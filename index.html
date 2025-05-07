@@ -1,0 +1,565 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta http-equiv="x-ua-compatible" content="ie=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="base" content="/" />
+    <meta name="HandheldFriendly" content="True" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+    <meta name="referrer" content="no-referrer-when-downgrade">
+    
+    <!-- Local fonts instead of Google Fonts -->
+    <link rel="stylesheet" href="assets/css/common.css" />
+    <link rel="stylesheet" href="assets/css/homepage.css" />
+    <link rel="stylesheet" href="assets/css/animations.css" />
+    
+    <meta name="robots" content="index, follow" />
+    <meta name="googlebot" content="index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1" />
+    <meta name="bingbot" content="index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1" />
+    <link rel="icon" href="assets/images/icon.png" type="image/png">
+    <title>Home | Abdullah Mehtab</title>
+    <meta property="og:title" content="Home" />
+    <meta name="twitter:title" content="Home" />
+    <meta name="copyright" content="Abdullah Mehtab" />
+    <meta name="description" content="Hey, I'm Abdullah Mehtab. I'm a passionate Computer Science student at Forman Christian College, with a minor in Mathematics. I specialize in programming, data structures, and algorithm development." />
+    <meta property="og:description" content="Hey, I'm Abdullah Mehtab. I'm a passionate Computer Science student at Forman Christian College, with a minor in Mathematics. I specialize in programming, data structures, and algorithm development." />
+    <meta name="twitter:description" content="Hey, I'm Abdullah Mehtab. I'm a passionate Computer Science student at Forman Christian College, with a minor in Mathematics. I specialize in programming, data structures, and algorithm development." />
+    <meta property="og:url" content="/" />
+    <meta name="twitter:url" content="/" />
+    <meta name="twitter:card" content="summary" />
+    <meta property="og:site_name" content="Abdullah Mehtab" />
+    <meta property="og:locale" content="en_US" />
+    <meta property="og:type" content="website" />
+    
+    <!-- Add tsParticles library from CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/tsparticles-slim@2.12.0/tsparticles.slim.bundle.min.js"></script>
+    <script src="assets/js/particles.js"></script>
+    <script src="assets/js/navbar.js"></script>
+  </head>
+  <body>
+    <header>
+<nav>
+  <div class="nav-left">
+    <h1><a href="#top">Abdullah Mehtab</a></h1>
+  </div>
+  <div class="nav-right">
+    <a class="button--big" href="index.html">
+      Home
+    </a>
+    <a class="button--big" href="projects.html">
+      Projects
+    </a>
+    <a class="button--big" href="todo.html">
+      Todo List
+    </a>
+    <a class="button--big" href="cv.html">
+      CV
+    </a>
+  </div>
+</nav>
+<dialog id="navbar-drawer">
+  <button id="drawer-close" class="icon-button" aria-label="Close Navigation Drawer">
+    <svg aria-hidden="true" viewBox="0 0 24 24" focusable="false"><path d="M18.3 5.71a.9959.9959 0 0 0-1.41 0L12 10.59 7.11 5.7a.9959.9959 0 0 0-1.41 0c-.39.39-.39 1.02 0 1.41L10.59 12 5.7 16.89c-.39.39-.39 1.02 0 1.41.39.39 1.02.39 1.41 0L12 13.41l4.89 4.89c.39.39 1.02.39 1.41 0 .39-.39.39-1.02 0-1.41L13.41 12l4.89-4.89c.38-.38.38-1.02 0-1.4z"></path></svg>
+  </button>
+  <div class="navbar-drawer-links">
+    <a class="button--big" href="index.html">
+      Home
+    </a>
+    <a class="button--big" href="projects.html">
+      Projects
+    </a>
+    <a class="button--big" href="todo.html">
+      Todo List
+    </a>
+    <a class="button--big" href="cv.html">
+      CV
+    </a>
+  </div>
+</dialog>
+<div id="navbar-trigger" style="position: absolute; width: 1px; height: 1px; top: 100px; left: 0;"></div>
+    </header>
+    <main id="top">
+<div id="tsparticles" style="position: fixed; inset: 0; z-index: -10;"></div>
+<div class="splash">
+  <img class="profile-picture" src="assets/images/me.jpeg" alt="Profile image" />
+  <h1>Abdullah Mehtab</h1>
+  <h2>I'm a <span class="typed" data-typed-items="Computer Science Student,Developer,Problem Solver">Computer Science Student</span><span class="typed-cursor typed-cursor--blink" aria-hidden="true"></span></h2>
+  <div class="socials">
+    <div class="has-tooltip">
+      <a href="#" target="_blank" rel="noopener" data-umami-event="github-social-hero">
+        <svg role="img" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><title>GitHub</title><path d="M12 .297c-6.63 0-12 5.373-12 12 0 5.303 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61C4.422 18.07 3.633 17.7 3.633 17.7c-1.087-.744.084-.729.084-.729 1.205.084 1.838 1.236 1.838 1.236 1.07 1.835 2.809 1.305 3.495.998.108-.776.417-1.305.76-1.605-2.665-.3-5.466-1.332-5.466-5.93 0-1.31.465-2.38 1.235-3.22-.135-.303-.54-1.523.105-3.176 0 0 1.005-.322 3.3 1.23.96-.267 1.98-.399 3-.405 1.02.006 2.04.138 3 .405 2.28-1.552 3.285-1.23 3.285-1.23.645 1.653.24 2.873.12 3.176.765.84 1.23 1.91 1.23 3.22 0 4.61-2.805 5.625-5.475 5.92.42.36.81 1.096.81 2.22 0 1.606-.015 2.896-.015 3.286 0 .315.21.69.825.57C20.565 22.092 24 17.592 24 12.297c0-6.627-5.373-12-12-12"/></svg>
+      </a>
+      <span class="tooltip" tip-position="bottom">[Your GitHub]</span>
+    </div>
+    <div class="has-tooltip">
+      <a href="#" target="_blank" rel="noopener" data-umami-event="mastodon-social-hero">
+        <svg fill="currentColor" viewBox="0 0 16 16"><path d="M11.19 12.195c2.016-.24 3.77-1.475 3.99-2.603.348-1.778.32-4.339.32-4.339 0-3.47-2.286-4.488-2.286-4.488C12.062.238 10.083.017 8.027 0h-.05C5.92.017 3.942.238 2.79.765c0 0-2.285 1.017-2.285 4.488l-.002.662c-.004.64-.007 1.35.011 2.091.083 3.394.626 6.74 3.78 7.57 1.454.383 2.703.463 3.709.408 1.823-.1 2.847-.647 2.847-.647l-.06-1.317s-1.303.41-2.767.36c-1.45-.05-2.98-.156-3.215-1.928a3.614 3.614 0 0 1-.033-.496s1.424.346 3.228.428c1.103.05 2.137-.064 3.188-.189zm1.613-2.47H11.13v-4.08c0-.859-.364-1.295-1.091-1.295-.804 0-1.207.517-1.207 1.541v2.233H7.168V5.89c0-1.024-.403-1.541-1.207-1.541-.727 0-1.091.436-1.091 1.296v4.079H3.197V5.522c0-.859.22-1.541.66-2.046.456-.505 1.052-.764 1.793-.764.856 0 1.504.328 1.933.983L8 4.39l.417-.695c.429-.655 1.077-.983 1.934-.983.74 0 1.336.259 1.791.764.442.505.661 1.187.661 2.046v4.203z"/></svg>
+      </a>
+      <span class="tooltip" tip-position="bottom">[Your Social Handle]</span>
+    </div>
+    <div class="has-tooltip">
+      <a href="#" target="_blank" rel="noopener" data-umami-event="discord-social-hero">
+        <svg role="img" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><title>Discord</title><path d="M20.222 0c1.406 0 2.54 1.137 2.607 2.475V24l-2.677-2.273-1.47-1.338-1.604-1.398.67 2.205H3.71c-1.402 0-2.54-1.065-2.54-2.476V2.48C1.17 1.142 2.31.003 3.715.003h16.5L20.222 0zm-6.118 5.683h-.03l-.202.2c2.073.6 3.076 1.537 3.076 1.537-1.336-.668-2.54-1.002-3.744-1.137-.87-.135-1.74-.064-2.475 0h-.2c-.47 0-1.47.2-2.81.735-.467.203-.735.336-.735.336s1.002-1.002 3.21-1.537l-.135-.135s-1.672-.064-3.477 1.27c0 0-1.805 3.144-1.805 7.02 0 0 1 1.74 3.743 1.806 0 0 .4-.533.805-1.002-1.54-.468-2.14-1.404-2.14-1.404s.134.066.335.2h.06c.03 0 .044.015.06.03v.006c.016.016.03.03.06.03.33.136.66.27.93.4.466.202 1.065.403 1.8.536.93.135 1.996.2 3.21 0 .6-.135 1.2-.267 1.8-.535.39-.2.87-.4 1.397-.737 0 0-.6.936-2.205 1.404.33.466.795 1 .795 1 2.744-.06 3.81-1.8 3.87-1.726 0-3.87-1.815-7.02-1.815-7.02-1.635-1.214-3.165-1.26-3.435-1.26l.056-.02zm.168 4.413c.703 0 1.27.6 1.27 1.335 0 .74-.57 1.34-1.27 1.34-.7 0-1.27-.6-1.27-1.334 0-.74.573-1.338 1.27-1.338zm-4.543 0c.7 0 1.266.6 1.266 1.335 0 .74-.57 1.34-1.27 1.34-.7 0-1.27-.6-1.27-1.334 0-.74.57-1.338 1.27-1.338z"/></svg>
+      </a>
+      <span class="tooltip" tip-position="bottom">[Your Discord]</span>
+    </div>
+    <div class="has-tooltip">
+      <a href="#" target="_blank" rel="noopener" data-umami-event="mail-social-hero">
+        <svg role="img" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><title>E-mail</title><path d="M24 4.5v15c0 .85-.65 1.5-1.5 1.5H21V7.387l-9 6.463-9-6.463V21H1.5C.649 21 0 20.35 0 19.5v-15c0-.425.162-.8.431-1.068C.7 3.16 1.076 3 1.5 3H2l10 7.25L22 3h.5c.425 0 .8.162 1.069.432.27.268.431.643.431 1.068z"/></svg>
+      </a>
+      <span class="tooltip" tip-position="bottom">[Your Email]</span>
+    </div>
+  </div>
+</div>
+
+<div class="section" id="about-me">
+  <div class="container">
+    <p><strong>Hey!</strong></p>
+    <p>I'm Abdullah Mehtab!<br />
+    I'm a passionate Computer Science student at Forman Christian College, with a minor in Mathematics. I specialize in programming, data structures, and algorithm development. I'm enthusiastic about applying technology to solve complex problems and am actively involved in CS societies, showcasing leadership and teamwork skills.<br />
+    Feel free to get in touch or take a look at my past work below.</p>
+  </div>
+</div>
+
+<div class="section-title" id="portfolio">
+  <h2>Portfolio</h2>
+</div>
+
+<div class="section">
+  <div class="container">
+    <h3>My top projects</h3>
+    <div class="top-projects">
+      <div class="card">
+        <div class="card-content">
+          <img src="assets/images/project1.svg" alt="Integrated Security System"/>
+          <h4>Integrated Security System</h4>
+          <div>
+            <p>Final Year Project (In Progress) - Wazuh & ELK Stack on Raspberry Pi</p>
+          </div>
+        </div>
+        <div class="card-actions">
+          <a href="projects.html#security-system" class="button">
+            View Details
+          </a>
+        </div>
+      </div>
+      
+      <div class="card">
+        <div class="card-content">
+          <img src="assets/images/project2.svg" alt="Smart LED On-Time Monitoring System"/>
+          <h4>Smart LED On-Time Monitoring System</h4>
+          <div>
+            <p>An ESP32-based system that logs LED usage times into Google Sheets via a WebApp.</p>
+          </div>
+        </div>
+        <div class="card-actions">
+          <a href="projects.html#led-monitoring" class="button">
+            View Details
+          </a>
+        </div>
+      </div>
+      
+      <div class="card">
+        <div class="card-content">
+          <img src="assets/images/project3.svg" alt="Small Scale Search Engine"/>
+          <h4>Small Scale Search Engine</h4>
+          <div>
+            <p>Developed a simple search engine using Data Structures & Algorithms for optimized search operations.</p>
+          </div>
+        </div>
+        <div class="card-actions">
+          <a href="projects.html#search-engine" class="button">
+            View Details
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="section" id="stats">
+  <div class="container">
+    <div class="stats-grid">
+      <div class="stat-item">
+        <h3>23</h3>
+        <p>Projects Delivered</p>
+      </div>
+      <div class="stat-item">
+        <h3>153</h3>
+        <p>Features Built & Deployed</p>
+      </div>
+      <div class="stat-item">
+        <h3>297</h3>
+        <p>User Needs Analyzed</p>
+      </div>
+      <div class="stat-item">
+        <h3>12</h3>
+        <p>Teams Collaborated With</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="section" id="skills">
+  <div class="container">
+    <h2>Skills</h2>
+    <p>Skills are the foundation of impactful solutions. Combining creativity, analysis, and collaboration allows me to deliver products that meet both user needs and business goals.</p>
+    <div class="skills-grid">
+      <div class="skill-item">
+        <span class="skill-name">Python / C / C++ / Java</span>
+        <div class="skill-bar">
+          <div class="skill-progress" style="width: 100%"></div>
+        </div>
+      </div>
+      <div class="skill-item">
+        <span class="skill-name">Cybersecurity (Wazuh & ELK Stack)</span>
+        <div class="skill-bar">
+          <div class="skill-progress" style="width: 100%"></div>
+        </div>
+      </div>
+      <div class="skill-item">
+        <span class="skill-name">Web Development (HTML, CSS, JavaScript)</span>
+        <div class="skill-bar">
+          <div class="skill-progress" style="width: 90%"></div>
+        </div>
+      </div>
+      <div class="skill-item">
+        <span class="skill-name">Arduino & ESP32</span>
+        <div class="skill-bar">
+          <div class="skill-progress" style="width: 75%"></div>
+        </div>
+      </div>
+      <div class="skill-item">
+        <span class="skill-name">Git & Version Control </span>
+        <div class="skill-bar">
+          <div class="skill-progress" style="width: 80%"></div>
+        </div>
+      </div>
+      <div class="skill-item">
+        <span class="skill-name">Data Structures & Algorithms</span>
+        <div class="skill-bar">
+          <div class="skill-progress" style="width: 90%"></div>
+        </div>
+      </div>
+      <div class="skill-item">
+        <span class="skill-name">Database (SQL/SSMS)</span>
+        <div class="skill-bar">
+          <div class="skill-progress" style="width: 100%"></div>
+        </div>
+      </div>
+      <div class="skill-item">
+        <span class="skill-name">TensorFlow Model Training</span>
+        <div class="skill-bar">
+          <div class="skill-progress" style="width: 55%"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="section" id="services">
+  <div class="container">
+    <h2>Services</h2>
+    <p>I am committed to delivering personalized solutions that align with your goals, leveraging innovation, expertise, and dedication. Explore the key areas of my professional focus below:</p>
+    <div class="services-grid">
+      
+      <div class="service-card">
+        <h3>Cybersecurity Consulting</h3>
+        <p>Design and implement robust offensive & defensive security strategies powered by hands-on experience with Wazuh, ELK Stack, and system hardening.</p>
+      </div>
+      
+      <div class="service-card">
+        <h3>Custom Software Development</h3>
+        <p>Build clean, maintainable applications in Python, Java, and C/C++—from back-end services and automation scripts to AI-driven chatbots.</p>
+      </div>
+      
+      <div class="service-card">
+        <h3>Machine Learning & AI Solutions</h3>
+        <p>Develop and deploy ML models using TensorFlow for NLP, expert systems, and predictive analytics across supervised & unsupervised workflows.</p>
+      </div>
+      
+      <div class="service-card">
+        <h3>Embedded Systems & IoT</h3>
+        <p>Architect and prototype IoT devices and smart-automation solutions with Arduino, ESP32, and Raspberry Pi for real-world monitoring and control.</p>
+      </div>
+      
+      <div class="service-card">
+        <h3>Full-Stack Web Development</h3>
+        <p>Create responsive, end-to-end web applications using HTML, CSS, JavaScript, and modern back-end frameworks to bring your ideas online.</p>
+      </div>
+      
+      <div class="service-card">
+        <h3>Project Management</h3>
+        <p>Coordinate teams and streamline deliverables through proven methodologies managing freelance projects, hackathons, and academic initiatives.</p>
+      </div>
+      
+    </div>
+  </div>
+</div>
+
+
+<div class="section" id="contact">
+  <div class="container">
+    <h2>Contact</h2>
+    <p>Let's connect! Contact with your questions or collaboration ideas.</p>
+    <div class="contact-info">
+      <div class="contact-item">
+        <h3>Address</h3>
+        <p>Lahore, Punjab, Pakistan</p>
+      </div>
+      <div class="contact-item">
+        <h3>Call</h3>
+        <p>+92 300 8569484</p>
+      </div>
+      <div class="contact-item">
+        <h3>Email</h3>
+        <p>adeen.amer@dubizzlelabs.com</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="section" id="timeline">
+  <div class="container">
+    <h2>Timeline</h2>
+    <div class="modern-timeline">
+      <div class="modern-timeline-item left">
+        <div class="modern-timeline-date-group right">
+          <div class="modern-timeline-date"></div>
+          <div class="modern-timeline-date-label">February 2025</div>
+        </div>
+        <div class="modern-timeline-content">
+          <h3>AI-Powered University Admissions Chatbot (Python)</h3>
+          <p>Designed and deployed a conversational AI chatbot to streamline university admissions inquiries using Python and NLP techniques.</p>
+        </div>
+      </div>
+      <div class="modern-timeline-item right">
+        <div class="modern-timeline-content">
+          <h3>Remote Project Manager<br><span style='font-weight:normal'>Freelancing</span></h3>
+          <p>Led cross-functional teams in research and documentation for tech projects, ensuring timely delivery and client satisfaction.</p>
+        </div>
+        <div class="modern-timeline-date-group left">
+          <div class="modern-timeline-date"></div>
+          <div class="modern-timeline-date-label">January 2025</div>
+        </div>
+      </div>
+      <div class="modern-timeline-item left">
+        <div class="modern-timeline-date-group right">
+          <div class="modern-timeline-date"></div>
+          <div class="modern-timeline-date-label">December 2024</div>
+        </div>
+        <div class="modern-timeline-content">
+          <h3>Smart LED On-Time Monitoring System (ESP32, G-Sheets, WebApp)</h3>
+          <p>Built an IoT system integrating ESP32 with Google Sheets and a web interface for real-time LED usage tracking.</p>
+        </div>
+      </div>
+      <div class="modern-timeline-item right">
+        <div class="modern-timeline-content">
+          <h3>Integrated Security System (Wazuh & ELK Stack on Raspberry Pi)</h3>
+          <p>Final Year Project: Developing a cost-effective cybersecurity solution using Wazuh SIEM and ELK Stack for threat detection.</p>
+        </div>
+        <div class="modern-timeline-date-group left">
+          <div class="modern-timeline-date"></div>
+          <div class="modern-timeline-date-label">November 2024</div>
+        </div>
+      </div>
+      <div class="modern-timeline-item left">
+        <div class="modern-timeline-date-group right">
+          <div class="modern-timeline-date"></div>
+          <div class="modern-timeline-date-label">September 2024</div>
+        </div>
+        <div class="modern-timeline-content">
+          <h3>Teacher Assistant<br><span style='font-weight:normal'>Forman Christian College (A Chartered University)</span></h3>
+          <p>Managed student records in Excel, conducted lab sessions, and assessed quizzes/assignments for undergraduate courses.</p>
+        </div>
+      </div>
+      <div class="modern-timeline-item right">
+        <div class="modern-timeline-content">
+          <h3>2nd Place – Web Development Competition<br><span style='font-weight:normal'>Forman Ignite 2024</span></h3>
+          <p>Secured second place in a university-wide competition for a full-stack web application.</p>
+        </div>
+        <div class="modern-timeline-date-group left">
+          <div class="modern-timeline-date"></div>
+          <div class="modern-timeline-date-label">July 2024</div>
+        </div>
+      </div>
+      <div class="modern-timeline-item left">
+        <div class="modern-timeline-date-group right">
+          <div class="modern-timeline-date"></div>
+          <div class="modern-timeline-date-label">April 2024</div>
+        </div>
+        <div class="modern-timeline-content">
+          <h3>Expression Parser Compiler Construction (C)</h3>
+          <p>Engineered a compiler for arithmetic expressions using C, demonstrating proficiency in automata theory and parsing algorithms.</p>
+        </div>
+      </div>
+      <div class="modern-timeline-item right">
+        <div class="modern-timeline-content">
+          <h3>Linear Regression Machine Learning in Assembly</h3>
+          <p>Implemented a linear regression model in MIPS Assembly, bridging low-level programming with ML concepts.</p>
+        </div>
+        <div class="modern-timeline-date-group left">
+          <div class="modern-timeline-date"></div>
+          <div class="modern-timeline-date-label">January 2024</div>
+        </div>
+      </div>
+      <div class="modern-timeline-item left">
+        <div class="modern-timeline-date-group right">
+          <div class="modern-timeline-date"></div>
+          <div class="modern-timeline-date-label">2023</div>
+        </div>
+        <div class="modern-timeline-content">
+          <h3>3rd Place – Programming Competition<br><span style='font-weight:normal'>Google Developer Student Club (GDSC)</span></h3>
+          <p>Ranked third in a competitive coding challenge focused on algorithmic problem-solving.</p>
+          <h3>Bluetooth Controlled Car (Arduino)</h3>
+          <p>Designed a remote-controlled car using Arduino and Bluetooth modules, showcasing embedded systems expertise.</p>
+        </div>
+      </div>
+      <div class="modern-timeline-item right">
+        <div class="modern-timeline-content">
+          <h3>Line-Following Mini-Robot (Car)</h3>
+          <p>Built an autonomous robot capable of navigating predefined paths using infrared sensors.</p>
+          <h3>Small Scale Search Engine (DSA)</h3>
+          <p>Developed a search engine prototype leveraging hash tables and graph traversal algorithms.</p>
+        </div>
+        <div class="modern-timeline-date-group left">
+          <div class="modern-timeline-date"></div>
+          <div class="modern-timeline-date-label">2022</div>
+        </div>
+      </div>
+      <div class="modern-timeline-item left">
+        <div class="modern-timeline-date-group right">
+          <div class="modern-timeline-date"></div>
+          <div class="modern-timeline-date-label">2021</div>
+        </div>
+        <div class="modern-timeline-content">
+          <h3>Facial Image Recognition (TensorFlow)</h3>
+          <p>Created a facial recognition system using TensorFlow, achieving 92% accuracy on test datasets.</p>
+          <h3>Cab/Taxi-Management-System (Tkinter)</h3>
+          <p>Designed a GUI-based fleet management application with Python's Tkinter library.</p>
+        </div>
+      </div>
+      <div class="modern-timeline-item right">
+        <div class="modern-timeline-content">
+          <h3>Minecraft Custom Datapacks (JavaScript/JSON)</h3>
+          <p>Engineered interactive gameplay modifications using JSON and JavaScript, enhancing singleplayer experiences.</p>
+        </div>
+        <div class="modern-timeline-date-group left">
+          <div class="modern-timeline-date"></div>
+          <div class="modern-timeline-date-label">Early 2020</div>
+        </div>
+      </div>
+      <div class="modern-timeline-item left">
+        <div class="modern-timeline-date-group right">
+          <div class="modern-timeline-date"></div>
+          <div class="modern-timeline-date-label">2019</div>
+        </div>
+        <div class="modern-timeline-content">
+          <h3>Intermediate FSc Pre-Engineering<br><span style='font-weight:normal'>KIPS College</span></h3>
+          <p>Pursued advanced studies in Physics, Chemistry, and Mathematics, maintaining a strong foundation for computational logic.</p>
+        </div>
+      </div>
+      <div class="modern-timeline-item right">
+        <div class="modern-timeline-content">
+          <h3>Age of Mythology Custom Scenarios</h3>
+          <p>Modded a 2002 RTS game to create custom scenarios, introducing foundational game development concepts.</p>
+        </div>
+        <div class="modern-timeline-date-group left">
+          <div class="modern-timeline-date"></div>
+          <div class="modern-timeline-date-label">2018</div>
+        </div>
+      </div>
+      <div class="modern-timeline-item left">
+        <div class="modern-timeline-date-group right">
+          <div class="modern-timeline-date"></div>
+          <div class="modern-timeline-date-label">2017</div>
+        </div>
+        <div class="modern-timeline-content">
+          <h3>Visual Basic Introduction</h3>
+          <p>Learned basic programming constructs (conditions, loops) during high school, sparking interest in scripting.</p>
+        </div>
+      </div>
+      <div class="modern-timeline-item right">
+        <div class="modern-timeline-content">
+          <h3>Minecraft Cracked Server Development</h3>
+          <p>Hosted a private server with custom plugins and mods, fostering early teamwork and problem-solving skills.</p>
+        </div>
+        <div class="modern-timeline-date-group left">
+          <div class="modern-timeline-date"></div>
+          <div class="modern-timeline-date-label">2016</div>
+        </div>
+      </div>
+      <div class="modern-timeline-item left">
+        <div class="modern-timeline-date-group right">
+          <div class="modern-timeline-date"></div>
+          <div class="modern-timeline-date-label">2014–2015</div>
+        </div>
+        <div class="modern-timeline-content">
+          <h3>GTA Modding & Minecraft Command Blocks</h3>
+          <p>Explored game modding communities, creating custom GTA Vice City/San Andreas mods and Minecraft command-block games.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+<div class="loop-wrapper">
+  <div class="mountain"></div>
+  <div class="hill"></div>
+  <div class="tree"></div>
+  <div class="tree"></div>
+  <div class="tree"></div>
+  <div class="rock"></div>
+  <div class="truck"></div>
+  <div class="wheels"></div>
+</div> 
+    </main>
+    <footer>
+      <div class="container footer-sections">
+        <div class="footer-section">
+          <h2>Contact me</h2>
+          <ul>
+            <li>
+              <span class="social-label">Email: </span>
+              <a href="mailto:abdullahmehtab666@gmail.com" target="_blank" rel="me noopener">
+                abdullahmehtab666@gmail.com
+              </a>
+            </li>
+            <li>
+              <span class="social-label">GitHub: </span>
+              <a href="https://github.com/Abdullah-Mehtab" target="_blank" rel="me noopener">
+                @Abdullah-Mehtab
+              </a>
+            </li>
+            <li>
+              <span class="social-label">LinkedIn: </span>
+              <a href="https://linkedin.com/in/abdullah-mehtab" target="_blank" rel="me noopener">
+                linkedin.com/in/abdullah-mehtab
+              </a>
+            </li>
+          </ul>
+        </div>
+        <div class="footer-section">
+          <h2>Site map</h2>
+          <ul>
+            <li><a href="index.html">Home</a></li>
+            <li><a href="projects.html">Projects</a></li>
+            <li><a href="todo.html">Todo List</a></li>
+            <li><a href="cv.html">CV</a></li>
+          </ul>
+        </div>
+      </div>
+      <div class="copyright">
+          <p class="copyright-text">&copy; 2023-2025 Abdullah Mehtab</p>
+      </div>
+    </footer>
+    <script src="assets/js/navbar.js"></script>
+    <script src="assets/js/particles.js"></script>
+    <script src="assets/js/header.js"></script>
+    <script src="assets/js/typed.js"></script>
+    <script src="assets/js/animations.js"></script>
+    <script src="assets/js/stats-animation.js"></script>
+  </body>
+</html> 
