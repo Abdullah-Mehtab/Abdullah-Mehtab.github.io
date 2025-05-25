@@ -2,6 +2,8 @@
 
 This is my personal resume website showcasing my professional experience, projects, and skills. The website is built using HTML, CSS, and JavaScript, providing a clean and modern interface to present my professional information.
 
+Visit here: https://abdullah-mehtab.github.io/Abdullah-Mehtab/
+
 ## Project Structure
 
 ```
