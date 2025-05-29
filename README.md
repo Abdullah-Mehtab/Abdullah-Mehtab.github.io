@@ -29,22 +29,9 @@ Visit here: https://abdullah-mehtab.github.io/Abdullah-Mehtab/
 ## Technologies Used
 
 - HTML5
-- CSS3
+- CSS
 - JavaScript
 - Custom fonts and icons
-- Responsive design principles
-
-## Deployment
-
-The website can be deployed on any static web hosting service like:
-- GitHub Pages
-- Netlify
-- Vercel
-- Any traditional web hosting service
-
-## License
-
-This project is open source and available under the MIT License.
 
 ## Contact
 
