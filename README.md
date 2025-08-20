@@ -1,6 +1,6 @@
-# StandAlone Resume Website
+# Standalone Resume Website
 
-The website is built using HTML, CSS, and JavaScript only in raw files.
+The website is built using HTML, CSS, and JavaScript only in raw files. (https://abdullah-mehtab.github.io/Abdullah-Mehtab/) 
 
 ## Project Structure
 
@@ -46,3 +46,4 @@ git clone [your-repository-url]
 ## Contact
 
 For any questions or feedback, please feel free to reach out through the contact information provided on the website. 
+
