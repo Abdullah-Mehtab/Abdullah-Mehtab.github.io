@@ -1,6 +1,6 @@
-# Personal Resume Website
+# StandAlone Resume Website
 
-This is my personal resume website showcasing my professional experience, projects, and skills. The website is built using HTML, CSS, and JavaScript, providing a clean and modern interface to present my professional information.
+The website is built using HTML, CSS, and JavaScript only in raw files.
 
 ## Project Structure
 
@@ -42,18 +42,6 @@ git clone [your-repository-url]
 ```
 
 2. Open `index.html` in your web browser to view the website locally.
-
-## Deployment
-
-The website can be deployed on any static web hosting service like:
-- GitHub Pages
-- Netlify
-- Vercel
-- Any traditional web hosting service
-
-## License
-
-This project is open source and available under the MIT License.
 
 ## Contact
 
