@@ -640,6 +640,7 @@ body.portfolio-v2 a {
 .comment-item p {
   margin: 8px 0 0;
   color: var(--text);
+  white-space: pre-wrap;
 }
 
 .comment-status {
