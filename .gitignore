@@ -1,0 +1,37 @@
+# Editor and local machine state
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Operating system noise
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Logs and temporary files
+*.log
+*.tmp
+*.temp
+*.bak
+*.orig
+
+# Local archives and one-off exports
+old.rar
+0bfb0d66b920418999336963b20c55ee.webp
+358a3b681a4b47019187d910558948b3.pdf
+adf21572c5df4cdcbe6950f0fc26fa15.pdf
+Abdullah-Mehtab-Resume-v4.5.pdf
+
+# Future Node/Next.js build and dependency output
+node_modules/
+.next/
+out/
+dist/
+build/
+.vercel/
+
+# Local environment files
+.env
+.env.*
+!.env.example

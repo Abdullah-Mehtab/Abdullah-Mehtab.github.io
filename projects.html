@@ -1,468 +1,257 @@
 <!DOCTYPE html>
 <html lang="en">
   <head>
-    <meta charset="utf-8" />
-    <meta http-equiv="x-ua-compatible" content="ie=edge" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <meta name="base" content="/" />
-    <meta name="HandheldFriendly" content="True" />
-    <meta name="mobile-web-app-capable" content="yes" />
-    <meta name="apple-mobile-web-app-capable" content="yes" />
-    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
-    <meta name="referrer" content="no-referrer-when-downgrade">
-
-    <!-- Local fonts instead of Google Fonts -->
-    <link rel="stylesheet" href="assets/css/common.css" />
-    <link rel="stylesheet" href="assets/css/homepage.css" />
-    <link rel="stylesheet" href="assets/css/animations.css" />
-    <link rel="stylesheet" href="assets/css/projects.css" />
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-    <!-- Add Lightbox2 CSS -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/lightbox2/2.11.4/css/lightbox.min.css">
-    
-    <meta name="robots" content="index, follow" />
-    <meta name="googlebot" content="index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1" />
-    <meta name="bingbot" content="index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1" />
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="Selected work by Abdullah Mehtab across offensive security, DevOps, full-stack, AI/ML, IoT, and older experiments.">
+    <title>Work | Abdullah Mehtab</title>
     <link rel="icon" href="assets/images/icon.png" type="image/png">
-    <title>Projects | Abdullah Mehtab</title>
-    <meta property="og:title" content="Projects" />
-    <meta name="twitter:title" content="Projects" />
-    <meta name="copyright" content="Abdullah Mehtab" />
-    <meta name="description" content="A collection of my projects in Computer Science and Software Development" />
-    <meta property="og:description" content="A collection of my projects in Computer Science and Software Development" />
-    <meta name="twitter:description" content="A collection of my projects in Computer Science and Software Development" />
-    <meta property="og:url" content="/" />
-    <meta name="twitter:url" content="/" />
-    <meta name="twitter:card" content="summary" />
-    <meta property="og:site_name" content="Abdullah Mehtab" />
-    <meta property="og:locale" content="en_US" />
-    <meta property="og:type" content="website" />
-    
-    <!-- Add tsParticles library from CDN -->
-    <script src="https://cdn.jsdelivr.net/npm/tsparticles-slim@2.12.0/tsparticles.slim.bundle.min.js"></script>
-    <!-- Add jQuery (required for lightbox) -->
-    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
-    <!-- Add Lightbox2 JS -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/lightbox2/2.11.4/js/lightbox.min.js"></script>
-    <!-- Configure Lightbox -->
-    <script>
-      lightbox.option({
-        'resizeDuration': 200,
-        'wrapAround': true,
-        'albumLabel': "Image %1 of %2",
-        'fadeDuration': 300,
-        'imageFadeDuration': 300,
-        'positionFromTop': 100,
-        'maxWidth': 1200,
-        'maxHeight': 800
-      });
-    </script>
-    <!-- Bootstrap CSS for responsive support -->
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" integrity="sha384-9ndCyUaIbzAi2FUVXJi0CjmCapSmO7SnpJef0486qhLnuZ2cdeRhO02iuK6FUUVM" crossorigin="anonymous">
+    <link rel="stylesheet" href="assets/css/animations.css">
+    <link rel="stylesheet" href="assets/css/portfolio-v2.css">
   </head>
-  <body>
-
-    <header>
-      <nav>
-        <div class="nav-left">
-          <h1><a href="#top">Abdullah Mehtab</a></h1>
+  <body class="portfolio-v2">
+    <header class="site-header">
+      <nav class="site-nav" aria-label="Primary navigation">
+        <a class="brand" href="index.html"><span class="brand-mark">AM</span><span>Abdullah Mehtab</span></a>
+        <div class="nav-links">
+          <a href="index.html">Home</a>
+          <a href="projects.html">Work</a>
+          <a href="labs.html">Labs</a>
+          <a href="cv.html">CV</a>
+          <a href="comments.html">Guestbook</a>
         </div>
-        <div class="nav-right">
-          <a class="button--big" href="index.html">
-            Home
-          </a>
-          <a class="button--big" href="projects.html">
-            Projects
-          </a>
-          <a class="button--big" href="todo.html">
-            Todo List
-          </a>
-          <a class="button--big" href="cv.html">
-            CV
-          </a>
-        </div>
+        <button class="nav-toggle" type="button" aria-label="Open navigation" aria-expanded="false" data-nav-toggle>Menu</button>
       </nav>
-      <dialog id="navbar-drawer">
-        <button id="drawer-close" class="icon-button" aria-label="Close Navigation Drawer">
-          <svg aria-hidden="true" viewBox="0 0 24 24" focusable="false"><path d="M18.3 5.71a.9959.9959 0 0 0-1.41 0L12 10.59 7.11 5.7a.9959.9959 0 0 0-1.41 0c-.39.39-.39 1.02 0 1.41L10.59 12 5.7 16.89c-.39.39-.39 1.02 0 1.41.39.39 1.02.39 1.41 0L12 13.41l4.89 4.89c.39.39 1.02.39 1.41 0 .39-.39.39-1.02 0-1.41L13.41 12l4.89-4.89c.38-.38.38-1.02 0-1.4z"></path></svg>
-        </button>
-        <div class="navbar-drawer-links">
-          <a class="button--big" href="index.html">
-            Home
-          </a>
-          <a class="button--big" href="projects.html">
-            Projects
-          </a>
-          <a class="button--big" href="todo.html">
-            Todo List
-          </a>
-          <a class="button--big" href="cv.html">
-            CV
-          </a>
-        </div>
-      </dialog>
-      <div id="navbar-trigger" style="position: absolute; width: 1px; height: 1px; top: 100px; left: 0;"></div>
-          </header>
+      <div class="mobile-nav" data-mobile-nav>
+        <a href="index.html">Home</a>
+        <a href="projects.html">Work</a>
+        <a href="labs.html">Labs</a>
+        <a href="cv.html">CV</a>
+        <a href="comments.html">Guestbook</a>
+      </div>
+    </header>
 
-    <main id="top">
-      <div id="tsparticles" style="position: fixed; inset: 0; z-index: -10;"></div>
-      
-      <section class="splash">
-        <h1>My Projects</h1>
-        <h2>by Abdullah Mehtab</h2>
+    <main>
+      <section class="page-hero">
+        <div class="section-inner">
+          <p class="eyebrow">Work</p>
+          <h1>Projects, case studies, and the older experiments that built the reflexes.</h1>
+          <p class="page-lede">This is not a trophy shelf. It is a map of what I have actually touched: security systems, backend demos, automation, ML, IoT, games, compilers, robots, and a few questionable repo names from earlier eras.</p>
+        </div>
       </section>
 
-      <section class="projects">
-        <div class="container">
-          <!-- Integrated Security System -->
-          <div id="security-system" class="project-row">
-            <div class="project-content">
-              <h3>Cyber Sentinel</h3>
-              <p>Final Year Project – A LAN-based security solution using Wazuh, ELK Stack, and Suricata on Raspberry Pi. It provides real-time monitoring, intrusion detection, and alerting for common network and host-based attacks.</p>
-              <p>Designed for small businesses and institutions, it automates log analysis, visualizes threats via Kibana, and sends email alerts. A custom installer and web GUI streamline deployment, with honeypot integration and AI-based enhancements planned. - Final Year Project</p>
-              <div class="project-links">
-                <a href="https://abdullah-mehtab.github.io/Cyber-Sentinal/" class="button" target="_blank">View Website</a>
-              </div>
-            </div>
-            <div class="project-image">
-              <div class="embed-responsive embed-responsive-16by9">
-                <iframe class="embed-responsive-item" src="https://www.youtube.com/embed/TLKqw3Hti8c" title="Cyber Sentinel Project Overview" allowfullscreen></iframe>
-              </div>
-              <div class="image-caption">
-                <h6>Security System Video Overview</h6>
-              </div>
-            </div>
+      <section class="section">
+        <div class="section-inner">
+          <div class="work-toolbar" aria-label="Project filters">
+            <button class="filter-button is-active" type="button" data-filter="all">All</button>
+            <button class="filter-button" type="button" data-filter="security">Security</button>
+            <button class="filter-button" type="button" data-filter="devops">DevOps</button>
+            <button class="filter-button" type="button" data-filter="fullstack">Full-stack</button>
+            <button class="filter-button" type="button" data-filter="ml">AI/ML</button>
+            <button class="filter-button" type="button" data-filter="iot">IoT</button>
+            <button class="filter-button" type="button" data-filter="classic">Older/Fun</button>
           </div>
 
-          <!-- Smart LED Monitoring System -->
-          <div id="led-monitoring" class="project-row reverse">
-            <div class="project-content">
-              <h3>Smart LED Monitoring System</h3>
-              <p>An innovative ESP32-based system that revolutionizes LED usage tracking. The system automatically logs LED usage times into Google Sheets through a custom WebApp interface, providing real-time monitoring and analytics.</p>
-              <p>The project demonstrates practical IoT implementation, combining hardware (ESP32) with cloud services (Google Sheets) and web technologies. It offers an efficient solution for tracking and optimizing energy usage in various settings.</p>
-              <div class="project-links">
-                <a href="https://github.com/Abdullah-Mehtab/Smart-LED-On-Time-Monitoring-System" class="button" target="_blank">View Project</a>
+          <div class="grid two">
+            <article id="security-system" class="work-card" data-categories="security devops">
+              <div class="work-media">
+                <iframe src="https://www.youtube.com/embed/TLKqw3Hti8c" title="Cyber Sentinel project overview" allowfullscreen></iframe>
               </div>
-            </div>
-            <div class="project-image">
-              <a href="assets/images/Project2.png" data-lightbox="project-gallery" data-title="System Showcase (Web-App)">
-                <img src="assets/images/Project2.png" alt="Smart LED Monitoring System" class="img-fluid">
-              </a>
-              <div class="image-caption">
-                <h6>System Showcase (Web-App)</h6>
+              <div>
+                <div class="work-meta"><span>Final Year Project</span><span>2024/11 - 2025/06</span></div>
+                <h3>Cyber Sentinel - Security Monitoring SIEM</h3>
+                <p>Low-cost open-source monitoring using Wazuh, ELK Stack, and Suricata IDS, with automated deployment, GUI management, and critical alerting for small-scale environments.</p>
+                <div class="tag-list">
+                  <span class="tag">Wazuh</span><span class="tag">ELK</span><span class="tag">Suricata</span><span class="tag">Python</span>
+                </div>
+                <div class="button-row">
+                  <a class="button" href="https://abdullah-mehtab.github.io/Cyber-Sentinal/" target="_blank" rel="noopener">Project site</a>
+                </div>
               </div>
-            </div>
-            </div>
+              <div data-comments data-type="project" data-slug="cyber-sentinel" data-title="Comments on Cyber Sentinel"></div>
+            </article>
 
-          <!-- Search Engine -->
-          <div id="search-engine" class="project-row">
-            <div class="project-content">
-              <h3>Small Scale Search Engine</h3>
-              <p>A powerful search engine implementation using advanced Data Structures & Algorithms. The project focuses on optimizing search operations through efficient indexing and retrieval mechanisms.</p>
-              <p>The system demonstrates practical applications of various data structures and algorithms in real-world scenarios, providing fast and accurate search results while maintaining optimal resource usage.</p>
-              <div class="project-links">
-                <a href="https://github.com/Abdullah-Mehtab/Search-Engine-Using-DSA" class="button" target="_blank">View Project</a>
+            <article id="pentest-report-generator" class="work-card" data-categories="security fullstack">
+              <div>
+                <div class="work-meta"><span>Personal Project</span><span>Security reporting</span></div>
+                <h3>Automated Pentest Report Generator</h3>
+                <p>A planned/prototyped reporting tool that parses standardized JSON vulnerability data and produces formatted Word/PDF reports to reduce repetitive report-writing overhead.</p>
+                <div class="tag-list">
+                  <span class="tag">JSON</span><span class="tag">PDF</span><span class="tag">Reports</span><span class="tag">Security</span>
+                </div>
               </div>
-            </div>
-            <div class="project-image">
-              <a href="assets/images/Project3.png" data-lightbox="project-gallery" data-title="Search Engine in Action">
-                <img src="assets/images/Project3.png" alt="Small Scale Search Engine" class="img-fluid">
-              </a>
-              <div class="image-caption">
-                <h6>Search Engine in Action</h6>
-              </div>
-            </div>
-            </div>
+              <div data-comments data-type="project" data-slug="pentest-report-generator" data-title="Comments on the report generator"></div>
+            </article>
 
-          <!-- AI Chatbot -->
-          <div id="ai-chatbot" class="project-row reverse">
-            <div class="project-content">
-              <h3>AI-Powered University Admissions Chatbot</h3>
-              <p>A sophisticated chatbot built using Python that assists students with university admissions-related queries. The system uses natural language processing to understand and respond to student inquiries about admission procedures, requirements, and deadlines.</p>
-              <div class="project-links">
-                <a href="https://github.com/Abdullah-Mehtab/AI-Powered-University-Admissions-Chatbot" class="button" target="_blank">View Project</a>
+            <article id="devops-environment" class="work-card" data-categories="devops fullstack">
+              <img src="assets/images/Project10.png" alt="Database and architecture diagram">
+              <div>
+                <div class="work-meta"><span>Infrastructure</span><span>Production-style demo</span></div>
+                <h3>DevOps Production Environment</h3>
+                <p>Infrastructure and deployment practice using Terraform, Ansible, Docker, Jenkins, GitHub Actions, SonarQube, Prometheus, Grafana, and ELK-style observability thinking.</p>
+                <div class="tag-list">
+                  <span class="tag">Terraform</span><span class="tag">Ansible</span><span class="tag">Docker</span><span class="tag">Jenkins</span>
+                </div>
               </div>
-            </div>
-            <div class="project-image">
-              <a href="assets/images/Project4.jpg" data-lightbox="project-gallery" data-title="Chatbot Interface">
-                <img src="assets/images/Project4.jpg" alt="AI Chatbot" class="img-fluid">
-              </a>
-              <div class="image-caption">
-                <h6>Chatbot Interface</h6>
-              </div>
-            </div>
-            </div>
+              <div data-comments data-type="project" data-slug="devops-production-environment" data-title="Comments on DevOps work"></div>
+            </article>
 
-          <!-- Taxi Management System -->
-          <div id="taxi-system" class="project-row">
-            <div class="project-content">
-              <h3>Cab/Taxi Management System</h3>
-              <p>A comprehensive Tkinter-based management system with authentication and logging capabilities. The system provides features for managing taxi bookings, driver assignments, and fare calculations.</p>
-              <div class="project-links">
-                <a href="https://github.com/Abdullah-Mehtab/Begginer-Taxi-Management-System-unusable-/tree/main" class="button" target="_blank">View Project</a>
+            <article id="led-monitoring" class="work-card" data-categories="iot fullstack">
+              <img src="assets/images/Project2.png" alt="Smart LED monitoring dashboard">
+              <div>
+                <div class="work-meta"><span>IoT</span><span>ESP32 + WebApp</span></div>
+                <h3>Smart LED On-Time Monitoring System</h3>
+                <p>ESP32-based LED usage tracking into Google Sheets through a custom WebApp, combining embedded systems, cloud logging, and practical analytics.</p>
+                <div class="tag-list">
+                  <span class="tag">ESP32</span><span class="tag">Google Sheets</span><span class="tag">JavaScript</span>
+                </div>
+                <div class="button-row">
+                  <a class="button" href="https://github.com/Abdullah-Mehtab/Smart-LED-On-Time-Monitoring-System" target="_blank" rel="noopener">Repository</a>
+                </div>
               </div>
-            </div>
-            <div class="project-image">
-              <a href="assets/images/Project5.png" data-lightbox="project-gallery" data-title="System Interface and Features">
-                <img src="assets/images/Project5.png" alt="Taxi Management System" class="img-fluid">
-              </a>
-              <div class="image-caption">
-                <h6>System Interface and Features</h6>
-              </div>
-            </div>
-            </div>
+              <div data-comments data-type="project" data-slug="smart-led-monitoring" data-title="Comments on LED monitoring"></div>
+            </article>
 
-          <!-- Linear Regression ML -->
-          <div id="linear-regression" class="project-row reverse">
-            <div class="project-content">
-              <h3>Linear Regression ML in Assembly</h3>
-              <p>An innovative implementation of a basic Linear Regression model using MIPS Assembly. This project bridges the gap between low-level computing and machine learning, demonstrating how complex algorithms can be implemented at the assembly level.</p>
-              <div class="project-links">
-                <a href="https://github.com/Abdullah-Mehtab/Linear-Regression-in-Assembly" class="button" target="_blank">View Project</a>
+            <article id="ai-chatbot" class="work-card" data-categories="ml fullstack">
+              <img src="assets/images/Project4.jpg" alt="AI admissions chatbot interface">
+              <div>
+                <div class="work-meta"><span>AI/NLP</span><span>Python</span></div>
+                <h3>AI-Powered University Admissions Chatbot</h3>
+                <p>A conversational assistant for university admissions queries, using Python and NLP-style query handling to help students find requirements and deadlines.</p>
+                <div class="tag-list">
+                  <span class="tag">Python</span><span class="tag">NLP</span><span class="tag">Chatbot</span>
+                </div>
+                <div class="button-row">
+                  <a class="button" href="https://github.com/Abdullah-Mehtab/AI-Powered-University-Admissions-Chatbot" target="_blank" rel="noopener">Repository</a>
+                </div>
               </div>
-            </div>
-            <div class="project-image">
-              <a href="assets/images/Project6.png" data-lightbox="project-gallery" data-title="Assembly Output">
-                <img src="assets/images/Project6.png" alt="Linear Regression ML" class="img-fluid">
-              </a>
-              <div class="image-caption">
-                <h6>Assembly Output</h6>
-              </div>
-            </div>
-            </div>
+              <div data-comments data-type="project" data-slug="ai-admissions-chatbot" data-title="Comments on the chatbot"></div>
+            </article>
 
-          <!-- Ludo Game -->
-          <div id="ludo-game" class="project-row">
-            <div class="project-content">
-              <h3>Ludo Game GUI</h3>
-              <p>A complete Ludo board game developed using Python's Pygame library. The game features smooth animations, multiplayer support, and traditional Ludo rules implementation.</p>
-              <div class="project-links">
-                <a href="https://github.com/Abdullah-Mehtab/Ludo-in-Python" class="button" target="_blank">View Project</a>
+            <article id="time-series-ml" class="work-card" data-categories="ml fullstack">
+              <div>
+                <div class="work-meta"><span>ML deployment</span><span>Flask + forecasting</span></div>
+                <h3>Time-Series Forecasting and ML Deployment</h3>
+                <p>Model training and deployment practice around forecasting, exploratory analysis, feature engineering, model evaluation, and serving predictions through a lightweight app.</p>
+                <div class="tag-list">
+                  <span class="tag">Flask</span><span class="tag">Forecasting</span><span class="tag">EDA</span><span class="tag">ML</span>
+                </div>
               </div>
-            </div>
-            <div class="project-image">
-              <a href="assets/images/Project7.png" data-lightbox="project-gallery" data-title="Game Interface and Features">
-                <img src="assets/images/Project7.png" alt="Ludo Game" class="img-fluid">
-              </a>
-              <div class="image-caption">
-                <h6>Game Interface and Features</h6>
-              </div>
-            </div>
-            </div>
+              <div data-comments data-type="project" data-slug="time-series-ml" data-title="Comments on time-series ML"></div>
+            </article>
 
-          <!-- Facial Recognition -->
-          <div id="facial-recognition" class="project-row reverse">
-            <div class="project-content">
-              <h3>Facial Image Recognition</h3>
-              <p>A sophisticated facial recognition system built using TensorFlow. The system provides improved identity verification capabilities through advanced machine learning algorithms.</p>
-              <div class="project-links">
-                <a href="https://github.com/Abdullah-Mehtab/Image-Recognition-Tensorflow-/tree/main" class="button" target="_blank">View Project</a>
+            <article id="laravel-backend" class="work-card" data-categories="fullstack">
+              <div>
+                <div class="work-meta"><span>Backend</span><span>Laravel 12.x</span></div>
+                <h3>Laravel E-commerce Backend Demo</h3>
+                <p>A backend-oriented e-commerce demo using Laravel, MySQL, Blade, routing, data modeling, and admin-style workflows.</p>
+                <div class="tag-list">
+                  <span class="tag">Laravel</span><span class="tag">MySQL</span><span class="tag">Blade</span>
+                </div>
               </div>
-            </div>
-            <div class="project-image">
-              <a href="assets/images/Project8.png" data-lightbox="project-gallery" data-title="Recognition System">
-                <img src="assets/images/Project8.png" alt="Facial Recognition" class="img-fluid">
-              </a>
-              <div class="image-caption">
-                <h6>Recognition System</h6>
-              </div>
-            </div>
-            </div>
+              <div data-comments data-type="project" data-slug="laravel-ecommerce-backend" data-title="Comments on Laravel backend"></div>
+            </article>
 
-          <!-- Space Invaders -->
-          <div id="space-invaders" class="project-row">
-            <div class="project-content">
-              <h3>Space Invaders Game GUI</h3>
-              <p>A Java Swing-based Space Invaders game implementing smooth GUI and game mechanics. The project demonstrates advanced game development concepts and Java GUI programming.</p>
-              <div class="project-links">
-                <a href="https://github.com/Abdullah-Mehtab/Space-Invaders" class="button" target="_blank">View Project</a>
+            <article id="search-engine" class="work-card" data-categories="classic fullstack">
+              <img src="assets/images/Project3.png" alt="Small scale search engine">
+              <div>
+                <div class="work-meta"><span>DSA</span><span>Search</span></div>
+                <h3>Small Scale Search Engine</h3>
+                <p>Search prototype using indexing and retrieval concepts from data structures and algorithms coursework.</p>
+                <div class="tag-list">
+                  <span class="tag">DSA</span><span class="tag">Search</span><span class="tag">Algorithms</span>
+                </div>
+                <div class="button-row">
+                  <a class="button" href="https://github.com/Abdullah-Mehtab/Search-Engine-Using-DSA" target="_blank" rel="noopener">Repository</a>
+                </div>
               </div>
-            </div>
-            <div class="project-image">
-              <a href="assets/images/Project9.png" data-lightbox="project-gallery" data-title="Game Interface and Features">
-                <img src="assets/images/Project9.png" alt="Space Invaders" class="img-fluid">
-              </a>
-              <div class="image-caption">
-                <h6>Game Interface and Features</h6>
-              </div>
-            </div>
-            </div>
+              <div data-comments data-type="project" data-slug="small-scale-search-engine" data-title="Comments on the search engine"></div>
+            </article>
 
-          <!-- Gol-Gappay SMS -->
-          <div id="gol-gappay" class="project-row reverse">
-            <div class="project-content">
-              <h3>Gol-Gappay Stall Management System</h3>
-              <p>An SQL-based management system for a food stall, integrating structured databases for business tracking. The system helps manage inventory, sales, and customer data efficiently.</p>
-              <div class="project-links">
-                <a href="https://github.com/Abdullah-Mehtab/Gol-Gappay-SMS/tree/main" class="button" target="_blank">View Project</a>
+            <article class="work-card" data-categories="classic ml">
+              <img src="assets/images/Project6.png" alt="Linear regression assembly output">
+              <div>
+                <div class="work-meta"><span>MIPS Assembly</span><span>ML basics</span></div>
+                <h3>Linear Regression in Assembly</h3>
+                <p>A low-level implementation of linear regression in MIPS Assembly. Did it need to exist? Maybe. Did it teach things? Absolutely.</p>
+                <div class="tag-list">
+                  <span class="tag">Assembly</span><span class="tag">Machine Learning</span>
+                </div>
+                <div class="button-row">
+                  <a class="button" href="https://github.com/Abdullah-Mehtab/Linear-Regression-in-Assembly" target="_blank" rel="noopener">Repository</a>
+                </div>
               </div>
-            </div>
-            <div class="project-image">
-              <a href="assets/images/Project10.png" data-lightbox="project-gallery" data-title="System Architecture ERD Diagram">
-                <img src="assets/images/Project10.png" alt="Gol-Gappay SMS" class="img-fluid">
-              </a>
-              <div class="image-caption">
-                <h6>System Architecture ERD Diagram</h6>
-              </div>
-            </div>
-            </div>
+            </article>
 
-          <!-- Line Following Robot -->
-          <div id="line-robot" class="project-row">
-            <div class="project-content">
-              <h3>Line-Following Mini-Robot</h3>
-              <p>A hardware-based line-following robot car with embedded systems. The project demonstrates practical applications of sensors, motors, and control systems in robotics.</p>
-              <div class="project-links">
-                <span class="badge">Hardware Project</span>
+            <article class="work-card" data-categories="classic">
+              <img src="assets/images/Project14.png" alt="Expression parser compiler">
+              <div>
+                <div class="work-meta"><span>Compiler construction</span><span>C</span></div>
+                <h3>Expression Parser Compiler</h3>
+                <p>A C-based parser/evaluator for arithmetic expressions, built around automata and compiler construction fundamentals.</p>
+                <div class="tag-list">
+                  <span class="tag">C</span><span class="tag">Compiler Design</span>
+                </div>
+                <div class="button-row">
+                  <a class="button" href="https://github.com/Abdullah-Mehtab/Expression-Parser-Compiler-Construction" target="_blank" rel="noopener">Repository</a>
+                </div>
               </div>
-            </div>
-            <div class="project-image">
-              <a href="assets/images/Project11.png" data-lightbox="project-gallery" data-title="Robot Design and Components">
-                <img src="assets/images/Project11.png" alt="Line Following Robot" class="img-fluid">
-              </a>
-              <div class="image-caption">
-                <h6>Robot Design and Components</h6>
-              </div>
-            </div>
-            </div>
+            </article>
 
-          <!-- Bluetooth Car -->
-          <div id="bluetooth-car" class="project-row reverse">
-            <div class="project-content">
-              <h3>Bluetooth Controlled Car</h3>
-              <p>An Arduino-powered car that can be controlled via Bluetooth using a smartphone. The project combines hardware and software to create an interactive remote-controlled vehicle.</p>
-              <div class="project-links">
-                <a href="https://github.com/Abdullah-Mehtab/Bluetooth-Controlled-Car-Arduino-/tree/main" class="button" target="_blank">View Project</a>
+            <article class="work-card" data-categories="classic iot">
+              <img src="assets/images/Project12.png" alt="Bluetooth controlled Arduino car">
+              <div>
+                <div class="work-meta"><span>Arduino</span><span>Hardware</span></div>
+                <h3>Bluetooth Controlled Car</h3>
+                <p>Arduino-powered car controlled over Bluetooth, part embedded systems practice and part classic "make it move" joy.</p>
+                <div class="tag-list">
+                  <span class="tag">Arduino</span><span class="tag">Bluetooth</span><span class="tag">Embedded</span>
+                </div>
+                <div class="button-row">
+                  <a class="button" href="https://github.com/Abdullah-Mehtab/Bluetooth-Controlled-Car-Arduino-/tree/main" target="_blank" rel="noopener">Repository</a>
+                </div>
               </div>
-            </div>
-            <div class="project-image">
-              <a href="assets/images/Project12.png" data-lightbox="project-gallery" data-title="Car Design and Control System">
-                <img src="assets/images/Project12.png" alt="Bluetooth Car" class="img-fluid">
-              </a>
-              <div class="image-caption">
-                <h6>Car Design and Control System</h6>
-              </div>
-            </div>
-            </div>
+            </article>
 
-          <!-- 2048 Game -->
-          <div id="game-2048" class="project-row">
-            <div class="project-content">
-              <h3>2048 Game</h3>
-              <p>The classic 2048 puzzle game developed using C++, with optimized tile movement mechanics. The implementation focuses on efficient game logic and smooth user interaction.</p>
-              <div class="project-links">
-                <a href="https://github.com/Abdullah-Mehtab/2048-Game/tree/main" class="button" target="_blank">View Project</a>
+            <article class="work-card" data-categories="classic">
+              <img src="assets/images/Project7.png" alt="Ludo game interface">
+              <div>
+                <div class="work-meta"><span>Pygame</span><span>Game UI</span></div>
+                <h3>Older Games and GUI Projects</h3>
+                <p>Ludo, Space Invaders, 2048, Taxi Management, TensorFlow image recognition, line-following robots, and other projects that made the skill tree branch out.</p>
+                <div class="tag-list">
+                  <span class="tag">Pygame</span><span class="tag">Java Swing</span><span class="tag">Tkinter</span><span class="tag">TensorFlow</span>
+                </div>
               </div>
-            </div>
-            <div class="project-image">
-              <a href="assets/images/Project13.png" data-lightbox="project-gallery" data-title="Game Interface and Features">
-                <img src="assets/images/Project13.png" alt="2048 Game" class="img-fluid">
-              </a>
-              <div class="image-caption">
-                <h6>Game Interface and Features</h6>
-              </div>
-            </div>
-            </div>
-
-          <!-- Expression Parser -->
-          <div id="expression-parser" class="project-row reverse">
-            <div class="project-content">
-              <h3>Expression Parser Compiler</h3>
-              <p>A compiler built in C that parses and evaluates mathematical expressions. The project demonstrates compiler construction principles and expression evaluation techniques.</p>
-              <div class="project-links">
-                <a href="https://github.com/Abdullah-Mehtab/Expression-Parser-Compiler-Construction" class="button" target="_blank">View Project</a>
-              </div>
-            </div>
-            <div class="project-image">
-              <a href="assets/images/Project14.png" data-lightbox="project-gallery" data-title="Compiler Architecture">
-                <img src="assets/images/Project14.png" alt="Expression Parser" class="img-fluid">
-              </a>
-              <div class="image-caption">
-                <h6>Compiler Architecture</h6>
-              </div>
-            </div>
-            </div>
-
-          <!-- Task Management -->
-          <div id="task-management" class="project-row">
-            <div class="project-content">
-              <h3>Task Management Web Application</h3>
-              <p>A simple yet effective task management web app using HTML, CSS, and JavaScript. The application helps users organize and track their tasks efficiently.</p>
-              <div class="project-links">
-                <a href="https://github.com/Abdullah-Mehtab/Web-Dev-Project" class="button" target="_blank">View Project</a>
-              </div>
-            </div>
-            <div class="project-image">
-              <a href="assets/images/Project15.png" data-lightbox="project-gallery" data-title="Application Interface">
-                <img src="assets/images/Project15.png" alt="Task Management" class="img-fluid">
-              </a>
-              <div class="image-caption">
-                <h6>Application Interface</h6>
-              </div>
-            </div>
+            </article>
           </div>
         </div>
       </section>
 
-      <div class="loop-wrapper">
-        <div class="mountain"></div>
-        <div class="hill"></div>
-        <div class="tree"></div>
-        <div class="tree"></div>
-        <div class="tree"></div>
-        <div class="rock"></div>
-        <div class="truck"></div>
-        <div class="wheels"></div>
-      </div> 
-
+      <div class="loop-wrapper" aria-hidden="true">
+        <div class="mountain"></div><div class="hill"></div><div class="tree"></div><div class="tree"></div><div class="tree"></div><div class="rock"></div><div class="truck"></div><div class="wheels"></div>
+      </div>
     </main>
 
-    <footer>
-      <div class="container footer-sections">
-        <div class="footer-section">
-          <h2>Contact me</h2>
-          <ul>
-            <li>
-              <span class="social-label">Email: </span>
-              <a href="mailto:abdullahmehtab666@gmail.com" target="_blank" rel="me noopener">
-                abdullahmehtab666@gmail.com
-              </a>
-            </li>
-            <li>
-              <span class="social-label">GitHub: </span>
-              <a href="https://github.com/Abdullah-Mehtab" target="_blank" rel="me noopener">
-                @Abdullah-Mehtab
-              </a>
-            </li>
-            <li>
-              <span class="social-label">LinkedIn: </span>
-              <a href="https://linkedin.com/in/abdullah-mehtab" target="_blank" rel="me noopener">
-                linkedin.com/in/abdullah-mehtab
-              </a>
-            </li>
-          </ul>
+    <footer class="site-footer">
+      <div class="site-footer-inner">
+        <div>
+          <h2>Work with receipts.</h2>
+          <p class="footer-note">Some projects are polished. Some are old. All of them are part of the trail.</p>
+          <p class="footer-note">&copy; 2023-<span data-year></span> Abdullah Mehtab.</p>
         </div>
-        <div class="footer-section">
-          <h2>Site map</h2>
-          <ul>
-            <li><a href="index.html">Home</a></li>
-            <li><a href="projects.html">Projects</a></li>
-            <li><a href="todo.html">Todo List</a></li>
-            <li><a href="cv.html">CV</a></li>
-          </ul>
-        </div>
-      </div>
-      <div class="copyright">
-        <div class="container">
-          <p class="copyright-text">&copy; 2023-2025 Abdullah Mehtab</p>
+        <div class="footer-links">
+          <a href="index.html">Home</a>
+          <a href="labs.html">Labs</a>
+          <a href="cv.html">CV</a>
+          <a href="todo.html">Never-Ending List</a>
+          <a class="legacy-link" href="classic/projects.html">Classic projects</a>
         </div>
       </div>
     </footer>
 
-    <script src="assets/js/navbar.js"></script>
-    <script src="assets/js/particles.js"></script>
-    <script src="assets/js/header.js"></script>
-    <!-- Bootstrap JS Bundle (with Popper) -->
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-ENjdO4Dr2bkBIFxQpeoA6DQD021OlistMZC2A4Ck0p1l9j7mtI1Q6Xo8y+4p6U8Q" crossorigin="anonymous"></script>
+    <script src="assets/js/site-config.js"></script>
+    <script src="assets/js/portfolio-v2.js"></script>
+    <script src="assets/js/comments.js"></script>
   </body>
-</html> 
+</html>
