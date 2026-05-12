@@ -99,6 +99,64 @@
     target.textContent = lines[Math.floor(Math.random() * lines.length)];
   }
 
+  function setupReveal() {
+    const targets = document.querySelectorAll(".reveal");
+    if (!targets.length) return;
+
+    if (!("IntersectionObserver" in window)) {
+      targets.forEach((target) => target.classList.add("is-visible"));
+      return;
+    }
+
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach((entry) => {
+        if (!entry.isIntersecting) return;
+        entry.target.classList.add("is-visible");
+        observer.unobserve(entry.target);
+      });
+    }, { threshold: 0.16 });
+
+    targets.forEach((target, index) => {
+      target.style.transitionDelay = `${Math.min(index % 6, 5) * 55}ms`;
+      observer.observe(target);
+    });
+  }
+
+  function setupCounters() {
+    const counters = document.querySelectorAll("[data-count]");
+    if (!counters.length) return;
+
+    function animateCounter(counter) {
+      const target = Number(counter.dataset.count || 0);
+      const start = performance.now();
+      const duration = 850;
+
+      function tick(now) {
+        const progress = Math.min((now - start) / duration, 1);
+        const eased = 1 - Math.pow(1 - progress, 3);
+        counter.textContent = String(Math.round(target * eased));
+        if (progress < 1) requestAnimationFrame(tick);
+      }
+
+      requestAnimationFrame(tick);
+    }
+
+    if (!("IntersectionObserver" in window)) {
+      counters.forEach(animateCounter);
+      return;
+    }
+
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach((entry) => {
+        if (!entry.isIntersecting) return;
+        animateCounter(entry.target);
+        observer.unobserve(entry.target);
+      });
+    }, { threshold: 0.5 });
+
+    counters.forEach((counter) => observer.observe(counter));
+  }
+
   document.addEventListener("DOMContentLoaded", () => {
     setActiveNav();
     setupMobileNav();
@@ -106,5 +164,7 @@
     setupMediaFallbacks();
     setupYear();
     setupProofLine();
+    setupReveal();
+    setupCounters();
   });
 })();
