@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Comments - Abdullah Mehtab</title>
+    <link rel="stylesheet" href="assets/css/common.css" />
+    <link rel="stylesheet" href="assets/css/animations.css" />
+    <link rel="icon" href="assets/images/icon.png" type="image/png">
+    <style>
+        .comment-form {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+
+        .comment-form input,
+        .comment-form textarea {
+            width: 100%;
+            padding: 8px;
+            margin: 8px 0;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+
+        .comment-form textarea {
+            height: 100px;
+            resize: vertical;
+        }
+
+        .comment-form button {
+            background-color: #4CAF50;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        .comment-form button:hover {
+            background-color: #45a049;
+        }
+
+        .comments-section {
+            margin-top: 30px;
+        }
+
+        .comment {
+            background: white;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            position: relative;
+        }
+
+        .comment-header {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 10px;
+            color: #666;
+            font-size: 0.9em;
+        }
+
+        .comment-content {
+            white-space: pre-wrap;
+        }
+
+        .admin-controls {
+            display: none;
+            position: absolute;
+            top: 10px;
+            right: 10px;
+        }
+
+        .admin-controls button {
+            background: #ff4444;
+            color: white;
+            border: none;
+            padding: 5px 10px;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        .admin-controls button:hover {
+            background: #cc0000;
+        }
+
+        .admin-mode .admin-controls {
+            display: block;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <nav>
+            <div class="nav-left">
+                <h1><a href="#top">Abdullah Mehtab</a></h1>
+            </div>
+            <div class="nav-right">
+                <a class="button--big" href="index.html">Home</a>
+                <a class="button--big" href="projects.html">Projects</a>
+                <a class="button--big" href="todo.html">Todo List</a>
+                <a class="button--big" href="cv.html">CV</a>
+                <a class="button--big" href="comments.html">Comments</a>
+            </div>
+        </nav>
+    </header>
+
+    <main id="top">
+        <div id="tsparticles" style="position: fixed; inset: 0; z-index: -10;"></div>
+        
+        <div class="section">
+            <div class="container">
+                <h1>Comments</h1>
+                
+                <div class="comment-form">
+                    <h2>Leave a Comment</h2>
+                    <form id="commentForm">
+                        <input type="text" id="username" placeholder="Your name" required>
+                        <textarea id="commentText" placeholder="Your comment" required></textarea>
+                        <button type="submit">Post Comment</button>
+                    </form>
+                </div>
+
+                <div class="comments-section" id="commentsSection">
+                    <!-- Comments will be displayed here -->
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script src="https://cdn.jsdelivr.net/npm/tsparticles-slim@2.12.0/tsparticles.slim.bundle.min.js"></script>
+    <script src="assets/js/particles.js"></script>
+    <script src="assets/js/navbar.js"></script>
+    <script>
+        // Admin mode toggle (you can set this to true to enable admin mode)
+        const isAdmin = false; // Change this to true when you want to moderate comments
+
+        // Function to format date
+        function formatDate(date) {
+            return new Date(date).toLocaleString();
+        }
+
+        // Function to load comments
+        function loadComments() {
+            const comments = JSON.parse(localStorage.getItem('comments')) || [];
+            const commentsSection = document.getElementById('commentsSection');
+            commentsSection.innerHTML = '';
+
+            comments.forEach((comment, index) => {
+                const commentElement = document.createElement('div');
+                commentElement.className = 'comment';
+                commentElement.innerHTML = `
+                    <div class="comment-header">
+                        <span><strong>${comment.username}</strong></span>
+                        <span>${formatDate(comment.timestamp)}</span>
+                    </div>
+                    <div class="comment-content">${comment.text}</div>
+                    ${isAdmin ? `
+                        <div class="admin-controls">
+                            <button onclick="deleteComment(${index})">Delete</button>
+                        </div>
+                    ` : ''}
+                `;
+                commentsSection.appendChild(commentElement);
+            });
+
+            // Add admin-mode class if in admin mode
+            if (isAdmin) {
+                document.body.classList.add('admin-mode');
+            }
+        }
+
+        // Function to delete comment (admin only)
+        function deleteComment(index) {
+            if (!isAdmin) return;
+            
+            const comments = JSON.parse(localStorage.getItem('comments')) || [];
+            comments.splice(index, 1);
+            localStorage.setItem('comments', JSON.stringify(comments));
+            loadComments();
+        }
+
+        // Function to save comment
+        function saveComment(event) {
+            event.preventDefault();
+            
+            const username = document.getElementById('username').value;
+            const commentText = document.getElementById('commentText').value;
+            
+            if (!username || !commentText) return;
+
+            const comments = JSON.parse(localStorage.getItem('comments')) || [];
+            comments.unshift({
+                username,
+                text: commentText,
+                timestamp: new Date().toISOString()
+            });
+
+            localStorage.setItem('comments', JSON.stringify(comments));
+            
+            // Clear form
+            document.getElementById('commentForm').reset();
+            
+            // Reload comments
+            loadComments();
+        }
+
+        // Add event listener to form
+        document.getElementById('commentForm').addEventListener('submit', saveComment);
+
+        // Load comments when page loads
+        loadComments();
+    </script>
+</body>
+</html> 

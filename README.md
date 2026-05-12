@@ -1,49 +1,42 @@
-# Standalone Resume Website
+# Abdullah Mehtab Portfolio
 
-The website is built using HTML, CSS, and JavaScript only in raw files. (https://abdullah-mehtab.github.io/Abdullah-Mehtab/) 
+This repository hosts my portfolio website at:
 
-## Project Structure
+https://abdullah-mehtab.github.io/Abdullah-Mehtab/
 
-```
-├── index.html          # Main landing page
-├── cv.html            # Detailed CV/Resume page
-├── projects.html      # Projects showcase
-├── comments.html      # Comments/Feedback section
-├── todo.html          # Todo/Planning section
-├── assets/
-│   ├── css/          # Stylesheets
-│   ├── js/           # JavaScript files
-│   ├── images/       # Image assets
-│   └── fonts/        # Custom fonts
-└── config.toml       # Configuration file
-```
+The site is intentionally human, not a sterile resume template. It keeps the old personality bits, the never-ending list, comments, and the footer truck, while upgrading the structure into a cleaner professional portfolio.
 
-## Features
+## Current Structure
 
-- Responsive design that works on all devices
-- Interactive project showcase
-- Detailed CV/Resume presentation
-- Comments/Feedback system
-- Modern and clean user interface
-
-## Technologies Used
-
-- HTML5
-- CSS3
-- JavaScript
-- Custom fonts and icons
-- Responsive design principles
-
-## Getting Started
-
-1. Clone the repository:
-```bash
-git clone [your-repository-url]
+```text
+index.html              # Home
+projects.html           # Work / project case studies
+labs.html               # Labs, writeups, and technical notes
+cv.html                 # Resume and cyber CV downloads
+comments.html           # Guestbook
+todo.html               # Never-Ending List
+classic/                # Preserved legacy static site snapshot
+assets/css/             # Stylesheets
+assets/js/              # JavaScript
+assets/images/          # Site images and project screenshots
+supabase/schema.sql     # Optional backend schema for moderated comments
 ```
 
-2. Open `index.html` in your web browser to view the website locally.
+## Comments Backend
 
-## Contact
+The comments UI works in local preview mode by default. To make comments live-backed:
 
-For any questions or feedback, please feel free to reach out through the contact information provided on the website. 
+1. Create a Supabase project.
+2. Run `supabase/schema.sql` in the Supabase SQL editor.
+3. Add the project URL and public anon key to `assets/js/site-config.js`.
+4. Moderate comments from Supabase by changing `status` from `pending` to `approved`.
 
+The anon key is safe to expose only if Row Level Security policies stay enabled.
+
+## Legacy Site
+
+The previous static site is preserved under `classic/`. The root site is the upgraded version; the classic pages are kept as a historical snapshot and because the old site had personality worth keeping.
+
+## Local Notes
+
+This project currently uses plain HTML, CSS, and JavaScript so it can run directly on GitHub Pages. A future full-stack migration can use Next.js + Supabase + Vercel once the local machine has Node.js/npm installed.

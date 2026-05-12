@@ -1,0 +1,315 @@
+/* Root Variables - Dark Theme Colors */
+:root {
+  --background: var(--background-color);
+  --mainBg: #1b1b1b;
+  --sidebarBg: #232b2e;
+  --headerBg: #0b3948;
+  --containerBg: #181818;
+  --cardBg: #191919;
+  --secondaryBg: #303c40;
+  
+  --mainText: #eceff4;
+  --accentBlue: #98bed5;
+  --highlightBlue: #79b9e7;
+  --golden: #dfb97d;
+  --darkBlue: #1b1b9f;
+  --darkRed: #9a1b1b;
+  --darkerRed: #791b1b;
+  
+  --cardShadow: rgba(0, 0, 0, 0.3);
+  --cardHoverShadow: rgba(0, 0, 0, 0.5);
+}
+
+/* Base Styles */
+body {
+  font-family: 'Open Sans', sans-serif;
+  font-size: 14px;
+  margin: 0;
+  background: var(--background-color);
+  color: var(--mainText);
+  line-height: 1.6;
+}
+
+/* CV Container */
+.cv {
+  background-color: transparent;
+  color: var(--mainText);
+  max-width: 1200px;
+  box-shadow: 0 4px 6px var(--cardShadow);
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+/* Header */
+.cv-header {
+  padding: 3rem 2rem;
+  background-color: var(--headerBg);
+  color: var(--mainText);
+  text-align: center;
+  position: relative;
+  overflow: hidden;
+}
+
+.cv-header::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+  background: linear-gradient(to right, var(--accentBlue), var(--highlightBlue));
+}
+
+.cv-header h1 {
+  text-transform: uppercase;
+  font-size: 2.2rem;
+  margin: 0 0 1.5rem 0;
+  letter-spacing: 0.05em;
+  color: var(--mainText);
+  font-weight: 700;
+}
+
+.cv-header p {
+  font-size: 1.1rem;
+  opacity: 0.9;
+  max-width: 800px;
+  margin: 0 auto;
+  color: var(--mainText);
+  line-height: 1.8;
+}
+
+/* CV Body Layout */
+.cv-body {
+  flex-grow: 1;
+  display: grid;
+  grid-template-columns: 1fr 2fr;
+  gap: 2rem;
+  padding: 2rem;
+}
+
+/* Sidebar */
+.cv-sidebar {
+  background-color: var(--sidebarBg);
+  color: var(--mainText);
+  padding: 2rem;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px var(--cardShadow);
+}
+
+.cv-sidebar-heading {
+  border-bottom: 2px solid var(--accentBlue);
+  text-transform: uppercase;
+  font-size: 1.4rem;
+  margin: 0 0 1.5rem 0;
+  padding-bottom: 0.5rem;
+  color: var(--accentBlue);
+  font-weight: 700;
+}
+
+/* Technical Skills Section */
+.cv-skills-section {
+  margin-bottom: 2rem;
+}
+
+.cv-skills-section:last-child {
+  margin-bottom: 0;
+}
+
+.cv-skills-section-title {
+  margin: 1.2em 0 0.5em;
+  font-size: 1.1rem;
+  color: var(--accentBlue);
+  font-weight: 600;
+}
+
+.cv-skills-entry {
+  margin-bottom: 1rem;
+}
+
+.cv-skills-entry--name {
+  margin: 0 0 0.3rem 0;
+  font-weight: 600;
+  color: var(--mainText);
+  font-size: 1.1rem;
+}
+
+.cv-skills-entry--description {
+  color: var(--mainText);
+  opacity: 0.8;
+  font-size: 0.95rem;
+  margin: 0 0 0.5rem 0;
+}
+
+.cv-skills-entry--rating {
+  display: flex;
+  gap: 0.3rem;
+}
+
+/* Sidebar Skills */
+.cv-skills-entry--row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.5rem;
+}
+
+.cv-skills-entry--level {
+  color: var(--accentBlue);
+  font-weight: 600;
+}
+
+.cv-skills-entry--description {
+  color: var(--mainText);
+  opacity: 0.9;
+  margin-bottom: 0.3rem;
+  font-size: 0.95rem;
+}
+
+/* Main Content */
+.cv-sections {
+  background-color: var(--containerBg);
+  padding: 0 2rem;
+  display: flex;
+  flex-direction: column;
+  gap: 2.5rem;
+}
+
+/* Experience Items */
+.cv-experience-item,
+.cv-education-item,
+.cv-projects-item,
+.cv-activities-item,
+.cv-awards-item {
+  background-color: var(--cardBg);
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 1.5rem;
+  align-items: start;
+  padding: 1.8rem;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px var(--cardShadow);
+  margin-bottom: 1.5rem;
+  border: 1px solid var(--secondaryBg);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.cv-experience-item:hover,
+.cv-education-item:hover,
+.cv-projects-item:hover,
+.cv-activities-item:hover,
+.cv-awards-item:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px var(--cardHoverShadow);
+  border-color: var(--accentBlue);
+}
+
+.cv-experience-item--date,
+.cv-education-item--date,
+.cv-activities-item--date,
+.cv-awards-item--date,
+.cv-projects-item--date {
+  color: var(--accentBlue);
+  font-weight: 600;
+  white-space: nowrap;
+  text-align: right;
+  min-width: 120px;
+}
+
+.cv-experience-item--content,
+.cv-education-item--content,
+.cv-activities-item--content,
+.cv-awards-item--content,
+.cv-projects-item--content {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.cv-experience-item--name,
+.cv-education-item--name,
+.cv-activities-item--name,
+.cv-awards-item--name,
+.cv-projects-item--name {
+  font-size: 1.2rem;
+  color: var(--highlightBlue);
+  margin: 0;
+  font-weight: 600;
+}
+
+.cv-experience-item--location,
+.cv-education-item--location,
+.cv-activities-item--location,
+.cv-awards-item--location,
+.cv-projects-item--location {
+  color: var(--mainText);
+  opacity: 0.8;
+  font-size: 1rem;
+}
+
+/* Projects Section */
+.cv-projects {
+  margin-bottom: 2rem;
+}
+
+.cv-projects-more {
+  text-align: center;
+  margin-top: 1rem;
+  font-size: 1.1rem;
+}
+
+.cv-projects-more a {
+  color: var(--golden);
+  text-decoration: none;
+  transition: opacity 0.2s ease;
+}
+
+.cv-projects-more a:hover {
+  opacity: 0.8;
+}
+
+/* Download Button Container */
+.cv-download-container {
+  text-align: center;
+  padding: 2rem 0;
+  background: transparent;
+}
+
+.cv-download-container .button {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.8rem 1.5rem;
+  font-size: 1.2rem;
+  font-weight: 600;
+  color: var(--mainText);
+  background: var(--headerBg);
+  border: 1px solid var(--accentBlue);
+  border-radius: 6px;
+  text-decoration: none;
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 4px var(--cardShadow);
+}
+
+.cv-download-container .button:hover {
+  background: var(--secondaryBg);
+  border-color: var(--golden);
+  color: var(--golden);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px var(--cardHoverShadow);
+}
+
+.cv-download-container .button i {
+  font-size: 1.2em;
+  color: var(--highlightBlue);
+}
+
+.cv-contact-item {
+  line-height: 2.8;
+}
+
+.cv-profile p {
+  line-height: 1.5;
+}
