@@ -41,14 +41,15 @@
       <section class="section">
         <div class="section-inner">
           <div class="work-toolbar" aria-label="Project filters">
-            <button class="filter-button is-active" type="button" data-filter="all">All</button>
-            <button class="filter-button" type="button" data-filter="security">Security</button>
-            <button class="filter-button" type="button" data-filter="devops">DevOps</button>
-            <button class="filter-button" type="button" data-filter="fullstack">Full-stack</button>
-            <button class="filter-button" type="button" data-filter="ml">AI/ML</button>
-            <button class="filter-button" type="button" data-filter="iot">IoT</button>
-            <button class="filter-button" type="button" data-filter="classic">Older/Fun</button>
+            <button class="filter-button is-active" type="button" data-filter="all" aria-pressed="true">All</button>
+            <button class="filter-button" type="button" data-filter="security" aria-pressed="false">Security</button>
+            <button class="filter-button" type="button" data-filter="devops" aria-pressed="false">DevOps</button>
+            <button class="filter-button" type="button" data-filter="fullstack" aria-pressed="false">FullStack</button>
+            <button class="filter-button" type="button" data-filter="ml" aria-pressed="false">AI/ML</button>
+            <button class="filter-button" type="button" data-filter="iot" aria-pressed="false">IoT</button>
+            <button class="filter-button" type="button" data-filter="classic" aria-pressed="false">Older/Fun</button>
           </div>
+          <p class="filter-status" data-filter-status aria-live="polite">Showing all projects.</p>
 
           <div class="grid two">
             <article id="security-system" class="work-card" data-categories="security devops">
@@ -70,6 +71,10 @@
             </article>
 
             <article id="pentest-report-generator" class="work-card" data-categories="security fullstack">
+              <div class="work-placeholder security" role="img" aria-label="Placeholder panel for Automated Pentest Report Generator">
+                <span>JSON -> Report</span>
+                <strong>Automated Pentest Report Generator</strong>
+              </div>
               <div>
                 <div class="work-meta"><span>Personal Project</span><span>Security reporting</span></div>
                 <h3>Automated Pentest Report Generator</h3>
@@ -127,6 +132,10 @@
             </article>
 
             <article id="time-series-ml" class="work-card" data-categories="ml fullstack">
+              <div class="work-placeholder ml" role="img" aria-label="Placeholder panel for time-series forecasting and machine learning deployment">
+                <span>Forecast -> Deploy</span>
+                <strong>Time-Series ML</strong>
+              </div>
               <div>
                 <div class="work-meta"><span>ML deployment</span><span>Flask + forecasting</span></div>
                 <h3>Time-Series Forecasting and ML Deployment</h3>
@@ -139,6 +148,10 @@
             </article>
 
             <article id="laravel-backend" class="work-card" data-categories="fullstack">
+              <div class="work-placeholder fullstack" role="img" aria-label="Placeholder panel for Laravel ecommerce backend demo">
+                <span>API -> Admin</span>
+                <strong>Laravel Backend</strong>
+              </div>
               <div>
                 <div class="work-meta"><span>Backend</span><span>Laravel 12.x</span></div>
                 <h3>Laravel E-commerce Backend Demo</h3>

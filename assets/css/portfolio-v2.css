@@ -374,8 +374,9 @@ body.portfolio-v2 a {
 .work-toolbar {
   display: flex;
   flex-wrap: wrap;
+  align-items: center;
   gap: 8px;
-  margin-bottom: 24px;
+  margin-bottom: 10px;
 }
 
 .filter-button {
@@ -386,6 +387,14 @@ body.portfolio-v2 a {
   background: rgba(255, 255, 255, 0.04);
   cursor: pointer;
   font-weight: 800;
+  transition: transform 160ms ease, border-color 160ms ease, background 160ms ease, color 160ms ease;
+}
+
+.filter-button:hover,
+.filter-button:focus-visible {
+  transform: translateY(-1px);
+  border-color: rgba(255, 209, 102, 0.46);
+  color: var(--text);
 }
 
 .filter-button.is-active {
@@ -394,19 +403,122 @@ body.portfolio-v2 a {
   background: rgba(88, 215, 255, 0.13);
 }
 
-.work-card {
-  display: grid;
-  gap: 16px;
+.filter-status {
+  min-height: 1.4em;
+  margin: 0 0 22px;
+  color: var(--muted);
+  font-size: 0.95rem;
 }
 
-.work-card img,
-.work-media iframe {
+.work-card {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  min-height: 100%;
+  transition: opacity 180ms ease, transform 180ms ease, border-color 180ms ease;
+}
+
+.work-card:hover {
+  transform: translateY(-3px);
+  border-color: rgba(88, 215, 255, 0.28);
+}
+
+.work-card.is-filtered-out {
+  display: none;
+}
+
+.work-card > img,
+.work-media,
+.work-placeholder {
   width: 100%;
-  border: 0;
+  min-height: 220px;
   border-radius: 6px;
   aspect-ratio: 16 / 9;
-  object-fit: cover;
   background: var(--bg-soft);
+}
+
+.work-card > img,
+.work-media iframe {
+  border: 0;
+  object-fit: cover;
+}
+
+.work-card > img {
+  display: block;
+}
+
+.work-media {
+  overflow: hidden;
+}
+
+.work-media iframe {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+.work-placeholder {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  gap: 8px;
+  overflow: hidden;
+  padding: 18px;
+  border: 1px solid rgba(244, 239, 231, 0.12);
+  color: var(--text);
+}
+
+.work-placeholder::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(120deg, rgba(88, 215, 255, 0.18), transparent 42%),
+    radial-gradient(circle at 82% 20%, rgba(255, 209, 102, 0.22), transparent 28%),
+    repeating-linear-gradient(135deg, rgba(255, 255, 255, 0.05) 0 1px, transparent 1px 13px);
+  animation: placeholderDrift 10s linear infinite;
+}
+
+.work-placeholder span,
+.work-placeholder strong {
+  position: relative;
+  z-index: 1;
+}
+
+.work-placeholder span {
+  color: var(--green);
+  font-size: 0.8rem;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.work-placeholder strong {
+  max-width: 18rem;
+  font-size: 1.22rem;
+  line-height: 1.2;
+}
+
+.work-placeholder.security::before {
+  background:
+    linear-gradient(120deg, rgba(255, 97, 136, 0.22), transparent 42%),
+    radial-gradient(circle at 82% 20%, rgba(255, 209, 102, 0.2), transparent 28%),
+    repeating-linear-gradient(135deg, rgba(255, 255, 255, 0.05) 0 1px, transparent 1px 13px);
+}
+
+.work-placeholder.ml::before {
+  background:
+    linear-gradient(120deg, rgba(88, 215, 255, 0.2), transparent 42%),
+    radial-gradient(circle at 82% 20%, rgba(79, 255, 176, 0.22), transparent 28%),
+    repeating-linear-gradient(135deg, rgba(255, 255, 255, 0.05) 0 1px, transparent 1px 13px);
+}
+
+.work-placeholder.fullstack::before {
+  background:
+    linear-gradient(120deg, rgba(255, 209, 102, 0.22), transparent 42%),
+    radial-gradient(circle at 82% 20%, rgba(88, 215, 255, 0.22), transparent 28%),
+    repeating-linear-gradient(135deg, rgba(255, 255, 255, 0.05) 0 1px, transparent 1px 13px);
 }
 
 .work-meta {
@@ -463,6 +575,10 @@ body.portfolio-v2 a {
   background: transparent;
   padding: 0;
   margin-top: 8px;
+}
+
+.work-card > [data-comments] {
+  margin-top: auto;
 }
 
 .comment-shell h3 {
@@ -579,6 +695,16 @@ body.portfolio-v2 a {
   border: 0;
 }
 
+@keyframes placeholderDrift {
+  from {
+    background-position: 0 0, 0 0, 0 0;
+  }
+
+  to {
+    background-position: 0 0, 0 0, 180px 180px;
+  }
+}
+
 @media (max-width: 920px) {
   .nav-links {
     display: none;
@@ -605,6 +731,12 @@ body.portfolio-v2 a {
   .proof-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
+
+  .work-card > img,
+  .work-media,
+  .work-placeholder {
+    min-height: 190px;
+  }
 }
 
 @media (max-width: 620px) {
@@ -629,5 +761,11 @@ body.portfolio-v2 a {
   .hero h1,
   .page-hero h1 {
     font-size: clamp(2.3rem, 14vw, 4rem);
+  }
+
+  .work-card > img,
+  .work-media,
+  .work-placeholder {
+    min-height: 170px;
   }
 }
