@@ -11,9 +11,7 @@ The site is intentionally human, not a sterile resume template. It keeps the old
 ```text
 index.html              # Home
 projects.html           # Work / project case studies
-labs.html               # Labs, writeups, and technical notes
-cv.html                 # Resume and cyber CV downloads
-comments.html           # Guestbook
+cv.html                 # Web CV plus resume/CV downloads near the bottom
 todo.html               # Never-Ending List
 classic/                # Preserved legacy static site snapshot
 assets/css/             # Stylesheets
@@ -24,7 +22,7 @@ supabase/schema.sql     # Optional backend schema for moderated comments
 
 ## Comments Backend
 
-The comments UI works in local preview mode by default. To make comments live-backed:
+Comments are embedded where they are useful, such as project entries, the CV page, and the Never-Ending List. They work in local preview mode by default. To make comments live-backed:
 
 1. Create a Supabase project.
 2. Run `supabase/schema.sql` in the Supabase SQL editor.
