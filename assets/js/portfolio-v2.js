@@ -22,17 +22,62 @@
   function setupFilters() {
     const buttons = document.querySelectorAll("[data-filter]");
     const cards = document.querySelectorAll("[data-categories]");
+    const status = document.querySelector("[data-filter-status]");
     if (!buttons.length || !cards.length) return;
+
+    const labels = {
+      all: "all projects",
+      security: "security projects",
+      devops: "DevOps projects",
+      fullstack: "FullStack projects",
+      ml: "AI/ML projects",
+      iot: "IoT projects",
+      classic: "older and fun projects"
+    };
+
+    function applyFilter(filter) {
+      let visible = 0;
+
+      buttons.forEach((item) => {
+        const isActive = item.dataset.filter === filter;
+        item.classList.toggle("is-active", isActive);
+        item.setAttribute("aria-pressed", String(isActive));
+      });
+
+      cards.forEach((card) => {
+        const categories = (card.dataset.categories || "").split(/\s+/).filter(Boolean);
+        const shouldShow = filter === "all" || categories.includes(filter);
+        card.classList.toggle("is-filtered-out", !shouldShow);
+        card.setAttribute("aria-hidden", String(!shouldShow));
+        if (shouldShow) visible += 1;
+      });
+
+      if (status) {
+        status.textContent = filter === "all"
+          ? `Showing all ${visible} projects.`
+          : `Showing ${visible} ${labels[filter] || "projects"}.`;
+      }
+    }
 
     buttons.forEach((button) => {
       button.addEventListener("click", () => {
-        const filter = button.dataset.filter;
-        buttons.forEach((item) => item.classList.toggle("is-active", item === button));
-        cards.forEach((card) => {
-          const categories = (card.dataset.categories || "").split(" ");
-          card.hidden = filter !== "all" && !categories.includes(filter);
-        });
+        applyFilter(button.dataset.filter || "all");
       });
+    });
+
+    applyFilter("all");
+  }
+
+  function setupMediaFallbacks() {
+    document.querySelectorAll(".work-card > img").forEach((image) => {
+      image.addEventListener("error", () => {
+        const placeholder = document.createElement("div");
+        placeholder.className = "work-placeholder";
+        placeholder.setAttribute("role", "img");
+        placeholder.setAttribute("aria-label", "Project image placeholder");
+        placeholder.innerHTML = "<span>Image missing</span><strong>Project details still matter</strong>";
+        image.replaceWith(placeholder);
+      }, { once: true });
     });
   }
 
@@ -58,6 +103,7 @@
     setActiveNav();
     setupMobileNav();
     setupFilters();
+    setupMediaFallbacks();
     setupYear();
     setupProofLine();
   });
