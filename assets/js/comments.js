@@ -12,6 +12,55 @@
       .replaceAll("'", "&#039;");
   }
 
+  function sanitizePlainText(value, maxLength, options = {}) {
+    const allowNewlines = options.allowNewlines === true;
+    const raw = String(value || "");
+    let text = raw.normalize ? raw.normalize("NFKC") : raw;
+
+    text = text
+      .replace(/<[^>]*>/g, " ")
+      .replace(/[<>`]/g, "")
+      .replace(/\b(?:javascript|data|vbscript)\s*:/gi, "")
+      .replace(/\son[a-z0-9_-]+\s*=/gi, " ")
+      .replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F\u007F]/g, " ");
+
+    if (allowNewlines) {
+      text = text
+        .replace(/\r\n?/g, "\n")
+        .replace(/[ \t]+/g, " ")
+        .replace(/\n{3,}/g, "\n\n");
+    } else {
+      text = text.replace(/\s+/g, " ");
+    }
+
+    return text.trim().slice(0, maxLength).trim();
+  }
+
+  function sanitizeComment(comment) {
+    return {
+      id: comment.id || String(Date.now()),
+      author_name: sanitizePlainText(comment.author_name || "Anonymous", 80) || "Anonymous",
+      body: sanitizePlainText(comment.body || "", 1200, { allowNewlines: true }),
+      created_at: comment.created_at || new Date().toISOString()
+    };
+  }
+
+  function sanitizePayload(data) {
+    const raw = {
+      author_name: String(data.get("author_name") || ""),
+      body: String(data.get("body") || "")
+    };
+    const clean = {
+      author_name: sanitizePlainText(raw.author_name, 80),
+      body: sanitizePlainText(raw.body, 1200, { allowNewlines: true })
+    };
+
+    return {
+      payload: clean,
+      wasCleaned: raw.author_name.trim() !== clean.author_name || raw.body.trim() !== clean.body
+    };
+  }
+
   function getThreadKey(root) {
     return {
       type: root.dataset.type || "page",
@@ -31,7 +80,8 @@
 
   function readLocal(key) {
     try {
-      return JSON.parse(localStorage.getItem(localPrefix + key.type + ":" + key.slug)) || [];
+      const comments = JSON.parse(localStorage.getItem(localPrefix + key.type + ":" + key.slug)) || [];
+      return comments.map(sanitizeComment).filter((comment) => comment.body);
     } catch (_) {
       return [];
     }
@@ -78,7 +128,7 @@
     if (!supabase) {
       const comments = readLocal(key);
       comments.unshift({
-        id: crypto.randomUUID ? crypto.randomUUID() : String(Date.now()),
+        id: window.crypto && crypto.randomUUID ? crypto.randomUUID() : String(Date.now()),
         author_name: payload.author_name,
         body: payload.body,
         created_at: new Date().toISOString()
@@ -144,11 +194,11 @@
         <form class="comment-form">
           <label>
             <span class="sr-only">Name</span>
-            <input name="author_name" maxlength="80" placeholder="Name or handle" required>
+            <input name="author_name" maxlength="80" placeholder="Name or handle" autocomplete="name" dir="auto" required>
           </label>
           <label>
             <span class="sr-only">Comment</span>
-            <textarea name="body" maxlength="1200" placeholder="Say something useful, funny, or incriminatingly specific enough to prove you were here." required></textarea>
+            <textarea name="body" maxlength="1200" placeholder="Say something useful, funny, or incriminatingly specific enough to prove you were here." dir="auto" required></textarea>
           </label>
           <input class="hidden-field" name="website" tabindex="-1" autocomplete="off">
           <button class="button primary" type="submit">Post comment</button>
@@ -175,18 +225,20 @@
         return;
       }
 
-      const payload = {
-        author_name: String(data.get("author_name") || "").trim(),
-        body: String(data.get("body") || "").trim()
-      };
-      if (!payload.author_name || !payload.body) return;
+      const { payload, wasCleaned } = sanitizePayload(data);
+      if (!payload.author_name || !payload.body) {
+        status.textContent = "Use plain text. Empty markup does not count as a comment.";
+        return;
+      }
 
       status.textContent = "Posting...";
       try {
         const result = await saveComment(key, payload);
         localStorage.setItem(localPrefix + "last-post", String(Date.now()));
         form.reset();
-        status.textContent = result.message;
+        status.textContent = wasCleaned
+          ? `${result.message} Unsafe markup was removed before saving.`
+          : result.message;
         loadComments(key).then((loaded) => render(root, loaded));
       } catch (error) {
         status.textContent = "Comment failed. Check Supabase config/RLS, then try again.";

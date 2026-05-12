@@ -15,6 +15,33 @@ create table if not exists public.comments (
 create index if not exists comments_thread_idx
   on public.comments (content_type, content_slug, status, created_at desc);
 
+create or replace function public.sanitize_comment_text()
+returns trigger
+language plpgsql
+as $$
+begin
+  new.content_type := left(trim(regexp_replace(coalesce(new.content_type, 'page'), '[^a-zA-Z0-9_-]', '-', 'g')), 80);
+  new.content_slug := left(trim(regexp_replace(coalesce(new.content_slug, ''), '[^a-zA-Z0-9_-]', '-', 'g')), 160);
+  new.author_name := left(trim(regexp_replace(coalesce(new.author_name, ''), '<[^>]*>|[<>`]|[[:cntrl:]]', ' ', 'g')), 80);
+  new.body := left(trim(regexp_replace(coalesce(new.body, ''), '<[^>]*>|[<>`]|[[:cntrl:]]', ' ', 'g')), 1200);
+
+  if new.content_type = '' then
+    new.content_type := 'page';
+  end if;
+
+  if new.content_slug = '' or new.author_name = '' or new.body = '' then
+    raise exception 'Comments require a valid thread, author, and plain-text body.';
+  end if;
+
+  return new;
+end;
+$$;
+
+drop trigger if exists sanitize_comments_before_write on public.comments;
+create trigger sanitize_comments_before_write
+  before insert or update on public.comments
+  for each row execute function public.sanitize_comment_text();
+
 alter table public.comments enable row level security;
 
 drop policy if exists "Anyone can read approved comments" on public.comments;
