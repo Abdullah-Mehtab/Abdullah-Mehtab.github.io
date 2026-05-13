@@ -1,0 +1,170 @@
+{
+  "profile": {
+    "name": "Abdullah Mehtab",
+    "headline": "Offensive Security Engineer / Computer Science Graduate",
+    "summary": "Offensive security, engineering breadth, and practical systems work across security, DevOps, backend, AI/ML, IoT, and applied mathematics.",
+    "location": "Lahore, Pakistan",
+    "email": "abdullahmehtab666@gmail.com",
+    "phone": "+92 335 0443496",
+    "github": "https://github.com/Abdullah-Mehtab",
+    "linkedin": "https://linkedin.com/in/abdullah-mehtab",
+    "portfolio": "https://abdullah-mehtab.github.io/Abdullah-Mehtab/"
+  },
+  "dialogues": {
+    "0": {
+      "speaker": "Guide",
+      "lines": [
+        "Welcome to Abdullah's Arcade Resume.",
+        "Use WASD or arrow keys to move.",
+        "Walk up to people and signs, then press SPACE to interact.",
+        "Explore the buildings to discover my experience, projects, education, skills, certificates, and contact details.",
+        "Have fun."
+      ]
+    },
+    "1": {
+      "speaker": "Security NPC",
+      "lines": [
+        "Name: Abdullah Mehtab.",
+        "Current role: Offensive Security Engineer at Tkxel.",
+        "Profile: Computer Science graduate with a Mathematics minor from Forman Christian College.",
+        "Security work: authorized web/API assessments, vulnerability research, OWASP-aligned remediation, reporting, and ongoing HTB/PortSwigger practice.",
+        "Core security stack: Burp Suite, Nmap, Nessus, Metasploit, Wireshark, BeEF, SQLMap, Wazuh, ELK, Suricata, log analysis, threat intelligence, and security monitoring."
+      ]
+    },
+    "2": {
+      "speaker": "Skills Terminal",
+      "lines": [
+        "Programming: Bash, Python, C, C++, Java, JavaScript, HTML/CSS, and MIPS Assembly.",
+        "Cyber Security: Metasploit, Burp Suite, Nmap, Nessus, Wireshark, BeEF, SQLMap, Wazuh, OWASP Top 10, vulnerability assessment, threat intelligence, log analysis, and security monitoring.",
+        "DevOps, Cloud, and IaC: AWS, Git, Terraform, Ansible, Docker, Docker Compose, Kubernetes, Jenkins, GitHub Actions, SonarQube, Prometheus, Grafana, and ELK Stack.",
+        "Machine Learning and Data Science: TensorFlow, time-series forecasting, EDA, feature engineering, model evaluation, and data visualization.",
+        "Embedded and IoT: Arduino, Raspberry Pi, ESP32, automation, and computer architecture.",
+        "Mathematics: probability and statistics, multivariate calculus, linear algebra, differential equations, numerical computing, and discrete math."
+      ]
+    },
+    "3": {
+      "speaker": "Cyber Sentinel Archive",
+      "lines": [
+        "Final Year Project: Cyber Sentinel - Security Monitoring SIEM.",
+        "Goal: make SIEM-style monitoring practical for small environments using open-source tools, automated deployment, and alerting.",
+        "Stack: Wazuh, ELK Stack, Suricata IDS, Python, deployment automation, dashboards, and email alerting.",
+        "Engineering focus: visibility, investigation, repeatable deployment, documentation, and small-environment cost constraints.",
+        "Outcome: a portfolio-grade security project demonstrating SIEM architecture, IDS integration, alerting, log analysis, automation, and explainable security engineering."
+      ]
+    },
+    "4": {
+      "speaker": "DevOps Pipeline Display",
+      "lines": [
+        "Project: DevOps Production Environment.",
+        "Infrastructure and deployment practice using Terraform, Ansible, Docker, Jenkins, GitHub Actions, SonarQube, Prometheus, Grafana, and ELK-style observability thinking.",
+        "Related work: backend demos, deployment architecture, monitoring stacks, dashboards, logs, and production-style engineering workflows.",
+        "Cloud and tooling: AWS, Git, Docker Compose, Kubernetes, Jenkins, GitHub Actions, Prometheus, Grafana, and ELK Stack."
+      ]
+    },
+    "5": {
+      "speaker": "Work Experience Log",
+      "lines": [
+        "09/2025 - Present: Offensive Security Engineer at Tkxel.",
+        "Work includes authorized full-scope security assessments on production web and API assets.",
+        "Responsibilities include identifying systemic architectural and logic-based flaws and communicating organizational risk.",
+        "Collaborates with developers on remediation aligned with OWASP Top 10.",
+        "07/2025 - 08/2025: Engineering Intern at Tkxel, rotating through BA, UI/UX, development, SQA, cybersecurity, and DevOps mentorship.",
+        "09/2023 - 07/2025: Teacher Assistant at Forman Christian College, managing course records, quizzes, assignments, and weekly undergraduate lab sessions.",
+        "03/2023 - 01/2025: Remote Developer and Project Manager, delivering automation scripts, data processing tools, algorithmic programs, technical research, documentation, and reports."
+      ]
+    },
+    "6": {
+      "speaker": "Education Archive",
+      "lines": [
+        "Bachelor's in Computer Science with a Minor in Mathematics.",
+        "Institution: Forman Christian College (A Chartered University), Lahore.",
+        "Dates: 03/2021 - 06/2025.",
+        "CGPA: 3.9.",
+        "Recognition: Vice Rector's / Dean's Honor List for academic excellence.",
+        "Intermediate F.Sc Pre-Engineering: KIPS College, 2018 - 2020.",
+        "Matriculation: Allied School System, 2016 - 2018."
+      ]
+    },
+    "7": {
+      "speaker": "Trophy NPC",
+      "lines": [
+        "Certificates: Certified Web Security Expert (CWSE) - Hackviser.",
+        "Certificates: Certified Associate Penetration Tester (CAPT) - Hackviser.",
+        "In progress: Web-Pentester Job Path - Hack The Box.",
+        "Active practitioner: Web Security Academy - PortSwigger.",
+        "Awards: Vice Rector's / Dean's Honor List at Forman Christian College.",
+        "Awards: 2nd Place - Web Development Competition, Forman Ignite 2024.",
+        "Awards: 3rd Place - Programming Competition, Google Developer Student Club, 2023.",
+        "Awards: Top 10 Finalist - FAST SOFTEC 2024 Programming Competition.",
+        "Awards: Finalist - FAST SOFTEC 2025 Line Following Robot Competition.",
+        "Activities: ACM Activities Coordinator, Forman Ignite 2k24 Activities Coordinator across ACM, IEEE, GDSC, and OmniLife, and XR Hackathon Development coordination."
+      ]
+    },
+    "8": {
+      "speaker": "Contact Terminal",
+      "lines": [
+        "Email: abdullahmehtab666@gmail.com.",
+        "Phone: +92 335 0443496.",
+        "Location: Lahore, Pakistan.",
+        "GitHub: github.com/Abdullah-Mehtab.",
+        "LinkedIn: linkedin.com/in/abdullah-mehtab.",
+        "Portfolio: abdullah-mehtab.github.io/Abdullah-Mehtab.",
+        "PDF downloads: Resume v5 and Cyber CV v2 are available from the CV page."
+      ]
+    }
+  },
+  "projects": [
+    "Cyber Sentinel: Security Monitoring System using Wazuh on Raspberry Pi",
+    "DevOps Production Environment: Terraform, Ansible, Docker, Jenkins",
+    "Automated Pentest Report Generator: JSON to PDF",
+    "Smart LED On-Time Monitoring System: ESP32, Google Sheets, WebApp",
+    "AI-Powered University Admissions Chatbot: Python",
+    "Time-Series Forecasting and ML Deployment: Flask, ML",
+    "Laravel E-commerce Backend Demo: Laravel 12.x, MySQL, Blade",
+    "Linear Regression Machine Learning in Assembly",
+    "Expression Parser Compiler Construction: C",
+    "Small Scale Search Engine: DSA",
+    "Cab/Taxi Management System: Tkinter",
+    "Gol-Gappay Stall Management System: SQL",
+    "Facial Image Recognition: TensorFlow",
+    "Space Invaders Game GUI: Java Swing",
+    "Line-Following Mini-Robot",
+    "Bluetooth Controlled Car: Arduino",
+    "Ludo Game GUI: Pygame",
+    "2048 Game: C++"
+  ],
+  "zones": {
+    "hub": {
+      "name": "Hub World",
+      "description": "Central area connecting all zones."
+    },
+    "server_lab": {
+      "name": "Server Lab",
+      "description": "Security profile and skills zone."
+    },
+    "sentinel": {
+      "name": "Sentinel Building",
+      "description": "Cyber Sentinel final year project zone."
+    },
+    "pipeline": {
+      "name": "Pipeline",
+      "description": "DevOps and infrastructure zone."
+    },
+    "office": {
+      "name": "Office",
+      "description": "Work experience zone."
+    },
+    "library": {
+      "name": "Library",
+      "description": "Education zone."
+    },
+    "trophy_case": {
+      "name": "Trophy Case",
+      "description": "Certificates, awards, and activities zone."
+    },
+    "post_office": {
+      "name": "Post Office",
+      "description": "Contact information zone."
+    }
+  }
+}
