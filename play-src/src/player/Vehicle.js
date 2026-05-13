@@ -24,6 +24,7 @@ export class Vehicle {
     this.lastPosition = START.clone();
     this.steerVisual = 0;
     this.groundedFrames = 0;
+    this.impactRecovery = 0;
     this.createBody();
     this.createModel();
     this.respawn();
@@ -32,20 +33,20 @@ export class Vehicle {
   createBody() {
     const bodyDesc = this.RAPIER.RigidBodyDesc.dynamic()
       .setTranslation(START.x, START.y, START.z)
-      .setLinearDamping(0.38)
-      .setAngularDamping(1.15);
+      .setLinearDamping(0.52)
+      .setAngularDamping(2.8);
     this.body = this.physics.world.createRigidBody(bodyDesc);
     const collider = this.RAPIER.ColliderDesc
       .cuboid(1.16, 0.42, 2.76)
       .setDensity(1.4)
       .setFriction(0.92)
-      .setRestitution(0.12);
+      .setRestitution(0.0);
     this.physics.world.createCollider(collider, this.body);
   }
 
   createModel() {
     const paint = new THREE.MeshPhysicalMaterial({
-      color: 0x8e2f17,
+      color: 0x8b2b13,
       roughness: 0.26,
       metalness: 0.5,
       clearcoat: 0.58,
@@ -70,7 +71,14 @@ export class Vehicle {
     });
     const chrome = new THREE.MeshStandardMaterial({ color: 0xc8ced0, roughness: 0.2, metalness: 0.82 });
     const grille = new THREE.MeshStandardMaterial({ color: 0x15191d, roughness: 0.42, metalness: 0.64 });
-    const glass = new THREE.MeshBasicMaterial({ color: 0x071018, transparent: true, opacity: 0.88, side: THREE.DoubleSide });
+    const glass = new THREE.MeshBasicMaterial({
+      color: 0x08131f,
+      transparent: true,
+      opacity: 0.94,
+      side: THREE.DoubleSide,
+      depthWrite: false
+    });
+    const glassFrame = new THREE.LineBasicMaterial({ color: 0xb9c4c8, transparent: true, opacity: 0.9, depthWrite: false });
     const glow = new THREE.MeshBasicMaterial({ color: 0xfff3cf });
     const tire = new THREE.MeshStandardMaterial({ color: 0x020407, roughness: 0.74, metalness: 0.12, flatShading: true });
     const hubcap = new THREE.MeshStandardMaterial({ color: 0xaeb4b8, roughness: 0.18, metalness: 0.82 });
@@ -91,14 +99,23 @@ export class Vehicle {
     add(createTrunkGeometry(), paint, [0, 0.91, -1.55]);
     add(createFastbackGeometry(), paint, [0, 1.03, -0.32]);
 
-    add(new THREE.BoxGeometry(0.46, 0.026, 2.62), stripe, [0, 1.145, 1.46], [-0.045, 0, 0]);
-    add(new THREE.BoxGeometry(0.4, 0.024, 1.02), stripe, [0, 1.76, -0.36], [-0.02, 0, 0]);
-    add(new THREE.BoxGeometry(0.46, 0.026, 1.72), stripe, [0, 1.08, -1.7], [0.035, 0, 0]);
+    add(createHoodStripeGeometry(), stripe, [0, 0, 0]);
+    add(createRoofStripeGeometry(), stripe, [0, 0, 0]);
+    add(createTrunkStripeGeometry(), stripe, [0, 0, 0]);
 
-    add(createWindshieldSurfaceGeometry(), glass, [0, 1.03, -0.32]);
-    add(createRearWindowSurfaceGeometry(), glass, [0, 1.03, -0.32]);
+    addWindow(createWindshieldSurfaceGeometry(), glass, [0, 1.03, -0.32], this.group);
+    addWindowFrame(createWindshieldFrameGeometry(), glassFrame, [0, 1.03, -0.32], this.group);
+    addWindow(createRearWindowSurfaceGeometry(), glass, [0, 1.03, -0.32], this.group);
+    addWindowFrame(createRearWindowFrameGeometry(), glassFrame, [0, 1.03, -0.32], this.group);
     for (const side of [-1, 1]) {
-      add(createSideWindowSurfaceGeometry(side), glass, [0, 1.03, -0.32]);
+      addWindow(createSideWindowSurfaceGeometry(side), glass, [0, 1.03, -0.32], this.group);
+      addWindowFrame(createSideWindowFrameGeometry(side), glassFrame, [0, 1.03, -0.32], this.group);
+      add(new THREE.BoxGeometry(0.38, 0.07, 0.07), dark, [side * 1.08, 1.08, 0.43], [0, 0, side * 0.04]);
+      add(new THREE.BoxGeometry(0.22, 0.13, 0.12), chrome, [side * 1.28, 1.1, 0.46], [0, side * 0.18, 0]);
+      add(new THREE.BoxGeometry(0.022, 0.082, 0.105), glass, [side * 1.318, 1.1, 0.47], [0, side * 0.18, 0]);
+      add(new THREE.BoxGeometry(0.03, 0.055, 0.22), chrome, [side * 1.205, 0.93, -0.27]);
+      add(new THREE.BoxGeometry(0.028, 0.028, 3.72), chrome, [side * 1.18, 0.68, 0.0]);
+      add(new THREE.BoxGeometry(0.036, 0.32, 0.032), dark, [side * 1.18, 0.82, -0.48]);
     }
 
     add(new THREE.BoxGeometry(2.1, 0.42, 0.16), grille, [0, 0.82, 2.68]);
@@ -108,7 +125,7 @@ export class Vehicle {
     add(new THREE.BoxGeometry(1.75, 0.05, 0.06), chrome, [0, 1.02, -2.68]);
 
     for (const x of [-0.72, -0.44, 0.44, 0.72]) {
-      const lamp = add(new THREE.BoxGeometry(0.18, 0.18, 0.035), glow, [x, 0.86, 2.772]);
+      const lamp = add(new THREE.CylinderGeometry(0.105, 0.105, 0.038, 28), glow, [x, 0.86, 2.776], [Math.PI / 2, 0, 0]);
       lamp.castShadow = false;
       lamp.renderOrder = 6;
     }
@@ -196,7 +213,11 @@ export class Vehicle {
     }
     this.driveSpeed += (forwardSpeed - this.driveSpeed) * Math.min(1, dt * 0.55);
     this.driveSpeed = THREE.MathUtils.clamp(this.driveSpeed, -15, boost ? 48 : 34);
-    if ((forwardInput || backwardInput) && Math.abs(this.driveSpeed) > 12 && Math.abs(forwardSpeed) < Math.abs(this.driveSpeed) * 0.18) {
+    const impactStall = (forwardInput || backwardInput)
+      && Math.abs(this.driveSpeed) > 10
+      && Math.abs(forwardSpeed) < Math.abs(this.driveSpeed) * 0.2;
+    if (impactStall) {
+      this.impactRecovery = 0.28;
       this.driveSpeed *= Math.max(0, 1 - dt * 7.5);
     }
     this.speed = this.driveSpeed;
@@ -212,7 +233,9 @@ export class Vehicle {
       this.driveSpeed *= Math.max(0, 1 - dt * 8.5);
     }
 
-    const verticalVelocity = THREE.MathUtils.clamp(linvel.y, -32, 10.5);
+    this.impactRecovery = Math.max(0, this.impactRecovery - dt);
+    const maxUpwardVelocity = this.impactRecovery > 0 ? 2.8 : 9.2;
+    const verticalVelocity = THREE.MathUtils.clamp(linvel.y, -32, maxUpwardVelocity);
     const desiredVelocity = forward.clone()
       .multiplyScalar(this.driveSpeed)
       .add(right.clone().multiplyScalar(sideSpeed * (brake ? 0.22 : 0.1)));
@@ -223,6 +246,7 @@ export class Vehicle {
     this.groundedFrames = grounded ? Math.min(18, this.groundedFrames + 1) : 0;
     this.airTime = grounded ? 0 : this.airTime + dt;
     if (input.consume('jump') && this.groundedFrames > 2) {
+      this.impactRecovery = 0;
       this.body.setLinvel({ x: desiredVelocity.x, y: 10.4, z: desiredVelocity.z }, true);
       this.achievements.unlock('jump');
       this.audio.click(760);
@@ -273,14 +297,15 @@ export class Vehicle {
 
   dampenImpactSpin() {
     const velocity = this.body.linvel();
-    if (velocity.y > 10.5) {
-      this.body.setLinvel({ x: velocity.x, y: 10.5, z: velocity.z }, true);
+    const maxUpwardVelocity = this.impactRecovery > 0 ? 2.8 : 9.2;
+    if (velocity.y > maxUpwardVelocity) {
+      this.body.setLinvel({ x: velocity.x, y: maxUpwardVelocity, z: velocity.z }, true);
     }
     const angular = this.body.angvel();
     this.body.setAngvel({
-      x: THREE.MathUtils.clamp(angular.x, -1.45, 1.45),
-      y: THREE.MathUtils.clamp(angular.y, -1.65, 1.65),
-      z: THREE.MathUtils.clamp(angular.z, -1.45, 1.45)
+      x: THREE.MathUtils.clamp(angular.x, -0.95, 0.95),
+      y: THREE.MathUtils.clamp(angular.y, -1.25, 1.25),
+      z: THREE.MathUtils.clamp(angular.z, -0.95, 0.95)
     }, true);
   }
 
@@ -293,6 +318,7 @@ export class Vehicle {
     this.driveSpeed = 0;
     this.speed = 0;
     this.airTime = 0;
+    this.impactRecovery = 0;
     this.lastPosition.copy(position);
     this.syncModel();
   }
@@ -374,6 +400,22 @@ function steeredQuaternion(heading, currentRotation) {
   return { x: quaternion.x, y: quaternion.y, z: quaternion.z, w: quaternion.w };
 }
 
+function addWindow(geometry, material, position, group) {
+  const mesh = new THREE.Mesh(geometry, material);
+  mesh.position.set(...position);
+  mesh.renderOrder = 8;
+  group.add(mesh);
+  return mesh;
+}
+
+function addWindowFrame(geometry, material, position, group) {
+  const line = new THREE.LineLoop(geometry, material);
+  line.position.set(...position);
+  line.renderOrder = 9;
+  group.add(line);
+  return line;
+}
+
 function createMuscleBodyGeometry() {
   const vertices = new Float32Array([
     -1.08, 0.00, -2.55, 1.08, 0.00, -2.55, 1.18, 0.00, 2.56, -1.18, 0.00, 2.56,
@@ -417,32 +459,87 @@ function createFastbackGeometry() {
   return buildGeometry(vertices, boxIndices());
 }
 
+function createHoodStripeGeometry() {
+  return buildGeometry(new Float32Array([
+    -0.24, 1.175, 0.32,
+    0.24, 1.175, 0.32,
+    0.24, 1.045, 2.56,
+    -0.24, 1.045, 2.56
+  ]), [0, 1, 2, 0, 2, 3]);
+}
+
+function createRoofStripeGeometry() {
+  return buildGeometry(new Float32Array([
+    -0.21, 1.765, -1.02,
+    0.21, 1.765, -1.02,
+    0.21, 1.62, -0.08,
+    -0.21, 1.62, -0.08
+  ]), [0, 1, 2, 0, 2, 3]);
+}
+
+function createTrunkStripeGeometry() {
+  return buildGeometry(new Float32Array([
+    -0.24, 1.09, -2.36,
+    0.24, 1.09, -2.36,
+    0.24, 1.018, -0.82,
+    -0.24, 1.018, -0.82
+  ]), [0, 1, 2, 0, 2, 3]);
+}
+
 function createWindshieldSurfaceGeometry() {
   return buildGeometry(new Float32Array([
-    -0.66, 0.16, 0.56,
-    0.66, 0.16, 0.56,
-    0.56, 0.58, 0.18,
-    -0.56, 0.58, 0.18
+    -0.74, 0.18, 0.62,
+    0.74, 0.18, 0.62,
+    0.6, 0.62, 0.12,
+    -0.6, 0.62, 0.12
   ]), [0, 1, 2, 0, 2, 3]);
 }
 
 function createRearWindowSurfaceGeometry() {
   return buildGeometry(new Float32Array([
-    -0.62, 0.15, -1.04,
-    0.62, 0.15, -1.04,
-    0.53, 0.54, -0.7,
-    -0.53, 0.54, -0.7
+    -0.68, 0.16, -1.14,
+    0.68, 0.16, -1.14,
+    0.54, 0.56, -0.78,
+    -0.54, 0.56, -0.78
   ]), [0, 2, 1, 0, 3, 2]);
 }
 
 function createSideWindowSurfaceGeometry(side) {
   const s = side;
   return buildGeometry(new Float32Array([
-    s * 0.835, 0.22, 0.42,
-    s * 0.66, 0.56, 0.18,
-    s * 0.64, 0.64, -0.68,
-    s * 0.79, 0.24, -1.04
+    s * 0.915, 0.21, 0.5,
+    s * 0.705, 0.6, 0.18,
+    s * 0.665, 0.67, -0.8,
+    s * 0.835, 0.23, -1.16
   ]), [0, 1, 2, 0, 2, 3]);
+}
+
+function createWindshieldFrameGeometry() {
+  return buildLineGeometry([
+    [-0.77, 0.17, 0.635],
+    [0.77, 0.17, 0.635],
+    [0.62, 0.64, 0.1],
+    [-0.62, 0.64, 0.1]
+  ]);
+}
+
+function createRearWindowFrameGeometry() {
+  return buildLineGeometry([
+    [-0.71, 0.15, -1.16],
+    [0.71, 0.15, -1.16],
+    [0.56, 0.58, -0.76],
+    [-0.56, 0.58, -0.76]
+  ]);
+}
+
+function createSideWindowFrameGeometry(side) {
+  const s = side;
+  return buildLineGeometry([
+    [s * 0.935, 0.2, 0.52],
+    [s * 0.72, 0.62, 0.18],
+    [s * 0.68, 0.69, -0.82],
+    [s * 0.855, 0.22, -1.18]
+  ]);
 }
 
 function boxIndices() {
@@ -461,5 +558,11 @@ function buildGeometry(vertices, indices) {
   geometry.setAttribute('position', new THREE.BufferAttribute(vertices, 3));
   geometry.setIndex(indices);
   geometry.computeVertexNormals();
+  return geometry;
+}
+
+function buildLineGeometry(points) {
+  const geometry = new THREE.BufferGeometry();
+  geometry.setFromPoints(points.map(([x, y, z]) => new THREE.Vector3(x, y, z)));
   return geometry;
 }

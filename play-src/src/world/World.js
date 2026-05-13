@@ -222,7 +222,7 @@ export class World {
       wall.castShadow = true;
       wall.receiveShadow = true;
       this.scene.add(wall);
-      this.physics.createFixedBox([x, edgeHeight / 2 - 0.08, z], [width, edgeHeight, depth], { friction: 0.7, restitution: 0.08 });
+      this.physics.createFixedBox([x, edgeHeight / 2 - 0.08, z], [width, edgeHeight, depth], { friction: 0.82, restitution: 0.0 });
       const rail = new THREE.Mesh(new THREE.BoxGeometry(width || edgeThickness, 0.08, depth || edgeThickness), railMaterial.clone());
       rail.position.set(x, edgeHeight + 0.12, z);
       this.scene.add(rail);
