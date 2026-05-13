@@ -291,116 +291,171 @@
           <div class="section-heading">
             <div>
               <p class="eyebrow">Timeline</p>
-              <h2>Timeline through projects, study, and early technical experiments.</h2>
+              <h2>Career, projects, competitions, and early technical roots.</h2>
             </div>
-            <p>Professional work, university projects, competitions, and the early experiments that shaped how I think about systems.</p>
+            <div class="timeline-controls" aria-label="Timeline controls">
+              <button class="icon-button timeline-control" type="button" data-timeline-prev aria-label="Previous timeline item">&lt;</button>
+              <button class="icon-button timeline-control" type="button" data-timeline-next aria-label="Next timeline item">&gt;</button>
+            </div>
           </div>
-          <div class="story-timeline">
-            <article class="timeline-item reveal">
+          <div class="timeline-shell">
+            <div class="timeline-rail" aria-hidden="true"></div>
+            <div class="story-timeline" data-timeline-track tabindex="0" aria-label="Horizontal career and project timeline">
+              <article class="timeline-item reveal">
               <time class="timeline-date">09/2025 - Present</time>
               <div class="timeline-card">
                 <h3>Associate Offensive Security Engineer - Tkxel</h3>
                 <p>Authorized web/API assessments, vulnerability research, reporting, OWASP-aligned remediation, and active offensive security practice.</p>
               </div>
-            </article>
-            <article class="timeline-item reveal">
+              </article>
+              <article class="timeline-item reveal">
               <time class="timeline-date">07/2025 - 08/2025</time>
               <div class="timeline-card">
                 <h3>Engineering Intern - Tkxel</h3>
                 <p>Rotated through BA, UI/UX, development, SQA, cyber, and DevOps with project-based learning in Agile engineering environments.</p>
               </div>
-            </article>
-            <article class="timeline-item reveal">
+              </article>
+              <article class="timeline-item reveal">
               <time class="timeline-date">02/2025</time>
               <div class="timeline-card">
                 <h3>AI-Powered University Admissions Chatbot</h3>
                 <p>Designed a conversational assistant to streamline university admissions inquiries using Python and NLP-style query handling.</p>
               </div>
-            </article>
-            <article class="timeline-item reveal">
+              </article>
+              <article class="timeline-item reveal">
               <time class="timeline-date">01/2025</time>
               <div class="timeline-card">
                 <h3>Remote Project Manager - Freelancing</h3>
                 <p>Led research and documentation work for technical projects, keeping delivery moving while clients kept inventing new "small changes."</p>
               </div>
-            </article>
-            <article class="timeline-item reveal">
+              </article>
+              <article class="timeline-item reveal">
               <time class="timeline-date">12/2024</time>
               <div class="timeline-card">
                 <h3>Smart LED On-Time Monitoring System</h3>
                 <p>Built an ESP32 system that logs LED usage into Google Sheets through a web app, combining embedded work, cloud logging, and analytics.</p>
               </div>
-            </article>
-            <article class="timeline-item reveal">
+              </article>
+              <article class="timeline-item reveal">
               <time class="timeline-date">11/2024 - 06/2025</time>
               <div class="timeline-card">
                 <h3>Cyber Sentinel - Wazuh, ELK, Suricata</h3>
                 <p>Final Year Project: a cost-effective security monitoring stack with deployment automation, alerting, and small-environment practicality.</p>
               </div>
-            </article>
-            <article class="timeline-item reveal">
+              </article>
+              <article class="timeline-item reveal">
               <time class="timeline-date">09/2023 - 07/2025</time>
               <div class="timeline-card">
                 <h3>Teacher Assistant - Forman Christian College</h3>
                 <p>Led labs, evaluated quizzes and assignments, managed student records, and learned that teaching exposes every weak explanation immediately.</p>
               </div>
-            </article>
-            <article class="timeline-item reveal">
+              </article>
+              <article class="timeline-item reveal">
               <time class="timeline-date">07/2024</time>
               <div class="timeline-card">
                 <h3>2nd Place - Web Development Competition</h3>
                 <p>Secured second place at Forman Ignite 2024 for a full-stack web application.</p>
               </div>
-            </article>
-            <article class="timeline-item reveal">
+              </article>
+              <article class="timeline-item reveal">
               <time class="timeline-date">04/2024</time>
               <div class="timeline-card">
                 <h3>Expression Parser Compiler Construction</h3>
                 <p>Built a C-based parser/evaluator for arithmetic expressions using automata and compiler construction fundamentals.</p>
               </div>
-            </article>
-            <article class="timeline-item reveal">
+              </article>
+              <article class="timeline-item reveal">
               <time class="timeline-date">01/2024</time>
               <div class="timeline-card">
                 <h3>Linear Regression in Assembly</h3>
                 <p>Implemented linear regression in MIPS Assembly. Not the easiest route, but definitely a memorable one.</p>
               </div>
-            </article>
-            <article class="timeline-item reveal">
+              </article>
+              <article class="timeline-item reveal">
               <time class="timeline-date">2023</time>
               <div class="timeline-card">
-                <h3>Programming Competition + Bluetooth Controlled Car</h3>
-                <p>Placed third in a GDSC programming competition and built an Arduino Bluetooth car, because algorithms and wheels both reveal bugs quickly.</p>
+                <h3>3rd Place - Programming Competition</h3>
+                <p>Ranked third in a GDSC competitive coding challenge focused on algorithmic problem solving.</p>
               </div>
-            </article>
-            <article class="timeline-item reveal">
+              </article>
+              <article class="timeline-item reveal">
+              <time class="timeline-date">2023</time>
+              <div class="timeline-card">
+                <h3>Bluetooth Controlled Car</h3>
+                <p>Designed an Arduino-powered car controlled over Bluetooth, turning embedded systems practice into something physical.</p>
+              </div>
+              </article>
+              <article class="timeline-item reveal">
               <time class="timeline-date">2022</time>
               <div class="timeline-card">
-                <h3>Line-Following Robot + Small Scale Search Engine</h3>
-                <p>Built an autonomous robot and a DSA-driven search engine prototype using indexing, retrieval, and graph-style thinking.</p>
+                <h3>Line-Following Mini-Robot</h3>
+                <p>Built an autonomous robot capable of navigating predefined paths using infrared sensors.</p>
               </div>
-            </article>
-            <article class="timeline-item reveal">
+              </article>
+              <article class="timeline-item reveal">
+              <time class="timeline-date">2022</time>
+              <div class="timeline-card">
+                <h3>Small Scale Search Engine</h3>
+                <p>Developed a search engine prototype using hash tables, indexing, retrieval, and graph-style thinking.</p>
+              </div>
+              </article>
+              <article class="timeline-item reveal">
               <time class="timeline-date">2021</time>
               <div class="timeline-card">
-                <h3>Facial Image Recognition + Taxi Management</h3>
-                <p>Worked with TensorFlow image recognition and Python/Tkinter GUI applications before my projects became easier to explain at dinner.</p>
+                <h3>Facial Image Recognition</h3>
+                <p>Created a facial recognition system using TensorFlow, reaching strong test accuracy while learning practical model workflows.</p>
               </div>
-            </article>
-            <article class="timeline-item reveal">
+              </article>
+              <article class="timeline-item reveal">
+              <time class="timeline-date">2021</time>
+              <div class="timeline-card">
+                <h3>Cab/Taxi Management System</h3>
+                <p>Designed a GUI-based fleet management application with Python and Tkinter.</p>
+              </div>
+              </article>
+              <article class="timeline-item reveal">
               <time class="timeline-date">2020</time>
               <div class="timeline-card">
                 <h3>Minecraft Custom Datapacks</h3>
                 <p>Made JSON/JavaScript gameplay modifications and learned that "just one more rule" can turn into a real systems problem.</p>
               </div>
-            </article>
-            <article class="timeline-item reveal">
-              <time class="timeline-date">2014 - 2019</time>
+              </article>
+              <article class="timeline-item reveal">
+              <time class="timeline-date">2019</time>
               <div class="timeline-card">
-                <h3>GTA Modding, Command Blocks, Servers, Visual Basic, KIPS</h3>
-                <p>The early era: custom game scenarios, command-block experiments, private servers, Visual Basic basics, and pre-engineering foundations.</p>
+                <h3>Intermediate F.Sc Pre-Engineering - KIPS College</h3>
+                <p>Studied physics, chemistry, and mathematics, strengthening the foundations that later fed programming and systems work.</p>
               </div>
-            </article>
+              </article>
+              <article class="timeline-item reveal">
+              <time class="timeline-date">2018</time>
+              <div class="timeline-card">
+                <h3>Age of Mythology Custom Scenarios</h3>
+                <p>Modded a 2002 RTS game to create custom scenarios, an early entry point into design logic and game systems.</p>
+              </div>
+              </article>
+              <article class="timeline-item reveal">
+              <time class="timeline-date">2017</time>
+              <div class="timeline-card">
+                <h3>Visual Basic Introduction</h3>
+                <p>Learned conditions, loops, and basic programming constructs during high school.</p>
+              </div>
+              </article>
+              <article class="timeline-item reveal">
+              <time class="timeline-date">2016</time>
+              <div class="timeline-card">
+                <h3>Minecraft Server Development</h3>
+                <p>Hosted a private server with custom plugins and mods, building early teamwork and troubleshooting instincts.</p>
+              </div>
+              </article>
+              <article class="timeline-item reveal">
+              <time class="timeline-date">2014 - 2015</time>
+              <div class="timeline-card">
+                <h3>GTA Modding &amp; Minecraft Command Blocks</h3>
+                <p>Explored game modding communities through custom GTA Vice City/San Andreas mods and command-block experiments.</p>
+              </div>
+              </article>
+            </div>
           </div>
         </div>
       </section>
