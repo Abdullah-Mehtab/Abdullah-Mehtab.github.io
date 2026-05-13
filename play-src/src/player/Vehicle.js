@@ -36,7 +36,7 @@ export class Vehicle {
       .setAngularDamping(1.15);
     this.body = this.physics.world.createRigidBody(bodyDesc);
     const collider = this.RAPIER.ColliderDesc
-      .cuboid(1.14, 0.42, 2.28)
+      .cuboid(1.16, 0.42, 2.76)
       .setDensity(1.4)
       .setFriction(0.92)
       .setRestitution(0.12);
@@ -99,35 +99,9 @@ export class Vehicle {
     add(createTrunkGeometry(), paint, [0, 0.91, -1.55]);
     add(createFastbackGeometry(), paint, [0, 1.03, -0.32]);
 
-    addStripePlane(0.46, 2.72, [0, 1.14, 1.46], -0.045, stripe, this.group);
-    addStripePlane(0.42, 1.06, [0, 1.77, -0.36], 0, stripe, this.group);
-    addStripePlane(0.46, 1.82, [0, 1.075, -1.72], 0.035, stripe, this.group);
-
-    for (const side of [-1, 1]) {
-      const sideTexture = makeSabreSideTexture(side);
-      const sidePanel = add(
-        new THREE.PlaneGeometry(5.72, 1.34),
-        new THREE.MeshBasicMaterial({ map: sideTexture, transparent: true, side: THREE.DoubleSide, depthWrite: false }),
-        [side * 1.255, 0.96, 0],
-        [0, side > 0 ? Math.PI / 2 : -Math.PI / 2, 0]
-      );
-      sidePanel.renderOrder = 3;
-    }
-
-    const frontPanel = add(
-      new THREE.PlaneGeometry(2.42, 0.68),
-      new THREE.MeshBasicMaterial({ map: makeSabreFrontTexture(), transparent: true, side: THREE.DoubleSide, depthWrite: false }),
-      [0, 0.78, 2.965]
-    );
-    frontPanel.renderOrder = 4;
-
-    const rearPanel = add(
-      new THREE.PlaneGeometry(2.28, 0.62),
-      new THREE.MeshBasicMaterial({ map: makeSabreRearTexture(), transparent: true, side: THREE.DoubleSide, depthWrite: false }),
-      [0, 0.76, -2.965],
-      [0, Math.PI, 0]
-    );
-    rearPanel.renderOrder = 4;
+    add(new THREE.BoxGeometry(0.46, 0.026, 2.62), stripe, [0, 1.145, 1.46], [-0.045, 0, 0]);
+    add(new THREE.BoxGeometry(0.4, 0.024, 1.02), stripe, [0, 1.76, -0.36], [-0.02, 0, 0]);
+    add(new THREE.BoxGeometry(0.46, 0.026, 1.72), stripe, [0, 1.08, -1.7], [0.035, 0, 0]);
 
     add(createWindshieldGeometry(), glass, [0, 1.52, 0.43]);
     add(createRearWindowGeometry(), glass, [0, 1.45, -1.14]);
@@ -139,6 +113,8 @@ export class Vehicle {
       add(new THREE.BoxGeometry(0.09, 0.07, 0.32), chrome, [side * 1.26, 0.98, -0.52]);
       add(new THREE.BoxGeometry(0.06, 0.36, 0.04), dark, [side * 1.19, 1.05, -0.2]);
       add(new THREE.BoxGeometry(0.05, 0.04, 4.58), chrome, [side * 1.2, 0.72, 0.02]);
+      add(new THREE.BoxGeometry(0.035, 0.58, 0.045), dark, [side * 1.215, 0.78, -0.48]);
+      add(new THREE.BoxGeometry(0.035, 0.12, 0.55), chrome, [side * 1.23, 0.92, 0.18]);
     }
 
     add(new THREE.BoxGeometry(2.1, 0.42, 0.16), grille, [0, 0.82, 2.76]);
@@ -250,7 +226,7 @@ export class Vehicle {
       const direction = Math.sign(this.driveSpeed || 1);
       this.heading += steer * direction * speedFactor * 2.15 * dt;
     }
-    this.body.setRotation(yawQuaternion(this.heading), true);
+    this.body.setRotation(steeredQuaternion(this.heading, this.body.rotation()), true);
 
     if (brake) {
       this.driveSpeed *= Math.max(0, 1 - dt * 8.5);
@@ -394,163 +370,13 @@ function yawQuaternion(heading) {
   return { x: quaternion.x, y: quaternion.y, z: quaternion.z, w: quaternion.w };
 }
 
-function addStripePlane(width, depth, position, tilt, material, group) {
-  const mesh = new THREE.Mesh(new THREE.PlaneGeometry(width, depth), material);
-  mesh.position.set(...position);
-  mesh.rotation.x = -Math.PI / 2 + tilt;
-  mesh.renderOrder = 5;
-  group.add(mesh);
-  return mesh;
-}
-
-function makeTexture(canvas) {
-  const texture = new THREE.CanvasTexture(canvas);
-  texture.colorSpace = THREE.SRGBColorSpace;
-  texture.magFilter = THREE.NearestFilter;
-  texture.minFilter = THREE.LinearMipmapLinearFilter;
-  texture.generateMipmaps = true;
-  return texture;
-}
-
-function makeSabreSideTexture(side = 1) {
-  const canvas = document.createElement('canvas');
-  canvas.width = 384;
-  canvas.height = 128;
-  const ctx = canvas.getContext('2d');
-  ctx.imageSmoothingEnabled = false;
-  ctx.clearRect(0, 0, canvas.width, canvas.height);
-  if (side < 0) {
-    ctx.translate(canvas.width, 0);
-    ctx.scale(-1, 1);
-  }
-
-  ctx.fillStyle = 'rgba(34, 7, 4, 0.42)';
-  polygon(ctx, [[24, 94], [72, 82], [324, 83], [366, 97], [350, 111], [42, 112]]);
-  ctx.fill();
-
-  ctx.fillStyle = 'rgba(6, 13, 22, 0.9)';
-  polygon(ctx, [[148, 47], [214, 45], [264, 60], [287, 79], [276, 88], [136, 86], [122, 72]]);
-  ctx.fill();
-  ctx.strokeStyle = '#aeb8bc';
-  ctx.lineWidth = 3;
-  ctx.stroke();
-  ctx.strokeStyle = '#1c2a31';
-  ctx.lineWidth = 3;
-  ctx.beginPath();
-  ctx.moveTo(212, 49);
-  ctx.lineTo(214, 89);
-  ctx.stroke();
-
-  ctx.strokeStyle = '#161b1e';
-  ctx.lineWidth = 2;
-  ctx.beginPath();
-  ctx.moveTo(258, 88);
-  ctx.lineTo(266, 113);
-  ctx.moveTo(119, 86);
-  ctx.lineTo(110, 112);
-  ctx.stroke();
-
-  ctx.strokeStyle = '#c4c9ca';
-  ctx.lineWidth = 3;
-  ctx.beginPath();
-  ctx.moveTo(50, 96);
-  ctx.lineTo(340, 94);
-  ctx.stroke();
-  ctx.fillStyle = '#d0d5d6';
-  ctx.fillRect(238, 88, 22, 6);
-  ctx.fillStyle = '#0a0e10';
-  ctx.fillRect(229, 82, 4, 30);
-
-  ctx.strokeStyle = 'rgba(8, 11, 12, 0.95)';
-  ctx.lineWidth = 7;
-  for (const wheelX of [86, 304]) {
-    ctx.beginPath();
-    ctx.arc(wheelX, 112, 33, Math.PI, Math.PI * 2);
-    ctx.stroke();
-  }
-
-  ctx.fillStyle = '#c9cdd0';
-  ctx.fillRect(15, 98, 28, 10);
-  ctx.fillRect(348, 100, 27, 10);
-  ctx.fillStyle = '#f3d591';
-  ctx.fillRect(25, 83, 9, 8);
-  ctx.fillStyle = '#ff443e';
-  ctx.fillRect(356, 87, 12, 9);
-
-  return makeTexture(canvas);
-}
-
-function makeSabreFrontTexture() {
-  const canvas = document.createElement('canvas');
-  canvas.width = 256;
-  canvas.height = 96;
-  const ctx = canvas.getContext('2d');
-  ctx.imageSmoothingEnabled = false;
-  ctx.clearRect(0, 0, canvas.width, canvas.height);
-  ctx.fillStyle = '#822511';
-  ctx.fillRect(30, 8, 196, 56);
-  ctx.fillStyle = '#e8dfca';
-  ctx.fillRect(112, 8, 32, 58);
-  ctx.fillStyle = '#0b1014';
-  ctx.fillRect(46, 30, 164, 34);
-  ctx.strokeStyle = '#bfc7c9';
-  ctx.lineWidth = 4;
-  ctx.strokeRect(44, 28, 168, 38);
-  ctx.strokeStyle = '#647075';
-  ctx.lineWidth = 2;
-  for (let x = 66; x <= 190; x += 16) {
-    ctx.beginPath();
-    ctx.moveTo(x, 31);
-    ctx.lineTo(x, 63);
-    ctx.stroke();
-  }
-  for (const x of [34, 58, 198, 222]) {
-    ctx.fillStyle = '#fff1c2';
-    ctx.beginPath();
-    ctx.arc(x, 46, 13, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.strokeStyle = '#d1d6d8';
-    ctx.lineWidth = 3;
-    ctx.stroke();
-  }
-  ctx.fillStyle = '#c6c9ca';
-  ctx.fillRect(22, 68, 212, 16);
-  ctx.fillStyle = '#6b7072';
-  ctx.fillRect(36, 80, 184, 6);
-  return makeTexture(canvas);
-}
-
-function makeSabreRearTexture() {
-  const canvas = document.createElement('canvas');
-  canvas.width = 256;
-  canvas.height = 96;
-  const ctx = canvas.getContext('2d');
-  ctx.imageSmoothingEnabled = false;
-  ctx.clearRect(0, 0, canvas.width, canvas.height);
-  ctx.fillStyle = '#72200f';
-  ctx.fillRect(30, 12, 196, 55);
-  ctx.fillStyle = '#e8dfca';
-  ctx.fillRect(113, 10, 30, 58);
-  ctx.fillStyle = '#11171b';
-  ctx.fillRect(72, 34, 112, 24);
-  for (const x of [52, 79, 177, 204]) {
-    ctx.fillStyle = x < 100 || x > 170 ? '#ff3d36' : '#f18f42';
-    ctx.fillRect(x, 40, 20, 12);
-  }
-  ctx.fillStyle = '#c6c9ca';
-  ctx.fillRect(24, 68, 208, 16);
-  ctx.fillStyle = '#24282a';
-  ctx.fillRect(111, 72, 34, 9);
-  return makeTexture(canvas);
-}
-
-function polygon(ctx, points) {
-  ctx.beginPath();
-  ctx.moveTo(points[0][0], points[0][1]);
-  for (let i = 1; i < points.length; i += 1) {
-    ctx.lineTo(points[i][0], points[i][1]);
-  }
-  ctx.closePath();
+function steeredQuaternion(heading, currentRotation) {
+  const current = new THREE.Quaternion(currentRotation.x, currentRotation.y, currentRotation.z, currentRotation.w);
+  const euler = new THREE.Euler().setFromQuaternion(current, 'YXZ');
+  const preservedPitch = THREE.MathUtils.clamp(euler.x, -0.55, 0.55);
+  const preservedRoll = THREE.MathUtils.clamp(euler.z, -0.42, 0.42);
+  const quaternion = new THREE.Quaternion().setFromEuler(new THREE.Euler(preservedPitch, heading, preservedRoll, 'YXZ'));
+  return { x: quaternion.x, y: quaternion.y, z: quaternion.z, w: quaternion.w };
 }
 
 function createMuscleBodyGeometry() {
