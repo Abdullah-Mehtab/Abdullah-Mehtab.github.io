@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="robots" content="noindex, nofollow">
+    <meta name="theme-color" content="#0e1116">
+    <title>Comment Moderation | Abdullah Mehtab</title>
+    <link rel="icon" href="assets/images/icon.png" type="image/png">
+    <link rel="stylesheet" href="assets/css/animations.css">
+    <link rel="stylesheet" href="assets/css/portfolio-v2.css">
+  </head>
+  <body class="portfolio-v2">
+    <header class="site-header">
+      <nav class="site-nav" aria-label="Primary navigation">
+        <a class="brand" href="index.html">Abdullah Mehtab</a>
+        <div class="nav-links">
+          <a href="index.html">Home</a>
+          <a href="projects.html">Projects</a>
+          <a href="cv.html">CV</a>
+          <a href="todo.html">Never-Ending List</a>
+        </div>
+        <div class="style-control" data-style-control>
+          <button class="style-toggle" type="button" aria-expanded="false" aria-controls="style-panel" data-style-toggle>Style</button>
+          <div class="style-panel" id="style-panel" data-style-panel>
+            <label>
+              <span>Theme</span>
+              <select data-theme-select aria-label="Theme"></select>
+            </label>
+            <label>
+              <span>Cursor Trail</span>
+              <select data-cursor-select aria-label="Cursor trail"></select>
+            </label>
+            <label>
+              <span>Motion Intensity</span>
+              <select data-motion-select aria-label="Motion intensity"></select>
+            </label>
+            <button class="style-reset" type="button" data-style-reset>Reset Style</button>
+          </div>
+        </div>
+        <button class="nav-toggle" type="button" aria-label="Open navigation" aria-expanded="false" data-nav-toggle>Menu</button>
+      </nav>
+      <div class="mobile-nav" data-mobile-nav>
+        <a href="index.html">Home</a>
+        <a href="projects.html">Projects</a>
+        <a href="cv.html">CV</a>
+        <a href="todo.html">Never-Ending List</a>
+      </div>
+    </header>
+
+    <main>
+      <section class="page-hero">
+        <div class="section-inner">
+          <p class="eyebrow">Admin</p>
+          <h1>Comment moderation.</h1>
+          <p class="page-lede">Authenticate with an allowed Supabase account to approve or hide public comments. The browser never receives a service-role key.</p>
+        </div>
+      </section>
+
+      <section class="section">
+        <div class="section-inner admin-layout">
+          <article class="admin-panel">
+            <h2>Sign in</h2>
+            <form class="comment-form" data-admin-login>
+              <label>
+                <span>Email</span>
+                <input name="email" type="email" autocomplete="email" required>
+              </label>
+              <button class="button primary" type="submit">Send magic link</button>
+              <p class="comment-status" data-admin-status aria-live="polite"></p>
+            </form>
+            <div class="button-row">
+              <button class="button" type="button" data-admin-refresh>Refresh comments</button>
+              <button class="button ghost" type="button" data-admin-signout>Sign out</button>
+            </div>
+          </article>
+
+          <article class="admin-panel admin-comments">
+            <div class="section-heading compact">
+              <div>
+                <p class="eyebrow">Queue</p>
+                <h2>Pending and recent comments</h2>
+              </div>
+            </div>
+            <div class="admin-comment-list" data-admin-comments>
+              <p class="comment-note">Sign in to load comments.</p>
+            </div>
+          </article>
+        </div>
+      </section>
+
+      <div class="loop-wrapper" aria-hidden="true">
+        <div class="mountain"></div><div class="hill"></div><div class="tree"></div><div class="tree"></div><div class="tree"></div><div class="rock"></div><div class="truck"></div><div class="wheels"></div>
+      </div>
+    </main>
+
+    <script src="assets/js/site-config.js"></script>
+    <script src="assets/js/portfolio-v2.js"></script>
+    <script src="assets/js/admin.js"></script>
+  </body>
+</html>

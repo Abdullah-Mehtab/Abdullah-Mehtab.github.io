@@ -5,13 +5,49 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="description" content="Abdullah Mehtab - Associate Offensive Security Engineer, full-stack builder, and security-minded computer science graduate.">
     <meta name="theme-color" content="#0e1116">
+    <meta name="robots" content="index, follow">
     <meta property="og:title" content="Abdullah Mehtab">
     <meta property="og:description" content="Offensive security, full-stack engineering, DevOps, AI/ML, IoT, and project-focused computer science work.">
     <meta property="og:type" content="website">
+    <meta property="og:url" content="https://abdullah-mehtab.github.io/Abdullah-Mehtab/">
+    <meta name="twitter:card" content="summary">
+    <meta name="twitter:title" content="Abdullah Mehtab">
+    <meta name="twitter:description" content="Offensive security, full-stack engineering, DevOps, AI/ML, IoT, and project-focused computer science work.">
+    <link rel="canonical" href="https://abdullah-mehtab.github.io/Abdullah-Mehtab/">
     <title>Abdullah Mehtab | Security-Minded Builder</title>
     <link rel="icon" href="assets/images/icon.png" type="image/png">
     <link rel="stylesheet" href="assets/css/animations.css">
     <link rel="stylesheet" href="assets/css/portfolio-v2.css">
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@type": "ProfilePage",
+        "mainEntity": {
+          "@type": "Person",
+          "name": "Abdullah Mehtab",
+          "jobTitle": "Associate Offensive Security Engineer",
+          "email": "mailto:abdullahmehtab666@gmail.com",
+          "address": {
+            "@type": "PostalAddress",
+            "addressLocality": "Lahore",
+            "addressCountry": "PK"
+          },
+          "url": "https://abdullah-mehtab.github.io/Abdullah-Mehtab/",
+          "sameAs": [
+            "https://github.com/Abdullah-Mehtab",
+            "https://linkedin.com/in/abdullah-mehtab"
+          ],
+          "knowsAbout": [
+            "Offensive Security",
+            "Web Application Security",
+            "DevOps",
+            "Full-stack Development",
+            "Machine Learning",
+            "Internet of Things"
+          ]
+        }
+      }
+    </script>
   </head>
   <body class="portfolio-v2">
     <header class="site-header">
@@ -34,6 +70,11 @@
               <span>Cursor Trail</span>
               <select data-cursor-select aria-label="Cursor trail"></select>
             </label>
+            <label>
+              <span>Motion Intensity</span>
+              <select data-motion-select aria-label="Motion intensity"></select>
+            </label>
+            <button class="style-reset" type="button" data-style-reset>Reset Style</button>
           </div>
         </div>
         <button class="nav-toggle" type="button" aria-label="Open navigation" aria-expanded="false" data-nav-toggle>Menu</button>
@@ -64,7 +105,7 @@
           </div>
           <figure class="profile-panel kinetic-card" data-tilt>
             <div class="profile-stage">
-              <img src="assets/images/me3.png" alt="Abdullah Mehtab">
+              <img src="assets/images/optimized/me3.webp" alt="Abdullah Mehtab" width="1100" height="1098" fetchpriority="high" decoding="async">
               <span class="orbit-chip chip-one">Burp</span>
               <span class="orbit-chip chip-two">Wazuh</span>
               <span class="orbit-chip chip-three">DevOps</span>
@@ -101,6 +142,55 @@
             <strong data-count="12">0</strong>
             <span>Teams Collaborated With</span>
           </article>
+        </div>
+      </section>
+
+      <section class="section proof-lane-section" id="proof">
+        <div class="section-inner">
+          <div class="section-heading">
+            <div>
+              <p class="eyebrow">Proof</p>
+              <h2>Three lanes, one portfolio: security, engineering, and actual human signal.</h2>
+            </div>
+            <p>
+              The site is allowed to have personality, but the proof comes first: assessed systems, shipped projects, documented decisions, and a public trail that can be checked.
+            </p>
+          </div>
+          <div class="proof-lanes">
+            <article class="proof-lane reveal">
+              <span class="proof-lane-mark">01</span>
+              <h3>Security hiring signal</h3>
+              <p>Current offensive security work, Cyber Sentinel SIEM engineering, web/API testing practice, reporting discipline, and OWASP-aligned remediation thinking.</p>
+              <div class="tag-list">
+                <span class="tag">Tkxel</span>
+                <span class="tag">Wazuh</span>
+                <span class="tag">Burp Suite</span>
+                <span class="tag">PortSwigger</span>
+              </div>
+            </article>
+            <article class="proof-lane reveal">
+              <span class="proof-lane-mark">02</span>
+              <h3>General engineering range</h3>
+              <p>Backend, DevOps, IoT, ML, embedded systems, compilers, and search projects. Not one narrow trick: a wide skill tree with working artifacts.</p>
+              <div class="tag-list">
+                <span class="tag">Python</span>
+                <span class="tag">Docker</span>
+                <span class="tag">ESP32</span>
+                <span class="tag">ML</span>
+              </div>
+            </article>
+            <article class="proof-lane reveal">
+              <span class="proof-lane-mark">03</span>
+              <h3>Human proof and memory</h3>
+              <p>The never-ending list, comments, early projects, games, money honesty, and the truck are intentional. If someone visited, there should be something real to remember.</p>
+              <div class="tag-list">
+                <span class="tag">Comments</span>
+                <span class="tag">Timeline</span>
+                <span class="tag">Archive</span>
+                <span class="tag accent">Personality</span>
+              </div>
+            </article>
+          </div>
         </div>
       </section>
 
@@ -259,7 +349,7 @@
           <div class="grid three">
             <article class="work-card">
               <div class="work-media">
-                <iframe src="https://www.youtube.com/embed/TLKqw3Hti8c" title="Cyber Sentinel overview" allowfullscreen></iframe>
+                <iframe src="https://www.youtube.com/embed/TLKqw3Hti8c" title="Cyber Sentinel overview" loading="lazy" allowfullscreen></iframe>
               </div>
               <div>
                 <h3>Cyber Sentinel</h3>
@@ -269,10 +359,13 @@
                   <span class="tag">ELK</span>
                   <span class="tag">Suricata</span>
                 </div>
+                <div class="button-row">
+                  <a class="button" href="cyber-sentinel.html">Read case study</a>
+                </div>
               </div>
             </article>
             <article class="work-card">
-              <img src="assets/images/Project2.png" alt="Smart LED monitoring web application">
+              <img src="assets/images/optimized/Project2.webp" alt="Smart LED monitoring web application" width="624" height="595" loading="lazy" decoding="async">
               <div>
                 <h3>Smart LED Monitoring</h3>
                 <p>ESP32-based logging into Google Sheets through a custom web app, because even LEDs deserve accountability.</p>
@@ -284,7 +377,7 @@
               </div>
             </article>
             <article class="work-card">
-              <img src="assets/images/Project3.png" alt="Small scale search engine UI">
+              <img src="assets/images/optimized/Project3.webp" alt="Small scale search engine UI" width="980" height="828" loading="lazy" decoding="async">
               <div>
                 <h3>Small Scale Search Engine</h3>
                 <p>A DSA-driven search prototype focused on indexing, retrieval, and making coursework actually do something.</p>
@@ -517,5 +610,6 @@
     <script src="assets/js/site-config.js"></script>
     <script src="assets/js/portfolio-v2.js"></script>
     <script src="assets/js/comments.js"></script>
+    <script src="assets/js/visitor-proof.js"></script>
   </body>
 </html>
