@@ -169,6 +169,54 @@
     counters.forEach((counter) => observer.observe(counter));
   }
 
+  function setupPointerEffects() {
+    const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    if (reduceMotion) return;
+
+    let raf = 0;
+    let pointerX = window.innerWidth / 2;
+    let pointerY = window.innerHeight * 0.25;
+
+    function updatePointer() {
+      raf = 0;
+      document.documentElement.style.setProperty("--mouse-x", `${pointerX}px`);
+      document.documentElement.style.setProperty("--mouse-y", `${pointerY}px`);
+    }
+
+    window.addEventListener("pointermove", (event) => {
+      pointerX = event.clientX;
+      pointerY = event.clientY;
+      if (!raf) raf = requestAnimationFrame(updatePointer);
+    }, { passive: true });
+  }
+
+  function setupTiltCards() {
+    const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    if (reduceMotion) return;
+
+    const cards = document.querySelectorAll(".profile-panel, .panel, .work-card, .service-card, .skill-item, .stat-card, .todo-column, .download-card");
+    cards.forEach((card) => {
+      card.classList.add("kinetic-card");
+
+      card.addEventListener("pointermove", (event) => {
+        const rect = card.getBoundingClientRect();
+        const x = (event.clientX - rect.left) / rect.width - 0.5;
+        const y = (event.clientY - rect.top) / rect.height - 0.5;
+        card.classList.add("is-tilting");
+        card.style.setProperty("--tilt-x", `${(-y * 5).toFixed(2)}deg`);
+        card.style.setProperty("--tilt-y", `${(x * 7).toFixed(2)}deg`);
+        card.style.setProperty("--lift", "-2px");
+      }, { passive: true });
+
+      card.addEventListener("pointerleave", () => {
+        card.classList.remove("is-tilting");
+        card.style.removeProperty("--tilt-x");
+        card.style.removeProperty("--tilt-y");
+        card.style.removeProperty("--lift");
+      });
+    });
+  }
+
   document.addEventListener("DOMContentLoaded", () => {
     setActiveNav();
     setupMobileNav();
@@ -179,5 +227,7 @@
     setupProofLine();
     setupReveal();
     setupCounters();
+    setupPointerEffects();
+    setupTiltCards();
   });
 })();
