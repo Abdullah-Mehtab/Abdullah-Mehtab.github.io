@@ -19,6 +19,18 @@
     });
   }
 
+  function setupHeaderScroll() {
+    const header = document.querySelector(".site-header");
+    if (!header) return;
+
+    function updateHeader() {
+      header.classList.toggle("is-scrolled", window.scrollY > 80);
+    }
+
+    updateHeader();
+    window.addEventListener("scroll", updateHeader, { passive: true });
+  }
+
   function setupFilters() {
     const buttons = document.querySelectorAll("[data-filter]");
     const cards = document.querySelectorAll("[data-categories]");
@@ -160,6 +172,7 @@
   document.addEventListener("DOMContentLoaded", () => {
     setActiveNav();
     setupMobileNav();
+    setupHeaderScroll();
     setupFilters();
     setupMediaFallbacks();
     setupYear();
