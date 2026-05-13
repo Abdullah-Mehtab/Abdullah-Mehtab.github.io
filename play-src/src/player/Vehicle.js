@@ -1,5 +1,7 @@
 import * as THREE from 'three';
+import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 import { WORLD_HALF_SIZE } from '../world/worldData.js';
+import sabreTurboModelUrl from '../../assets/models/vehicles/sabre-turbo.glb?url';
 
 const START = new THREE.Vector3(2, 1.45, 5.5);
 
@@ -45,97 +47,66 @@ export class Vehicle {
   }
 
   createModel() {
-    const paint = new THREE.MeshPhysicalMaterial({
-      color: 0x8b2b13,
-      roughness: 0.26,
-      metalness: 0.5,
-      clearcoat: 0.58,
-      clearcoatRoughness: 0.18,
-      emissive: 0x160402,
-      emissiveIntensity: 0.1
+    this.modelRoot = new THREE.Group();
+    this.modelRoot.name = 'VehicleModelRoot';
+    this.group.add(this.modelRoot);
+    this.addHeadlightBeams();
+    this.scene.add(this.group);
+    this.loadVehicleModel();
+  }
+
+  loadVehicleModel() {
+    const loader = new GLTFLoader();
+    loader.load(
+      sabreTurboModelUrl,
+      (gltf) => this.installVehicleModel(gltf.scene),
+      undefined,
+      (error) => {
+        console.error('Vehicle model failed to load', error);
+        this.createModelLoadFallback();
+      }
+    );
+  }
+
+  installVehicleModel(model) {
+    this.modelRoot.clear();
+    model.name = 'VehicleModel_SabreTurboGLB';
+    model.traverse((object) => {
+      if (object.isMesh) {
+        object.castShadow = true;
+        object.receiveShadow = true;
+        if (object.material?.transparent) {
+          object.renderOrder = 7;
+        }
+      }
     });
-    const paintDark = new THREE.MeshPhysicalMaterial({
-      color: 0x5f1c10,
-      roughness: 0.34,
-      metalness: 0.42,
-      clearcoat: 0.42,
-      clearcoatRoughness: 0.22
+    this.modelRoot.add(model);
+    this.wheels = [];
+    this.frontWheels = [];
+    model.traverse((object) => {
+      if (object.name.startsWith('WheelMesh_')) {
+        this.wheels.push(object);
+      }
+      if (object.name.startsWith('WheelFront')) {
+        this.frontWheels.push(object);
+      }
     });
-    const stripe = new THREE.MeshStandardMaterial({ color: 0xe8dfca, roughness: 0.28, metalness: 0.22, side: THREE.DoubleSide });
-    const dark = new THREE.MeshStandardMaterial({
-      color: 0x071018,
-      roughness: 0.42,
-      metalness: 0.38
-    });
-    const chrome = new THREE.MeshStandardMaterial({ color: 0xc8ced0, roughness: 0.2, metalness: 0.82 });
-    const grille = new THREE.MeshStandardMaterial({ color: 0x15191d, roughness: 0.42, metalness: 0.64 });
-    const glass = new THREE.MeshBasicMaterial({
-      color: 0x08131f,
-      transparent: true,
-      opacity: 0.94,
-      side: THREE.DoubleSide,
-      depthWrite: false
-    });
-    const glassFrame = new THREE.LineBasicMaterial({ color: 0xb9c4c8, transparent: true, opacity: 0.9, depthWrite: false });
-    const glow = new THREE.MeshBasicMaterial({ color: 0xfff3cf });
-    const tire = new THREE.MeshStandardMaterial({ color: 0x020407, roughness: 0.74, metalness: 0.12, flatShading: true });
-    const hubcap = new THREE.MeshStandardMaterial({ color: 0xaeb4b8, roughness: 0.18, metalness: 0.82 });
-    const rubberLine = new THREE.MeshBasicMaterial({ color: 0x8f989b });
+  }
 
-    const add = (geometry, material, position, rotation = [0, 0, 0]) => {
-      const mesh = new THREE.Mesh(geometry, material);
-      mesh.position.set(...position);
-      mesh.rotation.set(...rotation);
-      mesh.castShadow = true;
-      mesh.receiveShadow = true;
-      this.group.add(mesh);
-      return mesh;
-    };
+  createModelLoadFallback() {
+    this.modelRoot.clear();
+    const body = new THREE.Mesh(
+      new THREE.BoxGeometry(2.2, 0.7, 5.1),
+      new THREE.MeshStandardMaterial({ color: 0x8b2b13, roughness: 0.35, metalness: 0.45 })
+    );
+    body.name = 'VehicleModel_Fallback';
+    body.position.y = 0.65;
+    body.castShadow = true;
+    body.receiveShadow = true;
+    this.modelRoot.add(body);
+  }
 
-    add(createMuscleBodyGeometry(), paint, [0, 0.28, 0]);
-    add(createHoodGeometry(), paint, [0, 0.94, 1.35]);
-    add(createTrunkGeometry(), paint, [0, 0.91, -1.55]);
-    add(createFastbackGeometry(), paint, [0, 1.03, -0.32]);
-
-    add(createHoodStripeGeometry(), stripe, [0, 0, 0]);
-    add(createRoofStripeGeometry(), stripe, [0, 0, 0]);
-    add(createTrunkStripeGeometry(), stripe, [0, 0, 0]);
-
-    addWindow(createWindshieldSurfaceGeometry(), glass, [0, 1.03, -0.32], this.group);
-    addWindowFrame(createWindshieldFrameGeometry(), glassFrame, [0, 1.03, -0.32], this.group);
-    addWindow(createRearWindowSurfaceGeometry(), glass, [0, 1.03, -0.32], this.group);
-    addWindowFrame(createRearWindowFrameGeometry(), glassFrame, [0, 1.03, -0.32], this.group);
-    for (const side of [-1, 1]) {
-      addWindow(createSideWindowSurfaceGeometry(side), glass, [0, 1.03, -0.32], this.group);
-      addWindowFrame(createSideWindowFrameGeometry(side), glassFrame, [0, 1.03, -0.32], this.group);
-      add(new THREE.BoxGeometry(0.05, 0.32, 0.045), dark, [side * 0.99, 0.94, 0.34], [0, 0, side * 0.08]);
-      add(new THREE.BoxGeometry(0.34, 0.075, 0.07), dark, [side * 1.12, 0.98, 0.41], [0, 0, side * 0.05]);
-      add(new THREE.BoxGeometry(0.24, 0.15, 0.12), chrome, [side * 1.29, 0.99, 0.45], [0, side * 0.16, 0]);
-      add(new THREE.BoxGeometry(0.024, 0.086, 0.105), glass, [side * 1.33, 0.99, 0.46], [0, side * 0.16, 0]);
-      add(new THREE.BoxGeometry(0.03, 0.055, 0.22), chrome, [side * 1.205, 0.93, -0.27]);
-      add(new THREE.BoxGeometry(0.028, 0.028, 3.72), chrome, [side * 1.18, 0.68, 0.0]);
-      add(new THREE.BoxGeometry(0.036, 0.32, 0.032), dark, [side * 1.18, 0.82, -0.48]);
-      const sideDecal = add(new THREE.PlaneGeometry(5.45, 0.9), createSabreSideDecalMaterial(), [side * 1.232, 0.58, 0], [0, side > 0 ? Math.PI / 2 : -Math.PI / 2, 0]);
-      sideDecal.castShadow = false;
-      sideDecal.receiveShadow = false;
-      sideDecal.renderOrder = 7;
-    }
-
-    add(new THREE.BoxGeometry(0.035, 0.13, 0.026), dark, [0, 1.48, 0.1], [-0.52, 0, 0]);
-    add(new THREE.BoxGeometry(0.24, 0.07, 0.035), dark, [0, 1.4, 0.22], [-0.52, 0, 0]);
-
-    add(new THREE.BoxGeometry(2.1, 0.42, 0.16), grille, [0, 0.82, 2.68]);
-    add(new THREE.BoxGeometry(2.45, 0.18, 0.22), chrome, [0, 0.55, 2.78]);
-    add(new THREE.BoxGeometry(2.24, 0.16, 0.18), chrome, [0, 0.54, -2.74]);
-    add(new THREE.BoxGeometry(1.95, 0.06, 0.08), chrome, [0, 0.98, 2.76]);
-    add(new THREE.BoxGeometry(1.75, 0.05, 0.06), chrome, [0, 1.02, -2.68]);
-
-    for (const x of [-0.72, -0.44, 0.44, 0.72]) {
-      const lamp = add(new THREE.CylinderGeometry(0.105, 0.105, 0.038, 28), glow, [x, 0.86, 2.776], [Math.PI / 2, 0, 0]);
-      lamp.castShadow = false;
-      lamp.renderOrder = 6;
-    }
-
+  addHeadlightBeams() {
     for (const x of [-0.64, 0.64]) {
       const light = new THREE.SpotLight(0xfff0c4, 12, 36, Math.PI / 9, 0.42, 1.45);
       light.position.set(x, 0.86, 2.96);
@@ -143,40 +114,6 @@ export class Vehicle {
       this.group.add(light);
       this.group.add(light.target);
     }
-
-    for (const x of [-0.62, 0.62]) {
-      add(new THREE.BoxGeometry(0.34, 0.15, 0.055), new THREE.MeshBasicMaterial({ color: 0xff2b36 }), [x, 0.78, -2.58]);
-      add(new THREE.BoxGeometry(0.14, 0.15, 0.055), new THREE.MeshBasicMaterial({ color: 0xffa04d }), [x * 1.42, 0.78, -2.58]);
-    }
-
-    const wheelGeometry = new THREE.CylinderGeometry(0.52, 0.52, 0.42, 36);
-    const wheelPositions = [
-      [-1.24, 0.35, 1.62],
-      [1.24, 0.35, 1.62],
-      [-1.24, 0.35, -1.68],
-      [1.24, 0.35, -1.68]
-    ];
-    for (let i = 0; i < wheelPositions.length; i += 1) {
-      const pivot = new THREE.Group();
-      pivot.position.set(...wheelPositions[i]);
-      const wheel = new THREE.Mesh(wheelGeometry, tire);
-      wheel.rotation.z = Math.PI / 2;
-      wheel.castShadow = true;
-      pivot.add(wheel);
-      const cap = new THREE.Mesh(new THREE.CylinderGeometry(0.31, 0.31, 0.04, 32), hubcap);
-      cap.position.x = wheelPositions[i][0] > 0 ? 0.235 : -0.235;
-      cap.rotation.z = Math.PI / 2;
-      pivot.add(cap);
-      const whitewall = new THREE.Mesh(new THREE.TorusGeometry(0.42, 0.018, 8, 32), rubberLine);
-      whitewall.position.x = wheelPositions[i][0] > 0 ? 0.238 : -0.238;
-      whitewall.rotation.y = Math.PI / 2;
-      pivot.add(whitewall);
-      this.group.add(pivot);
-      this.wheels.push(wheel);
-      if (i < 2) this.frontWheels.push(pivot);
-    }
-
-    this.scene.add(this.group);
   }
 
   update(input, dt) {
@@ -404,290 +341,4 @@ function steeredQuaternion(heading, currentRotation) {
   const preservedRoll = THREE.MathUtils.clamp(euler.z, -0.42, 0.42);
   const quaternion = new THREE.Quaternion().setFromEuler(new THREE.Euler(preservedPitch, heading, preservedRoll, 'YXZ'));
   return { x: quaternion.x, y: quaternion.y, z: quaternion.z, w: quaternion.w };
-}
-
-function addWindow(geometry, material, position, group) {
-  const mesh = new THREE.Mesh(geometry, material);
-  mesh.position.set(...position);
-  mesh.renderOrder = 8;
-  group.add(mesh);
-  return mesh;
-}
-
-function addWindowFrame(geometry, material, position, group) {
-  const line = new THREE.LineLoop(geometry, material);
-  line.position.set(...position);
-  line.renderOrder = 9;
-  group.add(line);
-  return line;
-}
-
-function createMuscleBodyGeometry() {
-  const vertices = new Float32Array([
-    -1.08, 0.00, -2.55, 1.08, 0.00, -2.55, 1.18, 0.00, 2.56, -1.18, 0.00, 2.56,
-    -1.02, 0.78, -2.42, 1.02, 0.78, -2.42, 1.04, 0.66, 2.48, -1.04, 0.66, 2.48,
-    -1.22, 0.18, -1.7, -1.22, 0.18, 1.65, 1.22, 0.18, -1.7, 1.22, 0.18, 1.65
-  ]);
-  const indices = [
-    0, 1, 2, 0, 2, 3,
-    4, 6, 5, 4, 7, 6,
-    0, 4, 5, 0, 5, 1,
-    1, 5, 10, 1, 10, 2, 10, 5, 6, 10, 6, 2,
-    2, 6, 7, 2, 7, 3,
-    3, 7, 8, 3, 8, 0, 8, 7, 4, 8, 4, 0,
-    8, 9, 7, 7, 9, 3,
-    10, 5, 11, 11, 5, 6
-  ];
-  return buildGeometry(vertices, indices);
-}
-
-function createHoodGeometry() {
-  const vertices = new Float32Array([
-    -1.02, 0.00, -1.18, 1.02, 0.00, -1.18, 1.08, 0.00, 1.36, -1.08, 0.00, 1.36,
-    -0.94, 0.20, -1.08, 0.94, 0.20, -1.08, 0.98, 0.08, 1.28, -0.98, 0.08, 1.28
-  ]);
-  return buildGeometry(vertices, boxIndices());
-}
-
-function createTrunkGeometry() {
-  const vertices = new Float32Array([
-    -1.02, 0.00, -0.92, 1.02, 0.00, -0.92, 1.06, 0.00, 0.92, -1.06, 0.00, 0.92,
-    -0.96, 0.16, -0.84, 0.96, 0.16, -0.84, 0.98, 0.08, 0.86, -0.98, 0.08, 0.86
-  ]);
-  return buildGeometry(vertices, boxIndices());
-}
-
-function createFastbackGeometry() {
-  const vertices = new Float32Array([
-    -0.84, 0.00, -1.25, 0.84, 0.00, -1.25, 0.92, 0.00, 0.82, -0.92, 0.00, 0.82,
-    -0.61, 0.58, -0.78, 0.61, 0.58, -0.78, 0.66, 0.5, 0.24, -0.66, 0.5, 0.24
-  ]);
-  return buildGeometry(vertices, boxIndices());
-}
-
-function createHoodStripeGeometry() {
-  return buildGeometry(new Float32Array([
-    -0.24, 1.175, 0.32,
-    0.24, 1.175, 0.32,
-    0.24, 1.045, 2.56,
-    -0.24, 1.045, 2.56
-  ]), [0, 1, 2, 0, 2, 3]);
-}
-
-function createRoofStripeGeometry() {
-  return buildGeometry(new Float32Array([
-    -0.21, 1.595, -1.02,
-    0.21, 1.595, -1.02,
-    0.21, 1.51, -0.1,
-    -0.21, 1.51, -0.1
-  ]), [0, 1, 2, 0, 2, 3]);
-}
-
-function createTrunkStripeGeometry() {
-  return buildGeometry(new Float32Array([
-    -0.24, 1.09, -2.36,
-    0.24, 1.09, -2.36,
-    0.24, 1.018, -0.82,
-    -0.24, 1.018, -0.82
-  ]), [0, 1, 2, 0, 2, 3]);
-}
-
-function createWindshieldSurfaceGeometry() {
-  return buildGeometry(new Float32Array([
-    -0.74, 0.16, 0.62,
-    0.74, 0.16, 0.62,
-    0.59, 0.53, 0.12,
-    -0.59, 0.53, 0.12
-  ]), [0, 1, 2, 0, 2, 3]);
-}
-
-function createRearWindowSurfaceGeometry() {
-  return buildGeometry(new Float32Array([
-    -0.68, 0.15, -1.14,
-    0.68, 0.15, -1.14,
-    0.53, 0.52, -0.8,
-    -0.53, 0.52, -0.8
-  ]), [0, 2, 1, 0, 3, 2]);
-}
-
-function createSideWindowSurfaceGeometry(side) {
-  const s = side;
-  return buildGeometry(new Float32Array([
-    s * 0.915, 0.2, 0.5,
-    s * 0.705, 0.52, 0.18,
-    s * 0.665, 0.57, -0.8,
-    s * 0.835, 0.22, -1.16
-  ]), [0, 1, 2, 0, 2, 3]);
-}
-
-function createWindshieldFrameGeometry() {
-  return buildLineGeometry([
-    [-0.77, 0.15, 0.635],
-    [0.77, 0.15, 0.635],
-    [0.61, 0.55, 0.1],
-    [-0.61, 0.55, 0.1]
-  ]);
-}
-
-function createRearWindowFrameGeometry() {
-  return buildLineGeometry([
-    [-0.71, 0.15, -1.16],
-    [0.71, 0.15, -1.16],
-    [0.55, 0.54, -0.78],
-    [-0.55, 0.54, -0.78]
-  ]);
-}
-
-function createSideWindowFrameGeometry(side) {
-  const s = side;
-  return buildLineGeometry([
-    [s * 0.935, 0.2, 0.52],
-    [s * 0.72, 0.54, 0.18],
-    [s * 0.68, 0.59, -0.82],
-    [s * 0.855, 0.22, -1.18]
-  ]);
-}
-
-function createSabreSideDecalMaterial() {
-  const canvas = document.createElement('canvas');
-  canvas.width = 1024;
-  canvas.height = 320;
-  const ctx = canvas.getContext('2d');
-  const x = (z) => ((z + 2.72) / 5.44) * canvas.width;
-  const y = (height) => canvas.height - ((height - 0.12) / 0.9) * canvas.height;
-
-  ctx.clearRect(0, 0, canvas.width, canvas.height);
-  ctx.lineJoin = 'round';
-  ctx.lineCap = 'round';
-
-  const paint = ctx.createLinearGradient(0, y(1.55), 0, y(0.22));
-  paint.addColorStop(0, '#a8401d');
-  paint.addColorStop(0.48, '#7e1f0e');
-  paint.addColorStop(1, '#4e1009');
-  path(ctx, [
-    [-2.56, 0.34],
-    [-2.46, 0.78],
-    [-1.5, 0.9],
-    [-0.6, 0.88],
-    [0.74, 0.96],
-    [1.66, 0.91],
-    [2.5, 0.82],
-    [2.62, 0.42],
-    [2.28, 0.25],
-    [-2.34, 0.22]
-  ], x, y);
-  ctx.fillStyle = paint;
-  ctx.fill();
-  ctx.strokeStyle = '#240703';
-  ctx.lineWidth = 7;
-  ctx.stroke();
-
-  ctx.strokeStyle = 'rgba(255, 238, 210, 0.85)';
-  ctx.lineWidth = 5;
-  line(ctx, [[-2.05, 0.56], [-0.68, 0.59], [0.78, 0.61], [2.18, 0.58]], x, y);
-
-  ctx.strokeStyle = '#090b0f';
-  ctx.lineWidth = 8;
-  line(ctx, [[-0.38, 0.29], [-0.38, 0.88]], x, y);
-  ctx.lineWidth = 5;
-  line(ctx, [[-2.52, 0.76], [-2.5, 0.36]], x, y);
-  line(ctx, [[2.5, 0.78], [2.55, 0.4]], x, y);
-
-  ctx.strokeStyle = '#cfd7d8';
-  ctx.lineWidth = 3;
-  line(ctx, [[-0.42, 0.28], [-0.42, 0.88]], x, y);
-  line(ctx, [[0.68, 0.32], [0.7, 0.88]], x, y);
-
-  ctx.fillStyle = '#aeb6b8';
-  roundedRect(ctx, x(-0.28), y(0.88), 36, 13, 3);
-  ctx.fill();
-  ctx.fillStyle = '#11161b';
-  roundedRect(ctx, x(-0.68), y(0.83), 16, 68, 3);
-  ctx.fill();
-
-  ctx.strokeStyle = '#0b0f14';
-  ctx.lineWidth = 18;
-  drawArch(ctx, x(1.55), y(0.36), 76, 0.98 * Math.PI, 2.02 * Math.PI);
-  drawArch(ctx, x(-1.62), y(0.36), 76, 0.98 * Math.PI, 2.02 * Math.PI);
-
-  ctx.fillStyle = '#ff3a3d';
-  ctx.fillRect(x(-2.58), y(0.78), 38, 18);
-  ctx.fillStyle = '#ffb35e';
-  ctx.fillRect(x(-2.58) - 18, y(0.78), 16, 18);
-  ctx.fillStyle = '#f2f4e8';
-  ctx.fillRect(x(2.42), y(0.75), 28, 18);
-
-  const texture = new THREE.CanvasTexture(canvas);
-  texture.colorSpace = THREE.SRGBColorSpace;
-  texture.anisotropy = 4;
-  return new THREE.MeshBasicMaterial({
-    map: texture,
-    transparent: true,
-    side: THREE.DoubleSide,
-    depthWrite: false,
-    alphaTest: 0.04
-  });
-}
-
-function path(ctx, points, x, y) {
-  ctx.beginPath();
-  ctx.moveTo(x(points[0][0]), y(points[0][1]));
-  for (let i = 1; i < points.length; i += 1) {
-    ctx.lineTo(x(points[i][0]), y(points[i][1]));
-  }
-  ctx.closePath();
-}
-
-function line(ctx, points, x, y) {
-  ctx.beginPath();
-  ctx.moveTo(x(points[0][0]), y(points[0][1]));
-  for (let i = 1; i < points.length; i += 1) {
-    ctx.lineTo(x(points[i][0]), y(points[i][1]));
-  }
-  ctx.stroke();
-}
-
-function roundedRect(ctx, x, y, width, height, radius) {
-  ctx.beginPath();
-  ctx.moveTo(x + radius, y);
-  ctx.lineTo(x + width - radius, y);
-  ctx.quadraticCurveTo(x + width, y, x + width, y + radius);
-  ctx.lineTo(x + width, y + height - radius);
-  ctx.quadraticCurveTo(x + width, y + height, x + width - radius, y + height);
-  ctx.lineTo(x + radius, y + height);
-  ctx.quadraticCurveTo(x, y + height, x, y + height - radius);
-  ctx.lineTo(x, y + radius);
-  ctx.quadraticCurveTo(x, y, x + radius, y);
-  ctx.closePath();
-}
-
-function drawArch(ctx, x, y, radius, start, end) {
-  ctx.beginPath();
-  ctx.arc(x, y, radius, start, end);
-  ctx.stroke();
-}
-
-function boxIndices() {
-  return [
-    0, 1, 2, 0, 2, 3,
-    4, 6, 5, 4, 7, 6,
-    0, 4, 5, 0, 5, 1,
-    1, 5, 6, 1, 6, 2,
-    2, 6, 7, 2, 7, 3,
-    3, 7, 4, 3, 4, 0
-  ];
-}
-
-function buildGeometry(vertices, indices) {
-  const geometry = new THREE.BufferGeometry();
-  geometry.setAttribute('position', new THREE.BufferAttribute(vertices, 3));
-  geometry.setIndex(indices);
-  geometry.computeVertexNormals();
-  return geometry;
-}
-
-function buildLineGeometry(points) {
-  const geometry = new THREE.BufferGeometry();
-  geometry.setFromPoints(points.map(([x, y, z]) => new THREE.Vector3(x, y, z)));
-  return geometry;
 }
