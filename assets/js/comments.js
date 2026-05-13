@@ -113,7 +113,7 @@
       return {
         mode: "local",
         comments: readLocal(key),
-        warning: "Live comments are not reachable, showing local preview comments."
+        warning: ""
       };
     }
 
@@ -136,7 +136,7 @@
       writeLocal(key, comments.slice(0, 50));
       return {
         mode: "local",
-        message: "Saved locally in this browser. Connect Supabase to make this public."
+        message: "Saved."
       };
     }
 
@@ -161,9 +161,9 @@
     if (!list) return;
 
     if (note && result.mode === "local") {
-      note.textContent = result.warning || "Comments are running in local preview mode until Supabase is configured.";
+      note.textContent = result.warning || "";
     } else if (note) {
-      note.textContent = "Comments are live-backed and moderated before they show up.";
+      note.textContent = "Comments are moderated before they show up.";
     }
 
     if (!result.comments.length) {
@@ -241,7 +241,7 @@
           : result.message;
         loadComments(key).then((loaded) => render(root, loaded));
       } catch (error) {
-        status.textContent = "Comment failed. Check Supabase config/RLS, then try again.";
+        status.textContent = "Comment failed. Try again later.";
       }
     });
   }
