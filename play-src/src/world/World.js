@@ -167,7 +167,7 @@ export class World {
     for (let i = 0; i < positions.count; i += 1) {
       const x = positions.getX(i);
       const y = positions.getY(i);
-      const height = Math.sin(x * 0.045) * 0.18 + Math.cos(y * 0.035) * 0.16 + Math.sin((x + y) * 0.018) * 0.2;
+      const height = Math.sin(x * 0.045) * 0.055 + Math.cos(y * 0.035) * 0.045 + Math.sin((x + y) * 0.018) * 0.06;
       positions.setZ(i, height);
     }
     groundGeometry.computeVertexNormals();
@@ -197,7 +197,7 @@ export class World {
       patchMaterial.depthWrite = false;
       patchMaterial.needsUpdate = true;
       const patch = new THREE.Mesh(makeOrganicPatchGeometry(width, depth, x * 0.17 + z * 0.31), patchMaterial);
-      patch.position.set(x, y + 0.075, z);
+      patch.position.set(x, y + 0.04, z);
       patch.rotation.x = -Math.PI / 2;
       patch.rotation.z = rotation;
       patch.receiveShadow = true;
@@ -272,7 +272,7 @@ export class World {
     for (const path of roadPaths) {
       for (const point of path.points) {
         const node = new THREE.Mesh(new THREE.CylinderGeometry(path.width * 0.56, path.width * 0.56, 0.1, 32), nodeMaterial);
-        node.position.set(point[0], 0.055, point[1]);
+        node.position.set(point[0], 0.155, point[1]);
         node.receiveShadow = true;
         this.scene.add(node);
       }
@@ -281,9 +281,14 @@ export class World {
 
   addRoad(x, z, width, depth, rotation = 0) {
     const group = new THREE.Group();
-    group.position.set(x, 0.03, z);
+    group.position.set(x, 0.15, z);
     group.rotation.y = rotation;
-    const mesh = new THREE.Mesh(new THREE.BoxGeometry(width, 0.08, depth), this.materials.road);
+    const shoulder = new THREE.Mesh(new THREE.BoxGeometry(width + 1.35, 0.05, depth + 1.35), this.materials.edge);
+    shoulder.position.y = -0.035;
+    shoulder.receiveShadow = true;
+    group.add(shoulder);
+
+    const mesh = new THREE.Mesh(new THREE.BoxGeometry(width, 0.09, depth), this.materials.road);
     mesh.receiveShadow = true;
     group.add(mesh);
     this.scene.add(group);
@@ -827,15 +832,26 @@ export class World {
       [10, -142, 72, 28],
       [-20, 122, 62, 34],
       [-150, 18, 24, 92],
-      [148, 20, 28, 88]
+      [148, 20, 28, 88],
+      [-42, 42, 58, 36],
+      [48, -38, 62, 38],
+      [-66, -4, 44, 44],
+      [20, 132, 48, 20]
     ];
-    for (let i = 0; i < 96; i += 1) {
-      const cluster = treeClusters[i % treeClusters.length];
-      const x = cluster[0] + (pseudoRandom(i * 11) - 0.5) * cluster[2];
-      const z = cluster[1] + (pseudoRandom(i * 17) - 0.5) * cluster[3];
+    let placedTrees = 0;
+    for (let attempt = 0; attempt < 700 && placedTrees < 78; attempt += 1) {
+      const useCluster = attempt < 360;
+      const cluster = treeClusters[attempt % treeClusters.length];
+      const x = useCluster
+        ? cluster[0] + (pseudoRandom(attempt * 11) - 0.5) * cluster[2]
+        : (pseudoRandom(attempt * 23) - 0.5) * (WORLD_HALF_SIZE * 1.76);
+      const z = useCluster
+        ? cluster[1] + (pseudoRandom(attempt * 17) - 0.5) * cluster[3]
+        : (pseudoRandom(attempt * 29) - 0.5) * (WORLD_HALF_SIZE * 1.76);
       if (Math.abs(x) > WORLD_HALF_SIZE - 7 || Math.abs(z) > WORLD_HALF_SIZE - 7) continue;
       const treePosition = new THREE.Vector3(x, 0, z);
-      if (this.zones.some((zone) => flatDistance(treePosition, zone.position) < zone.radius + 24)) continue;
+      if (isNearRoad(x, z, 10.5)) continue;
+      if (this.zones.some((zone) => flatDistance(treePosition, zone.position) < zone.radius + 15)) continue;
       const tree = new THREE.Group();
       tree.position.set(x, 0, z);
       const trunk = new THREE.Mesh(new THREE.CylinderGeometry(0.2, 0.34, 2.8, 8), this.materials.trunk);
@@ -853,7 +869,8 @@ export class World {
         tree.add(leaf);
       }
       this.scene.add(tree);
-      this.decor.push({ type: 'tree', mesh: tree, phase: i * 0.37 });
+      this.decor.push({ type: 'tree', mesh: tree, phase: placedTrees * 0.37 });
+      placedTrees += 1;
     }
 
     const bladeGeometry = new THREE.PlaneGeometry(0.08, 0.75);
@@ -864,7 +881,7 @@ export class World {
     for (let i = 0; i < 850; i += 1) {
       const x = (pseudoRandom(i * 19) - 0.5) * 300;
       const z = (pseudoRandom(i * 31) - 0.5) * 300;
-      if (roadSegments.some(([rx, rz, width, depth]) => Math.abs(x - rx) < width && Math.abs(z - rz) < depth * 0.5)) continue;
+      if (isNearRoad(x, z, 3.25)) continue;
       matrix.compose(
         new THREE.Vector3(x, 0.05, z),
         new THREE.Quaternion().setFromEuler(new THREE.Euler(0, pseudoRandom(i * 7) * Math.PI, 0)),
@@ -1128,6 +1145,18 @@ export class World {
 
 function flatDistance(a, b) {
   return Math.hypot(a.x - b.x, a.z - b.z);
+}
+
+function isNearRoad(x, z, margin = 0) {
+  return roadSegments.some(([rx, rz, width, depth, rotation = 0]) => {
+    const dx = x - rx;
+    const dz = z - rz;
+    const cos = Math.cos(rotation);
+    const sin = Math.sin(rotation);
+    const localX = dx * cos - dz * sin;
+    const localZ = dx * sin + dz * cos;
+    return Math.abs(localX) <= width * 0.5 + margin && Math.abs(localZ) <= depth * 0.5 + margin;
+  });
 }
 
 function makeOrganicPatchGeometry(width, depth, seed = 1) {
