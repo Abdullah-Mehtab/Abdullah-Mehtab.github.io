@@ -4,5 +4,6 @@ window.PORTFOLIO_CONFIG = {
   commentsMode: "auto",
   commentsModeration: true,
   visitorProofEnabled: true,
+  visitorProofEndpoint: "https://zvuklviflletxyhniwdm.supabase.co/functions/v1/visitor-proof",
   adminEmailHint: "abdullahmehtab666@gmail.com"
 };
