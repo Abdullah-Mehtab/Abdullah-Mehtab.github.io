@@ -1,41 +1,30 @@
-# Abdullah Mehtab Portfolio
+# Abdullah Mehtab
 
-This repository hosts my portfolio website at:
+Portfolio website for Abdullah Mehtab, focused on offensive security, full-stack engineering, DevOps, AI/ML, IoT, embedded systems, and project-based computer science work.
+
+Live site:
 
 https://abdullah-mehtab.github.io/Abdullah-Mehtab/
 
-The site is intentionally human, not a sterile resume template. It keeps the old personality bits, the never-ending list, comments, and the footer truck, while upgrading the structure into a cleaner professional portfolio.
-
-## Current Structure
+## Main Pages
 
 ```text
-index.html              # Home
-projects.html           # Work / project case studies
-cyber-sentinel.html     # Cyber Sentinel security engineering case study
-cv.html                 # Web CV plus resume/CV downloads near the bottom
+index.html              # Home, profile, proof points, skills, services, featured projects, timeline
+projects.html           # 18-project portfolio across security, engineering, AI/ML, IoT, and systems
+cyber-sentinel.html     # Cyber Sentinel final year project write-up
+cv.html                 # Structured web resume with PDF downloads
 todo.html               # Never-Ending List
-admin.html              # Supabase Auth moderation page, noindex
-classic/                # Preserved legacy static site snapshot
-assets/css/             # Stylesheets
-assets/js/              # JavaScript
-assets/images/          # Site images and project screenshots
-supabase/schema.sql     # Backend schema for comments, admin moderation, and visitor proof
 ```
 
-## Comments Backend
+## Highlights
 
-Comments are embedded where they are useful, such as project entries, the CV page, and the Never-Ending List. Public comments are stored as `pending` first and only approved comments render publicly.
+- Offensive security experience at Tkxel.
+- Cyber Sentinel final year project using Wazuh, ELK Stack, Suricata, automation, and alerting.
+- 18 documented projects across security, DevOps, backend, machine learning, IoT, embedded systems, games, and data structures.
+- Web CV with resume downloads.
+- Moderated comments on selected pages and project entries.
+- Theme and cursor customization for visitors.
 
-The Supabase anon key is safe to expose only because Row Level Security stays enabled. Moderation is handled through `admin.html` with Supabase Auth and the `comment_admins` table.
+## Tech
 
-## Visitor Proof
-
-The site records lightweight anonymous page-view proof in Supabase when enabled in `assets/js/site-config.js`. It stores page slug, event type, selected theme/cursor/motion, referrer, optional source token, and timestamp. It does not log IP addresses or browser fingerprints.
-
-## Legacy Site
-
-The previous static site is preserved under `classic/`. The root site is the upgraded version; the classic pages are kept as a historical snapshot and because the old site had personality worth keeping.
-
-## Local Notes
-
-This project currently uses plain HTML, CSS, and JavaScript so it can run directly on GitHub Pages. A future full-stack migration can use Next.js + Supabase + Vercel once the local machine has Node.js/npm installed.
+The site is built with static HTML, CSS, and JavaScript and is hosted through GitHub Pages. Interactive comments and lightweight visitor proof use Supabase.

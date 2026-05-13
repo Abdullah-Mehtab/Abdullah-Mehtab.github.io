@@ -61,23 +61,23 @@
       <section class="page-hero">
         <div class="section-inner">
           <p class="eyebrow">Projects</p>
-          <h1>Projects, case studies, and the early experiments that built the reflexes.</h1>
-          <p class="page-lede">This is not a trophy shelf. It is a map of what I have actually touched: security systems, backend demos, automation, ML, IoT, games, compilers, robots, and a few questionable repo names from earlier eras.</p>
+          <h1>Projects across security, engineering, AI/ML, IoT, and systems.</h1>
+          <p class="page-lede">A focused record of 18 projects from my resume, ranging from Cyber Sentinel and DevOps infrastructure to embedded systems, machine learning, games, and data-structures work.</p>
         </div>
       </section>
 
       <section class="section">
         <div class="section-inner">
-          <article class="case-study-teaser reveal">
+          <article class="featured-project-teaser reveal">
             <div>
-              <p class="eyebrow">Featured case study</p>
+              <p class="eyebrow">Final Year Project</p>
               <h2>Cyber Sentinel - Security Monitoring SIEM</h2>
               <p>
                 A low-cost security monitoring stack built around Wazuh, ELK Stack, Suricata IDS, deployment automation, alerting, and small-environment practicality.
               </p>
             </div>
-            <div class="case-study-actions">
-              <a class="button primary" href="cyber-sentinel.html">Read Cyber Sentinel case study</a>
+            <div class="featured-project-actions">
+              <a class="button primary" href="cyber-sentinel.html">Read Cyber Sentinel blog</a>
               <a class="button" href="https://abdullah-mehtab.github.io/Cyber-Sentinal/" target="_blank" rel="noopener">Project site</a>
             </div>
           </article>
@@ -109,7 +109,7 @@
                   <span class="tag">Wazuh</span><span class="tag">ELK</span><span class="tag">Suricata</span><span class="tag">Python</span>
                 </div>
                 <div class="button-row">
-                  <a class="button primary" href="cyber-sentinel.html">Read case study</a>
+                  <a class="button primary" href="cyber-sentinel.html">Read Cyber Sentinel blog</a>
                   <a class="button" href="https://abdullah-mehtab.github.io/Cyber-Sentinal/" target="_blank" rel="noopener">Project site</a>
                 </div>
               </div>
@@ -133,7 +133,10 @@
             </article>
 
             <article id="devops-environment" class="work-card" data-categories="devops fullstack">
-              <img src="assets/images/optimized/Project10.webp" alt="Database and architecture diagram" width="624" height="338" loading="lazy" decoding="async">
+              <div class="work-placeholder fullstack" role="img" aria-label="Infrastructure and deployment project placeholder">
+                <span>IaC -> CI/CD</span>
+                <strong>DevOps Production Environment</strong>
+              </div>
               <div>
                 <div class="work-meta"><span>Infrastructure</span><span>Production-style demo</span></div>
                 <h3>DevOps Production Environment</h3>
@@ -212,11 +215,11 @@
             <article id="search-engine" class="work-card" data-categories="early fullstack">
               <img src="assets/images/optimized/Project3.webp" alt="Small scale search engine" width="980" height="828" loading="lazy" decoding="async">
               <div>
-                <div class="work-meta"><span>DSA</span><span>Search</span></div>
+                <div class="work-meta"><span>Python</span><span>DSA + Search</span></div>
                 <h3>Small Scale Search Engine</h3>
-                <p>Search prototype using indexing and retrieval concepts from data structures and algorithms coursework.</p>
+                <p>Python search prototype using indexing and retrieval concepts from data structures and algorithms coursework.</p>
                 <div class="tag-list">
-                  <span class="tag">DSA</span><span class="tag">Search</span><span class="tag">Algorithms</span>
+                  <span class="tag">Python</span><span class="tag">DSA</span><span class="tag">Search</span>
                 </div>
                 <div class="button-row">
                   <a class="button" href="https://github.com/Abdullah-Mehtab/Search-Engine-Using-DSA" target="_blank" rel="noopener">Repository</a>
@@ -225,12 +228,12 @@
               <div data-comments data-type="project" data-slug="small-scale-search-engine" data-title="Comments on the search engine"></div>
             </article>
 
-            <article class="work-card" data-categories="early ml">
+            <article id="linear-regression" class="work-card" data-categories="early ml">
               <img src="assets/images/optimized/Project6.webp" alt="Linear regression assembly output" width="620" height="538" loading="lazy" decoding="async">
               <div>
                 <div class="work-meta"><span>MIPS Assembly</span><span>ML basics</span></div>
                 <h3>Linear Regression in Assembly</h3>
-                <p>A low-level implementation of linear regression in MIPS Assembly. Did it need to exist? Maybe. Did it teach things? Absolutely.</p>
+                <p>A low-level implementation of linear regression in MIPS Assembly, connecting ML fundamentals with computer architecture.</p>
                 <div class="tag-list">
                   <span class="tag">Assembly</span><span class="tag">Machine Learning</span>
                 </div>
@@ -238,9 +241,10 @@
                   <a class="button" href="https://github.com/Abdullah-Mehtab/Linear-Regression-in-Assembly" target="_blank" rel="noopener">Repository</a>
                 </div>
               </div>
+              <div data-comments data-type="project" data-slug="linear-regression-assembly" data-title="Comments on Linear Regression in Assembly"></div>
             </article>
 
-            <article class="work-card" data-categories="early">
+            <article id="expression-parser" class="work-card" data-categories="early">
               <img src="assets/images/optimized/Project14.webp" alt="Expression parser compiler" width="817" height="807" loading="lazy" decoding="async">
               <div>
                 <div class="work-meta"><span>Compiler construction</span><span>C</span></div>
@@ -253,14 +257,92 @@
                   <a class="button" href="https://github.com/Abdullah-Mehtab/Expression-Parser-Compiler-Construction" target="_blank" rel="noopener">Repository</a>
                 </div>
               </div>
+              <div data-comments data-type="project" data-slug="expression-parser-compiler" data-title="Comments on the expression parser"></div>
             </article>
 
-            <article class="work-card" data-categories="early iot">
+            <article id="cab-taxi-management" class="work-card" data-categories="early fullstack">
+              <img src="assets/images/optimized/Project5.webp" alt="Cab and taxi management system interface" width="980" height="554" loading="lazy" decoding="async">
+              <div>
+                <div class="work-meta"><span>Tkinter</span><span>Desktop GUI</span></div>
+                <h3>Cab/Taxi Management System</h3>
+                <p>Tkinter-based management system with authentication, logging, booking flows, driver assignment, and fare calculation practice.</p>
+                <div class="tag-list">
+                  <span class="tag">Python</span><span class="tag">Tkinter</span><span class="tag">GUI</span>
+                </div>
+                <div class="button-row">
+                  <a class="button" href="https://github.com/Abdullah-Mehtab/Begginer-Taxi-Management-System-unusable-/tree/main" target="_blank" rel="noopener">Repository</a>
+                </div>
+              </div>
+              <div data-comments data-type="project" data-slug="cab-taxi-management" data-title="Comments on the taxi management system"></div>
+            </article>
+
+            <article id="gol-gappay" class="work-card" data-categories="early fullstack">
+              <img src="assets/images/optimized/Project10.webp" alt="Gol-Gappay stall management database diagram" width="624" height="338" loading="lazy" decoding="async">
+              <div>
+                <div class="work-meta"><span>SQL</span><span>Database systems</span></div>
+                <h3>Gol-Gappay Stall Management System</h3>
+                <p>SQL-based management system for a food stall, focused on structured data, inventory, sales, and customer records.</p>
+                <div class="tag-list">
+                  <span class="tag">SQL</span><span class="tag">Database</span><span class="tag">ERD</span>
+                </div>
+                <div class="button-row">
+                  <a class="button" href="https://github.com/Abdullah-Mehtab/Gol-Gappay-SMS/tree/main" target="_blank" rel="noopener">Repository</a>
+                </div>
+              </div>
+              <div data-comments data-type="project" data-slug="gol-gappay-stall-management" data-title="Comments on Gol-Gappay Stall Management"></div>
+            </article>
+
+            <article id="facial-recognition" class="work-card" data-categories="early ml">
+              <img src="assets/images/optimized/Project8.webp" alt="Facial image recognition system" width="980" height="878" loading="lazy" decoding="async">
+              <div>
+                <div class="work-meta"><span>TensorFlow</span><span>Computer vision</span></div>
+                <h3>Facial Image Recognition</h3>
+                <p>TensorFlow-based facial recognition project for identity verification practice and image classification workflows.</p>
+                <div class="tag-list">
+                  <span class="tag">TensorFlow</span><span class="tag">Python</span><span class="tag">CV</span>
+                </div>
+                <div class="button-row">
+                  <a class="button" href="https://github.com/Abdullah-Mehtab/Image-Recognition-Tensorflow-/tree/main" target="_blank" rel="noopener">Repository</a>
+                </div>
+              </div>
+              <div data-comments data-type="project" data-slug="facial-image-recognition" data-title="Comments on facial image recognition"></div>
+            </article>
+
+            <article id="space-invaders" class="work-card" data-categories="early">
+              <img src="assets/images/optimized/Project9.webp" alt="Space Invaders game interface" width="980" height="998" loading="lazy" decoding="async">
+              <div>
+                <div class="work-meta"><span>Java Swing</span><span>Game GUI</span></div>
+                <h3>Space Invaders Game GUI</h3>
+                <p>Java Swing-based Space Invaders implementation with GUI programming, game loops, and movement/collision mechanics.</p>
+                <div class="tag-list">
+                  <span class="tag">Java</span><span class="tag">Swing</span><span class="tag">Game</span>
+                </div>
+                <div class="button-row">
+                  <a class="button" href="https://github.com/Abdullah-Mehtab/Space-Invaders" target="_blank" rel="noopener">Repository</a>
+                </div>
+              </div>
+              <div data-comments data-type="project" data-slug="space-invaders-game" data-title="Comments on Space Invaders"></div>
+            </article>
+
+            <article id="line-following-robot" class="work-card" data-categories="early iot">
+              <img src="assets/images/optimized/Project11.webp" alt="Line-following mini robot" width="414" height="477" loading="lazy" decoding="async">
+              <div>
+                <div class="work-meta"><span>Robotics</span><span>Embedded systems</span></div>
+                <h3>Line-Following Mini-Robot</h3>
+                <p>Hardware robot car using sensors, motors, and control logic to follow predefined paths.</p>
+                <div class="tag-list">
+                  <span class="tag">Robotics</span><span class="tag">Sensors</span><span class="tag">Embedded</span>
+                </div>
+              </div>
+              <div data-comments data-type="project" data-slug="line-following-mini-robot" data-title="Comments on the line-following robot"></div>
+            </article>
+
+            <article id="bluetooth-car" class="work-card" data-categories="early iot">
               <img src="assets/images/optimized/Project12.webp" alt="Bluetooth controlled Arduino car" width="577" height="819" loading="lazy" decoding="async">
               <div>
                 <div class="work-meta"><span>Arduino</span><span>Hardware</span></div>
                 <h3>Bluetooth Controlled Car</h3>
-                <p>Arduino-powered car controlled over Bluetooth, part embedded systems practice and part make-it-move joy.</p>
+                <p>Arduino-powered car controlled over Bluetooth using a smartphone, combining hardware wiring with embedded control logic.</p>
                 <div class="tag-list">
                   <span class="tag">Arduino</span><span class="tag">Bluetooth</span><span class="tag">Embedded</span>
                 </div>
@@ -268,18 +350,39 @@
                   <a class="button" href="https://github.com/Abdullah-Mehtab/Bluetooth-Controlled-Car-Arduino-/tree/main" target="_blank" rel="noopener">Repository</a>
                 </div>
               </div>
+              <div data-comments data-type="project" data-slug="bluetooth-controlled-car" data-title="Comments on the Bluetooth controlled car"></div>
             </article>
 
-            <article class="work-card" data-categories="early">
+            <article id="ludo-game" class="work-card" data-categories="early">
               <img src="assets/images/optimized/Project7.webp" alt="Ludo game interface" width="980" height="745" loading="lazy" decoding="async">
               <div>
-                <div class="work-meta"><span>Pygame</span><span>Game UI</span></div>
-                <h3>Older Games and GUI Projects</h3>
-                <p>Ludo, Space Invaders, 2048, Taxi Management, TensorFlow image recognition, line-following robots, and other projects that made the skill tree branch out.</p>
+                <div class="work-meta"><span>Pygame</span><span>Game GUI</span></div>
+                <h3>Ludo Game GUI</h3>
+                <p>Pygame Ludo implementation with board rendering, player movement, multiplayer flow, and traditional Ludo rules.</p>
                 <div class="tag-list">
-                  <span class="tag">Pygame</span><span class="tag">Java Swing</span><span class="tag">Tkinter</span><span class="tag">TensorFlow</span>
+                  <span class="tag">Python</span><span class="tag">Pygame</span><span class="tag">Game</span>
+                </div>
+                <div class="button-row">
+                  <a class="button" href="https://github.com/Abdullah-Mehtab/Ludo-in-Python" target="_blank" rel="noopener">Repository</a>
                 </div>
               </div>
+              <div data-comments data-type="project" data-slug="ludo-game-gui" data-title="Comments on the Ludo game"></div>
+            </article>
+
+            <article id="game-2048" class="work-card" data-categories="early">
+              <img src="assets/images/optimized/Project13.webp" alt="2048 game interface" width="760" height="770" loading="lazy" decoding="async">
+              <div>
+                <div class="work-meta"><span>C++</span><span>Game logic</span></div>
+                <h3>2048 Game</h3>
+                <p>C++ implementation of the classic 2048 puzzle game, focused on tile movement, merge logic, and efficient state updates.</p>
+                <div class="tag-list">
+                  <span class="tag">C++</span><span class="tag">Game</span><span class="tag">Algorithms</span>
+                </div>
+                <div class="button-row">
+                  <a class="button" href="https://github.com/Abdullah-Mehtab/2048-Game/tree/main" target="_blank" rel="noopener">Repository</a>
+                </div>
+              </div>
+              <div data-comments data-type="project" data-slug="2048-game" data-title="Comments on the 2048 game"></div>
             </article>
           </div>
         </div>
