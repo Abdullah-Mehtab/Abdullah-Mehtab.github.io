@@ -52,16 +52,14 @@ export class Vehicle {
       clearcoat: 0.58,
       clearcoatRoughness: 0.18,
       emissive: 0x160402,
-      emissiveIntensity: 0.1,
-      flatShading: true
+      emissiveIntensity: 0.1
     });
     const paintDark = new THREE.MeshPhysicalMaterial({
       color: 0x5f1c10,
       roughness: 0.34,
       metalness: 0.42,
       clearcoat: 0.42,
-      clearcoatRoughness: 0.22,
-      flatShading: true
+      clearcoatRoughness: 0.22
     });
     const stripe = new THREE.MeshStandardMaterial({ color: 0xe8dfca, roughness: 0.28, metalness: 0.22, side: THREE.DoubleSide });
     const dark = new THREE.MeshStandardMaterial({
@@ -110,13 +108,21 @@ export class Vehicle {
     for (const side of [-1, 1]) {
       addWindow(createSideWindowSurfaceGeometry(side), glass, [0, 1.03, -0.32], this.group);
       addWindowFrame(createSideWindowFrameGeometry(side), glassFrame, [0, 1.03, -0.32], this.group);
-      add(new THREE.BoxGeometry(0.38, 0.07, 0.07), dark, [side * 1.08, 1.08, 0.43], [0, 0, side * 0.04]);
-      add(new THREE.BoxGeometry(0.22, 0.13, 0.12), chrome, [side * 1.28, 1.1, 0.46], [0, side * 0.18, 0]);
-      add(new THREE.BoxGeometry(0.022, 0.082, 0.105), glass, [side * 1.318, 1.1, 0.47], [0, side * 0.18, 0]);
+      add(new THREE.BoxGeometry(0.05, 0.32, 0.045), dark, [side * 0.99, 0.94, 0.34], [0, 0, side * 0.08]);
+      add(new THREE.BoxGeometry(0.34, 0.075, 0.07), dark, [side * 1.12, 0.98, 0.41], [0, 0, side * 0.05]);
+      add(new THREE.BoxGeometry(0.24, 0.15, 0.12), chrome, [side * 1.29, 0.99, 0.45], [0, side * 0.16, 0]);
+      add(new THREE.BoxGeometry(0.024, 0.086, 0.105), glass, [side * 1.33, 0.99, 0.46], [0, side * 0.16, 0]);
       add(new THREE.BoxGeometry(0.03, 0.055, 0.22), chrome, [side * 1.205, 0.93, -0.27]);
       add(new THREE.BoxGeometry(0.028, 0.028, 3.72), chrome, [side * 1.18, 0.68, 0.0]);
       add(new THREE.BoxGeometry(0.036, 0.32, 0.032), dark, [side * 1.18, 0.82, -0.48]);
+      const sideDecal = add(new THREE.PlaneGeometry(5.45, 0.9), createSabreSideDecalMaterial(), [side * 1.232, 0.58, 0], [0, side > 0 ? Math.PI / 2 : -Math.PI / 2, 0]);
+      sideDecal.castShadow = false;
+      sideDecal.receiveShadow = false;
+      sideDecal.renderOrder = 7;
     }
+
+    add(new THREE.BoxGeometry(0.035, 0.13, 0.026), dark, [0, 1.48, 0.1], [-0.52, 0, 0]);
+    add(new THREE.BoxGeometry(0.24, 0.07, 0.035), dark, [0, 1.4, 0.22], [-0.52, 0, 0]);
 
     add(new THREE.BoxGeometry(2.1, 0.42, 0.16), grille, [0, 0.82, 2.68]);
     add(new THREE.BoxGeometry(2.45, 0.18, 0.22), chrome, [0, 0.55, 2.78]);
@@ -139,8 +145,8 @@ export class Vehicle {
     }
 
     for (const x of [-0.62, 0.62]) {
-      add(new THREE.BoxGeometry(0.34, 0.15, 0.055), new THREE.MeshBasicMaterial({ color: 0xff2b36 }), [x, 0.78, -2.77]);
-      add(new THREE.BoxGeometry(0.14, 0.15, 0.055), new THREE.MeshBasicMaterial({ color: 0xffa04d }), [x * 1.42, 0.78, -2.77]);
+      add(new THREE.BoxGeometry(0.34, 0.15, 0.055), new THREE.MeshBasicMaterial({ color: 0xff2b36 }), [x, 0.78, -2.58]);
+      add(new THREE.BoxGeometry(0.14, 0.15, 0.055), new THREE.MeshBasicMaterial({ color: 0xffa04d }), [x * 1.42, 0.78, -2.58]);
     }
 
     const wheelGeometry = new THREE.CylinderGeometry(0.52, 0.52, 0.42, 36);
@@ -453,8 +459,8 @@ function createTrunkGeometry() {
 
 function createFastbackGeometry() {
   const vertices = new Float32Array([
-    -0.82, 0.00, -1.25, 0.82, 0.00, -1.25, 0.9, 0.00, 0.82, -0.9, 0.00, 0.82,
-    -0.64, 0.72, -0.72, 0.64, 0.72, -0.72, 0.68, 0.58, 0.28, -0.68, 0.58, 0.28
+    -0.84, 0.00, -1.25, 0.84, 0.00, -1.25, 0.92, 0.00, 0.82, -0.92, 0.00, 0.82,
+    -0.61, 0.58, -0.78, 0.61, 0.58, -0.78, 0.66, 0.5, 0.24, -0.66, 0.5, 0.24
   ]);
   return buildGeometry(vertices, boxIndices());
 }
@@ -470,10 +476,10 @@ function createHoodStripeGeometry() {
 
 function createRoofStripeGeometry() {
   return buildGeometry(new Float32Array([
-    -0.21, 1.765, -1.02,
-    0.21, 1.765, -1.02,
-    0.21, 1.62, -0.08,
-    -0.21, 1.62, -0.08
+    -0.21, 1.595, -1.02,
+    0.21, 1.595, -1.02,
+    0.21, 1.51, -0.1,
+    -0.21, 1.51, -0.1
   ]), [0, 1, 2, 0, 2, 3]);
 }
 
@@ -488,38 +494,38 @@ function createTrunkStripeGeometry() {
 
 function createWindshieldSurfaceGeometry() {
   return buildGeometry(new Float32Array([
-    -0.74, 0.18, 0.62,
-    0.74, 0.18, 0.62,
-    0.6, 0.62, 0.12,
-    -0.6, 0.62, 0.12
+    -0.74, 0.16, 0.62,
+    0.74, 0.16, 0.62,
+    0.59, 0.53, 0.12,
+    -0.59, 0.53, 0.12
   ]), [0, 1, 2, 0, 2, 3]);
 }
 
 function createRearWindowSurfaceGeometry() {
   return buildGeometry(new Float32Array([
-    -0.68, 0.16, -1.14,
-    0.68, 0.16, -1.14,
-    0.54, 0.56, -0.78,
-    -0.54, 0.56, -0.78
+    -0.68, 0.15, -1.14,
+    0.68, 0.15, -1.14,
+    0.53, 0.52, -0.8,
+    -0.53, 0.52, -0.8
   ]), [0, 2, 1, 0, 3, 2]);
 }
 
 function createSideWindowSurfaceGeometry(side) {
   const s = side;
   return buildGeometry(new Float32Array([
-    s * 0.915, 0.21, 0.5,
-    s * 0.705, 0.6, 0.18,
-    s * 0.665, 0.67, -0.8,
-    s * 0.835, 0.23, -1.16
+    s * 0.915, 0.2, 0.5,
+    s * 0.705, 0.52, 0.18,
+    s * 0.665, 0.57, -0.8,
+    s * 0.835, 0.22, -1.16
   ]), [0, 1, 2, 0, 2, 3]);
 }
 
 function createWindshieldFrameGeometry() {
   return buildLineGeometry([
-    [-0.77, 0.17, 0.635],
-    [0.77, 0.17, 0.635],
-    [0.62, 0.64, 0.1],
-    [-0.62, 0.64, 0.1]
+    [-0.77, 0.15, 0.635],
+    [0.77, 0.15, 0.635],
+    [0.61, 0.55, 0.1],
+    [-0.61, 0.55, 0.1]
   ]);
 }
 
@@ -527,8 +533,8 @@ function createRearWindowFrameGeometry() {
   return buildLineGeometry([
     [-0.71, 0.15, -1.16],
     [0.71, 0.15, -1.16],
-    [0.56, 0.58, -0.76],
-    [-0.56, 0.58, -0.76]
+    [0.55, 0.54, -0.78],
+    [-0.55, 0.54, -0.78]
   ]);
 }
 
@@ -536,10 +542,129 @@ function createSideWindowFrameGeometry(side) {
   const s = side;
   return buildLineGeometry([
     [s * 0.935, 0.2, 0.52],
-    [s * 0.72, 0.62, 0.18],
-    [s * 0.68, 0.69, -0.82],
+    [s * 0.72, 0.54, 0.18],
+    [s * 0.68, 0.59, -0.82],
     [s * 0.855, 0.22, -1.18]
   ]);
+}
+
+function createSabreSideDecalMaterial() {
+  const canvas = document.createElement('canvas');
+  canvas.width = 1024;
+  canvas.height = 320;
+  const ctx = canvas.getContext('2d');
+  const x = (z) => ((z + 2.72) / 5.44) * canvas.width;
+  const y = (height) => canvas.height - ((height - 0.12) / 0.9) * canvas.height;
+
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  ctx.lineJoin = 'round';
+  ctx.lineCap = 'round';
+
+  const paint = ctx.createLinearGradient(0, y(1.55), 0, y(0.22));
+  paint.addColorStop(0, '#a8401d');
+  paint.addColorStop(0.48, '#7e1f0e');
+  paint.addColorStop(1, '#4e1009');
+  path(ctx, [
+    [-2.56, 0.34],
+    [-2.46, 0.78],
+    [-1.5, 0.9],
+    [-0.6, 0.88],
+    [0.74, 0.96],
+    [1.66, 0.91],
+    [2.5, 0.82],
+    [2.62, 0.42],
+    [2.28, 0.25],
+    [-2.34, 0.22]
+  ], x, y);
+  ctx.fillStyle = paint;
+  ctx.fill();
+  ctx.strokeStyle = '#240703';
+  ctx.lineWidth = 7;
+  ctx.stroke();
+
+  ctx.strokeStyle = 'rgba(255, 238, 210, 0.85)';
+  ctx.lineWidth = 5;
+  line(ctx, [[-2.05, 0.56], [-0.68, 0.59], [0.78, 0.61], [2.18, 0.58]], x, y);
+
+  ctx.strokeStyle = '#090b0f';
+  ctx.lineWidth = 8;
+  line(ctx, [[-0.38, 0.29], [-0.38, 0.88]], x, y);
+  ctx.lineWidth = 5;
+  line(ctx, [[-2.52, 0.76], [-2.5, 0.36]], x, y);
+  line(ctx, [[2.5, 0.78], [2.55, 0.4]], x, y);
+
+  ctx.strokeStyle = '#cfd7d8';
+  ctx.lineWidth = 3;
+  line(ctx, [[-0.42, 0.28], [-0.42, 0.88]], x, y);
+  line(ctx, [[0.68, 0.32], [0.7, 0.88]], x, y);
+
+  ctx.fillStyle = '#aeb6b8';
+  roundedRect(ctx, x(-0.28), y(0.88), 36, 13, 3);
+  ctx.fill();
+  ctx.fillStyle = '#11161b';
+  roundedRect(ctx, x(-0.68), y(0.83), 16, 68, 3);
+  ctx.fill();
+
+  ctx.strokeStyle = '#0b0f14';
+  ctx.lineWidth = 18;
+  drawArch(ctx, x(1.55), y(0.36), 76, 0.98 * Math.PI, 2.02 * Math.PI);
+  drawArch(ctx, x(-1.62), y(0.36), 76, 0.98 * Math.PI, 2.02 * Math.PI);
+
+  ctx.fillStyle = '#ff3a3d';
+  ctx.fillRect(x(-2.58), y(0.78), 38, 18);
+  ctx.fillStyle = '#ffb35e';
+  ctx.fillRect(x(-2.58) - 18, y(0.78), 16, 18);
+  ctx.fillStyle = '#f2f4e8';
+  ctx.fillRect(x(2.42), y(0.75), 28, 18);
+
+  const texture = new THREE.CanvasTexture(canvas);
+  texture.colorSpace = THREE.SRGBColorSpace;
+  texture.anisotropy = 4;
+  return new THREE.MeshBasicMaterial({
+    map: texture,
+    transparent: true,
+    side: THREE.DoubleSide,
+    depthWrite: false,
+    alphaTest: 0.04
+  });
+}
+
+function path(ctx, points, x, y) {
+  ctx.beginPath();
+  ctx.moveTo(x(points[0][0]), y(points[0][1]));
+  for (let i = 1; i < points.length; i += 1) {
+    ctx.lineTo(x(points[i][0]), y(points[i][1]));
+  }
+  ctx.closePath();
+}
+
+function line(ctx, points, x, y) {
+  ctx.beginPath();
+  ctx.moveTo(x(points[0][0]), y(points[0][1]));
+  for (let i = 1; i < points.length; i += 1) {
+    ctx.lineTo(x(points[i][0]), y(points[i][1]));
+  }
+  ctx.stroke();
+}
+
+function roundedRect(ctx, x, y, width, height, radius) {
+  ctx.beginPath();
+  ctx.moveTo(x + radius, y);
+  ctx.lineTo(x + width - radius, y);
+  ctx.quadraticCurveTo(x + width, y, x + width, y + radius);
+  ctx.lineTo(x + width, y + height - radius);
+  ctx.quadraticCurveTo(x + width, y + height, x + width - radius, y + height);
+  ctx.lineTo(x + radius, y + height);
+  ctx.quadraticCurveTo(x, y + height, x, y + height - radius);
+  ctx.lineTo(x, y + radius);
+  ctx.quadraticCurveTo(x, y, x + radius, y);
+  ctx.closePath();
+}
+
+function drawArch(ctx, x, y, radius, start, end) {
+  ctx.beginPath();
+  ctx.arc(x, y, radius, start, end);
+  ctx.stroke();
 }
 
 function boxIndices() {
