@@ -194,7 +194,7 @@
     const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     if (reduceMotion) return;
 
-    const cards = document.querySelectorAll(".profile-panel, .panel, .work-card, .service-card, .skill-item, .stat-card, .todo-column, .download-card");
+    const cards = document.querySelectorAll(".profile-panel, .panel, .work-card, .service-card, .skill-item, .stat-card, .todo-column, .download-card, .timeline-card");
     cards.forEach((card) => {
       card.classList.add("kinetic-card");
 
@@ -217,6 +217,22 @@
     });
   }
 
+  function setupTimelineCarousel() {
+    const track = document.querySelector("[data-timeline-track]");
+    const previous = document.querySelector("[data-timeline-prev]");
+    const next = document.querySelector("[data-timeline-next]");
+    if (!track || !previous || !next) return;
+
+    function scrollByCard(direction) {
+      const firstCard = track.querySelector(".timeline-item");
+      const distance = firstCard ? firstCard.getBoundingClientRect().width + 18 : 380;
+      track.scrollBy({ left: direction * distance, behavior: "smooth" });
+    }
+
+    previous.addEventListener("click", () => scrollByCard(-1));
+    next.addEventListener("click", () => scrollByCard(1));
+  }
+
   document.addEventListener("DOMContentLoaded", () => {
     setActiveNav();
     setupMobileNav();
@@ -229,5 +245,6 @@
     setupCounters();
     setupPointerEffects();
     setupTiltCards();
+    setupTimelineCarousel();
   });
 })();
