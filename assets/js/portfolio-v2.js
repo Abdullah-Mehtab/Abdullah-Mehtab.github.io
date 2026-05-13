@@ -131,12 +131,12 @@
     const motionQuery = window.matchMedia("(prefers-reduced-motion: reduce)");
     const compactMotionQuery = window.matchMedia("(max-width: 760px)");
 
-    const savedTheme = themeOptions.some(([value]) => value === readStoredValue(storageKeys.theme, "dark"))
-      ? readStoredValue(storageKeys.theme, "dark")
-      : "dark";
-    const savedCursor = cursorOptions.some(([value]) => value === readStoredValue(storageKeys.cursor, "spotlight"))
-      ? readStoredValue(storageKeys.cursor, "spotlight")
-      : "spotlight";
+    const savedTheme = themeOptions.some(([value]) => value === readStoredValue(storageKeys.theme, "professional"))
+      ? readStoredValue(storageKeys.theme, "professional")
+      : "professional";
+    const savedCursor = cursorOptions.some(([value]) => value === readStoredValue(storageKeys.cursor, "constellation"))
+      ? readStoredValue(storageKeys.cursor, "constellation")
+      : "constellation";
     const savedMotion = motionOptions.some(([value]) => value === readStoredValue(storageKeys.motion, "auto"))
       ? readStoredValue(storageKeys.motion, "auto")
       : "auto";
@@ -199,8 +199,8 @@
 
     resetButtons.forEach((button) => {
       button.addEventListener("click", () => {
-        applyTheme("dark");
-        applyCursor("spotlight");
+        applyTheme("professional");
+        applyCursor("constellation");
         applyMotion("auto");
       });
     });
@@ -343,7 +343,7 @@
       "Security mindset, builder instincts, and a public trail of projects across domains.",
       "Computer science, offensive security, DevOps, AI/ML, IoT, and practical systems work.",
       "Broad technical range with a preference for work that can be tested, shipped, and explained clearly.",
-      "A portfolio for projects, proof, and the occasional line that sounds like a real person wrote it."
+      "Security thinking, engineering range, and a bias toward work that can survive review."
     ];
     target.textContent = lines[Math.floor(Math.random() * lines.length)];
   }
