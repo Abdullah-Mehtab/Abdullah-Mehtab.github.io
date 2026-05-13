@@ -10,7 +10,14 @@
     ["ocean", "Ocean Mode"],
     ["ember", "Ember Mode"],
     ["arctic", "Arctic Mode"],
-    ["royal", "Royal Mode"]
+    ["royal", "Royal Mode"],
+    ["noir", "Noir Mode"],
+    ["blueprint", "Blueprint Mode"],
+    ["aurora", "Aurora Mode"],
+    ["rain", "Rain Mode"],
+    ["signal", "Signal Mode"],
+    ["lab", "Lab Mode"],
+    ["paper", "Paper Mode"]
   ];
 
   const cursorOptions = [
@@ -20,6 +27,13 @@
     ["ribbon", "Ribbon"],
     ["reticle", "Reticle"],
     ["embers", "Embers"],
+    ["plasma", "Plasma Wake"],
+    ["ink", "Ink Ripple"],
+    ["constellation", "Constellation"],
+    ["scanner", "Scanner"],
+    ["orbit", "Orbit"],
+    ["snow", "Snowfall"],
+    ["pulse", "Pulse Rings"],
     ["off", "Off"]
   ];
 
@@ -327,22 +341,59 @@
       document.documentElement.style.setProperty("--mouse-y", `${pointerY}px`);
     }
 
+    const noTrailModes = new Set(["spotlight", "reticle", "off"]);
+    const jitterByMode = {
+      sparks: 28,
+      embers: 28,
+      constellation: 22,
+      snow: 44
+    };
+    const delayByMode = {
+      ribbon: 16,
+      plasma: 18,
+      scanner: 22,
+      orbit: 26,
+      pulse: 30,
+      constellation: 32,
+      snow: 42
+    };
+    const lifespanByMode = {
+      scanner: 680,
+      ribbon: 780,
+      comet: 850,
+      sparks: 900,
+      pulse: 940,
+      ink: 980,
+      plasma: 1050,
+      orbit: 1080,
+      embers: 1150,
+      constellation: 1220,
+      snow: 1450
+    };
+
     function createTrailPoint(x, y, mode) {
-      if (!effects || mode === "spotlight" || mode === "reticle" || mode === "off") return;
+      if (!effects || noTrailModes.has(mode)) return;
 
       const point = document.createElement("span");
       point.className = "cursor-point";
 
-      if (mode === "sparks" || mode === "embers") {
-        x += (Math.random() - 0.5) * 28;
-        y += (Math.random() - 0.5) * 28;
+      const jitter = jitterByMode[mode] || 0;
+      if (jitter) {
+        x += (Math.random() - 0.5) * jitter;
+        y += (Math.random() - 0.5) * jitter;
+      }
+
+      if (mode === "orbit") {
+        point.innerHTML = "<span></span><span></span>";
       }
 
       point.style.left = `${x}px`;
       point.style.top = `${y}px`;
+      point.style.setProperty("--cursor-rotate", `${Math.round(Math.random() * 360)}deg`);
+      point.style.setProperty("--cursor-scale", (0.72 + Math.random() * 0.58).toFixed(2));
       effects.appendChild(point);
 
-      window.setTimeout(() => point.remove(), mode === "embers" ? 1150 : 850);
+      window.setTimeout(() => point.remove(), lifespanByMode[mode] || 850);
     }
 
     window.addEventListener("pointermove", (event) => {
@@ -352,7 +403,7 @@
 
       const now = performance.now();
       const mode = document.body.dataset.cursor || "spotlight";
-      const delay = mode === "ribbon" ? 16 : 34;
+      const delay = delayByMode[mode] || 34;
       if (now - lastTrail > delay) {
         lastTrail = now;
         createTrailPoint(pointerX, pointerY, mode);
