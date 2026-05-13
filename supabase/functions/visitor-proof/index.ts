@@ -3,8 +3,16 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
-  "Access-Control-Allow-Methods": "POST, OPTIONS"
+  "Access-Control-Allow-Methods": "GET, POST, OPTIONS"
 };
+
+const allowedEventTypes = new Set([
+  "page_view",
+  "play_zone_visit",
+  "potato_summon",
+  "play_data_shard",
+  "play_boost_pad"
+]);
 
 function clean(value: unknown, maxLength: number, pattern = /[<>`"'\u0000-\u001F\u007F]/g) {
   return String(value || "")
@@ -12,6 +20,11 @@ function clean(value: unknown, maxLength: number, pattern = /[<>`"'\u0000-\u001F
     .replace(pattern, "")
     .trim()
     .slice(0, maxLength);
+}
+
+function cleanEventType(value: unknown) {
+  const eventType = clean(value || "page_view", 80, /[^a-zA-Z0-9_-]/g) || "page_view";
+  return allowedEventTypes.has(eventType) ? eventType : "page_view";
 }
 
 async function sha256(value: string) {
@@ -38,13 +51,6 @@ Deno.serve(async (request) => {
     return new Response("ok", { headers: corsHeaders });
   }
 
-  if (request.method !== "POST") {
-    return new Response(JSON.stringify({ error: "method_not_allowed" }), {
-      status: 405,
-      headers: { ...corsHeaders, "content-type": "application/json" }
-    });
-  }
-
   const supabaseUrl = Deno.env.get("SUPABASE_URL");
   const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
   const salt = Deno.env.get("VISITOR_PROOF_SALT") || serviceRoleKey || "";
@@ -63,9 +69,42 @@ Deno.serve(async (request) => {
     auth: { persistSession: false }
   });
 
+  if (request.method === "GET") {
+    const url = new URL(request.url);
+    const pageSlug = clean(url.searchParams.get("page_slug"), 120, /[^a-zA-Z0-9_-]/g) || "play";
+    const eventType = clean(url.searchParams.get("event_type"), 80, /[^a-zA-Z0-9_-]/g);
+    if (eventType !== "potato_summon_count") {
+      return new Response(JSON.stringify({ error: "unsupported_query" }), {
+        status: 400,
+        headers: { ...corsHeaders, "content-type": "application/json" }
+      });
+    }
+    const { count, error } = await supabase
+      .from("visitor_events")
+      .select("id", { count: "exact", head: true })
+      .eq("page_slug", pageSlug)
+      .eq("event_type", "potato_summon");
+    if (error) {
+      return new Response(JSON.stringify({ error: "count_failed" }), {
+        status: 500,
+        headers: { ...corsHeaders, "content-type": "application/json" }
+      });
+    }
+    return new Response(JSON.stringify({ ok: true, potato_count: count || 0 }), {
+      headers: { ...corsHeaders, "content-type": "application/json" }
+    });
+  }
+
+  if (request.method !== "POST") {
+    return new Response(JSON.stringify({ error: "method_not_allowed" }), {
+      status: 405,
+      headers: { ...corsHeaders, "content-type": "application/json" }
+    });
+  }
+
   const payload = {
     page_slug: clean(body.page_slug, 120, /[^a-zA-Z0-9_-]/g) || "home",
-    event_type: "page_view",
+    event_type: cleanEventType(body.event_type),
     theme: clean(body.theme, 80, /[^a-zA-Z0-9_-]/g),
     cursor: clean(body.cursor, 80, /[^a-zA-Z0-9_-]/g),
     motion: clean(body.motion, 80, /[^a-zA-Z0-9_-]/g),
@@ -93,7 +132,17 @@ Deno.serve(async (request) => {
     });
   }
 
-  return new Response(JSON.stringify({ ok: true }), {
+  let potatoCount: number | null = null;
+  if (payload.event_type === "potato_summon") {
+    const { count } = await supabase
+      .from("visitor_events")
+      .select("id", { count: "exact", head: true })
+      .eq("page_slug", payload.page_slug)
+      .eq("event_type", "potato_summon");
+    potatoCount = count || 0;
+  }
+
+  return new Response(JSON.stringify({ ok: true, potato_count: potatoCount }), {
     headers: { ...corsHeaders, "content-type": "application/json" }
   });
 });

@@ -3,6 +3,7 @@ import { Ticker } from './Ticker.js';
 import { Input } from './Input.js';
 import { AudioSystem } from './AudioSystem.js';
 import { Achievements } from './Achievements.js';
+import { Analytics } from './Analytics.js';
 import { PhysicsWorld } from '../physics/PhysicsWorld.js';
 import { Vehicle } from '../player/Vehicle.js';
 import { CameraRig } from '../player/CameraRig.js';
@@ -44,7 +45,13 @@ export class Game {
       audio: this.audio
     });
     this.cameraRig = new CameraRig(this.camera, this.vehicle, this.input);
+    this.analytics = new Analytics();
     this.ui = new UI({ game: this, achievements: this.achievements, audio: this.audio });
+    this.analytics.init().then(() => {
+      if (Number.isFinite(this.analytics.potatoCount)) {
+        this.ui.setPotatoCount(this.analytics.potatoCount);
+      }
+    }).catch(() => {});
     this.setupEvents();
     this.setupDebug();
     this.ui.markLoaded();
@@ -121,6 +128,7 @@ export class Game {
       ready: () => Boolean(this.world && this.vehicle && this.renderer),
       start: () => this.startDriving(),
       respawn: (zoneId) => this.respawn(zoneId),
+      summonPotato: () => this.summonPotato(),
       nearest: () => this.activeZone?.name || null
     };
   }
@@ -204,8 +212,35 @@ export class Game {
     if (this.input.consume('map')) {
       this.ui.toggleMap();
     }
+    if (this.input.consume('potato') && !this.ui.isPanelOpen()) {
+      this.summonPotato();
+    }
     if (this.input.consume('interact') && this.activeZone && !this.ui.isPanelOpen()) {
       this.ui.openZone(this.activeZone);
+    }
+  }
+
+  recordZoneVisit(zone) {
+    this.analytics?.recordZone(zone?.id);
+  }
+
+  async summonPotato() {
+    const farm = this.world.zones.find((zone) => zone.id === 'potato');
+    if (!farm) return;
+    const position = this.vehicle.position;
+    const nearFarm = Math.hypot(position.x - farm.position.x, position.z - farm.position.z) <= farm.radius + 6;
+    if (!nearFarm) {
+      this.ui?.notify?.('Drive to the Potato Farm to summon one');
+      return;
+    }
+    this.world.spawnPotato();
+    this.achievements.unlock('potato_summon');
+    this.audio.click(190);
+    this.ui?.notify?.('Potato summoned');
+    const count = await this.analytics?.recordPotatoSummon?.();
+    if (Number.isFinite(count)) {
+      this.ui.setPotatoCount(count);
+      this.ui.notify(`Potato counter: ${count}`);
     }
   }
 

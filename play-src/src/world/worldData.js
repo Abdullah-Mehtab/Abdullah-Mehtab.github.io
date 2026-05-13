@@ -2,28 +2,30 @@ export const WORLD_HALF_SIZE = 170;
 export const MAP_PADDING = 18;
 
 export const roadSegments = [
-  [0, 0, 14, 286],
-  [0, 24, 226, 12],
-  [0, -62, 210, 12],
-  [0, 96, 240, 12],
-  [-108, 18, 12, 166],
-  [108, 18, 12, 166],
-  [-54, 66, 104, 10],
-  [54, 66, 104, 10],
-  [0, -116, 120, 12],
-  [-132, -132, 72, 10],
-  [132, -132, 72, 10],
-  [-132, 126, 82, 10],
-  [132, 126, 82, 10],
-  [0, 144, 56, 10]
+  [3, 4, 14, 250, -0.04],
+  [-45, 21, 148, 11, 0.08],
+  [66, 32, 92, 11, -0.12],
+  [-64, -54, 112, 11, -0.13],
+  [67, -70, 120, 11, 0.08],
+  [-25, 95, 104, 11, 0.1],
+  [66, 91, 90, 10, -0.18],
+  [-122, 78, 12, 122, -0.08],
+  [112, 47, 12, 130, 0.06],
+  [-24, -124, 132, 11, -0.05],
+  [-132, -128, 62, 10, 0.18],
+  [128, -123, 78, 10, -0.12],
+  [-126, 132, 66, 10, -0.1],
+  [96, 140, 78, 10, 0.07],
+  [20, 146, 58, 10, -0.04],
+  [22, -35, 86, 10, 0.05]
 ];
 
 export const boostPads = [
-  { id: 'north-run', position: [0, 0, 58], rotation: 0, color: '#7cffb2' },
-  { id: 'south-run', position: [0, 0, -82], rotation: Math.PI, color: '#68d8ff' },
-  { id: 'east-run', position: [78, 0, 24], rotation: Math.PI / 2, color: '#ffdf8a' },
-  { id: 'west-run', position: [-78, 0, 24], rotation: -Math.PI / 2, color: '#ff6d8d' },
-  { id: 'pier-shot', position: [132, 0, -116], rotation: 0, color: '#a8a6ff' }
+  { id: 'north-run', position: [6, 0, 58], rotation: -0.04, color: '#7cffb2' },
+  { id: 'south-run', position: [2, 0, -82], rotation: Math.PI - 0.04, color: '#68d8ff' },
+  { id: 'east-run', position: [78, 0, 29], rotation: Math.PI / 2 - 0.12, color: '#ffdf8a' },
+  { id: 'west-run', position: [-82, 0, 17], rotation: -Math.PI / 2 + 0.08, color: '#ff6d8d' },
+  { id: 'pier-shot', position: [128, 0, -116], rotation: 0.2, color: '#a8a6ff' }
 ];
 
 export const worldZones = [
@@ -31,7 +33,7 @@ export const worldZones = [
     id: 'landing',
     name: 'Start Hub',
     kind: 'Home',
-    position: [0, 0, 0],
+    position: [2, 0, -4],
     radius: 9,
     color: '#7cffb2',
     shape: 'hub',
@@ -46,7 +48,7 @@ export const worldZones = [
     id: 'security',
     name: 'Security Lab',
     kind: 'Offensive Security',
-    position: [-108, 0, 24],
+    position: [-118, 0, 18],
     radius: 10,
     color: '#68d8ff',
     shape: 'lab',
@@ -61,7 +63,7 @@ export const worldZones = [
     id: 'projects',
     name: 'Projects Foundry',
     kind: 'Project Gallery',
-    position: [108, 0, 24],
+    position: [98, 0, 34],
     radius: 10,
     color: '#ffcc66',
     shape: 'foundry',
@@ -75,7 +77,7 @@ export const worldZones = [
     id: 'sentinel',
     name: 'Cyber Sentinel Tower',
     kind: 'Final Year Project',
-    position: [0, 0, 96],
+    position: [-10, 0, 103],
     radius: 11,
     color: '#ff6d8d',
     shape: 'tower',
@@ -89,7 +91,7 @@ export const worldZones = [
     id: 'career',
     name: 'Career Office',
     kind: 'Experience',
-    position: [-92, 0, -62],
+    position: [-105, 0, -52],
     radius: 9,
     color: '#b6a0ff',
     shape: 'office',
@@ -103,7 +105,7 @@ export const worldZones = [
     id: 'skills',
     name: 'Skills Terminal',
     kind: 'Stack',
-    position: [92, 0, -62],
+    position: [82, 0, -78],
     radius: 9,
     color: '#92ffea',
     shape: 'terminal',
@@ -117,7 +119,7 @@ export const worldZones = [
     id: 'education',
     name: 'Education Library',
     kind: 'Academics',
-    position: [0, 0, -116],
+    position: [-24, 0, -132],
     radius: 9,
     color: '#9ccfff',
     shape: 'library',
@@ -131,7 +133,7 @@ export const worldZones = [
     id: 'awards',
     name: 'Awards Tower',
     kind: 'Certificates',
-    position: [-54, 0, 66],
+    position: [-70, 0, 76],
     radius: 8,
     color: '#ffdf8a',
     shape: 'trophy',
@@ -145,7 +147,7 @@ export const worldZones = [
     id: 'cv',
     name: 'CV Vault',
     kind: 'Resume',
-    position: [54, 0, 66],
+    position: [45, 0, 82],
     radius: 8,
     color: '#e6f3ff',
     shape: 'vault',
@@ -165,7 +167,7 @@ export const worldZones = [
     id: 'todo',
     name: 'Todo Board',
     kind: 'Blog / List',
-    position: [-132, 0, 126],
+    position: [-138, 0, 128],
     radius: 8,
     color: '#d8ff92',
     shape: 'board',
@@ -182,7 +184,7 @@ export const worldZones = [
     id: 'circuit',
     name: 'Circuit Gate',
     kind: 'Time Trial',
-    position: [132, 0, 126],
+    position: [129, 0, 118],
     radius: 8,
     color: '#ff9b6d',
     shape: 'gate',
@@ -198,7 +200,7 @@ export const worldZones = [
     id: 'contact',
     name: 'Contact Port',
     kind: 'Links',
-    position: [0, 0, -36],
+    position: [18, 0, -28],
     radius: 8,
     color: '#78b7ff',
     shape: 'post',
@@ -214,7 +216,7 @@ export const worldZones = [
     id: 'behind',
     name: 'Behind The Build',
     kind: 'Stack',
-    position: [0, 0, 144],
+    position: [22, 0, 149],
     radius: 8,
     color: '#a8a6ff',
     shape: 'portal',
@@ -232,7 +234,7 @@ export const worldZones = [
     id: 'drift',
     name: 'Ramp Yard',
     kind: 'Driving',
-    position: [132, 0, -132],
+    position: [136, 0, -126],
     radius: 9,
     color: '#ff9b6d',
     shape: 'rampyard',
@@ -247,16 +249,32 @@ export const worldZones = [
     id: 'data-pier',
     name: 'Data Pier',
     kind: 'Visitor Trail',
-    position: [-132, 0, -132],
+    position: [-144, 0, -130],
     radius: 9,
     color: '#79ffc5',
     shape: 'pier',
     achievement: 'data_pier',
     lines: [
-      'A quiet edge of the island for signals, traces, and visitor-proof ideas.',
-      'The public portfolio remains static-friendly, but the wider site already has Supabase-backed comments and visitor proof plumbing.',
-      'This area can later become the live analytics/guest trail corner.'
+      'This pier lights up the visitor-proof layer for the drive page.',
+      'Page views, zone visits, and potato summons are counted as lightweight anonymous events.',
+      'Server-side analytics store hashed IP and browser-fingerprint signals for uniqueness without exposing raw addresses in the client.'
     ]
+  },
+  {
+    id: 'potato',
+    name: 'Potato Farm',
+    kind: 'Interaction Counter',
+    position: [95, 0, 142],
+    radius: 9,
+    color: '#c79b56',
+    shape: 'farm',
+    achievement: 'potato_farm',
+    lines: [
+      'A small farm patch for spawning temporary blocky potatoes inside the drive world.',
+      'Press P nearby, or use the summon button here, to add one potato to the local map and increment the persistent counter.',
+      'The potatoes are session-only objects; the interaction count is the part that stays.'
+    ],
+    potatoFarm: true
   }
 ];
 
@@ -276,6 +294,8 @@ export const achievementDefinitions = [
   ['behind_build', 'Look Under The Hood', 'Open Behind The Build.'],
   ['ramp_yard', 'Ramp Yard', 'Visit the driving yard.'],
   ['data_pier', 'Data Pier', 'Visit the data pier.'],
+  ['potato_farm', 'Potato Patch', 'Visit the potato farm.'],
+  ['potato_summon', 'Potato Summoner', 'Summon a blocky potato.'],
   ['boost', 'Boosted', 'Use boost while driving.'],
   ['boost_pad', 'Pad Launched', 'Hit a boost pad.'],
   ['jump', 'Suspension Check', 'Jump the car.'],
@@ -286,10 +306,10 @@ export const achievementDefinitions = [
 ];
 
 export const circuitCheckpoints = [
-  [-132, 0, 126],
-  [-156, 0, -132],
-  [0, 0, -156],
-  [156, 0, -132],
-  [132, 0, 126],
-  [0, 0, 144]
+  [-138, 0, 128],
+  [-158, 0, -130],
+  [-24, 0, -158],
+  [152, 0, -126],
+  [129, 0, 118],
+  [22, 0, 149]
 ];

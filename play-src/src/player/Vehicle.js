@@ -44,59 +44,89 @@ export class Vehicle {
   }
 
   createModel() {
-    const blue = new THREE.MeshStandardMaterial({
-      color: 0x68d8ff,
-      roughness: 0.36,
-      metalness: 0.42,
-      emissive: 0x0a2f44,
-      emissiveIntensity: 0.28
+    const red = new THREE.MeshStandardMaterial({
+      color: 0xb31322,
+      roughness: 0.32,
+      metalness: 0.48,
+      emissive: 0x260005,
+      emissiveIntensity: 0.22
     });
+    const stripe = new THREE.MeshStandardMaterial({ color: 0xf4f1e7, roughness: 0.28, metalness: 0.38 });
     const dark = new THREE.MeshStandardMaterial({
       color: 0x06111d,
       roughness: 0.42,
       metalness: 0.38
     });
+    const chrome = new THREE.MeshStandardMaterial({ color: 0xb8c1ca, roughness: 0.22, metalness: 0.78 });
     const glass = new THREE.MeshPhysicalMaterial({
-      color: 0x9be8ff,
+      color: 0x101d2d,
       roughness: 0.08,
       metalness: 0.1,
       transmission: 0.2,
       transparent: true,
-      opacity: 0.62
+      opacity: 0.72
     });
-    const glow = new THREE.MeshBasicMaterial({ color: 0x7cffb2 });
+    const glow = new THREE.MeshBasicMaterial({ color: 0xffefb2 });
     const tire = new THREE.MeshStandardMaterial({ color: 0x020407, roughness: 0.74, metalness: 0.12 });
 
-    const body = new THREE.Mesh(new THREE.BoxGeometry(2.35, 0.72, 3.6), blue);
+    const body = new THREE.Mesh(new THREE.BoxGeometry(2.62, 0.68, 4.28), red);
     body.position.y = 0.64;
     body.castShadow = true;
     this.group.add(body);
 
-    const nose = new THREE.Mesh(new THREE.BoxGeometry(1.7, 0.36, 1.25), blue);
-    nose.position.set(0, 0.94, 1.18);
-    nose.castShadow = true;
-    this.group.add(nose);
+    const hood = new THREE.Mesh(new THREE.BoxGeometry(2.18, 0.26, 1.62), red);
+    hood.position.set(0, 0.95, 1.33);
+    hood.castShadow = true;
+    this.group.add(hood);
 
-    const cabin = new THREE.Mesh(new THREE.BoxGeometry(1.42, 0.82, 1.28), glass);
-    cabin.position.set(0, 1.32, -0.36);
+    const trunk = new THREE.Mesh(new THREE.BoxGeometry(2.28, 0.28, 1.08), red);
+    trunk.position.set(0, 0.93, -1.47);
+    trunk.castShadow = true;
+    this.group.add(trunk);
+
+    const frontStripe = new THREE.Mesh(new THREE.BoxGeometry(0.34, 0.035, 1.72), stripe);
+    frontStripe.position.set(0, 1.105, 1.35);
+    this.group.add(frontStripe);
+
+    const centerStripe = new THREE.Mesh(new THREE.BoxGeometry(0.34, 0.04, 1.18), stripe);
+    centerStripe.position.set(0, 1.03, -0.05);
+    this.group.add(centerStripe);
+
+    const rearStripe = new THREE.Mesh(new THREE.BoxGeometry(0.34, 0.035, 1.24), stripe);
+    rearStripe.position.set(0, 1.08, -1.52);
+    this.group.add(rearStripe);
+
+    const cabin = new THREE.Mesh(new THREE.BoxGeometry(1.48, 0.78, 1.22), glass);
+    cabin.position.set(0, 1.28, -0.28);
     cabin.castShadow = true;
     this.group.add(cabin);
 
-    const spoiler = new THREE.Mesh(new THREE.BoxGeometry(2.25, 0.12, 0.28), dark);
-    spoiler.position.set(0, 1.32, -1.85);
+    const roofStripe = new THREE.Mesh(new THREE.BoxGeometry(0.3, 0.05, 1.0), stripe);
+    roofStripe.position.set(0, 1.71, -0.28);
+    this.group.add(roofStripe);
+
+    const hoodScoop = new THREE.Mesh(new THREE.BoxGeometry(0.78, 0.16, 0.58), dark);
+    hoodScoop.position.set(0, 1.24, 1.2);
+    hoodScoop.castShadow = true;
+    this.group.add(hoodScoop);
+
+    const spoiler = new THREE.Mesh(new THREE.BoxGeometry(2.42, 0.12, 0.28), stripe);
+    spoiler.position.set(0, 1.22, -2.14);
     spoiler.castShadow = true;
     this.group.add(spoiler);
 
-    const rack = new THREE.Mesh(new THREE.BoxGeometry(1.5, 0.12, 0.88), dark);
-    rack.position.set(0, 1.86, -0.36);
-    this.group.add(rack);
+    for (const z of [2.18, -2.18]) {
+      const bumper = new THREE.Mesh(new THREE.BoxGeometry(2.36, 0.2, 0.18), chrome);
+      bumper.position.set(0, 0.55, z);
+      this.group.add(bumper);
+    }
 
-    const wheelGeometry = new THREE.CylinderGeometry(0.42, 0.42, 0.42, 22);
+    const wheelGeometry = new THREE.CylinderGeometry(0.46, 0.46, 0.46, 24);
     const wheelPositions = [
-      [-1.2, 0.34, 1.18],
-      [1.2, 0.34, 1.18],
-      [-1.2, 0.34, -1.2],
-      [1.2, 0.34, -1.2]
+      [-1.32, 0.34, 1.32],
+      [1.32, 0.34, 1.32],
+      [-1.32, 0.34, -1.42],
+      [1.32, 0.34, -1.42]
     ];
     for (let i = 0; i < wheelPositions.length; i += 1) {
       const pivot = new THREE.Group();
@@ -111,20 +141,25 @@ export class Vehicle {
     }
 
     for (const x of [-0.54, 0.54]) {
-      const lamp = new THREE.Mesh(new THREE.BoxGeometry(0.34, 0.13, 0.06), glow);
-      lamp.position.set(x, 0.78, 1.84);
+      const lamp = new THREE.Mesh(new THREE.BoxGeometry(0.38, 0.13, 0.06), glow);
+      lamp.position.set(x, 0.77, 2.16);
       this.group.add(lamp);
 
-      const light = new THREE.SpotLight(0x9df8ff, 7.5, 25, Math.PI / 8, 0.42, 1.5);
-      light.position.set(x, 0.82, 1.96);
+      const light = new THREE.SpotLight(0xfff0c4, 8.5, 28, Math.PI / 8, 0.42, 1.5);
+      light.position.set(x, 0.82, 2.26);
       light.target.position.set(x, 0.35, 8);
       this.group.add(light);
       this.group.add(light.target);
     }
 
-    const rearGlow = new THREE.Mesh(new THREE.BoxGeometry(1.35, 0.08, 0.06), new THREE.MeshBasicMaterial({ color: 0xff6d8d }));
-    rearGlow.position.set(0, 0.78, -1.84);
-    this.group.add(rearGlow);
+    for (const x of [-0.56, 0.56]) {
+      const rearLamp = new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.12, 0.06), new THREE.MeshBasicMaterial({ color: 0xff253e }));
+      rearLamp.position.set(x, 0.78, -2.17);
+      this.group.add(rearLamp);
+    }
+    const underGlow = new THREE.Mesh(new THREE.BoxGeometry(1.35, 0.05, 0.06), new THREE.MeshBasicMaterial({ color: 0xff6d8d, transparent: true, opacity: 0.7 }));
+    underGlow.position.set(0, 0.3, -2.12);
+    this.group.add(underGlow);
 
     this.scene.add(this.group);
   }
@@ -156,8 +191,8 @@ export class Vehicle {
       this.achievements.unlock('boost');
     }
 
-    const engine = boost ? 58 : 39;
-    const reverse = 30;
+    const engine = boost ? 66 : 44;
+    const reverse = 28;
     if (forwardInput) {
       this.driveSpeed += engine * dt;
     }
@@ -167,14 +202,14 @@ export class Vehicle {
     if (!forwardInput && !backwardInput) {
       this.driveSpeed *= Math.max(0, 1 - dt * 1.35);
     }
-    this.driveSpeed += (forwardSpeed - this.driveSpeed) * Math.min(1, dt * 0.8);
-    this.driveSpeed = THREE.MathUtils.clamp(this.driveSpeed, -16, boost ? 42 : 30);
+    this.driveSpeed += (forwardSpeed - this.driveSpeed) * Math.min(1, dt * 0.55);
+    this.driveSpeed = THREE.MathUtils.clamp(this.driveSpeed, -15, boost ? 48 : 34);
     this.speed = this.driveSpeed;
 
     const speedFactor = THREE.MathUtils.clamp(Math.abs(this.driveSpeed) / 18, 0.28, 1.35);
     if (Math.abs(steer) > 0.03) {
       const direction = Math.sign(this.driveSpeed || 1);
-      this.heading += steer * direction * speedFactor * 2.65 * dt;
+      this.heading += steer * direction * speedFactor * 2.15 * dt;
     }
     this.body.setRotation(yawQuaternion(this.heading), true);
 
@@ -184,14 +219,14 @@ export class Vehicle {
 
     const desiredVelocity = forward.clone()
       .multiplyScalar(this.driveSpeed)
-      .add(right.clone().multiplyScalar(sideSpeed * 0.04));
+      .add(right.clone().multiplyScalar(sideSpeed * (brake ? 0.22 : 0.1)));
     this.body.setLinvel({ x: desiredVelocity.x, y: linvel.y, z: desiredVelocity.z }, true);
 
     const grounded = translation.y < 0.92 || (translation.y < 1.75 && Math.abs(linvel.y) < 0.32);
     this.groundedFrames = grounded ? Math.min(18, this.groundedFrames + 1) : 0;
     this.airTime = grounded ? 0 : this.airTime + dt;
     if (input.consume('jump') && this.groundedFrames > 2) {
-      this.body.setLinvel({ x: desiredVelocity.x, y: 9.5, z: desiredVelocity.z }, true);
+      this.body.setLinvel({ x: desiredVelocity.x, y: 10.4, z: desiredVelocity.z }, true);
       this.achievements.unlock('jump');
       this.audio.click(760);
     }
@@ -295,12 +330,12 @@ export class Vehicle {
     if (!pad || this.lastBoostPad === pad.id) return;
     this.lastBoostPad = pad.id;
     this.heading = Math.atan2(pad.direction.x, pad.direction.z);
-    this.driveSpeed = Math.max(this.driveSpeed, 42);
+    this.driveSpeed = Math.max(this.driveSpeed, 50);
     this.body.setRotation(yawQuaternion(this.heading), true);
     this.body.setLinvel({
-      x: pad.direction.x * 46,
+      x: pad.direction.x * 52,
       y: Math.max(2.4, this.body.linvel().y + 2.6),
-      z: pad.direction.z * 46
+      z: pad.direction.z * 52
     }, true);
     this.achievements.unlock('boost_pad');
     this.audio.click(940);

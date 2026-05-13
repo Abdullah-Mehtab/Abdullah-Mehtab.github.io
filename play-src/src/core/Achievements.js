@@ -40,7 +40,7 @@ export class Achievements {
     this.unlock(zone.achievement);
     const zoneAchievements = this.definitions
       .map((item) => item.id)
-      .filter((id) => !['boost', 'boost_pad', 'jump', 'ramp_jump', 'data_shards', 'distance_1km', 'all_zones'].includes(id));
+      .filter((id) => !['boost', 'boost_pad', 'jump', 'ramp_jump', 'data_shards', 'potato_summon', 'distance_1km', 'all_zones'].includes(id));
     const allVisited = zoneAchievements.every((id) => this.unlocked.has(id) || this.zoneUnlocks.has(id));
     if (allVisited) this.unlock('all_zones');
   }
