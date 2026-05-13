@@ -3,7 +3,9 @@ export class AudioSystem {
     this.context = null;
     this.master = null;
     this.engineOsc = null;
+    this.engineSubOsc = null;
     this.engineGain = null;
+    this.engineSubGain = null;
     this.windOsc = null;
     this.windGain = null;
     this.muted = localStorage.getItem('portfolio-drive-muted') === '1';
@@ -21,15 +23,26 @@ export class AudioSystem {
 
     this.engineOsc = this.context.createOscillator();
     this.engineOsc.type = 'sawtooth';
+    this.engineSubOsc = this.context.createOscillator();
+    this.engineSubOsc.type = 'square';
     this.engineGain = this.context.createGain();
+    this.engineSubGain = this.context.createGain();
     this.engineGain.gain.value = 0.0001;
+    this.engineSubGain.gain.value = 0.0001;
     const engineFilter = this.context.createBiquadFilter();
     engineFilter.type = 'lowpass';
-    engineFilter.frequency.value = 420;
+    engineFilter.frequency.value = 300;
+    const subFilter = this.context.createBiquadFilter();
+    subFilter.type = 'lowpass';
+    subFilter.frequency.value = 130;
     this.engineOsc.connect(engineFilter);
     engineFilter.connect(this.engineGain);
     this.engineGain.connect(this.master);
+    this.engineSubOsc.connect(subFilter);
+    subFilter.connect(this.engineSubGain);
+    this.engineSubGain.connect(this.master);
     this.engineOsc.start();
+    this.engineSubOsc.start();
 
     this.windOsc = this.context.createOscillator();
     this.windOsc.type = 'triangle';
@@ -93,9 +106,13 @@ export class AudioSystem {
 
   update(speed) {
     if (!this.context || !this.engineOsc || !this.engineGain) return;
-    const normalized = Math.min(1, Math.abs(speed) / 34);
-    this.engineOsc.frequency.setTargetAtTime(55 + normalized * 170, this.context.currentTime, 0.05);
-    this.engineGain.gain.setTargetAtTime(this.muted ? 0 : 0.018 + normalized * 0.05, this.context.currentTime, 0.08);
+    const normalized = Math.min(1, Math.abs(speed) / 42);
+    this.engineOsc.frequency.setTargetAtTime(42 + normalized * 128, this.context.currentTime, 0.06);
+    this.engineGain.gain.setTargetAtTime(this.muted ? 0 : 0.024 + normalized * 0.06, this.context.currentTime, 0.08);
+    if (this.engineSubOsc && this.engineSubGain) {
+      this.engineSubOsc.frequency.setTargetAtTime(24 + normalized * 52, this.context.currentTime, 0.08);
+      this.engineSubGain.gain.setTargetAtTime(this.muted ? 0 : 0.018 + normalized * 0.035, this.context.currentTime, 0.12);
+    }
     if (this.windGain) {
       this.windGain.gain.setTargetAtTime(this.muted ? 0 : 0.008 + normalized * 0.025, this.context.currentTime, 0.2);
     }

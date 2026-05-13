@@ -18,7 +18,8 @@ const KEY_BINDINGS = {
   KeyR: 'respawn',
   KeyM: 'map',
   Escape: 'menu',
-  KeyH: 'honk'
+  KeyH: 'honk',
+  KeyP: 'potato'
 };
 
 export class Input {
@@ -36,7 +37,8 @@ export class Input {
       respawn: false,
       map: false,
       menu: false,
-      honk: false
+      honk: false,
+      potato: false
     };
     this.pressed = new Set();
     this.pointer = {
@@ -204,6 +206,7 @@ export class Input {
     if (pad.buttons[0]?.pressed) this.pressed.add('interact');
     if (pad.buttons[9]?.pressed) this.pressed.add('menu');
     if (pad.buttons[8]?.pressed) this.pressed.add('respawn');
+    if (pad.buttons[4]?.pressed) this.pressed.add('potato');
     this.mode = 'gamepad';
   }
 

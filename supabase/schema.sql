@@ -24,7 +24,7 @@ on conflict (email) do nothing;
 create table if not exists public.visitor_events (
   id uuid primary key default gen_random_uuid(),
   page_slug text not null check (char_length(page_slug) between 1 and 120),
-  event_type text not null default 'page_view' check (event_type in ('page_view')),
+  event_type text not null default 'page_view' check (event_type in ('page_view', 'play_zone_visit', 'potato_summon', 'play_data_shard', 'play_boost_pad')),
   theme text check (char_length(theme) <= 80),
   cursor text check (char_length(cursor) <= 80),
   motion text check (char_length(motion) <= 80),
@@ -61,6 +61,9 @@ create index if not exists visitor_events_fingerprint_idx
 
 create index if not exists visitor_events_ip_hash_idx
   on public.visitor_events (ip_hash, created_at desc);
+
+create index if not exists visitor_events_play_interaction_idx
+  on public.visitor_events (page_slug, event_type, source_token, created_at desc);
 
 create or replace function public.is_comment_admin()
 returns boolean
@@ -106,7 +109,10 @@ language plpgsql
 as $$
 begin
   new.page_slug := left(trim(regexp_replace(coalesce(new.page_slug, 'home'), '[^a-zA-Z0-9_-]', '-', 'g')), 120);
-  new.event_type := 'page_view';
+  new.event_type := left(trim(regexp_replace(coalesce(new.event_type, 'page_view'), '[^a-zA-Z0-9_-]', '-', 'g')), 80);
+  if new.event_type not in ('page_view', 'play_zone_visit', 'potato_summon', 'play_data_shard', 'play_boost_pad') then
+    new.event_type := 'page_view';
+  end if;
   new.theme := nullif(left(trim(regexp_replace(coalesce(new.theme, ''), '[^a-zA-Z0-9_-]', '-', 'g')), 80), '');
   new.cursor := nullif(left(trim(regexp_replace(coalesce(new.cursor, ''), '[^a-zA-Z0-9_-]', '-', 'g')), 80), '');
   new.motion := nullif(left(trim(regexp_replace(coalesce(new.motion, ''), '[^a-zA-Z0-9_-]', '-', 'g')), 80), '');
@@ -188,7 +194,7 @@ drop policy if exists "Anyone can submit visitor proof" on public.visitor_events
 create policy "Anyone can submit visitor proof"
   on public.visitor_events for insert
   to anon, authenticated
-  with check (event_type = 'page_view');
+  with check (event_type in ('page_view', 'play_zone_visit', 'potato_summon', 'play_data_shard', 'play_boost_pad'));
 
 drop policy if exists "Admins can read visitor proof" on public.visitor_events;
 create policy "Admins can read visitor proof"

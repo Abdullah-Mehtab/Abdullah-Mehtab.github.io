@@ -26,6 +26,7 @@ export class UI {
       panelClose: document.getElementById('panel-close'),
       menu: document.getElementById('menu'),
       menuButton: document.getElementById('menu-button'),
+      potatoReadout: document.getElementById('potato-readout'),
       menuClose: document.getElementById('menu-close'),
       menuContent: document.getElementById('menu-content'),
       mapModal: document.getElementById('map-modal'),
@@ -95,7 +96,11 @@ export class UI {
     }
     this.refs.promptKind.textContent = zone.kind;
     this.refs.promptTitle.textContent = zone.name;
-    this.refs.promptAction.textContent = zone.startsCircuit ? 'Press E to start circuit' : 'Press E to interact';
+    if (zone.potatoFarm) {
+      this.refs.promptAction.textContent = 'Press P to summon. Press E for farm log';
+    } else {
+      this.refs.promptAction.textContent = zone.startsCircuit ? 'Press E to start circuit' : 'Press E to interact';
+    }
     this.refs.prompt.hidden = false;
   }
 
@@ -106,6 +111,7 @@ export class UI {
   openZone(zone) {
     this.audio.click();
     this.achievements.visitZone(zone);
+    this.game.recordZoneVisit(zone);
     if (zone.startsCircuit) {
       this.game.startCircuit();
     }
@@ -123,6 +129,22 @@ export class UI {
       const p = document.createElement('p');
       p.textContent = line;
       this.refs.panelBody.append(p);
+    }
+    if (zone.potatoFarm) {
+      const counter = document.createElement('p');
+      counter.className = 'panel-muted';
+      counter.textContent = `Persistent potato summons: ${this.game.analytics?.potatoCountLabel || '--'}`;
+      this.refs.panelBody.append(counter);
+      const summon = button('Summon Potato', () => this.game.summonPotato());
+      this.refs.panelActions.append(summon);
+    }
+    if (zone.id === 'data-pier') {
+      const status = document.createElement('p');
+      status.className = 'panel-muted';
+      status.textContent = this.game.analytics?.isEnabled
+        ? 'Visitor-proof endpoint is enabled for this page.'
+        : 'Visitor-proof endpoint is not configured for this page.';
+      this.refs.panelBody.append(status);
     }
     this.addActions(zone.actions || []);
     this.refs.panel.hidden = false;
@@ -169,10 +191,8 @@ export class UI {
       const link = document.createElement('a');
       link.href = action.href;
       link.textContent = action.label;
-      if (/^https?:\/\//.test(action.href)) {
-        link.target = '_blank';
-        link.rel = 'noreferrer';
-      }
+      link.target = '_blank';
+      link.rel = 'noopener noreferrer';
       this.refs.panelActions.append(link);
     }
   }
@@ -311,6 +331,7 @@ export class UI {
       ['Ctrl / B', 'Brake'],
       ['Space', 'Jump'],
       ['E / Enter', 'Interact'],
+      ['P', 'Summon potato at the farm'],
       ['M', 'Map'],
       ['R', 'Respawn'],
       ['Mouse drag', 'Move camera'],
@@ -352,8 +373,8 @@ export class UI {
   renderAbout() {
     const lines = [
       'This is a static GitHub Pages game page built as a modular Three.js portfolio world.',
-      'Rapier handles rigid-body physics, the car is procedural, the world is Abdullah-specific, and resume content comes from local JSON.',
-      'The goal is a proper interactive portfolio space: driveable, inspectable, personal, and still connected to the formal CV and project pages.'
+      'Rapier handles rigid-body physics, the car is procedural, and resume content comes from local JSON.',
+      'The drive world connects the playful exploration layer to the formal CV, projects, blog, and contact pages.'
     ];
     for (const line of lines) {
       const p = document.createElement('p');
@@ -408,7 +429,7 @@ export class UI {
     const island = document.createElement('div');
     island.className = `${mode}-island`;
     container.append(island);
-    for (const [x, z, width, depth] of roadSegments) {
+    for (const [x, z, width, depth, rotation = 0] of roadSegments) {
       const road = document.createElement('span');
       road.className = `${mode}-road`;
       const coords = worldToMap(x, z);
@@ -416,12 +437,16 @@ export class UI {
       road.style.top = `${coords.y}%`;
       road.style.width = `${(width / (WORLD_HALF_SIZE * 2 + MAP_PADDING * 2)) * 100}%`;
       road.style.height = `${(depth / (WORLD_HALF_SIZE * 2 + MAP_PADDING * 2)) * 100}%`;
+      road.style.transform = `translate(-50%, -50%) rotate(${rotation}rad)`;
       container.append(road);
     }
   }
 
   update({ speed, activeZone, circuit }) {
     this.refs.speedReadout.textContent = `${Math.round(Math.abs(speed) * 3.6)} km/h`;
+    if (this.refs.potatoReadout) {
+      this.refs.potatoReadout.textContent = `Potatoes ${this.game.analytics?.potatoCountLabel || '--'}`;
+    }
     this.refs.zoneReadout.textContent = activeZone ? activeZone.name : 'Road';
     this.refs.soundButton.textContent = this.audio.muted ? 'Muted' : 'Sound';
     this.showPrompt(activeZone);
@@ -460,6 +485,11 @@ export class UI {
       item.classList.remove('is-visible');
       setTimeout(() => item.remove(), 260);
     }, 3600);
+  }
+
+  setPotatoCount(count) {
+    if (!this.refs.potatoReadout) return;
+    this.refs.potatoReadout.textContent = `Potatoes ${count}`;
   }
 }
 
