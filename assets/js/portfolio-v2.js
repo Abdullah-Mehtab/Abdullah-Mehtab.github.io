@@ -129,6 +129,7 @@
     const styleControls = document.querySelectorAll("[data-style-control]");
     const styleToggles = document.querySelectorAll("[data-style-toggle]");
     const motionQuery = window.matchMedia("(prefers-reduced-motion: reduce)");
+    const compactMotionQuery = window.matchMedia("(max-width: 760px)");
 
     const savedTheme = themeOptions.some(([value]) => value === readStoredValue(storageKeys.theme, "dark"))
       ? readStoredValue(storageKeys.theme, "dark")
@@ -167,7 +168,9 @@
     }
 
     function getEffectiveMotion(value) {
-      return value === "auto" ? (motionQuery.matches ? "off" : "full") : value;
+      if (value !== "auto") return value;
+      if (motionQuery.matches) return "off";
+      return compactMotionQuery.matches ? "calm" : "full";
     }
 
     function applyMotion(value) {
@@ -211,6 +214,12 @@
       motionQuery.addEventListener("change", syncAutoMotion);
     } else if (motionQuery.addListener) {
       motionQuery.addListener(syncAutoMotion);
+    }
+
+    if (compactMotionQuery.addEventListener) {
+      compactMotionQuery.addEventListener("change", syncAutoMotion);
+    } else if (compactMotionQuery.addListener) {
+      compactMotionQuery.addListener(syncAutoMotion);
     }
 
     styleToggles.forEach((toggle) => {
@@ -295,6 +304,29 @@
         placeholder.innerHTML = "<span>Image missing</span><strong>Project details still matter</strong>";
         image.replaceWith(placeholder);
       }, { once: true });
+    });
+  }
+
+  function setupLiteVideos() {
+    document.querySelectorAll("[data-video-id]").forEach((video) => {
+      const button = video.querySelector(".video-play");
+      if (!button) return;
+
+      button.addEventListener("click", () => {
+        const videoId = String(video.dataset.videoId || "").replace(/[^\w-]/g, "");
+        if (!videoId) return;
+
+        const iframe = document.createElement("iframe");
+        iframe.src = `https://www.youtube.com/embed/${videoId}?autoplay=1&rel=0`;
+        iframe.title = video.dataset.videoTitle || button.getAttribute("aria-label") || "Project video";
+        iframe.loading = "lazy";
+        iframe.allow = "accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share";
+        iframe.allowFullscreen = true;
+
+        video.classList.add("is-playing");
+        video.replaceChildren(iframe);
+        iframe.focus();
+      });
     });
   }
 
@@ -504,6 +536,22 @@
     next.addEventListener("click", () => scrollByCard(1));
   }
 
+  function setupOffscreenAnimationPauses() {
+    const animatedBlocks = document.querySelectorAll(".loop-wrapper");
+    if (!animatedBlocks.length || !("IntersectionObserver" in window)) return;
+
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach((entry) => {
+        entry.target.classList.toggle("is-animation-paused", !entry.isIntersecting);
+      });
+    }, { rootMargin: "140px 0px", threshold: 0 });
+
+    animatedBlocks.forEach((block) => {
+      block.classList.add("is-animation-paused");
+      observer.observe(block);
+    });
+  }
+
   document.addEventListener("DOMContentLoaded", () => {
     setActiveNav();
     setupMobileNav();
@@ -511,6 +559,7 @@
     setupStyleControls();
     setupFilters();
     setupMediaFallbacks();
+    setupLiteVideos();
     setupYear();
     setupProofLine();
     setupReveal();
@@ -518,5 +567,6 @@
     setupPointerEffects();
     setupTiltCards();
     setupTimelineCarousel();
+    setupOffscreenAnimationPauses();
   });
 })();

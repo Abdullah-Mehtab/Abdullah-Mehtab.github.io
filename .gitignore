@@ -25,6 +25,7 @@ Abdullah-Mehtab-Resume-v4.5.pdf
 
 # Future Node/Next.js build and dependency output
 node_modules/
+.codex-tools/
 .next/
 out/
 dist/

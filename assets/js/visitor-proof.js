@@ -61,6 +61,12 @@
   }
 
   document.addEventListener("DOMContentLoaded", () => {
-    window.setTimeout(recordVisit, 900);
+    window.setTimeout(() => {
+      if ("requestIdleCallback" in window) {
+        window.requestIdleCallback(recordVisit, { timeout: 8000 });
+      } else {
+        recordVisit();
+      }
+    }, 6000);
   });
 })();
