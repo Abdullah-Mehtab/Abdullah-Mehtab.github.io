@@ -1,4 +1,4 @@
-import { worldZones } from '../world/worldData.js';
+import { MAP_PADDING, roadSegments, WORLD_HALF_SIZE, worldZones } from '../world/worldData.js';
 
 export class UI {
   constructor({ game, achievements, audio }) {
@@ -7,6 +7,7 @@ export class UI {
     this.audio = audio;
     this.projectIndex = 0;
     this.activeTab = 'options';
+    this.mapState = { scale: 1, x: 0, y: 0, dragging: false, lastX: 0, lastY: 0 };
     this.refs = {
       loading: document.getElementById('loading'),
       titleScreen: document.getElementById('title-screen'),
@@ -31,6 +32,13 @@ export class UI {
       mapButton: document.getElementById('map-button'),
       mapClose: document.getElementById('map-close'),
       worldMap: document.getElementById('world-map'),
+      worldMapLayer: document.getElementById('world-map-layer'),
+      mapZoomIn: document.getElementById('map-zoom-in'),
+      mapZoomOut: document.getElementById('map-zoom-out'),
+      mapReset: document.getElementById('map-reset'),
+      mapStatus: document.getElementById('map-status'),
+      minimap: document.getElementById('minimap'),
+      minimapWorld: document.getElementById('minimap-world'),
       notifications: document.getElementById('notifications'),
       soundButton: document.getElementById('sound-button')
     };
@@ -44,6 +52,10 @@ export class UI {
     this.refs.menuClose.addEventListener('click', () => this.closeMenu());
     this.refs.mapButton.addEventListener('click', () => this.toggleMap());
     this.refs.mapClose.addEventListener('click', () => this.closeMap());
+    this.refs.mapZoomIn.addEventListener('click', () => this.zoomMap(0.22));
+    this.refs.mapZoomOut.addEventListener('click', () => this.zoomMap(-0.22));
+    this.refs.mapReset.addEventListener('click', () => this.resetMapView());
+    this.setupMapDrag();
     this.refs.soundButton.addEventListener('click', () => {
       this.audio.resume();
       const muted = this.audio.toggleMute();
@@ -63,6 +75,7 @@ export class UI {
     };
 
     this.renderMap();
+    this.renderMinimap();
     this.renderMenu();
   }
 
@@ -203,6 +216,52 @@ export class UI {
     this.refs.mapModal.hidden = true;
   }
 
+  setupMapDrag() {
+    const map = this.refs.worldMap;
+    map.addEventListener('pointerdown', (event) => {
+      if (event.target.closest('.map-pin')) return;
+      this.mapState.dragging = true;
+      this.mapState.lastX = event.clientX;
+      this.mapState.lastY = event.clientY;
+      map.setPointerCapture(event.pointerId);
+    });
+    map.addEventListener('pointermove', (event) => {
+      if (!this.mapState.dragging) return;
+      const dx = event.clientX - this.mapState.lastX;
+      const dy = event.clientY - this.mapState.lastY;
+      this.mapState.lastX = event.clientX;
+      this.mapState.lastY = event.clientY;
+      this.mapState.x += dx;
+      this.mapState.y += dy;
+      this.applyMapTransform();
+    });
+    const end = (event) => {
+      this.mapState.dragging = false;
+      if (map.hasPointerCapture(event.pointerId)) map.releasePointerCapture(event.pointerId);
+    };
+    map.addEventListener('pointerup', end);
+    map.addEventListener('pointercancel', end);
+    map.addEventListener('wheel', (event) => {
+      event.preventDefault();
+      this.zoomMap(event.deltaY > 0 ? -0.12 : 0.12);
+    }, { passive: false });
+  }
+
+  zoomMap(delta) {
+    this.mapState.scale = Math.max(0.8, Math.min(2.4, this.mapState.scale + delta));
+    this.applyMapTransform();
+  }
+
+  resetMapView() {
+    this.mapState = { scale: 1, x: 0, y: 0, dragging: false, lastX: 0, lastY: 0 };
+    this.applyMapTransform();
+  }
+
+  applyMapTransform() {
+    this.refs.worldMapLayer.style.transform = `translate(${this.mapState.x}px, ${this.mapState.y}px) scale(${this.mapState.scale})`;
+    this.refs.mapStatus.textContent = `Zoom ${Math.round(this.mapState.scale * 100)}%`;
+  }
+
   renderMenu() {
     document.querySelectorAll('.menu-tabs button').forEach((button) => {
       button.classList.toggle('is-active', button.dataset.tab === this.activeTab);
@@ -304,20 +363,60 @@ export class UI {
   }
 
   renderMap() {
-    clear(this.refs.worldMap);
+    clear(this.refs.worldMapLayer);
+    this.renderMapBase(this.refs.worldMapLayer, 'map');
     for (const zone of worldZones) {
       const pin = document.createElement('button');
       pin.type = 'button';
       pin.className = 'map-pin';
-      pin.style.left = `${((zone.position[0] + 88) / 176) * 100}%`;
-      pin.style.top = `${((zone.position[2] + 88) / 176) * 100}%`;
+      const coords = worldToMap(zone.position[0], zone.position[2]);
+      pin.style.left = `${coords.x}%`;
+      pin.style.top = `${coords.y}%`;
       pin.style.setProperty('--pin-color', zone.color);
       pin.textContent = zone.name;
+      pin.title = `${zone.name} - ${zone.kind}`;
       pin.addEventListener('click', () => {
         this.game.respawn(zone.id);
         this.closeMap();
       });
-      this.refs.worldMap.append(pin);
+      this.refs.worldMapLayer.append(pin);
+    }
+    this.mapPlayer = document.createElement('span');
+    this.mapPlayer.className = 'map-player';
+    this.refs.worldMapLayer.append(this.mapPlayer);
+    this.applyMapTransform();
+  }
+
+  renderMinimap() {
+    clear(this.refs.minimapWorld);
+    this.renderMapBase(this.refs.minimapWorld, 'minimap');
+    for (const zone of worldZones) {
+      const pin = document.createElement('span');
+      pin.className = 'minimap-pin';
+      const coords = worldToMap(zone.position[0], zone.position[2]);
+      pin.style.left = `${coords.x}%`;
+      pin.style.top = `${coords.y}%`;
+      pin.style.setProperty('--pin-color', zone.color);
+      this.refs.minimapWorld.append(pin);
+    }
+    this.minimapPlayer = document.createElement('span');
+    this.minimapPlayer.className = 'minimap-player';
+    this.refs.minimapWorld.append(this.minimapPlayer);
+  }
+
+  renderMapBase(container, mode) {
+    const island = document.createElement('div');
+    island.className = `${mode}-island`;
+    container.append(island);
+    for (const [x, z, width, depth] of roadSegments) {
+      const road = document.createElement('span');
+      road.className = `${mode}-road`;
+      const coords = worldToMap(x, z);
+      road.style.left = `${coords.x}%`;
+      road.style.top = `${coords.y}%`;
+      road.style.width = `${(width / (WORLD_HALF_SIZE * 2 + MAP_PADDING * 2)) * 100}%`;
+      road.style.height = `${(depth / (WORLD_HALF_SIZE * 2 + MAP_PADDING * 2)) * 100}%`;
+      container.append(road);
     }
   }
 
@@ -329,6 +428,26 @@ export class UI {
     if (circuit?.active) {
       this.refs.zoneReadout.textContent = `Circuit ${circuit.checkpoint}/${this.game.world.checkpoints.length - 1}`;
     }
+    this.updateMapMarkers(activeZone);
+  }
+
+  updateMapMarkers(activeZone) {
+    const position = this.game.vehicle.position;
+    const coords = worldToMap(position.x, position.z);
+    const rotation = this.game.vehicle.heading || 0;
+    if (this.mapPlayer) {
+      this.mapPlayer.style.left = `${coords.x}%`;
+      this.mapPlayer.style.top = `${coords.y}%`;
+      this.mapPlayer.style.transform = `translate(-50%, -50%) rotate(${rotation}rad)`;
+    }
+    if (this.minimapPlayer) {
+      this.minimapPlayer.style.left = `${coords.x}%`;
+      this.minimapPlayer.style.top = `${coords.y}%`;
+      this.minimapPlayer.style.transform = `translate(-50%, -50%) rotate(${rotation}rad)`;
+    }
+    document.querySelectorAll('.map-pin').forEach((pin) => {
+      pin.classList.toggle('is-active', activeZone && pin.textContent === activeZone.name);
+    });
   }
 
   notify(message) {
@@ -342,6 +461,14 @@ export class UI {
       setTimeout(() => item.remove(), 260);
     }, 3600);
   }
+}
+
+function worldToMap(x, z) {
+  const span = WORLD_HALF_SIZE * 2 + MAP_PADDING * 2;
+  return {
+    x: ((x + WORLD_HALF_SIZE + MAP_PADDING) / span) * 100,
+    y: ((z + WORLD_HALF_SIZE + MAP_PADDING) / span) * 100
+  };
 }
 
 function clear(element) {
