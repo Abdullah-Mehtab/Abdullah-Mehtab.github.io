@@ -297,6 +297,84 @@ button {
   color: var(--muted);
 }
 
+.minimap {
+  position: fixed;
+  left: 18px;
+  bottom: 18px;
+  z-index: 18;
+  width: 178px;
+  aspect-ratio: 1;
+  border: 1px solid rgba(104, 216, 255, 0.24);
+  border-radius: 12px;
+  overflow: hidden;
+  background:
+    radial-gradient(circle at 50% 50%, rgba(7, 48, 71, 0.95), rgba(3, 13, 24, 0.95));
+  box-shadow: 0 16px 42px rgba(0, 0, 0, 0.34);
+  pointer-events: none;
+  backdrop-filter: blur(14px);
+}
+
+body:not(.is-driving) .minimap {
+  display: none;
+}
+
+.minimap-world {
+  position: absolute;
+  inset: 8px;
+}
+
+.minimap-island,
+.map-island {
+  position: absolute;
+  inset: 4.6%;
+  border: 1px solid rgba(124, 255, 178, 0.22);
+  border-radius: 12px;
+  background:
+    linear-gradient(rgba(104, 216, 255, 0.08) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(104, 216, 255, 0.08) 1px, transparent 1px),
+    rgba(16, 34, 56, 0.9);
+  background-size: 9% 9%, 9% 9%, auto;
+  box-shadow: inset 0 0 32px rgba(124, 255, 178, 0.07);
+}
+
+.minimap-road,
+.map-road {
+  position: absolute;
+  border-radius: 999px;
+  background: rgba(104, 216, 255, 0.38);
+  transform: translate(-50%, -50%);
+  box-shadow: 0 0 10px rgba(104, 216, 255, 0.18);
+}
+
+.minimap-pin {
+  position: absolute;
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: var(--pin-color);
+  transform: translate(-50%, -50%);
+  box-shadow: 0 0 8px var(--pin-color);
+}
+
+.minimap-player,
+.map-player {
+  position: absolute;
+  width: 0;
+  height: 0;
+  border-left: 5px solid transparent;
+  border-right: 5px solid transparent;
+  border-bottom: 13px solid var(--gold);
+  filter: drop-shadow(0 0 8px rgba(255, 223, 138, 0.9));
+  transform-origin: 50% 55%;
+  z-index: 5;
+}
+
+.map-player {
+  border-left-width: 8px;
+  border-right-width: 8px;
+  border-bottom-width: 20px;
+}
+
 .panel,
 .menu,
 .map-modal {
@@ -423,18 +501,48 @@ button {
 
 .world-map {
   position: relative;
-  width: min(78vw, 620px);
+  width: min(82vw, 760px);
   aspect-ratio: 1;
-  margin: 22px auto 0;
+  margin: 14px auto 0;
   border: 1px solid var(--line);
   border-radius: 12px;
   overflow: hidden;
   background:
-    linear-gradient(rgba(104, 216, 255, 0.11) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(104, 216, 255, 0.11) 1px, transparent 1px),
-    radial-gradient(circle at 50% 50%, rgba(124, 255, 178, 0.09), transparent 58%),
-    rgba(5, 12, 20, 0.72);
-  background-size: 34px 34px, 34px 34px, auto, auto;
+    radial-gradient(circle at 50% 50%, rgba(7, 48, 71, 0.96), rgba(2, 10, 18, 0.96));
+  cursor: grab;
+}
+
+.world-map:active {
+  cursor: grabbing;
+}
+
+.world-map-layer {
+  position: absolute;
+  inset: 0;
+  transform-origin: 50% 50%;
+  transition: transform 120ms ease;
+}
+
+.map-toolbar {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 18px;
+}
+
+.map-toolbar button {
+  min-height: 36px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: rgba(5, 12, 20, 0.78);
+  color: var(--text);
+  padding: 7px 11px;
+}
+
+.map-toolbar span {
+  color: var(--muted);
+  font-size: 0.92rem;
 }
 
 .map-pin {
@@ -449,6 +557,17 @@ button {
   color: transparent;
   transform: translate(-50%, -50%);
   box-shadow: 0 0 18px var(--pin-color);
+}
+
+.map-pin.is-active {
+  width: auto;
+  height: auto;
+  min-height: 34px;
+  padding: 6px 9px;
+  border-radius: 8px;
+  color: var(--text);
+  background: rgba(5, 12, 20, 0.96);
+  z-index: 4;
 }
 
 .map-pin:hover,
@@ -665,6 +784,13 @@ button {
 
   .world-map {
     width: 84vw;
+  }
+
+  .minimap {
+    left: 12px;
+    bottom: 118px;
+    width: 124px;
+    opacity: 0.76;
   }
 
   .interaction-prompt {

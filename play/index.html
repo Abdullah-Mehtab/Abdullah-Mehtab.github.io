@@ -3,10 +3,10 @@
   <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <meta name="description" content="Drive through Abdullah Mehtab's portfolio as an interactive 3D world with security labs, project spaces, CV archive, achievements, and portfolio links.">
+    <meta name="description" content="Drive through Abdullah Mehtab's portfolio as an interactive 3D island with security labs, project spaces, CV archive, achievements, ramps, ocean edges, and portfolio links.">
     <meta name="theme-color" content="#07111c">
     <meta property="og:title" content="Portfolio Drive - Abdullah Mehtab">
-    <meta property="og:description" content="A driveable 3D portfolio world for Abdullah Mehtab's security, engineering, projects, education, CV, and contact details.">
+    <meta property="og:description" content="A driveable 3D portfolio island for Abdullah Mehtab's security, engineering, projects, education, CV, and contact details.">
     <meta property="og:type" content="website">
     <meta property="og:url" content="https://abdullah-mehtab.github.io/Abdullah-Mehtab/play/">
     <meta property="og:image" content="https://abdullah-mehtab.github.io/Abdullah-Mehtab/assets/images/icon.png">
@@ -16,8 +16,8 @@
     <link rel="canonical" href="https://abdullah-mehtab.github.io/Abdullah-Mehtab/play/">
     <link rel="icon" href="./game-assets/icon-BhwRGiJD.png" type="image/png">
     <title>Portfolio Drive - Abdullah Mehtab</title>
-    <script type="module" crossorigin src="./game-assets/index-Cu7wY83c.js"></script>
-    <link rel="stylesheet" crossorigin href="./game-assets/index-xf8fLbS3.css">
+    <script type="module" crossorigin src="./game-assets/index-BqD8HwRv.js"></script>
+    <link rel="stylesheet" crossorigin href="./game-assets/index-hql2VYtb.css">
   </head>
   <body>
     <canvas id="play-canvas" aria-label="Interactive 3D portfolio drive"></canvas>
@@ -45,7 +45,7 @@
       <div class="title-card">
         <span>Interactive Portfolio</span>
         <h1>Drive through the work, not around it.</h1>
-        <p>Security labs, engineering projects, CV archive, timeline stops, and a few moving parts built into one compact 3D world.</p>
+        <p>Security labs, engineering projects, CV archive, timeline stops, ramps, boost pads, hidden shards, and an island road network built for exploration.</p>
         <div class="title-actions">
           <button id="start-button" type="button">Start Driving</button>
           <a href="../projects.html">Projects</a>
@@ -60,6 +60,10 @@
       <strong id="prompt-title">Start Hub</strong>
       <p id="prompt-action">Press E to interact</p>
     </section>
+
+    <aside id="minimap" class="minimap" aria-label="Driving minimap">
+      <div id="minimap-world" class="minimap-world"></div>
+    </aside>
 
     <section id="panel" class="panel" hidden aria-live="polite">
       <div class="panel-card">
@@ -97,7 +101,15 @@
           <h2>World Map</h2>
           <button id="map-close" type="button">Close</button>
         </div>
-        <div id="world-map" class="world-map" aria-label="Portfolio world map"></div>
+        <div class="map-toolbar">
+          <button id="map-zoom-out" type="button">-</button>
+          <button id="map-reset" type="button">Reset</button>
+          <button id="map-zoom-in" type="button">+</button>
+          <span id="map-status">Drag map. Click pins to jump.</span>
+        </div>
+        <div id="world-map" class="world-map" aria-label="Portfolio world map">
+          <div id="world-map-layer" class="world-map-layer"></div>
+        </div>
       </div>
     </section>
 

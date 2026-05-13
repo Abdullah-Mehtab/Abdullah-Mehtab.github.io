@@ -14,7 +14,7 @@ export class Game {
     this.RAPIER = RAPIER;
     this.canvas = document.getElementById('play-canvas');
     this.scene = new THREE.Scene();
-    this.camera = new THREE.PerspectiveCamera(58, window.innerWidth / window.innerHeight, 0.1, 320);
+    this.camera = new THREE.PerspectiveCamera(58, window.innerWidth / window.innerHeight, 0.1, 900);
     this.renderer = new THREE.WebGLRenderer({
       canvas: this.canvas,
       antialias: true,
@@ -71,7 +71,7 @@ export class Game {
 
   setupScene() {
     this.scene.background = new THREE.Color(0x07111c);
-    this.scene.fog = new THREE.Fog(0x07111c, 52, 154);
+    this.scene.fog = new THREE.Fog(0x07111c, 84, 360);
     this.camera.position.set(0, 9, -18);
 
     const hemi = new THREE.HemisphereLight(0xbfeeff, 0x07111c, 2.2);
@@ -81,12 +81,12 @@ export class Game {
     sun.position.set(-34, 54, -22);
     sun.castShadow = true;
     sun.shadow.mapSize.set(2048, 2048);
-    sun.shadow.camera.left = -92;
-    sun.shadow.camera.right = 92;
-    sun.shadow.camera.top = 92;
-    sun.shadow.camera.bottom = -92;
+    sun.shadow.camera.left = -190;
+    sun.shadow.camera.right = 190;
+    sun.shadow.camera.top = 190;
+    sun.shadow.camera.bottom = -190;
     sun.shadow.camera.near = 1;
-    sun.shadow.camera.far = 180;
+    sun.shadow.camera.far = 360;
     this.scene.add(sun);
 
     const rim = new THREE.DirectionalLight(0x68d8ff, 1.2);
@@ -147,6 +147,19 @@ export class Game {
     this.physics.step(dt, (fixedDt) => {
       if (canDrive) {
         this.vehicle.update(this.input, fixedDt);
+        const pad = this.world.checkBoostPad(this.vehicle.position);
+        if (pad) {
+          this.vehicle.boostFromPad(pad);
+          this.ui?.notify?.('Boost pad launched');
+        }
+        const collected = this.world.checkCollectibles(this.vehicle.position);
+        if (collected.length) {
+          const count = this.world.getCollectedCount();
+          this.ui?.notify?.(`Data shard ${count}/${this.world.collectibles.length}`);
+          if (count === this.world.collectibles.length) {
+            this.achievements.unlock('data_shards');
+          }
+        }
       }
     });
 
@@ -160,6 +173,9 @@ export class Game {
     }
 
     this.world.update(dt, elapsed, this.vehicle.position);
+    if (this.world.checkRampAir(this.vehicle.position, this.vehicle.body.linvel().y)) {
+      this.achievements.unlock('ramp_jump');
+    }
     this.updateLighting(elapsed);
     this.cameraRig.update(dt);
     this.audio.update(this.vehicle.speed);

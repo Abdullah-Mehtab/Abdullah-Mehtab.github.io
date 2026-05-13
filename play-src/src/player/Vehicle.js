@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import { WORLD_HALF_SIZE } from '../world/worldData.js';
 
 const START = new THREE.Vector3(0, 1.25, -8);
 
@@ -14,6 +15,11 @@ export class Vehicle {
     this.frontWheels = [];
     this.speed = 0;
     this.driveSpeed = 0;
+    this.heading = 0;
+    this.airTime = 0;
+    this.lastBoostPad = null;
+    this.trails = [];
+    this.trailGeometry = new THREE.SphereGeometry(0.16, 8, 6);
     this.distanceAccumulator = 0;
     this.lastPosition = START.clone();
     this.steerVisual = 0;
@@ -125,15 +131,13 @@ export class Vehicle {
 
   update(input, dt) {
     const translation = this.body.translation();
-    if (translation.y < -12 || Math.abs(translation.x) > 92 || Math.abs(translation.z) > 92) {
+    if (translation.y < -12 || Math.abs(translation.x) > WORLD_HALF_SIZE + 16 || Math.abs(translation.z) > WORLD_HALF_SIZE + 16) {
       this.respawn();
       return;
     }
 
-    const rotation = this.body.rotation();
-    const quaternion = new THREE.Quaternion(rotation.x, rotation.y, rotation.z, rotation.w);
-    const forward = new THREE.Vector3(0, 0, 1).applyQuaternion(quaternion).setY(0).normalize();
-    const right = new THREE.Vector3(1, 0, 0).applyQuaternion(quaternion).setY(0).normalize();
+    const forward = new THREE.Vector3(Math.sin(this.heading), 0, Math.cos(this.heading)).normalize();
+    const right = new THREE.Vector3(Math.cos(this.heading), 0, -Math.sin(this.heading)).normalize();
     const linvel = this.body.linvel();
     const velocity = new THREE.Vector3(linvel.x, linvel.y, linvel.z);
     const forwardSpeed = velocity.dot(forward);
@@ -152,8 +156,8 @@ export class Vehicle {
       this.achievements.unlock('boost');
     }
 
-    const engine = boost ? 42 : 27;
-    const reverse = 22;
+    const engine = boost ? 58 : 39;
+    const reverse = 30;
     if (forwardInput) {
       this.driveSpeed += engine * dt;
     }
@@ -161,32 +165,33 @@ export class Vehicle {
       this.driveSpeed -= reverse * dt;
     }
     if (!forwardInput && !backwardInput) {
-      this.driveSpeed *= Math.max(0, 1 - dt * 1.8);
+      this.driveSpeed *= Math.max(0, 1 - dt * 1.35);
     }
-    this.driveSpeed += (forwardSpeed - this.driveSpeed) * Math.min(1, dt * 2);
-    this.driveSpeed = THREE.MathUtils.clamp(this.driveSpeed, -12, boost ? 34 : 24);
+    this.driveSpeed += (forwardSpeed - this.driveSpeed) * Math.min(1, dt * 0.8);
+    this.driveSpeed = THREE.MathUtils.clamp(this.driveSpeed, -16, boost ? 42 : 30);
     this.speed = this.driveSpeed;
 
-    const speedFactor = THREE.MathUtils.clamp(Math.abs(forwardSpeed) / 12, 0.25, 1.25);
+    const speedFactor = THREE.MathUtils.clamp(Math.abs(this.driveSpeed) / 18, 0.28, 1.35);
     if (Math.abs(steer) > 0.03) {
-      const direction = Math.sign(forwardSpeed || 1);
-      this.body.applyTorqueImpulse({ x: 0, y: steer * direction * speedFactor * 11.5 * dt, z: 0 }, true);
+      const direction = Math.sign(this.driveSpeed || 1);
+      this.heading += steer * direction * speedFactor * 2.65 * dt;
     }
+    this.body.setRotation(yawQuaternion(this.heading), true);
 
     if (brake) {
-      this.driveSpeed *= Math.max(0, 1 - dt * 7.5);
+      this.driveSpeed *= Math.max(0, 1 - dt * 8.5);
     }
 
     const desiredVelocity = forward.clone()
       .multiplyScalar(this.driveSpeed)
-      .add(right.clone().multiplyScalar(sideSpeed * 0.12));
+      .add(right.clone().multiplyScalar(sideSpeed * 0.04));
     this.body.setLinvel({ x: desiredVelocity.x, y: linvel.y, z: desiredVelocity.z }, true);
 
-    const grounded = translation.y < 1.58 && Math.abs(linvel.y) < 2.8;
-    this.groundedFrames = grounded ? Math.min(12, this.groundedFrames + 1) : 0;
+    const grounded = translation.y < 0.92 || (translation.y < 1.75 && Math.abs(linvel.y) < 0.32);
+    this.groundedFrames = grounded ? Math.min(18, this.groundedFrames + 1) : 0;
+    this.airTime = grounded ? 0 : this.airTime + dt;
     if (input.consume('jump') && this.groundedFrames > 2) {
-      this.body.applyImpulse({ x: 0, y: 8.5, z: 0 }, true);
-      this.body.applyTorqueImpulse({ x: (Math.random() - 0.5) * 1.2, y: 0, z: steer * -1.4 }, true);
+      this.body.setLinvel({ x: desiredVelocity.x, y: 9.5, z: desiredVelocity.z }, true);
       this.achievements.unlock('jump');
       this.audio.click(760);
     }
@@ -200,6 +205,10 @@ export class Vehicle {
       this.respawn();
     }
 
+    if (Math.abs(this.driveSpeed) > 12) {
+      this.spawnTrail(forward, boost);
+    }
+
     const pos = new THREE.Vector3(translation.x, translation.y, translation.z);
     const distance = pos.distanceTo(this.lastPosition);
     if (distance < 5) {
@@ -209,7 +218,8 @@ export class Vehicle {
     this.lastPosition.copy(pos);
 
     this.syncModel();
-    this.updateWheels(dt, steer, forwardSpeed);
+    this.updateWheels(dt, steer, this.driveSpeed);
+    this.updateTrails(dt);
   }
 
   syncModel() {
@@ -231,17 +241,81 @@ export class Vehicle {
 
   respawn(position = START) {
     this.body.setTranslation({ x: position.x, y: position.y, z: position.z }, true);
-    this.body.setRotation({ x: 0, y: 0, z: 0, w: 1 }, true);
+    this.heading = 0;
+    this.body.setRotation(yawQuaternion(this.heading), true);
     this.body.setLinvel({ x: 0, y: 0, z: 0 }, true);
     this.body.setAngvel({ x: 0, y: 0, z: 0 }, true);
     this.driveSpeed = 0;
     this.speed = 0;
+    this.airTime = 0;
     this.lastPosition.copy(position);
     this.syncModel();
+  }
+
+  spawnTrail(forward, boost) {
+    if (this.trails.length > 90) return;
+    const origin = this.position.addScaledVector(forward, -2.25);
+    const particle = new THREE.Mesh(
+      this.trailGeometry,
+      new THREE.MeshBasicMaterial({
+        color: boost ? 0x7cffb2 : 0x68d8ff,
+        transparent: true,
+        opacity: boost ? 0.38 : 0.22
+      })
+    );
+    particle.position.set(
+      origin.x + (Math.random() - 0.5) * 0.7,
+      Math.max(0.22, origin.y - 0.1),
+      origin.z + (Math.random() - 0.5) * 0.7
+    );
+    this.scene.add(particle);
+    this.trails.push({
+      mesh: particle,
+      life: boost ? 0.55 : 0.38,
+      velocity: new THREE.Vector3((Math.random() - 0.5) * 0.5, 0.45 + Math.random() * 0.28, (Math.random() - 0.5) * 0.5)
+    });
+  }
+
+  updateTrails(dt) {
+    for (let i = this.trails.length - 1; i >= 0; i -= 1) {
+      const trail = this.trails[i];
+      trail.life -= dt;
+      trail.mesh.position.addScaledVector(trail.velocity, dt);
+      trail.mesh.scale.multiplyScalar(1 + dt * 1.8);
+      trail.mesh.material.opacity = Math.max(0, trail.life) * 0.7;
+      if (trail.life <= 0) {
+        this.scene.remove(trail.mesh);
+        trail.mesh.material.dispose();
+        this.trails.splice(i, 1);
+      }
+    }
+  }
+
+  boostFromPad(pad) {
+    if (!pad || this.lastBoostPad === pad.id) return;
+    this.lastBoostPad = pad.id;
+    this.heading = Math.atan2(pad.direction.x, pad.direction.z);
+    this.driveSpeed = Math.max(this.driveSpeed, 42);
+    this.body.setRotation(yawQuaternion(this.heading), true);
+    this.body.setLinvel({
+      x: pad.direction.x * 46,
+      y: Math.max(2.4, this.body.linvel().y + 2.6),
+      z: pad.direction.z * 46
+    }, true);
+    this.achievements.unlock('boost_pad');
+    this.audio.click(940);
+    window.setTimeout(() => {
+      if (this.lastBoostPad === pad.id) this.lastBoostPad = null;
+    }, 550);
   }
 
   get position() {
     const t = this.body.translation();
     return new THREE.Vector3(t.x, t.y, t.z);
   }
+}
+
+function yawQuaternion(heading) {
+  const quaternion = new THREE.Quaternion().setFromEuler(new THREE.Euler(0, heading, 0));
+  return { x: quaternion.x, y: quaternion.y, z: quaternion.z, w: quaternion.w };
 }
