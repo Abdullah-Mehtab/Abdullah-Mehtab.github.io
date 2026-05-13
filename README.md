@@ -11,25 +11,26 @@ The site is intentionally human, not a sterile resume template. It keeps the old
 ```text
 index.html              # Home
 projects.html           # Work / project case studies
+cyber-sentinel.html     # Cyber Sentinel security engineering case study
 cv.html                 # Web CV plus resume/CV downloads near the bottom
 todo.html               # Never-Ending List
+admin.html              # Supabase Auth moderation page, noindex
 classic/                # Preserved legacy static site snapshot
 assets/css/             # Stylesheets
 assets/js/              # JavaScript
 assets/images/          # Site images and project screenshots
-supabase/schema.sql     # Optional backend schema for moderated comments
+supabase/schema.sql     # Backend schema for comments, admin moderation, and visitor proof
 ```
 
 ## Comments Backend
 
-Comments are embedded where they are useful, such as project entries, the CV page, and the Never-Ending List. They work in local preview mode by default. To make comments live-backed:
+Comments are embedded where they are useful, such as project entries, the CV page, and the Never-Ending List. Public comments are stored as `pending` first and only approved comments render publicly.
 
-1. Create a Supabase project.
-2. Run `supabase/schema.sql` in the Supabase SQL editor.
-3. Add the project URL and public anon key to `assets/js/site-config.js`.
-4. Moderate comments from Supabase by changing `status` from `pending` to `approved`.
+The Supabase anon key is safe to expose only because Row Level Security stays enabled. Moderation is handled through `admin.html` with Supabase Auth and the `comment_admins` table.
 
-The anon key is safe to expose only if Row Level Security policies stay enabled.
+## Visitor Proof
+
+The site records lightweight anonymous page-view proof in Supabase when enabled in `assets/js/site-config.js`. It stores page slug, event type, selected theme/cursor/motion, referrer, optional source token, and timestamp. It does not log IP addresses or browser fingerprints.
 
 ## Legacy Site
 

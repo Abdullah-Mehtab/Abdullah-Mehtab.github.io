@@ -125,7 +125,6 @@
 
   async function saveComment(key, payload) {
     const supabase = await getSupabase();
-    const status = config.commentsModeration === true ? "pending" : "approved";
     if (!supabase) {
       const comments = readLocal(key);
       comments.unshift({
@@ -145,14 +144,13 @@
       content_type: key.type,
       content_slug: key.slug,
       author_name: payload.author_name,
-      body: payload.body,
-      status
+      body: payload.body
     });
 
     if (error) throw error;
     return {
       mode: "supabase",
-      message: status === "pending" ? "Sent. It will appear after review." : "Posted."
+      message: "Sent. It will appear after review."
     };
   }
 
@@ -163,10 +161,8 @@
 
     if (note && result.mode === "local") {
       note.textContent = result.warning || "";
-    } else if (note && config.commentsModeration === true) {
-      note.textContent = "Comments are moderated before they show up.";
     } else if (note) {
-      note.textContent = "";
+      note.textContent = "Comments are moderated before they show up.";
     }
 
     if (!result.comments.length) {
@@ -201,7 +197,7 @@
           </label>
           <label>
             <span class="sr-only">Comment</span>
-            <textarea name="body" maxlength="1200" placeholder="Say something useful, funny, or incriminatingly specific enough to prove you were here." dir="auto" required></textarea>
+            <textarea name="body" maxlength="1200" placeholder="Say something useful, funny, or specific enough to prove you were here." dir="auto" required></textarea>
           </label>
           <input class="hidden-field" name="website" tabindex="-1" autocomplete="off">
           <button class="button primary" type="submit">Post comment</button>

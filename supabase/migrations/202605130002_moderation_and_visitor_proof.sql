@@ -1,16 +1,5 @@
-create extension if not exists pgcrypto;
-
-create table if not exists public.comments (
-  id uuid primary key default gen_random_uuid(),
-  content_type text not null,
-  content_slug text not null,
-  parent_id uuid references public.comments(id) on delete cascade,
-  author_name text not null check (char_length(author_name) between 1 and 80),
-  body text not null check (char_length(body) between 1 and 1200),
-  status text not null default 'pending' check (status in ('pending', 'approved', 'hidden')),
-  created_at timestamptz not null default now(),
-  approved_at timestamptz
-);
+alter table public.comments
+  alter column status set default 'pending';
 
 create table if not exists public.comment_admins (
   email text primary key check (position('@' in email) > 1),
@@ -33,9 +22,6 @@ create table if not exists public.visitor_events (
   created_at timestamptz not null default now()
 );
 
-create index if not exists comments_thread_idx
-  on public.comments (content_type, content_slug, status, created_at desc);
-
 create index if not exists comments_status_idx
   on public.comments (status, created_at desc);
 
@@ -54,30 +40,6 @@ as $$
     from public.comment_admins
     where lower(email) = lower(coalesce(auth.jwt() ->> 'email', ''))
   );
-$$;
-
-create or replace function public.sanitize_comment_text()
-returns trigger
-language plpgsql
-as $$
-begin
-  new.content_type := left(trim(regexp_replace(coalesce(new.content_type, 'page'), '[^a-zA-Z0-9_-]', '-', 'g')), 80);
-  new.content_slug := left(trim(regexp_replace(coalesce(new.content_slug, ''), '[^a-zA-Z0-9_-]', '-', 'g')), 160);
-  new.author_name := regexp_replace(coalesce(new.author_name, ''), '<[^>]*>|[<>`]|[[:cntrl:]]', ' ', 'g');
-  new.author_name := left(trim(regexp_replace(new.author_name, '(javascript|data|vbscript)[[:space:]]*:', '', 'gi')), 80);
-  new.body := regexp_replace(coalesce(new.body, ''), '<[^>]*>|[<>`]|[[:cntrl:]]', ' ', 'g');
-  new.body := left(trim(regexp_replace(new.body, '(javascript|data|vbscript)[[:space:]]*:', '', 'gi')), 1200);
-
-  if new.content_type = '' then
-    new.content_type := 'page';
-  end if;
-
-  if new.content_slug = '' or new.author_name = '' or new.body = '' then
-    raise exception 'Comments require a valid thread, author, and plain-text body.';
-  end if;
-
-  return new;
-end;
 $$;
 
 create or replace function public.sanitize_visitor_event()
@@ -101,17 +63,11 @@ begin
 end;
 $$;
 
-drop trigger if exists sanitize_comments_before_write on public.comments;
-create trigger sanitize_comments_before_write
-  before insert or update on public.comments
-  for each row execute function public.sanitize_comment_text();
-
 drop trigger if exists sanitize_visitor_events_before_write on public.visitor_events;
 create trigger sanitize_visitor_events_before_write
   before insert or update on public.visitor_events
   for each row execute function public.sanitize_visitor_event();
 
-alter table public.comments enable row level security;
 alter table public.comment_admins enable row level security;
 alter table public.visitor_events enable row level security;
 
@@ -158,6 +114,3 @@ create policy "Anyone can submit visitor proof"
   on public.visitor_events for insert
   to anon, authenticated
   with check (event_type = 'page_view');
-
--- Public users can submit pending comments and anonymous page-view proof.
--- Only authenticated admins listed in comment_admins can moderate comments.

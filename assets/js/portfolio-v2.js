@@ -37,9 +37,17 @@
     ["off", "Off"]
   ];
 
+  const motionOptions = [
+    ["auto", "Auto"],
+    ["full", "Full"],
+    ["calm", "Calm"],
+    ["off", "Off"]
+  ];
+
   const storageKeys = {
     theme: "abdullah-portfolio-theme",
-    cursor: "abdullah-portfolio-cursor"
+    cursor: "abdullah-portfolio-cursor",
+    motion: "abdullah-portfolio-motion"
   };
 
   function readStoredValue(key, fallback) {
@@ -116,8 +124,11 @@
 
     const themeSelects = document.querySelectorAll("[data-theme-select]");
     const cursorSelects = document.querySelectorAll("[data-cursor-select]");
+    const motionSelects = document.querySelectorAll("[data-motion-select]");
+    const resetButtons = document.querySelectorAll("[data-style-reset]");
     const styleControls = document.querySelectorAll("[data-style-control]");
     const styleToggles = document.querySelectorAll("[data-style-toggle]");
+    const motionQuery = window.matchMedia("(prefers-reduced-motion: reduce)");
 
     const savedTheme = themeOptions.some(([value]) => value === readStoredValue(storageKeys.theme, "dark"))
       ? readStoredValue(storageKeys.theme, "dark")
@@ -125,6 +136,9 @@
     const savedCursor = cursorOptions.some(([value]) => value === readStoredValue(storageKeys.cursor, "spotlight"))
       ? readStoredValue(storageKeys.cursor, "spotlight")
       : "spotlight";
+    const savedMotion = motionOptions.some(([value]) => value === readStoredValue(storageKeys.motion, "auto"))
+      ? readStoredValue(storageKeys.motion, "auto")
+      : "auto";
 
     function fillSelect(select, options) {
       if (select.options.length) return;
@@ -152,6 +166,19 @@
       writeStoredValue(storageKeys.cursor, value);
     }
 
+    function getEffectiveMotion(value) {
+      return value === "auto" ? (motionQuery.matches ? "off" : "full") : value;
+    }
+
+    function applyMotion(value) {
+      document.body.dataset.motionPreference = value;
+      document.body.dataset.motion = getEffectiveMotion(value);
+      motionSelects.forEach((select) => {
+        select.value = value;
+      });
+      writeStoredValue(storageKeys.motion, value);
+    }
+
     themeSelects.forEach((select) => {
       fillSelect(select, themeOptions);
       select.addEventListener("change", () => applyTheme(select.value));
@@ -161,6 +188,30 @@
       fillSelect(select, cursorOptions);
       select.addEventListener("change", () => applyCursor(select.value));
     });
+
+    motionSelects.forEach((select) => {
+      fillSelect(select, motionOptions);
+      select.addEventListener("change", () => applyMotion(select.value));
+    });
+
+    resetButtons.forEach((button) => {
+      button.addEventListener("click", () => {
+        applyTheme("dark");
+        applyCursor("spotlight");
+        applyMotion("auto");
+      });
+    });
+
+    const syncAutoMotion = () => {
+      const preference = document.body.dataset.motionPreference || "auto";
+      if (preference === "auto") applyMotion(preference);
+    };
+
+    if (motionQuery.addEventListener) {
+      motionQuery.addEventListener("change", syncAutoMotion);
+    } else if (motionQuery.addListener) {
+      motionQuery.addListener(syncAutoMotion);
+    }
 
     styleToggles.forEach((toggle) => {
       toggle.addEventListener("click", () => {
@@ -182,6 +233,7 @@
 
     applyTheme(savedTheme);
     applyCursor(savedCursor);
+    applyMotion(savedMotion);
   }
 
   function setupFilters() {
@@ -323,12 +375,6 @@
   }
 
   function setupPointerEffects() {
-    const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-    if (reduceMotion) {
-      document.body.dataset.cursor = "off";
-      return;
-    }
-
     let raf = 0;
     let lastTrail = 0;
     let pointerX = window.innerWidth / 2;
@@ -403,7 +449,11 @@
 
       const now = performance.now();
       const mode = document.body.dataset.cursor || "spotlight";
-      const delay = delayByMode[mode] || 34;
+      const motion = document.body.dataset.motion || "full";
+      if (motion === "off") return;
+
+      const delayMultiplier = motion === "calm" ? 2.6 : 1;
+      const delay = (delayByMode[mode] || 34) * delayMultiplier;
       if (now - lastTrail > delay) {
         lastTrail = now;
         createTrailPoint(pointerX, pointerY, mode);
@@ -412,21 +462,21 @@
   }
 
   function setupTiltCards() {
-    const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-    if (reduceMotion) return;
-
     const cards = document.querySelectorAll(".profile-panel, .panel, .work-card, .service-card, .skill-item, .stat-card, .todo-column, .download-card, .timeline-card");
     cards.forEach((card) => {
       card.classList.add("kinetic-card");
 
       card.addEventListener("pointermove", (event) => {
+        const motion = document.body.dataset.motion || "full";
+        if (motion === "off") return;
         const rect = card.getBoundingClientRect();
         const x = (event.clientX - rect.left) / rect.width - 0.5;
         const y = (event.clientY - rect.top) / rect.height - 0.5;
+        const strength = motion === "calm" ? 0.42 : 1;
         card.classList.add("is-tilting");
-        card.style.setProperty("--tilt-x", `${(-y * 5).toFixed(2)}deg`);
-        card.style.setProperty("--tilt-y", `${(x * 7).toFixed(2)}deg`);
-        card.style.setProperty("--lift", "-2px");
+        card.style.setProperty("--tilt-x", `${(-y * 5 * strength).toFixed(2)}deg`);
+        card.style.setProperty("--tilt-y", `${(x * 7 * strength).toFixed(2)}deg`);
+        card.style.setProperty("--lift", motion === "calm" ? "-1px" : "-2px");
       }, { passive: true });
 
       card.addEventListener("pointerleave", () => {
