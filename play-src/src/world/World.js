@@ -2,6 +2,7 @@ import * as THREE from 'three';
 import { boostPads, circuitCheckpoints, roadPaths, roadSegments, WORLD_HALF_SIZE, worldZones } from './worldData.js';
 
 const OCEAN_HALF_SIZE = 520;
+const OCEAN_Y = -2.25;
 const ROAD_LINE_COLOR = 0x68d8ff;
 const tmpColor = new THREE.Color();
 
@@ -54,6 +55,7 @@ export class World {
     sandTexture.wrapS = THREE.RepeatWrapping;
     sandTexture.wrapT = THREE.RepeatWrapping;
     sandTexture.repeat.set(10, 10);
+    const patchAlpha = makePatchAlphaTexture();
 
     this.materials.ground = new THREE.MeshStandardMaterial({
       color: 0x4f9b45,
@@ -84,6 +86,7 @@ export class World {
     this.materials.neonGreen = new THREE.MeshBasicMaterial({ color: 0x7cffb2, transparent: true, opacity: 0.82 });
     this.materials.neonRed = new THREE.MeshBasicMaterial({ color: 0xff4466, transparent: true, opacity: 0.82 });
     this.materials.water = makeWaterMaterial();
+    this.materials.patchAlpha = patchAlpha;
     this.materials.glass = new THREE.MeshPhysicalMaterial({
       color: 0x8fe8ff,
       roughness: 0.05,
@@ -155,7 +158,7 @@ export class World {
       this.materials.water
     );
     water.rotation.x = -Math.PI / 2;
-    water.position.y = -0.42;
+    water.position.y = OCEAN_Y;
     this.scene.add(water);
     this.decor.push({ type: 'ocean', mesh: water, phase: 0 });
 
@@ -180,14 +183,21 @@ export class World {
       [96, 0, 126, 60, 32, 0.14, this.materials.leafLight],
       [-118, 0, -102, 54, 28, 0.2, this.materials.sand],
       [122, 0, -128, 44, 24, -0.12, this.materials.sand],
-      [-18, 0, -138, 78, 24, 0.06, this.materials.leafLight],
-      [132, 0, 58, 40, 28, -0.28, this.materials.leafLight],
-      [0, 0, 12, 82, 62, 0.04, this.materials.leafLight],
+      [-18, 0, -138, 68, 22, 0.06, this.materials.leafLight],
+      [132, 0, 58, 38, 24, -0.28, this.materials.leafLight],
+      [18, 0, 18, 56, 34, 0.04, this.materials.leafLight],
+      [56, 0, 30, 34, 18, -0.22, this.materials.leafLight],
       [105, 0, 154, 44, 26, -0.08, this.materials.leafLight]
     ];
     for (const [x, y, z, width, depth, rotation, material] of patchData) {
-      const patch = new THREE.Mesh(new THREE.PlaneGeometry(width, depth), material);
-      patch.position.set(x, y + 0.012, z);
+      const patchMaterial = material.clone();
+      patchMaterial.transparent = true;
+      patchMaterial.opacity = material === this.materials.sand ? 0.72 : 0.42;
+      patchMaterial.alphaMap = this.materials.patchAlpha;
+      patchMaterial.depthWrite = false;
+      patchMaterial.needsUpdate = true;
+      const patch = new THREE.Mesh(makeOrganicPatchGeometry(width, depth, x * 0.17 + z * 0.31), patchMaterial);
+      patch.position.set(x, y + 0.075, z);
       patch.rotation.x = -Math.PI / 2;
       patch.rotation.z = rotation;
       patch.receiveShadow = true;
@@ -263,7 +273,6 @@ export class World {
       for (const point of path.points) {
         const node = new THREE.Mesh(new THREE.CylinderGeometry(path.width * 0.56, path.width * 0.56, 0.1, 32), nodeMaterial);
         node.position.set(point[0], 0.055, point[1]);
-        node.rotation.x = Math.PI / 2;
         node.receiveShadow = true;
         this.scene.add(node);
       }
@@ -997,9 +1006,34 @@ export class World {
     return nearest && distance <= nearest.radius ? { zone: nearest, distance } : null;
   }
 
-  getRespawnPosition(zoneId = 'landing') {
+  getRespawnPose(zoneId = 'landing') {
     const zone = this.zones.find((item) => item.id === zoneId) || this.zones[0];
-    return zone.position.clone().add(new THREE.Vector3(0, 1.25, -zone.radius + 2.5));
+    const colliderDepth = zone.colliderSize?.[2] || 0;
+    const colliderWidth = zone.colliderSize?.[0] || 0;
+    const offsetZ = Math.max(zone.radius + 4, colliderDepth / 2 + 5.5);
+    const offsetX = Math.max(zone.radius + 4, colliderWidth / 2 + 5.5);
+    const limit = WORLD_HALF_SIZE - 12;
+    const candidates = [
+      { offset: new THREE.Vector3(0, 1.45, offsetZ), heading: 0 },
+      { offset: new THREE.Vector3(0, 1.45, -offsetZ), heading: Math.PI },
+      { offset: new THREE.Vector3(offsetX, 1.45, 0), heading: Math.PI / 2 },
+      { offset: new THREE.Vector3(-offsetX, 1.45, 0), heading: -Math.PI / 2 }
+    ];
+
+    const chosen = candidates.find(({ offset }) => {
+      const x = zone.position.x + offset.x;
+      const z = zone.position.z + offset.z;
+      return Math.abs(x) < limit && Math.abs(z) < limit;
+    }) || candidates[0];
+
+    return {
+      position: zone.position.clone().add(chosen.offset),
+      heading: chosen.heading
+    };
+  }
+
+  getRespawnPosition(zoneId = 'landing') {
+    return this.getRespawnPose(zoneId).position;
   }
 
   startCircuit(now) {
@@ -1063,7 +1097,7 @@ export class World {
         item.mesh.rotation.z += dt * 0.8;
       } else if (item.type === 'ocean') {
         if (item.mesh.material.uniforms?.uTime) item.mesh.material.uniforms.uTime.value = elapsed;
-        item.mesh.position.y = -0.42 + Math.sin(elapsed * 0.45) * 0.035;
+        item.mesh.position.y = OCEAN_Y + Math.sin(elapsed * 0.45) * 0.025;
       } else if (item.type === 'buoy') {
         item.mesh.position.y = 0.38 + Math.sin(elapsed * 1.4 + item.phase) * 0.18;
         item.mesh.rotation.y += dt * 0.45;
@@ -1094,6 +1128,49 @@ export class World {
 
 function flatDistance(a, b) {
   return Math.hypot(a.x - b.x, a.z - b.z);
+}
+
+function makeOrganicPatchGeometry(width, depth, seed = 1) {
+  const geometry = new THREE.CircleGeometry(1, 64);
+  const positions = geometry.attributes.position;
+  for (let i = 1; i < positions.count; i += 1) {
+    const x = positions.getX(i);
+    const y = positions.getY(i);
+    const angle = Math.atan2(y, x);
+    const radiusNoise =
+      Math.sin(angle * 3.1 + seed) * 0.075 +
+      Math.cos(angle * 5.3 + seed * 0.7) * 0.055 +
+      Math.sin(angle * 9.0 + seed * 1.4) * 0.025;
+    const radius = 1 + radiusNoise;
+    positions.setXY(i, x * width * 0.5 * radius, y * depth * 0.5 * radius);
+  }
+  positions.needsUpdate = true;
+  geometry.computeVertexNormals();
+  return geometry;
+}
+
+function makePatchAlphaTexture() {
+  const canvas = document.createElement('canvas');
+  canvas.width = 256;
+  canvas.height = 256;
+  const ctx = canvas.getContext('2d');
+  const gradient = ctx.createRadialGradient(128, 128, 22, 128, 128, 128);
+  gradient.addColorStop(0, 'rgb(255,255,255)');
+  gradient.addColorStop(0.58, 'rgb(230,230,230)');
+  gradient.addColorStop(0.82, 'rgb(108,108,108)');
+  gradient.addColorStop(1, 'rgb(0,0,0)');
+  ctx.fillStyle = gradient;
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+  for (let i = 0; i < 900; i += 1) {
+    const v = 170 + Math.random() * 85;
+    ctx.fillStyle = `rgb(${v},${v},${v})`;
+    ctx.globalAlpha = 0.04 + Math.random() * 0.08;
+    ctx.beginPath();
+    ctx.arc(Math.random() * canvas.width, Math.random() * canvas.height, 1 + Math.random() * 4, 0, Math.PI * 2);
+    ctx.fill();
+  }
+  ctx.globalAlpha = 1;
+  return new THREE.CanvasTexture(canvas);
 }
 
 function makeNoiseTexture(colors, size = 256, dots = 1200) {
@@ -1150,7 +1227,7 @@ function makeWaterMaterial() {
       void main() {
         vUv = uv;
         vec3 p = position;
-        float wave = sin(p.x * 0.035 + uTime * 0.9) * 0.28 + cos(p.y * 0.04 + uTime * 0.7) * 0.2;
+        float wave = sin(p.x * 0.035 + uTime * 0.9) * 0.055 + cos(p.y * 0.04 + uTime * 0.7) * 0.04;
         p.z += wave;
         vWave = wave;
         gl_Position = projectionMatrix * modelViewMatrix * vec4(p, 1.0);
