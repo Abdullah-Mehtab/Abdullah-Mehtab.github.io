@@ -77,15 +77,15 @@ export class Game {
   }
 
   setupScene() {
-    this.scene.background = new THREE.Color(0x07111c);
-    this.scene.fog = new THREE.Fog(0x07111c, 84, 360);
+    this.scene.background = new THREE.Color(0x8fd9ff);
+    this.scene.fog = new THREE.Fog(0xb9edff, 110, 430);
     this.camera.position.set(0, 9, -18);
 
-    const hemi = new THREE.HemisphereLight(0xbfeeff, 0x07111c, 2.2);
+    const hemi = new THREE.HemisphereLight(0xffffff, 0x2c6a35, 2.45);
     this.scene.add(hemi);
 
-    const sun = new THREE.DirectionalLight(0xffffff, 2.9);
-    sun.position.set(-34, 54, -22);
+    const sun = new THREE.DirectionalLight(0xfff4cf, 3.25);
+    sun.position.set(-52, 72, -46);
     sun.castShadow = true;
     sun.shadow.mapSize.set(2048, 2048);
     sun.shadow.camera.left = -190;
@@ -96,7 +96,7 @@ export class Game {
     sun.shadow.camera.far = 360;
     this.scene.add(sun);
 
-    const rim = new THREE.DirectionalLight(0x68d8ff, 1.2);
+    const rim = new THREE.DirectionalLight(0x8ed9ff, 0.85);
     rim.position.set(38, 26, 42);
     this.scene.add(rim);
 
@@ -246,9 +246,9 @@ export class Game {
 
   updateLighting(elapsed) {
     const cycle = Math.sin(elapsed * 0.035) * 0.5 + 0.5;
-    this.lights.sun.intensity = 2.1 + cycle * 1.2;
-    this.lights.rim.intensity = 0.75 + (1 - cycle) * 1.1;
-    this.scene.fog.color.lerpColors(new THREE.Color(0x07111c), new THREE.Color(0x0b2035), cycle * 0.35);
+    this.lights.sun.intensity = 2.7 + cycle * 0.65;
+    this.lights.rim.intensity = 0.55 + (1 - cycle) * 0.5;
+    this.scene.fog.color.lerpColors(new THREE.Color(0xb9edff), new THREE.Color(0xe7f8ff), cycle * 0.32);
   }
 
   getZoneLines(zone) {

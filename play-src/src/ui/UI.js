@@ -26,7 +26,6 @@ export class UI {
       panelClose: document.getElementById('panel-close'),
       menu: document.getElementById('menu'),
       menuButton: document.getElementById('menu-button'),
-      potatoReadout: document.getElementById('potato-readout'),
       menuClose: document.getElementById('menu-close'),
       menuContent: document.getElementById('menu-content'),
       mapModal: document.getElementById('map-modal'),
@@ -133,7 +132,7 @@ export class UI {
     if (zone.potatoFarm) {
       const counter = document.createElement('p');
       counter.className = 'panel-muted';
-      counter.textContent = `Persistent potato summons: ${this.game.analytics?.potatoCountLabel || '--'}`;
+      counter.textContent = `Farm counter: ${this.game.analytics?.potatoCountLabel || '--'}`;
       this.refs.panelBody.append(counter);
       const summon = button('Summon Potato', () => this.game.summonPotato());
       this.refs.panelActions.append(summon);
@@ -142,8 +141,8 @@ export class UI {
       const status = document.createElement('p');
       status.className = 'panel-muted';
       status.textContent = this.game.analytics?.isEnabled
-        ? 'Visitor-proof endpoint is enabled for this page.'
-        : 'Visitor-proof endpoint is not configured for this page.';
+        ? 'Signal collection is active.'
+        : 'Signal collection is offline.';
       this.refs.panelBody.append(status);
     }
     this.addActions(zone.actions || []);
@@ -372,9 +371,8 @@ export class UI {
 
   renderAbout() {
     const lines = [
-      'This is a static GitHub Pages game page built as a modular Three.js portfolio world.',
-      'Rapier handles rigid-body physics, the car is procedural, and resume content comes from local JSON.',
-      'The drive world connects the playful exploration layer to the formal CV, projects, blog, and contact pages.'
+      'Three.js renders the island. Rapier handles the driving physics.',
+      'Resume content, project stops, contact links, and counters are connected directly to the portfolio.'
     ];
     for (const line of lines) {
       const p = document.createElement('p');
@@ -444,9 +442,6 @@ export class UI {
 
   update({ speed, activeZone, circuit }) {
     this.refs.speedReadout.textContent = `${Math.round(Math.abs(speed) * 3.6)} km/h`;
-    if (this.refs.potatoReadout) {
-      this.refs.potatoReadout.textContent = `Potatoes ${this.game.analytics?.potatoCountLabel || '--'}`;
-    }
     this.refs.zoneReadout.textContent = activeZone ? activeZone.name : 'Road';
     this.refs.soundButton.textContent = this.audio.muted ? 'Muted' : 'Sound';
     this.showPrompt(activeZone);
@@ -488,8 +483,7 @@ export class UI {
   }
 
   setPotatoCount(count) {
-    if (!this.refs.potatoReadout) return;
-    this.refs.potatoReadout.textContent = `Potatoes ${count}`;
+    this.game.world?.setPotatoCount?.(count);
   }
 }
 

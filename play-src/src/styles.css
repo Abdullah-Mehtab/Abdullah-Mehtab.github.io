@@ -755,10 +755,6 @@ body:not(.is-driving) .minimap {
     display: none;
   }
 
-  #potato-readout {
-    display: none;
-  }
-
   .hud-readouts span,
   .hud-pill {
     min-height: 38px;

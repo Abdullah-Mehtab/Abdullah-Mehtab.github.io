@@ -69,17 +69,17 @@ export class Vehicle {
     const glow = new THREE.MeshBasicMaterial({ color: 0xffefb2 });
     const tire = new THREE.MeshStandardMaterial({ color: 0x020407, roughness: 0.74, metalness: 0.12 });
 
-    const body = new THREE.Mesh(new THREE.BoxGeometry(2.62, 0.68, 4.28), red);
+    const body = new THREE.Mesh(createCarShellGeometry(2.72, 0.72, 4.38), red);
     body.position.y = 0.64;
     body.castShadow = true;
     this.group.add(body);
 
-    const hood = new THREE.Mesh(new THREE.BoxGeometry(2.18, 0.26, 1.62), red);
+    const hood = new THREE.Mesh(createCarShellGeometry(2.24, 0.34, 1.64, 0.12), red);
     hood.position.set(0, 0.95, 1.33);
     hood.castShadow = true;
     this.group.add(hood);
 
-    const trunk = new THREE.Mesh(new THREE.BoxGeometry(2.28, 0.28, 1.08), red);
+    const trunk = new THREE.Mesh(createCarShellGeometry(2.34, 0.3, 1.08, -0.04), red);
     trunk.position.set(0, 0.93, -1.47);
     trunk.castShadow = true;
     this.group.add(trunk);
@@ -98,6 +98,7 @@ export class Vehicle {
 
     const cabin = new THREE.Mesh(new THREE.BoxGeometry(1.48, 0.78, 1.22), glass);
     cabin.position.set(0, 1.28, -0.28);
+    cabin.rotation.x = -0.03;
     cabin.castShadow = true;
     this.group.add(cabin);
 
@@ -119,6 +120,15 @@ export class Vehicle {
       const bumper = new THREE.Mesh(new THREE.BoxGeometry(2.36, 0.2, 0.18), chrome);
       bumper.position.set(0, 0.55, z);
       this.group.add(bumper);
+    }
+
+    for (const x of [-1.34, 1.34]) {
+      for (const z of [1.32, -1.42]) {
+        const arch = new THREE.Mesh(new THREE.TorusGeometry(0.52, 0.055, 8, 32, Math.PI), chrome);
+        arch.position.set(x, 0.54, z);
+        arch.rotation.set(0, Math.PI / 2, x > 0 ? Math.PI : 0);
+        this.group.add(arch);
+      }
     }
 
     const wheelGeometry = new THREE.CylinderGeometry(0.46, 0.46, 0.46, 24);
@@ -353,4 +363,29 @@ export class Vehicle {
 function yawQuaternion(heading) {
   const quaternion = new THREE.Quaternion().setFromEuler(new THREE.Euler(0, heading, 0));
   return { x: quaternion.x, y: quaternion.y, z: quaternion.z, w: quaternion.w };
+}
+
+function createCarShellGeometry(width, height, depth, noseDrop = 0.04) {
+  const hw = width / 2;
+  const hd = depth / 2;
+  const y0 = 0;
+  const y1 = height;
+  const taper = 0.22;
+  const vertices = new Float32Array([
+    -hw, y0, -hd, hw, y0, -hd, hw, y0, hd, -hw, y0, hd,
+    -hw + taper, y1, -hd + 0.18, hw - taper, y1, -hd + 0.18, hw - taper, y1 - noseDrop, hd - 0.12, -hw + taper, y1 - noseDrop, hd - 0.12
+  ]);
+  const indices = [
+    0, 1, 2, 0, 2, 3,
+    4, 6, 5, 4, 7, 6,
+    0, 4, 5, 0, 5, 1,
+    1, 5, 6, 1, 6, 2,
+    2, 6, 7, 2, 7, 3,
+    3, 7, 4, 3, 4, 0
+  ];
+  const geometry = new THREE.BufferGeometry();
+  geometry.setAttribute('position', new THREE.BufferAttribute(vertices, 3));
+  geometry.setIndex(indices);
+  geometry.computeVertexNormals();
+  return geometry;
 }
