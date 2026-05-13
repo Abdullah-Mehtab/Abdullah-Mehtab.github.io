@@ -245,7 +245,35 @@
     });
   }
 
-  document.addEventListener("DOMContentLoaded", () => {
-    document.querySelectorAll("[data-comments]").forEach(buildThread);
-  });
+  function setupLazyThreads() {
+    const roots = Array.from(document.querySelectorAll("[data-comments]"));
+    if (!roots.length) return;
+
+    roots.forEach((root) => {
+      if (root.dataset.ready === "true" || root.innerHTML.trim()) return;
+      root.innerHTML = '<div class="comment-shell comment-shell-lazy"><p class="comment-note">Comments load when this section is nearby.</p></div>';
+    });
+
+    const hydrate = (root) => {
+      if (root.dataset.ready === "true") return;
+      buildThread(root);
+    };
+
+    if (!("IntersectionObserver" in window)) {
+      roots.forEach(hydrate);
+      return;
+    }
+
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach((entry) => {
+        if (!entry.isIntersecting) return;
+        hydrate(entry.target);
+        observer.unobserve(entry.target);
+      });
+    }, { rootMargin: "260px 0px", threshold: 0 });
+
+    roots.forEach((root) => observer.observe(root));
+  }
+
+  document.addEventListener("DOMContentLoaded", setupLazyThreads);
 })();
