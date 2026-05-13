@@ -30,6 +30,17 @@ create table if not exists public.visitor_events (
   motion text check (char_length(motion) <= 80),
   referrer text check (char_length(referrer) <= 300),
   source_token text check (char_length(source_token) <= 120),
+  visitor_id text check (char_length(visitor_id) <= 80),
+  session_id text check (char_length(session_id) <= 80),
+  fingerprint_hash text check (char_length(fingerprint_hash) <= 128),
+  fingerprint_version text check (char_length(fingerprint_version) <= 20),
+  user_agent_hash text check (char_length(user_agent_hash) <= 128),
+  ip_hash text check (char_length(ip_hash) <= 128),
+  screen_size text check (char_length(screen_size) <= 40),
+  viewport_size text check (char_length(viewport_size) <= 40),
+  timezone text check (char_length(timezone) <= 80),
+  language text check (char_length(language) <= 40),
+  platform text check (char_length(platform) <= 80),
   created_at timestamptz not null default now()
 );
 
@@ -41,6 +52,15 @@ create index if not exists comments_status_idx
 
 create index if not exists visitor_events_page_idx
   on public.visitor_events (page_slug, event_type, created_at desc);
+
+create index if not exists visitor_events_visitor_idx
+  on public.visitor_events (visitor_id, created_at desc);
+
+create index if not exists visitor_events_fingerprint_idx
+  on public.visitor_events (fingerprint_hash, created_at desc);
+
+create index if not exists visitor_events_ip_hash_idx
+  on public.visitor_events (ip_hash, created_at desc);
 
 create or replace function public.is_comment_admin()
 returns boolean
@@ -92,6 +112,17 @@ begin
   new.motion := nullif(left(trim(regexp_replace(coalesce(new.motion, ''), '[^a-zA-Z0-9_-]', '-', 'g')), 80), '');
   new.referrer := nullif(left(trim(regexp_replace(coalesce(new.referrer, ''), '<[^>]*>|[<>`]|[[:cntrl:]]', ' ', 'g')), 300), '');
   new.source_token := nullif(left(trim(regexp_replace(coalesce(new.source_token, ''), '[^a-zA-Z0-9_-]', '-', 'g')), 120), '');
+  new.visitor_id := nullif(left(trim(regexp_replace(coalesce(new.visitor_id, ''), '[^a-zA-Z0-9_-]', '-', 'g')), 80), '');
+  new.session_id := nullif(left(trim(regexp_replace(coalesce(new.session_id, ''), '[^a-zA-Z0-9_-]', '-', 'g')), 80), '');
+  new.fingerprint_hash := nullif(left(trim(regexp_replace(coalesce(new.fingerprint_hash, ''), '[^a-fA-F0-9]', '', 'g')), 128), '');
+  new.fingerprint_version := nullif(left(trim(regexp_replace(coalesce(new.fingerprint_version, ''), '[^a-zA-Z0-9_-]', '-', 'g')), 20), '');
+  new.user_agent_hash := nullif(left(trim(regexp_replace(coalesce(new.user_agent_hash, ''), '[^a-fA-F0-9]', '', 'g')), 128), '');
+  new.ip_hash := nullif(left(trim(regexp_replace(coalesce(new.ip_hash, ''), '[^a-fA-F0-9]', '', 'g')), 128), '');
+  new.screen_size := nullif(left(trim(regexp_replace(coalesce(new.screen_size, ''), '[^0-9x.]', '', 'g')), 40), '');
+  new.viewport_size := nullif(left(trim(regexp_replace(coalesce(new.viewport_size, ''), '[^0-9x.]', '', 'g')), 40), '');
+  new.timezone := nullif(left(trim(regexp_replace(coalesce(new.timezone, ''), '[^a-zA-Z0-9_+./-]', '', 'g')), 80), '');
+  new.language := nullif(left(trim(regexp_replace(coalesce(new.language, ''), '[^a-zA-Z0-9_-]', '', 'g')), 40), '');
+  new.platform := nullif(left(trim(regexp_replace(coalesce(new.platform, ''), '<[^>]*>|[<>`]|[[:cntrl:]]', ' ', 'g')), 80), '');
 
   if new.page_slug = '' then
     new.page_slug := 'home';
@@ -158,6 +189,12 @@ create policy "Anyone can submit visitor proof"
   on public.visitor_events for insert
   to anon, authenticated
   with check (event_type = 'page_view');
+
+drop policy if exists "Admins can read visitor proof" on public.visitor_events;
+create policy "Admins can read visitor proof"
+  on public.visitor_events for select
+  to authenticated
+  using (public.is_comment_admin());
 
 -- Public users can submit pending comments and anonymous page-view proof.
 -- Only authenticated admins listed in comment_admins can moderate comments.

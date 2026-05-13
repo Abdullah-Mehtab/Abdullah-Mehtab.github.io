@@ -25,6 +25,10 @@ todo.html               # Never-Ending List
 - Moderated comments on selected pages and project entries.
 - Theme and cursor customization for visitors.
 
+## Visitor Proof
+
+The site records lightweight visitor analytics through Supabase. Events include page slug, event type, selected theme/cursor/motion, referrer, optional source token, stable visitor/session IDs, hashed browser fingerprint data, and a hashed IP signal from the visitor-proof edge function.
+
 ## Tech
 
 The site is built with static HTML, CSS, and JavaScript and is hosted through GitHub Pages. Interactive comments and lightweight visitor proof use Supabase.

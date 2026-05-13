@@ -55,6 +55,64 @@
     }).join("");
   }
 
+  function uniqueCount(items, key) {
+    return new Set(items.map((item) => item[key]).filter(Boolean)).size;
+  }
+
+  function renderVisitors(events) {
+    const stats = document.querySelector("[data-admin-visitor-stats]");
+    const list = document.querySelector("[data-admin-visitors]");
+    if (!stats || !list) return;
+
+    if (!events.length) {
+      stats.innerHTML = '<p class="comment-note">No visitor proof rows available.</p>';
+      list.innerHTML = "";
+      return;
+    }
+
+    const pages = new Map();
+    events.forEach((event) => {
+      const page = event.page_slug || "home";
+      pages.set(page, (pages.get(page) || 0) + 1);
+    });
+    const topPages = Array.from(pages.entries())
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 4)
+      .map(([page, count]) => `${escapeHtml(page)} (${count})`)
+      .join(", ");
+
+    stats.innerHTML = `
+      <article class="admin-stat"><strong>${events.length}</strong><span>Recent page views</span></article>
+      <article class="admin-stat"><strong>${uniqueCount(events, "visitor_id")}</strong><span>Visitor IDs</span></article>
+      <article class="admin-stat"><strong>${uniqueCount(events, "fingerprint_hash")}</strong><span>Browser fingerprints</span></article>
+      <article class="admin-stat"><strong>${uniqueCount(events, "ip_hash")}</strong><span>IP hashes</span></article>
+      <article class="admin-stat"><strong>${uniqueCount(events, "session_id")}</strong><span>Sessions</span></article>
+      <article class="admin-stat"><strong>${uniqueCount(events, "source_token")}</strong><span>Source tokens</span></article>
+    `;
+
+    list.innerHTML = `
+      <p class="comment-note">Top pages: ${topPages || "not enough data yet"}</p>
+      ${events.slice(0, 30).map((event) => {
+        const date = new Date(event.created_at || Date.now());
+        return `
+          <article class="admin-visitor">
+            <div class="admin-comment-head">
+              <strong>${escapeHtml(event.page_slug || "home")}</strong>
+              <time datetime="${escapeHtml(date.toISOString())}">${escapeHtml(date.toLocaleString())}</time>
+            </div>
+            <p>
+              visitor <code>${escapeHtml((event.visitor_id || "legacy").slice(0, 24))}</code>
+              / session <code>${escapeHtml((event.session_id || "legacy").slice(0, 24))}</code>
+              / fp <code>${escapeHtml((event.fingerprint_hash || "").slice(0, 16) || "none")}</code>
+              / ip <code>${escapeHtml((event.ip_hash || "").slice(0, 16) || "edge off")}</code>
+            </p>
+            <p>${escapeHtml(event.theme || "theme?")} / ${escapeHtml(event.cursor || "cursor?")} / ${escapeHtml(event.referrer || "direct")}</p>
+          </article>
+        `;
+      }).join("")}
+    `;
+  }
+
   async function loadComments() {
     const supabase = await getSupabase();
     if (!supabase) {
@@ -85,6 +143,66 @@
     setStatus(`Loaded ${(data || []).length} comments.`);
   }
 
+  async function loadVisitors() {
+    const supabase = await getSupabase();
+    if (!supabase) {
+      setStatus("Supabase config is missing.");
+      return;
+    }
+
+    const { data: sessionData } = await supabase.auth.getSession();
+    if (!sessionData.session) {
+      renderVisitors([]);
+      setStatus("Sign in with the admin email to load visitor proof.");
+      return;
+    }
+
+    const columns = [
+      "id",
+      "page_slug",
+      "event_type",
+      "theme",
+      "cursor",
+      "motion",
+      "referrer",
+      "source_token",
+      "visitor_id",
+      "session_id",
+      "fingerprint_hash",
+      "user_agent_hash",
+      "ip_hash",
+      "screen_size",
+      "viewport_size",
+      "timezone",
+      "language",
+      "platform",
+      "created_at"
+    ].join(", ");
+
+    let result = await supabase
+      .from("visitor_events")
+      .select(columns)
+      .order("created_at", { ascending: false })
+      .limit(250);
+
+    if (result.error) {
+      result = await supabase
+        .from("visitor_events")
+        .select("id, page_slug, event_type, theme, cursor, motion, referrer, source_token, created_at")
+        .order("created_at", { ascending: false })
+        .limit(250);
+    }
+
+    if (result.error) {
+      renderVisitors([]);
+      setStatus("Signed in, but RLS blocked visitor proof access or the migration is not applied yet.");
+      return;
+    }
+
+    renderVisitors(result.data || []);
+    setStatus(`Loaded ${(result.data || []).length} visitor proof rows.`);
+  }
+
   async function updateComment(id, status) {
     const supabase = await getSupabase();
     if (!supabase) return;
@@ -107,6 +225,7 @@
     const login = document.querySelector("[data-admin-login]");
     const list = document.querySelector("[data-admin-comments]");
     const refresh = document.querySelector("[data-admin-refresh]");
+    const refreshVisitors = document.querySelector("[data-admin-refresh-visitors]");
     const signout = document.querySelector("[data-admin-signout]");
     const emailInput = login ? login.querySelector("input[name='email']") : null;
 
@@ -129,9 +248,11 @@
     });
 
     refresh.addEventListener("click", loadComments);
+    refreshVisitors.addEventListener("click", loadVisitors);
     signout.addEventListener("click", async () => {
       await supabase.auth.signOut();
       renderComments([]);
+      renderVisitors([]);
       setStatus("Signed out.");
     });
 
@@ -143,5 +264,6 @@
     });
 
     await loadComments();
+    await loadVisitors();
   });
 })();
