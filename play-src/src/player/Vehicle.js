@@ -1,7 +1,7 @@
 import * as THREE from 'three';
 import { WORLD_HALF_SIZE } from '../world/worldData.js';
 
-const START = new THREE.Vector3(0, 1.25, -8);
+const START = new THREE.Vector3(2, 1.45, 5.5);
 
 export class Vehicle {
   constructor({ scene, physics, achievements, audio }) {
@@ -284,9 +284,9 @@ export class Vehicle {
     }
   }
 
-  respawn(position = START) {
+  respawn(position = START, heading = 0) {
     this.body.setTranslation({ x: position.x, y: position.y, z: position.z }, true);
-    this.heading = 0;
+    this.heading = heading;
     this.body.setRotation(yawQuaternion(this.heading), true);
     this.body.setLinvel({ x: 0, y: 0, z: 0 }, true);
     this.body.setAngvel({ x: 0, y: 0, z: 0 }, true);

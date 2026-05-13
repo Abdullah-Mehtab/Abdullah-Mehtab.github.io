@@ -270,7 +270,8 @@ export class Game {
   }
 
   respawn(zoneId = 'landing') {
-    this.vehicle.respawn(this.world.getRespawnPosition(zoneId));
+    const pose = this.world.getRespawnPose(zoneId);
+    this.vehicle.respawn(pose.position, pose.heading);
     this.audio.click(420);
   }
 
