@@ -1169,6 +1169,10 @@ body.portfolio-v2 a {
   margin: 0 0 18px;
 }
 
+.comment-note:empty {
+  display: none;
+}
+
 .comment-form {
   display: grid;
   gap: 10px;
