@@ -32,7 +32,7 @@
       fullstack: "FullStack projects",
       ml: "AI/ML projects",
       iot: "IoT projects",
-      classic: "older and fun projects"
+      early: "early and fun projects"
     };
 
     function applyFilter(filter) {
@@ -91,10 +91,10 @@
     const target = document.querySelector("[data-proof-line]");
     if (!target) return;
     const lines = [
-      "If you read this line in an interview, I know you actually opened the site.",
-      "Still motivated by money. Also curiosity, impact, and occasionally spite-driven debugging.",
-      "Built by a human. If it looks too clean later, please accuse me immediately.",
-      "The footer truck survived the redesign. Some institutions deserve protection."
+      "Security mindset, builder instincts, and a public trail of projects across domains.",
+      "Computer science, offensive security, DevOps, AI/ML, IoT, and practical systems work.",
+      "Broad technical range with a preference for work that can be tested, shipped, and explained clearly.",
+      "A portfolio for projects, proof, and the occasional line that sounds like a real person wrote it."
     ];
     target.textContent = lines[Math.floor(Math.random() * lines.length)];
   }
