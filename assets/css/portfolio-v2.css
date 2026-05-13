@@ -933,15 +933,19 @@ body.portfolio-v2 a {
 }
 
 .cv-paper {
+  position: relative;
   overflow: hidden;
   border-radius: 8px;
-  background: #f4efe7;
-  color: #151a22;
-  box-shadow: 0 30px 90px rgba(0, 0, 0, 0.38);
+  border: 1px solid rgba(210, 236, 255, 0.16);
+  background:
+    linear-gradient(150deg, rgba(77, 225, 220, 0.1), transparent 30%),
+    linear-gradient(180deg, rgba(16, 31, 49, 0.96), rgba(8, 16, 27, 0.98));
+  color: var(--text);
+  box-shadow: 0 30px 100px rgba(0, 0, 0, 0.48);
 }
 
 .cv-paper a {
-  color: #0b5f7a;
+  color: var(--cyan);
 }
 
 .cv-paper-head {
@@ -949,22 +953,23 @@ body.portfolio-v2 a {
   grid-template-columns: minmax(0, 1fr) minmax(280px, 0.55fr);
   gap: 24px;
   padding: 34px;
-  border-bottom: 3px solid #151a22;
+  border-bottom: 1px solid rgba(210, 236, 255, 0.14);
   background:
-    linear-gradient(135deg, rgba(88, 215, 255, 0.2), transparent 52%),
-    #fffaf1;
+    radial-gradient(circle at 8% 15%, rgba(124, 255, 178, 0.2), transparent 22rem),
+    linear-gradient(135deg, rgba(77, 225, 220, 0.16), rgba(245, 200, 106, 0.06) 58%, transparent),
+    rgba(9, 20, 34, 0.88);
 }
 
 .cv-paper-head h2 {
   margin: 0;
-  color: #111722;
+  color: var(--text);
   font-size: clamp(2.5rem, 7vw, 5.5rem);
   line-height: 0.95;
 }
 
 .cv-kicker {
   margin: 0 0 10px;
-  color: #526070;
+  color: var(--green);
   font-weight: 900;
   letter-spacing: 0.08em;
   text-transform: uppercase;
@@ -974,7 +979,7 @@ body.portfolio-v2 a {
   display: grid;
   gap: 8px;
   align-content: center;
-  color: #273240;
+  color: var(--muted);
   font-weight: 750;
 }
 
@@ -988,8 +993,10 @@ body.portfolio-v2 a {
   align-content: start;
   gap: 22px;
   padding: 30px;
-  background: #e7dccb;
-  border-right: 1px solid rgba(17, 23, 34, 0.18);
+  background:
+    linear-gradient(180deg, rgba(77, 225, 220, 0.08), transparent 44%),
+    rgba(8, 18, 30, 0.9);
+  border-right: 1px solid rgba(210, 236, 255, 0.12);
 }
 
 .cv-main {
@@ -1004,12 +1011,12 @@ body.portfolio-v2 a {
 
 .cv-block + .cv-block {
   padding-top: 18px;
-  border-top: 1px solid rgba(17, 23, 34, 0.18);
+  border-top: 1px solid rgba(210, 236, 255, 0.12);
 }
 
 .cv-block h3 {
   margin: 0 0 12px;
-  color: #111722;
+  color: var(--cyan);
   font-size: 1rem;
   letter-spacing: 0.08em;
   text-transform: uppercase;
@@ -1024,7 +1031,7 @@ body.portfolio-v2 a {
 .cv-block p,
 .cv-block li,
 .cv-role-head span {
-  color: #364253;
+  color: var(--muted);
 }
 
 .cv-block ul {
@@ -1049,16 +1056,23 @@ body.portfolio-v2 a {
   align-items: center;
   min-height: 28px;
   padding: 6px 9px;
-  border: 1px solid rgba(17, 23, 34, 0.16);
+  border: 1px solid rgba(210, 236, 255, 0.16);
   border-radius: 6px;
-  background: rgba(255, 255, 255, 0.52);
-  color: #273240;
+  background: rgba(255, 255, 255, 0.055);
+  color: var(--text);
   font-size: 0.88rem;
   font-weight: 750;
 }
 
 .cv-role + .cv-role {
   margin-top: 16px;
+}
+
+.cv-role {
+  padding: 16px;
+  border: 1px solid rgba(210, 236, 255, 0.12);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.035);
 }
 
 .cv-role-head {
@@ -1070,7 +1084,7 @@ body.portfolio-v2 a {
 
 .cv-role-head h4 {
   margin-bottom: 0;
-  color: #111722;
+  color: var(--text);
 }
 
 .cv-role-head span {
@@ -1088,6 +1102,14 @@ body.portfolio-v2 a {
 .cv-skill-groups {
   display: grid;
   gap: 8px;
+}
+
+.cv-skill-groups p {
+  margin: 0;
+  padding: 12px;
+  border: 1px solid rgba(210, 236, 255, 0.1);
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.035);
 }
 
 .cv-downloads {
