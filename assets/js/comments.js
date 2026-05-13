@@ -125,6 +125,7 @@
 
   async function saveComment(key, payload) {
     const supabase = await getSupabase();
+    const status = config.commentsModeration === true ? "pending" : "approved";
     if (!supabase) {
       const comments = readLocal(key);
       comments.unshift({
@@ -145,13 +146,13 @@
       content_slug: key.slug,
       author_name: payload.author_name,
       body: payload.body,
-      status: "pending"
+      status
     });
 
     if (error) throw error;
     return {
       mode: "supabase",
-      message: "Sent. It will appear after moderation."
+      message: status === "pending" ? "Sent. It will appear after review." : "Posted."
     };
   }
 
@@ -162,8 +163,10 @@
 
     if (note && result.mode === "local") {
       note.textContent = result.warning || "";
-    } else if (note) {
+    } else if (note && config.commentsModeration === true) {
       note.textContent = "Comments are moderated before they show up.";
+    } else if (note) {
+      note.textContent = "";
     }
 
     if (!result.comments.length) {
