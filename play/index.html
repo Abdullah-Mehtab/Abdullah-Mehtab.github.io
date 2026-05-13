@@ -3,42 +3,110 @@
   <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <meta name="description" content="Explore Abdullah Mehtab's resume as an interactive pixel-art game. Walk through zones showcasing security engineering, DevOps, and project experience.">
+    <meta name="description" content="Drive through Abdullah Mehtab's resume as an interactive 3D portfolio world covering security, engineering, projects, education, and contact details.">
     <meta name="theme-color" content="#07111c">
-    <meta property="og:title" content="Arcade Resume - Abdullah Mehtab">
-    <meta property="og:description" content="Explore Abdullah Mehtab's resume as an interactive pixel-art game. Walk through zones showcasing security engineering, DevOps, and project experience.">
+    <meta property="og:title" content="3D Portfolio Drive - Abdullah Mehtab">
+    <meta property="og:description" content="A driveable 3D resume world for Abdullah Mehtab's security, engineering, projects, education, and contact details.">
     <meta property="og:type" content="website">
     <meta property="og:url" content="https://abdullah-mehtab.github.io/Abdullah-Mehtab/play/">
     <meta property="og:image" content="https://abdullah-mehtab.github.io/Abdullah-Mehtab/assets/images/icon.png">
     <meta name="twitter:card" content="summary">
-    <meta name="twitter:title" content="Arcade Resume - Abdullah Mehtab">
-    <meta name="twitter:description" content="Explore Abdullah Mehtab's resume as an interactive pixel-art game.">
+    <meta name="twitter:title" content="3D Portfolio Drive - Abdullah Mehtab">
+    <meta name="twitter:description" content="Drive through Abdullah Mehtab's resume as an interactive 3D portfolio world.">
     <link rel="canonical" href="https://abdullah-mehtab.github.io/Abdullah-Mehtab/play/">
-    <title>Arcade Resume &mdash; Abdullah Mehtab</title>
+    <title>3D Portfolio Drive &mdash; Abdullah Mehtab</title>
     <link rel="icon" href="../assets/images/icon.png" type="image/png">
     <link rel="stylesheet" href="style.css">
   </head>
-  <body>
-    <canvas id="game-canvas" aria-label="Interactive arcade resume game"></canvas>
-    <div id="dialogue-overlay" class="hidden" aria-live="polite"></div>
-    <div id="pause-menu" class="hidden" aria-label="Pause menu"></div>
-    <div id="title-screen" class="title-screen">
-      <a class="back-link" href="../index.html">&lt;- Back to Portfolio</a>
-      <div class="title-card">
-        <div class="title-sprite" aria-hidden="true"></div>
-        <p class="title-kicker">ARCADE RESUME</p>
-        <h1>Abdullah Mehtab</h1>
-        <p class="title-start">[Press SPACE or tap to start]</p>
-        <p>Arrow keys / WASD to move</p>
-        <p>SPACE to interact</p>
-        <p>ESC to pause</p>
+  <body class="title-open">
+    <canvas id="drive-canvas" aria-label="Interactive 3D portfolio drive"></canvas>
+
+    <div class="scanline-layer" aria-hidden="true"></div>
+
+    <header class="drive-hud" aria-live="polite">
+      <a class="back-link" href="../index.html">Portfolio</a>
+      <div class="hud-title">
+        <span>3D Portfolio Drive</span>
+        <strong>Abdullah Mehtab</strong>
+      </div>
+      <div class="hud-readouts">
+        <span id="station-readout">Find a station</span>
+        <span id="speed-readout">0 km/h</span>
+        <button id="pause-button" type="button">Menu</button>
+      </div>
+    </header>
+
+    <aside id="station-panel" class="station-panel" hidden>
+      <span id="station-type">Station</span>
+      <strong id="station-name">Hub</strong>
+      <p id="station-hint">Press SPACE to open.</p>
+    </aside>
+
+    <section id="dialogue-panel" class="dialogue-panel" aria-live="polite" hidden>
+      <div class="dialogue-topline">
+        <span id="dialogue-speaker">Station</span>
+        <button id="dialogue-close" type="button" aria-label="Close dialogue">Close</button>
+      </div>
+      <p id="dialogue-line"></p>
+      <div class="dialogue-actions">
+        <button id="dialogue-next" type="button">Next</button>
+      </div>
+    </section>
+
+    <section id="pause-menu" class="pause-menu" hidden>
+      <div class="menu-panel">
+        <p class="menu-kicker">Paused</p>
+        <h2>Portfolio Drive</h2>
+        <div class="menu-actions">
+          <button id="resume-button" type="button">Resume</button>
+          <button id="respawn-button" type="button">Respawn</button>
+          <button id="quality-button" type="button">Quality: Full</button>
+          <a href="../Abdullah-Mehtab-Resume-v5.pdf" download>Download Resume</a>
+          <a href="../index.html">Main Portfolio</a>
+        </div>
+        <div class="control-grid">
+          <span>WASD / Arrows</span><span>Drive</span>
+          <span>Shift</span><span>Boost</span>
+          <span>Space / Enter</span><span>Interact</span>
+          <span>R</span><span>Respawn</span>
+          <span>Esc</span><span>Menu</span>
+        </div>
+      </div>
+    </section>
+
+    <section id="title-screen" class="title-screen">
+      <a class="back-link title-back" href="../index.html">Portfolio</a>
+      <div class="title-copy">
+        <span class="title-kicker">Driveable Resume World</span>
+        <h1>Explore Abdullah's portfolio by driving through it.</h1>
+        <p>
+          Visit security, DevOps, Cyber Sentinel, education, awards, skills, and contact stations across a compact 3D world.
+        </p>
+        <div class="title-actions">
+          <button id="start-button" type="button">Start Driving</button>
+          <a href="../projects.html">View Projects</a>
+        </div>
+        <p class="title-controls">WASD / arrows to drive. Space or Enter to interact.</p>
+      </div>
+    </section>
+
+    <div id="touch-controls" class="touch-controls" aria-hidden="true">
+      <div id="touch-stick" class="touch-stick">
+        <span id="touch-knob"></span>
+      </div>
+      <div class="touch-buttons">
+        <button id="touch-boost" type="button">Boost</button>
+        <button id="touch-action" type="button">Action</button>
       </div>
     </div>
-    <div id="rotate-notice" class="rotate-notice hidden">Rotate for best experience</div>
-    <div id="loading-screen">
-      <p>Initializing engine...</p>
+
+    <div id="loading-screen" class="loading-screen">
+      <p>Building the world...</p>
     </div>
-    <script src="dist/engine.js"></script>
+
+    <noscript>
+      <div class="noscript-warning">This interactive portfolio needs JavaScript enabled.</div>
+    </noscript>
     <script type="module" src="game-shell.js"></script>
   </body>
 </html>
