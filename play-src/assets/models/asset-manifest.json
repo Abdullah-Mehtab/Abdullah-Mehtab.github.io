@@ -1,0 +1,7 @@
+{
+  "schemaVersion": 1,
+  "builder": "node",
+  "assets": {
+    "sabreTurbo": "models/vehicles/sabre-turbo.glb"
+  }
+}
