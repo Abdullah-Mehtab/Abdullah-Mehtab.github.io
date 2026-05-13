@@ -103,11 +103,11 @@ export class Vehicle {
     add(new THREE.BoxGeometry(0.4, 0.024, 1.02), stripe, [0, 1.76, -0.36], [-0.02, 0, 0]);
     add(new THREE.BoxGeometry(0.46, 0.026, 1.72), stripe, [0, 1.08, -1.7], [0.035, 0, 0]);
 
-    add(createWindshieldGeometry(), glass, [0, 1.52, 0.43]);
-    add(createRearWindowGeometry(), glass, [0, 1.45, -1.14]);
+    add(new THREE.BoxGeometry(1.42, 0.05, 0.66), glass, [0, 1.46, 0.43], [-0.54, 0, 0]);
+    add(new THREE.BoxGeometry(1.34, 0.05, 0.72), glass, [0, 1.38, -1.08], [0.48, 0, 0]);
     for (const side of [-1, 1]) {
-      const sideGlass = add(createSideWindowGeometry(side), glass, [0, 1.48, -0.35]);
-      sideGlass.renderOrder = 2;
+      add(new THREE.BoxGeometry(0.04, 0.32, 0.56), glass, [side * 0.935, 1.43, 0.03], [0, side * 0.03, 0]);
+      add(new THREE.BoxGeometry(0.04, 0.28, 0.52), glass, [side * 0.935, 1.4, -0.72], [0, side * 0.03, 0]);
       add(new THREE.BoxGeometry(0.05, 0.42, 1.62), paintDark, [side * 0.86, 1.52, -0.4], [0, 0.03 * side, 0]);
       add(new THREE.BoxGeometry(0.07, 0.07, 0.38), chrome, [side * 1.28, 1.14, 0.48], [0, side * 0.16, 0]);
       add(new THREE.BoxGeometry(0.09, 0.07, 0.32), chrome, [side * 1.26, 0.98, -0.52]);
@@ -124,7 +124,7 @@ export class Vehicle {
     add(new THREE.BoxGeometry(1.75, 0.05, 0.06), chrome, [0, 1.02, -2.78]);
 
     for (const x of [-0.72, -0.44, 0.44, 0.72]) {
-      const lamp = add(new THREE.CircleGeometry(0.12, 18), glow, [x, 0.86, 2.972]);
+      const lamp = add(new THREE.BoxGeometry(0.18, 0.18, 0.035), glow, [x, 0.86, 2.872]);
       lamp.castShadow = false;
       lamp.renderOrder = 6;
     }
@@ -219,6 +219,9 @@ export class Vehicle {
     }
     this.driveSpeed += (forwardSpeed - this.driveSpeed) * Math.min(1, dt * 0.55);
     this.driveSpeed = THREE.MathUtils.clamp(this.driveSpeed, -15, boost ? 48 : 34);
+    if ((forwardInput || backwardInput) && Math.abs(this.driveSpeed) > 12 && Math.abs(forwardSpeed) < Math.abs(this.driveSpeed) * 0.18) {
+      this.driveSpeed *= Math.max(0, 1 - dt * 7.5);
+    }
     this.speed = this.driveSpeed;
 
     const speedFactor = THREE.MathUtils.clamp(Math.abs(this.driveSpeed) / 18, 0.28, 1.35);
@@ -232,10 +235,12 @@ export class Vehicle {
       this.driveSpeed *= Math.max(0, 1 - dt * 8.5);
     }
 
+    const verticalVelocity = THREE.MathUtils.clamp(linvel.y, -32, 13.5);
     const desiredVelocity = forward.clone()
       .multiplyScalar(this.driveSpeed)
       .add(right.clone().multiplyScalar(sideSpeed * (brake ? 0.22 : 0.1)));
-    this.body.setLinvel({ x: desiredVelocity.x, y: linvel.y, z: desiredVelocity.z }, true);
+    this.body.setLinvel({ x: desiredVelocity.x, y: verticalVelocity, z: desiredVelocity.z }, true);
+    this.dampenImpactSpin();
 
     const grounded = translation.y < 0.92 || (translation.y < 1.75 && Math.abs(linvel.y) < 0.32);
     this.groundedFrames = grounded ? Math.min(18, this.groundedFrames + 1) : 0;
@@ -248,7 +253,7 @@ export class Vehicle {
 
     if (input.consume('honk')) {
       this.audio.click(320);
-      this.body.applyImpulse({ x: 0, y: 2.2, z: 0 }, true);
+      this.body.applyImpulse({ x: 0, y: 1.35, z: 0 }, true);
     }
 
     if (input.consume('respawn')) {
@@ -287,6 +292,19 @@ export class Vehicle {
     for (const wheel of this.wheels) {
       wheel.rotation.x += forwardSpeed * dt * 2.4;
     }
+  }
+
+  dampenImpactSpin() {
+    const velocity = this.body.linvel();
+    if (velocity.y > 13.5) {
+      this.body.setLinvel({ x: velocity.x, y: 13.5, z: velocity.z }, true);
+    }
+    const angular = this.body.angvel();
+    this.body.setAngvel({
+      x: THREE.MathUtils.clamp(angular.x, -1.45, 1.45),
+      y: THREE.MathUtils.clamp(angular.y, -1.65, 1.65),
+      z: THREE.MathUtils.clamp(angular.z, -1.45, 1.45)
+    }, true);
   }
 
   respawn(position = START, heading = 0) {
@@ -420,31 +438,6 @@ function createFastbackGeometry() {
     -0.64, 0.72, -0.72, 0.64, 0.72, -0.72, 0.68, 0.58, 0.28, -0.68, 0.58, 0.28
   ]);
   return buildGeometry(vertices, boxIndices());
-}
-
-function createWindshieldGeometry() {
-  const vertices = new Float32Array([
-    -0.72, -0.28, 0.22, 0.72, -0.28, 0.22, 0.62, 0.24, -0.2, -0.62, 0.24, -0.2
-  ]);
-  return buildGeometry(vertices, [0, 1, 2, 0, 2, 3]);
-}
-
-function createRearWindowGeometry() {
-  const vertices = new Float32Array([
-    -0.66, -0.22, -0.08, 0.66, -0.22, -0.08, 0.55, 0.18, 0.44, -0.55, 0.18, 0.44
-  ]);
-  return buildGeometry(vertices, [0, 1, 2, 0, 2, 3]);
-}
-
-function createSideWindowGeometry(side) {
-  const x = side * 0.9;
-  const vertices = new Float32Array([
-    x, -0.18, 0.62,
-    x, 0.24, 0.18,
-    x, 0.28, -0.78,
-    x, -0.16, -1.12
-  ]);
-  return buildGeometry(vertices, [0, 1, 2, 0, 2, 3]);
 }
 
 function boxIndices() {
