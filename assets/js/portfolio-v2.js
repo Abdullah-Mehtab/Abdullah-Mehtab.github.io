@@ -1,4 +1,49 @@
 (function () {
+  const themeOptions = [
+    ["professional", "Professional"],
+    ["dark", "Dark Mode"],
+    ["light", "Light Mode"],
+    ["forest", "Forest Mode"],
+    ["space", "Space Mode"],
+    ["terminal", "Terminal Mode"],
+    ["cyber", "Cyber Mode"],
+    ["ocean", "Ocean Mode"],
+    ["ember", "Ember Mode"],
+    ["arctic", "Arctic Mode"],
+    ["royal", "Royal Mode"]
+  ];
+
+  const cursorOptions = [
+    ["spotlight", "Spotlight"],
+    ["comet", "Comet Trail"],
+    ["sparks", "Sparks"],
+    ["ribbon", "Ribbon"],
+    ["reticle", "Reticle"],
+    ["embers", "Embers"],
+    ["off", "Off"]
+  ];
+
+  const storageKeys = {
+    theme: "abdullah-portfolio-theme",
+    cursor: "abdullah-portfolio-cursor"
+  };
+
+  function readStoredValue(key, fallback) {
+    try {
+      return localStorage.getItem(key) || fallback;
+    } catch (_) {
+      return fallback;
+    }
+  }
+
+  function writeStoredValue(key, value) {
+    try {
+      localStorage.setItem(key, value);
+    } catch (_) {
+      // Ignore private browsing/storage failures.
+    }
+  }
+
   function setActiveNav() {
     const file = (window.location.pathname.split("/").pop() || "index.html").toLowerCase();
     document.querySelectorAll(".nav-links a, .mobile-nav a").forEach((link) => {
@@ -29,6 +74,100 @@
 
     updateHeader();
     window.addEventListener("scroll", updateHeader, { passive: true });
+  }
+
+  function ensureBackdrop() {
+    if (document.querySelector(".theme-backdrop")) return;
+
+    const backdrop = document.createElement("div");
+    backdrop.className = "theme-backdrop";
+    backdrop.setAttribute("aria-hidden", "true");
+    backdrop.innerHTML = `
+      <span class="theme-layer layer-a"></span>
+      <span class="theme-layer layer-b"></span>
+      <span class="theme-layer layer-c"></span>
+    `;
+
+    const cursorEffects = document.createElement("div");
+    cursorEffects.className = "cursor-effects";
+    cursorEffects.setAttribute("aria-hidden", "true");
+    cursorEffects.innerHTML = '<span class="cursor-reticle"></span>';
+
+    document.body.prepend(backdrop);
+    document.body.append(cursorEffects);
+  }
+
+  function setupStyleControls() {
+    ensureBackdrop();
+
+    const themeSelects = document.querySelectorAll("[data-theme-select]");
+    const cursorSelects = document.querySelectorAll("[data-cursor-select]");
+    const styleControls = document.querySelectorAll("[data-style-control]");
+    const styleToggles = document.querySelectorAll("[data-style-toggle]");
+
+    const savedTheme = themeOptions.some(([value]) => value === readStoredValue(storageKeys.theme, "dark"))
+      ? readStoredValue(storageKeys.theme, "dark")
+      : "dark";
+    const savedCursor = cursorOptions.some(([value]) => value === readStoredValue(storageKeys.cursor, "spotlight"))
+      ? readStoredValue(storageKeys.cursor, "spotlight")
+      : "spotlight";
+
+    function fillSelect(select, options) {
+      if (select.options.length) return;
+      options.forEach(([value, label]) => {
+        const option = document.createElement("option");
+        option.value = value;
+        option.textContent = label;
+        select.appendChild(option);
+      });
+    }
+
+    function applyTheme(value) {
+      document.body.dataset.theme = value;
+      themeSelects.forEach((select) => {
+        select.value = value;
+      });
+      writeStoredValue(storageKeys.theme, value);
+    }
+
+    function applyCursor(value) {
+      document.body.dataset.cursor = value;
+      cursorSelects.forEach((select) => {
+        select.value = value;
+      });
+      writeStoredValue(storageKeys.cursor, value);
+    }
+
+    themeSelects.forEach((select) => {
+      fillSelect(select, themeOptions);
+      select.addEventListener("change", () => applyTheme(select.value));
+    });
+
+    cursorSelects.forEach((select) => {
+      fillSelect(select, cursorOptions);
+      select.addEventListener("change", () => applyCursor(select.value));
+    });
+
+    styleToggles.forEach((toggle) => {
+      toggle.addEventListener("click", () => {
+        const control = toggle.closest("[data-style-control]");
+        if (!control) return;
+        const isOpen = control.classList.toggle("is-open");
+        toggle.setAttribute("aria-expanded", String(isOpen));
+      });
+    });
+
+    document.addEventListener("click", (event) => {
+      styleControls.forEach((control) => {
+        if (control.contains(event.target)) return;
+        control.classList.remove("is-open");
+        const toggle = control.querySelector("[data-style-toggle]");
+        if (toggle) toggle.setAttribute("aria-expanded", "false");
+      });
+    });
+
+    applyTheme(savedTheme);
+    applyCursor(savedCursor);
   }
 
   function setupFilters() {
@@ -171,11 +310,16 @@
 
   function setupPointerEffects() {
     const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-    if (reduceMotion) return;
+    if (reduceMotion) {
+      document.body.dataset.cursor = "off";
+      return;
+    }
 
     let raf = 0;
+    let lastTrail = 0;
     let pointerX = window.innerWidth / 2;
     let pointerY = window.innerHeight * 0.25;
+    const effects = document.querySelector(".cursor-effects");
 
     function updatePointer() {
       raf = 0;
@@ -183,10 +327,36 @@
       document.documentElement.style.setProperty("--mouse-y", `${pointerY}px`);
     }
 
+    function createTrailPoint(x, y, mode) {
+      if (!effects || mode === "spotlight" || mode === "reticle" || mode === "off") return;
+
+      const point = document.createElement("span");
+      point.className = "cursor-point";
+
+      if (mode === "sparks" || mode === "embers") {
+        x += (Math.random() - 0.5) * 28;
+        y += (Math.random() - 0.5) * 28;
+      }
+
+      point.style.left = `${x}px`;
+      point.style.top = `${y}px`;
+      effects.appendChild(point);
+
+      window.setTimeout(() => point.remove(), mode === "embers" ? 1150 : 850);
+    }
+
     window.addEventListener("pointermove", (event) => {
       pointerX = event.clientX;
       pointerY = event.clientY;
       if (!raf) raf = requestAnimationFrame(updatePointer);
+
+      const now = performance.now();
+      const mode = document.body.dataset.cursor || "spotlight";
+      const delay = mode === "ribbon" ? 16 : 34;
+      if (now - lastTrail > delay) {
+        lastTrail = now;
+        createTrailPoint(pointerX, pointerY, mode);
+      }
     }, { passive: true });
   }
 
@@ -237,6 +407,7 @@
     setActiveNav();
     setupMobileNav();
     setupHeaderScroll();
+    setupStyleControls();
     setupFilters();
     setupMediaFallbacks();
     setupYear();
