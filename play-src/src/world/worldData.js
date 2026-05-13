@@ -1,24 +1,80 @@
 export const WORLD_HALF_SIZE = 170;
 export const MAP_PADDING = 18;
 
-export const roadSegments = [
-  [3, 4, 14, 250, -0.04],
-  [-45, 21, 148, 11, 0.08],
-  [66, 32, 92, 11, -0.12],
-  [-64, -54, 112, 11, -0.13],
-  [67, -70, 120, 11, 0.08],
-  [-25, 95, 104, 11, 0.1],
-  [66, 91, 90, 10, -0.18],
-  [-122, 78, 12, 122, -0.08],
-  [112, 47, 12, 130, 0.06],
-  [-24, -124, 132, 11, -0.05],
-  [-132, -128, 62, 10, 0.18],
-  [128, -123, 78, 10, -0.12],
-  [-126, 132, 66, 10, -0.1],
-  [96, 140, 78, 10, 0.07],
-  [20, 146, 58, 10, -0.04],
-  [22, -35, 86, 10, 0.05]
+export const roadPaths = [
+  {
+    id: 'outer-loop',
+    width: 13,
+    closed: true,
+    points: [
+      [-138, 124],
+      [-156, 58],
+      [-145, -38],
+      [-108, -120],
+      [-24, -158],
+      [74, -146],
+      [146, -96],
+      [156, -8],
+      [132, 88],
+      [82, 142],
+      [-18, 154],
+      [-104, 142]
+    ]
+  },
+  {
+    id: 'inner-loop',
+    width: 11,
+    closed: true,
+    points: [
+      [2, -8],
+      [-70, 18],
+      [-72, 76],
+      [-10, 104],
+      [48, 82],
+      [100, 34],
+      [82, -78],
+      [18, -28]
+    ]
+  },
+  {
+    id: 'campus-loop',
+    width: 10,
+    closed: true,
+    points: [
+      [-105, -52],
+      [-24, -132],
+      [82, -78],
+      [18, -28]
+    ]
+  },
+  {
+    id: 'north-loop',
+    width: 10,
+    closed: true,
+    points: [
+      [-138, 128],
+      [-70, 76],
+      [-10, 104],
+      [45, 82],
+      [129, 118],
+      [82, 142],
+      [22, 149]
+    ]
+  },
+  {
+    id: 'dock-loop',
+    width: 10,
+    closed: true,
+    points: [
+      [-144, -130],
+      [-108, -120],
+      [-105, -52],
+      [-145, -38]
+    ]
+  }
 ];
+
+export const roadSegments = roadPaths.flatMap((path) => pathToSegments(path));
 
 export const boostPads = [
   { id: 'north-run', position: [6, 0, 58], rotation: -0.04, color: '#7cffb2' },
@@ -153,9 +209,8 @@ export const worldZones = [
     shape: 'vault',
     achievement: 'cv_vault',
     lines: [
-      'This vault opens into the web version of my current resume.',
-      'It collects experience, education, certificates, project record, skills, awards, and downloadable PDFs.',
-      'Use it when you want the formal version after exploring the world.'
+      'Resume archive, project record, certificates, skills, awards, and downloadable PDFs.',
+      'The formal version lives here when the drive becomes a document.'
     ],
     actions: [
       { label: 'Open CV Page', href: '../cv.html' },
@@ -174,7 +229,7 @@ export const worldZones = [
     achievement: 'todo_board',
     lines: [
       'The never-ending list keeps the unfinished, ongoing, and occasionally strange parts visible.',
-      'It is the public scratchpad beside the polished portfolio: tasks, experiments, reminders, and ideas still moving.'
+      'Tasks, experiments, reminders, and ideas still moving live there.'
     ],
     actions: [
       { label: 'Open Todo', href: '../todo.html' }
@@ -191,8 +246,7 @@ export const worldZones = [
     achievement: 'circuit_gate',
     lines: [
       'This gate marks the driving circuit.',
-      'The full leaderboard version can be expanded later, but the loop already gives the world a reason to be driven instead of merely viewed.',
-      'Follow the glowing road around the outer ring and try not to park upside down.'
+      'Follow the outer loop through the checkpoint rings and bring the car back clean.'
     ],
     startsCircuit: true
   },
@@ -222,9 +276,8 @@ export const worldZones = [
     shape: 'portal',
     achievement: 'behind_build',
     lines: [
-      'This world is a static GitHub Pages page powered by a Vite-built Three.js application.',
-      'Physics runs through Rapier, visuals are built with custom Three.js geometry and materials, and the portfolio content is pulled from local resume data.',
-      'The public site remains static-friendly while still behaving like a small interactive application.'
+      'Engine room: Three.js visuals, Rapier physics, local resume data, and Supabase-backed counters.',
+      'The repository link opens the source behind the drive world.'
     ],
     actions: [
       { label: 'Repository', href: 'https://github.com/Abdullah-Mehtab/Abdullah-Mehtab' }
@@ -240,9 +293,7 @@ export const worldZones = [
     shape: 'rampyard',
     achievement: 'ramp_yard',
     lines: [
-      'This yard exists for driving, not reading.',
-      'Use the ramps, boost pads, and loose crates to test the car handling.',
-      'The portfolio world should have some physical memory, not only panels.'
+      'Ramps, boost pads, loose crates, and a bit of room to throw the car around.'
     ]
   },
   {
@@ -255,24 +306,22 @@ export const worldZones = [
     shape: 'pier',
     achievement: 'data_pier',
     lines: [
-      'This pier lights up the visitor-proof layer for the drive page.',
-      'Page views, zone visits, and potato summons are counted as lightweight anonymous events.',
-      'Server-side analytics store hashed IP and browser-fingerprint signals for uniqueness without exposing raw addresses in the client.'
+      'Signal pier for page views, zone visits, and interaction counts.',
+      'Visitor signals are stored as hashed analytics events.'
     ]
   },
   {
     id: 'potato',
     name: 'Potato Farm',
-    kind: 'Interaction Counter',
-    position: [95, 0, 142],
+    kind: 'Farm Counter',
+    position: [105, 0, 154],
     radius: 9,
     color: '#c79b56',
     shape: 'farm',
     achievement: 'potato_farm',
     lines: [
-      'A small farm patch for spawning temporary blocky potatoes inside the drive world.',
-      'Press P nearby, or use the summon button here, to add one potato to the local map and increment the persistent counter.',
-      'The potatoes are session-only objects; the interaction count is the part that stays.'
+      'Minecraft-style potato patch.',
+      'Press P nearby, or use the summon button, to grow one temporary potato and increment the farm counter.'
     ],
     potatoFarm: true
   }
@@ -313,3 +362,24 @@ export const circuitCheckpoints = [
   [129, 0, 118],
   [22, 0, 149]
 ];
+
+function pathToSegments(path) {
+  const points = path.points;
+  const segments = [];
+  const limit = path.closed ? points.length : points.length - 1;
+  for (let i = 0; i < limit; i += 1) {
+    const a = points[i];
+    const b = points[(i + 1) % points.length];
+    const dx = b[0] - a[0];
+    const dz = b[1] - a[1];
+    const length = Math.hypot(dx, dz);
+    segments.push([
+      (a[0] + b[0]) / 2,
+      (a[1] + b[1]) / 2,
+      path.width,
+      length + path.width * 0.64,
+      Math.atan2(dx, dz)
+    ]);
+  }
+  return segments;
+}

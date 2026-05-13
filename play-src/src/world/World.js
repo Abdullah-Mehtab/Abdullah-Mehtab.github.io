@@ -1,8 +1,9 @@
 import * as THREE from 'three';
-import { boostPads, circuitCheckpoints, roadSegments, WORLD_HALF_SIZE, worldZones } from './worldData.js';
+import { boostPads, circuitCheckpoints, roadPaths, roadSegments, WORLD_HALF_SIZE, worldZones } from './worldData.js';
 
 const OCEAN_HALF_SIZE = 520;
 const ROAD_LINE_COLOR = 0x68d8ff;
+const tmpColor = new THREE.Color();
 
 export class World {
   constructor({ scene, physics, resumeData }) {
@@ -41,34 +42,63 @@ export class World {
   }
 
   createMaterials() {
-    this.materials.ground = new THREE.MeshStandardMaterial({ color: 0x102238, roughness: 0.92, metalness: 0.02 });
-    this.materials.road = new THREE.MeshStandardMaterial({ color: 0x172333, roughness: 0.74, metalness: 0.08 });
+    const grassTexture = makeNoiseTexture(['#285c2f', '#31723a', '#1f4a29', '#3d8243'], 256, 4600);
+    grassTexture.wrapS = THREE.RepeatWrapping;
+    grassTexture.wrapT = THREE.RepeatWrapping;
+    grassTexture.repeat.set(28, 28);
+    const roadTexture = makeRoadTexture();
+    roadTexture.wrapS = THREE.RepeatWrapping;
+    roadTexture.wrapT = THREE.RepeatWrapping;
+    roadTexture.repeat.set(1, 18);
+    const sandTexture = makeNoiseTexture(['#a98b61', '#bd9f70', '#8d724f', '#d0b17c'], 192, 1200);
+    sandTexture.wrapS = THREE.RepeatWrapping;
+    sandTexture.wrapT = THREE.RepeatWrapping;
+    sandTexture.repeat.set(10, 10);
+
+    this.materials.ground = new THREE.MeshStandardMaterial({
+      color: 0x4f9b45,
+      map: grassTexture,
+      roughness: 0.94,
+      metalness: 0.01
+    });
+    this.materials.road = new THREE.MeshStandardMaterial({ color: 0x3d4748, map: roadTexture, roughness: 0.86, metalness: 0.03 });
     this.materials.roadLine = new THREE.MeshBasicMaterial({ color: ROAD_LINE_COLOR, transparent: true, opacity: 0.46 });
     this.materials.dark = new THREE.MeshStandardMaterial({ color: 0x09121d, roughness: 0.55, metalness: 0.25 });
     this.materials.edge = new THREE.MeshStandardMaterial({ color: 0x0b1722, roughness: 0.7, metalness: 0.18 });
-    this.materials.sand = new THREE.MeshStandardMaterial({ color: 0x9e8057, roughness: 0.94, metalness: 0.02 });
-    this.materials.grass = new THREE.MeshStandardMaterial({ color: 0x173c29, roughness: 0.88, metalness: 0.02 });
+    this.materials.sand = new THREE.MeshStandardMaterial({ color: 0xb19163, map: sandTexture, roughness: 0.96, metalness: 0.01 });
+    this.materials.grass = new THREE.MeshStandardMaterial({ color: 0x246237, roughness: 0.88, metalness: 0.02 });
+    this.materials.leaf = new THREE.MeshStandardMaterial({ color: 0x2f7a44, roughness: 0.82, metalness: 0.01 });
+    this.materials.leafLight = new THREE.MeshStandardMaterial({ color: 0x4b9a55, roughness: 0.84, metalness: 0.01 });
     this.materials.trunk = new THREE.MeshStandardMaterial({ color: 0x4b3328, roughness: 0.9, metalness: 0.02 });
     this.materials.brick = new THREE.MeshStandardMaterial({ color: 0x7b4a37, roughness: 0.74, metalness: 0.04 });
     this.materials.cream = new THREE.MeshStandardMaterial({ color: 0xc8b991, roughness: 0.72, metalness: 0.02 });
+    this.materials.limestone = new THREE.MeshStandardMaterial({ color: 0xd8d0b9, roughness: 0.68, metalness: 0.03 });
     this.materials.roof = new THREE.MeshStandardMaterial({ color: 0x25384d, roughness: 0.55, metalness: 0.18 });
     this.materials.gold = new THREE.MeshStandardMaterial({ color: 0xffd56b, roughness: 0.3, metalness: 0.55, emissive: 0x332000, emissiveIntensity: 0.18 });
     this.materials.potato = new THREE.MeshStandardMaterial({ color: 0xc28b42, roughness: 0.86, metalness: 0.01 });
     this.materials.farmSoil = new THREE.MeshStandardMaterial({ color: 0x5a3826, roughness: 0.96, metalness: 0.01 });
-    this.materials.water = new THREE.MeshPhysicalMaterial({
-      color: 0x073047,
-      roughness: 0.18,
-      metalness: 0.05,
-      transmission: 0.08,
-      transparent: true,
-      opacity: 0.84
-    });
+    this.materials.wood = new THREE.MeshStandardMaterial({ color: 0x7b5739, roughness: 0.82, metalness: 0.03 });
+    this.materials.woodDark = new THREE.MeshStandardMaterial({ color: 0x533a28, roughness: 0.88, metalness: 0.02 });
+    this.materials.concrete = new THREE.MeshStandardMaterial({ color: 0x879199, roughness: 0.72, metalness: 0.06 });
+    this.materials.neonBlue = new THREE.MeshBasicMaterial({ color: 0x68d8ff, transparent: true, opacity: 0.82 });
+    this.materials.neonGreen = new THREE.MeshBasicMaterial({ color: 0x7cffb2, transparent: true, opacity: 0.82 });
+    this.materials.neonRed = new THREE.MeshBasicMaterial({ color: 0xff4466, transparent: true, opacity: 0.82 });
+    this.materials.water = makeWaterMaterial();
     this.materials.glass = new THREE.MeshPhysicalMaterial({
       color: 0x8fe8ff,
-      roughness: 0.08,
-      transmission: 0.16,
+      roughness: 0.05,
+      metalness: 0.05,
+      transmission: 0.28,
       transparent: true,
-      opacity: 0.44
+      opacity: 0.48
+    });
+    this.materials.darkGlass = new THREE.MeshPhysicalMaterial({
+      color: 0x233a4f,
+      roughness: 0.08,
+      metalness: 0.12,
+      transmission: 0.12,
+      transparent: true,
+      opacity: 0.7
     });
   }
 
@@ -78,10 +108,10 @@ export class World {
     canvas.height = 512;
     const ctx = canvas.getContext('2d');
     const gradient = ctx.createLinearGradient(0, 0, 0, canvas.height);
-    gradient.addColorStop(0, '#07111c');
-    gradient.addColorStop(0.38, '#123754');
-    gradient.addColorStop(0.68, '#2e6f8a');
-    gradient.addColorStop(1, '#f0b67b');
+    gradient.addColorStop(0, '#5ab8ff');
+    gradient.addColorStop(0.32, '#83d2ff');
+    gradient.addColorStop(0.66, '#bfefff');
+    gradient.addColorStop(1, '#f6d49a');
     ctx.fillStyle = gradient;
     ctx.fillRect(0, 0, canvas.width, canvas.height);
     const texture = new THREE.CanvasTexture(canvas);
@@ -95,23 +125,23 @@ export class World {
 
     const sun = new THREE.Mesh(
       new THREE.CircleGeometry(15, 48),
-      new THREE.MeshBasicMaterial({ color: 0xffd98a, transparent: true, opacity: 0.84, depthWrite: false })
+      new THREE.MeshBasicMaterial({ color: 0xfff1af, transparent: true, opacity: 0.86, depthWrite: false })
     );
     sun.position.set(-145, 118, -245);
     sun.lookAt(0, 20, 0);
     this.scene.add(sun);
     this.decor.push({ type: 'sunDisc', mesh: sun, phase: 0 });
 
-    const cloudMaterial = new THREE.MeshBasicMaterial({ color: 0xdaf0ff, transparent: true, opacity: 0.28, depthWrite: false });
-    for (let i = 0; i < 18; i += 1) {
+    const cloudMaterial = new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.38, depthWrite: false });
+    for (let i = 0; i < 14; i += 1) {
       const group = new THREE.Group();
-      const x = -260 + (i * 41) % 520;
-      const z = -230 + ((i * 67) % 460);
-      group.position.set(x, 34 + (i % 6) * 4, z);
-      for (let j = 0; j < 4; j += 1) {
-        const puff = new THREE.Mesh(new THREE.SphereGeometry(6 + j * 1.4, 12, 8), cloudMaterial.clone());
-        puff.scale.set(1.7, 0.42, 0.72);
-        puff.position.set((j - 1.5) * 7, Math.sin(j) * 1.1, (j % 2) * 2.2);
+      const x = -270 + (i * 47) % 540;
+      const z = -260 + ((i * 73) % 520);
+      group.position.set(x, 82 + (i % 5) * 7, z);
+      for (let j = 0; j < 5; j += 1) {
+        const puff = new THREE.Mesh(new THREE.SphereGeometry(5.5 + j * 1.1, 16, 10), cloudMaterial.clone());
+        puff.scale.set(2.9, 0.34, 0.96);
+        puff.position.set((j - 2) * 8.2, Math.sin(j) * 0.8, (j % 2) * 3.2);
         group.add(puff);
       }
       this.scene.add(group);
@@ -129,29 +159,31 @@ export class World {
     this.scene.add(water);
     this.decor.push({ type: 'ocean', mesh: water, phase: 0 });
 
-    const ground = new THREE.Mesh(
-      new THREE.PlaneGeometry(WORLD_HALF_SIZE * 2, WORLD_HALF_SIZE * 2, 32, 32),
-      this.materials.ground
-    );
+    const groundGeometry = new THREE.PlaneGeometry(WORLD_HALF_SIZE * 2, WORLD_HALF_SIZE * 2, 96, 96);
+    const positions = groundGeometry.attributes.position;
+    for (let i = 0; i < positions.count; i += 1) {
+      const x = positions.getX(i);
+      const y = positions.getY(i);
+      const height = Math.sin(x * 0.045) * 0.18 + Math.cos(y * 0.035) * 0.16 + Math.sin((x + y) * 0.018) * 0.2;
+      positions.setZ(i, height);
+    }
+    groundGeometry.computeVertexNormals();
+    const ground = new THREE.Mesh(groundGeometry, this.materials.ground);
     ground.rotation.x = -Math.PI / 2;
     ground.position.y = -0.02;
     ground.receiveShadow = true;
     this.scene.add(ground);
     this.physics.createFixedBox([0, -0.16, 0], [WORLD_HALF_SIZE * 2, 0.24, WORLD_HALF_SIZE * 2], { friction: 1 });
 
-    const grid = new THREE.GridHelper(WORLD_HALF_SIZE * 2, 68, 0x2e86de, 0x19344f);
-    grid.position.y = 0.02;
-    grid.material.transparent = true;
-    grid.material.opacity = 0.1;
-    this.scene.add(grid);
-
     const patchData = [
-      [-118, 0, 118, 52, 34, -0.18, this.materials.grass],
-      [96, 0, 126, 60, 32, 0.14, this.materials.grass],
+      [-118, 0, 118, 52, 34, -0.18, this.materials.leafLight],
+      [96, 0, 126, 60, 32, 0.14, this.materials.leafLight],
       [-118, 0, -102, 54, 28, 0.2, this.materials.sand],
       [122, 0, -128, 44, 24, -0.12, this.materials.sand],
-      [-18, 0, -138, 78, 24, 0.06, this.materials.grass],
-      [132, 0, 58, 40, 28, -0.28, this.materials.grass]
+      [-18, 0, -138, 78, 24, 0.06, this.materials.leafLight],
+      [132, 0, 58, 40, 28, -0.28, this.materials.leafLight],
+      [0, 0, 12, 82, 62, 0.04, this.materials.leafLight],
+      [105, 0, 154, 44, 26, -0.08, this.materials.leafLight]
     ];
     for (const [x, y, z, width, depth, rotation, material] of patchData) {
       const patch = new THREE.Mesh(new THREE.PlaneGeometry(width, depth), material);
@@ -225,6 +257,16 @@ export class World {
   createRoads() {
     for (const road of roadSegments) {
       this.addRoad(...road);
+    }
+    const nodeMaterial = this.materials.road.clone();
+    for (const path of roadPaths) {
+      for (const point of path.points) {
+        const node = new THREE.Mesh(new THREE.CylinderGeometry(path.width * 0.56, path.width * 0.56, 0.1, 32), nodeMaterial);
+        node.position.set(point[0], 0.055, point[1]);
+        node.rotation.x = Math.PI / 2;
+        node.receiveShadow = true;
+        this.scene.add(node);
+      }
     }
   }
 
@@ -351,7 +393,7 @@ export class World {
     group.position.copy(position);
     const color = new THREE.Color(definition.color);
     const baseMaterial = new THREE.MeshStandardMaterial({
-      color: 0x101b28,
+      color: tmpColor.copy(color).lerp(new THREE.Color(0x24313b), 0.68),
       roughness: 0.48,
       metalness: 0.3,
       emissive: color,
@@ -368,13 +410,13 @@ export class World {
     ring.position.y = 0.12;
     group.add(ring);
 
-    const marker = new THREE.Mesh(new THREE.OctahedronGeometry(0.72, 0), accentMaterial.clone());
-    marker.position.y = colliderSize[1] + 2.2;
-    group.add(marker);
-
-    const label = this.makeLabel(definition.name, definition.kind, color);
-    label.position.y = colliderSize[1] + 3.4;
-    group.add(label);
+    const beacon = new THREE.Mesh(
+      new THREE.CylinderGeometry(0.1, 0.1, Math.max(1.2, colliderSize[1]) + 1.4, 16),
+      new THREE.MeshBasicMaterial({ color, transparent: true, opacity: 0.18, depthWrite: false })
+    );
+    beacon.position.y = Math.max(1, colliderSize[1] / 2) + 0.65;
+    beacon.visible = !definition.potatoFarm;
+    group.add(beacon);
 
     this.scene.add(group);
     if (colliderSize[0] > 0) {
@@ -385,12 +427,12 @@ export class World {
       );
     }
 
-    this.decor.push({ type: 'zone', mesh: group, marker, ring, phase: Math.random() * 6 });
+    this.decor.push({ type: 'zone', mesh: group, marker: beacon, ring, phase: Math.random() * 6 });
     return {
       ...definition,
       position,
       group,
-      marker,
+      marker: beacon,
       ring,
       colliderSize
     };
@@ -398,246 +440,160 @@ export class World {
 
   addZoneModel(group, definition, baseMaterial, accentMaterial) {
     const shape = definition.shape;
-    let colliderSize = [5.2, 4.2, 5.2];
+    const color = new THREE.Color(definition.color);
+    const add = (geometry, material, position = [0, 0, 0], rotation = [0, 0, 0], scale = [1, 1, 1]) => {
+      const mesh = new THREE.Mesh(geometry, material);
+      mesh.position.set(...position);
+      mesh.rotation.set(...rotation);
+      mesh.scale.set(...scale);
+      mesh.castShadow = true;
+      mesh.receiveShadow = true;
+      group.add(mesh);
+      return mesh;
+    };
+    const neon = new THREE.MeshBasicMaterial({ color, transparent: true, opacity: 0.82 });
+    let colliderSize = [6, 5, 6];
 
     if (shape === 'hub') {
-      const base = new THREE.Mesh(new THREE.CylinderGeometry(3.8, 4.7, 1.6, 8), baseMaterial);
-      base.position.y = 0.8;
-      base.castShadow = true;
-      group.add(base);
-      const beacon = new THREE.Mesh(new THREE.CylinderGeometry(0.36, 0.36, 5.4, 12), accentMaterial);
-      beacon.position.y = 3.4;
-      group.add(beacon);
-      colliderSize = [7, 1.8, 7];
+      add(new THREE.CylinderGeometry(5.2, 5.9, 0.7, 48), this.materials.concrete, [0, 0.35, 0]);
+      add(new THREE.TorusGeometry(4.15, 0.08, 10, 72), neon, [0, 0.82, 0], [Math.PI / 2, 0, 0]);
+      add(new THREE.CylinderGeometry(1.05, 1.25, 2.2, 32), baseMaterial, [0, 1.55, 0]);
+      add(new THREE.OctahedronGeometry(1.25, 1), neon, [0, 3.4, 0]);
+      this.addSignalRings(group, 0, 3.4, 0, color, 3);
+      colliderSize = [8.8, 3.4, 8.8];
     } else if (shape === 'lab') {
-      for (let i = 0; i < 3; i += 1) {
-        const block = new THREE.Mesh(new THREE.BoxGeometry(2.6, 3.4 + i * 0.7, 3.6), baseMaterial);
-        block.position.set((i - 1) * 2.4, 1.7 + i * 0.35, 0);
-        block.castShadow = true;
-        group.add(block);
+      add(new THREE.CylinderGeometry(4.4, 4.9, 1.2, 6), baseMaterial, [0, 0.6, 0]);
+      add(new THREE.BoxGeometry(7.4, 2.4, 4.6), this.materials.darkGlass, [0, 2.0, 0]);
+      add(new THREE.CylinderGeometry(3.2, 3.2, 2.8, 6), this.materials.darkGlass, [0, 3.2, 0], [0, Math.PI / 6, 0]);
+      for (const x of [-2.8, -1.4, 0, 1.4, 2.8]) {
+        add(new THREE.BoxGeometry(0.12, 2.2, 4.9), neon, [x, 2.4, -0.04]);
       }
-      const antenna = new THREE.Mesh(new THREE.ConeGeometry(0.6, 3.8, 6), accentMaterial);
-      antenna.position.set(0, 6.6, 0);
-      group.add(antenna);
-      colliderSize = [8.2, 5.2, 4.8];
+      add(new THREE.CylinderGeometry(0.18, 0.24, 5.5, 16), this.materials.concrete, [0, 5.5, 0]);
+      add(new THREE.TorusGeometry(1.35, 0.08, 12, 48), neon, [0, 7.4, 0], [Math.PI / 2.8, 0, 0]);
+      colliderSize = [8.2, 5.2, 5.2];
     } else if (shape === 'foundry') {
-      const forge = new THREE.Mesh(new THREE.BoxGeometry(7.4, 4.2, 5.2), baseMaterial);
-      forge.position.y = 2.1;
-      forge.castShadow = true;
-      group.add(forge);
-      const chimney = new THREE.Mesh(new THREE.CylinderGeometry(0.72, 0.9, 5.8, 9), baseMaterial);
-      chimney.position.set(2.3, 5.0, -1.4);
-      chimney.castShadow = true;
-      group.add(chimney);
-      colliderSize = [7.8, 4.4, 5.6];
+      add(new THREE.CylinderGeometry(4.8, 5.4, 1.0, 32), this.materials.concrete, [0, 0.5, 0]);
+      add(new THREE.TorusGeometry(3.2, 0.5, 16, 96), baseMaterial, [0, 2.7, 0], [Math.PI / 2, 0, 0], [1, 1.4, 1]);
+      add(new THREE.CylinderGeometry(3.2, 3.2, 3.3, 32, 1, true), this.materials.darkGlass, [0, 2.55, 0]);
+      add(new THREE.BoxGeometry(7.4, 0.28, 0.34), this.materials.gold, [0, 4.5, -2.9]);
+      add(new THREE.CylinderGeometry(0.34, 0.48, 5.6, 18), this.materials.roof, [3.25, 3.4, 1.4]);
+      add(new THREE.TorusGeometry(1.15, 0.12, 8, 32), this.materials.gold, [-2.8, 3.0, 0.2], [Math.PI / 2, 0, 0]);
+      colliderSize = [8.4, 4.8, 6.4];
     } else if (shape === 'tower') {
-      const tower = new THREE.Mesh(new THREE.CylinderGeometry(2.2, 3.6, 9.5, 7), baseMaterial);
-      tower.position.y = 4.75;
-      tower.castShadow = true;
-      group.add(tower);
-      const crown = new THREE.Mesh(new THREE.OctahedronGeometry(2.4, 0), accentMaterial);
-      crown.position.y = 10.5;
-      group.add(crown);
-      colliderSize = [6.6, 9.5, 6.6];
+      add(new THREE.CylinderGeometry(3.0, 4.0, 1.0, 8), baseMaterial, [0, 0.5, 0]);
+      for (let i = 0; i < 5; i += 1) {
+        const radius = 2.45 - i * 0.16;
+        add(new THREE.CylinderGeometry(radius, radius + 0.18, 1.55, 8), i % 2 ? this.materials.darkGlass : baseMaterial, [0, 1.35 + i * 1.42, 0], [0, Math.PI / 8, 0]);
+        add(new THREE.TorusGeometry(radius + 0.08, 0.045, 8, 64), neon, [0, 2.12 + i * 1.42, 0], [Math.PI / 2, 0, 0]);
+      }
+      add(new THREE.ConeGeometry(1.55, 2.2, 8), this.materials.neonRed, [0, 9.1, 0]);
+      add(new THREE.TorusGeometry(3.2, 0.06, 8, 80), this.materials.neonRed, [0, 6.4, 0], [Math.PI / 2, 0, 0]);
+      add(new THREE.TorusGeometry(4.0, 0.04, 8, 80), this.materials.neonRed, [0, 7.2, 0], [Math.PI / 2, 0, 0]);
+      colliderSize = [7, 8.8, 7];
     } else if (shape === 'office') {
-      const podium = new THREE.Mesh(new THREE.BoxGeometry(8.2, 2.4, 5.8), baseMaterial);
-      podium.position.y = 1.2;
-      podium.castShadow = true;
-      group.add(podium);
-      const tower = new THREE.Mesh(
-        new THREE.BoxGeometry(4.4, 9.2, 3.9),
-        new THREE.MeshPhysicalMaterial({
-          color: 0x7fd6ff,
-          roughness: 0.18,
-          metalness: 0.18,
-          transmission: 0.12,
-          transparent: true,
-          opacity: 0.58
-        })
-      );
-      tower.position.set(0.7, 5.8, -0.1);
-      tower.castShadow = true;
-      group.add(tower);
-      const sideTower = new THREE.Mesh(new THREE.BoxGeometry(2.2, 7.2, 3.7), baseMaterial);
-      sideTower.position.set(-2.9, 4.7, 0.2);
-      sideTower.castShadow = true;
-      group.add(sideTower);
-      for (let x = -1; x <= 1; x += 1) {
-        const fin = new THREE.Mesh(new THREE.BoxGeometry(0.08, 9.5, 4.1), accentMaterial.clone());
-        fin.position.set(0.7 + x * 1.35, 5.9, -0.18);
-        group.add(fin);
+      add(new THREE.BoxGeometry(8.6, 1.6, 6.0), this.materials.concrete, [0, 0.8, 0]);
+      add(new THREE.BoxGeometry(5.0, 10.8, 3.8), this.materials.darkGlass, [0.4, 6.2, 0.15]);
+      add(new THREE.BoxGeometry(2.8, 8.2, 3.5), baseMaterial, [-3.0, 4.9, 0.2]);
+      add(new THREE.BoxGeometry(1.3, 6.2, 3.2), this.materials.glass, [3.3, 4.1, -0.1]);
+      for (let y = 2.1; y < 11.2; y += 1.05) {
+        add(new THREE.BoxGeometry(5.25, 0.045, 0.08), neon, [0.4, y, -1.86]);
       }
-      const sign = this.makeSmallLabel('Tkxel / One World', '#b6a0ff', 512, 128);
-      sign.position.set(0, 2.3, -3.02);
-      sign.scale.set(4.6, 1.15, 1);
-      group.add(sign);
-      colliderSize = [8.6, 10.6, 6.2];
+      for (const x of [-1.7, -0.65, 0.4, 1.45, 2.5]) {
+        add(new THREE.BoxGeometry(0.055, 10.6, 3.95), this.materials.concrete, [x, 6.15, 0.15]);
+      }
+      add(new THREE.BoxGeometry(4.7, 0.18, 1.1), this.materials.gold, [0, 1.8, -3.25]);
+      colliderSize = [8.8, 11, 6.2];
     } else if (shape === 'terminal') {
-      const terminal = new THREE.Mesh(new THREE.BoxGeometry(5.2, 4.2, 4.4), baseMaterial);
-      terminal.position.y = 2.1;
-      terminal.castShadow = true;
-      group.add(terminal);
-      const screen = new THREE.Mesh(new THREE.PlaneGeometry(3.7, 2.1), accentMaterial);
-      screen.position.set(0, 2.8, -2.23);
-      group.add(screen);
-      colliderSize = [5.8, 4.4, 5];
+      add(new THREE.CylinderGeometry(3.9, 4.2, 0.7, 32), baseMaterial, [0, 0.35, 0]);
+      add(new THREE.CylinderGeometry(2.7, 3.2, 2.0, 24), this.materials.darkGlass, [0, 1.7, 0]);
+      for (let i = 0; i < 6; i += 1) {
+        const angle = i * Math.PI / 3;
+        add(new THREE.PlaneGeometry(1.4, 0.86), neon, [Math.sin(angle) * 2.76, 2.1, Math.cos(angle) * 2.76], [0, angle, 0]);
+      }
+      add(new THREE.TorusGeometry(2.95, 0.05, 8, 64), this.materials.neonGreen, [0, 2.85, 0], [Math.PI / 2, 0, 0]);
+      colliderSize = [6.2, 3.2, 6.2];
     } else if (shape === 'library') {
-      const wingLeft = new THREE.Mesh(new THREE.BoxGeometry(3.2, 3.2, 5.4), this.materials.brick);
-      wingLeft.position.set(-3.3, 1.6, 0);
-      wingLeft.castShadow = true;
-      group.add(wingLeft);
-      const wingRight = new THREE.Mesh(new THREE.BoxGeometry(3.2, 3.2, 5.4), this.materials.brick);
-      wingRight.position.set(3.3, 1.6, 0);
-      wingRight.castShadow = true;
-      group.add(wingRight);
-      const hall = new THREE.Mesh(new THREE.BoxGeometry(4.8, 4.6, 5.8), this.materials.cream);
-      hall.position.set(0, 2.3, -0.15);
-      hall.castShadow = true;
-      group.add(hall);
-      const roof = new THREE.Mesh(new THREE.BoxGeometry(8.9, 0.55, 6.2), this.materials.roof);
-      roof.position.set(0, 4.85, -0.1);
-      roof.castShadow = true;
-      group.add(roof);
-      for (let i = -2; i <= 2; i += 1) {
-        const column = new THREE.Mesh(new THREE.CylinderGeometry(0.22, 0.26, 3.8, 10), accentMaterial.clone());
-        column.position.set(i * 0.9, 2.12, -3.12);
-        group.add(column);
+      add(new THREE.BoxGeometry(9.6, 1.0, 6.2), this.materials.limestone, [0, 0.5, 0]);
+      add(new THREE.BoxGeometry(8.7, 3.4, 5.1), this.materials.brick, [0, 2.2, 0.2]);
+      add(new THREE.BoxGeometry(4.6, 4.4, 5.6), this.materials.limestone, [0, 2.8, -0.1]);
+      add(new THREE.BoxGeometry(10.2, 0.55, 6.4), this.materials.roof, [0, 5.05, 0.05]);
+      for (let i = -3; i <= 3; i += 1) {
+        add(new THREE.CylinderGeometry(0.18, 0.24, 3.7, 18), this.materials.limestone, [i * 0.86, 2.35, -3.12]);
       }
-      const arch = new THREE.Mesh(new THREE.TorusGeometry(1.05, 0.09, 8, 32, Math.PI), accentMaterial.clone());
-      arch.position.set(0, 2.9, -3.15);
-      arch.rotation.z = Math.PI;
-      group.add(arch);
-      const sign = this.makeSmallLabel('FCCU S Block', '#9ccfff', 420, 128);
-      sign.position.set(0, 4.45, -3.18);
-      sign.scale.set(3.8, 1.05, 1);
-      group.add(sign);
-      colliderSize = [9.2, 5, 6.3];
+      for (const x of [-3.25, -2.05, 2.05, 3.25]) {
+        this.addWindowStack(group, x, 2.7, -2.85, 3, this.materials.darkGlass);
+      }
+      add(new THREE.TorusGeometry(1.05, 0.08, 10, 48, Math.PI), this.materials.limestone, [0, 3.0, -3.2], [0, 0, Math.PI]);
+      add(new THREE.CylinderGeometry(0.92, 1.05, 1.9, 20), this.materials.limestone, [0, 6.05, -0.1]);
+      add(new THREE.ConeGeometry(1.1, 1.05, 4), this.materials.roof, [0, 7.5, -0.1], [0, Math.PI / 4, 0]);
+      add(new THREE.CircleGeometry(0.42, 32), this.materials.gold, [0, 6.25, -1.08]);
+      colliderSize = [10.4, 6.2, 6.6];
     } else if (shape === 'trophy') {
-      const plinth = new THREE.Mesh(new THREE.BoxGeometry(4.8, 1.4, 4.8), baseMaterial);
-      plinth.position.y = 0.7;
-      plinth.castShadow = true;
-      group.add(plinth);
-      const stem = new THREE.Mesh(new THREE.CylinderGeometry(0.42, 0.58, 2.3, 14), this.materials.gold);
-      stem.position.y = 2.35;
-      group.add(stem);
-      const cup = new THREE.Mesh(new THREE.CylinderGeometry(1.65, 1.05, 2.3, 18), this.materials.gold);
-      cup.position.y = 4.35;
-      cup.castShadow = true;
-      group.add(cup);
+      add(new THREE.CylinderGeometry(3.4, 4.0, 0.9, 32), this.materials.concrete, [0, 0.45, 0]);
+      add(new THREE.CylinderGeometry(0.55, 0.78, 2.2, 28), this.materials.gold, [0, 1.9, 0]);
+      add(new THREE.SphereGeometry(1.65, 32, 16, 0, Math.PI * 2, 0, Math.PI * 0.64), this.materials.gold, [0, 3.5, 0], [Math.PI, 0, 0]);
       for (const side of [-1, 1]) {
-        const handle = new THREE.Mesh(new THREE.TorusGeometry(0.76, 0.1, 8, 28), this.materials.gold);
-        handle.position.set(side * 1.55, 4.45, 0);
-        handle.rotation.y = Math.PI / 2;
-        group.add(handle);
+        add(new THREE.TorusGeometry(0.95, 0.11, 12, 48), this.materials.gold, [side * 1.55, 3.55, 0], [0, Math.PI / 2, 0]);
       }
-      const star = new THREE.Mesh(new THREE.OctahedronGeometry(0.62, 0), accentMaterial.clone());
-      star.position.y = 6.1;
-      group.add(star);
-      colliderSize = [5.2, 4.8, 5.2];
+      add(new THREE.OctahedronGeometry(0.75, 0), neon, [0, 5.15, 0]);
+      colliderSize = [5.6, 4.9, 5.6];
     } else if (shape === 'vault') {
-      const vault = new THREE.Mesh(new THREE.BoxGeometry(5.6, 3.9, 4.8), baseMaterial);
-      vault.position.y = 1.95;
-      vault.castShadow = true;
-      group.add(vault);
-      const door = new THREE.Mesh(new THREE.TorusGeometry(1.25, 0.16, 12, 36), accentMaterial);
-      door.position.set(0, 2.1, -2.45);
-      group.add(door);
-      colliderSize = [6, 4.2, 5.2];
-    } else if (shape === 'board') {
-      const board = new THREE.Mesh(new THREE.BoxGeometry(7.4, 3.2, 0.35), baseMaterial);
-      board.position.y = 2.3;
-      board.castShadow = true;
-      group.add(board);
-      colliderSize = [7.8, 3.6, 1.4];
-    } else if (shape === 'gate') {
-      for (const x of [-2.1, 2.1]) {
-        const pillar = new THREE.Mesh(new THREE.BoxGeometry(0.7, 5.8, 0.7), baseMaterial);
-        pillar.position.set(x, 2.9, 0);
-        pillar.castShadow = true;
-        group.add(pillar);
+      add(new THREE.CylinderGeometry(3.4, 3.8, 4.4, 18, 1, false, 0, Math.PI), baseMaterial, [0, 2.2, 0], [0, Math.PI / 2, 0]);
+      add(new THREE.BoxGeometry(6.8, 3.9, 3.2), baseMaterial, [0, 1.95, 0.8]);
+      add(new THREE.TorusGeometry(1.65, 0.18, 16, 64), this.materials.gold, [0, 2.15, -2.05]);
+      add(new THREE.CylinderGeometry(0.22, 0.22, 0.42, 20), this.materials.gold, [0, 2.15, -2.28], [Math.PI / 2, 0, 0]);
+      for (const x of [-1.8, 1.8]) {
+        add(new THREE.BoxGeometry(0.8, 1.05, 0.08), this.materials.neonBlue, [x, 2.65, -2.15]);
       }
-      const top = new THREE.Mesh(new THREE.BoxGeometry(5.2, 0.52, 0.8), accentMaterial);
-      top.position.y = 5.8;
-      group.add(top);
+      colliderSize = [7.2, 4.5, 4.8];
+    } else if (shape === 'board') {
+      add(new THREE.BoxGeometry(7.4, 0.42, 1.2), this.materials.woodDark, [0, 0.21, 0]);
+      add(new THREE.BoxGeometry(7.8, 3.1, 0.28), this.materials.wood, [0, 2.35, -0.2]);
+      for (let i = 0; i < 12; i += 1) {
+        const note = add(new THREE.PlaneGeometry(0.72, 0.52), new THREE.MeshBasicMaterial({ color: [0xffdf8a, 0xd8ff92, 0x92ffea, 0xff9b6d][i % 4] }), [-3 + (i % 6) * 1.18, 2.0 + Math.floor(i / 6) * 0.72, -0.36]);
+        note.rotation.z = (i % 3 - 1) * 0.08;
+      }
+      colliderSize = [8.2, 3.4, 1.6];
+    } else if (shape === 'gate') {
+      for (const x of [-2.6, 2.6]) {
+        add(new THREE.CylinderGeometry(0.38, 0.54, 5.6, 16), baseMaterial, [x, 2.8, 0]);
+      }
+      add(new THREE.TorusGeometry(2.7, 0.16, 12, 64, Math.PI), neon, [0, 5.45, 0], [0, 0, Math.PI]);
+      add(new THREE.BoxGeometry(5.5, 0.34, 0.5), this.materials.gold, [0, 5.38, 0]);
       colliderSize = [0, 0, 0];
     } else if (shape === 'post') {
-      const tower = new THREE.Mesh(new THREE.CylinderGeometry(1.8, 2.4, 5.8, 6), baseMaterial);
-      tower.position.y = 2.9;
-      tower.castShadow = true;
-      group.add(tower);
-      colliderSize = [4.6, 6, 4.6];
+      add(new THREE.CylinderGeometry(1.45, 1.9, 5.6, 20), baseMaterial, [0, 2.8, 0]);
+      add(new THREE.CylinderGeometry(0.18, 0.24, 7.4, 16), this.materials.concrete, [0, 6.5, 0]);
+      for (const y of [4.3, 6.0, 7.4]) {
+        add(new THREE.TorusGeometry(1.85, 0.055, 8, 64), neon, [0, y, 0], [Math.PI / 2, 0, 0]);
+      }
+      add(new THREE.TorusGeometry(1.05, 0.08, 8, 32), neon, [1.6, 6.1, 0], [Math.PI / 3, 0.4, 0]);
+      colliderSize = [4.4, 6.4, 4.4];
     } else if (shape === 'rampyard') {
-      const garage = new THREE.Mesh(new THREE.BoxGeometry(7.2, 3.6, 4.6), baseMaterial);
-      garage.position.set(0, 1.8, 0);
-      garage.castShadow = true;
-      group.add(garage);
-      const sign = new THREE.Mesh(new THREE.BoxGeometry(5.4, 0.5, 0.3), accentMaterial);
-      sign.position.set(0, 4.1, -2.45);
-      group.add(sign);
-      for (const x of [-2.3, 0, 2.3]) {
-        const cone = new THREE.Mesh(new THREE.ConeGeometry(0.35, 1.1, 8), accentMaterial.clone());
-        cone.position.set(x, 0.55, 3.4);
-        group.add(cone);
+      add(new THREE.BoxGeometry(7.2, 3.2, 4.6), baseMaterial, [0, 1.6, 0]);
+      add(new THREE.CylinderGeometry(3.7, 3.7, 4.8, 24, 1, true, 0, Math.PI), this.materials.roof, [0, 3.4, 0], [0, Math.PI / 2, 0]);
+      add(new THREE.BoxGeometry(4.7, 1.8, 0.18), this.materials.darkGlass, [0, 1.35, -2.42]);
+      for (const x of [-2.7, 0, 2.7]) {
+        add(new THREE.ConeGeometry(0.34, 1.0, 12), new THREE.MeshStandardMaterial({ color: 0xff7a2d, roughness: 0.65 }), [x, 0.5, 3.2]);
       }
-      colliderSize = [7.6, 3.8, 5];
+      colliderSize = [7.8, 3.8, 5];
     } else if (shape === 'pier') {
-      const deck = new THREE.Mesh(new THREE.BoxGeometry(8.4, 0.55, 5.4), baseMaterial);
-      deck.position.y = 0.35;
-      deck.castShadow = true;
-      group.add(deck);
-      const mast = new THREE.Mesh(new THREE.CylinderGeometry(0.16, 0.24, 5.8, 8), accentMaterial);
-      mast.position.y = 3.2;
-      group.add(mast);
-      const dish = new THREE.Mesh(new THREE.TorusGeometry(1.1, 0.08, 8, 28), accentMaterial);
-      dish.position.set(0, 5.9, 0);
-      dish.rotation.x = Math.PI / 3;
-      group.add(dish);
-      for (let i = 0; i < 4; i += 1) {
-        const post = new THREE.Mesh(new THREE.BoxGeometry(0.55, 1.8, 0.55), accentMaterial.clone());
-        post.position.set(-3.3 + i * 2.2, 1.2, 2.35);
-        group.add(post);
+      add(new THREE.BoxGeometry(9.8, 0.48, 6.2), this.materials.wood, [0, 0.34, 0]);
+      for (const x of [-4.2, -1.4, 1.4, 4.2]) {
+        add(new THREE.CylinderGeometry(0.18, 0.22, 2.0, 10), this.materials.woodDark, [x, 1.0, 2.55]);
+        add(new THREE.CylinderGeometry(0.18, 0.22, 2.0, 10), this.materials.woodDark, [x, 1.0, -2.55]);
       }
-      colliderSize = [8.8, 1, 5.8];
+      add(new THREE.CylinderGeometry(0.65, 0.85, 4.2, 16), baseMaterial, [0, 2.35, 0.1]);
+      add(new THREE.ConeGeometry(1.05, 1.4, 16), this.materials.neonGreen, [0, 5.15, 0.1]);
+      add(new THREE.TorusGeometry(2.1, 0.05, 8, 64), this.materials.neonGreen, [0, 3.8, 0.1], [Math.PI / 2, 0, 0]);
+      colliderSize = [9.8, 1.0, 6.2];
     } else if (shape === 'farm') {
-      const soil = new THREE.Mesh(new THREE.BoxGeometry(9.4, 0.32, 6.8), this.materials.farmSoil);
-      soil.position.y = 0.16;
-      soil.castShadow = true;
-      soil.receiveShadow = true;
-      group.add(soil);
-      for (let i = -2; i <= 2; i += 1) {
-        const ridge = new THREE.Mesh(new THREE.BoxGeometry(8.5, 0.18, 0.34), this.materials.sand);
-        ridge.position.set(0, 0.42, i * 1.12);
-        group.add(ridge);
-        for (let j = -3; j <= 3; j += 1) {
-          const sprout = new THREE.Mesh(new THREE.BoxGeometry(0.34, 0.3, 0.34), new THREE.MeshStandardMaterial({ color: 0x3f8d44, roughness: 0.9 }));
-          sprout.position.set(j * 1.12 + (i % 2) * 0.26, 0.68, i * 1.12);
-          group.add(sprout);
-        }
-      }
-      const fenceMaterial = new THREE.MeshStandardMaterial({ color: 0x8b6440, roughness: 0.82 });
-      for (const z of [-3.8, 3.8]) {
-        const rail = new THREE.Mesh(new THREE.BoxGeometry(10.2, 0.26, 0.24), fenceMaterial);
-        rail.position.set(0, 1.0, z);
-        group.add(rail);
-      }
-      for (const x of [-5.1, 5.1]) {
-        const rail = new THREE.Mesh(new THREE.BoxGeometry(0.24, 0.26, 7.7), fenceMaterial);
-        rail.position.set(x, 1.0, 0);
-        group.add(rail);
-      }
-      const sign = this.makeSmallLabel('Press P', '#c79b56', 320, 128);
-      sign.position.set(0, 2.8, -4.05);
-      sign.scale.set(2.7, 1.08, 1);
-      group.add(sign);
+      this.createMinecraftFarm(group, add);
       colliderSize = [0, 0, 0];
     } else if (shape === 'portal') {
-      const portal = new THREE.Mesh(new THREE.TorusGeometry(2.5, 0.28, 12, 64), accentMaterial);
-      portal.rotation.y = Math.PI / 2;
-      portal.position.y = 3.2;
-      group.add(portal);
-      const base = new THREE.Mesh(new THREE.BoxGeometry(5.8, 0.8, 2.1), baseMaterial);
-      base.position.y = 0.4;
-      group.add(base);
+      add(new THREE.CylinderGeometry(3.4, 3.8, 0.55, 28), this.materials.concrete, [0, 0.28, 0]);
+      add(new THREE.TorusGeometry(2.5, 0.28, 16, 96), neon, [0, 3.2, 0], [0, Math.PI / 2, 0]);
+      add(new THREE.TorusGeometry(1.65, 0.08, 10, 72), this.materials.neonBlue, [0, 3.2, 0], [0, Math.PI / 2, 0]);
       colliderSize = [6.2, 1, 2.4];
     }
 
@@ -652,6 +608,104 @@ export class World {
         group.add(windowMesh);
       }
     }
+  }
+
+  addWindowStack(group, x, y, z, rows, material) {
+    for (let i = 0; i < rows; i += 1) {
+      const windowMesh = new THREE.Mesh(new THREE.PlaneGeometry(0.58, 0.48), material);
+      windowMesh.position.set(x, y + i * 0.82, z);
+      group.add(windowMesh);
+    }
+  }
+
+  addSignalRings(group, x, y, z, color, count = 2) {
+    for (let i = 0; i < count; i += 1) {
+      const ring = new THREE.Mesh(
+        new THREE.TorusGeometry(1.25 + i * 0.68, 0.035, 8, 56),
+        new THREE.MeshBasicMaterial({ color, transparent: true, opacity: 0.3 - i * 0.055, depthWrite: false })
+      );
+      ring.position.set(x, y + i * 0.18, z);
+      ring.rotation.x = Math.PI / 2;
+      group.add(ring);
+      this.decor.push({ type: 'signalRing', mesh: ring, phase: i * 0.4 });
+    }
+  }
+
+  createMinecraftFarm(group, add) {
+    const grassBlock = new THREE.MeshStandardMaterial({ color: 0x4f9a45, roughness: 0.82 });
+    const dirt = new THREE.MeshStandardMaterial({ color: 0x79512f, roughness: 0.9 });
+    const water = new THREE.MeshBasicMaterial({ color: 0x3ca6ff, transparent: true, opacity: 0.74 });
+    const crop = new THREE.MeshStandardMaterial({ color: 0x49a94e, roughness: 0.85 });
+    const fence = new THREE.MeshStandardMaterial({ color: 0x9b6a3d, roughness: 0.82 });
+
+    for (let x = -5; x <= 5; x += 1) {
+      for (let z = -4; z <= 4; z += 1) {
+        const material = Math.abs(z) === 1 ? water : (Math.abs(x) === 5 || Math.abs(z) === 4 ? grassBlock : dirt);
+        add(new THREE.BoxGeometry(0.98, 0.5, 0.98), material, [x, 0.25, z]);
+        if (material === dirt && (x + z) % 2 === 0) {
+          const stem = add(new THREE.BoxGeometry(0.2, 0.42, 0.2), crop, [x - 0.18, 0.72, z - 0.14]);
+          const leaves = add(new THREE.BoxGeometry(0.62, 0.22, 0.62), crop, [x + 0.08, 0.94, z + 0.08]);
+          stem.castShadow = false;
+          leaves.castShadow = false;
+        }
+      }
+    }
+
+    for (const z of [-4.8, 4.8]) {
+      add(new THREE.BoxGeometry(11.8, 0.22, 0.22), fence, [0, 1.12, z]);
+      add(new THREE.BoxGeometry(11.8, 0.22, 0.22), fence, [0, 1.68, z]);
+    }
+    for (const x of [-5.8, 5.8]) {
+      add(new THREE.BoxGeometry(0.22, 0.22, 9.8), fence, [x, 1.12, 0]);
+      add(new THREE.BoxGeometry(0.22, 0.22, 9.8), fence, [x, 1.68, 0]);
+    }
+    for (const x of [-5.8, -2.8, 0, 2.8, 5.8]) {
+      for (const z of [-4.8, 4.8]) {
+        add(new THREE.BoxGeometry(0.34, 2.0, 0.34), fence, [x, 1.0, z]);
+      }
+    }
+
+    const board = add(new THREE.BoxGeometry(4.8, 2.2, 0.22), this.materials.woodDark, [0, 2.25, -6.0]);
+    board.castShadow = true;
+    for (const x of [-1.9, 1.9]) {
+      add(new THREE.BoxGeometry(0.22, 2.5, 0.22), fence, [x, 1.2, -6.05]);
+    }
+    const canvas = document.createElement('canvas');
+    canvas.width = 512;
+    canvas.height = 256;
+    const texture = new THREE.CanvasTexture(canvas);
+    texture.colorSpace = THREE.SRGBColorSpace;
+    const screen = new THREE.Mesh(
+      new THREE.PlaneGeometry(4.15, 1.45),
+      new THREE.MeshBasicMaterial({ map: texture, transparent: true })
+    );
+    screen.position.set(0, 2.35, -6.13);
+    screen.rotation.y = Math.PI;
+    group.add(screen);
+    this.potatoCounter = { canvas, texture, ctx: canvas.getContext('2d') };
+    this.setPotatoCount('--');
+  }
+
+  setPotatoCount(count) {
+    if (!this.potatoCounter) return;
+    const { canvas, ctx, texture } = this.potatoCounter;
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    ctx.fillStyle = '#1f1308';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    ctx.fillStyle = '#5f3b1f';
+    for (let x = 0; x < canvas.width; x += 32) {
+      ctx.fillRect(x, 0, 16, canvas.height);
+    }
+    ctx.strokeStyle = '#d8aa5d';
+    ctx.lineWidth = 16;
+    ctx.strokeRect(12, 12, canvas.width - 24, canvas.height - 24);
+    ctx.fillStyle = '#f8e2a7';
+    ctx.textAlign = 'center';
+    ctx.font = '900 42px Inter, Arial, sans-serif';
+    ctx.fillText('POTATOES', canvas.width / 2, 78);
+    ctx.font = '900 96px Inter, Arial, sans-serif';
+    ctx.fillText(String(count), canvas.width / 2, 180);
+    texture.needsUpdate = true;
   }
 
   makeSmallLabel(text, color, width = 384, height = 128) {
@@ -758,7 +812,7 @@ export class World {
 
     const treeClusters = [
       [-142, 120, 38, 42],
-      [112, 126, 48, 34],
+      [142, 58, 30, 44],
       [-128, -96, 42, 56],
       [134, -84, 34, 52],
       [10, -142, 72, 28],
@@ -772,17 +826,46 @@ export class World {
       const z = cluster[1] + (pseudoRandom(i * 17) - 0.5) * cluster[3];
       if (Math.abs(x) > WORLD_HALF_SIZE - 7 || Math.abs(z) > WORLD_HALF_SIZE - 7) continue;
       const treePosition = new THREE.Vector3(x, 0, z);
-      if (this.zones.some((zone) => flatDistance(treePosition, zone.position) < zone.radius + 8)) continue;
-      const trunk = new THREE.Mesh(new THREE.CylinderGeometry(0.22, 0.32, 2.4, 7), this.materials.trunk);
-      trunk.position.set(x, 1.2, z);
+      if (this.zones.some((zone) => flatDistance(treePosition, zone.position) < zone.radius + 24)) continue;
+      const tree = new THREE.Group();
+      tree.position.set(x, 0, z);
+      const trunk = new THREE.Mesh(new THREE.CylinderGeometry(0.2, 0.34, 2.8, 8), this.materials.trunk);
+      trunk.position.y = 1.4;
       trunk.castShadow = true;
-      this.scene.add(trunk);
-      const top = new THREE.Mesh(new THREE.ConeGeometry(1.4 + (i % 4) * 0.16, 4.3, 7), this.materials.grass);
-      top.position.set(x, 4.1, z);
-      top.castShadow = true;
-      this.scene.add(top);
-      this.decor.push({ type: 'tree', mesh: top, phase: i * 0.37 });
+      tree.add(trunk);
+      for (let j = 0; j < 4; j += 1) {
+        const leaf = new THREE.Mesh(
+          new THREE.SphereGeometry(1.05 + (j % 2) * 0.24, 12, 8),
+          j % 2 ? this.materials.leafLight : this.materials.leaf
+        );
+        leaf.position.set((j - 1.5) * 0.56, 3.0 + j * 0.42, (j % 2 - 0.5) * 0.58);
+        leaf.scale.set(1.15, 0.86, 1.1);
+        leaf.castShadow = true;
+        tree.add(leaf);
+      }
+      this.scene.add(tree);
+      this.decor.push({ type: 'tree', mesh: tree, phase: i * 0.37 });
     }
+
+    const bladeGeometry = new THREE.PlaneGeometry(0.08, 0.75);
+    bladeGeometry.translate(0, 0.37, 0);
+    const bladeMaterial = new THREE.MeshBasicMaterial({ color: 0x65b85d, side: THREE.DoubleSide, transparent: true, opacity: 0.62 });
+    const grass = new THREE.InstancedMesh(bladeGeometry, bladeMaterial, 850);
+    const matrix = new THREE.Matrix4();
+    for (let i = 0; i < 850; i += 1) {
+      const x = (pseudoRandom(i * 19) - 0.5) * 300;
+      const z = (pseudoRandom(i * 31) - 0.5) * 300;
+      if (roadSegments.some(([rx, rz, width, depth]) => Math.abs(x - rx) < width && Math.abs(z - rz) < depth * 0.5)) continue;
+      matrix.compose(
+        new THREE.Vector3(x, 0.05, z),
+        new THREE.Quaternion().setFromEuler(new THREE.Euler(0, pseudoRandom(i * 7) * Math.PI, 0)),
+        new THREE.Vector3(0.7 + pseudoRandom(i * 13) * 0.8, 0.7 + pseudoRandom(i * 23) * 0.9, 1)
+      );
+      grass.setMatrixAt(i, matrix);
+    }
+    grass.instanceMatrix.needsUpdate = true;
+    this.scene.add(grass);
+    this.decor.push({ type: 'grassBlades', mesh: grass, phase: 0 });
   }
 
   createCollectibles() {
@@ -808,32 +891,17 @@ export class World {
   }
 
   createAtmosphere() {
-    const starPositions = [];
-    for (let i = 0; i < 1200; i += 1) {
-      starPositions.push((Math.random() - 0.5) * 520, 34 + Math.random() * 96, (Math.random() - 0.5) * 520);
+    const positions = [];
+    for (let i = 0; i < 450; i += 1) {
+      positions.push((Math.random() - 0.5) * 320, 1.2 + Math.random() * 8, (Math.random() - 0.5) * 320);
     }
-    const starGeometry = new THREE.BufferGeometry();
-    starGeometry.setAttribute('position', new THREE.Float32BufferAttribute(starPositions, 3));
-    this.stars = new THREE.Points(
-      starGeometry,
-      new THREE.PointsMaterial({ color: 0xa8f1ff, size: 0.18, transparent: true, opacity: 0.72, depthWrite: false })
+    const geometry = new THREE.BufferGeometry();
+    geometry.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
+    this.dust = new THREE.Points(
+      geometry,
+      new THREE.PointsMaterial({ color: 0xffe0a4, size: 0.08, transparent: true, opacity: 0.22, depthWrite: false })
     );
-    this.scene.add(this.stars);
-
-    const lineMaterial = new THREE.LineBasicMaterial({ color: 0x68d8ff, transparent: true, opacity: 0.14 });
-    for (let i = 0; i < 16; i += 1) {
-      const curve = new THREE.CatmullRomCurve3([
-        new THREE.Vector3(-150 + i * 20, 8 + (i % 4), -150),
-        new THREE.Vector3(-70 + i * 7, 13, -36),
-        new THREE.Vector3(36 - i * 4, 10 + (i % 3), 58),
-        new THREE.Vector3(150 - i * 12, 15, 150)
-      ]);
-      const points = curve.getPoints(48);
-      const geometry = new THREE.BufferGeometry().setFromPoints(points);
-      const line = new THREE.Line(geometry, lineMaterial.clone());
-      this.scene.add(line);
-      this.decor.push({ type: 'ribbon', mesh: line, phase: i * 0.4 });
-    }
+    this.scene.add(this.dust);
   }
 
   checkBoostPad(position) {
@@ -968,15 +1036,17 @@ export class World {
   }
 
   update(dt, elapsed, vehiclePosition) {
-    if (this.stars) {
-      this.stars.rotation.y += dt * 0.006;
+    if (this.dust) {
+      this.dust.rotation.y += dt * 0.012;
     }
     for (const item of this.decor) {
       if (item.type === 'dash') {
         item.mesh.material.opacity = 0.28 + Math.sin(elapsed * 2 + item.phase) * 0.12;
       } else if (item.type === 'zone') {
-        item.marker.rotation.y += dt * 1.8;
-        item.marker.position.y += Math.sin(elapsed * 2.4 + item.phase) * 0.004;
+        if (item.marker?.visible) {
+          item.marker.rotation.y += dt * 1.8;
+          item.marker.position.y += Math.sin(elapsed * 2.4 + item.phase) * 0.004;
+        }
         item.ring.material.opacity = 0.18 + Math.sin(elapsed * 1.7 + item.phase) * 0.05;
         const distance = vehiclePosition ? flatDistance(vehiclePosition, item.mesh.position) : 100;
         item.ring.scale.setScalar(distance < 13 ? 1.05 + Math.sin(elapsed * 7) * 0.04 : 1);
@@ -992,7 +1062,7 @@ export class World {
       } else if (item.type === 'checkpoint') {
         item.mesh.rotation.z += dt * 0.8;
       } else if (item.type === 'ocean') {
-        item.mesh.material.opacity = 0.76 + Math.sin(elapsed * 0.5) * 0.06;
+        if (item.mesh.material.uniforms?.uTime) item.mesh.material.uniforms.uTime.value = elapsed;
         item.mesh.position.y = -0.42 + Math.sin(elapsed * 0.45) * 0.035;
       } else if (item.type === 'buoy') {
         item.mesh.position.y = 0.38 + Math.sin(elapsed * 1.4 + item.phase) * 0.18;
@@ -1002,6 +1072,11 @@ export class World {
         item.arrow.rotation.y += dt * 1.8;
       } else if (item.type === 'rampStripe' || item.type === 'rail') {
         item.mesh.material.opacity = 0.34 + Math.sin(elapsed * 2 + item.phase) * 0.14;
+      } else if (item.type === 'signalRing') {
+        item.mesh.rotation.z += dt * 0.55;
+        item.mesh.scale.setScalar(1 + Math.sin(elapsed * 1.6 + item.phase) * 0.06);
+      } else if (item.type === 'grassBlades') {
+        item.mesh.material.opacity = 0.52 + Math.sin(elapsed * 0.9) * 0.08;
       }
     }
 
@@ -1019,6 +1094,83 @@ export class World {
 
 function flatDistance(a, b) {
   return Math.hypot(a.x - b.x, a.z - b.z);
+}
+
+function makeNoiseTexture(colors, size = 256, dots = 1200) {
+  const canvas = document.createElement('canvas');
+  canvas.width = size;
+  canvas.height = size;
+  const ctx = canvas.getContext('2d');
+  ctx.fillStyle = colors[0];
+  ctx.fillRect(0, 0, size, size);
+  for (let i = 0; i < dots; i += 1) {
+    ctx.fillStyle = colors[i % colors.length];
+    const radius = 0.6 + Math.random() * 2.4;
+    ctx.globalAlpha = 0.18 + Math.random() * 0.42;
+    ctx.beginPath();
+    ctx.arc(Math.random() * size, Math.random() * size, radius, 0, Math.PI * 2);
+    ctx.fill();
+  }
+  ctx.globalAlpha = 1;
+  const texture = new THREE.CanvasTexture(canvas);
+  texture.colorSpace = THREE.SRGBColorSpace;
+  return texture;
+}
+
+function makeRoadTexture() {
+  const canvas = document.createElement('canvas');
+  canvas.width = 96;
+  canvas.height = 256;
+  const ctx = canvas.getContext('2d');
+  ctx.fillStyle = '#252b2f';
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+  for (let i = 0; i < 900; i += 1) {
+    const value = 28 + Math.random() * 30;
+    ctx.fillStyle = `rgba(${value}, ${value + 4}, ${value + 8}, ${0.16 + Math.random() * 0.18})`;
+    ctx.fillRect(Math.random() * canvas.width, Math.random() * canvas.height, 1 + Math.random() * 2, 1 + Math.random() * 2);
+  }
+  const texture = new THREE.CanvasTexture(canvas);
+  texture.colorSpace = THREE.SRGBColorSpace;
+  return texture;
+}
+
+function makeWaterMaterial() {
+  const material = new THREE.ShaderMaterial({
+    transparent: true,
+    depthWrite: false,
+    uniforms: {
+      uTime: { value: 0 },
+      uDeep: { value: new THREE.Color(0x075b8a) },
+      uShallow: { value: new THREE.Color(0x38b7d8) }
+    },
+    vertexShader: `
+      uniform float uTime;
+      varying vec2 vUv;
+      varying float vWave;
+      void main() {
+        vUv = uv;
+        vec3 p = position;
+        float wave = sin(p.x * 0.035 + uTime * 0.9) * 0.28 + cos(p.y * 0.04 + uTime * 0.7) * 0.2;
+        p.z += wave;
+        vWave = wave;
+        gl_Position = projectionMatrix * modelViewMatrix * vec4(p, 1.0);
+      }
+    `,
+    fragmentShader: `
+      uniform vec3 uDeep;
+      uniform vec3 uShallow;
+      uniform float uTime;
+      varying vec2 vUv;
+      varying float vWave;
+      void main() {
+        float foam = smoothstep(0.38, 0.52, sin((vUv.x + vUv.y) * 80.0 + uTime * 1.4) * 0.5 + 0.5);
+        vec3 color = mix(uDeep, uShallow, 0.42 + vWave * 0.35);
+        color += foam * 0.08;
+        gl_FragColor = vec4(color, 0.82);
+      }
+    `
+  });
+  return material;
 }
 
 function pseudoRandom(seed) {
