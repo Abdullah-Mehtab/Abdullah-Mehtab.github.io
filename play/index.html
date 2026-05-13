@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <meta name="description" content="Explore Abdullah Mehtab's resume as an interactive pixel-art game. Walk through zones showcasing security engineering, DevOps, and project experience.">
+    <meta name="theme-color" content="#07111c">
+    <meta property="og:title" content="Arcade Resume - Abdullah Mehtab">
+    <meta property="og:description" content="Explore Abdullah Mehtab's resume as an interactive pixel-art game. Walk through zones showcasing security engineering, DevOps, and project experience.">
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://abdullah-mehtab.github.io/Abdullah-Mehtab/play/">
+    <meta property="og:image" content="https://abdullah-mehtab.github.io/Abdullah-Mehtab/assets/images/icon.png">
+    <meta name="twitter:card" content="summary">
+    <meta name="twitter:title" content="Arcade Resume - Abdullah Mehtab">
+    <meta name="twitter:description" content="Explore Abdullah Mehtab's resume as an interactive pixel-art game.">
+    <link rel="canonical" href="https://abdullah-mehtab.github.io/Abdullah-Mehtab/play/">
+    <title>Arcade Resume &mdash; Abdullah Mehtab</title>
+    <link rel="icon" href="../assets/images/icon.png" type="image/png">
+    <link rel="stylesheet" href="style.css">
+  </head>
+  <body>
+    <canvas id="game-canvas" aria-label="Interactive arcade resume game"></canvas>
+    <div id="dialogue-overlay" class="hidden" aria-live="polite"></div>
+    <div id="pause-menu" class="hidden" aria-label="Pause menu"></div>
+    <div id="title-screen" class="title-screen">
+      <a class="back-link" href="../index.html">&lt;- Back to Portfolio</a>
+      <div class="title-card">
+        <div class="title-sprite" aria-hidden="true"></div>
+        <p class="title-kicker">ARCADE RESUME</p>
+        <h1>Abdullah Mehtab</h1>
+        <p class="title-start">[Press SPACE or tap to start]</p>
+        <p>Arrow keys / WASD to move</p>
+        <p>SPACE to interact</p>
+        <p>ESC to pause</p>
+      </div>
+    </div>
+    <div id="rotate-notice" class="rotate-notice hidden">Rotate for best experience</div>
+    <div id="loading-screen">
+      <p>Initializing engine...</p>
+    </div>
+    <script src="dist/engine.js"></script>
+    <script type="module" src="game-shell.js"></script>
+  </body>
+</html>
