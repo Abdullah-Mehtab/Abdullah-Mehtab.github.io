@@ -15,9 +15,9 @@ def main():
 
     create_road_segment(mats)
     create_road_node(mats)
-    create_oak_tree(mats)
-    create_pine_tree(mats)
-    create_palm_tree(mats)
+    create_sakura_tree("EnvTreeSakuraLarge", mats, scale=1.08, bend=0.12)
+    create_sakura_tree("EnvTreeSakuraMedium", mats, scale=0.9, bend=-0.08)
+    create_sakura_tree("EnvTreeSakuraSmall", mats, scale=0.72, bend=0.04)
     create_grass_tuft(mats)
     create_shore_rock(mats)
     create_potato_farm(mats)
@@ -55,10 +55,12 @@ def create_materials():
         "road_edge": material("road_soft_shoulder", (0.075, 0.09, 0.083, 1), roughness=0.9),
         "road_line": material("faded_cool_lane_marking", (0.52, 0.74, 0.72, 1), roughness=0.72),
         "bark": material("warm_bark_ridges", (0.27, 0.14, 0.075, 1), roughness=0.92),
-        "leaf_dark": material("leaf_canopy_deep_green", (0.055, 0.31, 0.12, 1), roughness=0.86),
-        "leaf_mid": material("leaf_canopy_mid_green", (0.12, 0.48, 0.18, 1), roughness=0.84),
-        "leaf_light": material("leaf_canopy_light_green", (0.35, 0.68, 0.32, 1), roughness=0.84),
-        "palm": material("palm_leaf_warm_green", (0.15, 0.48, 0.18, 1), roughness=0.86),
+        "leaf_dark": material("sakura_leaf_shadow_pink", (0.76, 0.34, 0.48, 1), roughness=0.88),
+        "leaf_mid": material("sakura_leaf_soft_pink", (0.96, 0.55, 0.68, 1), roughness=0.86),
+        "leaf_light": material("sakura_leaf_pale_blossom", (1.0, 0.78, 0.84, 1), roughness=0.84),
+        "leaf_white": material("sakura_leaf_near_white", (1.0, 0.9, 0.92, 1), roughness=0.84),
+        "grass_blade_mid": material("grass_blade_mid_green", (0.22, 0.6, 0.28, 1), roughness=0.88),
+        "grass_blade_light": material("grass_blade_light_green", (0.46, 0.82, 0.42, 1), roughness=0.86),
         "sand": material("shoreline_sand", (0.63, 0.49, 0.29, 1), roughness=0.94),
         "rock": material("coastal_weathered_rock", (0.32, 0.38, 0.4, 1), roughness=0.88),
         "grass_top": material("minecraft_grass_top", (0.2, 0.57, 0.2, 1), roughness=0.9),
@@ -112,7 +114,7 @@ def cyl(name, parent, loc, radius, depth, mat, vertices=18, rotation=(0, 0, 0), 
     obj.data.materials.append(mat)
     obj.parent = parent
     if bevel:
-      add_bevel(obj, radius * 0.04, 2)
+        add_bevel(obj, radius * 0.04, 2)
     shade(obj)
     return obj
 
@@ -152,53 +154,60 @@ def create_road_node(mats):
     cyl("RoadNode_Asphalt", group, (0, 0.02, 0), 0.5, 0.08, mats["asphalt"], vertices=44)
 
 
-def create_oak_tree(mats):
-    group = root("EnvTreeOak")
-    cyl("Oak_Trunk", group, (0, 1.25, 0), 0.32, 2.5, mats["bark"], vertices=12, bevel=True)
-    for angle in [0.0, 2.1, 4.0]:
-        cube(
-            "Oak_LowerBranch",
-            group,
-            (math.sin(angle) * 0.38, 2.35, math.cos(angle) * 0.38),
-            (0.16, 0.14, 1.25),
-            mats["bark"],
-            rotation=(0.38, angle, 0.1),
-            bevel=0.02,
-        )
-    leaf_data = [
-        (0, 3.15, 0, 1.28, mats["leaf_mid"], (1.25, 0.86, 1.12)),
-        (-0.8, 3.25, 0.15, 1.05, mats["leaf_dark"], (1.12, 0.78, 1.0)),
-        (0.78, 3.34, -0.08, 1.08, mats["leaf_light"], (1.08, 0.8, 1.03)),
-        (0.08, 4.02, -0.16, 1.05, mats["leaf_mid"], (1.1, 0.78, 0.96)),
-        (-0.22, 3.62, 0.78, 0.92, mats["leaf_dark"], (1.0, 0.72, 0.95)),
+def create_sakura_tree(name, mats, scale=1.0, bend=0.0):
+    group = root(name)
+    trunk_segments = [
+        (0, 0.78, 0, 0.48, 1.56, 0.42, bend * 0.35),
+        (bend * 0.45, 1.88, 0.02, 0.38, 1.45, 0.34, bend * 0.75),
+        (bend * 0.9, 2.86, -0.05, 0.28, 1.08, 0.26, bend),
     ]
-    for index, (x, y, z, radius, mat, scale) in enumerate(leaf_data):
-        ico(f"Oak_Canopy_{index}", group, (x, y, z), radius, mat, scale=scale, rotation=(0.1 * index, 0.6 * index, 0))
-
-
-def create_pine_tree(mats):
-    group = root("EnvTreePine")
-    cyl("Pine_Trunk", group, (0, 1.35, 0), 0.24, 2.7, mats["bark"], vertices=10, bevel=True)
-    for index, y in enumerate([2.0, 2.78, 3.48, 4.05]):
-        cone(f"Pine_Tier_{index}", group, (0, y, 0), 1.35 - index * 0.22, 0.22, 1.25, mats["leaf_dark" if index % 2 else "leaf_mid"], vertices=9)
-
-
-def create_palm_tree(mats):
-    group = root("EnvTreePalm")
-    trunk = cyl("Palm_CurvedTrunk", group, (0, 1.85, 0), 0.22, 3.7, mats["bark"], vertices=10, rotation=(0.0, 0.0, 0.12), bevel=True)
-    trunk.scale.x = 0.82
-    for index in range(7):
-        angle = index * math.tau / 7
-        leaf = cube(
-            f"Palm_Frond_{index}",
+    for index, (x, y, z, sx, sy, sz, rot) in enumerate(trunk_segments):
+        cube(
+            f"Sakura_Trunk_{index}",
             group,
-            (math.sin(angle) * 0.88, 3.88, math.cos(angle) * 0.88),
-            (0.22, 0.075, 2.4),
-            mats["palm"],
-            rotation=(0.32, angle, 0.0),
-            bevel=0.025,
+            (x * scale, y * scale, z * scale),
+            (sx * scale, sy * scale, sz * scale),
+            mats["bark"],
+            rotation=(0.04 * index, 0.18 * index, rot),
+            bevel=0.035 * scale,
         )
-        leaf.scale.x = 0.75
+
+    branch_data = [
+        (-0.82, 2.62, 0.18, 1.46, 0.18, 0.18, -0.56, -0.24),
+        (0.76, 2.78, -0.18, 1.32, 0.16, 0.16, 0.48, 0.18),
+        (-0.42, 3.22, -0.58, 1.05, 0.14, 0.14, -0.22, 0.56),
+        (0.5, 3.36, 0.5, 1.08, 0.14, 0.14, 0.26, -0.52),
+    ]
+    for index, (x, y, z, sx, sy, sz, rz, ry) in enumerate(branch_data):
+        cube(
+            f"Sakura_Branch_{index}",
+            group,
+            (x * scale, y * scale, z * scale),
+            (sx * scale, sy * scale, sz * scale),
+            mats["bark"],
+            rotation=(0.06, ry, rz),
+            bevel=0.025 * scale,
+        )
+
+    blossom_data = [
+        (0.0, 3.65, 0.0, 1.42, mats["leaf_mid"], (1.28, 0.82, 1.08)),
+        (-0.95, 3.46, 0.18, 1.1, mats["leaf_light"], (1.2, 0.78, 1.0)),
+        (0.92, 3.58, -0.12, 1.12, mats["leaf_dark"], (1.18, 0.78, 0.98)),
+        (-0.28, 4.18, -0.45, 1.02, mats["leaf_light"], (1.1, 0.76, 0.92)),
+        (0.34, 4.06, 0.58, 0.96, mats["leaf_white"], (1.04, 0.72, 0.88)),
+        (-0.62, 3.9, 0.74, 0.84, mats["leaf_mid"], (0.98, 0.7, 0.9)),
+        (0.72, 3.92, 0.58, 0.82, mats["leaf_light"], (0.95, 0.68, 0.88)),
+    ]
+    for index, (x, y, z, radius, mat, blob_scale) in enumerate(blossom_data):
+        ico(
+            f"Sakura_BlossomCluster_{index}",
+            group,
+            ((x + bend * 0.6) * scale, y * scale, z * scale),
+            radius * scale,
+            mat,
+            scale=blob_scale,
+            rotation=(0.1 * index, 0.46 * index, 0.08 * index),
+        )
 
 
 def create_grass_tuft(mats):
@@ -209,7 +218,7 @@ def create_grass_tuft(mats):
             group,
             (math.sin(angle) * 0.08, 0.33, math.cos(angle) * 0.08),
             (0.055, 0.72 - abs(angle) * 0.1, 0.12),
-            mats["leaf_light" if index % 2 else "leaf_mid"],
+            mats["grass_blade_light" if index % 2 else "grass_blade_mid"],
             rotation=(0.0, angle, angle * 0.18),
             bevel=0.008,
         )
@@ -247,10 +256,10 @@ def create_potato_farm(mats):
         for x in [-6.65, 6.65]:
             cube("Farm_FencePostSide", group, (x, 0.94, z), (0.32, 1.72, 0.32), mats["wood"], bevel=0.02)
 
-    cube("Farm_CounterBoardBack", group, (0, 2.48, 7.08), (5.2, 2.55, 0.28), mats["wood_dark"], bevel=0.035)
-    cube("Farm_CounterBoardTop", group, (0, 3.87, 7.08), (5.6, 0.25, 0.34), mats["wood"], bevel=0.018)
+    cube("Farm_CounterBoardBack", group, (0, 2.48, -7.08), (5.2, 2.55, 0.28), mats["wood_dark"], bevel=0.035)
+    cube("Farm_CounterBoardTop", group, (0, 3.87, -7.08), (5.6, 0.25, 0.34), mats["wood"], bevel=0.018)
     for x in [-2.25, 2.25]:
-        cube("Farm_CounterBoardPost", group, (x, 1.35, 7.1), (0.32, 2.7, 0.32), mats["wood"], bevel=0.02)
+        cube("Farm_CounterBoardPost", group, (x, 1.35, -7.1), (0.32, 2.7, 0.32), mats["wood"], bevel=0.02)
     cube("Farm_GateLeft", group, (-0.7, 1.04, 5.75), (1.22, 1.18, 0.18), mats["wood"], bevel=0.018)
     cube("Farm_GateRight", group, (0.7, 1.04, 5.75), (1.22, 1.18, 0.18), mats["wood"], bevel=0.018)
 

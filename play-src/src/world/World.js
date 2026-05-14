@@ -3,8 +3,15 @@ import { boostPads, circuitCheckpoints, roadPaths, roadSegments, WORLD_HALF_SIZE
 
 const OCEAN_HALF_SIZE = 520;
 const OCEAN_Y = -3.35;
+const ISLAND_RADIUS = 214;
 const ROAD_LINE_COLOR = 0x68d8ff;
 const tmpColor = new THREE.Color();
+const QUALITY_PROFILES = {
+  low: { trees: 34, grassTufts: 64, petals: 60, clouds: 10 },
+  medium: { trees: 54, grassTufts: 150, petals: 160, clouds: 18 },
+  high: { trees: 76, grassTufts: 280, petals: 340, clouds: 30 }
+};
+const QUALITY_ORDER = ['low', 'medium', 'high'];
 
 export class World {
   constructor({ scene, physics, resumeData, environmentAssets }) {
@@ -20,6 +27,10 @@ export class World {
     this.collectibles = [];
     this.potatoes = [];
     this.materials = {};
+    this.landscapeQuality = this.readLandscapeQuality();
+    this.sakuraTrees = [];
+    this.grassTufts = [];
+    this.petals = null;
     this.circuit = {
       active: false,
       startedAt: 0,
@@ -45,6 +56,40 @@ export class World {
 
   cloneEnvironmentAsset(name) {
     return this.environmentAssets?.clone?.(name) || null;
+  }
+
+  readLandscapeQuality() {
+    const saved = localStorage.getItem('portfolio-drive-landscape-quality');
+    return QUALITY_PROFILES[saved] ? saved : 'medium';
+  }
+
+  getQualityProfile() {
+    return QUALITY_PROFILES[this.landscapeQuality] || QUALITY_PROFILES.medium;
+  }
+
+  setLandscapeQuality(quality) {
+    if (!QUALITY_PROFILES[quality]) return this.landscapeQuality;
+    this.landscapeQuality = quality;
+    localStorage.setItem('portfolio-drive-landscape-quality', quality);
+    this.applyLandscapeQuality();
+    return this.landscapeQuality;
+  }
+
+  cycleLandscapeQuality() {
+    const current = QUALITY_ORDER.indexOf(this.landscapeQuality);
+    const next = QUALITY_ORDER[(current + 1) % QUALITY_ORDER.length];
+    return this.setLandscapeQuality(next);
+  }
+
+  applyLandscapeQuality() {
+    const profile = this.getQualityProfile();
+    if (this.petals?.geometry) {
+      this.petals.geometry.setDrawRange(0, profile.petals);
+      this.petals.mesh.visible = profile.petals > 0;
+    }
+    for (let i = 0; i < this.grassTufts.length; i += 1) {
+      this.grassTufts[i].mesh.visible = i < profile.grassTufts;
+    }
   }
 
   createMaterials() {
@@ -90,7 +135,7 @@ export class World {
     this.materials.neonBlue = new THREE.MeshBasicMaterial({ color: 0x68d8ff, transparent: true, opacity: 0.82 });
     this.materials.neonGreen = new THREE.MeshBasicMaterial({ color: 0x7cffb2, transparent: true, opacity: 0.82 });
     this.materials.neonRed = new THREE.MeshBasicMaterial({ color: 0xff4466, transparent: true, opacity: 0.82 });
-    this.materials.water = makeWaterMaterial();
+    this.materials.water = makeWaterMaterial(ISLAND_RADIUS);
     this.materials.patchAlpha = patchAlpha;
     this.materials.glass = new THREE.MeshPhysicalMaterial({
       color: 0x8fe8ff,
@@ -140,16 +185,20 @@ export class World {
     this.scene.add(sun);
     this.decor.push({ type: 'sunDisc', mesh: sun, phase: 0 });
 
-    const cloudMaterial = new THREE.MeshBasicMaterial({ color: 0xf7fbff, transparent: true, opacity: 0.46, depthWrite: false });
-    for (let i = 0; i < 14; i += 1) {
+    const cloudMaterial = new THREE.MeshBasicMaterial({ color: 0xf7fbff, transparent: true, opacity: 0.54, depthWrite: false });
+    const cloudCount = this.getQualityProfile().clouds;
+    for (let i = 0; i < cloudCount; i += 1) {
       const group = new THREE.Group();
-      const x = -270 + (i * 47) % 540;
-      const z = -260 + ((i * 73) % 520);
-      group.position.set(x, 96 + (i % 5) * 8, z);
-      for (let j = 0; j < 5; j += 1) {
-        const puff = new THREE.Mesh(new THREE.SphereGeometry(5.5 + j * 1.1, 16, 10), cloudMaterial.clone());
-        puff.scale.set(3.1, 0.3, 0.92);
-        puff.position.set((j - 2) * 8.2, Math.sin(j) * 0.8, (j % 2) * 3.2);
+      const angle = (i / cloudCount) * Math.PI * 2 + pseudoRandom(i * 19) * 0.45;
+      const radius = 170 + pseudoRandom(i * 23) * 210;
+      const x = Math.cos(angle) * radius;
+      const z = Math.sin(angle) * radius;
+      group.position.set(x, 82 + (i % 7) * 7, z);
+      group.rotation.y = -angle + Math.PI / 2;
+      for (let j = 0; j < 6; j += 1) {
+        const puff = new THREE.Mesh(new THREE.SphereGeometry(5.2 + j * 0.95, 16, 10), cloudMaterial.clone());
+        puff.scale.set(3.4 + pseudoRandom(i * 31 + j) * 1.1, 0.28, 0.86 + pseudoRandom(i * 37 + j) * 0.25);
+        puff.position.set((j - 2.5) * 8.0, Math.sin(j + i) * 0.75, (j % 2) * 3.1);
         group.add(puff);
       }
       this.scene.add(group);
@@ -168,12 +217,14 @@ export class World {
     this.scene.add(water);
     this.decor.push({ type: 'ocean', mesh: water, phase: 0 });
 
-    const groundGeometry = new THREE.PlaneGeometry(WORLD_HALF_SIZE * 2, WORLD_HALF_SIZE * 2, 96, 96);
+    const groundGeometry = new THREE.CircleGeometry(ISLAND_RADIUS, 144);
     const positions = groundGeometry.attributes.position;
     for (let i = 0; i < positions.count; i += 1) {
       const x = positions.getX(i);
       const y = positions.getY(i);
-      const height = Math.sin(x * 0.045) * 0.055 + Math.cos(y * 0.035) * 0.045 + Math.sin((x + y) * 0.018) * 0.06;
+      const distance = Math.hypot(x, y);
+      const shoreDrop = THREE.MathUtils.smoothstep(distance, ISLAND_RADIUS - 22, ISLAND_RADIUS) * -0.34;
+      const height = Math.sin(x * 0.045) * 0.055 + Math.cos(y * 0.035) * 0.045 + Math.sin((x + y) * 0.018) * 0.06 + shoreDrop;
       positions.setZ(i, height);
     }
     groundGeometry.computeVertexNormals();
@@ -182,7 +233,7 @@ export class World {
     ground.position.y = -0.02;
     ground.receiveShadow = true;
     this.scene.add(ground);
-    this.physics.createFixedBox([0, -0.16, 0], [WORLD_HALF_SIZE * 2, 0.24, WORLD_HALF_SIZE * 2], { friction: 1 });
+    this.physics.createFixedBox([0, -0.16, 0], [ISLAND_RADIUS * 2, 0.24, ISLAND_RADIUS * 2], { friction: 1 });
 
     const patchData = [
       [-118, 0, 118, 52, 34, -0.18, this.materials.leafLight],
@@ -210,82 +261,88 @@ export class World {
       this.scene.add(patch);
     }
 
-    const beaches = [
-      [0, WORLD_HALF_SIZE - 6, WORLD_HALF_SIZE * 1.95, 15, 0],
-      [0, -WORLD_HALF_SIZE + 6, WORLD_HALF_SIZE * 1.95, 15, 0],
-      [WORLD_HALF_SIZE - 6, 0, 15, WORLD_HALF_SIZE * 1.95, 0],
-      [-WORLD_HALF_SIZE + 6, 0, 15, WORLD_HALF_SIZE * 1.95, 0],
-      [-132, 134, 34, 22, 0.22],
-      [128, -132, 40, 22, -0.3]
-    ];
-    for (const [x, z, width, depth, rotation] of beaches) {
-      const beachMaterial = this.materials.sand.clone();
-      beachMaterial.transparent = true;
-      beachMaterial.opacity = 0.78;
-      beachMaterial.alphaMap = this.materials.patchAlpha;
-      const beach = new THREE.Mesh(makeOrganicPatchGeometry(width, depth, x * 0.11 + z * 0.19), beachMaterial);
-      beach.position.set(x, 0.065, z);
-      beach.rotation.x = -Math.PI / 2;
-      beach.rotation.z = rotation;
-      beach.receiveShadow = true;
-      this.scene.add(beach);
-    }
+    const beachMaterial = this.materials.sand.clone();
+    beachMaterial.transparent = true;
+    beachMaterial.opacity = 0.88;
+    const beach = new THREE.Mesh(new THREE.RingGeometry(ISLAND_RADIUS - 24, ISLAND_RADIUS - 2, 144), beachMaterial);
+    beach.rotation.x = -Math.PI / 2;
+    beach.position.y = 0.07;
+    beach.receiveShadow = true;
+    this.scene.add(beach);
+
+    const wetSandMaterial = this.materials.sand.clone();
+    wetSandMaterial.color.set(0x8f7a5a);
+    wetSandMaterial.transparent = true;
+    wetSandMaterial.opacity = 0.7;
+    const wetSand = new THREE.Mesh(new THREE.RingGeometry(ISLAND_RADIUS - 5, ISLAND_RADIUS + 2.4, 144), wetSandMaterial);
+    wetSand.rotation.x = -Math.PI / 2;
+    wetSand.position.y = 0.075;
+    this.scene.add(wetSand);
   }
 
   createIslandEdges() {
-    const edgeMaterial = this.materials.edge;
-    const edgeHeight = 1.8;
-    const edgeThickness = 3.4;
-    const railMaterial = new THREE.MeshBasicMaterial({ color: 0x68d8ff, transparent: true, opacity: 0.38 });
-    const edges = [
-      [0, WORLD_HALF_SIZE + edgeThickness / 2, WORLD_HALF_SIZE * 2, edgeThickness],
-      [0, -WORLD_HALF_SIZE - edgeThickness / 2, WORLD_HALF_SIZE * 2, edgeThickness],
-      [WORLD_HALF_SIZE + edgeThickness / 2, 0, edgeThickness, WORLD_HALF_SIZE * 2],
-      [-WORLD_HALF_SIZE - edgeThickness / 2, 0, edgeThickness, WORLD_HALF_SIZE * 2]
-    ];
-    for (const [x, z, width, depth] of edges) {
-      const wall = new THREE.Mesh(new THREE.BoxGeometry(width, edgeHeight, depth), edgeMaterial);
-      wall.position.set(x, edgeHeight / 2 - 0.08, z);
-      wall.castShadow = true;
-      wall.receiveShadow = true;
-      this.scene.add(wall);
-      this.physics.createFixedBox([x, edgeHeight / 2 - 0.08, z], [width, edgeHeight, depth], { friction: 0.82, restitution: 0.0 });
-      const rail = new THREE.Mesh(new THREE.BoxGeometry(width || edgeThickness, 0.08, depth || edgeThickness), railMaterial.clone());
-      rail.position.set(x, edgeHeight + 0.12, z);
-      this.scene.add(rail);
-      this.decor.push({ type: 'rail', mesh: rail, phase: Math.random() * 6 });
+    const segmentCount = 88;
+    const segmentLength = (Math.PI * 2 * (ISLAND_RADIUS + 1.8)) / segmentCount * 1.08;
+    const edgeHeight = 1.15;
+    const edgeThickness = 3.8;
+    const barrierMaterial = new THREE.MeshStandardMaterial({
+      color: 0x7f8b89,
+      roughness: 0.78,
+      metalness: 0.05
+    });
+    const foamMaterial = new THREE.MeshBasicMaterial({ color: 0xcdf7ff, transparent: true, opacity: 0.42, depthWrite: false });
+
+    for (let i = 0; i < segmentCount; i += 1) {
+      const angle = (i / segmentCount) * Math.PI * 2;
+      const x = Math.cos(angle) * (ISLAND_RADIUS + 2.2);
+      const z = Math.sin(angle) * (ISLAND_RADIUS + 2.2);
+      const rotationY = -angle - Math.PI / 2;
+      this.physics.createFixedBox([x, edgeHeight / 2 - 0.25, z], [segmentLength, edgeHeight, edgeThickness], {
+        rotation: [0, rotationY, 0],
+        friction: 0.88,
+        restitution: 0.0
+      });
     }
 
-    for (let i = 0; i < 28; i += 1) {
-      const side = i % 4;
-      const t = -WORLD_HALF_SIZE + 12 + Math.floor(i / 4) * 48;
-      const x = side === 0 ? t : side === 1 ? WORLD_HALF_SIZE + 7 : side === 2 ? t : -WORLD_HALF_SIZE - 7;
-      const z = side === 0 ? WORLD_HALF_SIZE + 7 : side === 1 ? t : side === 2 ? -WORLD_HALF_SIZE - 7 : t;
-      const buoy = new THREE.Mesh(
-        new THREE.CylinderGeometry(0.52, 0.7, 1.5, 9),
-        new THREE.MeshBasicMaterial({ color: i % 2 ? 0xffdf8a : 0xff6d8d, transparent: true, opacity: 0.78 })
-      );
-      buoy.position.set(x, 0.38, z);
+    const seawall = new THREE.Mesh(
+      new THREE.RingGeometry(ISLAND_RADIUS + 1.0, ISLAND_RADIUS + 4.2, 144),
+      barrierMaterial
+    );
+    seawall.rotation.x = -Math.PI / 2;
+    seawall.position.y = -0.16;
+    seawall.receiveShadow = true;
+    this.scene.add(seawall);
+
+    const foam = new THREE.Mesh(new THREE.RingGeometry(ISLAND_RADIUS + 3.2, ISLAND_RADIUS + 8.4, 144), foamMaterial);
+    foam.rotation.x = -Math.PI / 2;
+    foam.position.y = OCEAN_Y + 0.11;
+    this.scene.add(foam);
+    this.decor.push({ type: 'shoreFoam', mesh: foam, phase: 0 });
+
+    const buoyMaterialA = new THREE.MeshBasicMaterial({ color: 0xffdf8a, transparent: true, opacity: 0.82 });
+    const buoyMaterialB = new THREE.MeshBasicMaterial({ color: 0xff6d8d, transparent: true, opacity: 0.82 });
+    for (let i = 0; i < 34; i += 1) {
+      const angle = (i / 34) * Math.PI * 2 + 0.08 * Math.sin(i * 1.7);
+      const radius = ISLAND_RADIUS + 17 + pseudoRandom(i * 41) * 8;
+      const buoy = new THREE.Mesh(new THREE.CylinderGeometry(0.52, 0.7, 1.5, 10), i % 2 ? buoyMaterialA : buoyMaterialB);
+      buoy.position.set(Math.cos(angle) * radius, -1.2, Math.sin(angle) * radius);
       buoy.castShadow = true;
       this.scene.add(buoy);
       this.decor.push({ type: 'buoy', mesh: buoy, phase: i * 0.5 });
     }
 
     const rockMaterial = new THREE.MeshStandardMaterial({ color: 0x52616f, roughness: 0.84, metalness: 0.04 });
-    for (let i = 0; i < 64; i += 1) {
-      const side = Math.floor(i / 16);
-      const t = -WORLD_HALF_SIZE + 10 + (i % 16) * 21.5 + Math.sin(i * 2.1) * 4;
-      const inset = 2 + Math.abs(Math.sin(i * 1.7)) * 4;
-      const x = side === 0 ? t : side === 1 ? WORLD_HALF_SIZE - inset : side === 2 ? t : -WORLD_HALF_SIZE + inset;
-      const z = side === 0 ? WORLD_HALF_SIZE - inset : side === 1 ? t : side === 2 ? -WORLD_HALF_SIZE + inset : t;
+    for (let i = 0; i < 86; i += 1) {
+      const angle = (i / 86) * Math.PI * 2 + (pseudoRandom(i * 13) - 0.5) * 0.09;
+      const radius = ISLAND_RADIUS - 16 + pseudoRandom(i * 17) * 12;
       const rock = this.cloneEnvironmentAsset('EnvShoreRock') || new THREE.Mesh(
         new THREE.DodecahedronGeometry(0.75 + (i % 5) * 0.22, 0),
         rockMaterial
       );
-      rock.position.set(x, 0.4, z);
-      rock.rotation.set(Math.random() * 0.6, Math.random() * 6, Math.random() * 0.6);
-      const scale = 0.72 + (i % 5) * 0.18;
-      rock.scale.set(scale, (0.55 + Math.random() * 0.45) * scale, scale);
+      rock.position.set(Math.cos(angle) * radius, 0.23 + pseudoRandom(i * 31) * 0.12, Math.sin(angle) * radius);
+      rock.rotation.set(pseudoRandom(i * 7) * 0.6, pseudoRandom(i * 11) * Math.PI * 2, pseudoRandom(i * 19) * 0.6);
+      const scale = 0.55 + (i % 5) * 0.16 + pseudoRandom(i * 23) * 0.24;
+      rock.scale.set(scale * (0.9 + pseudoRandom(i * 29) * 0.5), scale * 0.55, scale);
       rock.castShadow = true;
       rock.receiveShadow = true;
       this.scene.add(rock);
@@ -298,10 +355,21 @@ export class World {
     }
     for (const path of roadPaths) {
       for (const point of path.points) {
-        const node = this.cloneEnvironmentAsset('EnvRoadNode') || new THREE.Mesh(new THREE.CylinderGeometry(path.width * 0.56, path.width * 0.56, 0.1, 32), this.materials.road.clone());
+        const node = new THREE.Group();
+        const shoulder = new THREE.Mesh(
+          new THREE.CylinderGeometry(path.width * 0.72, path.width * 0.72, 0.075, 48),
+          this.materials.edge
+        );
+        shoulder.position.y = -0.03;
+        shoulder.receiveShadow = true;
+        const asphalt = new THREE.Mesh(
+          new THREE.CylinderGeometry(path.width * 0.58, path.width * 0.58, 0.1, 52),
+          this.materials.road
+        );
+        asphalt.position.y = 0.025;
+        asphalt.receiveShadow = true;
+        node.add(shoulder, asphalt);
         node.position.set(point[0], 0.155, point[1]);
-        node.scale.set(path.width * 1.12, 1, path.width * 1.12);
-        node.receiveShadow = true;
         this.scene.add(node);
       }
     }
@@ -421,11 +489,10 @@ export class World {
       mesh.rotation.y = pad.rotation;
       this.scene.add(mesh);
       const arrow = new THREE.Mesh(
-        new THREE.ConeGeometry(1.1, 2.8, 3),
+        new THREE.TorusGeometry(1.22, 0.08, 8, 36),
         new THREE.MeshBasicMaterial({ color: pad.color, transparent: true, opacity: 0.78 })
       );
       arrow.rotation.x = Math.PI / 2;
-      arrow.rotation.z = -pad.rotation;
       arrow.position.copy(mesh.position);
       arrow.position.y += 0.18;
       this.scene.add(arrow);
@@ -717,7 +784,8 @@ export class World {
       new THREE.PlaneGeometry(4.15, 1.45),
       new THREE.MeshBasicMaterial({ map: texture, transparent: true })
     );
-    screen.position.set(0, 2.48, 7.24);
+    screen.position.set(0, 2.48, -7.24);
+    screen.rotation.y = Math.PI;
     group.add(screen);
     this.potatoCounter = { canvas, texture, ctx: canvas.getContext('2d') };
     this.setPotatoCount('--');
@@ -796,6 +864,9 @@ export class World {
   }
 
   createProps() {
+    const quality = this.getQualityProfile();
+    this.sakuraTrees = [];
+    this.grassTufts = [];
     const crateMaterial = new THREE.MeshStandardMaterial({ color: 0x7d5a40, roughness: 0.78, metalness: 0.05 });
     const metalMaterial = new THREE.MeshStandardMaterial({ color: 0x3d4b57, roughness: 0.42, metalness: 0.55 });
     const positions = [
@@ -862,7 +933,7 @@ export class World {
       [20, 132, 48, 20]
     ];
     let placedTrees = 0;
-    for (let attempt = 0; attempt < 700 && placedTrees < 78; attempt += 1) {
+    for (let attempt = 0; attempt < 820 && placedTrees < quality.trees; attempt += 1) {
       const useCluster = attempt < 360;
       const cluster = treeClusters[attempt % treeClusters.length];
       const x = useCluster
@@ -871,21 +942,22 @@ export class World {
       const z = useCluster
         ? cluster[1] + (pseudoRandom(attempt * 17) - 0.5) * cluster[3]
         : (pseudoRandom(attempt * 29) - 0.5) * (WORLD_HALF_SIZE * 1.76);
-      if (Math.abs(x) > WORLD_HALF_SIZE - 7 || Math.abs(z) > WORLD_HALF_SIZE - 7) continue;
+      if (Math.hypot(x, z) > ISLAND_RADIUS - 24) continue;
       const treePosition = new THREE.Vector3(x, 0, z);
-      if (isNearRoad(x, z, 18.5)) continue;
+      if (isNearRoad(x, z, 20.5)) continue;
       if (this.zones.some((zone) => flatDistance(treePosition, zone.position) < zone.radius + 18)) continue;
-      const treeType = placedTrees % 11 === 0
-        ? 'EnvTreePalm'
-        : placedTrees % 4 === 0
-          ? 'EnvTreePine'
-          : 'EnvTreeOak';
+      const treeType = placedTrees % 7 === 0
+        ? 'EnvTreeSakuraLarge'
+        : placedTrees % 3 === 0
+          ? 'EnvTreeSakuraSmall'
+          : 'EnvTreeSakuraMedium';
       const tree = this.cloneEnvironmentAsset(treeType) || this.createFallbackTree();
       this.scene.add(tree);
       tree.position.set(x, 0, z);
       tree.rotation.y = pseudoRandom(attempt * 37) * Math.PI * 2;
-      const treeScale = 0.82 + pseudoRandom(attempt * 41) * 0.58;
+      const treeScale = 0.68 + pseudoRandom(attempt * 41) * 0.42;
       tree.scale.setScalar(treeScale);
+      this.sakuraTrees.push({ position: new THREE.Vector3(x, 0, z), scale: treeScale });
       this.decor.push({ type: 'tree', mesh: tree, phase: placedTrees * 0.37 });
       placedTrees += 1;
     }
@@ -896,17 +968,26 @@ export class World {
     const bladeMaterial = new THREE.MeshBasicMaterial({ color: 0x78c96c, side: THREE.DoubleSide, transparent: true, opacity: 0.42 });
     const grass = grassTemplate ? new THREE.Group() : new THREE.InstancedMesh(bladeGeometry, bladeMaterial, 850);
     const matrix = new THREE.Matrix4();
+    const maxGrass = Math.max(quality.grassTufts, QUALITY_PROFILES.high.grassTufts);
     for (let i = 0; i < 850; i += 1) {
       const x = (pseudoRandom(i * 19) - 0.5) * 300;
       const z = (pseudoRandom(i * 31) - 0.5) * 300;
       if (isNearRoad(x, z, 7.5)) continue;
-      if (grassTemplate && i < 185) {
+      if (Math.hypot(x, z) > ISLAND_RADIUS - 34) continue;
+      if (grassTemplate && this.grassTufts.length < maxGrass) {
         const tuft = grassTemplate.clone(true);
         tuft.position.set(x, 0.045, z);
         tuft.rotation.y = pseudoRandom(i * 7) * Math.PI;
         const tuftScale = 0.5 + pseudoRandom(i * 13) * 0.85;
         tuft.scale.setScalar(tuftScale);
         grass.add(tuft);
+        this.grassTufts.push({
+          mesh: tuft,
+          position: new THREE.Vector3(x, 0, z),
+          baseRotationY: tuft.rotation.y,
+          baseScale: tuftScale,
+          phase: pseudoRandom(i * 43) * Math.PI * 2
+        });
       } else if (!grassTemplate) {
         matrix.compose(
           new THREE.Vector3(x, 0.05, z),
@@ -921,6 +1002,86 @@ export class World {
     }
     this.scene.add(grass);
     this.decor.push({ type: 'grassBlades', mesh: grass, phase: 0 });
+    this.createSakuraPetals();
+    this.applyLandscapeQuality();
+  }
+
+  createSakuraPetals() {
+    const maxPetals = QUALITY_PROFILES.high.petals;
+    const positions = new Float32Array(maxPetals * 3);
+    const seeds = new Float32Array(maxPetals * 4);
+    const geometry = new THREE.BufferGeometry();
+    geometry.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
+    const material = new THREE.PointsMaterial({
+      color: 0xffbfd0,
+      size: 0.18,
+      map: makePetalTexture(),
+      transparent: true,
+      opacity: 0.72,
+      alphaTest: 0.08,
+      depthWrite: false
+    });
+    const mesh = new THREE.Points(geometry, material);
+    mesh.frustumCulled = false;
+    this.petals = { geometry, mesh, positions, seeds };
+    for (let i = 0; i < maxPetals; i += 1) {
+      seeds[i * 4] = pseudoRandom(i * 17);
+      seeds[i * 4 + 1] = pseudoRandom(i * 31);
+      seeds[i * 4 + 2] = pseudoRandom(i * 43);
+      seeds[i * 4 + 3] = pseudoRandom(i * 59);
+      this.resetPetal(i, true);
+    }
+    this.scene.add(mesh);
+  }
+
+  resetPetal(index, spreadHeight = false) {
+    if (!this.petals) return;
+    const { positions, seeds } = this.petals;
+    const tree = this.sakuraTrees.length
+      ? this.sakuraTrees[Math.floor(seeds[index * 4] * this.sakuraTrees.length) % this.sakuraTrees.length]
+      : { position: new THREE.Vector3(0, 0, 0), scale: 1 };
+    const angle = seeds[index * 4 + 1] * Math.PI * 2;
+    const radius = 0.8 + seeds[index * 4 + 2] * 3.2 * tree.scale;
+    positions[index * 3] = tree.position.x + Math.cos(angle) * radius;
+    positions[index * 3 + 1] = 4.0 + seeds[index * 4 + 3] * (spreadHeight ? 10 : 3.2) * tree.scale;
+    positions[index * 3 + 2] = tree.position.z + Math.sin(angle) * radius;
+  }
+
+  updateSakuraPetals(dt, elapsed) {
+    if (!this.petals?.mesh?.visible) return;
+    const { positions, seeds, geometry } = this.petals;
+    const count = this.getQualityProfile().petals;
+    for (let i = 0; i < count; i += 1) {
+      const base = i * 3;
+      const seed = i * 4;
+      positions[base] += Math.sin(elapsed * (0.8 + seeds[seed] * 0.7) + seeds[seed + 1] * 8) * dt * 0.7;
+      positions[base + 1] -= dt * (0.75 + seeds[seed + 2] * 0.85);
+      positions[base + 2] += Math.cos(elapsed * (0.7 + seeds[seed + 2] * 0.6) + seeds[seed + 3] * 8) * dt * 0.55;
+      if (positions[base + 1] < 0.16) {
+        seeds[seed] = pseudoRandom(elapsed * 11 + i * 17);
+        seeds[seed + 1] = pseudoRandom(elapsed * 13 + i * 31);
+        seeds[seed + 2] = pseudoRandom(elapsed * 19 + i * 43);
+        seeds[seed + 3] = pseudoRandom(elapsed * 23 + i * 59);
+        this.resetPetal(i, false);
+      }
+    }
+    geometry.attributes.position.needsUpdate = true;
+  }
+
+  updateGrassInteraction(vehiclePosition, elapsed) {
+    if (!vehiclePosition || !this.grassTufts.length) return;
+    const profile = this.getQualityProfile();
+    const limit = Math.min(profile.grassTufts, this.grassTufts.length);
+    for (let i = 0; i < limit; i += 1) {
+      const item = this.grassTufts[i];
+      const distance = flatDistance(vehiclePosition, item.position);
+      const bend = THREE.MathUtils.clamp(1 - distance / 5.2, 0, 1);
+      const wind = Math.sin(elapsed * 1.4 + item.phase) * 0.045;
+      item.mesh.rotation.y = item.baseRotationY + wind;
+      item.mesh.rotation.x = bend * 0.42;
+      item.mesh.scale.setScalar(item.baseScale * (1 - bend * 0.16));
+      item.mesh.scale.y = item.baseScale * (1 + wind * 0.25 - bend * 0.22);
+    }
   }
 
   createFallbackTree() {
@@ -932,7 +1093,7 @@ export class World {
     for (let j = 0; j < 4; j += 1) {
       const leaf = new THREE.Mesh(
         new THREE.SphereGeometry(1.05 + (j % 2) * 0.24, 12, 8),
-        j % 2 ? this.materials.leafLight : this.materials.leaf
+        new THREE.MeshStandardMaterial({ color: j % 2 ? 0xffc6d5 : 0xf58fab, roughness: 0.86, metalness: 0.01 })
       );
       leaf.position.set((j - 1.5) * 0.56, 3.0 + j * 0.42, (j % 2 - 0.5) * 0.58);
       leaf.scale.set(1.15, 0.86, 1.1);
@@ -1143,6 +1304,8 @@ export class World {
     if (this.dust) {
       this.dust.rotation.y += dt * 0.012;
     }
+    this.updateSakuraPetals(dt, elapsed);
+    this.updateGrassInteraction(vehiclePosition, elapsed);
     for (const item of this.decor) {
       if (item.type === 'dash') {
         item.mesh.material.opacity = 0.28 + Math.sin(elapsed * 2 + item.phase) * 0.12;
@@ -1168,6 +1331,8 @@ export class World {
       } else if (item.type === 'ocean') {
         if (item.mesh.material.uniforms?.uTime) item.mesh.material.uniforms.uTime.value = elapsed;
         item.mesh.position.y = OCEAN_Y + Math.sin(elapsed * 0.45) * 0.025;
+      } else if (item.type === 'shoreFoam') {
+        item.mesh.material.opacity = 0.34 + Math.sin(elapsed * 1.1) * 0.08;
       } else if (item.type === 'buoy') {
         item.mesh.position.y = 0.38 + Math.sin(elapsed * 1.4 + item.phase) * 0.18;
         item.mesh.rotation.y += dt * 0.45;
@@ -1297,7 +1462,28 @@ function makeRoadTexture() {
   return texture;
 }
 
-function makeWaterMaterial() {
+function makePetalTexture() {
+  const canvas = document.createElement('canvas');
+  canvas.width = 32;
+  canvas.height = 32;
+  const ctx = canvas.getContext('2d');
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  ctx.translate(16, 16);
+  ctx.rotate(-0.55);
+  const gradient = ctx.createRadialGradient(-3, -3, 2, 0, 0, 14);
+  gradient.addColorStop(0, 'rgba(255, 245, 248, 0.96)');
+  gradient.addColorStop(0.55, 'rgba(255, 179, 201, 0.78)');
+  gradient.addColorStop(1, 'rgba(255, 154, 185, 0)');
+  ctx.fillStyle = gradient;
+  ctx.beginPath();
+  ctx.ellipse(0, 0, 5.4, 12.5, 0, 0, Math.PI * 2);
+  ctx.fill();
+  const texture = new THREE.CanvasTexture(canvas);
+  texture.colorSpace = THREE.SRGBColorSpace;
+  return texture;
+}
+
+function makeWaterMaterial(islandRadius) {
   const material = new THREE.ShaderMaterial({
     transparent: false,
     depthWrite: true,
@@ -1305,18 +1491,23 @@ function makeWaterMaterial() {
     uniforms: {
       uTime: { value: 0 },
       uDeep: { value: new THREE.Color(0x07507e) },
-      uShallow: { value: new THREE.Color(0x42c4e8) }
+      uShallow: { value: new THREE.Color(0x42c4e8) },
+      uIslandRadius: { value: islandRadius }
     },
     vertexShader: `
       uniform float uTime;
       varying vec2 vUv;
       varying float vWave;
+      varying vec2 vWorld;
       void main() {
         vUv = uv;
         vec3 p = position;
-        float wave = sin(p.x * 0.035 + uTime * 0.9) * 0.055 + cos(p.y * 0.04 + uTime * 0.7) * 0.04;
+        float wave = sin(p.x * 0.035 + uTime * 0.9) * 0.14 + cos(p.y * 0.04 + uTime * 0.7) * 0.1;
+        wave += sin((p.x + p.y) * 0.022 + uTime * 1.45) * 0.075;
         p.z += wave;
         vWave = wave;
+        vec4 world = modelMatrix * vec4(p, 1.0);
+        vWorld = world.xz;
         gl_Position = projectionMatrix * modelViewMatrix * vec4(p, 1.0);
       }
     `,
@@ -1324,12 +1515,19 @@ function makeWaterMaterial() {
       uniform vec3 uDeep;
       uniform vec3 uShallow;
       uniform float uTime;
+      uniform float uIslandRadius;
       varying vec2 vUv;
       varying float vWave;
+      varying vec2 vWorld;
       void main() {
-        float foam = smoothstep(0.48, 0.56, sin((vUv.x + vUv.y) * 88.0 + uTime * 1.4) * 0.5 + 0.5);
-        vec3 color = mix(uDeep, uShallow, 0.42 + vWave * 0.35);
-        color += foam * 0.06;
+        float ripple = sin(vUv.x * 140.0 + uTime * 1.35) * sin(vUv.y * 108.0 - uTime * 0.9);
+        float foam = smoothstep(0.58, 0.88, ripple * 0.5 + 0.5);
+        float distanceFromCenter = length(vWorld);
+        float shoreFoam = smoothstep(uIslandRadius + 0.5, uIslandRadius + 8.0, distanceFromCenter)
+          * (1.0 - smoothstep(uIslandRadius + 20.0, uIslandRadius + 58.0, distanceFromCenter));
+        vec3 color = mix(uDeep, uShallow, 0.48 + vWave * 0.6);
+        color += foam * 0.055;
+        color = mix(color, vec3(0.78, 0.96, 1.0), shoreFoam * 0.34);
         gl_FragColor = vec4(color, 1.0);
       }
     `
