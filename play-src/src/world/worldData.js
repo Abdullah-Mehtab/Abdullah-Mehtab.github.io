@@ -11,8 +11,8 @@ export const districtFootprints = [
   { id: 'forge', label: 'Project Forge', center: [66, 28], size: [54, 42], color: '#ffcc66', kind: 'forge' },
   { id: 'harbor', label: 'Harbor Edge', center: [124, 30], size: [40, 32], color: '#78b7ff', kind: 'waterfront' },
   { id: 'archive', label: 'Archive Garden', center: [-42, 58], size: [48, 34], color: '#ffdf8a', kind: 'civic' },
-  { id: 'cove', label: 'Stunt Cove', center: [86, -110], size: [56, 38], color: '#ff9b6d', kind: 'stunt' },
-  { id: 'farm', label: 'Voxel Farm Pocket', center: [98, 98], size: [42, 32], color: '#c79b56', kind: 'farm' }
+  { id: 'cove', label: 'Stunt Cove', center: [96, -96], size: [44, 30], color: '#ff9b6d', kind: 'stunt' },
+  { id: 'farm', label: 'Voxel Farm Pocket', center: [82, 84], size: [38, 30], color: '#c79b56', kind: 'farm' }
 ];
 
 export const scenicPropZones = [
@@ -21,7 +21,7 @@ export const scenicPropZones = [
   { id: 'temple-garden', center: [38, 104], size: [58, 30], kind: 'garden' },
   { id: 'harbor-palms', center: [126, 58], size: [34, 38], kind: 'coast' },
   { id: 'southern-meadow', center: [-18, -118], size: [76, 34], kind: 'meadow' },
-  { id: 'farm-buffer', center: [100, 106], size: [42, 28], kind: 'farm' }
+  { id: 'farm-buffer', center: [82, 84], size: [40, 28], kind: 'farm' }
 ];
 
 export const roadPaths = [
@@ -126,24 +126,11 @@ export const roadPaths = [
     name: 'Stunt Cove Loop',
     width: 8.4,
     hierarchy: 'stunt',
-    closed: true,
-    points: [
-      [62, -94],
-      [92, -94],
-      [104, -108],
-      [88, -122],
-      [68, -116]
-    ]
-  },
-  {
-    id: 'stunt-connector',
-    name: 'Stunt Connector',
-    width: 7.2,
-    hierarchy: 'stunt',
     closed: false,
     points: [
       [64, -112],
-      [62, -94]
+      [82, -104],
+      [96, -116]
     ]
   },
   {
@@ -155,7 +142,7 @@ export const roadPaths = [
     turnaround: true,
     points: [
       [92, 104],
-      [100, 96]
+      [82, 96]
     ]
   }
 ];
@@ -165,7 +152,7 @@ export const roadSegments = roadPaths.flatMap((path) => pathToSegments(path));
 export const boostPads = [
   { id: 'loop-west-boost', position: [-116, 0, 20], rotation: Math.PI, color: '#7cffb2', district: 'loop' },
   { id: 'southern-curve-boost', position: [16, 0, -128], rotation: Math.PI / 2 - 0.28, color: '#68d8ff', district: 'loop' },
-  { id: 'stunt-cove-boost', position: [82, 0, -112], rotation: 0.86, color: '#ff9b6d', district: 'stunt' }
+  { id: 'stunt-cove-boost', position: [86, 0, -108], rotation: 0, color: '#ff9b6d', district: 'stunt' }
 ];
 
 export const worldZones = [
@@ -189,7 +176,7 @@ export const worldZones = [
     id: 'security',
     name: 'Security Keep',
     kind: 'Offensive Security',
-    position: [-100, 0, -42],
+    position: [-130, 0, -42],
     rotation: 0.18,
     radius: 10,
     color: '#68d8ff',
@@ -315,7 +302,7 @@ export const worldZones = [
     id: 'todo',
     name: 'Todo Board',
     kind: 'Blog / List',
-    position: [-106, 0, 92],
+    position: [-64, 0, 126],
     rotation: -0.28,
     radius: 8,
     color: '#d8ff92',
@@ -333,7 +320,7 @@ export const worldZones = [
     id: 'circuit',
     name: 'Circuit Gate',
     kind: 'Time Trial',
-    position: [84, 0, 104],
+    position: [62, 0, 112],
     rotation: -0.22,
     radius: 9,
     color: '#ff9b6d',
@@ -384,7 +371,7 @@ export const worldZones = [
     id: 'drift',
     name: 'Stunt Cove',
     kind: 'Driving',
-    position: [88, 0, -110],
+    position: [108, 0, -88],
     rotation: -0.45,
     radius: 11,
     color: '#ff9b6d',
@@ -398,7 +385,7 @@ export const worldZones = [
     id: 'data-pier',
     name: 'Data Pier',
     kind: 'Visitor Trail',
-    position: [-116, 0, -76],
+    position: [-138, 0, -4],
     rotation: 0.42,
     radius: 9,
     color: '#79ffc5',
@@ -413,8 +400,8 @@ export const worldZones = [
     id: 'potato',
     name: 'Potato Farm',
     kind: 'Farm Counter',
-    position: [118, 0, 78],
-    rotation: -0.78,
+    position: [82, 0, 84],
+    rotation: Math.PI,
     radius: 10,
     color: '#c79b56',
     shape: 'farm',

@@ -13,6 +13,7 @@ roadRects.forEach((rect, index) => { rect.index = index; });
 
 validateBounds();
 validateZones();
+validateZoneSeparation();
 validateBoostPads();
 validateRoadConnectivity();
 
@@ -60,6 +61,20 @@ function validateZones() {
     }
     if (isNearCanal(x, z, zone.radius * 0.35)) {
       errors.push(`${zone.id} is inside the canal/water clearance.`);
+    }
+  }
+}
+
+function validateZoneSeparation() {
+  for (let i = 0; i < worldZones.length; i += 1) {
+    for (let j = i + 1; j < worldZones.length; j += 1) {
+      const a = worldZones[i];
+      const b = worldZones[j];
+      const distance = distance2D(a.position[0], a.position[2], b.position[0], b.position[2]);
+      const minimum = a.radius + b.radius + 10;
+      if (distance < minimum) {
+        errors.push(`${a.id} and ${b.id} overlap or crowd each other: ${distance.toFixed(2)}m apart, needs ${minimum.toFixed(2)}m.`);
+      }
     }
   }
 }

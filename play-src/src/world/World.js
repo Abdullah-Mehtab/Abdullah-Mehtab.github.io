@@ -232,6 +232,7 @@ export class World {
 
   createGround() {
     this.createOceanPlane();
+    this.createIslandBaseShelf();
     const groundGeometry = makeIslandGeometry(ISLAND_RADIUS, 128);
     const positions = groundGeometry.attributes.position;
     for (let i = 0; i < positions.count; i += 1) {
@@ -272,9 +273,20 @@ export class World {
     this.decor.push({ type: 'canalWater', mesh: ocean, phase: 0.3 });
   }
 
+  createIslandBaseShelf() {
+    const shelfMaterial = this.materials.sand.clone();
+    shelfMaterial.color = new THREE.Color(0xb99162);
+    shelfMaterial.roughness = 0.98;
+    const shelf = new THREE.Mesh(makeIslandGeometry(ISLAND_RADIUS * 1.08, 160), shelfMaterial);
+    shelf.rotation.x = -Math.PI / 2;
+    shelf.position.y = WATER_Y + 0.08;
+    shelf.receiveShadow = true;
+    this.scene.add(shelf);
+  }
+
   createBeachRing() {
     const beach = new THREE.Mesh(
-      makeOrganicRingGeometry(ISLAND_RADIUS * 0.86, ISLAND_RADIUS * 1.02, 144, 3.2),
+      makeOrganicRingGeometry(ISLAND_RADIUS * 0.84, ISLAND_RADIUS * 1.06, 160, 4.2),
       this.materials.sand
     );
     beach.rotation.x = -Math.PI / 2;
@@ -282,16 +294,45 @@ export class World {
     beach.receiveShadow = true;
     this.scene.add(beach);
 
+    const grassBlendMaterial = this.materials.ground.clone();
+    grassBlendMaterial.transparent = true;
+    grassBlendMaterial.opacity = 0.46;
+    grassBlendMaterial.depthWrite = false;
+    const grassBlend = new THREE.Mesh(
+      makeOrganicRingGeometry(ISLAND_RADIUS * 0.76, ISLAND_RADIUS * 0.9, 160, 3.0),
+      grassBlendMaterial
+    );
+    grassBlend.rotation.x = -Math.PI / 2;
+    grassBlend.position.y = 0.045;
+    grassBlend.receiveShadow = true;
+    this.scene.add(grassBlend);
+
+    const shallowsMaterial = new THREE.MeshBasicMaterial({
+      color: 0x45c8e8,
+      transparent: true,
+      opacity: 0.28,
+      depthWrite: false
+    });
+    const shallows = new THREE.Mesh(
+      makeOrganicRingGeometry(ISLAND_RADIUS * 1.02, ISLAND_RADIUS * 1.2, 160, 5.0),
+      shallowsMaterial
+    );
+    shallows.rotation.x = -Math.PI / 2;
+    shallows.position.y = WATER_Y + 0.035;
+    this.scene.add(shallows);
+    this.decor.push({ type: 'canalWater', mesh: shallows, phase: 1.4 });
+
     const cliffMaterial = new THREE.MeshStandardMaterial({ color: 0x6f6d60, roughness: 0.92, metalness: 0.02 });
-    for (let i = 0; i < 56; i += 1) {
-      const angle = (i / 56) * Math.PI * 2 + (pseudoRandom(i * 19) - 0.5) * 0.045;
-      const radius = ISLAND_RADIUS * (0.99 + pseudoRandom(i * 23) * 0.06);
+    for (let i = 0; i < 38; i += 1) {
+      const angle = (i / 38) * Math.PI * 2 + (pseudoRandom(i * 19) - 0.5) * 0.055;
+      const radius = ISLAND_RADIUS * (0.89 + pseudoRandom(i * 23) * 0.08);
       const x = Math.cos(angle) * radius;
       const z = Math.sin(angle) * radius;
+      if (!this.isClearForProp(x, z, 3.5)) continue;
       const rock = this.cloneEnvironmentAsset('EnvShoreRock') || new THREE.Mesh(new THREE.DodecahedronGeometry(1.5, 0), cliffMaterial);
       rock.position.set(x, 0.1, z);
       rock.rotation.y = -angle + Math.PI / 2;
-      rock.scale.setScalar(1.8 + pseudoRandom(i * 31) * 2.2);
+      rock.scale.setScalar(1.0 + pseudoRandom(i * 31) * 1.35);
       this.scene.add(rock);
     }
   }
@@ -434,18 +475,17 @@ export class World {
       for (const point of path.points) {
         if (path.hierarchy === 'dirt') continue;
         const key = `${Math.round(point[0])}:${Math.round(point[1])}`;
-        if ((pointCounts.get(key) || 0) < 2 && path.hierarchy !== 'ring') continue;
-        if (path.hierarchy === 'ring' && pointCounts.get(key) < 2 && pseudoRandom(point[0] * 3 + point[1] * 7) < 0.72) continue;
+        if ((pointCounts.get(key) || 0) < 2) continue;
         const style = ROAD_STYLE[path.hierarchy] || ROAD_STYLE.street;
         const node = new THREE.Group();
         const shoulder = new THREE.Mesh(
-          new THREE.CylinderGeometry(path.width * 0.44 + style.shoulder, path.width * 0.44 + style.shoulder, 0.075, 36),
+          new THREE.CylinderGeometry(path.width * 0.22 + style.shoulder * 0.45, path.width * 0.22 + style.shoulder * 0.45, 0.065, 36),
           this.materials.edge
         );
         shoulder.position.y = -0.03;
         shoulder.receiveShadow = true;
         const asphalt = new THREE.Mesh(
-          new THREE.CylinderGeometry(path.width * 0.38, path.width * 0.38, 0.1, 40),
+          new THREE.CylinderGeometry(path.width * 0.19, path.width * 0.19, 0.09, 40),
           this.materials.road
         );
         asphalt.position.y = 0.025;
@@ -453,7 +493,7 @@ export class World {
         node.add(shoulder, asphalt);
         if (style.sidewalk > 0.1) {
           const curb = new THREE.Mesh(
-            new THREE.TorusGeometry(path.width * 0.45 + style.shoulder * 0.4, 0.045, 8, 40),
+            new THREE.TorusGeometry(path.width * 0.28 + style.shoulder * 0.24, 0.04, 8, 40),
             this.materials.sidewalk
           );
           curb.rotation.x = Math.PI / 2;
@@ -585,9 +625,7 @@ export class World {
       emissiveIntensity: 0.15
     });
     const rampData = [
-      { position: [78, 0.46, -108], rotation: [-0.3, Math.PI / 2 - 0.28, 0], size: [9, 0.68, 15], color: 0xff9b6d },
-      { position: [96, 0.46, -118], rotation: [-0.34, -0.46, 0], size: [10, 0.72, 16], color: 0xffdf8a },
-      { position: [102, 0.42, -98], rotation: [-0.24, -Math.PI / 2 + 0.3, 0], size: [8, 0.6, 13], color: 0xa8a6ff }
+      { position: [96, 0.46, -108], rotation: [-0.26, -0.72, 0], size: [8.6, 0.62, 13.5], color: 0xff9b6d }
     ];
 
     for (const item of rampData) {
@@ -1057,9 +1095,10 @@ export class World {
 
     const stallPositions = [
       [34, 38, -0.25], [50, 42, -0.1], [74, 48, 0.16],
-      [132, 70, 0.32], [-120, 122, -0.28], [148, 128, -0.72]
+      [126, 66, 0.32], [-78, 118, -0.28], [92, 74, -0.72]
     ];
     for (const [x, z, rotation] of stallPositions) {
+      if (!this.isClearForProp(x, z, 3.4)) continue;
       const stall = this.cloneEnvironmentAsset('EnvMarketStall') || this.createFallbackMarketStall();
       stall.position.set(x, 0, z);
       stall.rotation.y = rotation;
@@ -1069,8 +1108,7 @@ export class World {
     }
 
     const cratePositions = [
-      [102, 0.8, -126], [116, 0.8, -136], [136, 0.8, -126],
-      [132, 0.8, -154], [96, 0.8, -150], [144, 0.8, -140]
+      [110, 0.8, -96], [116, 0.8, -104]
     ];
     cratePositions.forEach((position, index) => {
       const size = index % 3 === 0 ? [1.4, 1.4, 1.4] : [1.1, 1.1, 1.1];
