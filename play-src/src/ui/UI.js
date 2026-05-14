@@ -314,6 +314,11 @@ export class UI {
         this.refs.soundButton.textContent = muted ? 'Muted' : 'Sound';
         this.renderMenu();
       }),
+      optionButton('Landscape Quality', `Currently ${capitalize(this.game.world.landscapeQuality)}. Controls sakura petals and grass density.`, () => {
+        const quality = this.game.world.cycleLandscapeQuality();
+        this.renderMenu();
+        this.notify(`Landscape quality: ${capitalize(quality)}`);
+      }),
       optionButton('Reset Achievements', 'Clear local achievement progress for this browser.', () => {
         this.achievements.reset();
         this.renderMenu();
@@ -518,4 +523,8 @@ function optionButton(title, description, onClick) {
   element.append(strong, span);
   element.addEventListener('click', onClick);
   return element;
+}
+
+function capitalize(value) {
+  return `${value.charAt(0).toUpperCase()}${value.slice(1)}`;
 }

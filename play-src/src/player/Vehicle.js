@@ -308,13 +308,18 @@ export class Vehicle {
   boostFromPad(pad) {
     if (!pad || this.lastBoostPad === pad.id) return;
     this.lastBoostPad = pad.id;
-    this.heading = Math.atan2(pad.direction.x, pad.direction.z);
-    this.driveSpeed = Math.max(this.driveSpeed, 50);
-    this.body.setRotation(yawQuaternion(this.heading), true);
+    const velocity = this.body.linvel();
+    const currentDirection = new THREE.Vector3(velocity.x, 0, velocity.z);
+    const headingDirection = new THREE.Vector3(Math.sin(this.heading), 0, Math.cos(this.heading)).normalize();
+    const direction = currentDirection.lengthSq() > 4 ? currentDirection.normalize() : headingDirection;
+    const boostSpeed = Math.max(42, Math.abs(this.driveSpeed) + 18, Math.hypot(velocity.x, velocity.z) + 20);
+    this.heading = Math.atan2(direction.x, direction.z);
+    this.driveSpeed = Math.max(this.driveSpeed, boostSpeed);
+    this.body.setRotation(steeredQuaternion(this.heading, this.body.rotation()), true);
     this.body.setLinvel({
-      x: pad.direction.x * 52,
+      x: direction.x * boostSpeed,
       y: Math.max(2.4, this.body.linvel().y + 2.6),
-      z: pad.direction.z * 52
+      z: direction.z * boostSpeed
     }, true);
     this.achievements.unlock('boost_pad');
     this.audio.click(940);
