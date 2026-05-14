@@ -2,15 +2,16 @@ import * as THREE from 'three';
 import { boostPads, circuitCheckpoints, roadPaths, roadSegments, WORLD_HALF_SIZE, worldZones } from './worldData.js';
 
 const OCEAN_HALF_SIZE = 520;
-const OCEAN_Y = -2.25;
+const OCEAN_Y = -3.35;
 const ROAD_LINE_COLOR = 0x68d8ff;
 const tmpColor = new THREE.Color();
 
 export class World {
-  constructor({ scene, physics, resumeData }) {
+  constructor({ scene, physics, resumeData, environmentAssets }) {
     this.scene = scene;
     this.physics = physics;
     this.resumeData = resumeData;
+    this.environmentAssets = environmentAssets;
     this.zones = [];
     this.decor = [];
     this.particles = [];
@@ -40,6 +41,10 @@ export class World {
     this.createProps();
     this.createCollectibles();
     this.createAtmosphere();
+  }
+
+  cloneEnvironmentAsset(name) {
+    return this.environmentAssets?.clone?.(name) || null;
   }
 
   createMaterials() {
@@ -135,15 +140,15 @@ export class World {
     this.scene.add(sun);
     this.decor.push({ type: 'sunDisc', mesh: sun, phase: 0 });
 
-    const cloudMaterial = new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.38, depthWrite: false });
+    const cloudMaterial = new THREE.MeshBasicMaterial({ color: 0xf7fbff, transparent: true, opacity: 0.46, depthWrite: false });
     for (let i = 0; i < 14; i += 1) {
       const group = new THREE.Group();
       const x = -270 + (i * 47) % 540;
       const z = -260 + ((i * 73) % 520);
-      group.position.set(x, 82 + (i % 5) * 7, z);
+      group.position.set(x, 96 + (i % 5) * 8, z);
       for (let j = 0; j < 5; j += 1) {
         const puff = new THREE.Mesh(new THREE.SphereGeometry(5.5 + j * 1.1, 16, 10), cloudMaterial.clone());
-        puff.scale.set(2.9, 0.34, 0.96);
+        puff.scale.set(3.1, 0.3, 0.92);
         puff.position.set((j - 2) * 8.2, Math.sin(j) * 0.8, (j % 2) * 3.2);
         group.add(puff);
       }
@@ -159,6 +164,7 @@ export class World {
     );
     water.rotation.x = -Math.PI / 2;
     water.position.y = OCEAN_Y;
+    water.renderOrder = -20;
     this.scene.add(water);
     this.decor.push({ type: 'ocean', mesh: water, phase: 0 });
 
@@ -202,6 +208,27 @@ export class World {
       patch.rotation.z = rotation;
       patch.receiveShadow = true;
       this.scene.add(patch);
+    }
+
+    const beaches = [
+      [0, WORLD_HALF_SIZE - 6, WORLD_HALF_SIZE * 1.95, 15, 0],
+      [0, -WORLD_HALF_SIZE + 6, WORLD_HALF_SIZE * 1.95, 15, 0],
+      [WORLD_HALF_SIZE - 6, 0, 15, WORLD_HALF_SIZE * 1.95, 0],
+      [-WORLD_HALF_SIZE + 6, 0, 15, WORLD_HALF_SIZE * 1.95, 0],
+      [-132, 134, 34, 22, 0.22],
+      [128, -132, 40, 22, -0.3]
+    ];
+    for (const [x, z, width, depth, rotation] of beaches) {
+      const beachMaterial = this.materials.sand.clone();
+      beachMaterial.transparent = true;
+      beachMaterial.opacity = 0.78;
+      beachMaterial.alphaMap = this.materials.patchAlpha;
+      const beach = new THREE.Mesh(makeOrganicPatchGeometry(width, depth, x * 0.11 + z * 0.19), beachMaterial);
+      beach.position.set(x, 0.065, z);
+      beach.rotation.x = -Math.PI / 2;
+      beach.rotation.z = rotation;
+      beach.receiveShadow = true;
+      this.scene.add(beach);
     }
   }
 
@@ -251,13 +278,14 @@ export class World {
       const inset = 2 + Math.abs(Math.sin(i * 1.7)) * 4;
       const x = side === 0 ? t : side === 1 ? WORLD_HALF_SIZE - inset : side === 2 ? t : -WORLD_HALF_SIZE + inset;
       const z = side === 0 ? WORLD_HALF_SIZE - inset : side === 1 ? t : side === 2 ? -WORLD_HALF_SIZE + inset : t;
-      const rock = new THREE.Mesh(
+      const rock = this.cloneEnvironmentAsset('EnvShoreRock') || new THREE.Mesh(
         new THREE.DodecahedronGeometry(0.75 + (i % 5) * 0.22, 0),
         rockMaterial
       );
       rock.position.set(x, 0.4, z);
       rock.rotation.set(Math.random() * 0.6, Math.random() * 6, Math.random() * 0.6);
-      rock.scale.y = 0.55 + Math.random() * 0.45;
+      const scale = 0.72 + (i % 5) * 0.18;
+      rock.scale.set(scale, (0.55 + Math.random() * 0.45) * scale, scale);
       rock.castShadow = true;
       rock.receiveShadow = true;
       this.scene.add(rock);
@@ -268,11 +296,11 @@ export class World {
     for (const road of roadSegments) {
       this.addRoad(...road);
     }
-    const nodeMaterial = this.materials.road.clone();
     for (const path of roadPaths) {
       for (const point of path.points) {
-        const node = new THREE.Mesh(new THREE.CylinderGeometry(path.width * 0.56, path.width * 0.56, 0.1, 32), nodeMaterial);
+        const node = this.cloneEnvironmentAsset('EnvRoadNode') || new THREE.Mesh(new THREE.CylinderGeometry(path.width * 0.56, path.width * 0.56, 0.1, 32), this.materials.road.clone());
         node.position.set(point[0], 0.155, point[1]);
+        node.scale.set(path.width * 1.12, 1, path.width * 1.12);
         node.receiveShadow = true;
         this.scene.add(node);
       }
@@ -283,14 +311,26 @@ export class World {
     const group = new THREE.Group();
     group.position.set(x, 0.15, z);
     group.rotation.y = rotation;
-    const shoulder = new THREE.Mesh(new THREE.BoxGeometry(width + 1.35, 0.05, depth + 1.35), this.materials.edge);
-    shoulder.position.y = -0.035;
-    shoulder.receiveShadow = true;
-    group.add(shoulder);
+    const roadModel = this.cloneEnvironmentAsset('EnvRoadSegment');
+    if (roadModel) {
+      roadModel.scale.set(width, 1, depth);
+      roadModel.traverse((object) => {
+        if (object.isMesh) {
+          object.receiveShadow = true;
+          object.castShadow = false;
+        }
+      });
+      group.add(roadModel);
+    } else {
+      const shoulder = new THREE.Mesh(new THREE.BoxGeometry(width + 1.35, 0.05, depth + 1.35), this.materials.edge);
+      shoulder.position.y = -0.035;
+      shoulder.receiveShadow = true;
+      group.add(shoulder);
 
-    const mesh = new THREE.Mesh(new THREE.BoxGeometry(width, 0.09, depth), this.materials.road);
-    mesh.receiveShadow = true;
-    group.add(mesh);
+      const mesh = new THREE.Mesh(new THREE.BoxGeometry(width, 0.09, depth), this.materials.road);
+      mesh.receiveShadow = true;
+      group.add(mesh);
+    }
     this.scene.add(group);
 
     const vertical = depth > width;
@@ -646,44 +686,28 @@ export class World {
   }
 
   createMinecraftFarm(group, add) {
-    const grassBlock = new THREE.MeshStandardMaterial({ color: 0x4f9a45, roughness: 0.82 });
-    const dirt = new THREE.MeshStandardMaterial({ color: 0x79512f, roughness: 0.9 });
-    const water = new THREE.MeshBasicMaterial({ color: 0x3ca6ff, transparent: true, opacity: 0.74 });
-    const crop = new THREE.MeshStandardMaterial({ color: 0x49a94e, roughness: 0.85 });
-    const fence = new THREE.MeshStandardMaterial({ color: 0x9b6a3d, roughness: 0.82 });
-
-    for (let x = -5; x <= 5; x += 1) {
-      for (let z = -4; z <= 4; z += 1) {
-        const material = Math.abs(z) === 1 ? water : (Math.abs(x) === 5 || Math.abs(z) === 4 ? grassBlock : dirt);
-        add(new THREE.BoxGeometry(0.98, 0.5, 0.98), material, [x, 0.25, z]);
-        if (material === dirt && (x + z) % 2 === 0) {
-          const stem = add(new THREE.BoxGeometry(0.2, 0.42, 0.2), crop, [x - 0.18, 0.72, z - 0.14]);
-          const leaves = add(new THREE.BoxGeometry(0.62, 0.22, 0.62), crop, [x + 0.08, 0.94, z + 0.08]);
-          stem.castShadow = false;
-          leaves.castShadow = false;
+    const farmModel = this.cloneEnvironmentAsset('EnvPotatoFarm');
+    if (farmModel) {
+      group.add(farmModel);
+    } else {
+      const grassBlock = new THREE.MeshStandardMaterial({ color: 0x4f9a45, roughness: 0.82 });
+      const dirt = new THREE.MeshStandardMaterial({ color: 0x79512f, roughness: 0.9 });
+      const water = new THREE.MeshBasicMaterial({ color: 0x3ca6ff, transparent: true, opacity: 0.74 });
+      const crop = new THREE.MeshStandardMaterial({ color: 0x49a94e, roughness: 0.85 });
+      const fence = new THREE.MeshStandardMaterial({ color: 0x9b6a3d, roughness: 0.82 });
+      for (let x = -5; x <= 5; x += 1) {
+        for (let z = -4; z <= 4; z += 1) {
+          const material = Math.abs(z) === 1 ? water : (Math.abs(x) === 5 || Math.abs(z) === 4 ? grassBlock : dirt);
+          add(new THREE.BoxGeometry(0.98, 0.5, 0.98), material, [x, 0.25, z]);
+          if (material === dirt && (x + z) % 2 === 0) {
+            add(new THREE.BoxGeometry(0.2, 0.42, 0.2), crop, [x - 0.18, 0.72, z - 0.14]);
+            add(new THREE.BoxGeometry(0.62, 0.22, 0.62), crop, [x + 0.08, 0.94, z + 0.08]);
+          }
         }
       }
+      add(new THREE.BoxGeometry(4.8, 2.2, 0.22), this.materials.woodDark, [0, 2.25, -6.0]);
     }
 
-    for (const z of [-4.8, 4.8]) {
-      add(new THREE.BoxGeometry(11.8, 0.22, 0.22), fence, [0, 1.12, z]);
-      add(new THREE.BoxGeometry(11.8, 0.22, 0.22), fence, [0, 1.68, z]);
-    }
-    for (const x of [-5.8, 5.8]) {
-      add(new THREE.BoxGeometry(0.22, 0.22, 9.8), fence, [x, 1.12, 0]);
-      add(new THREE.BoxGeometry(0.22, 0.22, 9.8), fence, [x, 1.68, 0]);
-    }
-    for (const x of [-5.8, -2.8, 0, 2.8, 5.8]) {
-      for (const z of [-4.8, 4.8]) {
-        add(new THREE.BoxGeometry(0.34, 2.0, 0.34), fence, [x, 1.0, z]);
-      }
-    }
-
-    const board = add(new THREE.BoxGeometry(4.8, 2.2, 0.22), this.materials.woodDark, [0, 2.25, -6.0]);
-    board.castShadow = true;
-    for (const x of [-1.9, 1.9]) {
-      add(new THREE.BoxGeometry(0.22, 2.5, 0.22), fence, [x, 1.2, -6.05]);
-    }
     const canvas = document.createElement('canvas');
     canvas.width = 512;
     canvas.height = 256;
@@ -693,8 +717,7 @@ export class World {
       new THREE.PlaneGeometry(4.15, 1.45),
       new THREE.MeshBasicMaterial({ map: texture, transparent: true })
     );
-    screen.position.set(0, 2.35, -6.13);
-    screen.rotation.y = Math.PI;
+    screen.position.set(0, 2.48, 7.24);
     group.add(screen);
     this.potatoCounter = { canvas, texture, ctx: canvas.getContext('2d') };
     this.setPotatoCount('--');
@@ -850,48 +873,73 @@ export class World {
         : (pseudoRandom(attempt * 29) - 0.5) * (WORLD_HALF_SIZE * 1.76);
       if (Math.abs(x) > WORLD_HALF_SIZE - 7 || Math.abs(z) > WORLD_HALF_SIZE - 7) continue;
       const treePosition = new THREE.Vector3(x, 0, z);
-      if (isNearRoad(x, z, 10.5)) continue;
-      if (this.zones.some((zone) => flatDistance(treePosition, zone.position) < zone.radius + 15)) continue;
-      const tree = new THREE.Group();
-      tree.position.set(x, 0, z);
-      const trunk = new THREE.Mesh(new THREE.CylinderGeometry(0.2, 0.34, 2.8, 8), this.materials.trunk);
-      trunk.position.y = 1.4;
-      trunk.castShadow = true;
-      tree.add(trunk);
-      for (let j = 0; j < 4; j += 1) {
-        const leaf = new THREE.Mesh(
-          new THREE.SphereGeometry(1.05 + (j % 2) * 0.24, 12, 8),
-          j % 2 ? this.materials.leafLight : this.materials.leaf
-        );
-        leaf.position.set((j - 1.5) * 0.56, 3.0 + j * 0.42, (j % 2 - 0.5) * 0.58);
-        leaf.scale.set(1.15, 0.86, 1.1);
-        leaf.castShadow = true;
-        tree.add(leaf);
-      }
+      if (isNearRoad(x, z, 18.5)) continue;
+      if (this.zones.some((zone) => flatDistance(treePosition, zone.position) < zone.radius + 18)) continue;
+      const treeType = placedTrees % 11 === 0
+        ? 'EnvTreePalm'
+        : placedTrees % 4 === 0
+          ? 'EnvTreePine'
+          : 'EnvTreeOak';
+      const tree = this.cloneEnvironmentAsset(treeType) || this.createFallbackTree();
       this.scene.add(tree);
+      tree.position.set(x, 0, z);
+      tree.rotation.y = pseudoRandom(attempt * 37) * Math.PI * 2;
+      const treeScale = 0.82 + pseudoRandom(attempt * 41) * 0.58;
+      tree.scale.setScalar(treeScale);
       this.decor.push({ type: 'tree', mesh: tree, phase: placedTrees * 0.37 });
       placedTrees += 1;
     }
 
-    const bladeGeometry = new THREE.PlaneGeometry(0.08, 0.75);
-    bladeGeometry.translate(0, 0.37, 0);
-    const bladeMaterial = new THREE.MeshBasicMaterial({ color: 0x65b85d, side: THREE.DoubleSide, transparent: true, opacity: 0.62 });
-    const grass = new THREE.InstancedMesh(bladeGeometry, bladeMaterial, 850);
+    const grassTemplate = this.cloneEnvironmentAsset('EnvGrassTuft');
+    const bladeGeometry = new THREE.PlaneGeometry(0.08, 0.44);
+    bladeGeometry.translate(0, 0.22, 0);
+    const bladeMaterial = new THREE.MeshBasicMaterial({ color: 0x78c96c, side: THREE.DoubleSide, transparent: true, opacity: 0.42 });
+    const grass = grassTemplate ? new THREE.Group() : new THREE.InstancedMesh(bladeGeometry, bladeMaterial, 850);
     const matrix = new THREE.Matrix4();
     for (let i = 0; i < 850; i += 1) {
       const x = (pseudoRandom(i * 19) - 0.5) * 300;
       const z = (pseudoRandom(i * 31) - 0.5) * 300;
-      if (isNearRoad(x, z, 3.25)) continue;
-      matrix.compose(
-        new THREE.Vector3(x, 0.05, z),
-        new THREE.Quaternion().setFromEuler(new THREE.Euler(0, pseudoRandom(i * 7) * Math.PI, 0)),
-        new THREE.Vector3(0.7 + pseudoRandom(i * 13) * 0.8, 0.7 + pseudoRandom(i * 23) * 0.9, 1)
-      );
-      grass.setMatrixAt(i, matrix);
+      if (isNearRoad(x, z, 7.5)) continue;
+      if (grassTemplate && i < 185) {
+        const tuft = grassTemplate.clone(true);
+        tuft.position.set(x, 0.045, z);
+        tuft.rotation.y = pseudoRandom(i * 7) * Math.PI;
+        const tuftScale = 0.5 + pseudoRandom(i * 13) * 0.85;
+        tuft.scale.setScalar(tuftScale);
+        grass.add(tuft);
+      } else if (!grassTemplate) {
+        matrix.compose(
+          new THREE.Vector3(x, 0.05, z),
+          new THREE.Quaternion().setFromEuler(new THREE.Euler(0, pseudoRandom(i * 7) * Math.PI, 0)),
+          new THREE.Vector3(0.55 + pseudoRandom(i * 13) * 0.55, 0.45 + pseudoRandom(i * 23) * 0.55, 1)
+        );
+        grass.setMatrixAt(i, matrix);
+      }
     }
-    grass.instanceMatrix.needsUpdate = true;
+    if (!grassTemplate) {
+      grass.instanceMatrix.needsUpdate = true;
+    }
     this.scene.add(grass);
     this.decor.push({ type: 'grassBlades', mesh: grass, phase: 0 });
+  }
+
+  createFallbackTree() {
+    const tree = new THREE.Group();
+    const trunk = new THREE.Mesh(new THREE.CylinderGeometry(0.2, 0.34, 2.8, 8), this.materials.trunk);
+    trunk.position.y = 1.4;
+    trunk.castShadow = true;
+    tree.add(trunk);
+    for (let j = 0; j < 4; j += 1) {
+      const leaf = new THREE.Mesh(
+        new THREE.SphereGeometry(1.05 + (j % 2) * 0.24, 12, 8),
+        j % 2 ? this.materials.leafLight : this.materials.leaf
+      );
+      leaf.position.set((j - 1.5) * 0.56, 3.0 + j * 0.42, (j % 2 - 0.5) * 0.58);
+      leaf.scale.set(1.15, 0.86, 1.1);
+      leaf.castShadow = true;
+      tree.add(leaf);
+    }
+    return tree;
   }
 
   createCollectibles() {
@@ -971,21 +1019,26 @@ export class World {
     group.position.set(x, 0.9, z);
     group.rotation.set(Math.random() * 0.2, Math.random() * Math.PI, Math.random() * 0.2);
 
-    const base = new THREE.Mesh(new THREE.BoxGeometry(0.78, 0.52, 0.92), this.materials.potato);
-    base.castShadow = true;
-    group.add(base);
-    const bumpMaterial = new THREE.MeshStandardMaterial({ color: 0x8f5f2b, roughness: 0.9, metalness: 0.01 });
-    for (let i = 0; i < 4; i += 1) {
-      const bump = new THREE.Mesh(new THREE.BoxGeometry(0.16, 0.12, 0.16), bumpMaterial);
-      bump.position.set((Math.random() - 0.5) * 0.55, 0.08 + Math.random() * 0.2, (Math.random() - 0.5) * 0.7);
-      group.add(bump);
+    const potatoModel = this.cloneEnvironmentAsset('EnvMinecraftPotato');
+    if (potatoModel) {
+      group.add(potatoModel);
+    } else {
+      const base = new THREE.Mesh(new THREE.BoxGeometry(0.78, 0.52, 0.92), this.materials.potato);
+      base.castShadow = true;
+      group.add(base);
+      const bumpMaterial = new THREE.MeshStandardMaterial({ color: 0x8f5f2b, roughness: 0.9, metalness: 0.01 });
+      for (let i = 0; i < 4; i += 1) {
+        const bump = new THREE.Mesh(new THREE.BoxGeometry(0.16, 0.12, 0.16), bumpMaterial);
+        bump.position.set((Math.random() - 0.5) * 0.55, 0.08 + Math.random() * 0.2, (Math.random() - 0.5) * 0.7);
+        group.add(bump);
+      }
+      const sprout = new THREE.Mesh(
+        new THREE.BoxGeometry(0.18, 0.46, 0.18),
+        new THREE.MeshStandardMaterial({ color: 0x4f9b4e, roughness: 0.9 })
+      );
+      sprout.position.set(0.12, 0.45, -0.1);
+      group.add(sprout);
     }
-    const sprout = new THREE.Mesh(
-      new THREE.BoxGeometry(0.18, 0.46, 0.18),
-      new THREE.MeshStandardMaterial({ color: 0x4f9b4e, roughness: 0.9 })
-    );
-    sprout.position.set(0.12, 0.45, -0.1);
-    group.add(sprout);
 
     this.scene.add(group);
     const body = this.physics.createDynamicBox([x, 0.9, z], [0.82, 0.58, 0.96], {
@@ -1127,7 +1180,11 @@ export class World {
         item.mesh.rotation.z += dt * 0.55;
         item.mesh.scale.setScalar(1 + Math.sin(elapsed * 1.6 + item.phase) * 0.06);
       } else if (item.type === 'grassBlades') {
-        item.mesh.material.opacity = 0.52 + Math.sin(elapsed * 0.9) * 0.08;
+        if (item.mesh.material) {
+          item.mesh.material.opacity = 0.42 + Math.sin(elapsed * 0.9) * 0.05;
+        } else {
+          item.mesh.rotation.y = Math.sin(elapsed * 0.18) * 0.012;
+        }
       }
     }
 
@@ -1242,12 +1299,13 @@ function makeRoadTexture() {
 
 function makeWaterMaterial() {
   const material = new THREE.ShaderMaterial({
-    transparent: true,
-    depthWrite: false,
+    transparent: false,
+    depthWrite: true,
+    depthTest: true,
     uniforms: {
       uTime: { value: 0 },
-      uDeep: { value: new THREE.Color(0x075b8a) },
-      uShallow: { value: new THREE.Color(0x38b7d8) }
+      uDeep: { value: new THREE.Color(0x07507e) },
+      uShallow: { value: new THREE.Color(0x42c4e8) }
     },
     vertexShader: `
       uniform float uTime;
@@ -1269,10 +1327,10 @@ function makeWaterMaterial() {
       varying vec2 vUv;
       varying float vWave;
       void main() {
-        float foam = smoothstep(0.38, 0.52, sin((vUv.x + vUv.y) * 80.0 + uTime * 1.4) * 0.5 + 0.5);
+        float foam = smoothstep(0.48, 0.56, sin((vUv.x + vUv.y) * 88.0 + uTime * 1.4) * 0.5 + 0.5);
         vec3 color = mix(uDeep, uShallow, 0.42 + vWave * 0.35);
-        color += foam * 0.08;
-        gl_FragColor = vec4(color, 0.82);
+        color += foam * 0.06;
+        gl_FragColor = vec4(color, 1.0);
       }
     `
   });
