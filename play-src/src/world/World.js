@@ -4,6 +4,7 @@ import {
   canalSegments,
   circuitCheckpoints,
   districtFootprints,
+  ISLAND_RADIUS,
   roadPaths,
   roadSegments,
   scenicPropZones,
@@ -21,14 +22,14 @@ const QUALITY_PROFILES = {
 };
 const QUALITY_ORDER = ['low', 'medium', 'high'];
 const ROAD_STYLE = {
-  ring: { shoulder: 2.2, sidewalk: 2.4, line: 0xffdf8a },
-  boulevard: { shoulder: 2.4, sidewalk: 2.8, line: 0x7cffb2 },
-  canal: { shoulder: 1.7, sidewalk: 1.8, line: 0x68d8ff },
-  avenue: { shoulder: 1.8, sidewalk: 2.0, line: 0x9ccfff },
-  street: { shoulder: 1.3, sidewalk: 1.2, line: 0xd8ff92 },
-  stunt: { shoulder: 1.6, sidewalk: 0.8, line: 0xff9b6d },
-  dirt: { shoulder: 1.0, sidewalk: 0, line: 0xc79b56 },
-  bridge: { shoulder: 2.0, sidewalk: 1.8, line: 0xe6f3ff }
+  ring: { shoulder: 0.62, sidewalk: 0, line: 0xffdf8a },
+  boulevard: { shoulder: 0.68, sidewalk: 0, line: 0x7cffb2 },
+  canal: { shoulder: 0.56, sidewalk: 0, line: 0x68d8ff },
+  avenue: { shoulder: 0.58, sidewalk: 0, line: 0x9ccfff },
+  street: { shoulder: 0.5, sidewalk: 0, line: 0xd8ff92 },
+  stunt: { shoulder: 0.6, sidewalk: 0, line: 0xff9b6d },
+  dirt: { shoulder: 0.72, sidewalk: 0, line: 0xc79b56 },
+  bridge: { shoulder: 0.62, sidewalk: 0, line: 0xe6f3ff }
 };
 
 export class World {
@@ -62,7 +63,7 @@ export class World {
     this.createMaterials();
     this.createSky();
     this.createGround();
-    this.createCityBoundary();
+    this.createIslandBoundary();
     this.createRoads();
     this.createCircuit();
     this.createZones();
@@ -230,16 +231,19 @@ export class World {
   }
 
   createGround() {
-    this.createOutskirtsPlane();
-    const groundGeometry = new THREE.PlaneGeometry(WORLD_HALF_SIZE * 2, WORLD_HALF_SIZE * 2, 112, 112);
+    this.createOceanPlane();
+    const groundGeometry = makeIslandGeometry(ISLAND_RADIUS, 128);
     const positions = groundGeometry.attributes.position;
     for (let i = 0; i < positions.count; i += 1) {
       const x = positions.getX(i);
       const y = positions.getY(i);
+      const distance = Math.hypot(x, y);
+      const coastFalloff = THREE.MathUtils.smoothstep(distance, ISLAND_RADIUS * 0.72, ISLAND_RADIUS * 0.99);
       const height =
         Math.sin(x * 0.032) * 0.045 +
         Math.cos(y * 0.028) * 0.04 +
-        Math.sin((x - y) * 0.016) * 0.035;
+        Math.sin((x - y) * 0.016) * 0.035 -
+        coastFalloff * 0.22;
       positions.setZ(i, height);
     }
     groundGeometry.computeVertexNormals();
@@ -250,12 +254,45 @@ export class World {
     this.scene.add(ground);
     this.physics.createFixedBox([0, -0.16, 0], [WORLD_HALF_SIZE * 2, 0.24, WORLD_HALF_SIZE * 2], { friction: 1 });
 
-    this.createCanal();
+    this.createBeachRing();
     for (const district of districtFootprints) {
       this.addDistrictPatch(district);
     }
     for (const zone of scenicPropZones) {
       this.addScenicPatch(zone);
+    }
+  }
+
+  createOceanPlane() {
+    const ocean = new THREE.Mesh(new THREE.PlaneGeometry(WORLD_HALF_SIZE * 6, WORLD_HALF_SIZE * 6, 64, 64), this.materials.water);
+    ocean.rotation.x = -Math.PI / 2;
+    ocean.position.y = WATER_Y - 0.06;
+    ocean.receiveShadow = false;
+    this.scene.add(ocean);
+    this.decor.push({ type: 'canalWater', mesh: ocean, phase: 0.3 });
+  }
+
+  createBeachRing() {
+    const beach = new THREE.Mesh(
+      makeOrganicRingGeometry(ISLAND_RADIUS * 0.86, ISLAND_RADIUS * 1.02, 144, 3.2),
+      this.materials.sand
+    );
+    beach.rotation.x = -Math.PI / 2;
+    beach.position.y = 0.018;
+    beach.receiveShadow = true;
+    this.scene.add(beach);
+
+    const cliffMaterial = new THREE.MeshStandardMaterial({ color: 0x6f6d60, roughness: 0.92, metalness: 0.02 });
+    for (let i = 0; i < 56; i += 1) {
+      const angle = (i / 56) * Math.PI * 2 + (pseudoRandom(i * 19) - 0.5) * 0.045;
+      const radius = ISLAND_RADIUS * (0.99 + pseudoRandom(i * 23) * 0.06);
+      const x = Math.cos(angle) * radius;
+      const z = Math.sin(angle) * radius;
+      const rock = this.cloneEnvironmentAsset('EnvShoreRock') || new THREE.Mesh(new THREE.DodecahedronGeometry(1.5, 0), cliffMaterial);
+      rock.position.set(x, 0.1, z);
+      rock.rotation.y = -angle + Math.PI / 2;
+      rock.scale.setScalar(1.8 + pseudoRandom(i * 31) * 2.2);
+      this.scene.add(rock);
     }
   }
 
@@ -342,76 +379,73 @@ export class World {
     this.scene.add(patch);
   }
 
-  createCityBoundary() {
+  createIslandBoundary() {
     const barrierHeight = 3.2;
-    const barrierThickness = 4.5;
-    const limit = WORLD_HALF_SIZE + barrierThickness / 2;
-    const walls = [
-      [0, limit, WORLD_HALF_SIZE * 2.1, barrierThickness],
-      [0, -limit, WORLD_HALF_SIZE * 2.1, barrierThickness],
-      [limit, 0, barrierThickness, WORLD_HALF_SIZE * 2.1],
-      [-limit, 0, barrierThickness, WORLD_HALF_SIZE * 2.1]
-    ];
-    for (const [x, z, width, depth] of walls) {
-      this.physics.createFixedBox([x, barrierHeight / 2 - 0.35, z], [width, barrierHeight, depth], {
+    const segments = 40;
+    const wallRadius = ISLAND_RADIUS + 6;
+    const chord = (Math.PI * 2 * wallRadius) / segments;
+    for (let i = 0; i < segments; i += 1) {
+      const angle = (i / segments) * Math.PI * 2;
+      const x = Math.cos(angle) * wallRadius;
+      const z = Math.sin(angle) * wallRadius;
+      this.physics.createFixedBox([x, barrierHeight / 2 - 0.4, z], [chord, barrierHeight, 3.8], {
+        rotation: [0, -angle + Math.PI / 2, 0],
         friction: 0.88,
         restitution: 0.0
       });
     }
 
-    const skylineMaterial = new THREE.MeshStandardMaterial({ color: 0x6f7d82, roughness: 0.72, metalness: 0.06 });
-    const glassMaterial = new THREE.MeshStandardMaterial({ color: 0x24394d, roughness: 0.42, metalness: 0.28, emissive: 0x071828, emissiveIntensity: 0.08 });
-    for (let i = 0; i < 68; i += 1) {
-      const side = i % 4;
-      const t = -WORLD_HALF_SIZE + 22 + (Math.floor(i / 4) * 24 + pseudoRandom(i * 13) * 12) % (WORLD_HALF_SIZE * 2 - 44);
-      const edge = WORLD_HALF_SIZE + 58 + pseudoRandom(i * 11) * 22;
-      const x = side === 0 ? t : side === 1 ? edge : side === 2 ? t : -edge;
-      const z = side === 0 ? edge : side === 1 ? t : side === 2 ? -edge : t;
-      const height = 5 + pseudoRandom(i * 17) * 17;
-      const width = 4 + pseudoRandom(i * 19) * 6;
-      const depth = 4 + pseudoRandom(i * 23) * 6;
-      const building = new THREE.Mesh(
-        new THREE.BoxGeometry(width, height, depth),
-        i % 5 === 0 ? glassMaterial.clone() : skylineMaterial.clone()
-      );
-      building.position.set(x, height / 2 - 0.15, z);
-      building.castShadow = true;
-      building.receiveShadow = true;
-      this.scene.add(building);
-    }
-
-    for (let i = 0; i < 36; i += 1) {
-      const side = i % 4;
-      const t = -WORLD_HALF_SIZE + 18 + Math.floor(i / 4) * 42;
-      const x = side === 0 ? t : side === 1 ? WORLD_HALF_SIZE - 8 : side === 2 ? t : -WORLD_HALF_SIZE + 8;
-      const z = side === 0 ? WORLD_HALF_SIZE - 8 : side === 1 ? t : side === 2 ? -WORLD_HALF_SIZE + 8 : t;
-      if (!this.isClearForProp(x, z, 5)) continue;
-      const tree = this.cloneEnvironmentAsset(i % 2 ? 'EnvCityTreeNeem' : 'EnvCityTreeKikar') || this.createFallbackTree();
-      tree.position.set(x, 0, z);
-      tree.rotation.y = pseudoRandom(i * 31) * Math.PI * 2;
-      tree.scale.setScalar(0.8 + pseudoRandom(i * 37) * 0.45);
-      this.scene.add(tree);
-      this.decor.push({ type: 'tree', mesh: tree, phase: i * 0.3 });
+    const columnMaterial = new THREE.MeshStandardMaterial({ color: 0xd7ccb0, roughness: 0.72, metalness: 0.02 });
+    const flameMaterial = new THREE.MeshBasicMaterial({ color: 0xffcf72, transparent: true, opacity: 0.82 });
+    for (let i = 0; i < 18; i += 1) {
+      const angle = (i / 18) * Math.PI * 2 + pseudoRandom(i * 17) * 0.12;
+      const radius = ISLAND_RADIUS * (0.82 + pseudoRandom(i * 19) * 0.08);
+      const x = Math.cos(angle) * radius;
+      const z = Math.sin(angle) * radius;
+      if (!this.isClearForProp(x, z, 4)) continue;
+      const marker = new THREE.Group();
+      const base = new THREE.Mesh(new THREE.CylinderGeometry(0.55, 0.72, 0.4, 14), columnMaterial);
+      base.position.y = 0.2;
+      const column = new THREE.Mesh(new THREE.CylinderGeometry(0.28, 0.34, 2.6, 14), columnMaterial);
+      column.position.y = 1.7;
+      const flame = new THREE.Mesh(new THREE.ConeGeometry(0.32, 0.9, 10), flameMaterial);
+      flame.position.y = 3.4;
+      marker.add(base, column, flame);
+      marker.position.set(x, 0, z);
+      marker.rotation.y = -angle;
+      this.scene.add(marker);
+      this.decor.push({ type: 'signalRing', mesh: flame, phase: i * 0.44 });
     }
   }
 
   createRoads() {
+    const pointCounts = new Map();
+    for (const path of roadPaths) {
+      for (const point of path.points) {
+        const key = `${Math.round(point[0])}:${Math.round(point[1])}`;
+        pointCounts.set(key, (pointCounts.get(key) || 0) + 1);
+      }
+    }
+
     for (const path of roadPaths) {
       for (const road of makePathSegments(path.points, path.closed, path.width)) {
         this.addRoad(...road, path);
       }
       for (const point of path.points) {
         if (path.hierarchy === 'dirt') continue;
+        const key = `${Math.round(point[0])}:${Math.round(point[1])}`;
+        if ((pointCounts.get(key) || 0) < 2 && path.hierarchy !== 'ring') continue;
+        if (path.hierarchy === 'ring' && pointCounts.get(key) < 2 && pseudoRandom(point[0] * 3 + point[1] * 7) < 0.72) continue;
         const style = ROAD_STYLE[path.hierarchy] || ROAD_STYLE.street;
         const node = new THREE.Group();
         const shoulder = new THREE.Mesh(
-          new THREE.CylinderGeometry(path.width * 0.72 + style.shoulder, path.width * 0.72 + style.shoulder, 0.075, 48),
+          new THREE.CylinderGeometry(path.width * 0.44 + style.shoulder, path.width * 0.44 + style.shoulder, 0.075, 36),
           this.materials.edge
         );
         shoulder.position.y = -0.03;
         shoulder.receiveShadow = true;
         const asphalt = new THREE.Mesh(
-          new THREE.CylinderGeometry(path.width * 0.58, path.width * 0.58, 0.1, 52),
+          new THREE.CylinderGeometry(path.width * 0.38, path.width * 0.38, 0.1, 40),
           this.materials.road
         );
         asphalt.position.y = 0.025;
@@ -419,7 +453,7 @@ export class World {
         node.add(shoulder, asphalt);
         if (style.sidewalk > 0.1) {
           const curb = new THREE.Mesh(
-            new THREE.TorusGeometry(path.width * 0.68 + style.shoulder * 0.45, 0.08, 8, 64),
+            new THREE.TorusGeometry(path.width * 0.45 + style.shoulder * 0.4, 0.045, 8, 40),
             this.materials.sidewalk
           );
           curb.rotation.x = Math.PI / 2;
@@ -528,6 +562,7 @@ export class World {
       );
       pillar.position.y = 1.7;
       group.add(pillar);
+      group.visible = false;
       this.scene.add(group);
       this.decor.push({ type: 'checkpoint', mesh: ring, phase: index * 0.7 });
       return { position: new THREE.Vector3(coords[0], 0, coords[2]), group, ring };
@@ -550,9 +585,9 @@ export class World {
       emissiveIntensity: 0.15
     });
     const rampData = [
-      { position: [120, 0.46, -138], rotation: [-0.32, Math.PI / 2 - 0.28, 0], size: [10, 0.72, 17], color: 0xff9b6d },
-      { position: [146, 0.46, -148], rotation: [-0.38, -0.24, 0], size: [11, 0.76, 18], color: 0xffdf8a },
-      { position: [158, 0.46, -124], rotation: [-0.28, -Math.PI / 2 + 0.2, 0], size: [9, 0.64, 15], color: 0xa8a6ff }
+      { position: [78, 0.46, -108], rotation: [-0.3, Math.PI / 2 - 0.28, 0], size: [9, 0.68, 15], color: 0xff9b6d },
+      { position: [96, 0.46, -118], rotation: [-0.34, -0.46, 0], size: [10, 0.72, 16], color: 0xffdf8a },
+      { position: [102, 0.42, -98], rotation: [-0.24, -Math.PI / 2 + 0.3, 0], size: [8, 0.6, 13], color: 0xa8a6ff }
     ];
 
     for (const item of rampData) {
@@ -680,15 +715,15 @@ export class World {
       this.addSignalRings(group, 0, 3.4, 0, color, 3);
       colliderSize = [8.8, 3.4, 8.8];
     } else if (shape === 'lab') {
-      add(new THREE.CylinderGeometry(4.4, 4.9, 1.2, 6), baseMaterial, [0, 0.6, 0]);
-      add(new THREE.BoxGeometry(7.4, 2.4, 4.6), this.materials.darkGlass, [0, 2.0, 0]);
-      add(new THREE.CylinderGeometry(3.2, 3.2, 2.8, 6), this.materials.darkGlass, [0, 3.2, 0], [0, Math.PI / 6, 0]);
-      for (const x of [-2.8, -1.4, 0, 1.4, 2.8]) {
-        add(new THREE.BoxGeometry(0.12, 2.2, 4.9), neon, [x, 2.4, -0.04]);
+      add(new THREE.BoxGeometry(8.4, 1.0, 6.6), this.materials.limestone, [0, 0.5, 0]);
+      add(new THREE.BoxGeometry(7.2, 4.2, 5.4), baseMaterial, [0, 2.6, 0]);
+      for (const x of [-4.2, 4.2]) {
+        add(new THREE.CylinderGeometry(0.85, 1.05, 5.6, 10), baseMaterial, [x, 2.8, -2.2]);
+        add(new THREE.ConeGeometry(1.15, 1.2, 10), this.materials.roof, [x, 6.2, -2.2]);
       }
-      add(new THREE.CylinderGeometry(0.18, 0.24, 5.5, 16), this.materials.concrete, [0, 5.5, 0]);
-      add(new THREE.TorusGeometry(1.35, 0.08, 12, 48), neon, [0, 7.4, 0], [Math.PI / 2.8, 0, 0]);
-      colliderSize = [8.2, 5.2, 5.2];
+      add(new THREE.BoxGeometry(8.4, 0.35, 0.38), neon, [0, 4.7, -2.86]);
+      add(new THREE.TorusGeometry(1.35, 0.08, 12, 48), neon, [0, 5.9, 0], [Math.PI / 2.8, 0, 0]);
+      colliderSize = [9, 5.4, 6.8];
     } else if (shape === 'foundry') {
       add(new THREE.CylinderGeometry(4.8, 5.4, 1.0, 32), this.materials.concrete, [0, 0.5, 0]);
       add(new THREE.TorusGeometry(3.2, 0.5, 16, 96), baseMaterial, [0, 2.7, 0], [Math.PI / 2, 0, 0], [1, 1.4, 1]);
@@ -709,27 +744,26 @@ export class World {
       add(new THREE.TorusGeometry(4.0, 0.04, 8, 80), this.materials.neonRed, [0, 7.2, 0], [Math.PI / 2, 0, 0]);
       colliderSize = [7, 8.8, 7];
     } else if (shape === 'office') {
-      add(new THREE.BoxGeometry(8.6, 1.6, 6.0), this.materials.concrete, [0, 0.8, 0]);
-      add(new THREE.BoxGeometry(5.0, 10.8, 3.8), this.materials.darkGlass, [0.4, 6.2, 0.15]);
-      add(new THREE.BoxGeometry(2.8, 8.2, 3.5), baseMaterial, [-3.0, 4.9, 0.2]);
-      add(new THREE.BoxGeometry(1.3, 6.2, 3.2), this.materials.glass, [3.3, 4.1, -0.1]);
-      for (let y = 2.1; y < 11.2; y += 1.05) {
-        add(new THREE.BoxGeometry(5.25, 0.045, 0.08), neon, [0.4, y, -1.86]);
+      add(new THREE.BoxGeometry(9.8, 0.9, 6.8), this.materials.limestone, [0, 0.45, 0]);
+      add(new THREE.BoxGeometry(8.0, 3.2, 5.2), baseMaterial, [0, 2.05, 0]);
+      add(new THREE.BoxGeometry(9.2, 0.4, 5.8), this.materials.roof, [0, 3.9, 0]);
+      add(new THREE.ConeGeometry(5.2, 1.2, 4), this.materials.roof, [0, 4.65, 0], [0, Math.PI / 4, 0], [1.0, 0.55, 0.68]);
+      for (const x of [-3.3, -2.0, -0.7, 0.7, 2.0, 3.3]) {
+        add(new THREE.CylinderGeometry(0.16, 0.22, 3.0, 16), this.materials.limestone, [x, 2.0, -3.0]);
       }
-      for (const x of [-1.7, -0.65, 0.4, 1.45, 2.5]) {
-        add(new THREE.BoxGeometry(0.055, 10.6, 3.95), this.materials.concrete, [x, 6.15, 0.15]);
-      }
-      add(new THREE.BoxGeometry(4.7, 0.18, 1.1), this.materials.gold, [0, 1.8, -3.25]);
-      colliderSize = [8.8, 11, 6.2];
+      add(new THREE.BoxGeometry(2.0, 2.15, 0.14), this.materials.darkGlass, [0, 1.65, -3.08]);
+      add(new THREE.BoxGeometry(4.7, 0.16, 0.9), this.materials.gold, [0, 1.72, -3.25]);
+      colliderSize = [10, 4.6, 7];
     } else if (shape === 'terminal') {
-      add(new THREE.CylinderGeometry(3.9, 4.2, 0.7, 32), baseMaterial, [0, 0.35, 0]);
-      add(new THREE.CylinderGeometry(2.7, 3.2, 2.0, 24), this.materials.darkGlass, [0, 1.7, 0]);
-      for (let i = 0; i < 6; i += 1) {
-        const angle = i * Math.PI / 3;
-        add(new THREE.PlaneGeometry(1.4, 0.86), neon, [Math.sin(angle) * 2.76, 2.1, Math.cos(angle) * 2.76], [0, angle, 0]);
+      add(new THREE.CylinderGeometry(4.0, 4.3, 0.65, 24), this.materials.limestone, [0, 0.32, 0]);
+      for (let i = 0; i < 8; i += 1) {
+        const angle = i * Math.PI / 4;
+        add(new THREE.CylinderGeometry(0.16, 0.22, 2.8, 12), this.materials.limestone, [Math.sin(angle) * 3.0, 1.75, Math.cos(angle) * 3.0]);
       }
-      add(new THREE.TorusGeometry(2.95, 0.05, 8, 64), this.materials.neonGreen, [0, 2.85, 0], [Math.PI / 2, 0, 0]);
-      colliderSize = [6.2, 3.2, 6.2];
+      add(new THREE.CylinderGeometry(2.1, 2.45, 1.55, 24), baseMaterial, [0, 1.55, 0]);
+      add(new THREE.OctahedronGeometry(1.15, 1), neon, [0, 3.15, 0]);
+      add(new THREE.TorusGeometry(2.95, 0.05, 8, 64), this.materials.neonGreen, [0, 2.95, 0], [Math.PI / 2, 0, 0]);
+      colliderSize = [6.8, 3.4, 6.8];
     } else if (shape === 'library') {
       add(new THREE.BoxGeometry(9.6, 1.0, 6.2), this.materials.limestone, [0, 0.5, 0]);
       add(new THREE.BoxGeometry(8.7, 3.4, 5.1), this.materials.brick, [0, 2.2, 0.2]);
@@ -780,21 +814,26 @@ export class World {
       add(new THREE.BoxGeometry(5.5, 0.34, 0.5), this.materials.gold, [0, 5.38, 0]);
       colliderSize = [0, 0, 0];
     } else if (shape === 'post') {
-      add(new THREE.CylinderGeometry(1.45, 1.9, 5.6, 20), baseMaterial, [0, 2.8, 0]);
-      add(new THREE.CylinderGeometry(0.18, 0.24, 7.4, 16), this.materials.concrete, [0, 6.5, 0]);
-      for (const y of [4.3, 6.0, 7.4]) {
-        add(new THREE.TorusGeometry(1.85, 0.055, 8, 64), neon, [0, y, 0], [Math.PI / 2, 0, 0]);
+      add(new THREE.CylinderGeometry(1.75, 2.15, 1.0, 18), this.materials.limestone, [0, 0.5, 0]);
+      add(new THREE.CylinderGeometry(1.15, 1.45, 6.2, 18), baseMaterial, [0, 3.6, 0]);
+      for (const y of [2.2, 4.2, 6.1]) {
+        add(new THREE.TorusGeometry(1.25, 0.055, 8, 48), neon, [0, y, 0], [Math.PI / 2, 0, 0]);
       }
-      add(new THREE.TorusGeometry(1.05, 0.08, 8, 32), neon, [1.6, 6.1, 0], [Math.PI / 3, 0.4, 0]);
-      colliderSize = [4.4, 6.4, 4.4];
+      add(new THREE.CylinderGeometry(1.35, 1.55, 0.65, 18), this.materials.darkGlass, [0, 7.0, 0]);
+      add(new THREE.ConeGeometry(1.7, 1.4, 18), this.materials.roof, [0, 8.0, 0]);
+      const lamp = new THREE.PointLight(color, 1.8, 26);
+      lamp.position.set(0, 7.2, 0);
+      group.add(lamp);
+      colliderSize = [4.4, 7.2, 4.4];
     } else if (shape === 'rampyard') {
-      add(new THREE.BoxGeometry(7.2, 3.2, 4.6), baseMaterial, [0, 1.6, 0]);
-      add(new THREE.CylinderGeometry(3.7, 3.7, 4.8, 24, 1, true, 0, Math.PI), this.materials.roof, [0, 3.4, 0], [0, Math.PI / 2, 0]);
-      add(new THREE.BoxGeometry(4.7, 1.8, 0.18), this.materials.darkGlass, [0, 1.35, -2.42]);
-      for (const x of [-2.7, 0, 2.7]) {
-        add(new THREE.ConeGeometry(0.34, 1.0, 12), new THREE.MeshStandardMaterial({ color: 0xff7a2d, roughness: 0.65 }), [x, 0.5, 3.2]);
+      add(new THREE.CylinderGeometry(5.0, 5.7, 0.7, 28), this.materials.sand, [0, 0.35, 0]);
+      add(new THREE.CylinderGeometry(4.0, 4.6, 1.6, 28, 1, true, 0, Math.PI * 1.55), baseMaterial, [0, 1.25, 0], [0, -0.6, 0]);
+      add(new THREE.TorusGeometry(4.9, 0.08, 8, 72), neon, [0, 1.75, 0], [Math.PI / 2, 0, 0]);
+      for (let i = 0; i < 7; i += 1) {
+        const angle = -1.65 + i * 0.55;
+        add(new THREE.BoxGeometry(0.45, 0.55, 1.4), this.materials.limestone, [Math.sin(angle) * 4.2, 1.4, Math.cos(angle) * 4.2], [0, angle, 0]);
       }
-      colliderSize = [7.8, 3.8, 5];
+      colliderSize = [7.8, 2.4, 7.8];
     } else if (shape === 'pier') {
       add(new THREE.BoxGeometry(9.8, 0.48, 6.2), this.materials.wood, [0, 0.34, 0]);
       for (const x of [-4.2, -1.4, 1.4, 4.2]) {
@@ -809,10 +848,13 @@ export class World {
       this.createMinecraftFarm(group, add);
       colliderSize = [0, 0, 0];
     } else if (shape === 'portal') {
-      add(new THREE.CylinderGeometry(3.4, 3.8, 0.55, 28), this.materials.concrete, [0, 0.28, 0]);
-      add(new THREE.TorusGeometry(2.5, 0.28, 16, 96), neon, [0, 3.2, 0], [0, Math.PI / 2, 0]);
-      add(new THREE.TorusGeometry(1.65, 0.08, 10, 72), this.materials.neonBlue, [0, 3.2, 0], [0, Math.PI / 2, 0]);
-      colliderSize = [6.2, 1, 2.4];
+      add(new THREE.CylinderGeometry(3.4, 3.8, 0.55, 28), this.materials.limestone, [0, 0.28, 0]);
+      for (const x of [-2.1, 2.1]) {
+        add(new THREE.CylinderGeometry(0.32, 0.42, 4.6, 14), baseMaterial, [x, 2.3, 0]);
+      }
+      add(new THREE.TorusGeometry(2.1, 0.26, 14, 72, Math.PI), baseMaterial, [0, 4.4, 0], [0, 0, Math.PI]);
+      add(new THREE.TorusGeometry(1.55, 0.08, 10, 72), this.materials.neonBlue, [0, 2.75, 0], [0, Math.PI / 2, 0]);
+      colliderSize = [5.8, 1, 2.4];
     }
 
     return colliderSize;
@@ -976,31 +1018,46 @@ export class World {
     const crateMaterial = new THREE.MeshStandardMaterial({ color: 0x7d5a40, roughness: 0.78, metalness: 0.05 });
     const metalMaterial = new THREE.MeshStandardMaterial({ color: 0x3d4b57, roughness: 0.42, metalness: 0.55 });
 
-    const plannedModels = [
-      ['EnvCampusBlock', -150, 122, 0.2, 1.05, [11, 8, 14]],
-      ['EnvCampusBlock', -102, 124, -0.14, 0.88, [10, 7, 12]],
-      ['EnvOfficeBlock', 112, -20, -0.08, 1.1, [12, 15, 10]],
-      ['EnvOfficeBlock', 74, -52, 0.18, 0.9, [10, 12, 9]],
-      ['EnvSecurityGate', -152, -18, Math.PI / 2 + 0.05, 1.0, [9, 6, 8]],
-      ['EnvArchiveKiosk', -64, 78, -0.2, 1.0, [7, 5, 7]],
-      ['EnvArchiveKiosk', 18, 92, 0.24, 0.86, [6, 4, 6]]
+    const ruinMaterial = this.materials.limestone.clone();
+    ruinMaterial.color.offsetHSL(0.02, -0.08, -0.05);
+    const ruinPieces = [
+      [-116, 56, 0.2, 7.5], [-98, 106, -0.35, 6.4], [-52, 82, 0.28, 5.2],
+      [34, 112, -0.2, 6.2], [114, 62, 0.42, 5.4], [-132, -98, -0.5, 6.4],
+      [58, -118, 0.2, 6.0], [136, -116, -0.22, 5.6]
     ];
-    for (const [asset, x, z, rotation, scale, collider] of plannedModels) {
-      const model = this.cloneEnvironmentAsset(asset) || this.createFallbackDistrictModel(asset);
-      model.position.set(x, 0, z);
-      model.rotation.y = rotation;
-      model.scale.setScalar(scale);
-      this.scene.add(model);
-      this.physics.createFixedBox([x, collider[1] * scale * 0.5, z], collider.map((value) => value * scale), {
-        rotation: [0, rotation, 0],
-        friction: 0.86,
-        restitution: 0.04
-      });
+    for (const [x, z, rotation, length] of ruinPieces) {
+      if (!this.isClearForProp(x, z, 2.4)) continue;
+      const wall = new THREE.Mesh(new THREE.BoxGeometry(length, 1.25, 0.48), ruinMaterial);
+      wall.position.set(x, 0.62, z);
+      wall.rotation.y = rotation;
+      wall.castShadow = true;
+      wall.receiveShadow = true;
+      this.scene.add(wall);
+      this.physics.createFixedBox([x, 0.62, z], [length, 1.25, 0.48], { rotation: [0, rotation, 0], friction: 0.88 });
+    }
+
+    const columnSpots = [
+      [-102, 96], [-114, 96], [-126, 96], [-42, 74], [-30, 74],
+      [32, 92], [44, 92], [128, 54], [138, 48]
+    ];
+    for (const [x, z] of columnSpots) {
+      if (!this.isClearForProp(x, z, 1.8)) continue;
+      const column = new THREE.Group();
+      const base = new THREE.Mesh(new THREE.CylinderGeometry(0.48, 0.58, 0.28, 14), this.materials.limestone);
+      base.position.y = 0.14;
+      const shaft = new THREE.Mesh(new THREE.CylinderGeometry(0.24, 0.28, 2.6, 16), this.materials.limestone);
+      shaft.position.y = 1.55;
+      const cap = new THREE.Mesh(new THREE.BoxGeometry(0.95, 0.28, 0.95), this.materials.limestone);
+      cap.position.y = 2.95;
+      column.add(base, shaft, cap);
+      column.position.set(x, 0, z);
+      column.rotation.y = pseudoRandom(x + z) * Math.PI;
+      this.scene.add(column);
     }
 
     const stallPositions = [
-      [26, 96, -0.25], [45, 94, -0.12], [66, 88, 0.16], [88, 76, 0.32],
-      [-138, 132, 0.42], [-116, 132, -0.28], [152, 142, -0.72]
+      [34, 38, -0.25], [50, 42, -0.1], [74, 48, 0.16],
+      [132, 70, 0.32], [-120, 122, -0.28], [148, 128, -0.72]
     ];
     for (const [x, z, rotation] of stallPositions) {
       const stall = this.cloneEnvironmentAsset('EnvMarketStall') || this.createFallbackMarketStall();
@@ -1012,8 +1069,8 @@ export class World {
     }
 
     const cratePositions = [
-      [126, 0.8, -132], [132, 0.8, -138], [150, 0.8, -126],
-      [156, 0.8, -154], [118, 0.8, -158], [168, 0.8, -138]
+      [102, 0.8, -126], [116, 0.8, -136], [136, 0.8, -126],
+      [132, 0.8, -154], [96, 0.8, -150], [144, 0.8, -140]
     ];
     cratePositions.forEach((position, index) => {
       const size = index % 3 === 0 ? [1.4, 1.4, 1.4] : [1.1, 1.1, 1.1];
@@ -1044,7 +1101,7 @@ export class World {
           const px = x + forward.x * t + side.x * sideSign * (width * 0.5 + 4.2);
           const pz = z + forward.z * t + side.z * sideSign * (width * 0.5 + 4.2);
           if (!this.isClearForProp(px, pz, 2.6)) continue;
-          const light = this.cloneEnvironmentAsset('EnvStreetLight') || this.createFallbackStreetLight();
+          const light = this.createFallbackTorch();
           light.position.set(px, 0, pz);
           light.rotation.y = rotation + (sideSign > 0 ? Math.PI : 0);
           light.scale.setScalar(0.9 + pseudoRandom(placed * 17) * 0.18);
@@ -1076,12 +1133,12 @@ export class World {
       const x = cx + (pseudoRandom(attempt * 11) - 0.5) * width;
       const z = cz + (pseudoRandom(attempt * 17) - 0.5) * depth;
       if (!this.isClearForProp(x, z, 5.2)) continue;
-      const treeType = zone.kind === 'market'
+      const treeType = zone.kind === 'garden'
         ? 'EnvTreeSakuraMedium'
-        : placedTrees % 5 === 0
-          ? 'EnvCityTreeNeem'
-          : placedTrees % 3 === 0
-            ? 'EnvTreeSakuraSmall'
+        : placedTrees % 4 === 0
+          ? 'EnvTreeSakuraSmall'
+          : placedTrees % 2 === 0
+            ? 'EnvCityTreeNeem'
             : 'EnvCityTreeKikar';
       const tree = this.cloneEnvironmentAsset(treeType) || this.createFallbackTree();
       tree.position.set(x, 0, z);
@@ -1217,7 +1274,7 @@ export class World {
   }
 
   isClearForProp(x, z, radius = 2) {
-    if (Math.abs(x) > WORLD_HALF_SIZE - radius - 6 || Math.abs(z) > WORLD_HALF_SIZE - radius - 6) return false;
+    if (Math.hypot(x, z) > ISLAND_RADIUS - radius - 4) return false;
     if (isNearRoad(x, z, radius + 3.5)) return false;
     if (isNearCanal(x, z, radius + 3)) return false;
     const point = new THREE.Vector3(x, 0, z);
@@ -1269,6 +1326,26 @@ export class World {
     return group;
   }
 
+  createFallbackTorch() {
+    const group = new THREE.Group();
+    const base = new THREE.Mesh(new THREE.CylinderGeometry(0.18, 0.24, 0.45, 10), this.materials.limestone);
+    base.position.y = 0.22;
+    const pole = new THREE.Mesh(new THREE.CylinderGeometry(0.08, 0.1, 2.3, 8), this.materials.woodDark);
+    pole.position.y = 1.38;
+    const bowl = new THREE.Mesh(new THREE.CylinderGeometry(0.28, 0.22, 0.22, 10), this.materials.gold);
+    bowl.position.y = 2.6;
+    const flame = new THREE.Mesh(
+      new THREE.ConeGeometry(0.28, 0.86, 10),
+      new THREE.MeshBasicMaterial({ color: 0xffb45e, transparent: true, opacity: 0.8 })
+    );
+    flame.position.y = 3.05;
+    const light = new THREE.PointLight(0xffae63, 0.45, 11);
+    light.position.y = 2.8;
+    group.add(base, pole, bowl, flame, light);
+    this.decor.push({ type: 'signalRing', mesh: flame, phase: Math.random() * 4 });
+    return group;
+  }
+
   createFallbackBench() {
     const group = new THREE.Group();
     const seat = new THREE.Mesh(new THREE.BoxGeometry(2.4, 0.22, 0.7), this.materials.wood);
@@ -1308,9 +1385,9 @@ export class World {
 
   createCollectibles() {
     const positions = [
-      [-144, 1.4, 86], [-92, 1.4, 112], [-42, 1.4, 84], [42, 1.4, 118],
-      [92, 1.4, 52], [142, 1.4, -42], [126, 1.4, -104], [152, 1.4, -162],
-      [-150, 1.4, -126], [-52, 1.4, -126], [12, 1.4, -118], [174, 1.4, 150]
+      [-120, 1.4, 76], [-92, 1.4, 108], [-34, 1.4, 86], [28, 1.4, 116],
+      [92, 1.4, 54], [138, 1.4, 22], [112, 1.4, -94], [128, 1.4, -150],
+      [-146, 1.4, -118], [-70, 1.4, -112], [18, 1.4, -108], [148, 1.4, 138]
     ];
     const material = new THREE.MeshBasicMaterial({ color: 0x7cffb2, transparent: true, opacity: 0.86 });
     positions.forEach((position, index) => {
@@ -1475,6 +1552,7 @@ export class World {
     this.circuit.startedAt = now;
     this.circuit.checkpoint = 1;
     for (let i = 0; i < this.checkpoints.length; i += 1) {
+      this.checkpoints[i].group.visible = true;
       this.checkpoints[i].ring.material.opacity = i === 1 ? 0.85 : 0.18;
     }
   }
@@ -1492,7 +1570,7 @@ export class World {
           this.circuit.best = lap;
           localStorage.setItem('portfolio-drive-best-lap', String(lap));
         }
-        for (const item of this.checkpoints) item.ring.material.opacity = 0.34;
+        for (const item of this.checkpoints) item.group.visible = false;
         return { finished: true, lap };
       }
       for (let i = 0; i < this.checkpoints.length; i += 1) {
@@ -1615,6 +1693,41 @@ function makePathSegments(points, closed, width) {
     ]);
   }
   return segments;
+}
+
+function makeIslandGeometry(radius, segments = 128) {
+  const geometry = new THREE.CircleGeometry(radius, segments);
+  const positions = geometry.attributes.position;
+  for (let i = 1; i < positions.count; i += 1) {
+    const x = positions.getX(i);
+    const y = positions.getY(i);
+    const angle = Math.atan2(y, x);
+    const edge =
+      Math.sin(angle * 2.1 + 0.4) * 0.045 +
+      Math.cos(angle * 4.7 - 0.8) * 0.05 +
+      Math.sin(angle * 8.2 + 1.9) * 0.028;
+    positions.setXY(i, x * (1 + edge), y * (1 + edge));
+  }
+  positions.needsUpdate = true;
+  geometry.computeVertexNormals();
+  return geometry;
+}
+
+function makeOrganicRingGeometry(innerRadius, outerRadius, segments = 128, noise = 2.8) {
+  const shape = new THREE.Shape();
+  const outer = [];
+  const inner = [];
+  for (let i = 0; i < segments; i += 1) {
+    const angle = (i / segments) * Math.PI * 2;
+    const wobble = Math.sin(angle * 3.2) * noise + Math.cos(angle * 5.7) * noise * 0.7;
+    outer.push(new THREE.Vector2(Math.cos(angle) * (outerRadius + wobble), Math.sin(angle) * (outerRadius + wobble)));
+    inner.push(new THREE.Vector2(Math.cos(angle) * (innerRadius + wobble * 0.45), Math.sin(angle) * (innerRadius + wobble * 0.45)));
+  }
+  shape.setFromPoints(outer);
+  const hole = new THREE.Path();
+  hole.setFromPoints(inner.reverse());
+  shape.holes.push(hole);
+  return new THREE.ShapeGeometry(shape);
 }
 
 function makeOrganicPatchGeometry(width, depth, seed = 1) {

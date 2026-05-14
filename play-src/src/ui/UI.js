@@ -376,7 +376,7 @@ export class UI {
 
   renderAbout() {
     const lines = [
-      'Three.js renders Abdullah Drive City. Rapier handles the driving physics.',
+      'Three.js renders the island drive-world. Rapier handles the driving physics.',
       'Resume content, project stops, contact links, and counters are connected directly to the portfolio.'
     ];
     for (const line of lines) {
