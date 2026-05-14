@@ -10,7 +10,12 @@ export default defineConfig({
     assetsDir: 'game-assets',
     chunkSizeWarningLimit: 3000,
     rollupOptions: {
-      input: 'play-src/index.html'
+      input: 'play-src/index.html',
+      output: {
+        entryFileNames: 'game-assets/[name].js',
+        chunkFileNames: 'game-assets/[name].js',
+        assetFileNames: 'game-assets/[name][extname]'
+      }
     }
   },
   server: {

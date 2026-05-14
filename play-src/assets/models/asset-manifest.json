@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "builder": "node",
+  "builder": "blender",
   "assets": {
     "sabreTurbo": "models/vehicles/sabre-turbo.glb"
   }
