@@ -12,4 +12,4 @@ Run:
 npm run play:assets
 ```
 
-If Blender is available on `PATH`, the pipeline can use the Blender source scripts. Otherwise it falls back to the Node generator so GitHub Pages can still ship working GLB assets.
+The asset builder checks `BLENDER`, the local portable Blender path at `C:\Tools\blender-4.5.0-windows-x64\blender.exe`, and then `blender` on `PATH`. If none are available, it falls back to the Node generator so GitHub Pages can still ship working GLB assets.

@@ -13,11 +13,11 @@ await mkdir(dirname(output), { recursive: true });
 await mkdir(dirname(manifest), { recursive: true });
 
 const blenderRequested = process.env.PLAY_ASSETS_BLENDER === '1';
-const blenderBinary = process.env.BLENDER || 'blender';
+const blenderBinary = await resolveBlenderBinary(blenderRequested);
 const blenderScript = resolve(root, 'play-assets', 'source', 'blender', 'export_sabre_turbo.py');
 
 let builder = 'node';
-if (blenderRequested && await canExecute(blenderBinary)) {
+if (blenderBinary) {
   const result = spawnSync(blenderBinary, [
     '--background',
     '--python',
@@ -57,4 +57,25 @@ async function canExecute(command) {
   }
   const result = spawnSync(command, ['--version'], { stdio: 'ignore' });
   return result.status === 0;
+}
+
+async function resolveBlenderBinary(required) {
+  const candidates = [
+    process.env.BLENDER,
+    'C:\\Tools\\blender-4.5.0-windows-x64\\blender.exe',
+    'C:\\Tools\\Blender\\blender-4.5.0-windows-x64\\blender.exe',
+    'blender'
+  ].filter(Boolean);
+
+  for (const candidate of candidates) {
+    if (await canExecute(candidate)) {
+      return candidate;
+    }
+  }
+
+  if (required) {
+    throw new Error('PLAY_ASSETS_BLENDER=1 was set, but Blender could not be executed. Set BLENDER to blender.exe.');
+  }
+
+  return null;
 }
