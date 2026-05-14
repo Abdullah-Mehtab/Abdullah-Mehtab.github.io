@@ -16,9 +16,9 @@ const WATER_Y = -0.18;
 const ROAD_LINE_COLOR = 0x68d8ff;
 const tmpColor = new THREE.Color();
 const QUALITY_PROFILES = {
-  low: { trees: 42, grassTufts: 80, petals: 70, clouds: 10, streetProps: 30 },
-  medium: { trees: 72, grassTufts: 170, petals: 170, clouds: 18, streetProps: 56 },
-  high: { trees: 108, grassTufts: 320, petals: 360, clouds: 30, streetProps: 88 }
+  low: { trees: 48, grassTufts: 130, petals: 90, clouds: 10, streetProps: 30 },
+  medium: { trees: 86, grassTufts: 360, petals: 220, clouds: 18, streetProps: 56 },
+  high: { trees: 132, grassTufts: 760, petals: 420, clouds: 30, streetProps: 88 }
 };
 const QUALITY_ORDER = ['low', 'medium', 'high'];
 const ROAD_STYLE = {
@@ -112,31 +112,33 @@ export class World {
   }
 
   createMaterials() {
-    const grassTexture = makeNoiseTexture(['#285c2f', '#31723a', '#1f4a29', '#3d8243'], 256, 4600);
-    grassTexture.wrapS = THREE.RepeatWrapping;
-    grassTexture.wrapT = THREE.RepeatWrapping;
-    grassTexture.repeat.set(28, 28);
     const roadTexture = makeRoadTexture();
     roadTexture.wrapS = THREE.RepeatWrapping;
     roadTexture.wrapT = THREE.RepeatWrapping;
     roadTexture.repeat.set(1, 18);
-    const sandTexture = makeNoiseTexture(['#a98b61', '#bd9f70', '#8d724f', '#d0b17c'], 192, 1200);
+    const sandTexture = makeNoiseTexture(['#c4a56e', '#d2b87e', '#ad8d58', '#e2c98f'], 192, 1200);
     sandTexture.wrapS = THREE.RepeatWrapping;
     sandTexture.wrapT = THREE.RepeatWrapping;
     sandTexture.repeat.set(10, 10);
+    const grassTexture = makeGrassTexture(1024);
+    grassTexture.wrapS = THREE.ClampToEdgeWrapping;
+    grassTexture.wrapT = THREE.ClampToEdgeWrapping;
+    grassTexture.anisotropy = 4;
     const patchAlpha = makePatchAlphaTexture();
 
     this.materials.ground = new THREE.MeshStandardMaterial({
-      color: 0x4f9b45,
+      color: 0xffffff,
       map: grassTexture,
       roughness: 0.94,
-      metalness: 0.01
+      metalness: 0.01,
+      vertexColors: true,
+      side: THREE.DoubleSide
     });
     this.materials.road = new THREE.MeshStandardMaterial({ color: 0x3d4748, map: roadTexture, roughness: 0.86, metalness: 0.03 });
     this.materials.roadLine = new THREE.MeshBasicMaterial({ color: ROAD_LINE_COLOR, transparent: true, opacity: 0.46 });
     this.materials.dark = new THREE.MeshStandardMaterial({ color: 0x09121d, roughness: 0.55, metalness: 0.25 });
     this.materials.edge = new THREE.MeshStandardMaterial({ color: 0x0b1722, roughness: 0.7, metalness: 0.18 });
-    this.materials.sand = new THREE.MeshStandardMaterial({ color: 0xb19163, map: sandTexture, roughness: 0.96, metalness: 0.01 });
+    this.materials.sand = new THREE.MeshStandardMaterial({ color: 0xc39d61, map: sandTexture, roughness: 0.96, metalness: 0.01 });
     this.materials.grass = new THREE.MeshStandardMaterial({ color: 0x246237, roughness: 0.88, metalness: 0.02 });
     this.materials.leaf = new THREE.MeshStandardMaterial({ color: 0x2f7a44, roughness: 0.82, metalness: 0.01 });
     this.materials.leafLight = new THREE.MeshStandardMaterial({ color: 0x4b9a55, roughness: 0.84, metalness: 0.01 });
@@ -181,16 +183,22 @@ export class World {
 
   createSky() {
     const canvas = document.createElement('canvas');
-    canvas.width = 32;
-    canvas.height = 512;
+    canvas.width = 96;
+    canvas.height = 768;
     const ctx = canvas.getContext('2d');
     const gradient = ctx.createLinearGradient(0, 0, 0, canvas.height);
-    gradient.addColorStop(0, '#5ab8ff');
-    gradient.addColorStop(0.32, '#83d2ff');
-    gradient.addColorStop(0.66, '#bfefff');
-    gradient.addColorStop(1, '#f6d49a');
+    gradient.addColorStop(0, '#2f83d8');
+    gradient.addColorStop(0.28, '#62b9f5');
+    gradient.addColorStop(0.62, '#b9ecff');
+    gradient.addColorStop(0.86, '#f5dca7');
+    gradient.addColorStop(1, '#f7c487');
     ctx.fillStyle = gradient;
     ctx.fillRect(0, 0, canvas.width, canvas.height);
+    for (let y = 0; y < canvas.height; y += 2) {
+      const alpha = 0.02 + (y / canvas.height) * 0.035;
+      ctx.fillStyle = `rgba(255,255,255,${alpha})`;
+      ctx.fillRect(0, y, canvas.width, 1);
+    }
     const texture = new THREE.CanvasTexture(canvas);
     texture.colorSpace = THREE.SRGBColorSpace;
     const sky = new THREE.Mesh(
@@ -201,15 +209,24 @@ export class World {
     this.scene.add(sky);
 
     const sun = new THREE.Mesh(
-      new THREE.CircleGeometry(15, 48),
-      new THREE.MeshBasicMaterial({ color: 0xfff1af, transparent: true, opacity: 0.86, depthWrite: false })
+      new THREE.CircleGeometry(17, 64),
+      new THREE.MeshBasicMaterial({ color: 0xffefb2, transparent: true, opacity: 0.88, depthWrite: false })
     );
     sun.position.set(-145, 118, -245);
     sun.lookAt(0, 20, 0);
     this.scene.add(sun);
     this.decor.push({ type: 'sunDisc', mesh: sun, phase: 0 });
 
-    const cloudMaterial = new THREE.MeshBasicMaterial({ color: 0xf7fbff, transparent: true, opacity: 0.54, depthWrite: false });
+    const glow = new THREE.Mesh(
+      new THREE.CircleGeometry(40, 64),
+      new THREE.MeshBasicMaterial({ color: 0xffdf9a, transparent: true, opacity: 0.18, depthWrite: false })
+    );
+    glow.position.copy(sun.position).add(new THREE.Vector3(0, -1.5, 1.5));
+    glow.lookAt(0, 20, 0);
+    this.scene.add(glow);
+    this.decor.push({ type: 'sunDisc', mesh: glow, phase: 1.2 });
+
+    const cloudMaterial = new THREE.MeshBasicMaterial({ color: 0xf8fcff, transparent: true, opacity: 0.74, depthWrite: false });
     const cloudCount = this.getQualityProfile().clouds;
     for (let i = 0; i < cloudCount; i += 1) {
       const group = new THREE.Group();
@@ -217,16 +234,33 @@ export class World {
       const radius = 170 + pseudoRandom(i * 23) * 210;
       const x = Math.cos(angle) * radius;
       const z = Math.sin(angle) * radius;
-      group.position.set(x, 82 + (i % 7) * 7, z);
+      group.position.set(x, 50 + (i % 7) * 5.5, z);
       group.rotation.y = -angle + Math.PI / 2;
       for (let j = 0; j < 6; j += 1) {
-        const puff = new THREE.Mesh(new THREE.SphereGeometry(5.2 + j * 0.95, 16, 10), cloudMaterial.clone());
-        puff.scale.set(3.4 + pseudoRandom(i * 31 + j) * 1.1, 0.28, 0.86 + pseudoRandom(i * 37 + j) * 0.25);
-        puff.position.set((j - 2.5) * 8.0, Math.sin(j + i) * 0.75, (j % 2) * 3.1);
+        const puff = new THREE.Mesh(new THREE.SphereGeometry(5.6 + j * 0.72, 20, 10), cloudMaterial.clone());
+        puff.scale.set(4.8 + pseudoRandom(i * 31 + j) * 2.5, 0.52, 1.04 + pseudoRandom(i * 37 + j) * 0.45);
+        puff.position.set((j - 2.5) * 9.4, Math.sin(j + i) * 0.65, (j % 2) * 3.6);
         group.add(puff);
       }
       this.scene.add(group);
       this.decor.push({ type: 'cloud', mesh: group, phase: i * 0.37 });
+    }
+
+    const bankMaterial = new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.5, depthWrite: false });
+    for (let i = 0; i < 6; i += 1) {
+      const group = new THREE.Group();
+      const angle = (i / 6) * Math.PI * 2 + 0.26;
+      const radius = 250 + pseudoRandom(i * 41) * 75;
+      group.position.set(Math.cos(angle) * radius, 48 + pseudoRandom(i * 43) * 18, Math.sin(angle) * radius);
+      group.rotation.y = -angle + Math.PI / 2;
+      for (let j = 0; j < 8; j += 1) {
+        const puff = new THREE.Mesh(new THREE.SphereGeometry(5 + pseudoRandom(i * 53 + j) * 3.5, 18, 10), bankMaterial.clone());
+        puff.scale.set(3.2 + pseudoRandom(i * 59 + j) * 2.6, 0.46 + pseudoRandom(i * 61 + j) * 0.18, 1.0 + pseudoRandom(i * 67 + j) * 0.5);
+        puff.position.set((j - 3.5) * 11, Math.sin(j * 0.9 + i) * 1.2, (pseudoRandom(i * 71 + j) - 0.5) * 9);
+        group.add(puff);
+      }
+      this.scene.add(group);
+      this.decor.push({ type: 'cloud', mesh: group, phase: i * 0.71 + 3.4 });
     }
   }
 
@@ -235,18 +269,31 @@ export class World {
     this.createIslandBaseShelf();
     const groundGeometry = makeIslandGeometry(ISLAND_RADIUS, 128);
     const positions = groundGeometry.attributes.position;
+    const colors = [];
+    const deepGrass = new THREE.Color(0x326d37);
+    const meadowGrass = new THREE.Color(0x5c9747);
+    const sunGrass = new THREE.Color(0x86b35c);
+    const coastGrass = new THREE.Color(0x87945b);
     for (let i = 0; i < positions.count; i += 1) {
       const x = positions.getX(i);
       const y = positions.getY(i);
       const distance = Math.hypot(x, y);
-      const coastFalloff = THREE.MathUtils.smoothstep(distance, ISLAND_RADIUS * 0.72, ISLAND_RADIUS * 0.99);
+      const coastFalloff = THREE.MathUtils.smoothstep(distance, ISLAND_RADIUS * 0.86, ISLAND_RADIUS * 0.995);
+      const meadow =
+        Math.sin(x * 0.026 + y * 0.013) * 0.5 +
+        Math.cos(y * 0.032 - x * 0.011) * 0.5 +
+        (pseudoRandom(Math.floor(x * 2.1) * 19 + Math.floor(y * 2.1) * 31) - 0.5) * 0.45;
+      const grassColor = tmpColor.copy(deepGrass).lerp(meadow > 0 ? sunGrass : meadowGrass, 0.38 + Math.min(Math.abs(meadow), 1) * 0.28);
+      grassColor.lerp(coastGrass, coastFalloff * 0.38);
+      colors.push(grassColor.r, grassColor.g, grassColor.b);
       const height =
         Math.sin(x * 0.032) * 0.045 +
         Math.cos(y * 0.028) * 0.04 +
         Math.sin((x - y) * 0.016) * 0.035 -
-        coastFalloff * 0.22;
+        coastFalloff * 0.075;
       positions.setZ(i, height);
     }
+    groundGeometry.setAttribute('color', new THREE.Float32BufferAttribute(colors, 3));
     groundGeometry.computeVertexNormals();
     const ground = new THREE.Mesh(groundGeometry, this.materials.ground);
     ground.rotation.x = -Math.PI / 2;
@@ -275,18 +322,18 @@ export class World {
 
   createIslandBaseShelf() {
     const shelfMaterial = this.materials.sand.clone();
-    shelfMaterial.color = new THREE.Color(0xb99162);
+    shelfMaterial.color = new THREE.Color(0xb88f55);
     shelfMaterial.roughness = 0.98;
-    const shelf = new THREE.Mesh(makeIslandGeometry(ISLAND_RADIUS * 1.08, 160), shelfMaterial);
+    const shelf = new THREE.Mesh(makeIslandGeometry(ISLAND_RADIUS * 1.045, 160), shelfMaterial);
     shelf.rotation.x = -Math.PI / 2;
-    shelf.position.y = WATER_Y + 0.08;
+    shelf.position.y = WATER_Y + 0.045;
     shelf.receiveShadow = true;
     this.scene.add(shelf);
   }
 
   createBeachRing() {
     const beach = new THREE.Mesh(
-      makeOrganicRingGeometry(ISLAND_RADIUS * 0.84, ISLAND_RADIUS * 1.06, 160, 4.2),
+      makeOrganicRingGeometry(ISLAND_RADIUS * 0.955, ISLAND_RADIUS * 1.028, 160, 2.2),
       this.materials.sand
     );
     beach.rotation.x = -Math.PI / 2;
@@ -296,10 +343,10 @@ export class World {
 
     const grassBlendMaterial = this.materials.ground.clone();
     grassBlendMaterial.transparent = true;
-    grassBlendMaterial.opacity = 0.46;
+    grassBlendMaterial.opacity = 0.32;
     grassBlendMaterial.depthWrite = false;
     const grassBlend = new THREE.Mesh(
-      makeOrganicRingGeometry(ISLAND_RADIUS * 0.76, ISLAND_RADIUS * 0.9, 160, 3.0),
+      makeOrganicRingGeometry(ISLAND_RADIUS * 0.91, ISLAND_RADIUS * 0.972, 160, 1.8),
       grassBlendMaterial
     );
     grassBlend.rotation.x = -Math.PI / 2;
@@ -314,7 +361,7 @@ export class World {
       depthWrite: false
     });
     const shallows = new THREE.Mesh(
-      makeOrganicRingGeometry(ISLAND_RADIUS * 1.02, ISLAND_RADIUS * 1.2, 160, 5.0),
+      makeOrganicRingGeometry(ISLAND_RADIUS * 1.0, ISLAND_RADIUS * 1.14, 160, 3.2),
       shallowsMaterial
     );
     shallows.rotation.x = -Math.PI / 2;
@@ -323,9 +370,9 @@ export class World {
     this.decor.push({ type: 'canalWater', mesh: shallows, phase: 1.4 });
 
     const cliffMaterial = new THREE.MeshStandardMaterial({ color: 0x6f6d60, roughness: 0.92, metalness: 0.02 });
-    for (let i = 0; i < 38; i += 1) {
-      const angle = (i / 38) * Math.PI * 2 + (pseudoRandom(i * 19) - 0.5) * 0.055;
-      const radius = ISLAND_RADIUS * (0.89 + pseudoRandom(i * 23) * 0.08);
+    for (let i = 0; i < 34; i += 1) {
+      const angle = (i / 34) * Math.PI * 2 + (pseudoRandom(i * 19) - 0.5) * 0.055;
+      const radius = ISLAND_RADIUS * (0.955 + pseudoRandom(i * 23) * 0.045);
       const x = Math.cos(angle) * radius;
       const z = Math.sin(angle) * radius;
       if (!this.isClearForProp(x, z, 3.5)) continue;
@@ -391,10 +438,10 @@ export class World {
     const [x, z] = district.center;
     const [width, depth] = district.size;
     const color = new THREE.Color(district.color);
-    const material = this.materials.plaza.clone();
-    material.color.copy(color).lerp(new THREE.Color(0x33443a), district.kind === 'plaza' ? 0.55 : 0.74);
+    const material = (district.kind === 'farm' ? this.materials.farmSoil : this.materials.grass).clone();
+    material.color.copy(color).lerp(new THREE.Color(district.kind === 'farm' ? 0x5b3b22 : 0x2f5b36), district.kind === 'plaza' ? 0.76 : 0.86);
     material.transparent = true;
-    material.opacity = district.kind === 'farm' ? 0.5 : 0.42;
+    material.opacity = district.kind === 'farm' ? 0.28 : 0.2;
     material.alphaMap = this.materials.patchAlpha;
     material.depthWrite = false;
     const patch = new THREE.Mesh(makeOrganicPatchGeometry(width, depth, x * 0.13 + z * 0.21), material);
@@ -408,9 +455,9 @@ export class World {
   addScenicPatch(zone) {
     const [x, z] = zone.center;
     const [width, depth] = zone.size;
-    const material = (zone.kind === 'farm' ? this.materials.dirtRoad : this.materials.leafLight).clone();
+    const material = (zone.kind === 'farm' ? this.materials.farmSoil : this.materials.leafLight).clone();
     material.transparent = true;
-    material.opacity = zone.kind === 'market' ? 0.34 : 0.46;
+    material.opacity = zone.kind === 'farm' ? 0.22 : zone.kind === 'market' ? 0.24 : 0.32;
     material.alphaMap = this.materials.patchAlpha;
     material.depthWrite = false;
     const patch = new THREE.Mesh(makeOrganicPatchGeometry(width, depth, x * 0.19 + z * 0.17), material);
@@ -460,48 +507,9 @@ export class World {
   }
 
   createRoads() {
-    const pointCounts = new Map();
-    for (const path of roadPaths) {
-      for (const point of path.points) {
-        const key = `${Math.round(point[0])}:${Math.round(point[1])}`;
-        pointCounts.set(key, (pointCounts.get(key) || 0) + 1);
-      }
-    }
-
     for (const path of roadPaths) {
       for (const road of makePathSegments(path.points, path.closed, path.width)) {
         this.addRoad(...road, path);
-      }
-      for (const point of path.points) {
-        if (path.hierarchy === 'dirt') continue;
-        const key = `${Math.round(point[0])}:${Math.round(point[1])}`;
-        if ((pointCounts.get(key) || 0) < 2) continue;
-        const style = ROAD_STYLE[path.hierarchy] || ROAD_STYLE.street;
-        const node = new THREE.Group();
-        const shoulder = new THREE.Mesh(
-          new THREE.CylinderGeometry(path.width * 0.22 + style.shoulder * 0.45, path.width * 0.22 + style.shoulder * 0.45, 0.065, 36),
-          this.materials.edge
-        );
-        shoulder.position.y = -0.03;
-        shoulder.receiveShadow = true;
-        const asphalt = new THREE.Mesh(
-          new THREE.CylinderGeometry(path.width * 0.19, path.width * 0.19, 0.09, 40),
-          this.materials.road
-        );
-        asphalt.position.y = 0.025;
-        asphalt.receiveShadow = true;
-        node.add(shoulder, asphalt);
-        if (style.sidewalk > 0.1) {
-          const curb = new THREE.Mesh(
-            new THREE.TorusGeometry(path.width * 0.28 + style.shoulder * 0.24, 0.04, 8, 40),
-            this.materials.sidewalk
-          );
-          curb.rotation.x = Math.PI / 2;
-          curb.position.y = 0.09;
-          node.add(curb);
-        }
-        node.position.set(point[0], 0.155, point[1]);
-        this.scene.add(node);
       }
     }
   }
@@ -1164,24 +1172,26 @@ export class World {
 
   placeCityTrees(quality) {
     let placedTrees = 0;
-    for (let attempt = 0; attempt < 1200 && placedTrees < quality.trees; attempt += 1) {
-      const zone = scenicPropZones[attempt % scenicPropZones.length];
-      const [cx, cz] = zone.center;
-      const [width, depth] = zone.size;
+    const groveAnchors = [
+      [-128, 12, 44, 74], [-118, 104, 52, 36], [32, 108, 72, 30],
+      [118, 58, 36, 34], [-20, -118, 86, 38], [38, -48, 48, 38],
+      [-72, -72, 48, 42], [92, -34, 44, 34]
+    ];
+    for (let attempt = 0; attempt < 1800 && placedTrees < quality.trees; attempt += 1) {
+      const anchor = groveAnchors[attempt % groveAnchors.length];
+      const [cx, cz, width, depth] = anchor;
       const x = cx + (pseudoRandom(attempt * 11) - 0.5) * width;
       const z = cz + (pseudoRandom(attempt * 17) - 0.5) * depth;
       if (!this.isClearForProp(x, z, 5.2)) continue;
-      const treeType = zone.kind === 'garden'
-        ? 'EnvTreeSakuraMedium'
-        : placedTrees % 4 === 0
-          ? 'EnvTreeSakuraSmall'
-          : placedTrees % 2 === 0
-            ? 'EnvCityTreeNeem'
-            : 'EnvCityTreeKikar';
+      const treeType = placedTrees % 5 === 0
+        ? 'EnvTreeSakuraLarge'
+        : placedTrees % 2 === 0
+          ? 'EnvTreeSakuraMedium'
+          : 'EnvTreeSakuraSmall';
       const tree = this.cloneEnvironmentAsset(treeType) || this.createFallbackTree();
       tree.position.set(x, 0, z);
       tree.rotation.y = pseudoRandom(attempt * 37) * Math.PI * 2;
-      const treeScale = 0.7 + pseudoRandom(attempt * 41) * 0.48;
+      const treeScale = 0.72 + pseudoRandom(attempt * 41) * 0.58;
       tree.scale.setScalar(treeScale);
       this.scene.add(tree);
       this.sakuraTrees.push({ position: new THREE.Vector3(x, 0, z), scale: treeScale });
@@ -1195,19 +1205,29 @@ export class World {
     const bladeGeometry = new THREE.PlaneGeometry(0.08, 0.44);
     bladeGeometry.translate(0, 0.22, 0);
     const bladeMaterial = new THREE.MeshBasicMaterial({ color: 0x78c96c, side: THREE.DoubleSide, transparent: true, opacity: 0.42 });
-    const grass = grassTemplate ? new THREE.Group() : new THREE.InstancedMesh(bladeGeometry, bladeMaterial, 850);
+    const grass = grassTemplate ? new THREE.Group() : new THREE.InstancedMesh(bladeGeometry, bladeMaterial, 1400);
     const matrix = new THREE.Matrix4();
     const maxGrass = Math.max(quality.grassTufts, QUALITY_PROFILES.high.grassTufts);
-    for (let i = 0; i < 850; i += 1) {
-      const zone = scenicPropZones[i % scenicPropZones.length];
-      const x = zone.center[0] + (pseudoRandom(i * 19) - 0.5) * zone.size[0];
-      const z = zone.center[1] + (pseudoRandom(i * 31) - 0.5) * zone.size[1];
+    for (let i = 0; i < 1400; i += 1) {
+      let x;
+      let z;
+      if (i % 3 === 0) {
+        const zone = scenicPropZones[i % scenicPropZones.length];
+        x = zone.center[0] + (pseudoRandom(i * 19) - 0.5) * zone.size[0];
+        z = zone.center[1] + (pseudoRandom(i * 31) - 0.5) * zone.size[1];
+      } else {
+        const angle = pseudoRandom(i * 17) * Math.PI * 2;
+        const radius = Math.sqrt(pseudoRandom(i * 29)) * ISLAND_RADIUS * 0.8;
+        x = Math.cos(angle) * radius;
+        z = Math.sin(angle) * radius;
+      }
+      if (Math.hypot(x, z) > ISLAND_RADIUS * 0.84) continue;
       if (!this.isClearForProp(x, z, 1.2)) continue;
       if (grassTemplate && this.grassTufts.length < maxGrass) {
         const tuft = grassTemplate.clone(true);
         tuft.position.set(x, 0.045, z);
         tuft.rotation.y = pseudoRandom(i * 7) * Math.PI;
-        const tuftScale = 0.5 + pseudoRandom(i * 13) * 0.85;
+        const tuftScale = 0.46 + pseudoRandom(i * 13) * 0.92;
         tuft.scale.setScalar(tuftScale);
         grass.add(tuft);
         this.grassTufts.push({
@@ -1445,14 +1465,16 @@ export class World {
 
   createAtmosphere() {
     const positions = [];
-    for (let i = 0; i < 450; i += 1) {
-      positions.push((Math.random() - 0.5) * 320, 1.2 + Math.random() * 8, (Math.random() - 0.5) * 320);
+    for (let i = 0; i < 560; i += 1) {
+      const angle = Math.random() * Math.PI * 2;
+      const radius = Math.sqrt(Math.random()) * ISLAND_RADIUS * 0.96;
+      positions.push(Math.cos(angle) * radius, 1.2 + Math.random() * 10, Math.sin(angle) * radius);
     }
     const geometry = new THREE.BufferGeometry();
     geometry.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
     this.dust = new THREE.Points(
       geometry,
-      new THREE.PointsMaterial({ color: 0xffe0a4, size: 0.08, transparent: true, opacity: 0.22, depthWrite: false })
+      new THREE.PointsMaterial({ color: 0xeaf7d6, size: 0.075, transparent: true, opacity: 0.18, depthWrite: false })
     );
     this.scene.add(this.dust);
   }
@@ -1734,19 +1756,49 @@ function makePathSegments(points, closed, width) {
 }
 
 function makeIslandGeometry(radius, segments = 128) {
-  const geometry = new THREE.CircleGeometry(radius, segments);
-  const positions = geometry.attributes.position;
-  for (let i = 1; i < positions.count; i += 1) {
-    const x = positions.getX(i);
-    const y = positions.getY(i);
-    const angle = Math.atan2(y, x);
-    const edge =
-      Math.sin(angle * 2.1 + 0.4) * 0.045 +
-      Math.cos(angle * 4.7 - 0.8) * 0.05 +
-      Math.sin(angle * 8.2 + 1.9) * 0.028;
-    positions.setXY(i, x * (1 + edge), y * (1 + edge));
+  const rings = 64;
+  const positions = [0, 0, 0];
+  const uvs = [0.5, 0.5];
+  const indices = [];
+
+  for (let ring = 1; ring <= rings; ring += 1) {
+    const t = ring / rings;
+    const edgeInfluence = Math.pow(t, 1.55);
+    for (let i = 0; i < segments; i += 1) {
+      const angle = (i / segments) * Math.PI * 2;
+      const edge =
+        Math.sin(angle * 2.1 + 0.4) * 0.045 +
+        Math.cos(angle * 4.7 - 0.8) * 0.05 +
+        Math.sin(angle * 8.2 + 1.9) * 0.028;
+      const localUndulation =
+        Math.sin(angle * 5.6 + ring * 0.18) * 0.01 +
+        Math.cos(angle * 9.2 - ring * 0.13) * 0.008;
+      const r = radius * t * (1 + edge * edgeInfluence + localUndulation * t);
+      const x = Math.cos(angle) * r;
+      const y = Math.sin(angle) * r;
+      positions.push(x, y, 0);
+      uvs.push(0.5 + x / (radius * 2.08), 0.5 + y / (radius * 2.08));
+    }
   }
-  positions.needsUpdate = true;
+
+  const ringStart = (ring) => 1 + (ring - 1) * segments;
+  for (let i = 0; i < segments; i += 1) {
+    indices.push(0, ringStart(1) + ((i + 1) % segments), ringStart(1) + i);
+  }
+  for (let ring = 2; ring <= rings; ring += 1) {
+    const current = ringStart(ring);
+    const previous = ringStart(ring - 1);
+    for (let i = 0; i < segments; i += 1) {
+      const next = (i + 1) % segments;
+      indices.push(previous + i, previous + next, current + i);
+      indices.push(current + i, previous + next, current + next);
+    }
+  }
+
+  const geometry = new THREE.BufferGeometry();
+  geometry.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
+  geometry.setAttribute('uv', new THREE.Float32BufferAttribute(uvs, 2));
+  geometry.setIndex(indices);
   geometry.computeVertexNormals();
   return geometry;
 }
@@ -1809,6 +1861,46 @@ function makePatchAlphaTexture() {
   }
   ctx.globalAlpha = 1;
   return new THREE.CanvasTexture(canvas);
+}
+
+function makeGrassTexture(size = 256) {
+  const canvas = document.createElement('canvas');
+  canvas.width = size;
+  canvas.height = size;
+  const ctx = canvas.getContext('2d');
+  const base = ctx.createLinearGradient(0, 0, size, size);
+  base.addColorStop(0, '#3d773d');
+  base.addColorStop(0.45, '#4d8b44');
+  base.addColorStop(1, '#2d6336');
+  ctx.fillStyle = base;
+  ctx.fillRect(0, 0, size, size);
+
+  for (let i = 0; i < 4200; i += 1) {
+    const x = Math.random() * size;
+    const y = Math.random() * size;
+    const length = 2 + Math.random() * 5;
+    const angle = -0.55 + Math.random() * 1.1;
+    const light = Math.random();
+    ctx.strokeStyle = light > 0.62
+      ? `rgba(132, 190, 100, ${0.09 + Math.random() * 0.12})`
+      : light < 0.24
+        ? `rgba(31, 76, 39, ${0.12 + Math.random() * 0.14})`
+        : `rgba(76, 135, 62, ${0.08 + Math.random() * 0.12})`;
+    ctx.lineWidth = 0.55 + Math.random() * 0.65;
+    ctx.beginPath();
+    ctx.moveTo(x, y);
+    ctx.lineTo(x + Math.cos(angle) * length, y + Math.sin(angle) * length);
+    ctx.stroke();
+  }
+
+  for (let i = 0; i < 500; i += 1) {
+    ctx.fillStyle = `rgba(170, 204, 112, ${0.03 + Math.random() * 0.05})`;
+    ctx.fillRect(Math.random() * size, Math.random() * size, 1.2 + Math.random() * 2.4, 0.8 + Math.random() * 1.6);
+  }
+
+  const texture = new THREE.CanvasTexture(canvas);
+  texture.colorSpace = THREE.SRGBColorSpace;
+  return texture;
 }
 
 function makeNoiseTexture(colors, size = 256, dots = 1200) {
