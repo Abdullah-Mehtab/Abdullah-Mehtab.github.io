@@ -1,4 +1,4 @@
-import { canalSegments, districtFootprints, MAP_PADDING, roadSegments, WORLD_HALF_SIZE, worldZones } from '../world/worldData.js';
+import { canalSegments, districtFootprints, ISLAND_RADIUS, MAP_PADDING, roadSegments, WORLD_HALF_SIZE, worldZones } from '../world/worldData.js';
 
 export class UI {
   constructor({ game, achievements, audio }) {
@@ -431,6 +431,8 @@ export class UI {
   renderMapBase(container, mode) {
     const island = document.createElement('div');
     island.className = `${mode}-island`;
+    const span = WORLD_HALF_SIZE * 2 + MAP_PADDING * 2;
+    island.style.inset = `${((WORLD_HALF_SIZE + MAP_PADDING - ISLAND_RADIUS) / span) * 100}%`;
     container.append(island);
     for (const district of districtFootprints) {
       const patch = document.createElement('span');

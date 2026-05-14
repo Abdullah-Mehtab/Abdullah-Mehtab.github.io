@@ -326,15 +326,15 @@ body:not(.is-driving) .minimap {
 .minimap-island,
 .map-island {
   position: absolute;
-  inset: 8.5%;
+  inset: 13%;
   border: 1px solid rgba(255, 223, 138, 0.34);
   border-radius: 50%;
   background:
     linear-gradient(rgba(104, 216, 255, 0.08) 1px, transparent 1px),
     linear-gradient(90deg, rgba(104, 216, 255, 0.08) 1px, transparent 1px),
-    radial-gradient(circle at 49% 47%, rgba(54, 118, 63, 0.92) 0 58%, rgba(176, 142, 89, 0.88) 66%, rgba(20, 96, 132, 0.94) 72%, rgba(6, 36, 60, 0.96) 100%);
+    radial-gradient(circle at 49% 47%, rgba(42, 112, 54, 0.94) 0 72%, rgba(86, 148, 69, 0.92) 86%, rgba(194, 158, 92, 0.9) 91%, rgba(66, 196, 232, 0.7) 96%, rgba(6, 36, 60, 0.96) 100%);
   background-size: 9% 9%, 9% 9%, auto;
-  box-shadow: inset 0 0 32px rgba(255, 223, 138, 0.12), 0 0 28px rgba(104, 216, 255, 0.08);
+  box-shadow: inset 0 0 32px rgba(124, 255, 178, 0.12), 0 0 28px rgba(104, 216, 255, 0.08);
 }
 
 .minimap-district,
@@ -342,7 +342,7 @@ body:not(.is-driving) .minimap {
   position: absolute;
   border: 1px solid color-mix(in srgb, var(--district-color), transparent 36%);
   border-radius: 8px;
-  background: color-mix(in srgb, var(--district-color), transparent 78%);
+  background: color-mix(in srgb, var(--district-color), transparent 86%);
   transform: translate(-50%, -50%);
 }
 
@@ -359,7 +359,7 @@ body:not(.is-driving) .minimap {
 .map-road {
   position: absolute;
   border-radius: 999px;
-  background: rgba(104, 216, 255, 0.26);
+  background: rgba(30, 43, 43, 0.66);
   transform: translate(-50%, -50%);
   box-shadow: none;
 }

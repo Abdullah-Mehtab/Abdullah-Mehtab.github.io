@@ -77,22 +77,22 @@ export class Game {
     this.renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 1.8));
     this.renderer.setSize(window.innerWidth, window.innerHeight, false);
     this.renderer.shadowMap.enabled = true;
-    this.renderer.shadowMap.type = THREE.PCFShadowMap;
+    this.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
     this.renderer.outputColorSpace = THREE.SRGBColorSpace;
     this.renderer.toneMapping = THREE.ACESFilmicToneMapping;
-    this.renderer.toneMappingExposure = 1.08;
+    this.renderer.toneMappingExposure = 1.0;
   }
 
   setupScene() {
-    this.scene.background = new THREE.Color(0x8fd9ff);
-    this.scene.fog = new THREE.Fog(0xb9edff, 110, 430);
+    this.scene.background = new THREE.Color(0x75c9f4);
+    this.scene.fog = new THREE.Fog(0xbbe8f7, 135, 470);
     this.camera.position.set(0, 9, -18);
 
-    const hemi = new THREE.HemisphereLight(0xffffff, 0x2c6a35, 2.45);
+    const hemi = new THREE.HemisphereLight(0xf8fbff, 0x2b5a31, 2.05);
     this.scene.add(hemi);
 
-    const sun = new THREE.DirectionalLight(0xfff4cf, 3.25);
-    sun.position.set(-52, 72, -46);
+    const sun = new THREE.DirectionalLight(0xffe4ad, 3.45);
+    sun.position.set(-70, 66, -58);
     sun.castShadow = true;
     sun.shadow.mapSize.set(2048, 2048);
     sun.shadow.camera.left = -190;
@@ -103,8 +103,8 @@ export class Game {
     sun.shadow.camera.far = 360;
     this.scene.add(sun);
 
-    const rim = new THREE.DirectionalLight(0x8ed9ff, 0.85);
-    rim.position.set(38, 26, 42);
+    const rim = new THREE.DirectionalLight(0x9fe7ff, 0.7);
+    rim.position.set(54, 30, 54);
     this.scene.add(rim);
 
     this.lights = { hemi, sun, rim };
@@ -255,7 +255,7 @@ export class Game {
     const cycle = Math.sin(elapsed * 0.035) * 0.5 + 0.5;
     this.lights.sun.intensity = 2.7 + cycle * 0.65;
     this.lights.rim.intensity = 0.55 + (1 - cycle) * 0.5;
-    this.scene.fog.color.lerpColors(new THREE.Color(0xb9edff), new THREE.Color(0xe7f8ff), cycle * 0.32);
+    this.scene.fog.color.lerpColors(new THREE.Color(0xbbe8f7), new THREE.Color(0xf0e7c9), cycle * 0.22);
   }
 
   getZoneLines(zone) {
