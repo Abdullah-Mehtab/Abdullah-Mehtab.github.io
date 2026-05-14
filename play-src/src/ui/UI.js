@@ -1,4 +1,4 @@
-import { MAP_PADDING, roadSegments, WORLD_HALF_SIZE, worldZones } from '../world/worldData.js';
+import { canalSegments, districtFootprints, MAP_PADDING, roadSegments, WORLD_HALF_SIZE, worldZones } from '../world/worldData.js';
 
 export class UI {
   constructor({ game, achievements, audio }) {
@@ -376,7 +376,7 @@ export class UI {
 
   renderAbout() {
     const lines = [
-      'Three.js renders the island. Rapier handles the driving physics.',
+      'Three.js renders Abdullah Drive City. Rapier handles the driving physics.',
       'Resume content, project stops, contact links, and counters are connected directly to the portfolio.'
     ];
     for (const line of lines) {
@@ -432,6 +432,30 @@ export class UI {
     const island = document.createElement('div');
     island.className = `${mode}-island`;
     container.append(island);
+    for (const district of districtFootprints) {
+      const patch = document.createElement('span');
+      patch.className = `${mode}-district`;
+      const coords = worldToMap(district.center[0], district.center[1]);
+      patch.style.left = `${coords.x}%`;
+      patch.style.top = `${coords.y}%`;
+      patch.style.width = `${(district.size[0] / (WORLD_HALF_SIZE * 2 + MAP_PADDING * 2)) * 100}%`;
+      patch.style.height = `${(district.size[1] / (WORLD_HALF_SIZE * 2 + MAP_PADDING * 2)) * 100}%`;
+      patch.style.setProperty('--district-color', district.color);
+      container.append(patch);
+    }
+    for (const canal of canalSegments) {
+      for (const [x, z, width, depth, rotation = 0] of pathToSegments(canal.points, false, canal.width)) {
+        const segment = document.createElement('span');
+        segment.className = `${mode}-canal`;
+        const coords = worldToMap(x, z);
+        segment.style.left = `${coords.x}%`;
+        segment.style.top = `${coords.y}%`;
+        segment.style.width = `${(width / (WORLD_HALF_SIZE * 2 + MAP_PADDING * 2)) * 100}%`;
+        segment.style.height = `${(depth / (WORLD_HALF_SIZE * 2 + MAP_PADDING * 2)) * 100}%`;
+        segment.style.transform = `translate(-50%, -50%) rotate(${rotation}rad)`;
+        container.append(segment);
+      }
+    }
     for (const [x, z, width, depth, rotation = 0] of roadSegments) {
       const road = document.createElement('span');
       road.className = `${mode}-road`;
@@ -498,6 +522,26 @@ function worldToMap(x, z) {
     x: ((x + WORLD_HALF_SIZE + MAP_PADDING) / span) * 100,
     y: ((z + WORLD_HALF_SIZE + MAP_PADDING) / span) * 100
   };
+}
+
+function pathToSegments(points, closed, width) {
+  const segments = [];
+  const limit = closed ? points.length : points.length - 1;
+  for (let i = 0; i < limit; i += 1) {
+    const a = points[i];
+    const b = points[(i + 1) % points.length];
+    const dx = b[0] - a[0];
+    const dz = b[1] - a[1];
+    const length = Math.hypot(dx, dz);
+    segments.push([
+      (a[0] + b[0]) / 2,
+      (a[1] + b[1]) / 2,
+      width,
+      length + width * 0.64,
+      Math.atan2(dx, dz)
+    ]);
+  }
+  return segments;
 }
 
 function clear(element) {

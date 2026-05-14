@@ -18,6 +18,15 @@ def main():
     create_sakura_tree("EnvTreeSakuraLarge", mats, scale=1.08, bend=0.12)
     create_sakura_tree("EnvTreeSakuraMedium", mats, scale=0.9, bend=-0.08)
     create_sakura_tree("EnvTreeSakuraSmall", mats, scale=0.72, bend=0.04)
+    create_city_tree("EnvCityTreeNeem", mats, scale=1.0, crown="round")
+    create_city_tree("EnvCityTreeKikar", mats, scale=0.92, crown="wide")
+    create_street_light(mats)
+    create_bench(mats)
+    create_market_stall(mats)
+    create_campus_block(mats)
+    create_office_block(mats)
+    create_security_gate(mats)
+    create_archive_kiosk(mats)
     create_grass_tuft(mats)
     create_shore_rock(mats)
     create_potato_farm(mats)
@@ -72,6 +81,15 @@ def create_materials():
         "wood_dark": material("minecraft_oak_dark_lines", (0.25, 0.14, 0.07, 1), roughness=0.88),
         "potato": material("minecraft_potato_body", (0.72, 0.46, 0.18, 1), roughness=0.94),
         "potato_eye": material("minecraft_potato_eye", (0.34, 0.2, 0.08, 1), roughness=0.96),
+        "concrete": material("city_warm_concrete", (0.58, 0.61, 0.56, 1), roughness=0.82),
+        "lamp": material("warm_lamp_glow", (1.0, 0.82, 0.44, 1), metallic=0.15, roughness=0.34),
+        "canvas": material("bazaar_canvas_awning", (0.84, 0.62, 0.24, 1), roughness=0.76),
+        "campus_brick": material("campus_warm_brick", (0.58, 0.34, 0.24, 1), roughness=0.82),
+        "campus_trim": material("campus_limestone_trim", (0.76, 0.7, 0.58, 1), roughness=0.74),
+        "office_glass": material("office_blue_green_glass", (0.09, 0.2, 0.28, 0.82), metallic=0.08, roughness=0.22, alpha=0.82),
+        "office_frame": material("office_dark_frame", (0.08, 0.11, 0.13, 1), metallic=0.35, roughness=0.42),
+        "security_panel": material("security_dark_panel", (0.05, 0.12, 0.16, 1), metallic=0.12, roughness=0.55),
+        "archive_gold": material("archive_soft_gold", (0.9, 0.68, 0.3, 1), metallic=0.35, roughness=0.42),
     }
 
 
@@ -208,6 +226,106 @@ def create_sakura_tree(name, mats, scale=1.0, bend=0.0):
             scale=blob_scale,
             rotation=(0.1 * index, 0.46 * index, 0.08 * index),
         )
+
+
+def create_city_tree(name, mats, scale=1.0, crown="round"):
+    group = root(name)
+    cube("CityTree_Trunk", group, (0, 1.25 * scale, 0), (0.42 * scale, 2.5 * scale, 0.38 * scale), mats["bark"], bevel=0.03 * scale)
+    branch_specs = [
+        (-0.46, 2.35, 0.1, 0.9, 0.14, 0.14, -0.42),
+        (0.48, 2.55, -0.12, 0.9, 0.14, 0.14, 0.42),
+        (0.05, 2.8, 0.42, 0.82, 0.12, 0.12, 0.08),
+    ]
+    for index, (x, y, z, sx, sy, sz, rz) in enumerate(branch_specs):
+        cube(f"CityTree_Branch_{index}", group, (x * scale, y * scale, z * scale), (sx * scale, sy * scale, sz * scale), mats["bark"], rotation=(0.08, index * 0.7, rz), bevel=0.018 * scale)
+    if crown == "wide":
+        canopy_specs = [
+            (0, 3.25, 0, 1.18, (1.45, 0.72, 1.05), mats["leaf_mid"]),
+            (-0.82, 3.14, 0.16, 0.88, (1.15, 0.62, 0.9), mats["leaf_dark"]),
+            (0.82, 3.2, -0.12, 0.92, (1.2, 0.62, 0.92), mats["leaf_light"]),
+            (0.05, 3.72, 0.22, 0.78, (1.08, 0.6, 0.8), mats["leaf_mid"]),
+        ]
+    else:
+        canopy_specs = [
+            (0, 3.25, 0, 1.12, (1.05, 0.9, 1.05), mats["leaf_mid"]),
+            (-0.55, 3.5, 0.18, 0.78, (0.9, 0.72, 0.82), mats["leaf_dark"]),
+            (0.58, 3.46, -0.2, 0.82, (0.9, 0.72, 0.82), mats["leaf_light"]),
+            (0.04, 3.9, 0.12, 0.72, (0.82, 0.68, 0.78), mats["leaf_mid"]),
+        ]
+    for index, (x, y, z, radius, blob_scale, mat) in enumerate(canopy_specs):
+        ico(f"CityTree_Canopy_{index}", group, (x * scale, y * scale, z * scale), radius * scale, mat, scale=blob_scale, rotation=(index * 0.2, index * 0.5, 0.1))
+
+
+def create_street_light(mats):
+    group = root("EnvStreetLight")
+    cyl("StreetLight_Pole", group, (0, 2.15, 0), 0.075, 4.3, mats["concrete"], vertices=10, bevel=True)
+    cube("StreetLight_Arm", group, (0.58, 4.08, 0), (1.25, 0.1, 0.1), mats["concrete"], bevel=0.015)
+    cube("StreetLight_LampHousing", group, (1.24, 3.95, 0), (0.42, 0.2, 0.34), mats["office_frame"], bevel=0.025)
+    ico("StreetLight_Glow", group, (1.24, 3.78, 0), 0.18, mats["lamp"], scale=(1.1, 0.58, 1.0))
+
+
+def create_bench(mats):
+    group = root("EnvBench")
+    cube("Bench_Seat", group, (0, 0.58, 0), (2.6, 0.22, 0.72), mats["wood"], bevel=0.025)
+    cube("Bench_Back", group, (0, 1.0, 0.34), (2.6, 0.82, 0.18), mats["wood_dark"], bevel=0.018)
+    for x in [-1.0, 1.0]:
+        cube("Bench_Leg", group, (x, 0.28, -0.18), (0.16, 0.56, 0.16), mats["office_frame"], bevel=0.01)
+        cube("Bench_LegBack", group, (x, 0.34, 0.3), (0.16, 0.68, 0.16), mats["office_frame"], bevel=0.01)
+
+
+def create_market_stall(mats):
+    group = root("EnvMarketStall")
+    cube("Market_Counter", group, (0, 0.74, 0), (3.8, 1.48, 2.5), mats["wood"], bevel=0.035)
+    cube("Market_FrontPlank", group, (0, 1.26, -1.31), (4.0, 0.34, 0.16), mats["wood_dark"], bevel=0.018)
+    cube("Market_Awning", group, (0, 2.08, -0.1), (4.6, 0.24, 3.3), mats["canvas"], bevel=0.035)
+    for x in [-1.65, 1.65]:
+        cube("Market_Post", group, (x, 1.42, -1.12), (0.16, 2.2, 0.16), mats["wood_dark"], bevel=0.012)
+        cube("Market_BackPost", group, (x, 1.42, 1.0), (0.16, 2.2, 0.16), mats["wood_dark"], bevel=0.012)
+    for x in [-1.0, 0.0, 1.0]:
+        cube("Market_Crate", group, (x, 1.62, -1.02), (0.7, 0.28, 0.54), mats["potato"], bevel=0.018)
+
+
+def create_campus_block(mats):
+    group = root("EnvCampusBlock")
+    cube("Campus_Base", group, (0, 0.35, 0), (11.5, 0.7, 13.0), mats["campus_trim"], bevel=0.035)
+    cube("Campus_Main", group, (0, 3.4, 0), (9.8, 6.4, 10.8), mats["campus_brick"], bevel=0.045)
+    cube("Campus_RoofTrim", group, (0, 6.82, 0), (10.6, 0.42, 11.6), mats["campus_trim"], bevel=0.025)
+    for x in [-3.4, -1.7, 0, 1.7, 3.4]:
+        cube("Campus_Column", group, (x, 2.8, -5.55), (0.34, 4.5, 0.34), mats["campus_trim"], bevel=0.018)
+        cube("Campus_Window", group, (x, 4.1, -5.62), (0.76, 1.1, 0.08), mats["office_glass"], bevel=0.01)
+    cube("Campus_Door", group, (0, 1.38, -5.64), (1.35, 2.1, 0.1), mats["office_frame"], bevel=0.012)
+
+
+def create_office_block(mats):
+    group = root("EnvOfficeBlock")
+    cube("Office_Podium", group, (0, 0.55, 0), (11.5, 1.1, 9.4), mats["concrete"], bevel=0.035)
+    cube("Office_Tower", group, (0, 7.4, 0), (8.5, 13.4, 7.2), mats["office_glass"], bevel=0.04)
+    for x in [-3.2, -1.6, 0, 1.6, 3.2]:
+        cube("Office_Mullion_Front", group, (x, 7.4, -3.68), (0.08, 12.8, 0.1), mats["office_frame"], bevel=0.006)
+        cube("Office_Mullion_Back", group, (x, 7.4, 3.68), (0.08, 12.8, 0.1), mats["office_frame"], bevel=0.006)
+    for y in [3.5, 6.2, 8.9, 11.6]:
+        cube("Office_HorizontalBand", group, (0, y, -3.72), (8.8, 0.12, 0.12), mats["office_frame"], bevel=0.004)
+    cube("Office_RoofSign", group, (0, 14.35, -3.9), (6.2, 0.65, 0.16), mats["lamp"], bevel=0.012)
+
+
+def create_security_gate(mats):
+    group = root("EnvSecurityGate")
+    cube("Security_Base", group, (0, 0.35, 0), (10.4, 0.7, 7.2), mats["concrete"], bevel=0.035)
+    cube("Security_Left", group, (-3.25, 2.65, 0), (2.1, 4.6, 5.6), mats["security_panel"], bevel=0.035)
+    cube("Security_Right", group, (3.25, 2.65, 0), (2.1, 4.6, 5.6), mats["security_panel"], bevel=0.035)
+    cube("Security_Bridge", group, (0, 5.0, 0), (8.2, 1.0, 5.0), mats["office_glass"], bevel=0.03)
+    for x in [-4.5, 4.5]:
+        cyl("Security_Antenna", group, (x, 6.9, 0), 0.06, 2.2, mats["lamp"], vertices=8)
+    cube("Security_GlowLine", group, (0, 4.25, -2.9), (8.6, 0.12, 0.12), mats["lamp"], bevel=0.006)
+
+
+def create_archive_kiosk(mats):
+    group = root("EnvArchiveKiosk")
+    cyl("Archive_Base", group, (0, 0.35, 0), 3.2, 0.7, mats["concrete"], vertices=20, bevel=True)
+    cube("Archive_Core", group, (0, 2.2, 0), (4.8, 3.4, 4.8), mats["campus_trim"], bevel=0.04)
+    cone("Archive_Roof", group, (0, 4.25, 0), 3.2, 0.8, 1.4, mats["archive_gold"], vertices=6)
+    for angle in [0, math.pi / 2, math.pi, math.pi * 1.5]:
+        cube("Archive_Window", group, (math.sin(angle) * 2.45, 2.35, math.cos(angle) * 2.45), (0.86, 1.0, 0.1), mats["office_glass"], rotation=(0, angle, 0), bevel=0.01)
 
 
 def create_grass_tuft(mats):
