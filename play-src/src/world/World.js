@@ -1,17 +1,35 @@
 import * as THREE from 'three';
-import { boostPads, circuitCheckpoints, roadPaths, roadSegments, WORLD_HALF_SIZE, worldZones } from './worldData.js';
+import {
+  boostPads,
+  canalSegments,
+  circuitCheckpoints,
+  districtFootprints,
+  roadPaths,
+  roadSegments,
+  scenicPropZones,
+  WORLD_HALF_SIZE,
+  worldZones
+} from './worldData.js';
 
-const OCEAN_HALF_SIZE = 520;
-const OCEAN_Y = -3.35;
-const ISLAND_RADIUS = 214;
+const WATER_Y = -0.18;
 const ROAD_LINE_COLOR = 0x68d8ff;
 const tmpColor = new THREE.Color();
 const QUALITY_PROFILES = {
-  low: { trees: 34, grassTufts: 64, petals: 60, clouds: 10 },
-  medium: { trees: 54, grassTufts: 150, petals: 160, clouds: 18 },
-  high: { trees: 76, grassTufts: 280, petals: 340, clouds: 30 }
+  low: { trees: 42, grassTufts: 80, petals: 70, clouds: 10, streetProps: 30 },
+  medium: { trees: 72, grassTufts: 170, petals: 170, clouds: 18, streetProps: 56 },
+  high: { trees: 108, grassTufts: 320, petals: 360, clouds: 30, streetProps: 88 }
 };
 const QUALITY_ORDER = ['low', 'medium', 'high'];
+const ROAD_STYLE = {
+  ring: { shoulder: 2.2, sidewalk: 2.4, line: 0xffdf8a },
+  boulevard: { shoulder: 2.4, sidewalk: 2.8, line: 0x7cffb2 },
+  canal: { shoulder: 1.7, sidewalk: 1.8, line: 0x68d8ff },
+  avenue: { shoulder: 1.8, sidewalk: 2.0, line: 0x9ccfff },
+  street: { shoulder: 1.3, sidewalk: 1.2, line: 0xd8ff92 },
+  stunt: { shoulder: 1.6, sidewalk: 0.8, line: 0xff9b6d },
+  dirt: { shoulder: 1.0, sidewalk: 0, line: 0xc79b56 },
+  bridge: { shoulder: 2.0, sidewalk: 1.8, line: 0xe6f3ff }
+};
 
 export class World {
   constructor({ scene, physics, resumeData, environmentAssets }) {
@@ -44,7 +62,7 @@ export class World {
     this.createMaterials();
     this.createSky();
     this.createGround();
-    this.createIslandEdges();
+    this.createCityBoundary();
     this.createRoads();
     this.createCircuit();
     this.createZones();
@@ -135,7 +153,12 @@ export class World {
     this.materials.neonBlue = new THREE.MeshBasicMaterial({ color: 0x68d8ff, transparent: true, opacity: 0.82 });
     this.materials.neonGreen = new THREE.MeshBasicMaterial({ color: 0x7cffb2, transparent: true, opacity: 0.82 });
     this.materials.neonRed = new THREE.MeshBasicMaterial({ color: 0xff4466, transparent: true, opacity: 0.82 });
-    this.materials.water = makeWaterMaterial(ISLAND_RADIUS);
+    this.materials.water = makeCanalWaterMaterial();
+    this.materials.canalBank = new THREE.MeshStandardMaterial({ color: 0x576b61, roughness: 0.86, metalness: 0.03 });
+    this.materials.sidewalk = new THREE.MeshStandardMaterial({ color: 0x8b9188, roughness: 0.82, metalness: 0.04 });
+    this.materials.plaza = new THREE.MeshStandardMaterial({ color: 0x5f7068, roughness: 0.78, metalness: 0.04 });
+    this.materials.dirtRoad = new THREE.MeshStandardMaterial({ color: 0x8a6339, roughness: 0.94, metalness: 0.01 });
+    this.materials.marketCanvas = new THREE.MeshStandardMaterial({ color: 0xc9a45d, roughness: 0.72, metalness: 0.02 });
     this.materials.patchAlpha = patchAlpha;
     this.materials.glass = new THREE.MeshPhysicalMaterial({
       color: 0x8fe8ff,
@@ -207,24 +230,16 @@ export class World {
   }
 
   createGround() {
-    const water = new THREE.Mesh(
-      new THREE.PlaneGeometry(OCEAN_HALF_SIZE * 2, OCEAN_HALF_SIZE * 2, 48, 48),
-      this.materials.water
-    );
-    water.rotation.x = -Math.PI / 2;
-    water.position.y = OCEAN_Y;
-    water.renderOrder = -20;
-    this.scene.add(water);
-    this.decor.push({ type: 'ocean', mesh: water, phase: 0 });
-
-    const groundGeometry = new THREE.CircleGeometry(ISLAND_RADIUS, 144);
+    this.createOutskirtsPlane();
+    const groundGeometry = new THREE.PlaneGeometry(WORLD_HALF_SIZE * 2, WORLD_HALF_SIZE * 2, 112, 112);
     const positions = groundGeometry.attributes.position;
     for (let i = 0; i < positions.count; i += 1) {
       const x = positions.getX(i);
       const y = positions.getY(i);
-      const distance = Math.hypot(x, y);
-      const shoreDrop = THREE.MathUtils.smoothstep(distance, ISLAND_RADIUS - 22, ISLAND_RADIUS) * -0.34;
-      const height = Math.sin(x * 0.045) * 0.055 + Math.cos(y * 0.035) * 0.045 + Math.sin((x + y) * 0.018) * 0.06 + shoreDrop;
+      const height =
+        Math.sin(x * 0.032) * 0.045 +
+        Math.cos(y * 0.028) * 0.04 +
+        Math.sin((x - y) * 0.016) * 0.035;
       positions.setZ(i, height);
     }
     groundGeometry.computeVertexNormals();
@@ -233,131 +248,164 @@ export class World {
     ground.position.y = -0.02;
     ground.receiveShadow = true;
     this.scene.add(ground);
-    this.physics.createFixedBox([0, -0.16, 0], [ISLAND_RADIUS * 2, 0.24, ISLAND_RADIUS * 2], { friction: 1 });
+    this.physics.createFixedBox([0, -0.16, 0], [WORLD_HALF_SIZE * 2, 0.24, WORLD_HALF_SIZE * 2], { friction: 1 });
 
-    const patchData = [
-      [-118, 0, 118, 52, 34, -0.18, this.materials.leafLight],
-      [96, 0, 126, 60, 32, 0.14, this.materials.leafLight],
-      [-118, 0, -102, 54, 28, 0.2, this.materials.sand],
-      [122, 0, -128, 44, 24, -0.12, this.materials.sand],
-      [-18, 0, -138, 68, 22, 0.06, this.materials.leafLight],
-      [132, 0, 58, 38, 24, -0.28, this.materials.leafLight],
-      [18, 0, 18, 56, 34, 0.04, this.materials.leafLight],
-      [56, 0, 30, 34, 18, -0.22, this.materials.leafLight],
-      [105, 0, 154, 44, 26, -0.08, this.materials.leafLight]
-    ];
-    for (const [x, y, z, width, depth, rotation, material] of patchData) {
-      const patchMaterial = material.clone();
-      patchMaterial.transparent = true;
-      patchMaterial.opacity = material === this.materials.sand ? 0.72 : 0.42;
-      patchMaterial.alphaMap = this.materials.patchAlpha;
-      patchMaterial.depthWrite = false;
-      patchMaterial.needsUpdate = true;
-      const patch = new THREE.Mesh(makeOrganicPatchGeometry(width, depth, x * 0.17 + z * 0.31), patchMaterial);
-      patch.position.set(x, y + 0.04, z);
-      patch.rotation.x = -Math.PI / 2;
-      patch.rotation.z = rotation;
-      patch.receiveShadow = true;
-      this.scene.add(patch);
+    this.createCanal();
+    for (const district of districtFootprints) {
+      this.addDistrictPatch(district);
     }
-
-    const beachMaterial = this.materials.sand.clone();
-    beachMaterial.transparent = true;
-    beachMaterial.opacity = 0.88;
-    const beach = new THREE.Mesh(new THREE.RingGeometry(ISLAND_RADIUS - 24, ISLAND_RADIUS - 2, 144), beachMaterial);
-    beach.rotation.x = -Math.PI / 2;
-    beach.position.y = 0.07;
-    beach.receiveShadow = true;
-    this.scene.add(beach);
-
-    const wetSandMaterial = this.materials.sand.clone();
-    wetSandMaterial.color.set(0x8f7a5a);
-    wetSandMaterial.transparent = true;
-    wetSandMaterial.opacity = 0.7;
-    const wetSand = new THREE.Mesh(new THREE.RingGeometry(ISLAND_RADIUS - 5, ISLAND_RADIUS + 2.4, 144), wetSandMaterial);
-    wetSand.rotation.x = -Math.PI / 2;
-    wetSand.position.y = 0.075;
-    this.scene.add(wetSand);
+    for (const zone of scenicPropZones) {
+      this.addScenicPatch(zone);
+    }
   }
 
-  createIslandEdges() {
-    const segmentCount = 88;
-    const segmentLength = (Math.PI * 2 * (ISLAND_RADIUS + 1.8)) / segmentCount * 1.08;
-    const edgeHeight = 1.15;
-    const edgeThickness = 3.8;
-    const barrierMaterial = new THREE.MeshStandardMaterial({
-      color: 0x7f8b89,
-      roughness: 0.78,
-      metalness: 0.05
-    });
-    const foamMaterial = new THREE.MeshBasicMaterial({ color: 0xcdf7ff, transparent: true, opacity: 0.42, depthWrite: false });
+  createOutskirtsPlane() {
+    const material = this.materials.ground.clone();
+    material.color = new THREE.Color(0x2e6539);
+    material.map = this.materials.ground.map;
+    material.opacity = 0.72;
+    const plane = new THREE.Mesh(new THREE.PlaneGeometry(WORLD_HALF_SIZE * 3.4, WORLD_HALF_SIZE * 3.4), material);
+    plane.rotation.x = -Math.PI / 2;
+    plane.position.y = -0.09;
+    plane.receiveShadow = true;
+    this.scene.add(plane);
+  }
 
-    for (let i = 0; i < segmentCount; i += 1) {
-      const angle = (i / segmentCount) * Math.PI * 2;
-      const x = Math.cos(angle) * (ISLAND_RADIUS + 2.2);
-      const z = Math.sin(angle) * (ISLAND_RADIUS + 2.2);
-      const rotationY = -angle - Math.PI / 2;
-      this.physics.createFixedBox([x, edgeHeight / 2 - 0.25, z], [segmentLength, edgeHeight, edgeThickness], {
-        rotation: [0, rotationY, 0],
+  createCanal() {
+    for (const canal of canalSegments) {
+      const segments = makePathSegments(canal.points, false, canal.width);
+      for (const [x, z, width, depth, rotation] of segments) {
+        const water = new THREE.Mesh(new THREE.BoxGeometry(width, 0.08, depth), this.materials.water);
+        water.position.set(x, WATER_Y, z);
+        water.rotation.y = rotation;
+        water.receiveShadow = false;
+        this.scene.add(water);
+        this.decor.push({ type: 'canalWater', mesh: water, phase: Math.random() * 6 });
+
+        const bankOffset = width * 0.5 + canal.bankWidth * 0.5;
+        const cos = Math.cos(rotation);
+        const sin = Math.sin(rotation);
+        for (const side of [-1, 1]) {
+          const bank = new THREE.Mesh(
+            new THREE.BoxGeometry(canal.bankWidth, 0.12, depth + 2.5),
+            this.materials.canalBank
+          );
+          bank.position.set(x + cos * bankOffset * side, 0.03, z - sin * bankOffset * side);
+          bank.rotation.y = rotation;
+          bank.receiveShadow = true;
+          this.scene.add(bank);
+
+          const rail = new THREE.Mesh(
+            new THREE.BoxGeometry(0.18, 0.72, depth + 1.5),
+            this.materials.sidewalk
+          );
+          rail.position.set(x + cos * (bankOffset + canal.bankWidth * 0.45) * side, 0.42, z - sin * (bankOffset + canal.bankWidth * 0.45) * side);
+          rail.rotation.y = rotation;
+          rail.castShadow = true;
+          rail.receiveShadow = true;
+          this.scene.add(rail);
+        }
+      }
+    }
+  }
+
+  addDistrictPatch(district) {
+    const [x, z] = district.center;
+    const [width, depth] = district.size;
+    const color = new THREE.Color(district.color);
+    const material = this.materials.plaza.clone();
+    material.color.copy(color).lerp(new THREE.Color(0x33443a), district.kind === 'plaza' ? 0.55 : 0.74);
+    material.transparent = true;
+    material.opacity = district.kind === 'farm' ? 0.5 : 0.42;
+    material.alphaMap = this.materials.patchAlpha;
+    material.depthWrite = false;
+    const patch = new THREE.Mesh(makeOrganicPatchGeometry(width, depth, x * 0.13 + z * 0.21), material);
+    patch.position.set(x, 0.052, z);
+    patch.rotation.x = -Math.PI / 2;
+    patch.rotation.z = district.kind === 'business' ? -0.08 : district.kind === 'campus' ? 0.12 : 0;
+    patch.receiveShadow = true;
+    this.scene.add(patch);
+  }
+
+  addScenicPatch(zone) {
+    const [x, z] = zone.center;
+    const [width, depth] = zone.size;
+    const material = (zone.kind === 'farm' ? this.materials.dirtRoad : this.materials.leafLight).clone();
+    material.transparent = true;
+    material.opacity = zone.kind === 'market' ? 0.34 : 0.46;
+    material.alphaMap = this.materials.patchAlpha;
+    material.depthWrite = false;
+    const patch = new THREE.Mesh(makeOrganicPatchGeometry(width, depth, x * 0.19 + z * 0.17), material);
+    patch.position.set(x, 0.06, z);
+    patch.rotation.x = -Math.PI / 2;
+    patch.rotation.z = (pseudoRandom(x + z) - 0.5) * 0.28;
+    this.scene.add(patch);
+  }
+
+  createCityBoundary() {
+    const barrierHeight = 3.2;
+    const barrierThickness = 4.5;
+    const limit = WORLD_HALF_SIZE + barrierThickness / 2;
+    const walls = [
+      [0, limit, WORLD_HALF_SIZE * 2.1, barrierThickness],
+      [0, -limit, WORLD_HALF_SIZE * 2.1, barrierThickness],
+      [limit, 0, barrierThickness, WORLD_HALF_SIZE * 2.1],
+      [-limit, 0, barrierThickness, WORLD_HALF_SIZE * 2.1]
+    ];
+    for (const [x, z, width, depth] of walls) {
+      this.physics.createFixedBox([x, barrierHeight / 2 - 0.35, z], [width, barrierHeight, depth], {
         friction: 0.88,
         restitution: 0.0
       });
     }
 
-    const seawall = new THREE.Mesh(
-      new THREE.RingGeometry(ISLAND_RADIUS + 1.0, ISLAND_RADIUS + 4.2, 144),
-      barrierMaterial
-    );
-    seawall.rotation.x = -Math.PI / 2;
-    seawall.position.y = -0.16;
-    seawall.receiveShadow = true;
-    this.scene.add(seawall);
-
-    const foam = new THREE.Mesh(new THREE.RingGeometry(ISLAND_RADIUS + 3.2, ISLAND_RADIUS + 8.4, 144), foamMaterial);
-    foam.rotation.x = -Math.PI / 2;
-    foam.position.y = OCEAN_Y + 0.11;
-    this.scene.add(foam);
-    this.decor.push({ type: 'shoreFoam', mesh: foam, phase: 0 });
-
-    const buoyMaterialA = new THREE.MeshBasicMaterial({ color: 0xffdf8a, transparent: true, opacity: 0.82 });
-    const buoyMaterialB = new THREE.MeshBasicMaterial({ color: 0xff6d8d, transparent: true, opacity: 0.82 });
-    for (let i = 0; i < 34; i += 1) {
-      const angle = (i / 34) * Math.PI * 2 + 0.08 * Math.sin(i * 1.7);
-      const radius = ISLAND_RADIUS + 17 + pseudoRandom(i * 41) * 8;
-      const buoy = new THREE.Mesh(new THREE.CylinderGeometry(0.52, 0.7, 1.5, 10), i % 2 ? buoyMaterialA : buoyMaterialB);
-      buoy.position.set(Math.cos(angle) * radius, -1.2, Math.sin(angle) * radius);
-      buoy.castShadow = true;
-      this.scene.add(buoy);
-      this.decor.push({ type: 'buoy', mesh: buoy, phase: i * 0.5 });
+    const skylineMaterial = new THREE.MeshStandardMaterial({ color: 0x6f7d82, roughness: 0.72, metalness: 0.06 });
+    const glassMaterial = new THREE.MeshStandardMaterial({ color: 0x24394d, roughness: 0.42, metalness: 0.28, emissive: 0x071828, emissiveIntensity: 0.08 });
+    for (let i = 0; i < 68; i += 1) {
+      const side = i % 4;
+      const t = -WORLD_HALF_SIZE + 22 + (Math.floor(i / 4) * 24 + pseudoRandom(i * 13) * 12) % (WORLD_HALF_SIZE * 2 - 44);
+      const edge = WORLD_HALF_SIZE + 58 + pseudoRandom(i * 11) * 22;
+      const x = side === 0 ? t : side === 1 ? edge : side === 2 ? t : -edge;
+      const z = side === 0 ? edge : side === 1 ? t : side === 2 ? -edge : t;
+      const height = 5 + pseudoRandom(i * 17) * 17;
+      const width = 4 + pseudoRandom(i * 19) * 6;
+      const depth = 4 + pseudoRandom(i * 23) * 6;
+      const building = new THREE.Mesh(
+        new THREE.BoxGeometry(width, height, depth),
+        i % 5 === 0 ? glassMaterial.clone() : skylineMaterial.clone()
+      );
+      building.position.set(x, height / 2 - 0.15, z);
+      building.castShadow = true;
+      building.receiveShadow = true;
+      this.scene.add(building);
     }
 
-    const rockMaterial = new THREE.MeshStandardMaterial({ color: 0x52616f, roughness: 0.84, metalness: 0.04 });
-    for (let i = 0; i < 86; i += 1) {
-      const angle = (i / 86) * Math.PI * 2 + (pseudoRandom(i * 13) - 0.5) * 0.09;
-      const radius = ISLAND_RADIUS - 16 + pseudoRandom(i * 17) * 12;
-      const rock = this.cloneEnvironmentAsset('EnvShoreRock') || new THREE.Mesh(
-        new THREE.DodecahedronGeometry(0.75 + (i % 5) * 0.22, 0),
-        rockMaterial
-      );
-      rock.position.set(Math.cos(angle) * radius, 0.23 + pseudoRandom(i * 31) * 0.12, Math.sin(angle) * radius);
-      rock.rotation.set(pseudoRandom(i * 7) * 0.6, pseudoRandom(i * 11) * Math.PI * 2, pseudoRandom(i * 19) * 0.6);
-      const scale = 0.55 + (i % 5) * 0.16 + pseudoRandom(i * 23) * 0.24;
-      rock.scale.set(scale * (0.9 + pseudoRandom(i * 29) * 0.5), scale * 0.55, scale);
-      rock.castShadow = true;
-      rock.receiveShadow = true;
-      this.scene.add(rock);
+    for (let i = 0; i < 36; i += 1) {
+      const side = i % 4;
+      const t = -WORLD_HALF_SIZE + 18 + Math.floor(i / 4) * 42;
+      const x = side === 0 ? t : side === 1 ? WORLD_HALF_SIZE - 8 : side === 2 ? t : -WORLD_HALF_SIZE + 8;
+      const z = side === 0 ? WORLD_HALF_SIZE - 8 : side === 1 ? t : side === 2 ? -WORLD_HALF_SIZE + 8 : t;
+      if (!this.isClearForProp(x, z, 5)) continue;
+      const tree = this.cloneEnvironmentAsset(i % 2 ? 'EnvCityTreeNeem' : 'EnvCityTreeKikar') || this.createFallbackTree();
+      tree.position.set(x, 0, z);
+      tree.rotation.y = pseudoRandom(i * 31) * Math.PI * 2;
+      tree.scale.setScalar(0.8 + pseudoRandom(i * 37) * 0.45);
+      this.scene.add(tree);
+      this.decor.push({ type: 'tree', mesh: tree, phase: i * 0.3 });
     }
   }
 
   createRoads() {
-    for (const road of roadSegments) {
-      this.addRoad(...road);
-    }
     for (const path of roadPaths) {
+      for (const road of makePathSegments(path.points, path.closed, path.width)) {
+        this.addRoad(...road, path);
+      }
       for (const point of path.points) {
+        if (path.hierarchy === 'dirt') continue;
+        const style = ROAD_STYLE[path.hierarchy] || ROAD_STYLE.street;
         const node = new THREE.Group();
         const shoulder = new THREE.Mesh(
-          new THREE.CylinderGeometry(path.width * 0.72, path.width * 0.72, 0.075, 48),
+          new THREE.CylinderGeometry(path.width * 0.72 + style.shoulder, path.width * 0.72 + style.shoulder, 0.075, 48),
           this.materials.edge
         );
         shoulder.position.y = -0.03;
@@ -369,17 +417,27 @@ export class World {
         asphalt.position.y = 0.025;
         asphalt.receiveShadow = true;
         node.add(shoulder, asphalt);
+        if (style.sidewalk > 0.1) {
+          const curb = new THREE.Mesh(
+            new THREE.TorusGeometry(path.width * 0.68 + style.shoulder * 0.45, 0.08, 8, 64),
+            this.materials.sidewalk
+          );
+          curb.rotation.x = Math.PI / 2;
+          curb.position.y = 0.09;
+          node.add(curb);
+        }
         node.position.set(point[0], 0.155, point[1]);
         this.scene.add(node);
       }
     }
   }
 
-  addRoad(x, z, width, depth, rotation = 0) {
+  addRoad(x, z, width, depth, rotation = 0, path = {}) {
+    const style = ROAD_STYLE[path.hierarchy] || ROAD_STYLE.street;
     const group = new THREE.Group();
     group.position.set(x, 0.15, z);
     group.rotation.y = rotation;
-    const roadModel = this.cloneEnvironmentAsset('EnvRoadSegment');
+    const roadModel = path.hierarchy === 'dirt' ? null : this.cloneEnvironmentAsset('EnvRoadSegment');
     if (roadModel) {
       roadModel.scale.set(width, 1, depth);
       roadModel.traverse((object) => {
@@ -390,23 +448,62 @@ export class World {
       });
       group.add(roadModel);
     } else {
-      const shoulder = new THREE.Mesh(new THREE.BoxGeometry(width + 1.35, 0.05, depth + 1.35), this.materials.edge);
+      const shoulderMaterial = path.hierarchy === 'dirt' ? this.materials.dirtRoad : this.materials.edge;
+      const roadMaterial = path.hierarchy === 'dirt' ? this.materials.dirtRoad : this.materials.road;
+      const shoulder = new THREE.Mesh(new THREE.BoxGeometry(width + style.shoulder * 2, 0.05, depth + style.shoulder * 2), shoulderMaterial);
       shoulder.position.y = -0.035;
       shoulder.receiveShadow = true;
       group.add(shoulder);
 
-      const mesh = new THREE.Mesh(new THREE.BoxGeometry(width, 0.09, depth), this.materials.road);
+      const mesh = new THREE.Mesh(new THREE.BoxGeometry(width, 0.09, depth), roadMaterial);
       mesh.receiveShadow = true;
       group.add(mesh);
+    }
+    if (style.sidewalk > 0.1) {
+      const vertical = depth > width;
+      const sidewalkMaterial = this.materials.sidewalk.clone();
+      sidewalkMaterial.color.offsetHSL(0, 0, path.hierarchy === 'bridge' ? 0.08 : 0);
+      for (const side of [-1, 1]) {
+        const sidewalk = new THREE.Mesh(
+          new THREE.BoxGeometry(
+            vertical ? style.sidewalk : width + style.shoulder * 2,
+            0.11,
+            vertical ? depth + style.shoulder * 2 : style.sidewalk
+          ),
+          sidewalkMaterial
+        );
+        sidewalk.position.set(
+          vertical ? side * (width * 0.5 + style.shoulder + style.sidewalk * 0.5) : 0,
+          0.035,
+          vertical ? 0 : side * (depth * 0.5 + style.shoulder + style.sidewalk * 0.5)
+        );
+        sidewalk.receiveShadow = true;
+        group.add(sidewalk);
+      }
+    }
+    if (path.hierarchy === 'bridge') {
+      const guardMaterial = new THREE.MeshStandardMaterial({ color: 0xaeb8b6, roughness: 0.68, metalness: 0.08 });
+      const vertical = depth > width;
+      for (const side of [-1, 1]) {
+        const rail = new THREE.Mesh(
+          new THREE.BoxGeometry(vertical ? 0.24 : width + 1.2, 0.85, vertical ? depth + 1.2 : 0.24),
+          guardMaterial
+        );
+        rail.position.set(vertical ? side * (width * 0.5 + 1.1) : 0, 0.48, vertical ? 0 : side * (depth * 0.5 + 1.1));
+        rail.castShadow = true;
+        rail.receiveShadow = true;
+        group.add(rail);
+      }
     }
     this.scene.add(group);
 
     const vertical = depth > width;
     const count = Math.max(2, vertical ? Math.floor(depth / 8) : Math.floor(width / 8));
     for (let i = 0; i < count; i += 1) {
+      if (path.hierarchy === 'dirt') break;
       const dash = new THREE.Mesh(
         new THREE.BoxGeometry(vertical ? 0.14 : 2.3, 0.09, vertical ? 2.3 : 0.14),
-        this.materials.roadLine.clone()
+        new THREE.MeshBasicMaterial({ color: style.line, transparent: true, opacity: 0.5 })
       );
       const t = count <= 1 ? 0 : i / (count - 1) - 0.5;
       dash.position.set(vertical ? 0 : t * width, 0.08, vertical ? t * depth : 0);
@@ -453,10 +550,9 @@ export class World {
       emissiveIntensity: 0.15
     });
     const rampData = [
-      { position: [0, 0.46, 68], rotation: [-0.34, 0, 0], size: [12, 0.72, 18], color: 0x7cffb2 },
-      { position: [132, 0.46, -112], rotation: [-0.42, 0, 0], size: [13, 0.8, 19], color: 0xff9b6d },
-      { position: [112, 0.46, -132], rotation: [-0.34, Math.PI / 2, 0], size: [11, 0.72, 18], color: 0xa8a6ff },
-      { position: [-132, 0.46, -112], rotation: [-0.28, 0, 0], size: [10, 0.65, 16], color: 0x79ffc5 }
+      { position: [120, 0.46, -138], rotation: [-0.32, Math.PI / 2 - 0.28, 0], size: [10, 0.72, 17], color: 0xff9b6d },
+      { position: [146, 0.46, -148], rotation: [-0.38, -0.24, 0], size: [11, 0.76, 18], color: 0xffdf8a },
+      { position: [158, 0.46, -124], rotation: [-0.28, -Math.PI / 2 + 0.2, 0], size: [9, 0.64, 15], color: 0xa8a6ff }
     ];
 
     for (const item of rampData) {
@@ -512,6 +608,7 @@ export class World {
     const group = new THREE.Group();
     const position = new THREE.Vector3(...definition.position);
     group.position.copy(position);
+    group.rotation.y = definition.rotation || 0;
     const color = new THREE.Color(definition.color);
     const baseMaterial = new THREE.MeshStandardMaterial({
       color: tmpColor.copy(color).lerp(new THREE.Color(0x24313b), 0.68),
@@ -544,7 +641,7 @@ export class World {
       this.physics.createFixedBox(
         [position.x, colliderSize[1] / 2, position.z],
         colliderSize,
-        { friction: 0.88, restitution: 0.08 }
+        { rotation: [0, definition.rotation || 0, 0], friction: 0.88, restitution: 0.08 }
       );
     }
 
@@ -867,16 +964,58 @@ export class World {
     const quality = this.getQualityProfile();
     this.sakuraTrees = [];
     this.grassTufts = [];
+    this.createDistrictProps();
+    this.createStreetProps(quality);
+    this.placeCityTrees(quality);
+    this.placeGrassTufts(quality);
+    this.createSakuraPetals();
+    this.applyLandscapeQuality();
+  }
+
+  createDistrictProps() {
     const crateMaterial = new THREE.MeshStandardMaterial({ color: 0x7d5a40, roughness: 0.78, metalness: 0.05 });
     const metalMaterial = new THREE.MeshStandardMaterial({ color: 0x3d4b57, roughness: 0.42, metalness: 0.55 });
-    const positions = [
-      [-92, 0.8, 46], [-98, 0.8, 50], [98, 0.8, 46], [116, 0.8, -12],
-      [12, 0.8, 36], [-13, 0.8, -46], [136, 0.8, -126], [142, 0.8, -136],
-      [5, 0.8, -132], [-7, 0.8, -135], [-118, 0.8, -124], [-142, 0.8, -132],
-      [74, 0.8, 86], [-74, 0.8, 86], [44, 0.8, -84], [-44, 0.8, -84],
-      [0, 0.8, 122], [0, 0.8, -148]
+
+    const plannedModels = [
+      ['EnvCampusBlock', -150, 122, 0.2, 1.05, [11, 8, 14]],
+      ['EnvCampusBlock', -102, 124, -0.14, 0.88, [10, 7, 12]],
+      ['EnvOfficeBlock', 112, -20, -0.08, 1.1, [12, 15, 10]],
+      ['EnvOfficeBlock', 74, -52, 0.18, 0.9, [10, 12, 9]],
+      ['EnvSecurityGate', -152, -18, Math.PI / 2 + 0.05, 1.0, [9, 6, 8]],
+      ['EnvArchiveKiosk', -64, 78, -0.2, 1.0, [7, 5, 7]],
+      ['EnvArchiveKiosk', 18, 92, 0.24, 0.86, [6, 4, 6]]
     ];
-    positions.forEach((position, index) => {
+    for (const [asset, x, z, rotation, scale, collider] of plannedModels) {
+      const model = this.cloneEnvironmentAsset(asset) || this.createFallbackDistrictModel(asset);
+      model.position.set(x, 0, z);
+      model.rotation.y = rotation;
+      model.scale.setScalar(scale);
+      this.scene.add(model);
+      this.physics.createFixedBox([x, collider[1] * scale * 0.5, z], collider.map((value) => value * scale), {
+        rotation: [0, rotation, 0],
+        friction: 0.86,
+        restitution: 0.04
+      });
+    }
+
+    const stallPositions = [
+      [26, 96, -0.25], [45, 94, -0.12], [66, 88, 0.16], [88, 76, 0.32],
+      [-138, 132, 0.42], [-116, 132, -0.28], [152, 142, -0.72]
+    ];
+    for (const [x, z, rotation] of stallPositions) {
+      const stall = this.cloneEnvironmentAsset('EnvMarketStall') || this.createFallbackMarketStall();
+      stall.position.set(x, 0, z);
+      stall.rotation.y = rotation;
+      stall.scale.setScalar(0.92);
+      this.scene.add(stall);
+      this.physics.createFixedBox([x, 1.2, z], [4.4, 2.4, 3.1], { rotation: [0, rotation, 0], friction: 0.86, restitution: 0.04 });
+    }
+
+    const cratePositions = [
+      [126, 0.8, -132], [132, 0.8, -138], [150, 0.8, -126],
+      [156, 0.8, -154], [118, 0.8, -158], [168, 0.8, -138]
+    ];
+    cratePositions.forEach((position, index) => {
       const size = index % 3 === 0 ? [1.4, 1.4, 1.4] : [1.1, 1.1, 1.1];
       const mesh = new THREE.Mesh(new THREE.BoxGeometry(...size), index % 2 ? metalMaterial : crateMaterial);
       mesh.position.set(...position);
@@ -886,82 +1025,77 @@ export class World {
       const body = this.physics.createDynamicBox(position, size, { density: 0.35, restitution: 0.24 });
       this.physics.bindVisual(body, mesh);
     });
+  }
 
-    const houseData = [
-      [-140, 112, 0.15, 0x7b4a37],
-      [-112, 142, -0.25, 0x52616f],
-      [75, 126, 0.35, 0x7b5f4d],
-      [128, 82, -0.2, 0x5b6f7f],
-      [-92, -102, 0.42, 0x7b4a37],
-      [116, -98, -0.32, 0x52616f]
-    ];
-    for (const [x, z, rotation, color] of houseData) {
-      const group = new THREE.Group();
-      group.position.set(x, 0, z);
-      group.rotation.y = rotation;
-      const body = new THREE.Mesh(
-        new THREE.BoxGeometry(4.6, 2.6, 4.1),
-        new THREE.MeshStandardMaterial({ color, roughness: 0.78, metalness: 0.04 })
-      );
-      body.position.y = 1.3;
-      body.castShadow = true;
-      group.add(body);
-      const roof = new THREE.Mesh(new THREE.ConeGeometry(3.35, 1.55, 4), this.materials.roof);
-      roof.position.y = 3.35;
-      roof.rotation.y = Math.PI / 4;
-      roof.castShadow = true;
-      group.add(roof);
-      const door = new THREE.Mesh(new THREE.BoxGeometry(0.8, 1.2, 0.08), this.materials.dark);
-      door.position.set(0, 0.9, -2.1);
-      group.add(door);
-      this.scene.add(group);
-      this.physics.createFixedBox([x, 1.35, z], [4.7, 2.7, 4.2], { rotation: [0, rotation, 0], friction: 0.82, restitution: 0.08 });
+  createStreetProps(quality) {
+    let placed = 0;
+    for (const path of roadPaths) {
+      if (path.hierarchy === 'dirt' || path.hierarchy === 'stunt') continue;
+      const segments = makePathSegments(path.points, path.closed, path.width);
+      for (const segment of segments) {
+        const [x, z, width, depth, rotation] = segment;
+        const length = depth;
+        const steps = Math.max(1, Math.floor(length / 36));
+        const forward = new THREE.Vector3(Math.sin(rotation), 0, Math.cos(rotation));
+        const side = new THREE.Vector3(Math.cos(rotation), 0, -Math.sin(rotation));
+        for (let step = 0; step <= steps && placed < quality.streetProps; step += 1) {
+          const t = (step / Math.max(1, steps) - 0.5) * length;
+          const sideSign = (placed + step) % 2 ? 1 : -1;
+          const px = x + forward.x * t + side.x * sideSign * (width * 0.5 + 4.2);
+          const pz = z + forward.z * t + side.z * sideSign * (width * 0.5 + 4.2);
+          if (!this.isClearForProp(px, pz, 2.6)) continue;
+          const light = this.cloneEnvironmentAsset('EnvStreetLight') || this.createFallbackStreetLight();
+          light.position.set(px, 0, pz);
+          light.rotation.y = rotation + (sideSign > 0 ? Math.PI : 0);
+          light.scale.setScalar(0.9 + pseudoRandom(placed * 17) * 0.18);
+          this.scene.add(light);
+          placed += 1;
+        }
+      }
     }
 
-    const treeClusters = [
-      [-142, 120, 38, 42],
-      [142, 58, 30, 44],
-      [-128, -96, 42, 56],
-      [134, -84, 34, 52],
-      [10, -142, 72, 28],
-      [-20, 122, 62, 34],
-      [-150, 18, 24, 92],
-      [148, 20, 28, 88],
-      [-42, 42, 58, 36],
-      [48, -38, 62, 38],
-      [-66, -4, 44, 44],
-      [20, 132, 48, 20]
+    const benchSpots = [
+      [-18, 44, 0.1], [22, 45, -0.12], [-122, 76, 0.32], [-96, 122, -0.4],
+      [60, 102, 0.2], [132, -62, -0.1], [-144, -78, 0.45], [166, 126, -0.68]
     ];
+    for (const [x, z, rotation] of benchSpots) {
+      if (!this.isClearForProp(x, z, 2.8)) continue;
+      const bench = this.cloneEnvironmentAsset('EnvBench') || this.createFallbackBench();
+      bench.position.set(x, 0, z);
+      bench.rotation.y = rotation;
+      this.scene.add(bench);
+    }
+  }
+
+  placeCityTrees(quality) {
     let placedTrees = 0;
-    for (let attempt = 0; attempt < 820 && placedTrees < quality.trees; attempt += 1) {
-      const useCluster = attempt < 360;
-      const cluster = treeClusters[attempt % treeClusters.length];
-      const x = useCluster
-        ? cluster[0] + (pseudoRandom(attempt * 11) - 0.5) * cluster[2]
-        : (pseudoRandom(attempt * 23) - 0.5) * (WORLD_HALF_SIZE * 1.76);
-      const z = useCluster
-        ? cluster[1] + (pseudoRandom(attempt * 17) - 0.5) * cluster[3]
-        : (pseudoRandom(attempt * 29) - 0.5) * (WORLD_HALF_SIZE * 1.76);
-      if (Math.hypot(x, z) > ISLAND_RADIUS - 24) continue;
-      const treePosition = new THREE.Vector3(x, 0, z);
-      if (isNearRoad(x, z, 20.5)) continue;
-      if (this.zones.some((zone) => flatDistance(treePosition, zone.position) < zone.radius + 18)) continue;
-      const treeType = placedTrees % 7 === 0
-        ? 'EnvTreeSakuraLarge'
-        : placedTrees % 3 === 0
-          ? 'EnvTreeSakuraSmall'
-          : 'EnvTreeSakuraMedium';
+    for (let attempt = 0; attempt < 1200 && placedTrees < quality.trees; attempt += 1) {
+      const zone = scenicPropZones[attempt % scenicPropZones.length];
+      const [cx, cz] = zone.center;
+      const [width, depth] = zone.size;
+      const x = cx + (pseudoRandom(attempt * 11) - 0.5) * width;
+      const z = cz + (pseudoRandom(attempt * 17) - 0.5) * depth;
+      if (!this.isClearForProp(x, z, 5.2)) continue;
+      const treeType = zone.kind === 'market'
+        ? 'EnvTreeSakuraMedium'
+        : placedTrees % 5 === 0
+          ? 'EnvCityTreeNeem'
+          : placedTrees % 3 === 0
+            ? 'EnvTreeSakuraSmall'
+            : 'EnvCityTreeKikar';
       const tree = this.cloneEnvironmentAsset(treeType) || this.createFallbackTree();
-      this.scene.add(tree);
       tree.position.set(x, 0, z);
       tree.rotation.y = pseudoRandom(attempt * 37) * Math.PI * 2;
-      const treeScale = 0.68 + pseudoRandom(attempt * 41) * 0.42;
+      const treeScale = 0.7 + pseudoRandom(attempt * 41) * 0.48;
       tree.scale.setScalar(treeScale);
+      this.scene.add(tree);
       this.sakuraTrees.push({ position: new THREE.Vector3(x, 0, z), scale: treeScale });
       this.decor.push({ type: 'tree', mesh: tree, phase: placedTrees * 0.37 });
       placedTrees += 1;
     }
+  }
 
+  placeGrassTufts(quality) {
     const grassTemplate = this.cloneEnvironmentAsset('EnvGrassTuft');
     const bladeGeometry = new THREE.PlaneGeometry(0.08, 0.44);
     bladeGeometry.translate(0, 0.22, 0);
@@ -970,10 +1104,10 @@ export class World {
     const matrix = new THREE.Matrix4();
     const maxGrass = Math.max(quality.grassTufts, QUALITY_PROFILES.high.grassTufts);
     for (let i = 0; i < 850; i += 1) {
-      const x = (pseudoRandom(i * 19) - 0.5) * 300;
-      const z = (pseudoRandom(i * 31) - 0.5) * 300;
-      if (isNearRoad(x, z, 7.5)) continue;
-      if (Math.hypot(x, z) > ISLAND_RADIUS - 34) continue;
+      const zone = scenicPropZones[i % scenicPropZones.length];
+      const x = zone.center[0] + (pseudoRandom(i * 19) - 0.5) * zone.size[0];
+      const z = zone.center[1] + (pseudoRandom(i * 31) - 0.5) * zone.size[1];
+      if (!this.isClearForProp(x, z, 1.2)) continue;
       if (grassTemplate && this.grassTufts.length < maxGrass) {
         const tuft = grassTemplate.clone(true);
         tuft.position.set(x, 0.045, z);
@@ -1002,8 +1136,6 @@ export class World {
     }
     this.scene.add(grass);
     this.decor.push({ type: 'grassBlades', mesh: grass, phase: 0 });
-    this.createSakuraPetals();
-    this.applyLandscapeQuality();
   }
 
   createSakuraPetals() {
@@ -1084,6 +1216,77 @@ export class World {
     }
   }
 
+  isClearForProp(x, z, radius = 2) {
+    if (Math.abs(x) > WORLD_HALF_SIZE - radius - 6 || Math.abs(z) > WORLD_HALF_SIZE - radius - 6) return false;
+    if (isNearRoad(x, z, radius + 3.5)) return false;
+    if (isNearCanal(x, z, radius + 3)) return false;
+    const point = new THREE.Vector3(x, 0, z);
+    return !this.zones.some((zone) => flatDistance(point, zone.position) < zone.radius + radius + 9);
+  }
+
+  createFallbackDistrictModel(assetName) {
+    const group = new THREE.Group();
+    const material = assetName.includes('Office') ? this.materials.darkGlass : assetName.includes('Security') ? this.materials.dark : this.materials.limestone;
+    const body = new THREE.Mesh(new THREE.BoxGeometry(8, assetName.includes('Office') ? 14 : 6, 8), material);
+    body.position.y = assetName.includes('Office') ? 7 : 3;
+    body.castShadow = true;
+    body.receiveShadow = true;
+    group.add(body);
+    const base = new THREE.Mesh(new THREE.BoxGeometry(10, 0.5, 10), this.materials.concrete);
+    base.position.y = 0.25;
+    base.receiveShadow = true;
+    group.add(base);
+    return group;
+  }
+
+  createFallbackMarketStall() {
+    const group = new THREE.Group();
+    const base = new THREE.Mesh(new THREE.BoxGeometry(3.8, 1.7, 2.7), this.materials.wood);
+    base.position.y = 0.85;
+    base.castShadow = true;
+    base.receiveShadow = true;
+    group.add(base);
+    const canopy = new THREE.Mesh(new THREE.BoxGeometry(4.4, 0.28, 3.2), this.materials.marketCanvas);
+    canopy.position.y = 2.05;
+    canopy.castShadow = true;
+    group.add(canopy);
+    return group;
+  }
+
+  createFallbackStreetLight() {
+    const group = new THREE.Group();
+    const pole = new THREE.Mesh(new THREE.CylinderGeometry(0.08, 0.1, 4.2, 10), this.materials.concrete);
+    pole.position.y = 2.1;
+    pole.castShadow = true;
+    group.add(pole);
+    const arm = new THREE.Mesh(new THREE.BoxGeometry(1.4, 0.08, 0.08), this.materials.concrete);
+    arm.position.set(0.6, 4.0, 0);
+    arm.castShadow = true;
+    group.add(arm);
+    const lamp = new THREE.Mesh(new THREE.SphereGeometry(0.18, 12, 8), this.materials.gold);
+    lamp.position.set(1.25, 3.9, 0);
+    group.add(lamp);
+    return group;
+  }
+
+  createFallbackBench() {
+    const group = new THREE.Group();
+    const seat = new THREE.Mesh(new THREE.BoxGeometry(2.4, 0.22, 0.7), this.materials.wood);
+    seat.position.y = 0.58;
+    seat.castShadow = true;
+    group.add(seat);
+    const back = new THREE.Mesh(new THREE.BoxGeometry(2.4, 0.85, 0.18), this.materials.woodDark);
+    back.position.set(0, 0.98, 0.34);
+    back.castShadow = true;
+    group.add(back);
+    for (const x of [-0.9, 0.9]) {
+      const leg = new THREE.Mesh(new THREE.BoxGeometry(0.16, 0.58, 0.16), this.materials.dark);
+      leg.position.set(x, 0.29, 0);
+      group.add(leg);
+    }
+    return group;
+  }
+
   createFallbackTree() {
     const tree = new THREE.Group();
     const trunk = new THREE.Mesh(new THREE.CylinderGeometry(0.2, 0.34, 2.8, 8), this.materials.trunk);
@@ -1105,9 +1308,9 @@ export class World {
 
   createCollectibles() {
     const positions = [
-      [-72, 1.4, 82], [-118, 1.4, 76], [86, 1.4, 86], [136, 1.4, 72],
-      [-146, 1.4, -88], [-92, 1.4, -142], [92, 1.4, -142], [146, 1.4, -88],
-      [-26, 1.4, -152], [26, 1.4, -152], [-18, 1.4, 126], [18, 1.4, 126]
+      [-144, 1.4, 86], [-92, 1.4, 112], [-42, 1.4, 84], [42, 1.4, 118],
+      [92, 1.4, 52], [142, 1.4, -42], [126, 1.4, -104], [152, 1.4, -162],
+      [-150, 1.4, -126], [-52, 1.4, -126], [12, 1.4, -118], [174, 1.4, 150]
     ];
     const material = new THREE.MeshBasicMaterial({ color: 0x7cffb2, transparent: true, opacity: 0.86 });
     positions.forEach((position, index) => {
@@ -1241,14 +1444,14 @@ export class World {
     const zone = this.zones.find((item) => item.id === zoneId) || this.zones[0];
     const colliderDepth = zone.colliderSize?.[2] || 0;
     const colliderWidth = zone.colliderSize?.[0] || 0;
-    const offsetZ = Math.max(zone.radius + 4, colliderDepth / 2 + 5.5);
-    const offsetX = Math.max(zone.radius + 4, colliderWidth / 2 + 5.5);
+    const offsetZ = Math.max(zone.radius + 18, colliderDepth / 2 + 19);
+    const offsetX = Math.max(zone.radius + 18, colliderWidth / 2 + 19);
     const limit = WORLD_HALF_SIZE - 12;
     const candidates = [
-      { offset: new THREE.Vector3(0, 1.45, offsetZ), heading: 0 },
-      { offset: new THREE.Vector3(0, 1.45, -offsetZ), heading: Math.PI },
-      { offset: new THREE.Vector3(offsetX, 1.45, 0), heading: Math.PI / 2 },
-      { offset: new THREE.Vector3(-offsetX, 1.45, 0), heading: -Math.PI / 2 }
+      { offset: new THREE.Vector3(0, 1.45, offsetZ), heading: Math.PI },
+      { offset: new THREE.Vector3(0, 1.45, -offsetZ), heading: 0 },
+      { offset: new THREE.Vector3(offsetX, 1.45, 0), heading: -Math.PI / 2 },
+      { offset: new THREE.Vector3(-offsetX, 1.45, 0), heading: Math.PI / 2 }
     ];
 
     const chosen = candidates.find(({ offset }) => {
@@ -1328,11 +1531,9 @@ export class World {
         item.mesh.material.opacity = 0.74 + Math.sin(elapsed * 0.35) * 0.08;
       } else if (item.type === 'checkpoint') {
         item.mesh.rotation.z += dt * 0.8;
-      } else if (item.type === 'ocean') {
+      } else if (item.type === 'canalWater') {
         if (item.mesh.material.uniforms?.uTime) item.mesh.material.uniforms.uTime.value = elapsed;
-        item.mesh.position.y = OCEAN_Y + Math.sin(elapsed * 0.45) * 0.025;
-      } else if (item.type === 'shoreFoam') {
-        item.mesh.material.opacity = 0.34 + Math.sin(elapsed * 1.1) * 0.08;
+        item.mesh.position.y = WATER_Y + Math.sin(elapsed * 0.75 + item.phase) * 0.025;
       } else if (item.type === 'buoy') {
         item.mesh.position.y = 0.38 + Math.sin(elapsed * 1.4 + item.phase) * 0.18;
         item.mesh.rotation.y += dt * 0.45;
@@ -1379,6 +1580,41 @@ function isNearRoad(x, z, margin = 0) {
     const localZ = dx * sin + dz * cos;
     return Math.abs(localX) <= width * 0.5 + margin && Math.abs(localZ) <= depth * 0.5 + margin;
   });
+}
+
+function isNearCanal(x, z, margin = 0) {
+  return canalSegments.some((canal) => {
+    const segments = makePathSegments(canal.points, false, canal.width);
+    return segments.some(([cx, cz, width, depth, rotation = 0]) => {
+      const dx = x - cx;
+      const dz = z - cz;
+      const cos = Math.cos(rotation);
+      const sin = Math.sin(rotation);
+      const localX = dx * cos - dz * sin;
+      const localZ = dx * sin + dz * cos;
+      return Math.abs(localX) <= width * 0.5 + margin && Math.abs(localZ) <= depth * 0.5 + margin;
+    });
+  });
+}
+
+function makePathSegments(points, closed, width) {
+  const segments = [];
+  const limit = closed ? points.length : points.length - 1;
+  for (let i = 0; i < limit; i += 1) {
+    const a = points[i];
+    const b = points[(i + 1) % points.length];
+    const dx = b[0] - a[0];
+    const dz = b[1] - a[1];
+    const length = Math.hypot(dx, dz);
+    segments.push([
+      (a[0] + b[0]) / 2,
+      (a[1] + b[1]) / 2,
+      width,
+      length + width * 0.64,
+      Math.atan2(dx, dz)
+    ]);
+  }
+  return segments;
 }
 
 function makeOrganicPatchGeometry(width, depth, seed = 1) {
@@ -1483,7 +1719,7 @@ function makePetalTexture() {
   return texture;
 }
 
-function makeWaterMaterial(islandRadius) {
+function makeCanalWaterMaterial() {
   const material = new THREE.ShaderMaterial({
     transparent: false,
     depthWrite: true,
@@ -1491,23 +1727,18 @@ function makeWaterMaterial(islandRadius) {
     uniforms: {
       uTime: { value: 0 },
       uDeep: { value: new THREE.Color(0x07507e) },
-      uShallow: { value: new THREE.Color(0x42c4e8) },
-      uIslandRadius: { value: islandRadius }
+      uShallow: { value: new THREE.Color(0x42c4e8) }
     },
     vertexShader: `
       uniform float uTime;
       varying vec2 vUv;
       varying float vWave;
-      varying vec2 vWorld;
       void main() {
         vUv = uv;
         vec3 p = position;
-        float wave = sin(p.x * 0.035 + uTime * 0.9) * 0.14 + cos(p.y * 0.04 + uTime * 0.7) * 0.1;
-        wave += sin((p.x + p.y) * 0.022 + uTime * 1.45) * 0.075;
-        p.z += wave;
+        float wave = sin(p.x * 0.11 + uTime * 1.2) * 0.035 + cos(p.z * 0.08 + uTime * 0.8) * 0.025;
+        p.y += wave;
         vWave = wave;
-        vec4 world = modelMatrix * vec4(p, 1.0);
-        vWorld = world.xz;
         gl_Position = projectionMatrix * modelViewMatrix * vec4(p, 1.0);
       }
     `,
@@ -1515,19 +1746,13 @@ function makeWaterMaterial(islandRadius) {
       uniform vec3 uDeep;
       uniform vec3 uShallow;
       uniform float uTime;
-      uniform float uIslandRadius;
       varying vec2 vUv;
       varying float vWave;
-      varying vec2 vWorld;
       void main() {
-        float ripple = sin(vUv.x * 140.0 + uTime * 1.35) * sin(vUv.y * 108.0 - uTime * 0.9);
-        float foam = smoothstep(0.58, 0.88, ripple * 0.5 + 0.5);
-        float distanceFromCenter = length(vWorld);
-        float shoreFoam = smoothstep(uIslandRadius + 0.5, uIslandRadius + 8.0, distanceFromCenter)
-          * (1.0 - smoothstep(uIslandRadius + 20.0, uIslandRadius + 58.0, distanceFromCenter));
-        vec3 color = mix(uDeep, uShallow, 0.48 + vWave * 0.6);
-        color += foam * 0.055;
-        color = mix(color, vec3(0.78, 0.96, 1.0), shoreFoam * 0.34);
+        float ripple = sin(vUv.x * 96.0 + uTime * 1.35) * sin(vUv.y * 44.0 - uTime * 0.9);
+        float foam = smoothstep(0.7, 0.92, ripple * 0.5 + 0.5);
+        vec3 color = mix(uDeep, uShallow, 0.5 + vWave * 2.0);
+        color += foam * 0.045;
         gl_FragColor = vec4(color, 1.0);
       }
     `
