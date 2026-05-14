@@ -1,6 +1,7 @@
 import {
   boostPads,
   canalSegments,
+  ISLAND_RADIUS,
   roadPaths,
   WORLD_HALF_SIZE,
   worldZones
@@ -29,12 +30,18 @@ function validateBounds() {
       if (Math.abs(x) > WORLD_HALF_SIZE || Math.abs(z) > WORLD_HALF_SIZE) {
         errors.push(`${path.id} has point outside world bounds: ${x}, ${z}`);
       }
+      if (Math.hypot(x, z) > ISLAND_RADIUS - path.width * 0.35) {
+        errors.push(`${path.id} has point outside the island driveable land: ${x}, ${z}`);
+      }
     }
   }
   for (const zone of worldZones) {
     const [x, , z] = zone.position;
     if (Math.abs(x) > WORLD_HALF_SIZE - zone.radius || Math.abs(z) > WORLD_HALF_SIZE - zone.radius) {
-      errors.push(`${zone.id} is too close to or outside the city boundary.`);
+      errors.push(`${zone.id} is too close to or outside the world boundary.`);
+    }
+    if (Math.hypot(x, z) > ISLAND_RADIUS - zone.radius - 4) {
+      errors.push(`${zone.id} is too close to or outside the island coastline.`);
     }
   }
 }
@@ -70,7 +77,10 @@ function validateBoostPads() {
     const direction = [Math.sin(pad.rotation), Math.cos(pad.rotation)];
     const landing = [x + direction[0] * 24, z + direction[1] * 24];
     if (Math.abs(landing[0]) > WORLD_HALF_SIZE - 8 || Math.abs(landing[1]) > WORLD_HALF_SIZE - 8) {
-      errors.push(`${pad.id} visual launch direction points outside the city.`);
+      errors.push(`${pad.id} visual launch direction points outside the world.`);
+    }
+    if (Math.hypot(landing[0], landing[1]) > ISLAND_RADIUS - 8) {
+      errors.push(`${pad.id} visual launch direction points off the island.`);
     }
     if (isNearCanal(landing[0], landing[1], 4)) {
       errors.push(`${pad.id} visual launch direction points into canal water.`);
