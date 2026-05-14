@@ -7,6 +7,7 @@ import { Analytics } from './Analytics.js';
 import { PhysicsWorld } from '../physics/PhysicsWorld.js';
 import { Vehicle } from '../player/Vehicle.js';
 import { CameraRig } from '../player/CameraRig.js';
+import { loadEnvironmentAssets } from '../world/EnvironmentAssets.js';
 import { World } from '../world/World.js';
 import { UI } from '../ui/UI.js';
 
@@ -37,7 +38,13 @@ export class Game {
     this.audio = new AudioSystem();
     this.achievements = new Achievements();
     this.physics = new PhysicsWorld(this.RAPIER);
-    this.world = new World({ scene: this.scene, physics: this.physics, resumeData: this.resumeData });
+    this.environmentAssets = await loadEnvironmentAssets();
+    this.world = new World({
+      scene: this.scene,
+      physics: this.physics,
+      resumeData: this.resumeData,
+      environmentAssets: this.environmentAssets
+    });
     this.vehicle = new Vehicle({
       scene: this.scene,
       physics: this.physics,

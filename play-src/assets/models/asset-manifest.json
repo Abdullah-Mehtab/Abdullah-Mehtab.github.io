@@ -2,6 +2,7 @@
   "schemaVersion": 1,
   "builder": "blender",
   "assets": {
-    "sabreTurbo": "models/vehicles/sabre-turbo.glb"
+    "sabreTurbo": "models/vehicles/sabre-turbo.glb",
+    "environment": "models/environment/play-environment.glb"
   }
 }
