@@ -5,21 +5,21 @@ export const ISLAND_RADIUS = 158;
 export const canalSegments = [];
 
 export const districtFootprints = [
-  { id: 'agora', label: 'Portfolio Agora', center: [0, 0], size: [48, 42], color: '#7cffb2', kind: 'plaza' },
-  { id: 'acropolis', label: 'Sentinel Acropolis', center: [8, 104], size: [54, 42], color: '#ff6d8d', kind: 'temple' },
-  { id: 'academy', label: 'Academy Grove', center: [-104, 82], size: [56, 44], color: '#9ccfff', kind: 'campus' },
-  { id: 'forge', label: 'Project Forge', center: [66, 28], size: [54, 42], color: '#ffcc66', kind: 'forge' },
-  { id: 'harbor', label: 'Harbor Edge', center: [124, 30], size: [40, 32], color: '#78b7ff', kind: 'waterfront' },
+  { id: 'courtyard', label: 'Portfolio Courtyard', center: [0, 0], size: [48, 42], color: '#7cffb2', kind: 'plaza' },
+  { id: 'watchtower', label: 'Sentinel Watchtower', center: [8, 104], size: [54, 42], color: '#ff6d8d', kind: 'keep' },
+  { id: 'library-grove', label: 'Education Grove', center: [-104, 82], size: [56, 44], color: '#9ccfff', kind: 'library' },
+  { id: 'forge', label: 'Projects Foundry', center: [66, 28], size: [54, 42], color: '#ffcc66', kind: 'forge' },
+  { id: 'harbor', label: 'Contact Harbor', center: [124, 30], size: [40, 32], color: '#78b7ff', kind: 'waterfront' },
   { id: 'archive', label: 'Archive Garden', center: [-42, 58], size: [48, 34], color: '#ffdf8a', kind: 'civic' },
-  { id: 'cove', label: 'Stunt Cove', center: [96, -96], size: [44, 30], color: '#ff9b6d', kind: 'stunt' },
+  { id: 'cove', label: 'Stunt Courtyard', center: [96, -96], size: [44, 30], color: '#ff9b6d', kind: 'stunt' },
   { id: 'farm', label: 'Voxel Farm Pocket', center: [82, 84], size: [38, 30], color: '#c79b56', kind: 'farm' }
 ];
 
 export const scenicPropZones = [
-  { id: 'olive-grove-west', center: [-122, -8], size: [42, 72], kind: 'grove' },
-  { id: 'academy-grove', center: [-120, 106], size: [42, 36], kind: 'grove' },
-  { id: 'temple-garden', center: [38, 104], size: [58, 30], kind: 'garden' },
-  { id: 'harbor-palms', center: [126, 58], size: [34, 38], kind: 'coast' },
+  { id: 'western-woods', center: [-122, -8], size: [42, 72], kind: 'grove' },
+  { id: 'library-woods', center: [-120, 106], size: [42, 36], kind: 'grove' },
+  { id: 'watchtower-garden', center: [38, 104], size: [58, 30], kind: 'garden' },
+  { id: 'harbor-cypress', center: [126, 58], size: [34, 38], kind: 'coast' },
   { id: 'southern-meadow', center: [-18, -118], size: [76, 34], kind: 'meadow' },
   { id: 'farm-buffer', center: [82, 84], size: [40, 28], kind: 'farm' }
 ];
@@ -27,7 +27,7 @@ export const scenicPropZones = [
 export const roadPaths = [
   {
     id: 'island-loop',
-    name: 'Island Loop',
+    name: 'Stone Coast Loop',
     width: 10.5,
     hierarchy: 'ring',
     closed: true,
@@ -46,7 +46,7 @@ export const roadPaths = [
   },
   {
     id: 'agora-way',
-    name: 'Agora Way',
+    name: 'Courtyard Way',
     width: 8.4,
     hierarchy: 'avenue',
     closed: false,
@@ -60,7 +60,7 @@ export const roadPaths = [
   },
   {
     id: 'acropolis-climb',
-    name: 'Acropolis Climb',
+    name: 'Watchtower Climb',
     width: 7.4,
     hierarchy: 'street',
     closed: false,
@@ -73,7 +73,7 @@ export const roadPaths = [
   },
   {
     id: 'academy-lane',
-    name: 'Academy Lane',
+    name: 'Library Lane',
     width: 7.2,
     hierarchy: 'street',
     closed: false,
@@ -123,7 +123,7 @@ export const roadPaths = [
   },
   {
     id: 'stunt-cove-loop',
-    name: 'Stunt Cove Loop',
+    name: 'Stunt Courtyard Approach',
     width: 8.4,
     hierarchy: 'stunt',
     closed: false,
@@ -158,7 +158,7 @@ export const boostPads = [
 export const worldZones = [
   {
     id: 'landing',
-    name: 'Portfolio Agora',
+    name: 'Portfolio Courtyard',
     kind: 'Home',
     position: [18, 0, 22],
     rotation: 0,
@@ -190,7 +190,7 @@ export const worldZones = [
   },
   {
     id: 'projects',
-    name: 'Projects Forge',
+    name: 'Projects Foundry',
     kind: 'Project Gallery',
     position: [66, 0, 28],
     rotation: -0.34,
@@ -205,7 +205,7 @@ export const worldZones = [
   },
   {
     id: 'sentinel',
-    name: 'Cyber Sentinel Acropolis',
+    name: 'Cyber Sentinel Watchtower',
     kind: 'Final Year Project',
     position: [18, 0, 106],
     rotation: 0,
@@ -220,7 +220,7 @@ export const worldZones = [
   },
   {
     id: 'career',
-    name: 'Career Villa',
+    name: 'Career Guild Hall',
     kind: 'Experience',
     position: [96, 0, -18],
     rotation: -0.15,
@@ -334,7 +334,7 @@ export const worldZones = [
   },
   {
     id: 'contact',
-    name: 'Contact Lighthouse',
+    name: 'Contact Harbor Lighthouse',
     kind: 'Links',
     position: [132, 0, 54],
     rotation: -0.18,
@@ -369,7 +369,7 @@ export const worldZones = [
   },
   {
     id: 'drift',
-    name: 'Stunt Cove',
+    name: 'Stunt Courtyard',
     kind: 'Driving',
     position: [108, 0, -88],
     rotation: -0.45,
@@ -378,7 +378,7 @@ export const worldZones = [
     shape: 'rampyard',
     achievement: 'ramp_yard',
     lines: [
-      'A separate cove for ramps, boosters, and messy driving away from the formal portfolio landmarks.'
+      'A separate courtyard for ramps, boosters, and messy driving away from the formal portfolio landmarks.'
     ]
   },
   {

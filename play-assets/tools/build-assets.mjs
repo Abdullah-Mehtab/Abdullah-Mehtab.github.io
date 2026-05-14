@@ -8,21 +8,31 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 const root = resolve(__dirname, '..', '..');
 const vehicleOutput = resolve(root, 'play-src', 'assets', 'models', 'vehicles', 'sabre-turbo.glb');
 const environmentOutput = resolve(root, 'play-src', 'assets', 'models', 'environment', 'play-environment.glb');
+const islandVisualOutput = resolve(root, 'play-src', 'assets', 'models', 'world', 'island-visual.glb');
+const islandPhysicsOutput = resolve(root, 'play-src', 'assets', 'models', 'world', 'island-physics.glb');
+const medievalPropsOutput = resolve(root, 'play-src', 'assets', 'models', 'world', 'medieval-props.glb');
 const manifest = resolve(root, 'play-src', 'assets', 'models', 'asset-manifest.json');
 
 await mkdir(dirname(vehicleOutput), { recursive: true });
 await mkdir(dirname(environmentOutput), { recursive: true });
+await mkdir(dirname(islandVisualOutput), { recursive: true });
+await mkdir(dirname(islandPhysicsOutput), { recursive: true });
+await mkdir(dirname(medievalPropsOutput), { recursive: true });
 await mkdir(dirname(manifest), { recursive: true });
 
 const blenderRequested = process.env.PLAY_ASSETS_BLENDER === '1';
 const blenderBinary = await resolveBlenderBinary(blenderRequested);
 const vehicleBlenderScript = resolve(root, 'play-assets', 'source', 'blender', 'export_sabre_turbo.py');
 const environmentBlenderScript = resolve(root, 'play-assets', 'source', 'blender', 'export_environment.py');
+const medievalWorldScript = resolve(root, 'play-assets', 'source', 'blender', 'export_medieval_world.py');
 
 let builder = 'node';
 if (blenderBinary) {
   runBlenderExport(blenderBinary, vehicleBlenderScript, vehicleOutput);
   runBlenderExport(blenderBinary, environmentBlenderScript, environmentOutput);
+  runMedievalExport(blenderBinary, 'visual', islandVisualOutput);
+  runMedievalExport(blenderBinary, 'physics', islandPhysicsOutput);
+  runMedievalExport(blenderBinary, 'props', medievalPropsOutput);
   builder = 'blender';
 } else {
   const moduleUrl = pathToFileURL(resolve(root, 'play-assets', 'source', 'js', 'create-sabre-turbo.mjs')).href;
@@ -32,6 +42,11 @@ if (blenderBinary) {
   if (!await fileExists(environmentOutput)) {
     throw new Error('Environment GLB is missing and Blender is not available to rebuild it.');
   }
+  for (const required of [islandVisualOutput, islandPhysicsOutput, medievalPropsOutput]) {
+    if (!await fileExists(required)) {
+      throw new Error(`Medieval world asset is missing and Blender is not available: ${required}`);
+    }
+  }
 }
 
 await writeFile(manifest, JSON.stringify({
@@ -39,12 +54,16 @@ await writeFile(manifest, JSON.stringify({
   builder,
   assets: {
     sabreTurbo: 'models/vehicles/sabre-turbo.glb',
-    environment: 'models/environment/play-environment.glb'
+    environment: 'models/environment/play-environment.glb',
+    islandVisual: 'models/world/island-visual.glb',
+    islandPhysics: 'models/world/island-physics.glb',
+    medievalProps: 'models/world/medieval-props.glb'
   }
 }, null, 2));
 
 console.log(`Built play assets with ${builder}: ${vehicleOutput}`);
 console.log(`Built play environment assets with ${builder}: ${environmentOutput}`);
+console.log(`Built medieval island assets with ${builder}: ${islandVisualOutput}`);
 
 function runBlenderExport(blenderBinary, script, output) {
   const result = spawnSync(blenderBinary, [
@@ -58,6 +77,23 @@ function runBlenderExport(blenderBinary, script, output) {
 
   if (result.status !== 0) {
     throw new Error(`Blender asset export failed with exit code ${result.status}`);
+  }
+}
+
+function runMedievalExport(blenderBinary, kind, output) {
+  const result = spawnSync(blenderBinary, [
+    '--background',
+    '--python',
+    medievalWorldScript,
+    '--',
+    '--kind',
+    kind,
+    '--output',
+    output
+  ], { cwd: root, stdio: 'inherit' });
+
+  if (result.status !== 0) {
+    throw new Error(`Blender medieval ${kind} export failed with exit code ${result.status}`);
   }
 }
 

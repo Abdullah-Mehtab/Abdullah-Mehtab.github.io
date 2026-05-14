@@ -3,6 +3,9 @@
   "builder": "blender",
   "assets": {
     "sabreTurbo": "models/vehicles/sabre-turbo.glb",
-    "environment": "models/environment/play-environment.glb"
+    "environment": "models/environment/play-environment.glb",
+    "islandVisual": "models/world/island-visual.glb",
+    "islandPhysics": "models/world/island-physics.glb",
+    "medievalProps": "models/world/medieval-props.glb"
   }
 }

@@ -10,6 +10,7 @@ import { CameraRig } from '../player/CameraRig.js';
 import { loadEnvironmentAssets } from '../world/EnvironmentAssets.js';
 import { World } from '../world/World.js';
 import { UI } from '../ui/UI.js';
+import { GameRenderer } from '../rendering/GameRenderer.js';
 
 export class Game {
   constructor(RAPIER) {
@@ -17,12 +18,8 @@ export class Game {
     this.canvas = document.getElementById('play-canvas');
     this.scene = new THREE.Scene();
     this.camera = new THREE.PerspectiveCamera(58, window.innerWidth / window.innerHeight, 0.1, 900);
-    this.renderer = new THREE.WebGLRenderer({
-      canvas: this.canvas,
-      antialias: true,
-      powerPreference: 'high-performance',
-      preserveDrawingBuffer: true
-    });
+    this.rendererSystem = new GameRenderer({ canvas: this.canvas, scene: this.scene, camera: this.camera });
+    this.renderer = this.rendererSystem.renderer;
     this.ticker = new Ticker();
     this.started = false;
     this.activeZone = null;
@@ -74,13 +71,7 @@ export class Game {
   }
 
   setupRenderer() {
-    this.renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 1.8));
-    this.renderer.setSize(window.innerWidth, window.innerHeight, false);
-    this.renderer.shadowMap.enabled = true;
-    this.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
-    this.renderer.outputColorSpace = THREE.SRGBColorSpace;
-    this.renderer.toneMapping = THREE.ACESFilmicToneMapping;
-    this.renderer.toneMappingExposure = 1.0;
+    this.rendererSystem.setup();
   }
 
   setupScene() {
@@ -177,14 +168,10 @@ export class Game {
         }
       }
     });
+    this.vehicle.postPhysics();
 
     if (!canDrive) {
-      this.vehicle.body.setLinvel({
-        x: this.vehicle.body.linvel().x * 0.94,
-        y: this.vehicle.body.linvel().y,
-        z: this.vehicle.body.linvel().z * 0.94
-      }, true);
-      this.vehicle.syncModel();
+      this.vehicle.idleDampen();
     }
 
     this.world.update(dt, elapsed, this.vehicle.position);
@@ -204,7 +191,7 @@ export class Game {
       this.ui.notify(`Checkpoint ${circuitEvent.checkpoint}`);
     }
 
-    this.renderer.render(this.scene, this.camera);
+    this.rendererSystem.render();
     this.input.clearTransient();
   }
 
@@ -295,8 +282,7 @@ export class Game {
   resize() {
     this.camera.aspect = window.innerWidth / window.innerHeight;
     this.camera.updateProjectionMatrix();
-    this.renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 1.8));
-    this.renderer.setSize(window.innerWidth, window.innerHeight, false);
+    this.rendererSystem.resize();
   }
 }
 
