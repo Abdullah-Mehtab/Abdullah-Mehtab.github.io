@@ -1,9 +1,10 @@
 import * as THREE from 'three';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
+import { VehicleController } from '../physics/VehicleController.js';
 import { WORLD_HALF_SIZE } from '../world/worldData.js';
 import sabreTurboModelUrl from '../../assets/models/vehicles/sabre-turbo.glb?url';
 
-const START = new THREE.Vector3(2, 1.45, 5.5);
+const START = new THREE.Vector3(2, 1.65, 5.5);
 
 export class Vehicle {
   constructor({ scene, physics, achievements, audio }) {
@@ -13,46 +14,56 @@ export class Vehicle {
     this.audio = audio;
     this.RAPIER = physics.RAPIER;
     this.group = new THREE.Group();
+    this.group.name = 'Vehicle';
+    this.modelRoot = new THREE.Group();
+    this.group.add(this.modelRoot);
     this.wheels = [];
     this.frontWheels = [];
     this.speed = 0;
-    this.driveSpeed = 0;
-    this.heading = 0;
     this.airTime = 0;
     this.lastBoostPad = null;
-    this.trails = [];
-    this.trailGeometry = new THREE.SphereGeometry(0.16, 8, 6);
     this.distanceAccumulator = 0;
     this.lastPosition = START.clone();
-    this.steerVisual = 0;
-    this.groundedFrames = 0;
-    this.impactRecovery = 0;
+    this.trails = [];
+    this.trailGeometry = new THREE.SphereGeometry(0.14, 8, 6);
     this.createBody();
-    this.createModel();
+    this.createLights();
+    this.loadVehicleModel();
+    this.scene.add(this.group);
     this.respawn();
   }
 
   createBody() {
     const bodyDesc = this.RAPIER.RigidBodyDesc.dynamic()
       .setTranslation(START.x, START.y, START.z)
-      .setLinearDamping(0.52)
-      .setAngularDamping(2.8);
+      .setCanSleep(false)
+      .setLinearDamping(0.18)
+      .setAngularDamping(0.82);
     this.body = this.physics.world.createRigidBody(bodyDesc);
-    const collider = this.RAPIER.ColliderDesc
-      .cuboid(1.16, 0.42, 2.76)
-      .setDensity(1.4)
-      .setFriction(0.92)
-      .setRestitution(0.0);
-    this.physics.world.createCollider(collider, this.body);
+    const main = this.RAPIER.ColliderDesc
+      .cuboid(1.12, 0.34, 2.48)
+      .setDensity(1.6)
+      .setFriction(0.82)
+      .setRestitution(0.02);
+    main.setTranslation(0, -0.1, 0);
+    this.physics.world.createCollider(main, this.body);
+    const roof = this.RAPIER.ColliderDesc
+      .cuboid(0.72, 0.28, 0.74)
+      .setDensity(0.42)
+      .setFriction(0.72)
+      .setRestitution(0.02);
+    roof.setTranslation(0, 0.48, -0.08);
+    this.physics.world.createCollider(roof, this.body);
+    this.controller = new VehicleController({ physics: this.physics, body: this.body });
   }
 
-  createModel() {
-    this.modelRoot = new THREE.Group();
-    this.modelRoot.name = 'VehicleModelRoot';
-    this.group.add(this.modelRoot);
-    this.addHeadlightBeams();
-    this.scene.add(this.group);
-    this.loadVehicleModel();
+  createLights() {
+    for (const x of [-0.62, 0.62]) {
+      const light = new THREE.SpotLight(0xfff0c4, 10, 34, Math.PI / 10, 0.45, 1.5);
+      light.position.set(x, 0.78, 2.86);
+      light.target.position.set(x, 0.32, 10);
+      this.group.add(light, light.target);
+    }
   }
 
   loadVehicleModel() {
@@ -63,7 +74,7 @@ export class Vehicle {
       undefined,
       (error) => {
         console.error('Vehicle model failed to load', error);
-        this.createModelLoadFallback();
+        this.createFallbackModel();
       }
     );
   }
@@ -75,150 +86,78 @@ export class Vehicle {
       if (object.isMesh) {
         object.castShadow = true;
         object.receiveShadow = true;
-        if (object.material?.transparent) {
-          object.renderOrder = 7;
-        }
+        if (object.material?.transparent) object.renderOrder = 7;
       }
     });
     this.modelRoot.add(model);
     this.wheels = [];
     this.frontWheels = [];
     model.traverse((object) => {
-      if (object.name.startsWith('WheelMesh_')) {
-        this.wheels.push(object);
-      }
-      if (object.name.startsWith('WheelFront')) {
-        this.frontWheels.push(object);
-      }
+      if (object.name.startsWith('WheelMesh_')) this.wheels.push(object);
+      if (object.name.startsWith('WheelFront')) this.frontWheels.push(object);
     });
   }
 
-  createModelLoadFallback() {
-    this.modelRoot.clear();
+  createFallbackModel() {
     const body = new THREE.Mesh(
-      new THREE.BoxGeometry(2.2, 0.7, 5.1),
-      new THREE.MeshStandardMaterial({ color: 0x8b2b13, roughness: 0.35, metalness: 0.45 })
+      new THREE.BoxGeometry(2.2, 0.72, 5.0),
+      new THREE.MeshStandardMaterial({ color: 0x9d3c16, roughness: 0.38, metalness: 0.35 })
     );
-    body.name = 'VehicleModel_Fallback';
-    body.position.y = 0.65;
+    body.position.y = 0.45;
     body.castShadow = true;
     body.receiveShadow = true;
     this.modelRoot.add(body);
   }
 
-  addHeadlightBeams() {
-    for (const x of [-0.64, 0.64]) {
-      const light = new THREE.SpotLight(0xfff0c4, 12, 36, Math.PI / 9, 0.42, 1.45);
-      light.position.set(x, 0.86, 2.96);
-      light.target.position.set(x, 0.35, 10);
-      this.group.add(light);
-      this.group.add(light.target);
-    }
-  }
-
   update(input, dt) {
     const translation = this.body.translation();
-    if (translation.y < -12 || Math.abs(translation.x) > WORLD_HALF_SIZE + 16 || Math.abs(translation.z) > WORLD_HALF_SIZE + 16) {
+    if (translation.y < -12 || Math.abs(translation.x) > WORLD_HALF_SIZE + 18 || Math.abs(translation.z) > WORLD_HALF_SIZE + 18) {
       this.respawn();
       return;
     }
 
-    const forward = new THREE.Vector3(Math.sin(this.heading), 0, Math.cos(this.heading)).normalize();
-    const right = new THREE.Vector3(Math.cos(this.heading), 0, -Math.sin(this.heading)).normalize();
-    const linvel = this.body.linvel();
-    const velocity = new THREE.Vector3(linvel.x, linvel.y, linvel.z);
-    const forwardSpeed = velocity.dot(forward);
-    const sideSpeed = velocity.dot(right);
-
-    const joy = input.joystick;
-    const forwardInput = input.actions.forward || joy.y < -0.22;
-    const backwardInput = input.actions.backward || joy.y > 0.22;
-    const leftInput = input.actions.left || joy.x < -0.22;
-    const rightInput = input.actions.right || joy.x > 0.22;
-    const steer = (leftInput ? 1 : 0) + (rightInput ? -1 : 0) + THREE.MathUtils.clamp(-joy.x, -1, 1);
-    const boost = input.actions.boost;
-    const brake = input.actions.brake;
-
-    if (boost && Math.abs(forwardSpeed) > 2) {
-      this.achievements.unlock('boost');
+    const state = this.controller.update(input, dt);
+    this.speed = this.controller.speed * 3.6;
+    if (state.boost && this.controller.speed > 3) this.achievements.unlock('boost');
+    if (input.consume('jump')) {
+      if (this.controller.jump()) {
+        this.achievements.unlock('jump');
+        this.audio.click(760);
+      } else if (this.controller.flipRecovery()) {
+        this.audio.click(480);
+      }
     }
-
-    const engine = boost ? 66 : 44;
-    const reverse = 28;
-    if (forwardInput) {
-      this.driveSpeed += engine * dt;
-    }
-    if (backwardInput) {
-      this.driveSpeed -= reverse * dt;
-    }
-    if (!forwardInput && !backwardInput) {
-      this.driveSpeed *= Math.max(0, 1 - dt * 1.35);
-    }
-    this.driveSpeed += (forwardSpeed - this.driveSpeed) * Math.min(1, dt * 0.55);
-    this.driveSpeed = THREE.MathUtils.clamp(this.driveSpeed, -15, boost ? 48 : 34);
-    const impactStall = (forwardInput || backwardInput)
-      && Math.abs(this.driveSpeed) > 10
-      && Math.abs(forwardSpeed) < Math.abs(this.driveSpeed) * 0.2;
-    if (impactStall) {
-      this.impactRecovery = 0.28;
-      this.driveSpeed *= Math.max(0, 1 - dt * 7.5);
-    }
-    this.speed = this.driveSpeed;
-
-    const speedFactor = THREE.MathUtils.clamp(Math.abs(this.driveSpeed) / 18, 0.28, 1.35);
-    if (Math.abs(steer) > 0.03) {
-      const direction = Math.sign(this.driveSpeed || 1);
-      this.heading += steer * direction * speedFactor * 2.15 * dt;
-    }
-    this.body.setRotation(steeredQuaternion(this.heading, this.body.rotation()), true);
-
-    if (brake) {
-      this.driveSpeed *= Math.max(0, 1 - dt * 8.5);
-    }
-
-    this.impactRecovery = Math.max(0, this.impactRecovery - dt);
-    const maxUpwardVelocity = this.impactRecovery > 0 ? 2.8 : 9.2;
-    const verticalVelocity = THREE.MathUtils.clamp(linvel.y, -32, maxUpwardVelocity);
-    const desiredVelocity = forward.clone()
-      .multiplyScalar(this.driveSpeed)
-      .add(right.clone().multiplyScalar(sideSpeed * (brake ? 0.22 : 0.1)));
-    this.body.setLinvel({ x: desiredVelocity.x, y: verticalVelocity, z: desiredVelocity.z }, true);
-    this.dampenImpactSpin();
-
-    const grounded = translation.y < 0.92 || (translation.y < 1.75 && Math.abs(linvel.y) < 0.32);
-    this.groundedFrames = grounded ? Math.min(18, this.groundedFrames + 1) : 0;
-    this.airTime = grounded ? 0 : this.airTime + dt;
-    if (input.consume('jump') && this.groundedFrames > 2) {
-      this.impactRecovery = 0;
-      this.body.setLinvel({ x: desiredVelocity.x, y: 10.4, z: desiredVelocity.z }, true);
-      this.achievements.unlock('jump');
-      this.audio.click(760);
-    }
-
     if (input.consume('honk')) {
       this.audio.click(320);
-      this.body.applyImpulse({ x: 0, y: 1.35, z: 0 }, true);
+      this.body.applyImpulse({ x: 0, y: 1.8 * this.body.mass(), z: 0 }, true);
     }
+    if (input.consume('respawn')) this.respawn();
 
-    if (input.consume('respawn')) {
-      this.respawn();
-    }
+    this.trackDistance();
+    this.syncModel();
+    this.updateWheelVisuals(dt);
+    this.updateTrails(dt);
+    if (this.controller.speed > 10) this.spawnTrail(state.boost);
+  }
 
-    if (Math.abs(this.driveSpeed) > 12) {
-      this.spawnTrail(forward, boost);
-    }
+  postPhysics() {
+    this.syncModel();
+  }
 
-    const pos = new THREE.Vector3(translation.x, translation.y, translation.z);
+  idleDampen() {
+    const v = this.body.linvel();
+    this.body.setLinvel({ x: v.x * 0.94, y: v.y, z: v.z * 0.94 }, true);
+    this.syncModel();
+  }
+
+  trackDistance() {
+    const pos = this.position;
     const distance = pos.distanceTo(this.lastPosition);
-    if (distance < 5) {
+    if (distance < 6) {
       this.distanceAccumulator += distance;
       this.achievements.addDistance(distance);
     }
     this.lastPosition.copy(pos);
-
-    this.syncModel();
-    this.updateWheels(dt, steer, this.driveSpeed);
-    this.updateTrails(dt);
   }
 
   syncModel() {
@@ -228,65 +167,33 @@ export class Vehicle {
     this.group.quaternion.set(rotation.x, rotation.y, rotation.z, rotation.w);
   }
 
-  updateWheels(dt, steer, forwardSpeed) {
-    this.steerVisual += (steer * 0.42 - this.steerVisual) * Math.min(1, dt * 12);
-    for (const pivot of this.frontWheels) {
-      pivot.rotation.y = this.steerVisual;
-    }
+  updateWheelVisuals(dt) {
     for (const wheel of this.wheels) {
-      wheel.rotation.x += forwardSpeed * dt * 2.4;
+      wheel.rotation.x += this.controller.speed * dt * 4.2;
+    }
+    for (const pivot of this.frontWheels) {
+      pivot.rotation.y = this.controller.steering;
     }
   }
 
-  dampenImpactSpin() {
-    const velocity = this.body.linvel();
-    const maxUpwardVelocity = this.impactRecovery > 0 ? 2.8 : 9.2;
-    if (velocity.y > maxUpwardVelocity) {
-      this.body.setLinvel({ x: velocity.x, y: maxUpwardVelocity, z: velocity.z }, true);
-    }
-    const angular = this.body.angvel();
-    this.body.setAngvel({
-      x: THREE.MathUtils.clamp(angular.x, -0.95, 0.95),
-      y: THREE.MathUtils.clamp(angular.y, -1.25, 1.25),
-      z: THREE.MathUtils.clamp(angular.z, -0.95, 0.95)
-    }, true);
-  }
-
-  respawn(position = START, heading = 0) {
-    this.body.setTranslation({ x: position.x, y: position.y, z: position.z }, true);
-    this.heading = heading;
-    this.body.setRotation(yawQuaternion(this.heading), true);
-    this.body.setLinvel({ x: 0, y: 0, z: 0 }, true);
-    this.body.setAngvel({ x: 0, y: 0, z: 0 }, true);
-    this.driveSpeed = 0;
-    this.speed = 0;
-    this.airTime = 0;
-    this.impactRecovery = 0;
-    this.lastPosition.copy(position);
-    this.syncModel();
-  }
-
-  spawnTrail(forward, boost) {
-    if (this.trails.length > 90) return;
-    const origin = this.position.addScaledVector(forward, -2.25);
+  spawnTrail(boosting) {
+    if (this.trails.length > 70) return;
+    const rear = new THREE.Vector3(0, 0.2, -2.6).applyQuaternion(this.group.quaternion).add(this.group.position);
     const particle = new THREE.Mesh(
       this.trailGeometry,
       new THREE.MeshBasicMaterial({
-        color: boost ? 0x7cffb2 : 0x68d8ff,
+        color: boosting ? 0xffb35c : 0xb6e6ff,
         transparent: true,
-        opacity: boost ? 0.38 : 0.22
+        opacity: boosting ? 0.34 : 0.18,
+        depthWrite: false
       })
     );
-    particle.position.set(
-      origin.x + (Math.random() - 0.5) * 0.7,
-      Math.max(0.22, origin.y - 0.1),
-      origin.z + (Math.random() - 0.5) * 0.7
-    );
+    particle.position.set(rear.x + (Math.random() - 0.5) * 0.7, Math.max(0.25, rear.y), rear.z + (Math.random() - 0.5) * 0.7);
     this.scene.add(particle);
     this.trails.push({
       mesh: particle,
-      life: boost ? 0.55 : 0.38,
-      velocity: new THREE.Vector3((Math.random() - 0.5) * 0.5, 0.45 + Math.random() * 0.28, (Math.random() - 0.5) * 0.5)
+      life: boosting ? 0.6 : 0.38,
+      velocity: new THREE.Vector3((Math.random() - 0.5) * 0.35, 0.35 + Math.random() * 0.25, (Math.random() - 0.5) * 0.35)
     });
   }
 
@@ -295,8 +202,8 @@ export class Vehicle {
       const trail = this.trails[i];
       trail.life -= dt;
       trail.mesh.position.addScaledVector(trail.velocity, dt);
-      trail.mesh.scale.multiplyScalar(1 + dt * 1.8);
-      trail.mesh.material.opacity = Math.max(0, trail.life) * 0.7;
+      trail.mesh.scale.multiplyScalar(1 + dt * 1.6);
+      trail.mesh.material.opacity = Math.max(0, trail.life) * 0.6;
       if (trail.life <= 0) {
         this.scene.remove(trail.mesh);
         trail.mesh.material.dispose();
@@ -309,23 +216,24 @@ export class Vehicle {
     if (!pad || this.lastBoostPad === pad.id) return;
     this.lastBoostPad = pad.id;
     const velocity = this.body.linvel();
-    const currentDirection = new THREE.Vector3(velocity.x, 0, velocity.z);
-    const headingDirection = new THREE.Vector3(Math.sin(this.heading), 0, Math.cos(this.heading)).normalize();
-    const direction = currentDirection.lengthSq() > 4 ? currentDirection.normalize() : headingDirection;
-    const boostSpeed = Math.max(42, Math.abs(this.driveSpeed) + 18, Math.hypot(velocity.x, velocity.z) + 20);
-    this.heading = Math.atan2(direction.x, direction.z);
-    this.driveSpeed = Math.max(this.driveSpeed, boostSpeed);
-    this.body.setRotation(steeredQuaternion(this.heading, this.body.rotation()), true);
-    this.body.setLinvel({
-      x: direction.x * boostSpeed,
-      y: Math.max(2.4, this.body.linvel().y + 2.6),
-      z: direction.z * boostSpeed
-    }, true);
+    const current = new THREE.Vector3(velocity.x, 0, velocity.z);
+    let direction = current.lengthSq() > 1 ? current.normalize() : new THREE.Vector3(0, 0, 1).applyQuaternion(this.group.quaternion).normalize();
+    this.controller.boost(direction, 20);
     this.achievements.unlock('boost_pad');
     this.audio.click(940);
     window.setTimeout(() => {
       if (this.lastBoostPad === pad.id) this.lastBoostPad = null;
     }, 550);
+  }
+
+  respawn(position = START, heading = 0) {
+    this.body.setTranslation({ x: position.x, y: position.y, z: position.z }, true);
+    this.body.setRotation(yawQuaternion(heading), true);
+    this.body.setLinvel({ x: 0, y: 0, z: 0 }, true);
+    this.body.setAngvel({ x: 0, y: 0, z: 0 }, true);
+    this.speed = 0;
+    this.lastPosition.copy(position);
+    this.syncModel();
   }
 
   get position() {
@@ -336,14 +244,5 @@ export class Vehicle {
 
 function yawQuaternion(heading) {
   const quaternion = new THREE.Quaternion().setFromEuler(new THREE.Euler(0, heading, 0));
-  return { x: quaternion.x, y: quaternion.y, z: quaternion.z, w: quaternion.w };
-}
-
-function steeredQuaternion(heading, currentRotation) {
-  const current = new THREE.Quaternion(currentRotation.x, currentRotation.y, currentRotation.z, currentRotation.w);
-  const euler = new THREE.Euler().setFromQuaternion(current, 'YXZ');
-  const preservedPitch = THREE.MathUtils.clamp(euler.x, -0.55, 0.55);
-  const preservedRoll = THREE.MathUtils.clamp(euler.z, -0.42, 0.42);
-  const quaternion = new THREE.Quaternion().setFromEuler(new THREE.Euler(preservedPitch, heading, preservedRoll, 'YXZ'));
   return { x: quaternion.x, y: quaternion.y, z: quaternion.z, w: quaternion.w };
 }

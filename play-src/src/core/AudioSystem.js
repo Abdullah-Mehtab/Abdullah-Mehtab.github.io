@@ -1,3 +1,5 @@
+import { Howler } from 'howler';
+
 export class AudioSystem {
   constructor() {
     this.context = null;
@@ -60,6 +62,7 @@ export class AudioSystem {
 
   resume() {
     this.init();
+    Howler.mute(this.muted);
     if (this.context?.state === 'suspended') {
       this.context.resume();
     }
@@ -68,6 +71,7 @@ export class AudioSystem {
   toggleMute() {
     this.muted = !this.muted;
     localStorage.setItem('portfolio-drive-muted', this.muted ? '1' : '0');
+    Howler.mute(this.muted);
     if (this.master) {
       this.master.gain.setTargetAtTime(this.muted ? 0 : 0.35, this.context.currentTime, 0.04);
     }
