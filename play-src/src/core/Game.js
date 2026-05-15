@@ -92,6 +92,8 @@ export class Game {
     sun.shadow.camera.bottom = -190;
     sun.shadow.camera.near = 1;
     sun.shadow.camera.far = 360;
+    sun.shadow.bias = -0.00015;
+    sun.shadow.normalBias = 0.08;
     this.scene.add(sun);
 
     const rim = new THREE.DirectionalLight(0x9fe7ff, 0.7);

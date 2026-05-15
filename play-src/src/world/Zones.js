@@ -1,6 +1,5 @@
 import * as THREE from 'three';
 import { worldZones } from './worldData.js';
-import { makeCanvasLabel } from './WorldMaterials.js';
 
 export class Zones {
   constructor(world) {
@@ -27,18 +26,23 @@ export class Zones {
     group.rotation.y = definition.rotation || 0;
     this.addInteractionRing(group, zone);
     this.addLandmark(group, zone);
-    this.addLabel(group, zone);
     this.world.scene.add(group);
   }
 
   addInteractionRing(group, zone) {
     const ring = new THREE.Mesh(
-      new THREE.RingGeometry(zone.radius * 0.84, zone.radius, 48),
-      new THREE.MeshBasicMaterial({ color: zone.color, transparent: true, opacity: 0.24, side: THREE.DoubleSide })
+      new THREE.RingGeometry(zone.radius * 0.94, zone.radius, 48),
+      new THREE.MeshBasicMaterial({
+        color: zone.color,
+        transparent: true,
+        opacity: 0.1,
+        depthWrite: false,
+        side: THREE.DoubleSide
+      })
     );
     ring.name = `ZONE_${zone.id}_interaction_ring`;
     ring.rotation.x = -Math.PI / 2;
-    ring.position.y = 0.23;
+    ring.position.y = 0.19;
     group.add(ring);
   }
 
@@ -59,16 +63,6 @@ export class Zones {
       size,
       { rotation: [0, zone.rotation || 0, 0], friction: 0.85, restitution: 0.02 }
     );
-  }
-
-  addLabel(group, zone) {
-    const texture = makeCanvasLabel(zone.name, zone.color, 420, 126);
-    const material = new THREE.MeshBasicMaterial({ map: texture, transparent: true, side: THREE.DoubleSide });
-    const label = new THREE.Mesh(new THREE.PlaneGeometry(6.8, 2.05), material);
-    label.name = `ZONE_${zone.id}_road_label`;
-    label.position.set(0, 5.2, zone.radius * 0.62);
-    label.rotation.y = Math.PI;
-    group.add(label);
   }
 
   createFallbackLandmark(zone) {

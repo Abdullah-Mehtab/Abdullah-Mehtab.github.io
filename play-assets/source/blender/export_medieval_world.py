@@ -170,16 +170,16 @@ def create_props(mats):
     create_potato(mats)
 
 
-def create_island_mesh(name, parent, mats, radius=158, rings=18, segments=160):
+def create_island_mesh(name, parent, mats, radius=158, rings=56, segments=220):
     verts = [(0, 0.04, 0)]
     faces = []
     for ring in range(1, rings + 1):
         ratio = ring / rings
         for i in range(segments):
             a = i / segments * math.tau
-            wobble = math.sin(a * 3.0 + ring * 0.7) * 2.6 + math.sin(a * 7.0) * 1.1
+            wobble = math.sin(a * 3.0 + ring * 0.18) * 2.2 + math.sin(a * 7.0) * 0.9
             r = radius * ratio + wobble * ratio
-            y = 0.03 + math.sin(a * 2.0) * 0.12 * ratio + math.cos(a * 5.0) * 0.08 * ratio
+            y = 0.025 + math.sin(a * 2.0 + ratio * 1.4) * 0.035 * ratio + math.cos(a * 5.0) * 0.025 * ratio
             verts.append((math.cos(a) * r, y, math.sin(a) * r))
     for i in range(segments):
         faces.append((0, 1 + i, 1 + ((i + 1) % segments)))
@@ -191,6 +191,8 @@ def create_island_mesh(name, parent, mats, radius=158, rings=18, segments=160):
     mesh = bpy.data.meshes.new(name)
     mesh.from_pydata(verts, [], faces)
     mesh.update()
+    for polygon in mesh.polygons:
+        polygon.use_smooth = True
     obj = bpy.data.objects.new(name, mesh)
     bpy.context.collection.objects.link(obj)
     obj.data.materials.append(mats["grass"])

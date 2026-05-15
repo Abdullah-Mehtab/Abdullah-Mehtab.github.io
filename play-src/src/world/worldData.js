@@ -7,12 +7,12 @@ export const canalSegments = [];
 export const districtFootprints = [
   { id: 'courtyard', label: 'Portfolio Courtyard', center: [0, 0], size: [48, 42], color: '#7cffb2', kind: 'plaza' },
   { id: 'watchtower', label: 'Sentinel Watchtower', center: [8, 104], size: [54, 42], color: '#ff6d8d', kind: 'keep' },
-  { id: 'library-grove', label: 'Education Grove', center: [-104, 82], size: [56, 44], color: '#9ccfff', kind: 'library' },
+  { id: 'library-grove', label: 'Education Grove', center: [-108, 92], size: [56, 44], color: '#9ccfff', kind: 'library' },
   { id: 'forge', label: 'Projects Foundry', center: [66, 28], size: [54, 42], color: '#ffcc66', kind: 'forge' },
   { id: 'harbor', label: 'Contact Harbor', center: [124, 30], size: [40, 32], color: '#78b7ff', kind: 'waterfront' },
   { id: 'archive', label: 'Archive Garden', center: [-42, 58], size: [48, 34], color: '#ffdf8a', kind: 'civic' },
   { id: 'cove', label: 'Stunt Courtyard', center: [96, -96], size: [44, 30], color: '#ff9b6d', kind: 'stunt' },
-  { id: 'farm', label: 'Voxel Farm Pocket', center: [82, 84], size: [38, 30], color: '#c79b56', kind: 'farm' }
+  { id: 'farm', label: 'Voxel Farm Pocket', center: [80, 76], size: [38, 30], color: '#c79b56', kind: 'farm' }
 ];
 
 export const scenicPropZones = [
@@ -21,7 +21,7 @@ export const scenicPropZones = [
   { id: 'watchtower-garden', center: [38, 104], size: [58, 30], kind: 'garden' },
   { id: 'harbor-cypress', center: [126, 58], size: [34, 38], kind: 'coast' },
   { id: 'southern-meadow', center: [-18, -118], size: [76, 34], kind: 'meadow' },
-  { id: 'farm-buffer', center: [82, 84], size: [40, 28], kind: 'farm' }
+  { id: 'farm-buffer', center: [80, 76], size: [40, 28], kind: 'farm' }
 ];
 
 export const roadPaths = [
@@ -207,7 +207,7 @@ export const worldZones = [
     id: 'sentinel',
     name: 'Cyber Sentinel Watchtower',
     kind: 'Final Year Project',
-    position: [18, 0, 106],
+    position: [24, 0, 106],
     rotation: 0,
     radius: 12,
     color: '#ff6d8d',
@@ -252,7 +252,7 @@ export const worldZones = [
     id: 'education',
     name: 'Education Library',
     kind: 'Academics',
-    position: [-108, 0, 84],
+    position: [-108, 0, 92],
     rotation: 0.18,
     radius: 10,
     color: '#9ccfff',
@@ -302,7 +302,7 @@ export const worldZones = [
     id: 'todo',
     name: 'Todo Board',
     kind: 'Blog / List',
-    position: [-64, 0, 126],
+    position: [-68, 0, 126],
     rotation: -0.28,
     radius: 8,
     color: '#d8ff92',
@@ -336,7 +336,7 @@ export const worldZones = [
     id: 'contact',
     name: 'Contact Harbor Lighthouse',
     kind: 'Links',
-    position: [132, 0, 54],
+    position: [132, 0, 62],
     rotation: -0.18,
     radius: 8,
     color: '#78b7ff',
@@ -400,7 +400,7 @@ export const worldZones = [
     id: 'potato',
     name: 'Potato Farm',
     kind: 'Farm Counter',
-    position: [82, 0, 84],
+    position: [80, 0, 76],
     rotation: Math.PI,
     radius: 10,
     color: '#c79b56',

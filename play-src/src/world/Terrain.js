@@ -5,27 +5,32 @@ import { makeIslandGeometry, makeRingGeometry, WATER_Y } from './WorldMaterials.
 export class Terrain {
   constructor(world) {
     this.world = world;
+    this.authoredIslandLoaded = false;
   }
 
   build() {
-    this.addAuthoredIsland();
-    this.addFallbackGround();
-    this.addBeachAndCliffs();
+    this.authoredIslandLoaded = this.addAuthoredIsland();
+    if (!this.authoredIslandLoaded) {
+      this.addFallbackGround();
+      this.addBeachAndCliffs();
+    }
     this.addPhysicsFloor();
   }
 
   addAuthoredIsland() {
     const visual = this.world.environmentAssets?.cloneScene?.('islandVisual');
-    if (!visual) return;
+    if (!visual) return false;
     visual.name = 'MedievalIslandVisual';
     visual.traverse((object) => {
       if (object.isMesh) {
+        object.geometry?.computeVertexNormals?.();
         object.receiveShadow = true;
-        object.castShadow = true;
+        object.castShadow = false;
       }
     });
     this.world.scene.add(visual);
     this.world.decor.push({ type: 'authoredIsland', mesh: visual });
+    return true;
   }
 
   addFallbackGround() {
