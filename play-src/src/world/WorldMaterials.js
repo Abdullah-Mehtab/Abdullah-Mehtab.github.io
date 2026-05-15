@@ -29,7 +29,7 @@ export function createWorldMaterials() {
 
   return {
     ground: new THREE.MeshStandardMaterial({
-      color: 0xffffff,
+      color: 0x82a866,
       map: grassTexture,
       roughness: 0.92,
       metalness: 0.01,
@@ -221,7 +221,7 @@ function makeGrassTexture(size) {
   const ctx = canvas.getContext('2d');
   const pixel = 16;
   const cell = size / pixel;
-  const palette = ['#255829', '#2f6a31', '#3b7d36', '#4b913d', '#1f4d27', '#5b9c42'];
+  const palette = ['#183f22', '#24562a', '#2e6630', '#397636', '#14341c', '#4a833b'];
   ctx.imageSmoothingEnabled = false;
   for (let y = 0; y < pixel; y += 1) {
     for (let x = 0; x < pixel; x += 1) {
@@ -230,11 +230,11 @@ function makeGrassTexture(size) {
       ctx.fillStyle = shade;
       ctx.fillRect(x * cell, y * cell, cell + 1, cell + 1);
       if (pseudoRandom(n * 19.2 + x) > 0.66) {
-        ctx.fillStyle = 'rgba(159, 202, 76, 0.26)';
+        ctx.fillStyle = 'rgba(125, 168, 61, 0.22)';
         ctx.fillRect(x * cell + cell * 0.12, y * cell + cell * 0.18, cell * 0.42, cell * 0.18);
       }
       if (pseudoRandom(n * 43.8 + y) > 0.72) {
-        ctx.fillStyle = 'rgba(15, 49, 24, 0.34)';
+        ctx.fillStyle = 'rgba(10, 36, 18, 0.4)';
         ctx.fillRect(x * cell + cell * 0.42, y * cell + cell * 0.52, cell * 0.45, cell * 0.22);
       }
     }
