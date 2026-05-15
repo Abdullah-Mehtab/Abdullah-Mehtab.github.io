@@ -5,6 +5,7 @@ import { ISLAND_RADIUS, WORLD_HALF_SIZE } from '../world/worldData.js';
 import sabreTurboModelUrl from '../../assets/models/vehicles/sabre-turbo.glb?url';
 
 const START = new THREE.Vector3(2, 1.08, 5.5);
+const VISUAL_Y_OFFSET = -0.65;
 
 export class Vehicle {
   constructor({ scene, physics, achievements, audio }) {
@@ -16,6 +17,7 @@ export class Vehicle {
     this.group = new THREE.Group();
     this.group.name = 'Vehicle';
     this.modelRoot = new THREE.Group();
+    this.modelRoot.position.y = VISUAL_Y_OFFSET;
     this.group.add(this.modelRoot);
     this.wheels = [];
     this.frontWheels = [];
@@ -67,8 +69,8 @@ export class Vehicle {
   createLights() {
     for (const x of [-0.62, 0.62]) {
       const light = new THREE.SpotLight(0xfff0c4, 10, 34, Math.PI / 10, 0.45, 1.5);
-      light.position.set(x, 0.78, 2.86);
-      light.target.position.set(x, 0.32, 10);
+      light.position.set(x, 0.78 + VISUAL_Y_OFFSET, 2.86);
+      light.target.position.set(x, 0.32 + VISUAL_Y_OFFSET, 10);
       this.group.add(light, light.target);
     }
   }
