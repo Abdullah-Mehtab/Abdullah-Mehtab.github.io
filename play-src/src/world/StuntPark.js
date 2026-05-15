@@ -17,19 +17,20 @@ export class StuntPark {
     const baseX = zone.position[0];
     const baseZ = zone.position[2];
     const ramps = [
-      { id: 'cove-main-ramp', x: baseX - 2, z: baseZ + 2, rot: -0.35, size: [8.5, 0.95, 12], pitch: -0.2 }
+      { id: 'cove-main-ramp', x: baseX - 14, z: baseZ - 18, y: 0.12, rot: Math.PI / 2, width: 8.8, length: 22, height: 2.1 }
     ];
     for (const ramp of ramps) {
-      const mesh = new THREE.Mesh(new THREE.BoxGeometry(...ramp.size), this.world.materials.roadEdge);
+      const rampShape = createRampShape(ramp.width, ramp.length, ramp.height);
+      const mesh = new THREE.Mesh(rampShape.geometry, this.world.materials.roadEdge);
       mesh.name = `STUNT_${ramp.id}`;
-      mesh.position.set(ramp.x, 0.72, ramp.z);
-      mesh.rotation.set(ramp.pitch, ramp.rot, 0);
+      mesh.position.set(ramp.x, ramp.y, ramp.z);
+      mesh.rotation.y = ramp.rot;
       mesh.castShadow = true;
       mesh.receiveShadow = true;
       this.world.scene.add(mesh);
-      this.world.ramps.push({ id: ramp.id, position: new THREE.Vector3(ramp.x, 0, ramp.z), radius: 8, triggered: false });
-      this.world.physics.createFixedBox([ramp.x, 0.72, ramp.z], ramp.size, {
-        rotation: [ramp.pitch, ramp.rot, 0],
+      this.world.ramps.push({ id: ramp.id, position: new THREE.Vector3(ramp.x, 0, ramp.z), radius: 11, triggered: false });
+      this.world.physics.createFixedTrimesh([ramp.x, ramp.y, ramp.z], rampShape.vertices, rampShape.indices, {
+        rotation: [0, ramp.rot, 0],
         friction: 0.92,
         restitution: 0.02
       });
@@ -39,8 +40,8 @@ export class StuntPark {
 
   addGuardrails(ramp) {
     for (const side of [-1, 1]) {
-      const rail = new THREE.Mesh(new THREE.BoxGeometry(0.25, 0.55, ramp.size[2]), this.world.materials.paleStone);
-      rail.position.set(ramp.x + Math.cos(ramp.rot) * ramp.size[0] * 0.55 * side, 1.25, ramp.z - Math.sin(ramp.rot) * ramp.size[0] * 0.55 * side);
+      const rail = new THREE.Mesh(new THREE.BoxGeometry(0.25, 0.55, ramp.length), this.world.materials.paleStone);
+      rail.position.set(ramp.x + Math.cos(ramp.rot) * ramp.width * 0.55 * side, 1.1, ramp.z - Math.sin(ramp.rot) * ramp.width * 0.55 * side);
       rail.rotation.y = ramp.rot;
       this.world.scene.add(rail);
     }
@@ -64,4 +65,34 @@ export class StuntPark {
       this.world.boostPads.push({ ...pad, position: new THREE.Vector3(pad.position[0], 0, pad.position[2]) });
     }
   }
+}
+
+function createRampShape(width, length, height) {
+  const halfWidth = width / 2;
+  const halfLength = length / 2;
+  const lowTop = -0.18;
+  const bottom = -0.82;
+  const vertices = new Float32Array([
+    -halfWidth, lowTop, -halfLength,
+    halfWidth, lowTop, -halfLength,
+    halfWidth, height, halfLength,
+    -halfWidth, height, halfLength,
+    -halfWidth, bottom, -halfLength,
+    halfWidth, bottom, -halfLength,
+    halfWidth, bottom, halfLength,
+    -halfWidth, bottom, halfLength
+  ]);
+  const indices = new Uint32Array([
+    0, 1, 2, 0, 2, 3,
+    4, 7, 6, 4, 6, 5,
+    0, 4, 5, 0, 5, 1,
+    3, 2, 6, 3, 6, 7,
+    0, 3, 7, 0, 7, 4,
+    1, 5, 6, 1, 6, 2
+  ]);
+  const geometry = new THREE.BufferGeometry();
+  geometry.setAttribute('position', new THREE.BufferAttribute(vertices, 3));
+  geometry.setIndex(new THREE.BufferAttribute(indices, 1));
+  geometry.computeVertexNormals();
+  return { geometry, vertices, indices };
 }

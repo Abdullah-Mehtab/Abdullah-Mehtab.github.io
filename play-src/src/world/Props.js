@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import { ISLAND_RADIUS, scenicPropZones } from './worldData.js';
+import { ISLAND_RADIUS } from './worldData.js';
 import { pseudoRandom } from './WorldMaterials.js';
 
 export class Props {
@@ -38,54 +38,90 @@ export class Props {
   }
 
   placeScenicProps() {
-    const templates = ['EnvBarrel', 'EnvCrate', 'EnvBench'];
-    let placed = 0;
-    const maxProps = Math.floor(this.world.getQualityProfile().props * 0.58);
-    for (let attempt = 0; attempt < 1200 && placed < maxProps; attempt += 1) {
-      const zone = scenicPropZones[Math.floor(pseudoRandom(attempt * 2.2) * scenicPropZones.length)];
-      const x = zone.center[0] + (pseudoRandom(attempt * 4.3) - 0.5) * zone.size[0];
-      const z = zone.center[1] + (pseudoRandom(attempt * 8.9) - 0.5) * zone.size[1];
-      if (Math.hypot(x, z) > ISLAND_RADIUS * 0.82) continue;
-      if (!this.world.isClearForProp(x, z, 2.2)) continue;
-      const name = templates[Math.floor(pseudoRandom(attempt * 6.6) * templates.length)];
-      const prop = this.world.cloneEnvironmentAsset(name) || this.createFallbackProp(name);
-      prop.position.set(x, 0.2, z);
-      prop.rotation.y = pseudoRandom(attempt * 9.1) * Math.PI * 2;
-      prop.scale.setScalar(0.75 + pseudoRandom(attempt * 12.1) * 0.55);
-      this.world.scene.add(prop);
-      this.items.push(prop);
-      this.addPropCollider(name, x, z, prop.scale.x);
-      placed += 1;
+    const placements = [
+      // Courtyard seating, placed like a small public square instead of random clutter.
+      ['EnvBench', -8, 48, -0.35, 0.92],
+      ['EnvBench', 34, 55, 0.42, 0.92],
+      ['EnvBench', 38, 23, 2.86, 0.88],
+      ['EnvBench', -34, 40, -0.2, 0.86],
+
+      // Education grove: benches face the library approach and stay outside the driving line.
+      ['EnvBench', -133, 69, 0.98, 0.9],
+      ['EnvBench', -121, 50, 0.36, 0.86],
+      ['EnvBench', -86, 96, -0.8, 0.86],
+
+      // Harbor / foundry / farm storage groups.
+      ['EnvCrate', 145, 78, 0.2, 0.92],
+      ['EnvBarrel', 141, 84, -0.2, 0.86],
+      ['EnvCrate', 78, 57, 0.38, 0.88],
+      ['EnvBarrel', 84, 51, -0.4, 0.82],
+      ['EnvCrate', 31, 93, 0.12, 0.82],
+      ['EnvBarrel', 36, 92, -0.34, 0.78],
+
+      // Small rest points near the outer loop.
+      ['EnvBench', -138, -12, 1.34, 0.86],
+      ['EnvBench', -111, -88, 0.7, 0.86],
+      ['EnvBench', 104, -34, -0.85, 0.86],
+      ['EnvBench', -20, -102, 0.18, 0.84],
+
+      // Pier data props.
+      ['EnvCrate', -145, 34, 0.34, 0.84],
+      ['EnvBarrel', -135, 39, -0.22, 0.8]
+    ];
+
+    for (const [name, x, z, rotation, scale] of placements) {
+      if (!this.world.isClearForProp(x, z, name.includes('Bench') ? 2.1 : 1.5)) continue;
+      this.addPlacedProp({ name, x, z, rotation, scale });
     }
   }
 
   placeShoreRocks() {
-    for (let i = 0; i < 44; i += 1) {
-      const angle = (i / 44) * Math.PI * 2 + (pseudoRandom(i * 6.4) - 0.5) * 0.18;
+    const count = this.world.landscapeQuality === 'low' ? 22 : this.world.landscapeQuality === 'medium' ? 30 : 38;
+    for (let i = 0; i < count; i += 1) {
+      const angle = (i / count) * Math.PI * 2 + (pseudoRandom(i * 6.4) - 0.5) * 0.18;
       const radius = ISLAND_RADIUS * (0.88 + pseudoRandom(i * 11.2) * 0.1);
       const x = Math.cos(angle) * radius;
       const z = Math.sin(angle) * radius;
-      if (this.world.roads.isNear(x, z, 5)) continue;
+      if (this.world.roads.isNear(x, z, 6.5)) continue;
       const rock = this.world.cloneEnvironmentAsset('EnvShoreRock') || this.createRock();
-      rock.position.set(x, 0.15, z);
+      rock.position.set(x, 0.08, z);
       rock.rotation.y = pseudoRandom(i * 3.7) * Math.PI * 2;
-      rock.scale.setScalar(0.75 + pseudoRandom(i * 7.3) * 1.8);
+      rock.scale.setScalar(0.72 + pseudoRandom(i * 7.3) * 1.25);
       this.world.scene.add(rock);
+      this.groundObject(rock, 0.03);
       this.items.push(rock);
-      this.world.physics.createFixedBox([x, 0.45 * rock.scale.x, z], [1.4 * rock.scale.x, 0.9 * rock.scale.x, 1.0 * rock.scale.x], {
-        rotation: [0, rock.rotation.y, 0],
+      this.world.physics.createFixedBall([x, 0.34 * rock.scale.x, z], 0.42 * rock.scale.x, {
         friction: 0.95,
-        restitution: 0.02
+        restitution: 0.01
       });
     }
   }
 
-  addPropCollider(name, x, z, scale) {
-    const size = name.includes('Bench') ? [2.0 * scale, 0.75 * scale, 0.75 * scale] : [1.1 * scale, 1.1 * scale, 1.1 * scale];
-    this.world.physics.createFixedBox([x, size[1] / 2, z], size, {
-      friction: 0.86,
-      restitution: 0.02
-    });
+  addPlacedProp({ name, x, z, rotation, scale }) {
+    if (name.includes('Bench')) {
+      const pad = new THREE.Mesh(new THREE.BoxGeometry(2.85 * scale, 0.035, 1.1 * scale), this.world.materials.paleStone);
+      pad.name = 'PROP_BenchStonePad';
+      pad.position.set(x, 0.085, z);
+      pad.rotation.y = rotation;
+      pad.receiveShadow = true;
+      this.world.scene.add(pad);
+      this.items.push(pad);
+    }
+    const prop = this.world.cloneEnvironmentAsset(name) || this.createFallbackProp(name);
+    prop.position.set(x, 0.12, z);
+    prop.rotation.y = rotation;
+    prop.scale.setScalar(scale);
+    this.world.scene.add(prop);
+    this.groundObject(prop, 0.035);
+    this.items.push(prop);
+  }
+
+  groundObject(object, targetY = 0.04) {
+    object.updateMatrixWorld(true);
+    const box = new THREE.Box3().setFromObject(object);
+    if (Number.isFinite(box.min.y)) {
+      object.position.y += targetY - box.min.y;
+    }
   }
 
   createLantern() {

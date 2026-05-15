@@ -182,9 +182,11 @@ export class Foliage {
   }
 
   addTreeCollider(x, z, scale) {
-    this.world.physics.createFixedBox([x, 1.0 * scale, z], [0.72 * scale, 2.0 * scale, 0.72 * scale], {
+    const halfHeight = 0.82 * scale;
+    const radius = 0.2 * scale;
+    this.world.physics.createFixedCylinder([x, halfHeight, z], halfHeight, radius, {
       friction: 0.88,
-      restitution: 0.02
+      restitution: 0.01
     });
   }
 }

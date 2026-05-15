@@ -196,6 +196,7 @@ def create_island_mesh(name, parent, mats, radius=158, rings=56, segments=220):
     mesh = bpy.data.meshes.new(name)
     mesh.from_pydata(verts, [], faces)
     mesh.update()
+    assign_planar_uv(mesh, radius)
     for polygon in mesh.polygons:
         polygon.use_smooth = True
     obj = bpy.data.objects.new(name, mesh)
@@ -219,11 +220,21 @@ def create_ring(name, parent, inner, outer, material, y=0.0, segments=160):
     mesh = bpy.data.meshes.new(name)
     mesh.from_pydata(verts, [], faces)
     mesh.update()
+    assign_planar_uv(mesh, outer)
     obj = bpy.data.objects.new(name, mesh)
     bpy.context.collection.objects.link(obj)
     obj.data.materials.append(material)
     obj.parent = parent
     return obj
+
+
+def assign_planar_uv(mesh, scale):
+    uv_layer = mesh.uv_layers.new(name="UVMap")
+    span = max(scale * 2, 1)
+    for polygon in mesh.polygons:
+        for loop_index in polygon.loop_indices:
+            vertex = mesh.vertices[mesh.loops[loop_index].vertex_index].co
+            uv_layer.data[loop_index].uv = ((vertex.x + scale) / span, (vertex.z + scale) / span)
 
 
 def create_oak_tree(mats):
