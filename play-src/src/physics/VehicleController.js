@@ -1,10 +1,10 @@
 import * as THREE from 'three';
 
 const WHEEL_OFFSETS = [
-  { x: -0.9, y: -0.34, z: 1.55, front: true },
-  { x: 0.9, y: -0.34, z: 1.55, front: true },
-  { x: -0.9, y: -0.34, z: -1.55, front: false },
-  { x: 0.9, y: -0.34, z: -1.55, front: false }
+  { x: -0.88, y: -0.42, z: 1.58, front: true },
+  { x: 0.88, y: -0.42, z: 1.58, front: true },
+  { x: -0.88, y: -0.42, z: -1.64, front: false },
+  { x: 0.88, y: -0.42, z: -1.64, front: false }
 ];
 
 export class VehicleController {
@@ -21,24 +21,24 @@ export class VehicleController {
   }
 
   setupWheels() {
-    this.radius = 0.44;
+    this.radius = 0.39;
     for (const wheel of WHEEL_OFFSETS) {
       this.controller.addWheel(
         { x: wheel.x, y: wheel.y, z: wheel.z },
         { x: 0, y: -1, z: 0 },
         { x: -1, y: 0, z: 0 },
-        0.34,
+        0.3,
         this.radius
       );
     }
     for (let i = 0; i < WHEEL_OFFSETS.length; i += 1) {
-      this.controller.setWheelFrictionSlip(i, 1.68);
-      this.controller.setWheelSideFrictionStiffness(i, 8.2);
-      this.controller.setWheelSuspensionStiffness(i, 28);
-      this.controller.setWheelSuspensionCompression(i, 6.8);
-      this.controller.setWheelSuspensionRelaxation(i, 7.2);
-      this.controller.setWheelMaxSuspensionTravel(i, 0.32);
-      this.controller.setWheelMaxSuspensionForce(i, 230);
+      this.controller.setWheelFrictionSlip(i, 1.78);
+      this.controller.setWheelSideFrictionStiffness(i, 9.4);
+      this.controller.setWheelSuspensionStiffness(i, 34);
+      this.controller.setWheelSuspensionCompression(i, 8.2);
+      this.controller.setWheelSuspensionRelaxation(i, 8.6);
+      this.controller.setWheelMaxSuspensionTravel(i, 0.24);
+      this.controller.setWheelMaxSuspensionForce(i, 285);
     }
   }
 
@@ -56,13 +56,13 @@ export class VehicleController {
 
     const velocity = this.body.linvel();
     this.speed = Math.hypot(velocity.x, velocity.y * 0.18, velocity.z);
-    const topSpeed = boost ? 32 : 23;
+    const topSpeed = boost ? 31 : 22;
     const overflow = Math.max(0, this.speed - topSpeed);
     let engine = 0;
-    if (forward) engine += (boost ? 235 : 146) / (1 + overflow * 0.42);
-    if (reverse) engine -= 76 / (1 + overflow * 0.42);
-    let brake = brakeInput ? 46 : 0.12;
-    if (!forward && !reverse && this.speed < 1.8) brake = 4.2;
+    if (forward) engine += (boost ? 218 : 132) / (1 + overflow * 0.42);
+    if (reverse) engine -= 64 / (1 + overflow * 0.42);
+    let brake = brakeInput ? 54 : 0.18;
+    if (!forward && !reverse && this.speed < 1.8) brake = 5.0;
 
     for (let i = 0; i < WHEEL_OFFSETS.length; i += 1) {
       const isFront = WHEEL_OFFSETS[i].front;
@@ -129,21 +129,21 @@ export class VehicleController {
     const angular = this.body.angvel();
     const q = this.body.rotation();
     const up = new THREE.Vector3(0, 1, 0).applyQuaternion(new THREE.Quaternion(q.x, q.y, q.z, q.w));
-    const pitchRollCorrection = this.body.mass() * 0.52;
+    const pitchRollCorrection = this.body.mass() * 0.68;
     this.body.applyTorqueImpulse({
-      x: (-angular.x * 0.46 - up.z * 0.72) * pitchRollCorrection,
+      x: (-angular.x * 0.58 - up.z * 0.84) * pitchRollCorrection,
       y: -angular.y * this.body.mass() * 0.018,
-      z: (-angular.z * 0.46 + up.x * 0.72) * pitchRollCorrection
+      z: (-angular.z * 0.58 + up.x * 0.84) * pitchRollCorrection
     }, true);
     if (this.speed > 5) {
-      this.body.applyImpulse({ x: 0, y: -Math.min(0.5, this.speed * 0.012) * this.body.mass(), z: 0 }, true);
+      this.body.applyImpulse({ x: 0, y: -Math.min(0.74, this.speed * 0.016) * this.body.mass(), z: 0 }, true);
     }
   }
 
   applyAeroGrip(dt) {
     if (this.groundedWheels < 2) return;
     const mass = this.body.mass();
-    const downforce = Math.min(1.2, 0.22 + this.speed * 0.018) * mass;
-    this.body.applyImpulse({ x: 0, y: -downforce * Math.min(1, dt * 60) * 0.018, z: 0 }, true);
+    const downforce = Math.min(1.55, 0.34 + this.speed * 0.024) * mass;
+    this.body.applyImpulse({ x: 0, y: -downforce * Math.min(1, dt * 60) * 0.022, z: 0 }, true);
   }
 }

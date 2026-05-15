@@ -5,7 +5,7 @@ import { ISLAND_RADIUS, WORLD_HALF_SIZE } from '../world/worldData.js';
 import sabreTurboModelUrl from '../../assets/models/vehicles/sabre-turbo.glb?url';
 
 const START = new THREE.Vector3(2, 1.08, 5.5);
-const VISUAL_Y_OFFSET = -0.95;
+const VISUAL_Y_OFFSET = -0.88;
 
 export class Vehicle {
   constructor({ scene, physics, achievements, audio }) {
@@ -27,7 +27,7 @@ export class Vehicle {
     this.distanceAccumulator = 0;
     this.lastPosition = START.clone();
     this.trails = [];
-    this.trailGeometry = new THREE.SphereGeometry(0.14, 8, 6);
+    this.trailGeometry = new THREE.SphereGeometry(0.08, 8, 5);
     this.createBody();
     this.createLights();
     this.loadVehicleModel();
@@ -43,30 +43,30 @@ export class Vehicle {
       .setAngularDamping(1.85);
     this.body = this.physics.world.createRigidBody(bodyDesc);
     const main = this.RAPIER.ColliderDesc
-      .cuboid(1.1, 0.28, 2.38)
-      .setDensity(1.35)
+      .cuboid(1.12, 0.25, 2.42)
+      .setDensity(1.42)
       .setFriction(1.0)
       .setRestitution(0.01);
-    main.setTranslation(0, -0.18, 0);
+    main.setTranslation(0, -0.2, -0.02);
     this.physics.world.createCollider(main, this.body);
     const ballast = this.RAPIER.ColliderDesc
-      .cuboid(0.94, 0.14, 1.7)
-      .setDensity(2.9)
+      .cuboid(0.96, 0.16, 1.78)
+      .setDensity(3.35)
       .setFriction(1.05)
       .setRestitution(0);
-    ballast.setTranslation(0, -0.54, -0.08);
+    ballast.setTranslation(0, -0.58, -0.12);
     this.physics.world.createCollider(ballast, this.body);
     const roof = this.RAPIER.ColliderDesc
-      .cuboid(0.66, 0.22, 0.66)
-      .setDensity(0.16)
+      .cuboid(0.64, 0.18, 0.62)
+      .setDensity(0.12)
       .setFriction(0.72)
       .setRestitution(0.02);
-    roof.setTranslation(0, 0.36, -0.08);
+    roof.setTranslation(0, 0.3, -0.1);
     this.physics.world.createCollider(roof, this.body);
     this.body.setAdditionalMassProperties(
-      5.8,
-      { x: 0, y: -0.58, z: -0.12 },
-      { x: 4.6, y: 3.8, z: 5.2 },
+      6.4,
+      { x: 0, y: -0.66, z: -0.14 },
+      { x: 5.0, y: 4.6, z: 5.9 },
       { x: 0, y: 0, z: 0, w: 1 },
       true
     );
@@ -75,7 +75,7 @@ export class Vehicle {
 
   createLights() {
     for (const x of [-0.62, 0.62]) {
-      const light = new THREE.SpotLight(0xfff0c4, 10, 34, Math.PI / 10, 0.45, 1.5);
+      const light = new THREE.SpotLight(0xfff0c4, 4.8, 26, Math.PI / 10, 0.45, 1.6);
       light.position.set(x, 0.78 + VISUAL_Y_OFFSET, 2.86);
       light.target.position.set(x, 0.32 + VISUAL_Y_OFFSET, 10);
       this.group.add(light, light.target);
@@ -199,14 +199,14 @@ export class Vehicle {
   }
 
   spawnTrail(boosting) {
-    if (this.trails.length > 70) return;
+    if (this.trails.length > 45) return;
     const rear = new THREE.Vector3(0, 0.2, -2.6).applyQuaternion(this.group.quaternion).add(this.group.position);
     const particle = new THREE.Mesh(
       this.trailGeometry,
       new THREE.MeshBasicMaterial({
-        color: boosting ? 0xffb35c : 0xb6e6ff,
+        color: boosting ? 0xff9a4c : 0x6f6250,
         transparent: true,
-        opacity: boosting ? 0.34 : 0.18,
+        opacity: boosting ? 0.18 : 0.09,
         depthWrite: false
       })
     );
@@ -214,8 +214,8 @@ export class Vehicle {
     this.scene.add(particle);
     this.trails.push({
       mesh: particle,
-      life: boosting ? 0.6 : 0.38,
-      velocity: new THREE.Vector3((Math.random() - 0.5) * 0.35, 0.35 + Math.random() * 0.25, (Math.random() - 0.5) * 0.35)
+      life: boosting ? 0.46 : 0.28,
+      velocity: new THREE.Vector3((Math.random() - 0.5) * 0.24, 0.18 + Math.random() * 0.16, (Math.random() - 0.5) * 0.24)
     });
   }
 
@@ -224,8 +224,8 @@ export class Vehicle {
       const trail = this.trails[i];
       trail.life -= dt;
       trail.mesh.position.addScaledVector(trail.velocity, dt);
-      trail.mesh.scale.multiplyScalar(1 + dt * 1.6);
-      trail.mesh.material.opacity = Math.max(0, trail.life) * 0.6;
+      trail.mesh.scale.multiplyScalar(1 + dt * 0.9);
+      trail.mesh.material.opacity = Math.max(0, trail.life) * 0.42;
       if (trail.life <= 0) {
         this.scene.remove(trail.mesh);
         trail.mesh.material.dispose();
