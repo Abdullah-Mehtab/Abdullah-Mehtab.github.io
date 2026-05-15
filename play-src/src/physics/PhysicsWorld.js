@@ -19,6 +19,7 @@ export class PhysicsWorld {
       .cuboid(size[0] / 2, size[1] / 2, size[2] / 2)
       .setFriction(options.friction ?? 0.85)
       .setRestitution(options.restitution ?? 0.05);
+    if (options.sensor) collider.setSensor(true);
     this.world.createCollider(collider, body);
     return body;
   }
@@ -33,6 +34,7 @@ export class PhysicsWorld {
       .cylinder(halfHeight, radius)
       .setFriction(options.friction ?? 0.85)
       .setRestitution(options.restitution ?? 0.04);
+    if (options.sensor) collider.setSensor(true);
     this.world.createCollider(collider, body);
     return body;
   }
@@ -44,6 +46,7 @@ export class PhysicsWorld {
       .ball(radius)
       .setFriction(options.friction ?? 0.85)
       .setRestitution(options.restitution ?? 0.04);
+    if (options.sensor) collider.setSensor(true);
     this.world.createCollider(collider, body);
     return body;
   }
@@ -58,6 +61,7 @@ export class PhysicsWorld {
       .trimesh(vertices, indices)
       .setFriction(options.friction ?? 0.85)
       .setRestitution(options.restitution ?? 0.04);
+    if (options.sensor) collider.setSensor(true);
     this.world.createCollider(collider, body);
     return body;
   }
@@ -73,6 +77,7 @@ export class PhysicsWorld {
       .setDensity(options.density ?? 0.55)
       .setFriction(options.friction ?? 0.75)
       .setRestitution(options.restitution ?? 0.2);
+    if (options.sensor) collider.setSensor(true);
     this.world.createCollider(collider, body);
     return body;
   }

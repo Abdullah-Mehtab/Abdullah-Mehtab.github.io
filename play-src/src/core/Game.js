@@ -182,7 +182,7 @@ export class Game {
     }
     this.updateLighting(elapsed);
     this.cameraRig.update(dt);
-    this.audio.update(this.vehicle.speed);
+    this.audio.update(this.vehicle.speed, this.vehicle.controller?.driveState);
     this.ui.update({ speed: this.vehicle.speed, activeZone: this.activeZone, circuit: this.world.circuit });
 
     const circuitEvent = this.world.updateCircuit(this.vehicle.position, elapsed);

@@ -14,9 +14,14 @@ export class VehicleController {
     this.body = body;
     this.controller = physics.world.createVehicleController(body);
     this.steering = 0;
+    this.throttle = 0;
     this.speed = 0;
+    this.localSpeed = 0;
     this.groundedWheels = 0;
     this.boostCooldown = 0;
+    this.stuckTimer = 0;
+    this.lastCollisionSpeed = 0;
+    this.driveState = { boost: false, handbrake: false, throttle: 0, slip: 0 };
     this.setupWheels();
   }
 
@@ -32,13 +37,13 @@ export class VehicleController {
       );
     }
     for (let i = 0; i < WHEEL_OFFSETS.length; i += 1) {
-      this.controller.setWheelFrictionSlip(i, 1.78);
-      this.controller.setWheelSideFrictionStiffness(i, 9.4);
-      this.controller.setWheelSuspensionStiffness(i, 34);
-      this.controller.setWheelSuspensionCompression(i, 8.2);
-      this.controller.setWheelSuspensionRelaxation(i, 8.6);
-      this.controller.setWheelMaxSuspensionTravel(i, 0.24);
-      this.controller.setWheelMaxSuspensionForce(i, 285);
+      this.controller.setWheelFrictionSlip(i, 1.82);
+      this.controller.setWheelSideFrictionStiffness(i, 9.8);
+      this.controller.setWheelSuspensionStiffness(i, 42);
+      this.controller.setWheelSuspensionCompression(i, 9.4);
+      this.controller.setWheelSuspensionRelaxation(i, 10.8);
+      this.controller.setWheelMaxSuspensionTravel(i, 0.21);
+      this.controller.setWheelMaxSuspensionForce(i, 360);
     }
   }
 
@@ -48,35 +53,79 @@ export class VehicleController {
     const reverse = input.actions.backward || joy.y > 0.22;
     const left = input.actions.left || joy.x < -0.22;
     const right = input.actions.right || joy.x > 0.22;
-    const boost = input.actions.boost;
+    const boost = input.actions.boost && !input.actions.handbrake;
+    const handbrake = input.actions.handbrake;
     const brakeInput = input.actions.brake;
-
-    const steerTarget = ((left ? 1 : 0) + (right ? -1 : 0) + THREE.MathUtils.clamp(-joy.x, -1, 1)) * 0.42;
-    this.steering += (steerTarget - this.steering) * Math.min(1, dt * 7.5);
-
     const velocity = this.body.linvel();
-    this.speed = Math.hypot(velocity.x, velocity.y * 0.18, velocity.z);
-    const topSpeed = boost ? 31 : 22;
-    const overflow = Math.max(0, this.speed - topSpeed);
-    let engine = 0;
-    if (forward) engine += (boost ? 218 : 132) / (1 + overflow * 0.42);
-    if (reverse) engine -= 64 / (1 + overflow * 0.42);
-    let brake = brakeInput ? 54 : 0.18;
-    if (!forward && !reverse && this.speed < 1.8) brake = 5.0;
+    const localVelocity = this.getLocalVelocity(velocity);
+    this.speed = Math.hypot(velocity.x, velocity.y * 0.12, velocity.z);
+    this.localSpeed = localVelocity.z;
+    const horizontalSpeed = Math.hypot(velocity.x, velocity.z);
+    const speedNorm = THREE.MathUtils.clamp(horizontalSpeed / 31, 0, 1);
+    const rawSteer = THREE.MathUtils.clamp((left ? 1 : 0) + (right ? -1 : 0) + THREE.MathUtils.clamp(-joy.x, -1, 1), -1, 1);
+    const steerLimit = THREE.MathUtils.lerp(0.54, 0.24, speedNorm) * (handbrake ? 1.22 : 1);
+    const steerTarget = rawSteer * steerLimit;
+    this.steering += (steerTarget - this.steering) * Math.min(1, dt * (handbrake ? 10.5 : 7.8));
+
+    const throttleTarget = forward ? 1 : reverse ? -0.58 : 0;
+    const throttleRate = throttleTarget === 0 ? 4.4 : 6.6;
+    this.throttle += (throttleTarget - this.throttle) * Math.min(1, dt * throttleRate);
+
+    const topSpeed = boost ? 38 : 26;
+    const reverseTopSpeed = 10.5;
+    const top = this.throttle >= 0 ? topSpeed : reverseTopSpeed;
+    const overflow = Math.max(0, Math.abs(this.localSpeed) - top);
+    const speedRatio = THREE.MathUtils.clamp(Math.abs(this.localSpeed) / top, 0, 1.25);
+    const launchBonus = this.throttle > 0 && this.localSpeed < 4 ? 1.22 : 1;
+    const engineBase = this.throttle >= 0 ? (boost ? 318 : 176) : 98;
+    let engine = this.throttle * engineBase * launchBonus * (1 - Math.min(0.82, speedRatio * 0.72));
+    engine /= 1 + overflow * 0.36;
+    if (boost && forward && horizontalSpeed > 3 && this.groundedWheels > 1) {
+      this.applyHeldBoost(dt, velocity);
+    }
+
+    const changingDirection = (forward && this.localSpeed < -1.4) || (reverse && this.localSpeed > 1.4);
+    let frontBrake = brakeInput ? 42 : 0.08;
+    let rearBrake = brakeInput ? 42 : 0.08;
+    if (changingDirection) {
+      frontBrake = Math.max(frontBrake, 30);
+      rearBrake = Math.max(rearBrake, 30);
+    }
+    if (handbrake) {
+      rearBrake = Math.max(rearBrake, 38);
+      frontBrake = Math.max(frontBrake, 2.5);
+      engine *= 0.64;
+    }
+    if (!forward && !reverse && this.speed < 1.8) {
+      frontBrake = 4.2;
+      rearBrake = 4.2;
+    }
 
     for (let i = 0; i < WHEEL_OFFSETS.length; i += 1) {
       const isFront = WHEEL_OFFSETS[i].front;
+      const isRear = !isFront;
       this.controller.setWheelSteering(i, isFront ? this.steering : 0);
-      this.controller.setWheelBrake(i, brake);
-      this.controller.setWheelEngineForce(i, engine);
+      this.controller.setWheelBrake(i, isRear ? rearBrake : frontBrake);
+      this.controller.setWheelEngineForce(i, isRear ? engine : 0);
+      this.controller.setWheelFrictionSlip(i, this.getWheelSlip(isFront, handbrake, boost));
+      this.controller.setWheelSideFrictionStiffness(i, this.getWheelSideFriction(isFront, handbrake));
     }
     this.controller.updateVehicle(Math.min(dt, 1 / 45));
     this.updateContactState();
-    this.stabilizeOnGround();
-    this.applyAeroGrip(dt);
+    this.applyDriftAssist(rawSteer, handbrake, dt);
+    this.stabilizeOnGround(handbrake);
+    this.applyAeroGrip(dt, handbrake);
+    this.applyStuckRecovery({ forward, reverse, rawSteer }, dt);
     this.limitChaos();
+    this.lastCollisionSpeed = horizontalSpeed;
     this.boostCooldown = Math.max(0, this.boostCooldown - dt);
-    return { boost, grounded: this.groundedWheels > 1 };
+    this.driveState = {
+      boost,
+      handbrake,
+      throttle: this.throttle,
+      slip: handbrake && this.speed > 5 ? THREE.MathUtils.clamp(this.speed / 24, 0, 1) : 0
+    };
+    return { boost, handbrake, grounded: this.groundedWheels > 1 };
   }
 
   updateContactState() {
@@ -96,7 +145,7 @@ export class VehicleController {
   boost(direction, strength = 18) {
     if (this.boostCooldown > 0) return;
     const mass = this.body.mass();
-    this.body.applyImpulse({ x: direction.x * strength * mass, y: 0.45 * mass, z: direction.z * strength * mass }, true);
+    this.body.applyImpulse({ x: direction.x * strength * mass, y: 0.08 * mass, z: direction.z * strength * mass }, true);
     this.boostCooldown = 0.5;
   }
 
@@ -124,26 +173,83 @@ export class VehicleController {
     }, true);
   }
 
-  stabilizeOnGround() {
+  stabilizeOnGround(handbrake = false) {
     if (this.groundedWheels < 2) return;
     const angular = this.body.angvel();
     const q = this.body.rotation();
     const up = new THREE.Vector3(0, 1, 0).applyQuaternion(new THREE.Quaternion(q.x, q.y, q.z, q.w));
-    const pitchRollCorrection = this.body.mass() * 0.68;
+    const pitchRollCorrection = this.body.mass() * (handbrake ? 0.5 : 0.76);
     this.body.applyTorqueImpulse({
-      x: (-angular.x * 0.58 - up.z * 0.84) * pitchRollCorrection,
-      y: -angular.y * this.body.mass() * 0.018,
-      z: (-angular.z * 0.58 + up.x * 0.84) * pitchRollCorrection
+      x: (-angular.x * 0.68 - up.z * 0.96) * pitchRollCorrection,
+      y: -angular.y * this.body.mass() * (handbrake ? 0.006 : 0.016),
+      z: (-angular.z * 0.68 + up.x * 0.96) * pitchRollCorrection
     }, true);
     if (this.speed > 5) {
-      this.body.applyImpulse({ x: 0, y: -Math.min(0.74, this.speed * 0.016) * this.body.mass(), z: 0 }, true);
+      this.body.applyImpulse({ x: 0, y: -Math.min(0.92, this.speed * 0.02) * this.body.mass(), z: 0 }, true);
     }
   }
 
-  applyAeroGrip(dt) {
+  applyAeroGrip(dt, handbrake = false) {
     if (this.groundedWheels < 2) return;
     const mass = this.body.mass();
-    const downforce = Math.min(1.55, 0.34 + this.speed * 0.024) * mass;
+    const downforce = Math.min(1.85, 0.42 + this.speed * 0.028) * mass * (handbrake ? 0.82 : 1);
     this.body.applyImpulse({ x: 0, y: -downforce * Math.min(1, dt * 60) * 0.022, z: 0 }, true);
+  }
+
+  getWheelSlip(isFront, handbrake, boost) {
+    if (handbrake) return isFront ? 1.7 : 0.86;
+    return boost ? 2.08 : 1.86;
+  }
+
+  getWheelSideFriction(isFront, handbrake) {
+    if (handbrake) return isFront ? 8.4 : 2.35;
+    return isFront ? 10.2 : 9.4;
+  }
+
+  getLocalVelocity(velocity) {
+    const q = this.body.rotation();
+    const inverse = new THREE.Quaternion(q.x, q.y, q.z, q.w).invert();
+    return new THREE.Vector3(velocity.x, velocity.y, velocity.z).applyQuaternion(inverse);
+  }
+
+  getForwardVector() {
+    const q = this.body.rotation();
+    const forward = new THREE.Vector3(0, 0, 1).applyQuaternion(new THREE.Quaternion(q.x, q.y, q.z, q.w));
+    forward.y = 0;
+    if (forward.lengthSq() < 0.0001) return new THREE.Vector3(0, 0, 1);
+    return forward.normalize();
+  }
+
+  applyHeldBoost(dt, velocity) {
+    const mass = this.body.mass();
+    const current = new THREE.Vector3(velocity.x, 0, velocity.z);
+    const direction = current.lengthSq() > 5 ? current.normalize() : this.getForwardVector();
+    const force = mass * 0.12 * Math.min(1, dt * 60);
+    this.body.applyImpulse({ x: direction.x * force, y: -0.01 * mass, z: direction.z * force }, true);
+  }
+
+  applyDriftAssist(rawSteer, handbrake, dt) {
+    if (!handbrake || this.groundedWheels < 2 || Math.abs(rawSteer) < 0.12 || this.speed < 5) return;
+    const mass = this.body.mass();
+    const impulseScale = Math.min(1, dt * 60);
+    this.body.applyTorqueImpulse({ x: 0, y: -rawSteer * mass * 0.34 * impulseScale, z: 0 }, true);
+  }
+
+  applyStuckRecovery(intent, dt) {
+    const wantsMove = intent.forward || intent.reverse;
+    if (!wantsMove || this.groundedWheels < 2 || this.speed > 1.15) {
+      this.stuckTimer = 0;
+      return;
+    }
+    this.stuckTimer += dt;
+    if (this.stuckTimer < 0.48) return;
+
+    const mass = this.body.mass();
+    const direction = this.getForwardVector().multiplyScalar(intent.forward ? 1 : -1);
+    this.body.applyImpulse({ x: direction.x * mass * 0.7, y: mass * 0.06, z: direction.z * mass * 0.7 }, true);
+    if (Math.abs(intent.rawSteer) > 0.12) {
+      this.body.applyTorqueImpulse({ x: 0, y: -intent.rawSteer * mass * 0.42, z: 0 }, true);
+    }
+    this.stuckTimer = 0.24;
   }
 }

@@ -159,7 +159,7 @@ export class Vehicle {
     this.syncModel();
     this.updateWheelVisuals(dt);
     this.updateTrails(dt);
-    if (this.controller.speed > 10) this.spawnTrail(state.boost);
+    if (this.controller.speed > 10 || (state.handbrake && this.controller.speed > 4)) this.spawnTrail(state.boost, state.handbrake);
   }
 
   postPhysics() {
@@ -198,15 +198,15 @@ export class Vehicle {
     }
   }
 
-  spawnTrail(boosting) {
+  spawnTrail(boosting, drifting = false) {
     if (this.trails.length > 45) return;
     const rear = new THREE.Vector3(0, 0.2, -2.6).applyQuaternion(this.group.quaternion).add(this.group.position);
     const particle = new THREE.Mesh(
       this.trailGeometry,
       new THREE.MeshBasicMaterial({
-        color: boosting ? 0xff9a4c : 0x6f6250,
+        color: boosting ? 0xff9a4c : drifting ? 0xcfd4cf : 0x6f6250,
         transparent: true,
-        opacity: boosting ? 0.18 : 0.09,
+        opacity: boosting ? 0.18 : drifting ? 0.16 : 0.09,
         depthWrite: false
       })
     );
@@ -214,8 +214,8 @@ export class Vehicle {
     this.scene.add(particle);
     this.trails.push({
       mesh: particle,
-      life: boosting ? 0.46 : 0.28,
-      velocity: new THREE.Vector3((Math.random() - 0.5) * 0.24, 0.18 + Math.random() * 0.16, (Math.random() - 0.5) * 0.24)
+      life: boosting ? 0.46 : drifting ? 0.38 : 0.28,
+      velocity: new THREE.Vector3((Math.random() - 0.5) * 0.28, 0.16 + Math.random() * 0.18, (Math.random() - 0.5) * 0.28)
     });
   }
 

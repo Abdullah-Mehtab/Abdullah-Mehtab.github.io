@@ -77,7 +77,7 @@ export class Roads {
       this.world.scene.add(dash);
     }
 
-    this.world.physics.createFixedBox([x, 0.035, z], [width + style.shoulder * 2, 0.16, length + width * 0.45], {
+    this.world.physics.createFixedBox([x, 0.025, z], [width + style.shoulder * 2, 0.05, length + width * 0.45], {
       rotation: [0, rotation, 0],
       friction: path.hierarchy === 'dirt' ? 0.82 : 1.15,
       restitution: 0.01
