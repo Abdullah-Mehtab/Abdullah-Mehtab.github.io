@@ -45,17 +45,17 @@ export class AudioSystem {
     this.engineNoiseGain.gain.value = 0.0001;
     this.engineFilter = this.context.createBiquadFilter();
     this.engineFilter.type = 'lowpass';
-    this.engineFilter.frequency.value = 420;
-    this.engineFilter.Q.value = 0.75;
+    this.engineFilter.frequency.value = 340;
+    this.engineFilter.Q.value = 0.85;
     this.engineSubFilter = this.context.createBiquadFilter();
     this.engineSubFilter.type = 'lowpass';
-    this.engineSubFilter.frequency.value = 120;
+    this.engineSubFilter.frequency.value = 96;
     const pulseFilter = this.context.createBiquadFilter();
     pulseFilter.type = 'bandpass';
-    pulseFilter.frequency.value = 86;
-    pulseFilter.Q.value = 1.2;
+    pulseFilter.frequency.value = 68;
+    pulseFilter.Q.value = 1.4;
     const shaper = this.context.createWaveShaper();
-    shaper.curve = makeDistortionCurve(44);
+    shaper.curve = makeDistortionCurve(58);
     shaper.oversample = '2x';
     this.engineOsc.connect(this.engineFilter);
     this.engineFilter.connect(shaper);
@@ -72,8 +72,8 @@ export class AudioSystem {
     this.engineNoise.loop = true;
     const noiseFilter = this.context.createBiquadFilter();
     noiseFilter.type = 'bandpass';
-    noiseFilter.frequency.value = 360;
-    noiseFilter.Q.value = 0.7;
+    noiseFilter.frequency.value = 290;
+    noiseFilter.Q.value = 0.85;
     this.engineNoise.connect(noiseFilter);
     noiseFilter.connect(this.engineNoiseGain);
     this.engineNoiseGain.connect(this.master);
@@ -148,16 +148,16 @@ export class AudioSystem {
     if (!this.context || !this.engineOsc || !this.engineGain) return;
     const normalized = Math.min(1, Math.abs(speed) / 42);
     const wobble = Math.sin(this.context.currentTime * (18 + normalized * 28)) * (2 + normalized * 5);
-    this.engineOsc.frequency.setTargetAtTime(54 + normalized * 168 + wobble, this.context.currentTime, 0.055);
-    this.engineGain.gain.setTargetAtTime(this.muted ? 0 : 0.028 + normalized * 0.078, this.context.currentTime, 0.075);
-    this.engineFilter?.frequency.setTargetAtTime(310 + normalized * 720, this.context.currentTime, 0.12);
+    this.engineOsc.frequency.setTargetAtTime(42 + normalized * 148 + wobble, this.context.currentTime, 0.055);
+    this.engineGain.gain.setTargetAtTime(this.muted ? 0 : 0.034 + normalized * 0.084, this.context.currentTime, 0.075);
+    this.engineFilter?.frequency.setTargetAtTime(240 + normalized * 650, this.context.currentTime, 0.12);
     if (this.engineSubOsc && this.engineSubGain) {
-      this.engineSubOsc.frequency.setTargetAtTime(27 + normalized * 66, this.context.currentTime, 0.08);
-      this.engineSubGain.gain.setTargetAtTime(this.muted ? 0 : 0.022 + normalized * 0.045, this.context.currentTime, 0.12);
+      this.engineSubOsc.frequency.setTargetAtTime(23 + normalized * 52, this.context.currentTime, 0.08);
+      this.engineSubGain.gain.setTargetAtTime(this.muted ? 0 : 0.027 + normalized * 0.05, this.context.currentTime, 0.12);
     }
     if (this.enginePulseOsc && this.enginePulseGain) {
-      this.enginePulseOsc.frequency.setTargetAtTime(19 + normalized * 42, this.context.currentTime, 0.1);
-      this.enginePulseGain.gain.setTargetAtTime(this.muted ? 0 : 0.01 + normalized * 0.024, this.context.currentTime, 0.1);
+      this.enginePulseOsc.frequency.setTargetAtTime(15 + normalized * 35, this.context.currentTime, 0.1);
+      this.enginePulseGain.gain.setTargetAtTime(this.muted ? 0 : 0.013 + normalized * 0.028, this.context.currentTime, 0.1);
     }
     if (this.engineNoiseGain) {
       this.engineNoiseGain.gain.setTargetAtTime(this.muted ? 0 : 0.004 + normalized * 0.017, this.context.currentTime, 0.18);
