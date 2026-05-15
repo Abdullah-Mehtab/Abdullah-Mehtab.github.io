@@ -97,7 +97,7 @@ export class Terrain {
   }
 
   addPhysicsFloor() {
-    this.world.physics.createFixedBox([0, -0.55, 0], [WORLD_HALF_SIZE * 2.1, 1, WORLD_HALF_SIZE * 2.1], {
+    this.world.physics.createFixedBox([0, -0.47, 0], [WORLD_HALF_SIZE * 2.1, 1, WORLD_HALF_SIZE * 2.1], {
       friction: 1.08,
       restitution: 0.01
     });

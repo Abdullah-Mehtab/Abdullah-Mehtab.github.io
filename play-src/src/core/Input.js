@@ -7,8 +7,9 @@ const KEY_BINDINGS = {
   ArrowLeft: 'left',
   KeyD: 'right',
   ArrowRight: 'right',
-  ShiftLeft: 'boost',
-  ShiftRight: 'boost',
+  ShiftLeft: 'handbrake',
+  ShiftRight: 'handbrake',
+  KeyX: 'boost',
   ControlLeft: 'brake',
   ControlRight: 'brake',
   KeyB: 'brake',
@@ -31,6 +32,7 @@ export class Input {
       left: false,
       right: false,
       boost: false,
+      handbrake: false,
       brake: false,
       jump: false,
       interact: false,
@@ -200,6 +202,7 @@ export class Input {
     this.actions.left = lx < -0.25;
     this.actions.right = lx > 0.25;
     this.actions.boost = Boolean(pad.buttons[1]?.pressed);
+    this.actions.handbrake = Boolean(pad.buttons[5]?.pressed);
     this.actions.jump = Boolean(pad.buttons[3]?.pressed);
     this.actions.brake = Boolean(pad.buttons[2]?.pressed);
 

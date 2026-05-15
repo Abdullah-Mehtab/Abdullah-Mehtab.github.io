@@ -57,10 +57,22 @@ export class Zones {
     });
     group.add(asset);
 
-    const size = landmarkColliderSize(zone.shape, zone.radius);
+    const collider = landmarkCollider(zone.shape);
+    if (!collider) return;
+
+    if (collider.type === 'cylinder') {
+      this.world.physics.createFixedCylinder(
+        [zone.position.x, collider.height / 2, zone.position.z],
+        collider.height / 2,
+        collider.radius,
+        { friction: 0.85, restitution: 0.02 }
+      );
+      return;
+    }
+
     this.world.physics.createFixedBox(
-      [zone.position.x, size[1] / 2, zone.position.z],
-      size,
+      [zone.position.x, collider.size[1] / 2, zone.position.z],
+      collider.size,
       { rotation: [0, zone.rotation || 0, 0], friction: 0.85, restitution: 0.02 }
     );
   }
@@ -264,10 +276,38 @@ export class Zones {
   }
 }
 
-function landmarkColliderSize(shape, radius) {
-  if (shape === 'tower' || shape === 'post') return [radius * 0.48, 7.2, radius * 0.48];
-  if (shape === 'gate') return [radius * 1.05, 4.8, 1.0];
-  if (shape === 'pier' || shape === 'board') return [radius * 1.0, 3.2, radius * 0.42];
-  if (shape === 'farm' || shape === 'rampyard') return [0.1, 0.1, 0.1];
-  return [radius * 0.82, 4.4, radius * 0.68];
+function landmarkCollider(shape) {
+  switch (shape) {
+    case 'hub':
+      return { type: 'cylinder', radius: 2.45, height: 2.4 };
+    case 'tower':
+      return { type: 'cylinder', radius: 1.95, height: 7.2 };
+    case 'post':
+      return { type: 'cylinder', radius: 1.45, height: 6.2 };
+    case 'lab':
+      return { type: 'box', size: [5.9, 3.6, 4.9] };
+    case 'foundry':
+      return { type: 'box', size: [6.8, 3.1, 5.0] };
+    case 'office':
+      return { type: 'box', size: [7.0, 3.4, 5.4] };
+    case 'library':
+      return { type: 'box', size: [7.2, 3.2, 5.4] };
+    case 'terminal':
+      return { type: 'box', size: [4.4, 2.2, 1.2] };
+    case 'trophy':
+      return { type: 'cylinder', radius: 1.35, height: 3.3 };
+    case 'vault':
+      return { type: 'box', size: [5.4, 2.9, 4.1] };
+    case 'board':
+      return { type: 'box', size: [5.8, 3.2, 0.42] };
+    case 'pier':
+      return { type: 'box', size: [7.1, 0.8, 2.4] };
+    case 'gate':
+    case 'portal':
+    case 'farm':
+    case 'rampyard':
+      return null;
+    default:
+      return { type: 'box', size: [4.8, 3.0, 4.0] };
+  }
 }

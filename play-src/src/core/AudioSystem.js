@@ -144,23 +144,26 @@ export class AudioSystem {
     osc.stop(this.context.currentTime + 0.14);
   }
 
-  update(speed) {
+  update(speed, driveState = {}) {
     if (!this.context || !this.engineOsc || !this.engineGain) return;
     const normalized = Math.min(1, Math.abs(speed) / 42);
+    const throttle = Math.min(1, Math.abs(driveState.throttle ?? 0));
+    const boost = driveState.boost ? 1 : 0;
+    const slip = driveState.slip ?? 0;
     const wobble = Math.sin(this.context.currentTime * (18 + normalized * 28)) * (2 + normalized * 5);
-    this.engineOsc.frequency.setTargetAtTime(42 + normalized * 148 + wobble, this.context.currentTime, 0.055);
-    this.engineGain.gain.setTargetAtTime(this.muted ? 0 : 0.034 + normalized * 0.084, this.context.currentTime, 0.075);
-    this.engineFilter?.frequency.setTargetAtTime(240 + normalized * 650, this.context.currentTime, 0.12);
+    this.engineOsc.frequency.setTargetAtTime(42 + normalized * 148 + throttle * 42 + boost * 30 + wobble, this.context.currentTime, 0.055);
+    this.engineGain.gain.setTargetAtTime(this.muted ? 0 : 0.034 + normalized * 0.084 + throttle * 0.025 + boost * 0.02, this.context.currentTime, 0.075);
+    this.engineFilter?.frequency.setTargetAtTime(240 + normalized * 650 + throttle * 180 + boost * 240, this.context.currentTime, 0.12);
     if (this.engineSubOsc && this.engineSubGain) {
-      this.engineSubOsc.frequency.setTargetAtTime(23 + normalized * 52, this.context.currentTime, 0.08);
-      this.engineSubGain.gain.setTargetAtTime(this.muted ? 0 : 0.027 + normalized * 0.05, this.context.currentTime, 0.12);
+      this.engineSubOsc.frequency.setTargetAtTime(23 + normalized * 52 + throttle * 10, this.context.currentTime, 0.08);
+      this.engineSubGain.gain.setTargetAtTime(this.muted ? 0 : 0.027 + normalized * 0.05 + throttle * 0.018, this.context.currentTime, 0.12);
     }
     if (this.enginePulseOsc && this.enginePulseGain) {
-      this.enginePulseOsc.frequency.setTargetAtTime(15 + normalized * 35, this.context.currentTime, 0.1);
-      this.enginePulseGain.gain.setTargetAtTime(this.muted ? 0 : 0.013 + normalized * 0.028, this.context.currentTime, 0.1);
+      this.enginePulseOsc.frequency.setTargetAtTime(15 + normalized * 35 + boost * 16, this.context.currentTime, 0.1);
+      this.enginePulseGain.gain.setTargetAtTime(this.muted ? 0 : 0.013 + normalized * 0.028 + boost * 0.018, this.context.currentTime, 0.1);
     }
     if (this.engineNoiseGain) {
-      this.engineNoiseGain.gain.setTargetAtTime(this.muted ? 0 : 0.004 + normalized * 0.017, this.context.currentTime, 0.18);
+      this.engineNoiseGain.gain.setTargetAtTime(this.muted ? 0 : 0.004 + normalized * 0.017 + slip * 0.065 + boost * 0.018, this.context.currentTime, 0.08);
     }
     if (this.windGain) {
       this.windGain.gain.setTargetAtTime(this.muted ? 0 : 0.008 + normalized * 0.025, this.context.currentTime, 0.2);

@@ -331,7 +331,8 @@ export class UI {
   renderControls() {
     const rows = [
       ['WASD / Arrows', 'Drive'],
-      ['Shift', 'Boost'],
+      ['X', 'Boost'],
+      ['Shift', 'Handbrake / drift'],
       ['Ctrl / B', 'Brake'],
       ['Space', 'Jump'],
       ['E / Enter', 'Interact'],
@@ -339,7 +340,7 @@ export class UI {
       ['M', 'Map'],
       ['R', 'Respawn'],
       ['Mouse drag', 'Move camera'],
-      ['Gamepad', 'Left stick, A interact, B boost, Y jump']
+      ['Gamepad', 'Left stick, A interact, B boost, RB handbrake, Y jump']
     ];
     const grid = document.createElement('div');
     grid.className = 'control-grid';
