@@ -24,17 +24,17 @@ def main():
     body = create_extruded_profile(
         "Body_AttachedMuscleShell",
         [
-            (-2.88, 0.34),
-            (-2.78, 0.67),
-            (-2.34, 0.82),
-            (-1.62, 0.9),
-            (-0.64, 0.97),
-            (1.42, 0.98),
-            (2.34, 0.86),
-            (2.78, 0.66),
-            (2.88, 0.4),
-            (2.46, 0.3),
-            (-2.42, 0.3),
+            (-2.9, 0.32),
+            (-2.72, 0.66),
+            (-2.28, 0.82),
+            (-1.48, 0.91),
+            (-0.55, 0.99),
+            (1.52, 1.0),
+            (2.38, 0.84),
+            (2.8, 0.62),
+            (2.94, 0.36),
+            (2.5, 0.27),
+            (-2.46, 0.27),
         ],
         width=CAR_WIDTH,
         mat=mats["paint"],
@@ -71,14 +71,14 @@ def main():
     cabin = create_extruded_profile(
         "Cabin_AttachedFastbackGreenhouse",
         [
-            (-1.42, 0.98),
-            (-1.12, 1.23),
-            (-0.66, 1.62),
-            (0.5, 1.66),
-            (0.94, 1.18),
-            (1.04, 1.0),
+            (-1.5, 0.98),
+            (-1.16, 1.12),
+            (-0.72, 1.48),
+            (0.24, 1.54),
+            (0.64, 1.12),
+            (0.78, 1.0),
         ],
-        width=1.56,
+        width=1.58,
         mat=mats["paint_dark"],
         parent=root,
     )
@@ -120,10 +120,11 @@ def reset_scene():
 
 def create_materials():
     return {
-        "paint": material("burnt_candy_red_metallic_paint", (0.55, 0.13, 0.045, 1), metallic=0.55, roughness=0.24),
-        "paint_dark": material("dark_red_shadowed_cabin_paint", (0.32, 0.055, 0.025, 1), metallic=0.5, roughness=0.28),
-        "stripe": material("warm_white_center_racing_stripe", (0.88, 0.84, 0.71, 1), metallic=0.12, roughness=0.36),
+        "paint": material("deep_burnt_red_metallic_paint", (0.48, 0.055, 0.022, 1), metallic=0.68, roughness=0.19),
+        "paint_dark": material("dark_red_shadowed_cabin_paint", (0.22, 0.024, 0.018, 1), metallic=0.56, roughness=0.24),
+        "stripe": material("aged_ivory_center_racing_stripe", (0.86, 0.82, 0.68, 1), metallic=0.08, roughness=0.32),
         "glass": material("attached_smoked_black_glass", (0.015, 0.035, 0.05, 0.86), metallic=0.0, roughness=0.08, alpha=0.86),
+        "interior": material("visible_black_leather_interior", (0.01, 0.009, 0.008, 1), metallic=0.0, roughness=0.66),
         "rubber": material("deep_black_rubber", (0.006, 0.006, 0.007, 1), metallic=0.0, roughness=0.78),
         "chrome": material("aged_brushed_chrome", (0.74, 0.75, 0.72, 1), metallic=0.88, roughness=0.18),
         "dark_chrome": material("dark_recessed_chrome", (0.08, 0.09, 0.09, 1), metallic=0.62, roughness=0.25),
@@ -233,10 +234,10 @@ def add_glass_and_frames(parent, mats):
     create_panel(
         "Glass_AttachedWindshield",
         [
-            (-0.67, 1.08, 0.92 + EPS),
-            (0.67, 1.08, 0.92 + EPS),
-            (0.58, 1.55, 0.43 + EPS),
-            (-0.58, 1.55, 0.43 + EPS),
+            (-0.66, 1.07, 0.78 + EPS),
+            (0.66, 1.07, 0.78 + EPS),
+            (0.56, 1.47, 0.28 + EPS),
+            (-0.56, 1.47, 0.28 + EPS),
         ],
         mats["glass"],
         parent,
@@ -244,61 +245,82 @@ def add_glass_and_frames(parent, mats):
     create_panel(
         "Glass_AttachedRearWindow",
         [
-            (-0.6, 1.5, -0.68 - EPS),
-            (0.6, 1.5, -0.68 - EPS),
-            (0.68, 1.08, -1.24 - EPS),
-            (-0.68, 1.08, -1.24 - EPS),
+            (-0.58, 1.43, -0.76 - EPS),
+            (0.58, 1.43, -0.76 - EPS),
+            (0.66, 1.06, -1.28 - EPS),
+            (-0.66, 1.06, -1.28 - EPS),
         ],
         mats["glass"],
         parent,
     )
 
+    add_cube("Interior_DashboardVisibleThroughGlass", (0, 1.0, 0.56), (1.24, 0.16, 0.26), mats["interior"], parent, bevel=0.018)
+    add_cube("Interior_FrontBenchSeat", (0, 0.92, -0.2), (1.28, 0.3, 0.42), mats["interior"], parent, bevel=0.02)
+    add_cube("Interior_RearBenchSeat", (0, 0.88, -0.92), (1.22, 0.26, 0.36), mats["interior"], parent, bevel=0.02)
+    add_cube("Glass_WindshieldWiper_Left", (-0.23, 1.075, 0.71), (0.034, 0.035, 0.56), mats["rubber"], parent, rotation=(0.16, 0.0, -0.18), bevel=0.003)
+    add_cube("Glass_WindshieldWiper_Right", (0.23, 1.075, 0.71), (0.034, 0.035, 0.56), mats["rubber"], parent, rotation=(0.16, 0.0, 0.18), bevel=0.003)
+    for index, z in enumerate([-0.84, -0.98, -1.12]):
+        add_cube(f"Glass_RearWindowLouver_{index}", (0, 1.36 - index * 0.045, z), (1.16, 0.035, 0.04), mats["dark_chrome"], parent, bevel=0.004)
+
     for side, label in [(-1, "Left"), (1, "Right")]:
-        x = side * (0.786 + EPS)
+        x = side * (0.816 + EPS)
         side_window = [
-            (x, 1.08, -1.14),
-            (x, 1.5, -0.66),
-            (x, 1.54, 0.38),
-            (x, 1.06, 0.82),
+            (x, 1.04, -1.22),
+            (x, 1.42, -0.74),
+            (x, 1.48, 0.24),
+            (x, 1.03, 0.72),
         ]
         create_panel(f"Glass_AttachedSideWindow_{label}", side_window, mats["glass"], parent)
         add_polyline(f"Trim_WindowFrame_{label}", side_window, mats["chrome"], parent, thickness=0.026)
-        add_cube(f"Mirror_Stem_Attached_{label}", (side * 1.06, 1.03, 0.7), (0.26, 0.045, 0.06), mats["dark_chrome"], parent, bevel=0.01)
-        add_cube(f"Mirror_Case_Attached_{label}", (side * 1.24, 1.04, 0.72), (0.28, 0.14, 0.15), mats["chrome"], parent, bevel=0.025)
+        add_cube(f"Trim_BPillar_{label}", (side * 0.832, 1.24, -0.22), (0.034, 0.52, 0.04), mats["dark_chrome"], parent, bevel=0.004)
+        add_cube(f"Mirror_Stem_Attached_{label}", (side * 1.04, 0.96, 0.66), (0.28, 0.05, 0.07), mats["dark_chrome"], parent, bevel=0.01)
+        add_cube(f"Mirror_Case_Attached_{label}", (side * 1.22, 0.99, 0.68), (0.34, 0.16, 0.18), mats["chrome"], parent, bevel=0.026)
 
-    add_cube("Trim_WindshieldTopChrome", (0, 1.57, 0.39), (1.28, 0.025, 0.035), mats["chrome"], parent, rotation=(0.0, 0.0, 0.0), bevel=0.004)
-    add_cube("Trim_RearWindowTopChrome", (0, 1.52, -0.7), (1.28, 0.025, 0.035), mats["chrome"], parent, bevel=0.004)
+    add_cube("Trim_WindshieldTopChrome", (0, 1.5, 0.28), (1.28, 0.025, 0.035), mats["chrome"], parent, bevel=0.004)
+    add_cube("Trim_WindshieldBaseChrome", (0, 1.08, 0.78), (1.36, 0.025, 0.035), mats["chrome"], parent, bevel=0.004)
+    add_cube("Trim_RearWindowTopChrome", (0, 1.44, -0.78), (1.22, 0.025, 0.035), mats["chrome"], parent, bevel=0.004)
+    add_cube("Trim_RearWindowBaseChrome", (0, 1.08, -1.23), (1.38, 0.025, 0.035), mats["chrome"], parent, bevel=0.004)
 
 
 def add_stripes(parent, mats):
-    add_cube("Stripe_FlushHoodCenter", (0, 1.055, 1.58), (0.43, 0.018, 1.8), mats["stripe"], parent, bevel=0.006)
-    add_cube("Stripe_FlushRoofCenter", (0, 1.685, -0.12), (0.38, 0.018, 0.8), mats["stripe"], parent, bevel=0.006)
-    add_cube("Stripe_FlushTrunkCenter", (0, 1.035, -1.82), (0.43, 0.018, 1.24), mats["stripe"], parent, bevel=0.006)
+    add_cube("Stripe_FlushHoodCenter", (0, 1.07, 1.55), (0.46, 0.018, 1.94), mats["stripe"], parent, bevel=0.006)
+    add_cube("Stripe_FlushRoofCenter", (0, 1.645, -0.12), (0.39, 0.018, 0.82), mats["stripe"], parent, bevel=0.006)
+    add_cube("Stripe_FlushRearDeckCenter", (0, 1.045, -1.82), (0.46, 0.018, 1.34), mats["stripe"], parent, bevel=0.006)
+    add_cube("Stripe_FrontNoseReturn", (0, 0.9, 2.63), (0.45, 0.02, 0.34), mats["stripe"], parent, bevel=0.004)
 
 
 def add_front_and_rear_detail(parent, mats):
     add_cube("Front_BlackInsetGrille", (0, 0.76, 2.86), (1.62, 0.32, 0.08), mats["rubber"], parent, bevel=0.01)
+    for x in [-0.28, -0.12, 0.04, 0.2, 0.36]:
+        add_cube(f"Front_ChromeGrilleBar_{x:+.2f}", (x, 0.78, 2.905), (0.034, 0.25, 0.024), mats["chrome"], parent, bevel=0.003)
+    add_cube("Front_ChromeGrilleTopRail", (0, 0.91, 2.91), (1.68, 0.035, 0.026), mats["chrome"], parent, bevel=0.004)
+    add_cube("Front_ChromeGrilleBottomRail", (0, 0.62, 2.91), (1.68, 0.035, 0.026), mats["chrome"], parent, bevel=0.004)
     add_cube("Front_ChromeBumper_Attached", (0, 0.5, 2.95), (2.34, 0.19, 0.18), mats["chrome"], parent, bevel=0.025)
     add_cube("Front_LowerLipChrome", (0, 0.38, 2.82), (2.08, 0.065, 0.08), mats["chrome"], parent, bevel=0.01)
 
     for x in [-0.74, -0.48, 0.48, 0.74]:
+        add_cylinder(f"Front_ChromeHeadlightBezel_{x:+.2f}", (x, 0.83, 2.915), radius=0.145, depth=0.022, mat=mats["chrome"], parent=parent, rotation=(0, 0, 0), vertices=34)
         add_cylinder(f"Front_RoundHeadlight_{x:+.2f}", (x, 0.83, 2.92), radius=0.12, depth=0.035, mat=mats["light"], parent=parent, rotation=(0, 0, 0))
     for x in [-1.0, 1.0]:
         add_cube(f"Front_AmberMarker_{x:+.1f}", (x, 0.63, 2.93), (0.18, 0.11, 0.028), mats["amber"], parent, bevel=0.005)
 
-    add_cube("Rear_ChromeBumper_Attached", (0, 0.5, -2.94), (2.22, 0.18, 0.18), mats["chrome"], parent, bevel=0.025)
-    add_cube("Rear_BlackInsetPanel", (0, 0.72, -2.9), (1.72, 0.24, 0.055), mats["rubber"], parent, bevel=0.008)
+    add_cube("Rear_ChromeBumper_Attached", (0, 0.5, -2.94), (2.26, 0.19, 0.19), mats["chrome"], parent, bevel=0.026)
+    add_cube("Rear_LowerChromeRollPan", (0, 0.36, -2.8), (1.92, 0.08, 0.08), mats["chrome"], parent, bevel=0.012)
+    add_cube("Rear_BlackInsetPanel", (0, 0.72, -2.915), (1.78, 0.25, 0.055), mats["rubber"], parent, bevel=0.008)
     for x in [-0.78, -0.54, 0.54, 0.78]:
-        add_cube(f"Rear_FlushTailLamp_{x:+.2f}", (x, 0.72, -2.935), (0.17, 0.105, 0.03), mats["tail"], parent, bevel=0.006)
+        add_cube(f"Rear_FlushTailLamp_{x:+.2f}", (x, 0.72, -2.95), (0.18, 0.11, 0.032), mats["tail"], parent, bevel=0.006)
     add_cube("Rear_LicensePlateInset", (0, 0.53, -2.96), (0.34, 0.13, 0.026), mats["stripe"], parent, bevel=0.006)
+    add_cylinder("Rear_ExhaustPipe_Attached", (-0.52, 0.28, -2.96), radius=0.045, depth=0.34, mat=mats["dark_chrome"], parent=parent, vertices=16)
 
 
 def add_side_trim(parent, mats):
     for side, label in [(-1, "Left"), (1, "Right")]:
         add_cube(f"Trim_ChromeRocker_{label}", (side * 1.145, 0.55, -0.05), (0.035, 0.05, 4.25), mats["chrome"], parent, bevel=0.006)
+        add_cube(f"Trim_MidBodyChromeLine_{label}", (side * 1.17, 0.76, -0.08), (0.026, 0.035, 4.55), mats["chrome"], parent, bevel=0.004)
         add_cube(f"Trim_DoorHandle_{label}", (side * 1.17, 0.88, 0.1), (0.035, 0.07, 0.25), mats["chrome"], parent, bevel=0.006)
         add_cube(f"Trim_DoorSeam_{label}", (side * 1.176, 0.72, -0.42), (0.022, 0.5, 0.025), mats["rubber"], parent)
-        add_cube(f"Trim_WhiteSideAccent_{label}", (side * 1.18, 0.68, -0.58), (0.03, 0.045, 1.34), mats["stripe"], parent, bevel=0.006)
+        add_cube(f"Trim_FuelDoor_{label}", (side * 1.18, 0.82, -1.62), (0.025, 0.32, 0.26), mats["dark_chrome"], parent, bevel=0.006)
+        add_cube(f"Trim_LowerRearVent_{label}", (side * 1.18, 0.58, -1.14), (0.026, 0.11, 0.48), mats["dark_chrome"], parent, bevel=0.006)
 
 
 def add_wheels(parent, mats):
@@ -326,8 +348,8 @@ def add_wheel(name, location, side, mats, parent):
     tire = add_cylinder(
         f"WheelMesh_{name}",
         location,
-        radius=0.52,
-        depth=0.42,
+        radius=0.47,
+        depth=0.4,
         mat=mats["rubber"],
         parent=empty,
         rotation=(0, math.radians(90), 0),
@@ -340,7 +362,7 @@ def add_wheel(name, location, side, mats, parent):
     cap = add_cylinder(
         f"Hubcap_{name}",
         (hub_x, 0, 0),
-        radius=0.31,
+        radius=0.28,
         depth=0.05,
         mat=mats["chrome"],
         parent=empty,
@@ -351,7 +373,7 @@ def add_wheel(name, location, side, mats, parent):
     add_cylinder(
         f"Hubcap_DarkInset_{name}",
         (hub_x + 0.028 * side, 0, 0),
-        radius=0.22,
+        radius=0.19,
         depth=0.025,
         mat=mats["dark_chrome"],
         parent=empty,

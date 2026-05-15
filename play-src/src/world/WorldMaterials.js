@@ -12,26 +12,27 @@ export function createWorldMaterials() {
   const grassTexture = makeGrassTexture(1024);
   grassTexture.wrapS = THREE.RepeatWrapping;
   grassTexture.wrapT = THREE.RepeatWrapping;
-  grassTexture.repeat.set(54, 54);
-  grassTexture.magFilter = THREE.NearestFilter;
-  grassTexture.minFilter = THREE.NearestMipmapNearestFilter;
-  grassTexture.anisotropy = 8;
+  grassTexture.repeat.set(58, 58);
+  grassTexture.magFilter = THREE.LinearFilter;
+  grassTexture.minFilter = THREE.LinearMipmapLinearFilter;
+  grassTexture.anisotropy = 12;
 
   const stoneTexture = makeNoiseTexture(['#605c50', '#756f61', '#8b8472', '#46443e'], 256, 1400);
   stoneTexture.wrapS = THREE.RepeatWrapping;
   stoneTexture.wrapT = THREE.RepeatWrapping;
   stoneTexture.repeat.set(2, 18);
 
-  const sandTexture = makeNoiseTexture(['#b98d52', '#d1ad6c', '#e1c482', '#8d6a40', '#f1dca2'], 256, 1800);
+  const sandTexture = makeSandTexture(512);
   sandTexture.wrapS = THREE.RepeatWrapping;
   sandTexture.wrapT = THREE.RepeatWrapping;
-  sandTexture.repeat.set(10, 10);
+  sandTexture.repeat.set(18, 18);
+  sandTexture.anisotropy = 12;
 
   return {
     ground: new THREE.MeshStandardMaterial({
-      color: 0x82a866,
+      color: 0x356f2f,
       map: grassTexture,
-      roughness: 0.92,
+      roughness: 0.96,
       metalness: 0.01,
       vertexColors: false,
       side: THREE.DoubleSide
@@ -39,7 +40,7 @@ export function createWorldMaterials() {
     stoneRoad: new THREE.MeshStandardMaterial({ color: 0x5d584d, map: stoneTexture, roughness: 0.94, metalness: 0.02 }),
     roadEdge: new THREE.MeshStandardMaterial({ color: 0x2f302b, roughness: 0.9, metalness: 0.04 }),
     roadLine: new THREE.MeshBasicMaterial({ color: 0xd8c48a, transparent: true, opacity: 0.36 }),
-    sand: new THREE.MeshStandardMaterial({ color: 0xffffff, map: sandTexture, roughness: 0.95, metalness: 0.0 }),
+    sand: new THREE.MeshStandardMaterial({ color: 0xf4d59a, map: sandTexture, roughness: 0.98, metalness: 0.0 }),
     cliff: new THREE.MeshStandardMaterial({ color: 0x5c5146, roughness: 0.92, metalness: 0.01 }),
     shallow: new THREE.MeshBasicMaterial({ color: 0x79d6d0, transparent: true, opacity: 0.16, depthWrite: false }),
     foam: new THREE.MeshBasicMaterial({ color: 0xf1fff6, transparent: true, opacity: 0.26, depthWrite: false }),
@@ -65,9 +66,9 @@ export function makeIslandGeometry(radius, segments = 160) {
   const geometry = new THREE.CircleGeometry(radius, segments);
   const position = geometry.attributes.position;
   const colors = [];
-  const deepGrass = new THREE.Color(0x28562e);
-  const meadow = new THREE.Color(0x4e8a3a);
-  const highGrass = new THREE.Color(0x7aa453);
+  const deepGrass = new THREE.Color(0x1f4a25);
+  const meadow = new THREE.Color(0x356f2f);
+  const highGrass = new THREE.Color(0x5f8f42);
   const coast = new THREE.Color(0x89764d);
   const temp = new THREE.Color();
 
@@ -161,33 +162,45 @@ export function makeWaterMaterial() {
     depthWrite: false,
     uniforms: {
       time: { value: 0 },
-      deep: { value: new THREE.Color(0x064c78) },
-      shallow: { value: new THREE.Color(0x28b8c5) }
+      deep: { value: new THREE.Color(0x063e66) },
+      shallow: { value: new THREE.Color(0x38c7d3) },
+      sun: { value: new THREE.Color(0xfff1b8) }
     },
     vertexShader: `
       varying vec2 vUv;
+      varying vec3 vWorld;
       varying float vWave;
       uniform float time;
       void main() {
         vUv = uv;
         vec3 transformed = position;
-        float wave = sin(position.x * 0.045 + time * 0.55) * 0.18 + cos(position.y * 0.06 + time * 0.42) * 0.11;
+        float waveA = sin(position.x * 0.04 + time * 0.72) * 0.22;
+        float waveB = cos(position.y * 0.055 - time * 0.48) * 0.15;
+        float chop = sin((position.x + position.y) * 0.12 + time * 1.2) * 0.035;
+        float wave = waveA + waveB + chop;
         transformed.z += wave;
         vWave = wave;
+        vWorld = (modelMatrix * vec4(transformed, 1.0)).xyz;
         gl_Position = projectionMatrix * modelViewMatrix * vec4(transformed, 1.0);
       }
     `,
     fragmentShader: `
       varying vec2 vUv;
+      varying vec3 vWorld;
       varying float vWave;
       uniform vec3 deep;
       uniform vec3 shallow;
+      uniform vec3 sun;
       uniform float time;
       void main() {
-        float bands = sin((vUv.x + vUv.y) * 90.0 + time * 0.9) * 0.5 + 0.5;
-        vec3 color = mix(deep, shallow, smoothstep(0.1, 1.0, vUv.y + vWave * 0.2));
-        color += bands * 0.025;
-        gl_FragColor = vec4(color, 0.78);
+        float longBands = sin((vUv.x * 32.0 + vUv.y * 19.0) + time * 0.75) * 0.5 + 0.5;
+        float fineBands = sin((vUv.x - vUv.y) * 145.0 - time * 1.15) * 0.5 + 0.5;
+        float depthFade = smoothstep(-180.0, 150.0, vWorld.z + vWorld.x * 0.12);
+        float sparkle = pow(max(0.0, fineBands * longBands), 8.0) * 0.24;
+        vec3 color = mix(deep, shallow, smoothstep(0.12, 0.95, depthFade + vWave * 0.25));
+        color += longBands * 0.035 + sparkle * sun;
+        color = mix(color, vec3(0.72, 0.94, 0.98), 0.08);
+        gl_FragColor = vec4(color, 0.84);
       }
     `
   });
@@ -214,31 +227,76 @@ export function makeNoiseTexture(colors, size = 256, dots = 800) {
   return new THREE.CanvasTexture(canvas);
 }
 
+function makeSandTexture(size) {
+  const canvas = document.createElement('canvas');
+  canvas.width = size;
+  canvas.height = size;
+  const ctx = canvas.getContext('2d');
+  const gradient = ctx.createLinearGradient(0, 0, size, size);
+  gradient.addColorStop(0, '#d1a869');
+  gradient.addColorStop(0.45, '#f0d392');
+  gradient.addColorStop(1, '#b9894e');
+  ctx.fillStyle = gradient;
+  ctx.fillRect(0, 0, size, size);
+  for (let i = 0; i < 9000; i += 1) {
+    const x = pseudoRandom(i * 2.13) * size;
+    const y = pseudoRandom(i * 3.79) * size;
+    const r = 0.45 + pseudoRandom(i * 5.11) * 1.4;
+    const light = pseudoRandom(i * 7.71);
+    ctx.globalAlpha = 0.08 + pseudoRandom(i * 11.17) * 0.14;
+    ctx.fillStyle = light > 0.54 ? '#fff1be' : '#8f6538';
+    ctx.beginPath();
+    ctx.arc(x, y, r, 0, Math.PI * 2);
+    ctx.fill();
+  }
+  for (let i = 0; i < 90; i += 1) {
+    const x = pseudoRandom(i * 17.3) * size;
+    const y = pseudoRandom(i * 19.9) * size;
+    ctx.globalAlpha = 0.05;
+    ctx.strokeStyle = '#7d5a35';
+    ctx.lineWidth = 1 + pseudoRandom(i * 23.5) * 2;
+    ctx.beginPath();
+    ctx.ellipse(x, y, 14 + pseudoRandom(i * 29.1) * 38, 2 + pseudoRandom(i * 31.7) * 6, pseudoRandom(i * 37.1) * Math.PI, 0, Math.PI * 2);
+    ctx.stroke();
+  }
+  ctx.globalAlpha = 1;
+  return new THREE.CanvasTexture(canvas);
+}
+
 function makeGrassTexture(size) {
   const canvas = document.createElement('canvas');
   canvas.width = size;
   canvas.height = size;
   const ctx = canvas.getContext('2d');
-  const pixel = 16;
-  const cell = size / pixel;
-  const palette = ['#183f22', '#24562a', '#2e6630', '#397636', '#14341c', '#4a833b'];
-  ctx.imageSmoothingEnabled = false;
-  for (let y = 0; y < pixel; y += 1) {
-    for (let x = 0; x < pixel; x += 1) {
-      const n = pseudoRandom((x + 1) * 17.3 + (y + 3) * 31.7);
-      const shade = palette[Math.floor(n * palette.length)];
-      ctx.fillStyle = shade;
-      ctx.fillRect(x * cell, y * cell, cell + 1, cell + 1);
-      if (pseudoRandom(n * 19.2 + x) > 0.66) {
-        ctx.fillStyle = 'rgba(125, 168, 61, 0.22)';
-        ctx.fillRect(x * cell + cell * 0.12, y * cell + cell * 0.18, cell * 0.42, cell * 0.18);
-      }
-      if (pseudoRandom(n * 43.8 + y) > 0.72) {
-        ctx.fillStyle = 'rgba(10, 36, 18, 0.4)';
-        ctx.fillRect(x * cell + cell * 0.42, y * cell + cell * 0.52, cell * 0.45, cell * 0.22);
-      }
-    }
+  ctx.fillStyle = '#1e4d21';
+  ctx.fillRect(0, 0, size, size);
+
+  for (let i = 0; i < 24000; i += 1) {
+    const x = pseudoRandom(i * 2.37) * size;
+    const y = pseudoRandom(i * 5.81) * size;
+    const length = 2 + pseudoRandom(i * 7.61) * 9;
+    const angle = -Math.PI / 2 + (pseudoRandom(i * 11.43) - 0.5) * 0.9;
+    const green = pseudoRandom(i * 13.17);
+    ctx.globalAlpha = 0.06 + pseudoRandom(i * 17.77) * 0.16;
+    ctx.strokeStyle = green > 0.68 ? '#76a84b' : green > 0.32 ? '#2e6d2b' : '#102f18';
+    ctx.lineWidth = 0.55 + pseudoRandom(i * 19.21) * 1.1;
+    ctx.beginPath();
+    ctx.moveTo(x, y);
+    ctx.lineTo(x + Math.cos(angle) * length, y + Math.sin(angle) * length);
+    ctx.stroke();
   }
+
+  for (let i = 0; i < 520; i += 1) {
+    const x = pseudoRandom(i * 23.31) * size;
+    const y = pseudoRandom(i * 31.27) * size;
+    const r = 6 + pseudoRandom(i * 41.13) * 22;
+    ctx.globalAlpha = 0.035;
+    ctx.fillStyle = pseudoRandom(i * 47.4) > 0.55 ? '#669c46' : '#0d2815';
+    ctx.beginPath();
+    ctx.ellipse(x, y, r, r * (0.25 + pseudoRandom(i * 53.3) * 0.4), pseudoRandom(i * 59.7) * Math.PI, 0, Math.PI * 2);
+    ctx.fill();
+  }
+  ctx.globalAlpha = 1;
   return new THREE.CanvasTexture(canvas);
 }
 

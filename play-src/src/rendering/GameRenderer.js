@@ -23,14 +23,14 @@ export class GameRenderer {
     this.renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 1.8));
     this.renderer.setSize(window.innerWidth, window.innerHeight, false);
     this.renderer.shadowMap.enabled = true;
-    this.renderer.shadowMap.type = THREE.PCFShadowMap;
+    this.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
     this.renderer.outputColorSpace = THREE.SRGBColorSpace;
     this.renderer.toneMapping = THREE.ACESFilmicToneMapping;
-    this.renderer.toneMappingExposure = 0.94;
+    this.renderer.toneMappingExposure = 1.03;
 
     this.composer = new EffectComposer(this.renderer);
     this.composer.addPass(new RenderPass(this.scene, this.camera));
-    this.bloom = new UnrealBloomPass(new THREE.Vector2(window.innerWidth, window.innerHeight), 0.14, 0.48, 0.88);
+    this.bloom = new UnrealBloomPass(new THREE.Vector2(window.innerWidth, window.innerHeight), 0.18, 0.54, 0.84);
     this.composer.addPass(this.bloom);
     this.composer.addPass(new OutputPass());
   }
@@ -38,13 +38,13 @@ export class GameRenderer {
   setQuality(quality) {
     if (!this.bloom) return;
     if (quality === 'low') {
-      this.bloom.strength = 0.08;
+      this.bloom.strength = 0.07;
       this.renderer.shadowMap.enabled = false;
     } else if (quality === 'high') {
-      this.bloom.strength = 0.22;
+      this.bloom.strength = 0.3;
       this.renderer.shadowMap.enabled = true;
     } else {
-      this.bloom.strength = 0.14;
+      this.bloom.strength = 0.18;
       this.renderer.shadowMap.enabled = true;
     }
   }

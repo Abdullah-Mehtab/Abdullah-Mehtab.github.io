@@ -5,7 +5,7 @@ import { ISLAND_RADIUS, WORLD_HALF_SIZE } from '../world/worldData.js';
 import sabreTurboModelUrl from '../../assets/models/vehicles/sabre-turbo.glb?url';
 
 const START = new THREE.Vector3(2, 1.08, 5.5);
-const VISUAL_Y_OFFSET = -0.65;
+const VISUAL_Y_OFFSET = -0.95;
 
 export class Vehicle {
   constructor({ scene, physics, achievements, audio }) {
@@ -63,6 +63,13 @@ export class Vehicle {
       .setRestitution(0.02);
     roof.setTranslation(0, 0.36, -0.08);
     this.physics.world.createCollider(roof, this.body);
+    this.body.setAdditionalMassProperties(
+      5.8,
+      { x: 0, y: -0.58, z: -0.12 },
+      { x: 4.6, y: 3.8, z: 5.2 },
+      { x: 0, y: 0, z: 0, w: 1 },
+      true
+    );
     this.controller = new VehicleController({ physics: this.physics, body: this.body });
   }
 
