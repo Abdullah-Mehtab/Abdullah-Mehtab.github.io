@@ -97,7 +97,7 @@ def cube(name, parent, loc, scale, material, rot=(0, 0, 0), bevel=0.0):
 
 
 def cyl(name, parent, loc, radius, depth, material, vertices=18, rot=(0, 0, 0)):
-    bpy.ops.mesh.primitive_cylinder_add(vertices=vertices, radius=radius, depth=depth, location=loc, rotation=rot)
+    bpy.ops.mesh.primitive_cylinder_add(vertices=vertices, radius=radius, depth=depth, location=loc, rotation=axis_to_game_y(rot))
     obj = bpy.context.object
     obj.name = name
     obj.data.materials.append(material)
@@ -107,13 +107,17 @@ def cyl(name, parent, loc, radius, depth, material, vertices=18, rot=(0, 0, 0)):
 
 
 def cone(name, parent, loc, r1, r2, depth, material, vertices=18, rot=(0, 0, 0)):
-    bpy.ops.mesh.primitive_cone_add(vertices=vertices, radius1=r1, radius2=r2, depth=depth, location=loc, rotation=rot)
+    bpy.ops.mesh.primitive_cone_add(vertices=vertices, radius1=r1, radius2=r2, depth=depth, location=loc, rotation=axis_to_game_y(rot))
     obj = bpy.context.object
     obj.name = name
     obj.data.materials.append(material)
     obj.parent = parent
     obj.modifiers.new("weighted_normals", "WEIGHTED_NORMAL")
     return obj
+
+
+def axis_to_game_y(rot):
+    return (rot[0] - math.pi / 2, rot[1], rot[2])
 
 
 def ico(name, parent, loc, radius, material, scale=(1, 1, 1), rot=(0, 0, 0)):
@@ -130,7 +134,7 @@ def ico(name, parent, loc, radius, material, scale=(1, 1, 1), rot=(0, 0, 0)):
 def create_visual_world(mats):
     group = root("VIS_MedievalIsland")
     create_island_mesh("VIS_IslandTerrain", group, mats)
-    create_ring("VIS_BeachRing", group, 126, 161, mats["sand"], y=0.035)
+    create_ring("VIS_BeachRing", group, 146, 162, mats["sand"], y=0.035)
     create_ring("VIS_CliffRing", group, 156, 169, mats["cliff"], y=-0.08)
     for name, x, z, color in [
         ("SPAWN_landing", 2, 5.5, mats["stone_light"]),
@@ -168,6 +172,7 @@ def create_props(mats):
     create_ruin_fragment(mats)
     create_potato_crop(mats)
     create_potato(mats)
+    create_potato_farm(mats)
 
 
 def create_island_mesh(name, parent, mats, radius=158, rings=56, segments=220):
@@ -303,6 +308,41 @@ def create_potato(mats):
     cube("Potato_BlockyBody", group, (0, 0.32, 0), (0.9, 0.62, 0.7), mats["potato"], bevel=0.04)
     for x, z in [(-0.22, 0.36), (0.16, 0.37), (0.28, -0.22)]:
         cube("Potato_Eye", group, (x, 0.46, z), (0.09, 0.08, 0.04), mats["wood"])
+
+
+def create_potato_farm(mats):
+    group = root("EnvPotatoFarm")
+    cube("Farm_BlockyGrass_Base", group, (0, 0.08, 0), (15.8, 0.18, 12.8), mats["grass"], bevel=0.02)
+    for row in range(-3, 4):
+        for col in range(-4, 5):
+            x = col * 1.36
+            z = row * 1.36
+            if col == 0:
+                cube(f"Farm_Water_{row}_{col}", group, (x, 0.34, z), (1.24, 0.32, 1.24), mats["water"], bevel=0.01)
+            else:
+                cube(f"Farm_Tilled_Block_{row}_{col}", group, (x, 0.34, z), (1.24, 0.32, 1.24), mats["wood"], bevel=0.01)
+                if (row + col) % 2 == 0:
+                    crop = bpy.data.objects.get("EnvPotatoCrop")
+                    # Build a small crop locally so this GLB remains self-contained.
+                    for i in range(3):
+                        cube(
+                            f"Farm_Crop_{row}_{col}_{i}",
+                            group,
+                            (x + math.cos(i * 2.1) * 0.16, 0.72 + i * 0.04, z + math.sin(i * 2.1) * 0.16),
+                            (0.32, 0.26, 0.08),
+                            mats["crop"],
+                            rot=(0.25, i * 1.7, 0.12),
+                            bevel=0.008,
+                        )
+    for x in [-7.6, 7.6]:
+        cube("Farm_Fence_LongPost", group, (x, 0.8, 0), (0.28, 1.5, 12.9), mats["wood_light"], bevel=0.02)
+    for z in [-6.2, 6.2]:
+        cube("Farm_Fence_Rail", group, (0, 0.78, z), (15.6, 0.28, 0.28), mats["wood_light"], bevel=0.02)
+        for x in [-7.2, -4.8, -2.4, 0, 2.4, 4.8, 7.2]:
+            cube("Farm_Fence_Post", group, (x, 0.88, z), (0.28, 1.75, 0.28), mats["wood"], bevel=0.02)
+    for z in [-5.0, -2.5, 0, 2.5, 5.0]:
+        cube("Farm_Fence_SidePost", group, (-7.6, 0.88, z), (0.28, 1.75, 0.28), mats["wood"], bevel=0.02)
+        cube("Farm_Fence_SidePost", group, (7.6, 0.88, z), (0.28, 1.75, 0.28), mats["wood"], bevel=0.02)
 
 
 if __name__ == "__main__":

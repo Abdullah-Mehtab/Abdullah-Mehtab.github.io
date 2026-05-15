@@ -15,6 +15,7 @@ desktop.ini
 *.temp
 *.bak
 *.orig
+.codex-tmp/
 
 # Local archives and one-off exports
 old.rar

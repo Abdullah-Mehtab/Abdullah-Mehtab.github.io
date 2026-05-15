@@ -1,25 +1,28 @@
 import * as THREE from 'three';
 
-export const WATER_Y = -0.2;
+export const WATER_Y = -0.55;
 export const QUALITY_PROFILES = {
-  low: { trees: 42, grassTufts: 120, leaves: 70, clouds: 8, props: 34, fireflies: 24, shadows: false, water: 'low' },
-  medium: { trees: 84, grassTufts: 360, leaves: 180, clouds: 16, props: 70, fireflies: 60, shadows: true, water: 'medium' },
-  high: { trees: 136, grassTufts: 820, leaves: 360, clouds: 28, props: 120, fireflies: 120, shadows: true, water: 'high' }
+  low: { trees: 30, grassTufts: 110, leaves: 50, clouds: 8, props: 22, fireflies: 18, shadows: false, water: 'low' },
+  medium: { trees: 58, grassTufts: 300, leaves: 135, clouds: 16, props: 44, fireflies: 46, shadows: true, water: 'medium' },
+  high: { trees: 86, grassTufts: 640, leaves: 260, clouds: 28, props: 72, fireflies: 90, shadows: true, water: 'high' }
 };
 export const QUALITY_ORDER = ['low', 'medium', 'high'];
 
 export function createWorldMaterials() {
   const grassTexture = makeGrassTexture(1024);
-  grassTexture.wrapS = THREE.ClampToEdgeWrapping;
-  grassTexture.wrapT = THREE.ClampToEdgeWrapping;
-  grassTexture.anisotropy = 4;
+  grassTexture.wrapS = THREE.RepeatWrapping;
+  grassTexture.wrapT = THREE.RepeatWrapping;
+  grassTexture.repeat.set(54, 54);
+  grassTexture.magFilter = THREE.NearestFilter;
+  grassTexture.minFilter = THREE.NearestMipmapNearestFilter;
+  grassTexture.anisotropy = 8;
 
   const stoneTexture = makeNoiseTexture(['#605c50', '#756f61', '#8b8472', '#46443e'], 256, 1400);
   stoneTexture.wrapS = THREE.RepeatWrapping;
   stoneTexture.wrapT = THREE.RepeatWrapping;
   stoneTexture.repeat.set(2, 18);
 
-  const sandTexture = makeNoiseTexture(['#b98d52', '#d1ad6c', '#e1c482', '#8d6a40'], 256, 1300);
+  const sandTexture = makeNoiseTexture(['#b98d52', '#d1ad6c', '#e1c482', '#8d6a40', '#f1dca2'], 256, 1800);
   sandTexture.wrapS = THREE.RepeatWrapping;
   sandTexture.wrapT = THREE.RepeatWrapping;
   sandTexture.repeat.set(10, 10);
@@ -30,16 +33,16 @@ export function createWorldMaterials() {
       map: grassTexture,
       roughness: 0.92,
       metalness: 0.01,
-      vertexColors: true,
+      vertexColors: false,
       side: THREE.DoubleSide
     }),
-    stoneRoad: new THREE.MeshStandardMaterial({ color: 0x8b8372, map: stoneTexture, roughness: 0.9, metalness: 0.02 }),
-    roadEdge: new THREE.MeshStandardMaterial({ color: 0x4b473f, roughness: 0.86, metalness: 0.04 }),
-    roadLine: new THREE.MeshBasicMaterial({ color: 0xd8c48a, transparent: true, opacity: 0.5 }),
+    stoneRoad: new THREE.MeshStandardMaterial({ color: 0x5d584d, map: stoneTexture, roughness: 0.94, metalness: 0.02 }),
+    roadEdge: new THREE.MeshStandardMaterial({ color: 0x2f302b, roughness: 0.9, metalness: 0.04 }),
+    roadLine: new THREE.MeshBasicMaterial({ color: 0xd8c48a, transparent: true, opacity: 0.36 }),
     sand: new THREE.MeshStandardMaterial({ color: 0xffffff, map: sandTexture, roughness: 0.95, metalness: 0.0 }),
     cliff: new THREE.MeshStandardMaterial({ color: 0x5c5146, roughness: 0.92, metalness: 0.01 }),
-    shallow: new THREE.MeshBasicMaterial({ color: 0x77d8ce, transparent: true, opacity: 0.26, depthWrite: false }),
-    foam: new THREE.MeshBasicMaterial({ color: 0xd8fff7, transparent: true, opacity: 0.44, depthWrite: false }),
+    shallow: new THREE.MeshBasicMaterial({ color: 0x79d6d0, transparent: true, opacity: 0.16, depthWrite: false }),
+    foam: new THREE.MeshBasicMaterial({ color: 0xf1fff6, transparent: true, opacity: 0.26, depthWrite: false }),
     wood: new THREE.MeshStandardMaterial({ color: 0x6b4425, roughness: 0.86, metalness: 0.02 }),
     darkWood: new THREE.MeshStandardMaterial({ color: 0x2c1a11, roughness: 0.88, metalness: 0.03 }),
     stone: new THREE.MeshStandardMaterial({ color: 0x827968, roughness: 0.86, metalness: 0.04 }),
@@ -216,22 +219,25 @@ function makeGrassTexture(size) {
   canvas.width = size;
   canvas.height = size;
   const ctx = canvas.getContext('2d');
-  const gradient = ctx.createLinearGradient(0, 0, size, size);
-  gradient.addColorStop(0, '#234d28');
-  gradient.addColorStop(0.45, '#387335');
-  gradient.addColorStop(1, '#6a9444');
-  ctx.fillStyle = gradient;
-  ctx.fillRect(0, 0, size, size);
-  for (let i = 0; i < 2600; i += 1) {
-    const x = pseudoRandom(i * 12.7) * size;
-    const y = pseudoRandom(i * 8.9) * size;
-    const length = 4 + pseudoRandom(i * 19.2) * 15;
-    ctx.strokeStyle = pseudoRandom(i * 5.3) > 0.5 ? 'rgba(171, 204, 96, 0.16)' : 'rgba(12, 48, 20, 0.18)';
-    ctx.lineWidth = 1;
-    ctx.beginPath();
-    ctx.moveTo(x, y);
-    ctx.lineTo(x + Math.sin(i) * 2, y - length);
-    ctx.stroke();
+  const pixel = 16;
+  const cell = size / pixel;
+  const palette = ['#255829', '#2f6a31', '#3b7d36', '#4b913d', '#1f4d27', '#5b9c42'];
+  ctx.imageSmoothingEnabled = false;
+  for (let y = 0; y < pixel; y += 1) {
+    for (let x = 0; x < pixel; x += 1) {
+      const n = pseudoRandom((x + 1) * 17.3 + (y + 3) * 31.7);
+      const shade = palette[Math.floor(n * palette.length)];
+      ctx.fillStyle = shade;
+      ctx.fillRect(x * cell, y * cell, cell + 1, cell + 1);
+      if (pseudoRandom(n * 19.2 + x) > 0.66) {
+        ctx.fillStyle = 'rgba(159, 202, 76, 0.26)';
+        ctx.fillRect(x * cell + cell * 0.12, y * cell + cell * 0.18, cell * 0.42, cell * 0.18);
+      }
+      if (pseudoRandom(n * 43.8 + y) > 0.72) {
+        ctx.fillStyle = 'rgba(15, 49, 24, 0.34)';
+        ctx.fillRect(x * cell + cell * 0.42, y * cell + cell * 0.52, cell * 0.45, cell * 0.22);
+      }
+    }
   }
   return new THREE.CanvasTexture(canvas);
 }

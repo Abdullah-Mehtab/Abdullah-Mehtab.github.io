@@ -1,6 +1,6 @@
 import * as THREE from 'three';
 import { ISLAND_RADIUS, WORLD_HALF_SIZE } from './worldData.js';
-import { makeRingGeometry, WATER_Y } from './WorldMaterials.js';
+import { WATER_Y } from './WorldMaterials.js';
 
 export class Water {
   constructor(world) {
@@ -17,23 +17,8 @@ export class Water {
     this.world.scene.add(ocean);
     this.waterMeshes.push(ocean);
 
-    const shallow = new THREE.Mesh(
-      makeRingGeometry(ISLAND_RADIUS * 0.96, ISLAND_RADIUS * 1.22, 180, 5.2),
-      this.world.materials.shallow
-    );
-    shallow.name = 'MedievalIslandShallowWater';
-    shallow.position.y = WATER_Y + 0.045;
-    this.world.scene.add(shallow);
-    this.waterMeshes.push(shallow);
-
-    const foam = new THREE.Mesh(
-      makeRingGeometry(ISLAND_RADIUS * 0.99, ISLAND_RADIUS * 1.035, 180, 3.6),
-      this.world.materials.foam
-    );
-    foam.name = 'MedievalIslandShoreFoam';
-    foam.position.y = WATER_Y + 0.08;
-    this.world.scene.add(foam);
-    this.waterMeshes.push(foam);
+    // Shore foam/shallow-water overlays were removed until a proper authored
+    // shoreline mesh exists. Transparent rings were bleeding across the island.
   }
 
   update(dt, elapsed) {

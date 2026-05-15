@@ -1,4 +1,4 @@
-import { canalSegments, districtFootprints, ISLAND_RADIUS, MAP_PADDING, roadSegments, WORLD_HALF_SIZE, worldZones } from '../world/worldData.js';
+import { canalSegments, districtFootprints, ISLAND_RADIUS, MAP_PADDING, roadPaths, WORLD_HALF_SIZE, worldZones } from '../world/worldData.js';
 
 export class UI {
   constructor({ game, achievements, audio }) {
@@ -458,17 +458,7 @@ export class UI {
         container.append(segment);
       }
     }
-    for (const [x, z, width, depth, rotation = 0] of roadSegments) {
-      const road = document.createElement('span');
-      road.className = `${mode}-road`;
-      const coords = worldToMap(x, z);
-      road.style.left = `${coords.x}%`;
-      road.style.top = `${coords.y}%`;
-      road.style.width = `${(width / (WORLD_HALF_SIZE * 2 + MAP_PADDING * 2)) * 100}%`;
-      road.style.height = `${(depth / (WORLD_HALF_SIZE * 2 + MAP_PADDING * 2)) * 100}%`;
-      road.style.transform = `translate(-50%, -50%) rotate(${rotation}rad)`;
-      container.append(road);
-    }
+    container.append(createRoadSvg(mode));
   }
 
   update({ speed, activeZone, circuit }) {
@@ -524,6 +514,26 @@ function worldToMap(x, z) {
     x: ((x + WORLD_HALF_SIZE + MAP_PADDING) / span) * 100,
     y: ((z + WORLD_HALF_SIZE + MAP_PADDING) / span) * 100
   };
+}
+
+function createRoadSvg(mode) {
+  const span = WORLD_HALF_SIZE * 2 + MAP_PADDING * 2;
+  const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+  svg.setAttribute('class', `${mode}-roads-svg`);
+  svg.setAttribute('viewBox', '0 0 100 100');
+  svg.setAttribute('aria-hidden', 'true');
+  for (const path of roadPaths) {
+    const points = path.closed ? [...path.points, path.points[0]] : path.points;
+    const polyline = document.createElementNS('http://www.w3.org/2000/svg', 'polyline');
+    polyline.setAttribute('class', `${mode}-road-line ${mode}-road-${path.hierarchy}`);
+    polyline.setAttribute('points', points.map(([x, z]) => {
+      const coords = worldToMap(x, z);
+      return `${coords.x.toFixed(2)},${coords.y.toFixed(2)}`;
+    }).join(' '));
+    polyline.setAttribute('stroke-width', `${((path.width + 3.4) / span) * 100}`);
+    svg.append(polyline);
+  }
+  return svg;
 }
 
 function pathToSegments(points, closed, width) {

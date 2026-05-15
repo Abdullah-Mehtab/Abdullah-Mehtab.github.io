@@ -44,9 +44,11 @@ export class Roads {
     const style = ROAD_STYLE[path.hierarchy] || ROAD_STYLE.street;
     const width = path.width;
 
+    const edgeMaterial = path.hierarchy === 'dirt' ? this.world.materials.sand : this.world.materials.roadEdge;
+    const surfaceMaterial = path.hierarchy === 'dirt' ? this.world.materials.wood : this.world.materials.stoneRoad;
     const shoulder = new THREE.Mesh(
       new THREE.BoxGeometry(width + style.shoulder * 2, 0.026, length + width * 0.45),
-      this.world.materials.roadEdge
+      edgeMaterial
     );
     shoulder.name = `ROAD_${path.id}_shoulder`;
     shoulder.position.set(x, 0.072, z);
@@ -56,7 +58,7 @@ export class Roads {
 
     const stone = new THREE.Mesh(
       new THREE.BoxGeometry(width, 0.032, length + width * 0.28),
-      this.world.materials.stoneRoad
+      surfaceMaterial
     );
     stone.name = `ROAD_${path.id}_stone`;
     stone.position.set(x, 0.102, z);
@@ -84,14 +86,16 @@ export class Roads {
 
   addNode(point, path) {
     const style = ROAD_STYLE[path.hierarchy] || ROAD_STYLE.street;
-    const radius = path.width * 0.56 + style.shoulder;
-    const node = new THREE.Mesh(new THREE.CylinderGeometry(radius, radius, 0.03, 34), this.world.materials.roadEdge);
+    const radius = path.width * 0.42 + style.shoulder * 0.62;
+    const edgeMaterial = path.hierarchy === 'dirt' ? this.world.materials.sand : this.world.materials.roadEdge;
+    const surfaceMaterial = path.hierarchy === 'dirt' ? this.world.materials.wood : this.world.materials.stoneRoad;
+    const node = new THREE.Mesh(new THREE.CylinderGeometry(radius, radius, 0.03, 34), edgeMaterial);
     node.name = `ROAD_${path.id}_node`;
     node.position.set(point[0], 0.077, point[1]);
     node.receiveShadow = true;
     this.world.scene.add(node);
 
-    const top = new THREE.Mesh(new THREE.CylinderGeometry(radius - style.shoulder * 0.65, radius - style.shoulder * 0.65, 0.034, 34), this.world.materials.stoneRoad);
+    const top = new THREE.Mesh(new THREE.CylinderGeometry(radius - style.shoulder * 0.55, radius - style.shoulder * 0.55, 0.034, 34), surfaceMaterial);
     top.position.set(point[0], 0.106, point[1]);
     top.receiveShadow = true;
     this.world.scene.add(top);

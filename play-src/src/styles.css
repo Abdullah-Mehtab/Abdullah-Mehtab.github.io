@@ -302,16 +302,16 @@ button {
   left: 18px;
   bottom: 18px;
   z-index: 18;
-  width: 178px;
+  width: 190px;
   aspect-ratio: 1;
-  border: 1px solid rgba(104, 216, 255, 0.24);
-  border-radius: 12px;
+  border: 1px solid rgba(255, 223, 138, 0.24);
+  border-radius: 50%;
   overflow: hidden;
   background:
-    radial-gradient(circle at 50% 50%, rgba(7, 48, 71, 0.95), rgba(3, 13, 24, 0.95));
+    radial-gradient(circle at 50% 50%, rgba(11, 52, 43, 0.86), rgba(3, 13, 24, 0.96) 72%);
   box-shadow: 0 16px 42px rgba(0, 0, 0, 0.34);
   pointer-events: none;
-  backdrop-filter: blur(14px);
+  backdrop-filter: blur(10px);
 }
 
 body:not(.is-driving) .minimap {
@@ -320,7 +320,7 @@ body:not(.is-driving) .minimap {
 
 .minimap-world {
   position: absolute;
-  inset: 8px;
+  inset: 0;
 }
 
 .minimap-island,
@@ -362,6 +362,34 @@ body:not(.is-driving) .minimap {
   background: rgba(30, 43, 43, 0.66);
   transform: translate(-50%, -50%);
   box-shadow: none;
+}
+
+.minimap-roads-svg,
+.map-roads-svg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  overflow: visible;
+}
+
+.minimap-road-line,
+.map-road-line {
+  fill: none;
+  stroke: rgba(29, 36, 32, 0.78);
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.minimap-road-dirt,
+.map-road-dirt {
+  stroke: rgba(116, 79, 39, 0.78);
+}
+
+.minimap-road-stunt,
+.map-road-stunt {
+  stroke: rgba(112, 65, 50, 0.82);
 }
 
 .minimap-pin {
@@ -807,7 +835,7 @@ body:not(.is-driving) .minimap {
   .minimap {
     left: 12px;
     bottom: 118px;
-    width: 124px;
+    width: 132px;
     opacity: 0.76;
   }
 

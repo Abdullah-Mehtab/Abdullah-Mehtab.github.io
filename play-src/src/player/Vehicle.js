@@ -4,7 +4,7 @@ import { VehicleController } from '../physics/VehicleController.js';
 import { ISLAND_RADIUS, WORLD_HALF_SIZE } from '../world/worldData.js';
 import sabreTurboModelUrl from '../../assets/models/vehicles/sabre-turbo.glb?url';
 
-const START = new THREE.Vector3(2, 1.65, 5.5);
+const START = new THREE.Vector3(2, 1.08, 5.5);
 
 export class Vehicle {
   constructor({ scene, physics, achievements, audio }) {
@@ -37,22 +37,29 @@ export class Vehicle {
     const bodyDesc = this.RAPIER.RigidBodyDesc.dynamic()
       .setTranslation(START.x, START.y, START.z)
       .setCanSleep(false)
-      .setLinearDamping(0.18)
-      .setAngularDamping(0.82);
+      .setLinearDamping(0.34)
+      .setAngularDamping(1.85);
     this.body = this.physics.world.createRigidBody(bodyDesc);
     const main = this.RAPIER.ColliderDesc
-      .cuboid(1.12, 0.34, 2.48)
-      .setDensity(1.6)
-      .setFriction(0.82)
-      .setRestitution(0.02);
-    main.setTranslation(0, -0.1, 0);
+      .cuboid(1.1, 0.28, 2.38)
+      .setDensity(1.35)
+      .setFriction(1.0)
+      .setRestitution(0.01);
+    main.setTranslation(0, -0.18, 0);
     this.physics.world.createCollider(main, this.body);
+    const ballast = this.RAPIER.ColliderDesc
+      .cuboid(0.94, 0.14, 1.7)
+      .setDensity(2.9)
+      .setFriction(1.05)
+      .setRestitution(0);
+    ballast.setTranslation(0, -0.54, -0.08);
+    this.physics.world.createCollider(ballast, this.body);
     const roof = this.RAPIER.ColliderDesc
-      .cuboid(0.72, 0.28, 0.74)
-      .setDensity(0.42)
+      .cuboid(0.66, 0.22, 0.66)
+      .setDensity(0.16)
       .setFriction(0.72)
       .setRestitution(0.02);
-    roof.setTranslation(0, 0.48, -0.08);
+    roof.setTranslation(0, 0.36, -0.08);
     this.physics.world.createCollider(roof, this.body);
     this.controller = new VehicleController({ physics: this.physics, body: this.body });
   }
@@ -245,6 +252,13 @@ export class Vehicle {
   get position() {
     const t = this.body.translation();
     return new THREE.Vector3(t.x, t.y, t.z);
+  }
+
+  get heading() {
+    const q = this.body.rotation();
+    const quaternion = new THREE.Quaternion(q.x, q.y, q.z, q.w);
+    const forward = new THREE.Vector3(0, 0, 1).applyQuaternion(quaternion);
+    return Math.atan2(forward.x, forward.z);
   }
 }
 

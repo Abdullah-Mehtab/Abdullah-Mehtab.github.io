@@ -28,26 +28,34 @@ export class Foliage {
   }
 
   placeTrees() {
-    const templates = ['EnvOakTree', 'EnvCypressTree', 'EnvBlossomTree', 'EnvTreeSakuraLarge', 'EnvTreeSakuraMedium'];
+    const maxTrees = QUALITY_PROFILES.high.trees;
+    const perZone = Math.ceil(maxTrees / scenicPropZones.length);
     let placed = 0;
-    for (let attempt = 0; attempt < 2200 && placed < QUALITY_PROFILES.high.trees; attempt += 1) {
-      const zone = scenicPropZones[Math.floor(pseudoRandom(attempt * 2.7) * scenicPropZones.length)];
-      const x = zone.center[0] + (pseudoRandom(attempt * 7.13) - 0.5) * zone.size[0];
-      const z = zone.center[1] + (pseudoRandom(attempt * 9.41) - 0.5) * zone.size[1];
-      const radius = Math.hypot(x, z);
-      if (radius > ISLAND_RADIUS * 0.82 || radius < 20) continue;
-      if (!this.world.isClearForProp(x, z, 4.2)) continue;
+    for (let zoneIndex = 0; zoneIndex < scenicPropZones.length && placed < maxTrees; zoneIndex += 1) {
+      const zone = scenicPropZones[zoneIndex];
+      const target = Math.min(maxTrees - placed, perZone + (zone.kind === 'grove' ? 4 : zone.kind === 'meadow' ? -2 : 0));
+      let zonePlaced = 0;
+      for (let attempt = 0; attempt < 360 && zonePlaced < target; attempt += 1) {
+        const seed = zoneIndex * 1000 + attempt;
+        const x = zone.center[0] + (pseudoRandom(seed * 7.13) - 0.5) * zone.size[0];
+        const z = zone.center[1] + (pseudoRandom(seed * 9.41) - 0.5) * zone.size[1];
+        const radius = Math.hypot(x, z);
+        if (radius > ISLAND_RADIUS * 0.86 || radius < 18) continue;
+        if (!this.world.isClearForProp(x, z, 4.6)) continue;
 
-      const templateName = templates[Math.floor(pseudoRandom(attempt * 11.31) * templates.length)];
-      const tree = this.world.cloneEnvironmentAsset(templateName) || this.createFallbackTree();
-      tree.position.set(x, 0.16, z);
-      tree.rotation.y = pseudoRandom(attempt * 13.3) * Math.PI * 2;
-      const scale = 0.82 + pseudoRandom(attempt * 17.1) * 0.72;
-      tree.scale.setScalar(scale);
-      this.world.scene.add(tree);
-      this.world.decor.push({ type: 'tree', mesh: tree });
-      this.trees.push(tree);
-      placed += 1;
+        const templateName = pickTreeTemplate(zone, seed);
+        const tree = this.world.cloneEnvironmentAsset(templateName) || this.createFallbackTree();
+        tree.position.set(x, 0.04, z);
+        tree.rotation.y = pseudoRandom(seed * 13.3) * Math.PI * 2;
+        const scale = 0.82 + pseudoRandom(seed * 17.1) * 0.55;
+        tree.scale.setScalar(scale);
+        this.world.scene.add(tree);
+        this.world.decor.push({ type: 'tree', mesh: tree });
+        this.trees.push(tree);
+        this.addTreeCollider(x, z, scale);
+        placed += 1;
+        zonePlaced += 1;
+      }
     }
   }
 
@@ -62,7 +70,7 @@ export class Foliage {
       if (!this.world.isClearForProp(x, z, 1.3)) continue;
 
       const tuft = template ? template.clone(true) : new THREE.Mesh(fallbackGeometry, this.world.materials.crop);
-      tuft.position.set(x, 0.16, z);
+      tuft.position.set(x, 0.05, z);
       tuft.rotation.y = pseudoRandom(i * 19.4) * Math.PI * 2;
       const scale = 0.45 + pseudoRandom(i * 22.9) * 0.78;
       tuft.scale.set(scale, scale, scale);
@@ -172,4 +180,19 @@ export class Foliage {
     group.add(trunk, crown);
     return group;
   }
+
+  addTreeCollider(x, z, scale) {
+    this.world.physics.createFixedBox([x, 1.0 * scale, z], [0.72 * scale, 2.0 * scale, 0.72 * scale], {
+      friction: 0.88,
+      restitution: 0.02
+    });
+  }
+}
+
+function pickTreeTemplate(zone, seed) {
+  const n = pseudoRandom(seed * 11.31);
+  if (zone.kind === 'coast') return n > 0.35 ? 'EnvCypressTree' : 'EnvBlossomTree';
+  if (zone.kind === 'meadow') return n > 0.58 ? 'EnvBlossomTree' : 'EnvOakTree';
+  if (zone.kind === 'farm') return n > 0.42 ? 'EnvBlossomTree' : 'EnvOakTree';
+  return n > 0.22 ? 'EnvBlossomTree' : 'EnvOakTree';
 }

@@ -59,7 +59,7 @@ export class Zones {
 
     const size = landmarkColliderSize(zone.shape, zone.radius);
     this.world.physics.createFixedBox(
-      [zone.position.x, 1.8, zone.position.z],
+      [zone.position.x, size[1] / 2, zone.position.z],
       size,
       { rotation: [0, zone.rotation || 0, 0], friction: 0.85, restitution: 0.02 }
     );
@@ -268,9 +268,9 @@ export class Zones {
 }
 
 function landmarkColliderSize(shape, radius) {
-  if (shape === 'tower' || shape === 'post') return [radius * 0.62, 7.2, radius * 0.62];
-  if (shape === 'gate') return [radius * 1.2, 4.8, 1.2];
-  if (shape === 'pier' || shape === 'board') return [radius * 1.25, 3.2, radius * 0.55];
+  if (shape === 'tower' || shape === 'post') return [radius * 0.48, 7.2, radius * 0.48];
+  if (shape === 'gate') return [radius * 1.05, 4.8, 1.0];
+  if (shape === 'pier' || shape === 'board') return [radius * 1.0, 3.2, radius * 0.42];
   if (shape === 'farm') return [0.1, 0.1, 0.1];
-  return [radius * 1.1, 4.4, radius * 0.9];
+  return [radius * 0.82, 4.4, radius * 0.68];
 }
