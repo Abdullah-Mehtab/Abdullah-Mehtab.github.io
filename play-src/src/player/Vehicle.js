@@ -1,7 +1,7 @@
 import * as THREE from 'three';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 import { VehicleController } from '../physics/VehicleController.js';
-import { WORLD_HALF_SIZE } from '../world/worldData.js';
+import { ISLAND_RADIUS, WORLD_HALF_SIZE } from '../world/worldData.js';
 import sabreTurboModelUrl from '../../assets/models/vehicles/sabre-turbo.glb?url';
 
 const START = new THREE.Vector3(2, 1.65, 5.5);
@@ -111,13 +111,19 @@ export class Vehicle {
 
   update(input, dt) {
     const translation = this.body.translation();
-    if (translation.y < -12 || Math.abs(translation.x) > WORLD_HALF_SIZE + 18 || Math.abs(translation.z) > WORLD_HALF_SIZE + 18) {
+    const distanceFromCenter = Math.hypot(translation.x, translation.z);
+    if (
+      translation.y < -12 ||
+      distanceFromCenter > ISLAND_RADIUS + 8 ||
+      Math.abs(translation.x) > WORLD_HALF_SIZE + 18 ||
+      Math.abs(translation.z) > WORLD_HALF_SIZE + 18
+    ) {
       this.respawn();
       return;
     }
 
     const state = this.controller.update(input, dt);
-    this.speed = this.controller.speed * 3.6;
+    this.speed = this.controller.speed;
     if (state.boost && this.controller.speed > 3) this.achievements.unlock('boost');
     if (input.consume('jump')) {
       if (this.controller.jump()) {

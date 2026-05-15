@@ -2,8 +2,8 @@ import './styles.css';
 import { Game } from './core/Game.js';
 
 async function boot() {
-  const { default: RAPIER } = await import('@dimforge/rapier3d-compat');
-  await RAPIER.init({});
+  const RAPIER = await import('@dimforge/rapier3d-compat');
+  await RAPIER.init();
   const game = new Game(RAPIER);
   await game.init();
 }
