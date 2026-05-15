@@ -21,7 +21,7 @@ export class VehicleController {
   }
 
   setupWheels() {
-    this.radius = 0.42;
+    this.radius = 0.44;
     for (const wheel of WHEEL_OFFSETS) {
       this.controller.addWheel(
         { x: wheel.x, y: wheel.y, z: wheel.z },
@@ -32,13 +32,13 @@ export class VehicleController {
       );
     }
     for (let i = 0; i < WHEEL_OFFSETS.length; i += 1) {
-      this.controller.setWheelFrictionSlip(i, 1.55);
-      this.controller.setWheelSideFrictionStiffness(i, 7.4);
-      this.controller.setWheelSuspensionStiffness(i, 23);
-      this.controller.setWheelSuspensionCompression(i, 5.2);
-      this.controller.setWheelSuspensionRelaxation(i, 6.0);
-      this.controller.setWheelMaxSuspensionTravel(i, 0.38);
-      this.controller.setWheelMaxSuspensionForce(i, 190);
+      this.controller.setWheelFrictionSlip(i, 1.68);
+      this.controller.setWheelSideFrictionStiffness(i, 8.2);
+      this.controller.setWheelSuspensionStiffness(i, 28);
+      this.controller.setWheelSuspensionCompression(i, 6.8);
+      this.controller.setWheelSuspensionRelaxation(i, 7.2);
+      this.controller.setWheelMaxSuspensionTravel(i, 0.32);
+      this.controller.setWheelMaxSuspensionForce(i, 230);
     }
   }
 
@@ -59,8 +59,8 @@ export class VehicleController {
     const topSpeed = boost ? 32 : 23;
     const overflow = Math.max(0, this.speed - topSpeed);
     let engine = 0;
-    if (forward) engine += (boost ? 280 : 182) / (1 + overflow * 0.35);
-    if (reverse) engine -= 96 / (1 + overflow * 0.35);
+    if (forward) engine += (boost ? 235 : 146) / (1 + overflow * 0.42);
+    if (reverse) engine -= 76 / (1 + overflow * 0.42);
     let brake = brakeInput ? 46 : 0.12;
     if (!forward && !reverse && this.speed < 1.8) brake = 4.2;
 
@@ -73,6 +73,7 @@ export class VehicleController {
     this.controller.updateVehicle(Math.min(dt, 1 / 45));
     this.updateContactState();
     this.stabilizeOnGround();
+    this.applyAeroGrip(dt);
     this.limitChaos();
     this.boostCooldown = Math.max(0, this.boostCooldown - dt);
     return { boost, grounded: this.groundedWheels > 1 };
@@ -128,14 +129,21 @@ export class VehicleController {
     const angular = this.body.angvel();
     const q = this.body.rotation();
     const up = new THREE.Vector3(0, 1, 0).applyQuaternion(new THREE.Quaternion(q.x, q.y, q.z, q.w));
-    const pitchRollCorrection = this.body.mass() * 0.34;
+    const pitchRollCorrection = this.body.mass() * 0.52;
     this.body.applyTorqueImpulse({
-      x: (-angular.x * 0.34 - up.z * 0.48) * pitchRollCorrection,
-      y: -angular.y * this.body.mass() * 0.015,
-      z: (-angular.z * 0.34 + up.x * 0.48) * pitchRollCorrection
+      x: (-angular.x * 0.46 - up.z * 0.72) * pitchRollCorrection,
+      y: -angular.y * this.body.mass() * 0.018,
+      z: (-angular.z * 0.46 + up.x * 0.72) * pitchRollCorrection
     }, true);
     if (this.speed > 5) {
-      this.body.applyImpulse({ x: 0, y: -Math.min(0.28, this.speed * 0.007) * this.body.mass(), z: 0 }, true);
+      this.body.applyImpulse({ x: 0, y: -Math.min(0.5, this.speed * 0.012) * this.body.mass(), z: 0 }, true);
     }
+  }
+
+  applyAeroGrip(dt) {
+    if (this.groundedWheels < 2) return;
+    const mass = this.body.mass();
+    const downforce = Math.min(1.2, 0.22 + this.speed * 0.018) * mass;
+    this.body.applyImpulse({ x: 0, y: -downforce * Math.min(1, dt * 60) * 0.018, z: 0 }, true);
   }
 }
