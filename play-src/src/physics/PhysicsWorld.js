@@ -23,6 +23,45 @@ export class PhysicsWorld {
     return body;
   }
 
+  createFixedCylinder(position, halfHeight, radius, options = {}) {
+    const bodyDesc = this.RAPIER.RigidBodyDesc.fixed().setTranslation(position[0], position[1], position[2]);
+    if (options.rotation) {
+      bodyDesc.setRotation(toRapierQuaternion(options.rotation));
+    }
+    const body = this.world.createRigidBody(bodyDesc);
+    const collider = this.RAPIER.ColliderDesc
+      .cylinder(halfHeight, radius)
+      .setFriction(options.friction ?? 0.85)
+      .setRestitution(options.restitution ?? 0.04);
+    this.world.createCollider(collider, body);
+    return body;
+  }
+
+  createFixedBall(position, radius, options = {}) {
+    const bodyDesc = this.RAPIER.RigidBodyDesc.fixed().setTranslation(position[0], position[1], position[2]);
+    const body = this.world.createRigidBody(bodyDesc);
+    const collider = this.RAPIER.ColliderDesc
+      .ball(radius)
+      .setFriction(options.friction ?? 0.85)
+      .setRestitution(options.restitution ?? 0.04);
+    this.world.createCollider(collider, body);
+    return body;
+  }
+
+  createFixedTrimesh(position, vertices, indices, options = {}) {
+    const bodyDesc = this.RAPIER.RigidBodyDesc.fixed().setTranslation(position[0], position[1], position[2]);
+    if (options.rotation) {
+      bodyDesc.setRotation(toRapierQuaternion(options.rotation));
+    }
+    const body = this.world.createRigidBody(bodyDesc);
+    const collider = this.RAPIER.ColliderDesc
+      .trimesh(vertices, indices)
+      .setFriction(options.friction ?? 0.85)
+      .setRestitution(options.restitution ?? 0.04);
+    this.world.createCollider(collider, body);
+    return body;
+  }
+
   createDynamicBox(position, size, options = {}) {
     const bodyDesc = this.RAPIER.RigidBodyDesc.dynamic()
       .setTranslation(position[0], position[1], position[2])
