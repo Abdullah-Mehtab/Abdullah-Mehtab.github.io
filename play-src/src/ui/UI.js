@@ -331,9 +331,9 @@ export class UI {
   renderControls() {
     const rows = [
       ['WASD / Arrows', 'Drive'],
-      ['X', 'Boost'],
+      ['Left Ctrl', 'Boost'],
       ['Shift', 'Handbrake / drift'],
-      ['Ctrl / B', 'Brake'],
+      ['Right Ctrl / B', 'Brake'],
       ['Space', 'Jump'],
       ['E / Enter', 'Interact'],
       ['P', 'Summon potato at the farm'],

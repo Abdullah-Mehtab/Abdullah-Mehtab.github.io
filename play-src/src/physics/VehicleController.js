@@ -61,7 +61,7 @@ export class VehicleController {
     this.speed = Math.hypot(velocity.x, velocity.y * 0.12, velocity.z);
     this.localSpeed = localVelocity.z;
     const horizontalSpeed = Math.hypot(velocity.x, velocity.z);
-    const speedNorm = THREE.MathUtils.clamp(horizontalSpeed / 31, 0, 1);
+    const speedNorm = THREE.MathUtils.clamp(horizontalSpeed / 40, 0, 1);
     const rawSteer = THREE.MathUtils.clamp((left ? 1 : 0) + (right ? -1 : 0) + THREE.MathUtils.clamp(-joy.x, -1, 1), -1, 1);
     const steerLimit = THREE.MathUtils.lerp(0.54, 0.24, speedNorm) * (handbrake ? 1.22 : 1);
     const steerTarget = rawSteer * steerLimit;
@@ -71,13 +71,13 @@ export class VehicleController {
     const throttleRate = throttleTarget === 0 ? 4.4 : 6.6;
     this.throttle += (throttleTarget - this.throttle) * Math.min(1, dt * throttleRate);
 
-    const topSpeed = boost ? 38 : 26;
-    const reverseTopSpeed = 10.5;
+    const topSpeed = boost ? 52 : 34;
+    const reverseTopSpeed = 13;
     const top = this.throttle >= 0 ? topSpeed : reverseTopSpeed;
     const overflow = Math.max(0, Math.abs(this.localSpeed) - top);
     const speedRatio = THREE.MathUtils.clamp(Math.abs(this.localSpeed) / top, 0, 1.25);
-    const launchBonus = this.throttle > 0 && this.localSpeed < 4 ? 1.22 : 1;
-    const engineBase = this.throttle >= 0 ? (boost ? 318 : 176) : 98;
+    const launchBonus = this.throttle > 0 && this.localSpeed < 5 ? 1.34 : 1;
+    const engineBase = this.throttle >= 0 ? (boost ? 470 : 258) : 124;
     let engine = this.throttle * engineBase * launchBonus * (1 - Math.min(0.82, speedRatio * 0.72));
     engine /= 1 + overflow * 0.36;
     if (boost && forward && horizontalSpeed > 3 && this.groundedWheels > 1) {
@@ -192,7 +192,7 @@ export class VehicleController {
   applyAeroGrip(dt, handbrake = false) {
     if (this.groundedWheels < 2) return;
     const mass = this.body.mass();
-    const downforce = Math.min(1.85, 0.42 + this.speed * 0.028) * mass * (handbrake ? 0.82 : 1);
+    const downforce = Math.min(2.45, 0.48 + this.speed * 0.032) * mass * (handbrake ? 0.78 : 1);
     this.body.applyImpulse({ x: 0, y: -downforce * Math.min(1, dt * 60) * 0.022, z: 0 }, true);
   }
 
@@ -224,7 +224,7 @@ export class VehicleController {
     const mass = this.body.mass();
     const current = new THREE.Vector3(velocity.x, 0, velocity.z);
     const direction = current.lengthSq() > 5 ? current.normalize() : this.getForwardVector();
-    const force = mass * 0.12 * Math.min(1, dt * 60);
+    const force = mass * 0.23 * Math.min(1, dt * 60);
     this.body.applyImpulse({ x: direction.x * force, y: -0.01 * mass, z: direction.z * force }, true);
   }
 

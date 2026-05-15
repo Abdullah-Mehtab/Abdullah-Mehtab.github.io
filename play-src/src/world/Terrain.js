@@ -43,7 +43,7 @@ export class Terrain {
   }
 
   addInteriorGrassCap() {
-    const cap = new THREE.Mesh(new THREE.CircleGeometry(ISLAND_RADIUS * 1.025, 260), this.world.materials.ground);
+    const cap = new THREE.Mesh(new THREE.CircleGeometry(ISLAND_RADIUS * 0.925, 260), this.world.materials.ground);
     cap.name = 'MedievalIslandInteriorGrassCap';
     cap.rotation.x = -Math.PI / 2;
     cap.position.y = 0.066;
@@ -54,14 +54,37 @@ export class Terrain {
 
   addCleanShoreBand() {
     const shore = new THREE.Mesh(
-      makeRingGeometry(ISLAND_RADIUS * 0.94, ISLAND_RADIUS * 1.045, 220, 1.8),
+      makeRingGeometry(ISLAND_RADIUS * 0.895, ISLAND_RADIUS * 1.055, 240, 2.6),
       this.world.materials.sand
     );
     shore.name = 'MedievalIslandCleanBeachBand';
     shore.position.y = 0.074;
     shore.receiveShadow = true;
     this.world.scene.add(shore);
-    this.world.decor.push({ type: 'shoreBand', mesh: shore });
+
+    const grassBlend = new THREE.Mesh(
+      makeRingGeometry(ISLAND_RADIUS * 0.86, ISLAND_RADIUS * 0.965, 240, 3.2),
+      this.world.materials.grassSandBlend
+    );
+    grassBlend.name = 'MedievalIslandGrassToSandFeather';
+    grassBlend.position.y = 0.086;
+    grassBlend.renderOrder = 2;
+    this.world.scene.add(grassBlend);
+
+    const wetBlend = new THREE.Mesh(
+      makeRingGeometry(ISLAND_RADIUS * 0.965, ISLAND_RADIUS * 1.065, 260, 2.8),
+      this.world.materials.wetSandBlend
+    );
+    wetBlend.name = 'MedievalIslandWetSandFeather';
+    wetBlend.position.y = 0.092;
+    wetBlend.renderOrder = 3;
+    this.world.scene.add(wetBlend);
+
+    this.world.decor.push(
+      { type: 'shoreBand', mesh: shore },
+      { type: 'shoreBlend', mesh: grassBlend },
+      { type: 'wetSandBlend', mesh: wetBlend }
+    );
   }
 
   addFallbackGround() {

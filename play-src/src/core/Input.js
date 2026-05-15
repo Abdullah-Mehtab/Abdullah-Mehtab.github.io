@@ -7,10 +7,9 @@ const KEY_BINDINGS = {
   ArrowLeft: 'left',
   KeyD: 'right',
   ArrowRight: 'right',
+  ControlLeft: 'boost',
   ShiftLeft: 'handbrake',
   ShiftRight: 'handbrake',
-  KeyX: 'boost',
-  ControlLeft: 'brake',
   ControlRight: 'brake',
   KeyB: 'brake',
   Space: 'jump',
@@ -64,6 +63,7 @@ export class Input {
       const action = KEY_BINDINGS[event.code];
       if (!action) return;
       event.preventDefault();
+      event.stopPropagation();
       if (!this.actions[action]) {
         this.pressed.add(action);
       }
@@ -75,6 +75,7 @@ export class Input {
       const action = KEY_BINDINGS[event.code];
       if (!action) return;
       event.preventDefault();
+      event.stopPropagation();
       this.actions[action] = false;
     });
   }

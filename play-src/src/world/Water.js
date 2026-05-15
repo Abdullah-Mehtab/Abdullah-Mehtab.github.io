@@ -17,7 +17,20 @@ export class Water {
     this.world.scene.add(ocean);
     this.waterMeshes.push(ocean);
 
+    this.createShallowShelf();
     this.createShoreFoam();
+  }
+
+  createShallowShelf() {
+    const shelf = new THREE.Mesh(
+      makeRingGeometry(ISLAND_RADIUS * 0.998, ISLAND_RADIUS * 1.2, 260, 4.2),
+      this.world.materials.shoreWash
+    );
+    shelf.name = 'MedievalIslandShallowWaterShelf';
+    shelf.position.y = WATER_Y + 0.075;
+    shelf.renderOrder = -3;
+    this.world.scene.add(shelf);
+    this.waterMeshes.push(shelf);
   }
 
   createShoreFoam() {
@@ -47,6 +60,9 @@ export class Water {
   update(dt, elapsed) {
     if (this.world.materials.water.uniforms?.time) {
       this.world.materials.water.uniforms.time.value = elapsed;
+    }
+    for (const material of [this.world.materials.shoreWash, this.world.materials.wetSandBlend]) {
+      if (material?.uniforms?.time) material.uniforms.time.value = elapsed;
     }
     for (const mesh of this.waterMeshes) {
       if (mesh.name.includes('Foam')) {
