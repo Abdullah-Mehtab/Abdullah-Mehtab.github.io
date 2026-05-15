@@ -41,6 +41,31 @@ export function createWorldMaterials() {
     roadEdge: new THREE.MeshStandardMaterial({ color: 0x2f302b, roughness: 0.9, metalness: 0.04 }),
     roadLine: new THREE.MeshBasicMaterial({ color: 0xd8c48a, transparent: true, opacity: 0.36 }),
     sand: new THREE.MeshStandardMaterial({ color: 0xf4d59a, map: sandTexture, roughness: 0.98, metalness: 0.0 }),
+    grassSandBlend: makeRadialBlendMaterial({
+      inner: 136,
+      outer: 151,
+      colorA: 0x245b26,
+      colorB: 0xe8c987,
+      opacity: 0.58,
+      noise: 0.28
+    }),
+    wetSandBlend: makeRadialBlendMaterial({
+      inner: 151,
+      outer: 166,
+      colorA: 0xd1ad6e,
+      colorB: 0x6fcdd0,
+      opacity: 0.48,
+      noise: 0.2
+    }),
+    shoreWash: makeRadialBlendMaterial({
+      inner: 158,
+      outer: 190,
+      colorA: 0x8de0dd,
+      colorB: 0x0a6894,
+      opacity: 0.36,
+      noise: 0.32,
+      animated: true
+    }),
     cliff: new THREE.MeshStandardMaterial({ color: 0x5c5146, roughness: 0.92, metalness: 0.01 }),
     shallow: new THREE.MeshBasicMaterial({ color: 0x79d6d0, transparent: true, opacity: 0.16, depthWrite: false }),
     foam: new THREE.MeshBasicMaterial({ color: 0xf1fff6, transparent: true, opacity: 0.26, depthWrite: false }),
@@ -201,6 +226,68 @@ export function makeWaterMaterial() {
         color += longBands * 0.035 + sparkle * sun;
         color = mix(color, vec3(0.72, 0.94, 0.98), 0.08);
         gl_FragColor = vec4(color, 0.84);
+      }
+    `
+  });
+}
+
+function makeRadialBlendMaterial({ inner, outer, colorA, colorB, opacity = 0.5, noise = 0.2, animated = false }) {
+  return new THREE.ShaderMaterial({
+    transparent: true,
+    depthWrite: false,
+    uniforms: {
+      inner: { value: inner },
+      outer: { value: outer },
+      colorA: { value: new THREE.Color(colorA) },
+      colorB: { value: new THREE.Color(colorB) },
+      opacity: { value: opacity },
+      noiseAmount: { value: noise },
+      time: { value: 0 },
+      animated: { value: animated ? 1 : 0 }
+    },
+    vertexShader: `
+      varying vec3 vPos;
+      varying vec2 vUv;
+      void main() {
+        vPos = position;
+        vUv = uv;
+        gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+      }
+    `,
+    fragmentShader: `
+      varying vec3 vPos;
+      varying vec2 vUv;
+      uniform float inner;
+      uniform float outer;
+      uniform vec3 colorA;
+      uniform vec3 colorB;
+      uniform float opacity;
+      uniform float noiseAmount;
+      uniform float time;
+      uniform int animated;
+      float hash(vec2 p) {
+        return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453123);
+      }
+      float noise(vec2 p) {
+        vec2 i = floor(p);
+        vec2 f = fract(p);
+        float a = hash(i);
+        float b = hash(i + vec2(1.0, 0.0));
+        float c = hash(i + vec2(0.0, 1.0));
+        float d = hash(i + vec2(1.0, 1.0));
+        vec2 u = f * f * (3.0 - 2.0 * f);
+        return mix(a, b, u.x) + (c - a) * u.y * (1.0 - u.x) + (d - b) * u.x * u.y;
+      }
+      void main() {
+        float radius = length(vPos.xz);
+        float t = smoothstep(inner, outer, radius);
+        float featherIn = smoothstep(inner, inner + (outer - inner) * 0.32, radius);
+        float featherOut = 1.0 - smoothstep(outer - (outer - inner) * 0.34, outer, radius);
+        float n = noise(vPos.xz * 0.075 + vec2(time * 0.045 * float(animated), -time * 0.025 * float(animated)));
+        float brokenEdge = 1.0 + (n - 0.5) * noiseAmount;
+        float alpha = featherIn * featherOut * opacity * brokenEdge;
+        vec3 color = mix(colorA, colorB, clamp(t + (n - 0.5) * 0.18, 0.0, 1.0));
+        gl_FragColor = vec4(color, clamp(alpha, 0.0, opacity));
       }
     `
   });

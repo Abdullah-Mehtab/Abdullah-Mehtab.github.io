@@ -10,9 +10,9 @@ export const districtFootprints = [
   { id: 'library-grove', label: 'Education Grove', center: [-112, 72], size: [48, 38], color: '#9ccfff', kind: 'library' },
   { id: 'forge', label: 'Projects Foundry', center: [62, 42], size: [48, 36], color: '#ffcc66', kind: 'forge' },
   { id: 'harbor', label: 'Contact Harbor', center: [130, 64], size: [34, 30], color: '#78b7ff', kind: 'waterfront' },
-  { id: 'archive', label: 'Archive Garden', center: [-20, 72], size: [36, 28], color: '#ffdf8a', kind: 'civic' },
+  { id: 'archive', label: 'Archive Garden', center: [-24, 60], size: [36, 28], color: '#ffdf8a', kind: 'civic' },
   { id: 'cove', label: 'Stunt Courtyard', center: [112, -78], size: [40, 28], color: '#ff9b6d', kind: 'stunt' },
-  { id: 'farm', label: 'Voxel Farm Pocket', center: [50, 74], size: [34, 28], color: '#c79b56', kind: 'farm' }
+  { id: 'farm', label: 'Voxel Farm Pocket', center: [-56, -126], size: [34, 28], color: '#c79b56', kind: 'farm' }
 ];
 
 export const scenicPropZones = [
@@ -21,7 +21,7 @@ export const scenicPropZones = [
   { id: 'north-meadow', center: [-12, 110], size: [54, 28], kind: 'meadow' },
   { id: 'harbor-cypress', center: [128, 76], size: [24, 32], kind: 'coast' },
   { id: 'southern-oaks', center: [-22, -116], size: [58, 26], kind: 'meadow' },
-  { id: 'farm-orchard', center: [34, 76], size: [28, 26], kind: 'farm' },
+  { id: 'farm-orchard', center: [-60, -126], size: [30, 24], kind: 'farm' },
   { id: 'east-park', center: [114, -12], size: [26, 34], kind: 'garden' },
   { id: 'west-cove', center: [-118, -60], size: [30, 34], kind: 'coast' }
 ];
@@ -119,8 +119,8 @@ export const roadPaths = [
     closed: false,
     turnaround: true,
     points: [
-      [84, 100],
-      [76, 86]
+      [-28, -120],
+      [-44, -124]
     ]
   }
 ];
@@ -245,7 +245,7 @@ export const worldZones = [
     id: 'awards',
     name: 'Awards Shrine',
     kind: 'Certificates',
-    position: [-20, 0, 72],
+    position: [-24, 0, 60],
     rotation: -0.18,
     radius: 8,
     color: '#ffdf8a',
@@ -280,8 +280,8 @@ export const worldZones = [
     id: 'todo',
     name: 'Todo Board',
     kind: 'Blog / List',
-    position: [-62, 0, 86],
-    rotation: -0.28,
+    position: [-88, 0, 0],
+    rotation: 0.18,
     radius: 8,
     color: '#d8ff92',
     shape: 'board',
@@ -378,8 +378,8 @@ export const worldZones = [
     id: 'potato',
     name: 'Potato Farm',
     kind: 'Farm Counter',
-    position: [50, 0, 74],
-    rotation: 0,
+    position: [-56, 0, -126],
+    rotation: 1.15,
     radius: 10,
     color: '#c79b56',
     shape: 'farm',
