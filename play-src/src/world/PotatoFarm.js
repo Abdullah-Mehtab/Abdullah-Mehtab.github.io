@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import { makeCanvasLabel, pseudoRandom } from './WorldMaterials.js';
+import { pseudoRandom } from './WorldMaterials.js';
 
 export class PotatoFarm {
   constructor(world) {
@@ -21,17 +21,21 @@ export class PotatoFarm {
     this.world.scene.add(this.group);
 
     this.addField();
-    this.addFence();
     this.addCounter();
     this.addSummonPad();
-    this.world.physics.createFixedBox([zone.position.x, 0.18, zone.position.z], [18, 0.35, 14], {
-      rotation: [0, zone.rotation || 0, 0],
-      friction: 0.8,
-      restitution: 0
-    });
+    this.addFenceColliders(zone);
   }
 
   addField() {
+    const farmAsset = this.world.cloneEnvironmentAsset('EnvPotatoFarm');
+    if (farmAsset) {
+      farmAsset.name = 'EnvPotatoFarm_BlockyVoxelField';
+      farmAsset.position.set(0, 0, 0);
+      farmAsset.rotation.y = 0;
+      this.group.add(farmAsset);
+      return;
+    }
+
     for (let row = -3; row <= 3; row += 1) {
       for (let col = -4; col <= 4; col += 1) {
         const wet = col === 0;
@@ -49,6 +53,7 @@ export class PotatoFarm {
         }
       }
     }
+    this.addFence();
   }
 
   addFence() {
@@ -71,17 +76,20 @@ export class PotatoFarm {
   }
 
   addCounter() {
-    this.counterTexture = makeCanvasLabel(`Potatoes ${this.count}`, '#c79b56', 420, 180);
+    this.counterTexture = makePotatoCounterTexture(this.count);
     this.counterMaterial = new THREE.MeshBasicMaterial({ map: this.counterTexture, transparent: true, side: THREE.DoubleSide });
-    const board = new THREE.Mesh(new THREE.PlaneGeometry(6.6, 2.82), this.counterMaterial);
+    const board = new THREE.Mesh(new THREE.PlaneGeometry(5.35, 1.72), this.counterMaterial);
     board.name = 'PotatoCounterRoadFacing';
-    board.position.set(0, 3.0, -7.1);
-    board.rotation.y = Math.PI;
+    board.position.set(0, 2.25, 7.2);
     this.group.add(board);
 
-    const backing = new THREE.Mesh(new THREE.BoxGeometry(7.0, 3.2, 0.22), this.world.materials.darkWood);
-    backing.position.set(0, 3.0, -7.23);
-    this.group.add(backing);
+    const backing = new THREE.Mesh(new THREE.BoxGeometry(5.7, 2.05, 0.2), this.world.materials.darkWood);
+    backing.position.set(0, 2.25, 7.08);
+    const leftPost = new THREE.Mesh(new THREE.BoxGeometry(0.18, 2.7, 0.18), this.world.materials.wood);
+    leftPost.position.set(-2.95, 1.45, 7.02);
+    const rightPost = leftPost.clone();
+    rightPost.position.x = 2.95;
+    this.group.add(backing, leftPost, rightPost);
   }
 
   addSummonPad() {
@@ -90,14 +98,31 @@ export class PotatoFarm {
       new THREE.MeshStandardMaterial({ color: 0x7cffb2, emissive: 0x163826, roughness: 0.62, metalness: 0.08 })
     );
     pad.name = 'PotatoSummonPad';
-    pad.position.set(0, 0.28, -9.8);
+    pad.position.set(0, 0.28, 9.45);
     this.group.add(pad);
+  }
+
+  addFenceColliders(zone) {
+    const rotation = zone.rotation || 0;
+    for (const item of [
+      { local: [0, 0.84, -6.25], size: [15.8, 1.7, 0.34] },
+      { local: [0, 0.84, 6.25], size: [15.8, 1.7, 0.34] },
+      { local: [-7.75, 0.84, 0], size: [0.34, 1.7, 12.5] },
+      { local: [7.75, 0.84, 0], size: [0.34, 1.7, 12.5] }
+    ]) {
+      const local = new THREE.Vector3(item.local[0], item.local[1], item.local[2]).applyAxisAngle(new THREE.Vector3(0, 1, 0), rotation);
+      this.world.physics.createFixedBox([zone.position.x + local.x, local.y, zone.position.z + local.z], item.size, {
+        rotation: [0, rotation, 0],
+        friction: 0.92,
+        restitution: 0.02
+      });
+    }
   }
 
   setPotatoCount(count) {
     this.count = count;
     if (!this.counterTexture) return;
-    const replacement = makeCanvasLabel(`Potatoes ${count}`, '#c79b56', 420, 180);
+    const replacement = makePotatoCounterTexture(count);
     this.counterMaterial.map = replacement;
     this.counterMaterial.needsUpdate = true;
     this.counterTexture.dispose();
@@ -133,4 +158,29 @@ export class PotatoFarm {
       }
     }
   }
+}
+
+function makePotatoCounterTexture(count) {
+  const canvas = document.createElement('canvas');
+  canvas.width = 512;
+  canvas.height = 192;
+  const ctx = canvas.getContext('2d');
+  ctx.fillStyle = '#2a160c';
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+  for (let x = 0; x < canvas.width; x += 32) {
+    ctx.fillStyle = x % 64 === 0 ? '#4b2a15' : '#3a1f11';
+    ctx.fillRect(x, 0, 28, canvas.height);
+  }
+  ctx.strokeStyle = '#d7a357';
+  ctx.lineWidth = 10;
+  ctx.strokeRect(18, 18, canvas.width - 36, canvas.height - 36);
+  ctx.fillStyle = '#f7e1a3';
+  ctx.textAlign = 'center';
+  ctx.font = '800 34px Arial';
+  ctx.fillText('POTATOES', canvas.width / 2, 75);
+  ctx.font = '900 64px Arial';
+  ctx.fillText(String(count), canvas.width / 2, 145);
+  const texture = new THREE.CanvasTexture(canvas);
+  texture.anisotropy = 6;
+  return texture;
 }

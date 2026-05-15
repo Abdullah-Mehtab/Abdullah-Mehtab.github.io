@@ -22,15 +22,46 @@ export class Terrain {
     if (!visual) return false;
     visual.name = 'MedievalIslandVisual';
     visual.traverse((object) => {
+      if (/^(SPAWN_|ZONE_|WATER_)/.test(object.name)) {
+        object.visible = false;
+        return;
+      }
       if (object.isMesh) {
         object.geometry?.computeVertexNormals?.();
+        if (object.name.includes('IslandTerrain')) object.material = this.world.materials.ground;
+        else if (object.name.includes('Beach')) object.material = this.world.materials.sand;
+        else if (object.name.includes('Cliff')) object.material = this.world.materials.cliff;
         object.receiveShadow = true;
         object.castShadow = false;
       }
     });
     this.world.scene.add(visual);
     this.world.decor.push({ type: 'authoredIsland', mesh: visual });
+    this.addInteriorGrassCap();
+    this.addCleanShoreBand();
     return true;
+  }
+
+  addInteriorGrassCap() {
+    const cap = new THREE.Mesh(new THREE.CircleGeometry(ISLAND_RADIUS * 1.025, 260), this.world.materials.ground);
+    cap.name = 'MedievalIslandInteriorGrassCap';
+    cap.rotation.x = -Math.PI / 2;
+    cap.position.y = 0.066;
+    cap.receiveShadow = true;
+    this.world.scene.add(cap);
+    this.world.decor.push({ type: 'grassCap', mesh: cap });
+  }
+
+  addCleanShoreBand() {
+    const shore = new THREE.Mesh(
+      makeRingGeometry(ISLAND_RADIUS * 0.94, ISLAND_RADIUS * 1.045, 220, 1.8),
+      this.world.materials.sand
+    );
+    shore.name = 'MedievalIslandCleanBeachBand';
+    shore.position.y = 0.074;
+    shore.receiveShadow = true;
+    this.world.scene.add(shore);
+    this.world.decor.push({ type: 'shoreBand', mesh: shore });
   }
 
   addFallbackGround() {
@@ -45,7 +76,7 @@ export class Terrain {
 
   addBeachAndCliffs() {
     const beach = new THREE.Mesh(
-      makeRingGeometry(ISLAND_RADIUS * 0.8, ISLAND_RADIUS * 1.01, 180, 4.2),
+      makeRingGeometry(ISLAND_RADIUS * 0.92, ISLAND_RADIUS * 1.01, 180, 2.4),
       this.world.materials.sand
     );
     beach.name = 'MedievalIslandBeachBlend';

@@ -17,8 +17,7 @@ export class StuntPark {
     const baseX = zone.position[0];
     const baseZ = zone.position[2];
     const ramps = [
-      { id: 'cove-main-ramp', x: baseX - 8, z: baseZ + 4, rot: -0.4, size: [9, 1.2, 14], pitch: -0.28 },
-      { id: 'cove-side-ramp', x: baseX + 8, z: baseZ - 5, rot: 0.82, size: [7, 1.0, 10], pitch: -0.22 }
+      { id: 'cove-main-ramp', x: baseX - 2, z: baseZ + 2, rot: -0.35, size: [8.5, 0.95, 12], pitch: -0.2 }
     ];
     for (const ramp of ramps) {
       const mesh = new THREE.Mesh(new THREE.BoxGeometry(...ramp.size), this.world.materials.roadEdge);

@@ -17,15 +17,15 @@ export class Props {
   placeRoadLanterns() {
     let placed = 0;
     for (const segment of this.world.roadSegments) {
-      if (placed >= this.world.getQualityProfile().props * 0.45) break;
+      if (placed >= this.world.getQualityProfile().props * 0.32) break;
       const [cx, cz, width, length, rotation] = segment;
       if (length < 18) continue;
       const stepCount = Math.max(1, Math.floor(length / 28));
-      for (let i = 0; i < stepCount && placed < 42; i += 1) {
+      for (let i = 0; i < stepCount && placed < 24; i += 1) {
         const t = (i + 0.5) / stepCount - 0.5;
         const side = pseudoRandom(placed * 4.1) > 0.5 ? 1 : -1;
-        const x = cx + Math.sin(rotation) * length * t + Math.cos(rotation) * (width * 0.68) * side;
-        const z = cz + Math.cos(rotation) * length * t - Math.sin(rotation) * (width * 0.68) * side;
+        const x = cx + Math.sin(rotation) * length * t + Math.cos(rotation) * (width * 0.92) * side;
+        const z = cz + Math.cos(rotation) * length * t - Math.sin(rotation) * (width * 0.92) * side;
         if (!this.world.terrain.containsPoint(x, z, 12)) continue;
         const lamp = this.world.cloneEnvironmentAsset('EnvMedievalLantern') || this.createLantern();
         lamp.position.set(x, 0.2, z);
@@ -38,9 +38,9 @@ export class Props {
   }
 
   placeScenicProps() {
-    const templates = ['EnvBarrel', 'EnvCrate', 'EnvBench', 'EnvRuinFragment', 'EnvFencePost'];
+    const templates = ['EnvBarrel', 'EnvCrate', 'EnvBench'];
     let placed = 0;
-    const maxProps = this.world.getQualityProfile().props;
+    const maxProps = Math.floor(this.world.getQualityProfile().props * 0.58);
     for (let attempt = 0; attempt < 1200 && placed < maxProps; attempt += 1) {
       const zone = scenicPropZones[Math.floor(pseudoRandom(attempt * 2.2) * scenicPropZones.length)];
       const x = zone.center[0] + (pseudoRandom(attempt * 4.3) - 0.5) * zone.size[0];
@@ -54,6 +54,7 @@ export class Props {
       prop.scale.setScalar(0.75 + pseudoRandom(attempt * 12.1) * 0.55);
       this.world.scene.add(prop);
       this.items.push(prop);
+      this.addPropCollider(name, x, z, prop.scale.x);
       placed += 1;
     }
   }
@@ -71,7 +72,20 @@ export class Props {
       rock.scale.setScalar(0.75 + pseudoRandom(i * 7.3) * 1.8);
       this.world.scene.add(rock);
       this.items.push(rock);
+      this.world.physics.createFixedBox([x, 0.45 * rock.scale.x, z], [1.4 * rock.scale.x, 0.9 * rock.scale.x, 1.0 * rock.scale.x], {
+        rotation: [0, rock.rotation.y, 0],
+        friction: 0.95,
+        restitution: 0.02
+      });
     }
+  }
+
+  addPropCollider(name, x, z, scale) {
+    const size = name.includes('Bench') ? [2.0 * scale, 0.75 * scale, 0.75 * scale] : [1.1 * scale, 1.1 * scale, 1.1 * scale];
+    this.world.physics.createFixedBox([x, size[1] / 2, z], size, {
+      friction: 0.86,
+      restitution: 0.02
+    });
   }
 
   createLantern() {

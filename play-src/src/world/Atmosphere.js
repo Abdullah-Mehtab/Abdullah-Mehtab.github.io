@@ -17,8 +17,8 @@ export class Atmosphere {
     const material = new THREE.ShaderMaterial({
       side: THREE.BackSide,
       uniforms: {
-        top: { value: new THREE.Color(0x7fcaf4) },
-        horizon: { value: new THREE.Color(0xf8dba6) }
+        top: { value: new THREE.Color(0x51b8f4) },
+        horizon: { value: new THREE.Color(0xcdf4ff) }
       },
       vertexShader: `
         varying vec3 vWorldPosition;
@@ -34,7 +34,8 @@ export class Atmosphere {
         uniform vec3 horizon;
         void main() {
           float h = normalize(vWorldPosition).y * 0.5 + 0.5;
-          vec3 color = mix(horizon, top, smoothstep(0.18, 0.92, h));
+          vec3 color = mix(horizon, top, smoothstep(0.14, 0.9, h));
+          color += pow(max(h, 0.0), 4.0) * vec3(0.03, 0.04, 0.06);
           gl_FragColor = vec4(color, 1.0);
         }
       `
@@ -49,7 +50,7 @@ export class Atmosphere {
     for (let i = 0; i < profile.clouds; i += 1) {
       const group = new THREE.Group();
       group.name = `Cloud_${i}`;
-      const material = new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.78, depthWrite: false });
+      const material = new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.68, depthWrite: false });
       const lobes = 4 + (i % 3);
       for (let j = 0; j < lobes; j += 1) {
         const mesh = new THREE.Mesh(new THREE.IcosahedronGeometry(3.2 + j * 0.35, 1), material);
@@ -58,8 +59,8 @@ export class Atmosphere {
         group.add(mesh);
       }
       const angle = (i / profile.clouds) * Math.PI * 2;
-      const radius = 90 + (i % 5) * 18;
-      group.position.set(Math.cos(angle) * radius, 44 + (i % 4) * 4, Math.sin(angle) * radius);
+      const radius = 112 + (i % 5) * 20;
+      group.position.set(Math.cos(angle) * radius, 56 + (i % 4) * 5, Math.sin(angle) * radius);
       group.rotation.y = angle;
       this.world.scene.add(group);
       this.clouds.push(group);

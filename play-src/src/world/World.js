@@ -183,7 +183,7 @@ export class World {
     if (!zone) {
       return { position: new THREE.Vector3(2, 1.45, 5.5), heading: 0 };
     }
-    const offset = new THREE.Vector3(Math.sin(zone.rotation || 0) * -9, 1.45, Math.cos(zone.rotation || 0) * -9);
+    const offset = new THREE.Vector3(Math.sin(zone.rotation || 0) * -9, 1.08, Math.cos(zone.rotation || 0) * -9);
     return {
       position: zone.position.clone().add(offset),
       heading: zone.rotation || 0

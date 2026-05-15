@@ -5,144 +5,122 @@ export const ISLAND_RADIUS = 158;
 export const canalSegments = [];
 
 export const districtFootprints = [
-  { id: 'courtyard', label: 'Portfolio Courtyard', center: [0, 0], size: [48, 42], color: '#7cffb2', kind: 'plaza' },
-  { id: 'watchtower', label: 'Sentinel Watchtower', center: [8, 104], size: [54, 42], color: '#ff6d8d', kind: 'keep' },
-  { id: 'library-grove', label: 'Education Grove', center: [-108, 92], size: [56, 44], color: '#9ccfff', kind: 'library' },
-  { id: 'forge', label: 'Projects Foundry', center: [66, 28], size: [54, 42], color: '#ffcc66', kind: 'forge' },
-  { id: 'harbor', label: 'Contact Harbor', center: [124, 30], size: [40, 32], color: '#78b7ff', kind: 'waterfront' },
-  { id: 'archive', label: 'Archive Garden', center: [-42, 58], size: [48, 34], color: '#ffdf8a', kind: 'civic' },
-  { id: 'cove', label: 'Stunt Courtyard', center: [96, -96], size: [44, 30], color: '#ff9b6d', kind: 'stunt' },
-  { id: 'farm', label: 'Voxel Farm Pocket', center: [80, 76], size: [38, 30], color: '#c79b56', kind: 'farm' }
+  { id: 'courtyard', label: 'Portfolio Courtyard', center: [16, 40], size: [44, 36], color: '#7cffb2', kind: 'plaza' },
+  { id: 'watchtower', label: 'Sentinel Watchtower', center: [38, 104], size: [46, 34], color: '#ff6d8d', kind: 'keep' },
+  { id: 'library-grove', label: 'Education Grove', center: [-112, 72], size: [48, 38], color: '#9ccfff', kind: 'library' },
+  { id: 'forge', label: 'Projects Foundry', center: [62, 42], size: [48, 36], color: '#ffcc66', kind: 'forge' },
+  { id: 'harbor', label: 'Contact Harbor', center: [130, 64], size: [34, 30], color: '#78b7ff', kind: 'waterfront' },
+  { id: 'archive', label: 'Archive Garden', center: [-20, 72], size: [36, 28], color: '#ffdf8a', kind: 'civic' },
+  { id: 'cove', label: 'Stunt Courtyard', center: [112, -78], size: [40, 28], color: '#ff9b6d', kind: 'stunt' },
+  { id: 'farm', label: 'Voxel Farm Pocket', center: [50, 74], size: [34, 28], color: '#c79b56', kind: 'farm' }
 ];
 
 export const scenicPropZones = [
-  { id: 'western-woods', center: [-122, -8], size: [42, 72], kind: 'grove' },
-  { id: 'library-woods', center: [-120, 106], size: [42, 36], kind: 'grove' },
-  { id: 'watchtower-garden', center: [38, 104], size: [58, 30], kind: 'garden' },
-  { id: 'harbor-cypress', center: [126, 58], size: [34, 38], kind: 'coast' },
-  { id: 'southern-meadow', center: [-18, -118], size: [76, 34], kind: 'meadow' },
-  { id: 'farm-buffer', center: [80, 76], size: [40, 28], kind: 'farm' }
+  { id: 'western-sakura', center: [-124, 28], size: [34, 48], kind: 'grove' },
+  { id: 'library-sakura', center: [-122, 112], size: [30, 28], kind: 'grove' },
+  { id: 'north-meadow', center: [-12, 110], size: [54, 28], kind: 'meadow' },
+  { id: 'harbor-cypress', center: [128, 76], size: [24, 32], kind: 'coast' },
+  { id: 'southern-oaks', center: [-22, -116], size: [58, 26], kind: 'meadow' },
+  { id: 'farm-orchard', center: [34, 76], size: [28, 26], kind: 'farm' },
+  { id: 'east-park', center: [114, -12], size: [26, 34], kind: 'garden' },
+  { id: 'west-cove', center: [-118, -60], size: [30, 34], kind: 'coast' }
 ];
 
 export const roadPaths = [
   {
     id: 'island-loop',
     name: 'Stone Coast Loop',
-    width: 10.5,
+    width: 8.8,
     hierarchy: 'ring',
     closed: true,
     points: [
-      [-116, 66],
-      [-118, -26],
-      [-78, -104],
-      [-8, -132],
-      [64, -112],
-      [124, -54],
-      [132, 34],
-      [92, 104],
-      [18, 128],
-      [-58, 116]
+      [-88, 78],
+      [-122, 12],
+      [-96, -74],
+      [-28, -120],
+      [56, -112],
+      [118, -56],
+      [130, 34],
+      [84, 100],
+      [16, 126],
+      [-60, 112]
     ]
   },
   {
     id: 'agora-way',
     name: 'Courtyard Way',
-    width: 8.4,
+    width: 7.2,
     hierarchy: 'avenue',
     closed: false,
     points: [
-      [-118, -26],
-      [-62, -10],
-      [0, 0],
-      [62, 0],
-      [132, 34]
+      [-122, 12],
+      [-62, 18],
+      [0, 26],
+      [62, 18],
+      [130, 34]
     ]
   },
   {
     id: 'acropolis-climb',
     name: 'Watchtower Climb',
-    width: 7.4,
+    width: 6.2,
     hierarchy: 'street',
     closed: false,
     points: [
-      [0, 0],
-      [6, 46],
-      [0, 96],
-      [18, 128]
+      [0, 26],
+      [6, 66],
+      [22, 104],
+      [16, 126]
     ]
   },
   {
     id: 'academy-lane',
     name: 'Library Lane',
-    width: 7.2,
+    width: 6,
     hierarchy: 'street',
     closed: false,
     points: [
-      [-62, -10],
-      [-92, 28],
-      [-108, 74],
-      [-116, 66]
-    ]
-  },
-  {
-    id: 'harbor-lane',
-    name: 'Harbor Lane',
-    width: 7.2,
-    hierarchy: 'street',
-    closed: false,
-    points: [
-      [62, 0],
-      [102, 12],
-      [132, 28]
+      [-62, 18],
+      [-92, 54],
+      [-104, 86],
+      [-88, 78]
     ]
   },
   {
     id: 'vault-run',
     name: 'Vault Run',
-    width: 7,
+    width: 5.8,
     hierarchy: 'street',
     closed: false,
     points: [
-      [0, 0],
-      [18, -52],
-      [50, -98],
-      [64, -112]
-    ]
-  },
-  {
-    id: 'western-trail',
-    name: 'Western Trail',
-    width: 7,
-    hierarchy: 'street',
-    closed: false,
-    points: [
-      [-62, -10],
-      [-90, -50],
-      [-104, -92]
+      [0, 26],
+      [24, -36],
+      [44, -86],
+      [56, -112]
     ]
   },
   {
     id: 'stunt-cove-loop',
     name: 'Stunt Courtyard Approach',
-    width: 8.4,
+    width: 7,
     hierarchy: 'stunt',
     closed: false,
     points: [
-      [64, -112],
-      [82, -104],
-      [96, -116]
+      [56, -112],
+      [84, -96],
+      [104, -96]
     ]
   },
   {
     id: 'farm-track',
     name: 'Farm Track',
-    width: 6.4,
+    width: 5.2,
     hierarchy: 'dirt',
     closed: false,
     turnaround: true,
     points: [
-      [92, 104],
-      [82, 96]
+      [84, 100],
+      [76, 86]
     ]
   }
 ];
@@ -150,9 +128,9 @@ export const roadPaths = [
 export const roadSegments = roadPaths.flatMap((path) => pathToSegments(path));
 
 export const boostPads = [
-  { id: 'loop-west-boost', position: [-116, 0, 20], rotation: Math.PI, color: '#7cffb2', district: 'loop' },
-  { id: 'southern-curve-boost', position: [16, 0, -128], rotation: Math.PI / 2 - 0.28, color: '#68d8ff', district: 'loop' },
-  { id: 'stunt-cove-boost', position: [86, 0, -108], rotation: 0, color: '#ff9b6d', district: 'stunt' }
+  { id: 'southern-curve-boost', position: [0, 0, -123], rotation: Math.PI / 2 - 0.2, color: '#68d8ff', district: 'loop' },
+  { id: 'east-loop-boost', position: [122, 0, -18], rotation: 0.1, color: '#7cffb2', district: 'loop' },
+  { id: 'stunt-cove-boost', position: [78, 0, -106], rotation: -0.6, color: '#ff9b6d', district: 'stunt' }
 ];
 
 export const worldZones = [
@@ -160,7 +138,7 @@ export const worldZones = [
     id: 'landing',
     name: 'Portfolio Courtyard',
     kind: 'Home',
-    position: [18, 0, 22],
+    position: [16, 0, 40],
     rotation: 0,
     radius: 11,
     color: '#7cffb2',
@@ -176,7 +154,7 @@ export const worldZones = [
     id: 'security',
     name: 'Security Keep',
     kind: 'Offensive Security',
-    position: [-130, 0, -42],
+    position: [-126, 0, -42],
     rotation: 0.18,
     radius: 10,
     color: '#68d8ff',
@@ -192,7 +170,7 @@ export const worldZones = [
     id: 'projects',
     name: 'Projects Foundry',
     kind: 'Project Gallery',
-    position: [66, 0, 28],
+    position: [64, 0, 42],
     rotation: -0.34,
     radius: 10,
     color: '#ffcc66',
@@ -207,7 +185,7 @@ export const worldZones = [
     id: 'sentinel',
     name: 'Cyber Sentinel Watchtower',
     kind: 'Final Year Project',
-    position: [24, 0, 106],
+    position: [38, 0, 104],
     rotation: 0,
     radius: 12,
     color: '#ff6d8d',
@@ -222,7 +200,7 @@ export const worldZones = [
     id: 'career',
     name: 'Career Guild Hall',
     kind: 'Experience',
-    position: [96, 0, -18],
+    position: [90, 0, -28],
     rotation: -0.15,
     radius: 10,
     color: '#b6a0ff',
@@ -237,7 +215,7 @@ export const worldZones = [
     id: 'skills',
     name: 'Skills Oracle',
     kind: 'Stack',
-    position: [-112, 0, -72],
+    position: [-86, 0, -102],
     rotation: 0.28,
     radius: 9,
     color: '#92ffea',
@@ -252,7 +230,7 @@ export const worldZones = [
     id: 'education',
     name: 'Education Library',
     kind: 'Academics',
-    position: [-108, 0, 92],
+    position: [-112, 0, 72],
     rotation: 0.18,
     radius: 10,
     color: '#9ccfff',
@@ -267,7 +245,7 @@ export const worldZones = [
     id: 'awards',
     name: 'Awards Shrine',
     kind: 'Certificates',
-    position: [-34, 0, 64],
+    position: [-20, 0, 72],
     rotation: -0.18,
     radius: 8,
     color: '#ffdf8a',
@@ -282,7 +260,7 @@ export const worldZones = [
     id: 'cv',
     name: 'CV Vault',
     kind: 'Resume',
-    position: [44, 0, -68],
+    position: [32, 0, -78],
     rotation: 0.28,
     radius: 8,
     color: '#e6f3ff',
@@ -302,7 +280,7 @@ export const worldZones = [
     id: 'todo',
     name: 'Todo Board',
     kind: 'Blog / List',
-    position: [-68, 0, 126],
+    position: [-62, 0, 86],
     rotation: -0.28,
     radius: 8,
     color: '#d8ff92',
@@ -320,7 +298,7 @@ export const worldZones = [
     id: 'circuit',
     name: 'Circuit Gate',
     kind: 'Time Trial',
-    position: [62, 0, 112],
+    position: [84, 0, 100],
     rotation: -0.22,
     radius: 9,
     color: '#ff9b6d',
@@ -336,7 +314,7 @@ export const worldZones = [
     id: 'contact',
     name: 'Contact Harbor Lighthouse',
     kind: 'Links',
-    position: [132, 0, 62],
+    position: [130, 0, 64],
     rotation: -0.18,
     radius: 8,
     color: '#78b7ff',
@@ -353,7 +331,7 @@ export const worldZones = [
     id: 'behind',
     name: 'Behind The Build',
     kind: 'Stack',
-    position: [70, 0, -86],
+    position: [36, 0, -104],
     rotation: 0.08,
     radius: 8,
     color: '#a8a6ff',
@@ -371,7 +349,7 @@ export const worldZones = [
     id: 'drift',
     name: 'Stunt Courtyard',
     kind: 'Driving',
-    position: [108, 0, -88],
+    position: [112, 0, -78],
     rotation: -0.45,
     radius: 11,
     color: '#ff9b6d',
@@ -385,7 +363,7 @@ export const worldZones = [
     id: 'data-pier',
     name: 'Data Pier',
     kind: 'Visitor Trail',
-    position: [-138, 0, -4],
+    position: [-138, 0, 20],
     rotation: 0.42,
     radius: 9,
     color: '#79ffc5',
@@ -400,8 +378,8 @@ export const worldZones = [
     id: 'potato',
     name: 'Potato Farm',
     kind: 'Farm Counter',
-    position: [80, 0, 76],
-    rotation: Math.PI,
+    position: [50, 0, 74],
+    rotation: 0,
     radius: 10,
     color: '#c79b56',
     shape: 'farm',
@@ -442,18 +420,17 @@ export const achievementDefinitions = [
 ];
 
 export const circuitCheckpoints = [
-  [84, 0, 104],
-  [18, 0, 128],
-  [-58, 0, 116],
-  [-116, 0, 66],
-  [-118, 0, -26],
-  [-78, 0, -104],
-  [-8, 0, -132],
-  [64, 0, -112],
-  [124, 0, -54],
-  [132, 0, 34],
-  [92, 0, 104],
-  [84, 0, 104]
+  [84, 0, 100],
+  [16, 0, 126],
+  [-60, 0, 112],
+  [-88, 0, 78],
+  [-122, 0, 12],
+  [-96, 0, -74],
+  [-28, 0, -120],
+  [56, 0, -112],
+  [118, 0, -56],
+  [130, 0, 34],
+  [84, 0, 100]
 ];
 
 function pathToSegments(path) {
