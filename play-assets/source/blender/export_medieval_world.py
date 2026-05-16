@@ -56,12 +56,13 @@ def materials():
         "water": mat("farm_water", (0.1, 0.42, 0.78, 0.72), 0.36, alpha=0.72),
         "crop": mat("potato_crop", (0.32, 0.66, 0.28, 1), 0.9),
         "potato": mat("voxel_potato", (0.72, 0.46, 0.18, 1), 0.94),
-        "tkxel_glass": mat("tkxel_one_world_blue_green_glass", (0.04, 0.34, 0.44, 0.78), 0.18, metallic=0.05, alpha=0.78, emission=(0.01, 0.09, 0.12, 1)),
-        "tkxel_dark_glass": mat("tkxel_one_world_dark_curtain_wall", (0.015, 0.045, 0.06, 0.92), 0.2, metallic=0.08, alpha=0.92),
-        "tkxel_frame": mat("tkxel_one_world_black_aluminium_frame", (0.025, 0.035, 0.04, 1), 0.42, metallic=0.35),
-        "tkxel_concrete": mat("tkxel_one_world_warm_concrete", (0.72, 0.69, 0.62, 1), 0.82),
-        "tkxel_white": mat("tkxel_one_world_white_signage", (0.92, 0.96, 0.92, 1), 0.5, emission=(0.28, 0.38, 0.26, 1)),
-        "tkxel_green": mat("tkxel_brand_green_signage", (0.12, 0.72, 0.42, 1), 0.42, emission=(0.0, 0.36, 0.12, 1)),
+        "tkxel_glass": mat("tkxel_babar_block_blue_green_glass", (0.04, 0.34, 0.44, 0.78), 0.18, metallic=0.05, alpha=0.78, emission=(0.01, 0.09, 0.12, 1)),
+        "tkxel_dark_glass": mat("tkxel_babar_block_dark_curtain_wall", (0.015, 0.045, 0.06, 0.92), 0.2, metallic=0.08, alpha=0.92),
+        "tkxel_frame": mat("tkxel_babar_block_black_aluminium_frame", (0.025, 0.035, 0.04, 1), 0.42, metallic=0.35),
+        "tkxel_concrete": mat("tkxel_babar_block_warm_concrete", (0.72, 0.69, 0.62, 1), 0.82),
+        "tkxel_concrete_shadow": mat("tkxel_babar_block_recess_shadow", (0.42, 0.39, 0.33, 1), 0.86),
+        "tkxel_roof": mat("tkxel_babar_block_roof_parapet", (0.05, 0.07, 0.075, 1), 0.56, metallic=0.18),
+        "tkxel_metal": mat("tkxel_babar_block_roof_metal", (0.64, 0.58, 0.43, 1), 0.44, metallic=0.36),
     }
 
 
@@ -99,23 +100,6 @@ def cube(name, parent, loc, scale, material, rot=(0, 0, 0), bevel=0.0):
         modifier.width = bevel
         modifier.segments = 2
         obj.modifiers.new("weighted_normals", "WEIGHTED_NORMAL")
-    return obj
-
-
-def text_mesh(name, parent, text, loc, size, material, rot=(math.pi / 2, 0, 0), align="CENTER"):
-    bpy.ops.object.text_add(location=loc, rotation=rot)
-    obj = bpy.context.object
-    obj.name = name
-    obj.data.body = text
-    obj.data.align_x = align
-    obj.data.align_y = "CENTER"
-    obj.data.size = size
-    obj.data.extrude = 0.012
-    obj.data.materials.append(material)
-    bpy.ops.object.convert(target="MESH")
-    obj = bpy.context.object
-    obj.parent = parent
-    obj.modifiers.new("text_weighted_normals", "WEIGHTED_NORMAL")
     return obj
 
 
@@ -196,7 +180,7 @@ def create_props(mats):
     create_potato_crop(mats)
     create_potato(mats)
     create_potato_farm(mats)
-    create_tkxel_one_world_tower(mats)
+    create_tkxel_babar_block_building(mats)
 
 
 def create_island_mesh(name, parent, mats, radius=158, rings=56, segments=220):
@@ -380,87 +364,68 @@ def create_potato_farm(mats):
         cube("Farm_Fence_SidePost", group, (7.6, 0.88, z), (0.28, 1.75, 0.28), mats["wood"], bevel=0.02)
 
 
-def create_tkxel_one_world_tower(mats):
+def create_tkxel_babar_block_building(mats):
     group = root("EnvLandmark_office")
 
-    # Tkxel's One World reference reads as a tall blue-green glass tower with a dark vertical
-    # curtain-wall face, concrete podium, rooftop frame, and a visible roadside welcome sign.
-    cube("OneWorld_SitePlinth", group, (0, 0.12, 0), (11.8, 0.24, 8.2), mats["tkxel_concrete"], bevel=0.035)
-    cube("OneWorld_FrontSteps", group, (0, 0.26, -4.85), (5.8, 0.28, 1.0), mats["stone_light"], bevel=0.03)
-    for i in range(6):
-        x = -2.55 + i * 1.02
-        cube(f"OneWorld_ParkingStripe_{i}", group, (x, 0.44, -5.1), (0.12, 0.045, 0.92), mats["tkxel_white"], bevel=0.004)
+    # Current Babar Block reference: a rectangular blue-green glass front with a stepped
+    # central curtain-wall bay, beige concrete side/rear wing, roof rails, and no readable labels.
+    cube("BabarBlock_SitePlinth", group, (0.2, 0.11, -0.1), (12.2, 0.22, 10.8), mats["stone_light"], bevel=0.025)
+    cube("BabarBlock_FrontTerrace", group, (-0.35, 0.24, -4.6), (9.4, 0.26, 1.2), mats["tkxel_concrete"], bevel=0.025)
+    cube("BabarBlock_FrontStepLower", group, (-0.35, 0.12, -5.25), (7.4, 0.18, 0.58), mats["stone_light"], bevel=0.018)
+    cube("BabarBlock_EntryShadow", group, (-0.35, 0.98, -4.16), (5.6, 1.55, 0.18), mats["tkxel_dark_glass"], bevel=0.01)
+    cube("BabarBlock_EntryCanopy", group, (-0.35, 1.86, -4.36), (6.4, 0.22, 0.8), mats["tkxel_roof"], bevel=0.016)
 
-    cube("OneWorld_Podium", group, (0, 1.0, -0.2), (9.6, 1.78, 6.6), mats["tkxel_concrete"], bevel=0.055)
-    cube("OneWorld_PodiumGlassFront", group, (0, 1.18, -3.54), (8.7, 1.08, 0.12), mats["tkxel_dark_glass"], bevel=0.015)
-    cube("OneWorld_EntranceCanopy", group, (0, 2.12, -4.08), (5.8, 0.22, 1.18), mats["tkxel_frame"], bevel=0.025)
-    cube("OneWorld_GlassDoors", group, (0, 1.12, -4.14), (2.3, 1.78, 0.1), mats["tkxel_glass"], bevel=0.012)
+    cube("BabarBlock_LeftConcreteReturn", group, (-4.78, 8.1, -0.15), (0.28, 15.7, 6.0), mats["tkxel_concrete"], bevel=0.012)
+    cube("BabarBlock_RightBeigeWing", group, (5.12, 8.0, 1.75), (1.88, 15.6, 5.85), mats["tkxel_concrete"], bevel=0.025)
+    cube("BabarBlock_RearBeigeWing", group, (0.78, 7.85, 4.55), (8.0, 15.2, 0.65), mats["tkxel_concrete"], bevel=0.018)
 
-    cube("OneWorld_MainGlassTower", group, (0.34, 9.15, 0.05), (7.9, 15.7, 5.45), mats["tkxel_glass"], bevel=0.06)
-    cube("OneWorld_LeftDarkCurtainWall", group, (-4.05, 9.15, -0.02), (1.34, 15.9, 5.7), mats["tkxel_dark_glass"], bevel=0.035)
-    cube("OneWorld_RightConcreteCore", group, (4.95, 8.7, 0.22), (1.28, 14.2, 5.35), mats["tkxel_concrete"], bevel=0.04)
-    cube("OneWorld_RearServiceCore", group, (0.65, 8.0, 3.18), (7.6, 13.0, 0.72), mats["tkxel_concrete"], bevel=0.035)
+    cube("BabarBlock_FrontGlassLeft", group, (-2.22, 8.75, -3.72), (5.05, 16.45, 0.26), mats["tkxel_glass"], bevel=0.018)
+    cube("BabarBlock_FrontGlassRight", group, (2.24, 8.72, -3.68), (4.15, 16.35, 0.24), mats["tkxel_glass"], bevel=0.018)
+    cube("BabarBlock_CentralSteppedGlassBay", group, (0.28, 8.78, -4.02), (1.54, 15.35, 0.34), mats["tkxel_glass"], bevel=0.016)
+    cube("BabarBlock_RightEdgeGlassReturn", group, (4.65, 8.72, -0.2), (0.28, 16.25, 6.58), mats["tkxel_glass"], bevel=0.012)
+
+    for floor in range(11):
+        y = 1.95 + floor * 1.32
+        cube(f"BabarBlock_FrontFloorBand_{floor}", group, (-0.22, y, -3.91), (8.75, 0.055, 0.14), mats["tkxel_frame"], bevel=0.003)
+        cube(f"BabarBlock_CenterBayFloorBand_{floor}", group, (0.44, y + 0.18, -4.18), (1.52, 0.048, 0.12), mats["tkxel_frame"], bevel=0.003)
+
+    for idx, x in enumerate([-4.28, -3.15, -2.02, -0.92, 0.04, 0.88, 1.74, 2.68, 3.58, 4.34]):
+        cube(f"BabarBlock_FrontVerticalMullion_{idx}", group, (x, 8.75, -3.93), (0.055, 15.8, 0.16), mats["tkxel_frame"], bevel=0.003)
+    for idx, x in enumerate([-0.28, 1.16]):
+        cube(f"BabarBlock_CenterBaySideMullion_{idx}", group, (x, 8.8, -4.2), (0.07, 15.18, 0.16), mats["tkxel_frame"], bevel=0.003)
+
+    for index, (x, y, sx, sy) in enumerate([
+        (0.28, 5.6, 1.32, 1.0),
+        (0.27, 8.25, 1.32, 1.08),
+        (0.28, 11.1, 1.32, 0.96),
+        (0.27, 13.95, 1.32, 1.0),
+        (2.98, 12.55, 0.92, 1.12),
+    ]):
+        cube(f"BabarBlock_RecessedPanel_{index}", group, (x, y, -4.24), (sx, sy, 0.055), mats["tkxel_glass"], bevel=0.004)
 
     for floor in range(10):
-        y = 2.95 + floor * 1.25
-        cube(f"OneWorld_FrontFloorBand_{floor}", group, (0.34, y, -2.73), (8.1, 0.07, 0.11), mats["tkxel_frame"], bevel=0.004)
-        cube(f"OneWorld_LeftFloorBand_{floor}", group, (-4.08, y, -0.02), (0.11, 0.07, 5.72), mats["tkxel_frame"], bevel=0.004)
-        cube(f"OneWorld_RightWindowBand_{floor}", group, (4.28, y, -0.42), (0.12, 0.07, 4.2), mats["tkxel_frame"], bevel=0.004)
-
-    for column, x in enumerate([-2.72, -1.36, 0.0, 1.36, 2.72]):
-        cube(f"OneWorld_FrontMullion_{column}", group, (x, 9.15, -2.78), (0.08, 15.15, 0.12), mats["tkxel_frame"], bevel=0.004)
-    for column, x in enumerate([-3.3, -2.7]):
-        cube(f"OneWorld_DarkFaceVerticalLine_{column}", group, (x, 9.15, -2.9), (0.06, 14.7, 0.16), mats["tkxel_glass"], bevel=0.004)
-    for column, x in enumerate([4.42, 4.9]):
-        cube(f"OneWorld_CoreWindowStack_{column}", group, (x, 8.2, -2.58), (0.32, 11.2, 0.1), mats["tkxel_dark_glass"], bevel=0.01)
-
-    # Detail all drive-by angles. The tower is viewed from every side in-game, so the pale
-    # service/core faces need curtain-wall rhythm instead of reading as blank slabs.
-    cube("OneWorld_LeftSideGlassFace", group, (-4.77, 9.18, 0.02), (0.12, 14.9, 5.28), mats["tkxel_glass"], bevel=0.012)
-    cube("OneWorld_RightSideGlassFace", group, (5.66, 9.18, 0.02), (0.12, 13.3, 4.92), mats["tkxel_glass"], bevel=0.012)
-    cube("OneWorld_RearGlassFace", group, (0.65, 8.05, 3.65), (7.25, 12.6, 0.12), mats["tkxel_glass"], bevel=0.012)
+        y = 2.45 + floor * 1.28
+        for i, z in enumerate([-0.82, 0.18, 1.18, 2.18, 3.18]):
+            cube(f"BabarBlock_RightWingWindow_{floor}_{i}", group, (6.09, y, z), (0.055, 0.34, 0.36), mats["tkxel_dark_glass"], bevel=0.003)
+        cube(f"BabarBlock_RightWingFloorGroove_{floor}", group, (6.13, y + 0.55, 1.35), (0.03, 0.035, 5.15), mats["tkxel_concrete_shadow"], bevel=0.002)
 
     for floor in range(9):
-        y = 3.15 + floor * 1.25
-        cube(f"OneWorld_LeftSideFloorBand_{floor}", group, (-4.84, y, 0.0), (0.13, 0.07, 5.22), mats["tkxel_frame"], bevel=0.004)
-        cube(f"OneWorld_RightSideFloorBand_{floor}", group, (5.73, y, 0.0), (0.13, 0.07, 4.82), mats["tkxel_frame"], bevel=0.004)
-        cube(f"OneWorld_RearFloorBand_{floor}", group, (0.65, y, 3.72), (7.05, 0.07, 0.13), mats["tkxel_frame"], bevel=0.004)
+        y = 2.7 + floor * 1.34
+        for i, x in enumerate([-3.2, -1.85, -0.5, 0.85, 2.2, 3.55]):
+            cube(f"BabarBlock_RearWindow_{floor}_{i}", group, (x, y, 4.72), (0.52, 0.38, 0.07), mats["tkxel_dark_glass"], bevel=0.004)
 
-    for idx, z in enumerate([-1.9, -0.95, 0.0, 0.95, 1.9]):
-        cube(f"OneWorld_LeftSideMullion_{idx}", group, (-4.86, 9.15, z), (0.14, 14.45, 0.07), mats["tkxel_frame"], bevel=0.004)
-        cube(f"OneWorld_RightSideMullion_{idx}", group, (5.75, 9.15, z), (0.14, 12.9, 0.07), mats["tkxel_frame"], bevel=0.004)
-    for idx, x in enumerate([-2.55, -1.28, 0.0, 1.28, 2.55]):
-        cube(f"OneWorld_RearMullion_{idx}", group, (x, 8.05, 3.74), (0.07, 12.15, 0.14), mats["tkxel_frame"], bevel=0.004)
+    cube("BabarBlock_RoofSlab", group, (-0.1, 16.72, -0.2), (10.25, 0.3, 8.75), mats["tkxel_roof"], bevel=0.018)
+    cube("BabarBlock_RoofGlassParapetFront", group, (-0.1, 17.12, -3.8), (9.65, 0.38, 0.16), mats["tkxel_glass"], bevel=0.006)
+    cube("BabarBlock_RoofConcreteService", group, (3.35, 17.32, 1.7), (2.05, 0.82, 2.1), mats["tkxel_concrete"], bevel=0.018)
+    for i, x in enumerate([-4.0, -2.2, 0.0, 2.2, 4.0]):
+        cube(f"BabarBlock_RoofRailPost_{i}", group, (x, 17.72, -3.52), (0.08, 0.78, 0.08), mats["tkxel_metal"], bevel=0.004)
+    cube("BabarBlock_RoofRailFront", group, (0, 17.92, -3.52), (8.6, 0.08, 0.08), mats["tkxel_metal"], bevel=0.004)
+    cube("BabarBlock_RoofCraneArmLeft", group, (-3.15, 17.95, -0.5), (0.08, 1.55, 3.8), mats["tkxel_metal"], rot=(0.0, 0.36, 0.0), bevel=0.004)
+    cube("BabarBlock_RoofCraneArmRight", group, (2.8, 17.98, -0.65), (0.08, 1.45, 3.4), mats["tkxel_metal"], rot=(0.0, -0.32, 0.0), bevel=0.004)
 
-    for floor in range(8):
-        y = 3.35 + floor * 1.34
-        for z in [-1.62, -0.38, 0.86, 2.1]:
-            cube(f"OneWorld_RightCoreSideWindow_{floor}_{z}", group, (5.79, y, z), (0.035, 0.5, 0.34), mats["tkxel_dark_glass"], bevel=0.004)
-            cube(f"OneWorld_LeftCoreSideWindow_{floor}_{z}", group, (-4.9, y, z), (0.035, 0.5, 0.34), mats["tkxel_dark_glass"], bevel=0.004)
-    for floor in range(7):
-        y = 3.55 + floor * 1.48
-        for x in [-2.4, -0.8, 0.8, 2.4]:
-            cube(f"OneWorld_RearWindow_{floor}_{x}", group, (x, y, 3.82), (0.84, 0.62, 0.1), mats["tkxel_dark_glass"], bevel=0.008)
-
-    cube("OneWorld_RoofSlab", group, (0.3, 17.15, 0), (8.8, 0.34, 5.9), mats["tkxel_frame"], bevel=0.025)
-    cube("OneWorld_RoofMachineRoom", group, (2.6, 17.82, 1.4), (2.35, 1.08, 2.0), mats["tkxel_concrete"], bevel=0.025)
-    cube("OneWorld_TopFrontBeam", group, (0.1, 18.25, -2.85), (7.8, 0.18, 0.18), mats["tkxel_frame"], bevel=0.008)
-    cube("OneWorld_TopRearBeam", group, (0.1, 18.25, 2.85), (7.8, 0.18, 0.18), mats["tkxel_frame"], bevel=0.008)
-    cube("OneWorld_RoofTrussLeft", group, (-2.65, 18.0, 0), (0.16, 2.0, 6.1), mats["tkxel_frame"], rot=(0, 0, -0.36), bevel=0.008)
-    cube("OneWorld_RoofTrussRight", group, (2.85, 18.0, 0), (0.16, 2.0, 6.1), mats["tkxel_frame"], rot=(0, 0, 0.36), bevel=0.008)
-
-    cube("OneWorld_TkxelSignPanel", group, (0, 2.72, -4.24), (4.8, 0.72, 0.08), mats["tkxel_frame"], bevel=0.015)
-    text_mesh("OneWorld_TkxelSignText", group, "tkxel", (-0.7, 2.74, -4.31), 0.62, mats["tkxel_green"], rot=(math.pi / 2, 0, 0))
-    text_mesh("OneWorld_WelcomeText", group, "WELCOME", (1.35, 2.74, -4.31), 0.23, mats["tkxel_white"], rot=(math.pi / 2, 0, 0))
-    text_mesh("OneWorld_NameText", group, "THE ONE WORLD", (0.2, 1.76, -4.18), 0.24, mats["tkxel_white"], rot=(math.pi / 2, 0, 0))
-
-    cube("OneWorld_RoadsideSignPost", group, (-5.5, 2.25, -5.05), (0.16, 3.35, 0.16), mats["tkxel_frame"], bevel=0.008)
-    cube("OneWorld_RoadsideSignBoard", group, (-5.5, 3.62, -5.05), (1.62, 1.1, 0.12), mats["tkxel_dark_glass"], bevel=0.02)
-    text_mesh("OneWorld_Roadside50", group, "50", (-5.5, 3.62, -5.13), 0.58, mats["tkxel_green"], rot=(math.pi / 2, 0, 0))
-
-    for x in [-4.2, -1.4, 1.4, 4.2]:
-        cube("OneWorld_GroundPlanter", group, (x, 0.54, -4.02), (1.15, 0.48, 0.62), mats["stone"], bevel=0.025)
-        ico("OneWorld_PlanterShrub", group, (x, 1.0, -4.02), 0.46, mats["leaf"], scale=(1.25, 0.62, 0.9))
+    for x in [-3.65, -1.25, 1.25, 3.65]:
+        cube("BabarBlock_LowPlanter", group, (x, 0.52, -4.18), (1.0, 0.44, 0.56), mats["stone"], bevel=0.02)
+        ico("BabarBlock_PlanterShrub", group, (x, 0.96, -4.18), 0.42, mats["leaf"], scale=(1.18, 0.58, 0.88))
 
 
 if __name__ == "__main__":
