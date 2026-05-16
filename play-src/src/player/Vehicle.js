@@ -4,7 +4,7 @@ import { VehicleController } from '../physics/VehicleController.js';
 import { ISLAND_RADIUS, WORLD_HALF_SIZE } from '../world/worldData.js';
 import sabreTurboModelUrl from '../../assets/models/vehicles/sabre-turbo.glb?url';
 
-const START = new THREE.Vector3(2, 1.08, 5.5);
+const START = new THREE.Vector3(10, 1.08, 27);
 const VISUAL_Y_OFFSET = -0.88;
 
 export class Vehicle {

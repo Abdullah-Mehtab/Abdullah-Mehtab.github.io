@@ -547,7 +547,8 @@ body:not(.is-driving) .minimap {
 
 .world-map {
   position: relative;
-  width: min(82vw, 760px);
+  width: min(82vw, 720px, calc(82vh - 190px));
+  min-width: min(82vw, 420px);
   aspect-ratio: 1;
   margin: 14px auto 0;
   border: 1px solid var(--line);
@@ -829,7 +830,8 @@ body:not(.is-driving) .minimap {
   }
 
   .world-map {
-    width: 84vw;
+    width: min(84vw, calc(86vh - 170px));
+    min-width: 0;
   }
 
   .minimap {

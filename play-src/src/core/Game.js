@@ -25,6 +25,8 @@ export class Game {
     this.activeZone = null;
     this.resumeData = null;
     this.lights = {};
+    this.fogDay = new THREE.Color(0xcdeef7);
+    this.fogWarm = new THREE.Color(0xf4e5bd);
   }
 
   async init() {
@@ -42,6 +44,8 @@ export class Game {
       resumeData: this.resumeData,
       environmentAssets: this.environmentAssets
     });
+    this.world.onQualityChange = (quality) => this.rendererSystem.setQuality(quality);
+    this.rendererSystem.setQuality(this.world.landscapeQuality);
     this.vehicle = new Vehicle({
       scene: this.scene,
       physics: this.physics,
@@ -244,7 +248,7 @@ export class Game {
     const cycle = Math.sin(elapsed * 0.035) * 0.5 + 0.5;
     this.lights.sun.intensity = 3.05 + cycle * 0.62;
     this.lights.rim.intensity = 0.7 + (1 - cycle) * 0.44;
-    this.scene.fog.color.lerpColors(new THREE.Color(0xcdeef7), new THREE.Color(0xf4e5bd), cycle * 0.2);
+    this.scene.fog.color.lerpColors(this.fogDay, this.fogWarm, cycle * 0.2);
   }
 
   getZoneLines(zone) {

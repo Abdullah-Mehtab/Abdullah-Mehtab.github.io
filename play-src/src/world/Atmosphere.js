@@ -1,5 +1,6 @@
 import * as THREE from 'three';
 import { WORLD_HALF_SIZE } from './worldData.js';
+import { QUALITY_PROFILES } from './WorldMaterials.js';
 
 export class Atmosphere {
   constructor(world) {
@@ -66,8 +67,8 @@ export class Atmosphere {
   }
 
   createClouds() {
-    const profile = this.world.getQualityProfile();
-    for (let i = 0; i < profile.clouds; i += 1) {
+    const maxClouds = QUALITY_PROFILES.high.clouds;
+    for (let i = 0; i < maxClouds; i += 1) {
       const group = new THREE.Group();
       group.name = `Cloud_${i}`;
       const material = new THREE.MeshBasicMaterial({
@@ -83,13 +84,21 @@ export class Atmosphere {
         mesh.scale.set(1.55 + (j % 2) * 0.28, 0.46, 0.84 + (j % 3) * 0.12);
         group.add(mesh);
       }
-      const angle = (i / profile.clouds) * Math.PI * 2;
+      const angle = (i / maxClouds) * Math.PI * 2;
       const radius = 132 + (i % 5) * 26;
       group.position.set(Math.cos(angle) * radius, 58 + (i % 4) * 6, Math.sin(angle) * radius);
       group.rotation.y = angle;
       group.scale.setScalar(0.9 + (i % 5) * 0.12);
       this.world.scene.add(group);
       this.clouds.push(group);
+    }
+    this.applyQuality();
+  }
+
+  applyQuality() {
+    const profile = this.world.getQualityProfile();
+    for (let i = 0; i < this.clouds.length; i += 1) {
+      this.clouds[i].visible = i < profile.clouds;
     }
   }
 
