@@ -17,7 +17,7 @@ export function createWorldMaterials() {
   grassTexture.minFilter = THREE.LinearMipmapLinearFilter;
   grassTexture.anisotropy = 12;
 
-  const stoneTexture = makeNoiseTexture(['#605c50', '#756f61', '#8b8472', '#46443e'], 256, 1400);
+  const stoneTexture = makeNoiseTexture(['#625d50', '#6c6556', '#786f5d', '#575247'], 256, 720);
   stoneTexture.wrapS = THREE.RepeatWrapping;
   stoneTexture.wrapT = THREE.RepeatWrapping;
   stoneTexture.repeat.set(2, 18);
@@ -38,7 +38,7 @@ export function createWorldMaterials() {
       side: THREE.DoubleSide
     }),
     stoneRoad: new THREE.MeshStandardMaterial({ color: 0x5d584d, map: stoneTexture, roughness: 0.94, metalness: 0.02 }),
-    roadEdge: new THREE.MeshStandardMaterial({ color: 0x2f302b, roughness: 0.9, metalness: 0.04 }),
+    roadEdge: new THREE.MeshStandardMaterial({ color: 0x3a3a32, roughness: 0.9, metalness: 0.04 }),
     roadLine: new THREE.MeshBasicMaterial({ color: 0xd8c48a, transparent: true, opacity: 0.36 }),
     sand: new THREE.MeshStandardMaterial({ color: 0xf4d59a, map: sandTexture, roughness: 0.98, metalness: 0.0 }),
     grassSandBlend: makeRadialBlendMaterial({
@@ -82,8 +82,26 @@ export function createWorldMaterials() {
     potato: new THREE.MeshStandardMaterial({ color: 0xb5742b, roughness: 0.94, metalness: 0.0 }),
     crop: new THREE.MeshStandardMaterial({ color: 0x63a950, roughness: 0.9, metalness: 0.0 }),
     water: makeWaterMaterial(),
-    leaf: new THREE.MeshBasicMaterial({ color: 0xffb2bc, transparent: true, opacity: 0.62, depthWrite: false }),
-    firefly: new THREE.MeshBasicMaterial({ color: 0xc7ff8a, transparent: true, opacity: 0.8, depthWrite: false })
+    leaf: new THREE.PointsMaterial({
+      color: 0xffb2bc,
+      map: makeParticleTexture('petal'),
+      size: 0.12,
+      transparent: true,
+      opacity: 0.62,
+      alphaTest: 0.08,
+      depthWrite: false,
+      sizeAttenuation: true
+    }),
+    firefly: new THREE.PointsMaterial({
+      color: 0xc7ff8a,
+      map: makeParticleTexture('round'),
+      size: 0.1,
+      transparent: true,
+      opacity: 0.8,
+      alphaTest: 0.05,
+      depthWrite: false,
+      sizeAttenuation: true
+    })
   };
 }
 
@@ -231,6 +249,39 @@ export function makeWaterMaterial() {
   });
 }
 
+function makeParticleTexture(kind = 'round') {
+  const canvas = document.createElement('canvas');
+  canvas.width = 64;
+  canvas.height = 64;
+  const ctx = canvas.getContext('2d');
+  ctx.clearRect(0, 0, 64, 64);
+
+  if (kind === 'petal') {
+    ctx.translate(32, 32);
+    ctx.rotate(-0.55);
+    const gradient = ctx.createRadialGradient(-5, -3, 3, 0, 0, 24);
+    gradient.addColorStop(0, 'rgba(255, 244, 247, 1)');
+    gradient.addColorStop(0.55, 'rgba(255, 178, 188, 0.88)');
+    gradient.addColorStop(1, 'rgba(255, 178, 188, 0)');
+    ctx.fillStyle = gradient;
+    ctx.beginPath();
+    ctx.ellipse(0, 0, 22, 10, 0, 0, Math.PI * 2);
+    ctx.fill();
+  } else {
+    const gradient = ctx.createRadialGradient(32, 32, 2, 32, 32, 30);
+    gradient.addColorStop(0, 'rgba(255, 255, 220, 1)');
+    gradient.addColorStop(0.42, 'rgba(199, 255, 138, 0.85)');
+    gradient.addColorStop(1, 'rgba(199, 255, 138, 0)');
+    ctx.fillStyle = gradient;
+    ctx.fillRect(0, 0, 64, 64);
+  }
+
+  const texture = new THREE.CanvasTexture(canvas);
+  texture.colorSpace = THREE.SRGBColorSpace;
+  texture.needsUpdate = true;
+  return texture;
+}
+
 function makeRadialBlendMaterial({ inner, outer, colorA, colorB, opacity = 0.5, noise = 0.2, animated = false }) {
   return new THREE.ShaderMaterial({
     transparent: true,
@@ -304,8 +355,8 @@ export function makeNoiseTexture(colors, size = 256, dots = 800) {
     ctx.fillStyle = colors[Math.floor(pseudoRandom(i * 11.3) * colors.length)];
     const x = pseudoRandom(i * 17.1) * size;
     const y = pseudoRandom(i * 23.7) * size;
-    const r = 1 + pseudoRandom(i * 31.1) * 4;
-    ctx.globalAlpha = 0.16 + pseudoRandom(i * 7.5) * 0.24;
+    const r = 0.7 + pseudoRandom(i * 31.1) * 2.5;
+    ctx.globalAlpha = 0.08 + pseudoRandom(i * 7.5) * 0.12;
     ctx.beginPath();
     ctx.arc(x, y, r, 0, Math.PI * 2);
     ctx.fill();

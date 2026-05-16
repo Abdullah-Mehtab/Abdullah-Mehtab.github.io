@@ -21,7 +21,7 @@ export class StuntPark {
     ];
     for (const ramp of ramps) {
       const rampShape = createRampShape(ramp.width, ramp.length, ramp.height);
-      const mesh = new THREE.Mesh(rampShape.geometry, this.world.materials.roadEdge);
+      const mesh = new THREE.Mesh(rampShape.geometry, this.world.materials.stoneRoad);
       mesh.name = `STUNT_${ramp.id}`;
       mesh.position.set(ramp.x, ramp.y, ramp.z);
       mesh.rotation.y = ramp.rot;
@@ -40,9 +40,12 @@ export class StuntPark {
 
   addGuardrails(ramp) {
     for (const side of [-1, 1]) {
-      const rail = new THREE.Mesh(new THREE.BoxGeometry(0.25, 0.55, ramp.length), this.world.materials.paleStone);
-      rail.position.set(ramp.x + Math.cos(ramp.rot) * ramp.width * 0.55 * side, 1.1, ramp.z - Math.sin(ramp.rot) * ramp.width * 0.55 * side);
+      const rail = new THREE.Mesh(new THREE.BoxGeometry(0.22, 0.36, ramp.length * 0.92), this.world.materials.wood);
+      rail.name = `STUNT_${ramp.id}_wood_guardrail`;
+      rail.position.set(ramp.x + Math.cos(ramp.rot) * ramp.width * 0.56 * side, 0.78, ramp.z - Math.sin(ramp.rot) * ramp.width * 0.56 * side);
       rail.rotation.y = ramp.rot;
+      rail.castShadow = true;
+      rail.receiveShadow = true;
       this.world.scene.add(rail);
     }
   }

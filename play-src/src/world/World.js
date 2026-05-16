@@ -84,6 +84,8 @@ export class World {
     this.landscapeQuality = quality;
     localStorage.setItem('portfolio-drive-landscape-quality', quality);
     this.foliage?.applyQuality();
+    this.atmosphere?.applyQuality?.();
+    this.onQualityChange?.(quality);
     return this.landscapeQuality;
   }
 
@@ -181,7 +183,10 @@ export class World {
   getRespawnPose(zoneId = 'landing') {
     const zone = this.zones.find((item) => item.id === zoneId) || this.zones.find((item) => item.id === 'landing');
     if (!zone) {
-      return { position: new THREE.Vector3(2, 1.45, 5.5), heading: 0 };
+      return { position: new THREE.Vector3(10, 1.45, 27), heading: 0 };
+    }
+    if (zone.id === 'landing') {
+      return { position: new THREE.Vector3(10, 1.08, 27), heading: 0.15 };
     }
     const offset = new THREE.Vector3(Math.sin(zone.rotation || 0) * -9, 1.08, Math.cos(zone.rotation || 0) * -9);
     return {

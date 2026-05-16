@@ -10,6 +10,15 @@ const ROAD_STYLE = {
   bridge: { shoulder: 1.4, line: 0xe8edf0 }
 };
 
+const ROAD_LAYER = {
+  ring: 0,
+  avenue: 1,
+  street: 2,
+  dirt: 2,
+  stunt: 3,
+  bridge: 4
+};
+
 export class Roads {
   constructor(world) {
     this.world = world;
@@ -43,6 +52,9 @@ export class Roads {
     const rotation = Math.atan2(dx, dz);
     const style = ROAD_STYLE[path.hierarchy] || ROAD_STYLE.street;
     const width = path.width;
+    const layer = ROAD_LAYER[path.hierarchy] ?? 1;
+    const shoulderY = 0.068 + layer * 0.001;
+    const surfaceY = 0.104 + layer * 0.006;
 
     const edgeMaterial = path.hierarchy === 'dirt' ? this.world.materials.sand : this.world.materials.roadEdge;
     const surfaceMaterial = path.hierarchy === 'dirt' ? this.world.materials.wood : this.world.materials.stoneRoad;
@@ -51,7 +63,7 @@ export class Roads {
       edgeMaterial
     );
     shoulder.name = `ROAD_${path.id}_shoulder`;
-    shoulder.position.set(x, 0.072, z);
+    shoulder.position.set(x, shoulderY, z);
     shoulder.rotation.y = rotation;
     shoulder.receiveShadow = true;
     this.world.scene.add(shoulder);
@@ -61,18 +73,19 @@ export class Roads {
       surfaceMaterial
     );
     stone.name = `ROAD_${path.id}_stone`;
-    stone.position.set(x, 0.102, z);
+    stone.position.set(x, surfaceY, z);
     stone.rotation.y = rotation;
     stone.receiveShadow = true;
     this.world.scene.add(stone);
 
     const lineMaterial = this.world.materials.roadLine.clone();
     lineMaterial.color.setHex(style.line);
-    const dashCount = Math.max(1, Math.floor(length / 12));
+    const lineLength = Math.max(0, length - width * 2.4);
+    const dashCount = Math.max(0, Math.floor(lineLength / 12));
     for (let i = 0; i < dashCount; i += 1) {
       const dash = new THREE.Mesh(new THREE.BoxGeometry(0.38, 0.035, 3.2), lineMaterial);
       const t = (i + 0.5) / dashCount - 0.5;
-      dash.position.set(x + Math.sin(rotation) * length * t, 0.132, z + Math.cos(rotation) * length * t);
+      dash.position.set(x + Math.sin(rotation) * lineLength * t, surfaceY + 0.033, z + Math.cos(rotation) * lineLength * t);
       dash.rotation.y = rotation;
       this.world.scene.add(dash);
     }
@@ -86,18 +99,25 @@ export class Roads {
 
   addNode(point, path) {
     const style = ROAD_STYLE[path.hierarchy] || ROAD_STYLE.street;
-    const radius = path.width * 0.42 + style.shoulder * 0.62;
+    const radius = path.width * 0.58 + style.shoulder * 0.76;
+    const layer = ROAD_LAYER[path.hierarchy] ?? 1;
+    const shoulderY = 0.086 + layer * 0.003;
+    const surfaceY = 0.142 + layer * 0.007;
     const edgeMaterial = path.hierarchy === 'dirt' ? this.world.materials.sand : this.world.materials.roadEdge;
     const surfaceMaterial = path.hierarchy === 'dirt' ? this.world.materials.wood : this.world.materials.stoneRoad;
-    const node = new THREE.Mesh(new THREE.CylinderGeometry(radius, radius, 0.03, 34), edgeMaterial);
+    const node = new THREE.Mesh(new THREE.CircleGeometry(radius, 48), edgeMaterial);
     node.name = `ROAD_${path.id}_node`;
-    node.position.set(point[0], 0.077, point[1]);
+    node.position.set(point[0], shoulderY, point[1]);
+    node.rotation.x = -Math.PI / 2;
     node.receiveShadow = true;
+    node.renderOrder = 4 + layer;
     this.world.scene.add(node);
 
-    const top = new THREE.Mesh(new THREE.CylinderGeometry(radius - style.shoulder * 0.55, radius - style.shoulder * 0.55, 0.034, 34), surfaceMaterial);
-    top.position.set(point[0], 0.106, point[1]);
+    const top = new THREE.Mesh(new THREE.CircleGeometry(radius - style.shoulder * 0.64, 48), surfaceMaterial);
+    top.position.set(point[0], surfaceY + 0.028, point[1]);
+    top.rotation.x = -Math.PI / 2;
     top.receiveShadow = true;
+    top.renderOrder = 5 + layer;
     this.world.scene.add(top);
   }
 
