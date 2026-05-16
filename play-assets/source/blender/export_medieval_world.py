@@ -56,6 +56,12 @@ def materials():
         "water": mat("farm_water", (0.1, 0.42, 0.78, 0.72), 0.36, alpha=0.72),
         "crop": mat("potato_crop", (0.32, 0.66, 0.28, 1), 0.9),
         "potato": mat("voxel_potato", (0.72, 0.46, 0.18, 1), 0.94),
+        "tkxel_glass": mat("tkxel_one_world_blue_green_glass", (0.04, 0.34, 0.44, 0.78), 0.18, metallic=0.05, alpha=0.78, emission=(0.01, 0.09, 0.12, 1)),
+        "tkxel_dark_glass": mat("tkxel_one_world_dark_curtain_wall", (0.015, 0.045, 0.06, 0.92), 0.2, metallic=0.08, alpha=0.92),
+        "tkxel_frame": mat("tkxel_one_world_black_aluminium_frame", (0.025, 0.035, 0.04, 1), 0.42, metallic=0.35),
+        "tkxel_concrete": mat("tkxel_one_world_warm_concrete", (0.72, 0.69, 0.62, 1), 0.82),
+        "tkxel_white": mat("tkxel_one_world_white_signage", (0.92, 0.96, 0.92, 1), 0.5, emission=(0.28, 0.38, 0.26, 1)),
+        "tkxel_green": mat("tkxel_brand_green_signage", (0.12, 0.72, 0.42, 1), 0.42, emission=(0.0, 0.36, 0.12, 1)),
     }
 
 
@@ -93,6 +99,23 @@ def cube(name, parent, loc, scale, material, rot=(0, 0, 0), bevel=0.0):
         modifier.width = bevel
         modifier.segments = 2
         obj.modifiers.new("weighted_normals", "WEIGHTED_NORMAL")
+    return obj
+
+
+def text_mesh(name, parent, text, loc, size, material, rot=(math.pi / 2, 0, 0), align="CENTER"):
+    bpy.ops.object.text_add(location=loc, rotation=rot)
+    obj = bpy.context.object
+    obj.name = name
+    obj.data.body = text
+    obj.data.align_x = align
+    obj.data.align_y = "CENTER"
+    obj.data.size = size
+    obj.data.extrude = 0.012
+    obj.data.materials.append(material)
+    bpy.ops.object.convert(target="MESH")
+    obj = bpy.context.object
+    obj.parent = parent
+    obj.modifiers.new("text_weighted_normals", "WEIGHTED_NORMAL")
     return obj
 
 
@@ -173,6 +196,7 @@ def create_props(mats):
     create_potato_crop(mats)
     create_potato(mats)
     create_potato_farm(mats)
+    create_tkxel_one_world_tower(mats)
 
 
 def create_island_mesh(name, parent, mats, radius=158, rings=56, segments=220):
@@ -354,6 +378,89 @@ def create_potato_farm(mats):
     for z in [-5.0, -2.5, 0, 2.5, 5.0]:
         cube("Farm_Fence_SidePost", group, (-7.6, 0.88, z), (0.28, 1.75, 0.28), mats["wood"], bevel=0.02)
         cube("Farm_Fence_SidePost", group, (7.6, 0.88, z), (0.28, 1.75, 0.28), mats["wood"], bevel=0.02)
+
+
+def create_tkxel_one_world_tower(mats):
+    group = root("EnvLandmark_office")
+
+    # Tkxel's One World reference reads as a tall blue-green glass tower with a dark vertical
+    # curtain-wall face, concrete podium, rooftop frame, and a visible roadside welcome sign.
+    cube("OneWorld_SitePlinth", group, (0, 0.12, 0), (11.8, 0.24, 8.2), mats["tkxel_concrete"], bevel=0.035)
+    cube("OneWorld_FrontSteps", group, (0, 0.26, -4.85), (5.8, 0.28, 1.0), mats["stone_light"], bevel=0.03)
+    for i in range(6):
+        x = -2.55 + i * 1.02
+        cube(f"OneWorld_ParkingStripe_{i}", group, (x, 0.44, -5.1), (0.12, 0.045, 0.92), mats["tkxel_white"], bevel=0.004)
+
+    cube("OneWorld_Podium", group, (0, 1.0, -0.2), (9.6, 1.78, 6.6), mats["tkxel_concrete"], bevel=0.055)
+    cube("OneWorld_PodiumGlassFront", group, (0, 1.18, -3.54), (8.7, 1.08, 0.12), mats["tkxel_dark_glass"], bevel=0.015)
+    cube("OneWorld_EntranceCanopy", group, (0, 2.12, -4.08), (5.8, 0.22, 1.18), mats["tkxel_frame"], bevel=0.025)
+    cube("OneWorld_GlassDoors", group, (0, 1.12, -4.14), (2.3, 1.78, 0.1), mats["tkxel_glass"], bevel=0.012)
+
+    cube("OneWorld_MainGlassTower", group, (0.34, 9.15, 0.05), (7.9, 15.7, 5.45), mats["tkxel_glass"], bevel=0.06)
+    cube("OneWorld_LeftDarkCurtainWall", group, (-4.05, 9.15, -0.02), (1.34, 15.9, 5.7), mats["tkxel_dark_glass"], bevel=0.035)
+    cube("OneWorld_RightConcreteCore", group, (4.95, 8.7, 0.22), (1.28, 14.2, 5.35), mats["tkxel_concrete"], bevel=0.04)
+    cube("OneWorld_RearServiceCore", group, (0.65, 8.0, 3.18), (7.6, 13.0, 0.72), mats["tkxel_concrete"], bevel=0.035)
+
+    for floor in range(10):
+        y = 2.95 + floor * 1.25
+        cube(f"OneWorld_FrontFloorBand_{floor}", group, (0.34, y, -2.73), (8.1, 0.07, 0.11), mats["tkxel_frame"], bevel=0.004)
+        cube(f"OneWorld_LeftFloorBand_{floor}", group, (-4.08, y, -0.02), (0.11, 0.07, 5.72), mats["tkxel_frame"], bevel=0.004)
+        cube(f"OneWorld_RightWindowBand_{floor}", group, (4.28, y, -0.42), (0.12, 0.07, 4.2), mats["tkxel_frame"], bevel=0.004)
+
+    for column, x in enumerate([-2.72, -1.36, 0.0, 1.36, 2.72]):
+        cube(f"OneWorld_FrontMullion_{column}", group, (x, 9.15, -2.78), (0.08, 15.15, 0.12), mats["tkxel_frame"], bevel=0.004)
+    for column, x in enumerate([-3.3, -2.7]):
+        cube(f"OneWorld_DarkFaceVerticalLine_{column}", group, (x, 9.15, -2.9), (0.06, 14.7, 0.16), mats["tkxel_glass"], bevel=0.004)
+    for column, x in enumerate([4.42, 4.9]):
+        cube(f"OneWorld_CoreWindowStack_{column}", group, (x, 8.2, -2.58), (0.32, 11.2, 0.1), mats["tkxel_dark_glass"], bevel=0.01)
+
+    # Detail all drive-by angles. The tower is viewed from every side in-game, so the pale
+    # service/core faces need curtain-wall rhythm instead of reading as blank slabs.
+    cube("OneWorld_LeftSideGlassFace", group, (-4.77, 9.18, 0.02), (0.12, 14.9, 5.28), mats["tkxel_glass"], bevel=0.012)
+    cube("OneWorld_RightSideGlassFace", group, (5.66, 9.18, 0.02), (0.12, 13.3, 4.92), mats["tkxel_glass"], bevel=0.012)
+    cube("OneWorld_RearGlassFace", group, (0.65, 8.05, 3.65), (7.25, 12.6, 0.12), mats["tkxel_glass"], bevel=0.012)
+
+    for floor in range(9):
+        y = 3.15 + floor * 1.25
+        cube(f"OneWorld_LeftSideFloorBand_{floor}", group, (-4.84, y, 0.0), (0.13, 0.07, 5.22), mats["tkxel_frame"], bevel=0.004)
+        cube(f"OneWorld_RightSideFloorBand_{floor}", group, (5.73, y, 0.0), (0.13, 0.07, 4.82), mats["tkxel_frame"], bevel=0.004)
+        cube(f"OneWorld_RearFloorBand_{floor}", group, (0.65, y, 3.72), (7.05, 0.07, 0.13), mats["tkxel_frame"], bevel=0.004)
+
+    for idx, z in enumerate([-1.9, -0.95, 0.0, 0.95, 1.9]):
+        cube(f"OneWorld_LeftSideMullion_{idx}", group, (-4.86, 9.15, z), (0.14, 14.45, 0.07), mats["tkxel_frame"], bevel=0.004)
+        cube(f"OneWorld_RightSideMullion_{idx}", group, (5.75, 9.15, z), (0.14, 12.9, 0.07), mats["tkxel_frame"], bevel=0.004)
+    for idx, x in enumerate([-2.55, -1.28, 0.0, 1.28, 2.55]):
+        cube(f"OneWorld_RearMullion_{idx}", group, (x, 8.05, 3.74), (0.07, 12.15, 0.14), mats["tkxel_frame"], bevel=0.004)
+
+    for floor in range(8):
+        y = 3.35 + floor * 1.34
+        for z in [-1.62, -0.38, 0.86, 2.1]:
+            cube(f"OneWorld_RightCoreSideWindow_{floor}_{z}", group, (5.79, y, z), (0.035, 0.5, 0.34), mats["tkxel_dark_glass"], bevel=0.004)
+            cube(f"OneWorld_LeftCoreSideWindow_{floor}_{z}", group, (-4.9, y, z), (0.035, 0.5, 0.34), mats["tkxel_dark_glass"], bevel=0.004)
+    for floor in range(7):
+        y = 3.55 + floor * 1.48
+        for x in [-2.4, -0.8, 0.8, 2.4]:
+            cube(f"OneWorld_RearWindow_{floor}_{x}", group, (x, y, 3.82), (0.84, 0.62, 0.1), mats["tkxel_dark_glass"], bevel=0.008)
+
+    cube("OneWorld_RoofSlab", group, (0.3, 17.15, 0), (8.8, 0.34, 5.9), mats["tkxel_frame"], bevel=0.025)
+    cube("OneWorld_RoofMachineRoom", group, (2.6, 17.82, 1.4), (2.35, 1.08, 2.0), mats["tkxel_concrete"], bevel=0.025)
+    cube("OneWorld_TopFrontBeam", group, (0.1, 18.25, -2.85), (7.8, 0.18, 0.18), mats["tkxel_frame"], bevel=0.008)
+    cube("OneWorld_TopRearBeam", group, (0.1, 18.25, 2.85), (7.8, 0.18, 0.18), mats["tkxel_frame"], bevel=0.008)
+    cube("OneWorld_RoofTrussLeft", group, (-2.65, 18.0, 0), (0.16, 2.0, 6.1), mats["tkxel_frame"], rot=(0, 0, -0.36), bevel=0.008)
+    cube("OneWorld_RoofTrussRight", group, (2.85, 18.0, 0), (0.16, 2.0, 6.1), mats["tkxel_frame"], rot=(0, 0, 0.36), bevel=0.008)
+
+    cube("OneWorld_TkxelSignPanel", group, (0, 2.72, -4.24), (4.8, 0.72, 0.08), mats["tkxel_frame"], bevel=0.015)
+    text_mesh("OneWorld_TkxelSignText", group, "tkxel", (-0.7, 2.74, -4.31), 0.62, mats["tkxel_green"], rot=(math.pi / 2, 0, 0))
+    text_mesh("OneWorld_WelcomeText", group, "WELCOME", (1.35, 2.74, -4.31), 0.23, mats["tkxel_white"], rot=(math.pi / 2, 0, 0))
+    text_mesh("OneWorld_NameText", group, "THE ONE WORLD", (0.2, 1.76, -4.18), 0.24, mats["tkxel_white"], rot=(math.pi / 2, 0, 0))
+
+    cube("OneWorld_RoadsideSignPost", group, (-5.5, 2.25, -5.05), (0.16, 3.35, 0.16), mats["tkxel_frame"], bevel=0.008)
+    cube("OneWorld_RoadsideSignBoard", group, (-5.5, 3.62, -5.05), (1.62, 1.1, 0.12), mats["tkxel_dark_glass"], bevel=0.02)
+    text_mesh("OneWorld_Roadside50", group, "50", (-5.5, 3.62, -5.13), 0.58, mats["tkxel_green"], rot=(math.pi / 2, 0, 0))
+
+    for x in [-4.2, -1.4, 1.4, 4.2]:
+        cube("OneWorld_GroundPlanter", group, (x, 0.54, -4.02), (1.15, 0.48, 0.62), mats["stone"], bevel=0.025)
+        ico("OneWorld_PlanterShrub", group, (x, 1.0, -4.02), 0.46, mats["leaf"], scale=(1.25, 0.62, 0.9))
 
 
 if __name__ == "__main__":
