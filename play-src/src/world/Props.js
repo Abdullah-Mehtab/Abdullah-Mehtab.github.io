@@ -42,7 +42,7 @@ export class Props {
       // Courtyard seating, placed like a small public square instead of random clutter.
       ['EnvBench', -8, 48, -0.35, 0.92],
       ['EnvBench', 34, 55, 0.42, 0.92],
-      ['EnvBench', 38, 23, 2.86, 0.88],
+      ['EnvBench', 42, 34, 2.86, 0.88],
       ['EnvBench', -34, 40, -0.2, 0.86],
 
       // Education grove: benches face the library approach and stay outside the driving line.
@@ -51,12 +51,12 @@ export class Props {
       ['EnvBench', -86, 96, -0.8, 0.86],
 
       // Harbor / foundry / farm storage groups.
-      ['EnvCrate', 145, 78, 0.2, 0.92],
-      ['EnvBarrel', 141, 84, -0.2, 0.86],
+      ['EnvCrate', 116, 82, 0.2, 0.92],
+      ['EnvBarrel', 120, 88, -0.2, 0.86],
       ['EnvCrate', 78, 57, 0.38, 0.88],
       ['EnvBarrel', 84, 51, -0.4, 0.82],
-      ['EnvCrate', 31, 93, 0.12, 0.82],
-      ['EnvBarrel', 36, 92, -0.34, 0.78],
+      ['EnvCrate', 54, 82, 0.12, 0.82],
+      ['EnvBarrel', 56, 89, -0.34, 0.78],
 
       // Small rest points near the outer loop.
       ['EnvBench', -138, -12, 1.34, 0.86],

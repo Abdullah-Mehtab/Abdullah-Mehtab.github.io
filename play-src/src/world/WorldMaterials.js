@@ -37,9 +37,10 @@ export function createWorldMaterials() {
       vertexColors: false,
       side: THREE.DoubleSide
     }),
-    stoneRoad: new THREE.MeshStandardMaterial({ color: 0x5d584d, map: stoneTexture, roughness: 0.94, metalness: 0.02 }),
-    roadEdge: new THREE.MeshStandardMaterial({ color: 0x3a3a32, roughness: 0.9, metalness: 0.04 }),
+    stoneRoad: new THREE.MeshStandardMaterial({ color: 0x605a4d, map: stoneTexture, roughness: 0.94, metalness: 0.02 }),
+    roadEdge: new THREE.MeshStandardMaterial({ color: 0x474239, roughness: 0.92, metalness: 0.02 }),
     roadLine: new THREE.MeshBasicMaterial({ color: 0xd8c48a, transparent: true, opacity: 0.36 }),
+    stuntRamp: new THREE.MeshStandardMaterial({ color: 0x80624a, roughness: 0.88, metalness: 0.02 }),
     sand: new THREE.MeshStandardMaterial({ color: 0xf4d59a, map: sandTexture, roughness: 0.98, metalness: 0.0 }),
     grassSandBlend: makeRadialBlendMaterial({
       inner: 136,

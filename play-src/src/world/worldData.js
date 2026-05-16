@@ -268,7 +268,7 @@ export const worldZones = [
     achievement: 'cv_vault',
     lines: [
       'Resume archive, project record, certificates, skills, awards, and downloadable PDFs.',
-      'The formal version lives here when the drive becomes a document.'
+      'Open the document-first version for the full professional profile.'
     ],
     actions: [
       { label: 'Open CV Page', href: '../cv.html' },
@@ -287,8 +287,8 @@ export const worldZones = [
     shape: 'board',
     achievement: 'todo_board',
     lines: [
-      'The never-ending list keeps the unfinished, ongoing, and occasionally strange parts visible.',
-      'Tasks, experiments, reminders, and ideas still moving live there.'
+      'The never-ending list keeps active tasks, experiments, reminders, and ideas visible.',
+      'A lightweight log for work that is being tested, refined, or revisited.'
     ],
     actions: [
       { label: 'Open Todo', href: '../todo.html' }
@@ -356,7 +356,7 @@ export const worldZones = [
     shape: 'rampyard',
     achievement: 'ramp_yard',
     lines: [
-      'A separate courtyard for ramps, boosters, and messy driving away from the formal portfolio landmarks.'
+      'A dedicated driving yard for ramps, boosters, handbrake turns, and clean landings.'
     ]
   },
   {

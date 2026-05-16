@@ -58,23 +58,15 @@ export class Roads {
 
     const edgeMaterial = path.hierarchy === 'dirt' ? this.world.materials.sand : this.world.materials.roadEdge;
     const surfaceMaterial = path.hierarchy === 'dirt' ? this.world.materials.wood : this.world.materials.stoneRoad;
-    const shoulder = new THREE.Mesh(
-      new THREE.BoxGeometry(width + style.shoulder * 2, 0.026, length + width * 0.45),
-      edgeMaterial
-    );
+    const shoulder = this.createRoadPlane(width + style.shoulder * 2, length + width * 0.45, edgeMaterial, 1 + layer, rotation);
     shoulder.name = `ROAD_${path.id}_shoulder`;
     shoulder.position.set(x, shoulderY, z);
-    shoulder.rotation.y = rotation;
     shoulder.receiveShadow = true;
     this.world.scene.add(shoulder);
 
-    const stone = new THREE.Mesh(
-      new THREE.BoxGeometry(width, 0.032, length + width * 0.28),
-      surfaceMaterial
-    );
+    const stone = this.createRoadPlane(width, length + width * 0.28, surfaceMaterial, 3 + layer, rotation);
     stone.name = `ROAD_${path.id}_stone`;
     stone.position.set(x, surfaceY, z);
-    stone.rotation.y = rotation;
     stone.receiveShadow = true;
     this.world.scene.add(stone);
 
@@ -83,10 +75,9 @@ export class Roads {
     const lineLength = Math.max(0, length - width * 2.4);
     const dashCount = Math.max(0, Math.floor(lineLength / 12));
     for (let i = 0; i < dashCount; i += 1) {
-      const dash = new THREE.Mesh(new THREE.BoxGeometry(0.38, 0.035, 3.2), lineMaterial);
+      const dash = this.createRoadPlane(0.38, 3.2, lineMaterial, 8 + layer, rotation);
       const t = (i + 0.5) / dashCount - 0.5;
-      dash.position.set(x + Math.sin(rotation) * lineLength * t, surfaceY + 0.033, z + Math.cos(rotation) * lineLength * t);
-      dash.rotation.y = rotation;
+      dash.position.set(x + Math.sin(rotation) * lineLength * t, surfaceY + 0.034, z + Math.cos(rotation) * lineLength * t);
       this.world.scene.add(dash);
     }
 
@@ -99,26 +90,58 @@ export class Roads {
 
   addNode(point, path) {
     const style = ROAD_STYLE[path.hierarchy] || ROAD_STYLE.street;
-    const radius = path.width * 0.58 + style.shoulder * 0.76;
+    const radius = path.width * 0.54 + style.shoulder * 0.52;
     const layer = ROAD_LAYER[path.hierarchy] ?? 1;
     const shoulderY = 0.086 + layer * 0.003;
     const surfaceY = 0.142 + layer * 0.007;
     const edgeMaterial = path.hierarchy === 'dirt' ? this.world.materials.sand : this.world.materials.roadEdge;
     const surfaceMaterial = path.hierarchy === 'dirt' ? this.world.materials.wood : this.world.materials.stoneRoad;
-    const node = new THREE.Mesh(new THREE.CircleGeometry(radius, 48), edgeMaterial);
+    const nodeMaterial = this.cleanCapMaterial(edgeMaterial);
+    const topMaterial = this.cleanCapMaterial(surfaceMaterial);
+    const node = new THREE.Mesh(new THREE.CircleGeometry(radius, 72), nodeMaterial);
     node.name = `ROAD_${path.id}_node`;
     node.position.set(point[0], shoulderY, point[1]);
     node.rotation.x = -Math.PI / 2;
-    node.receiveShadow = true;
-    node.renderOrder = 4 + layer;
+    node.receiveShadow = false;
+    node.renderOrder = 10 + layer;
     this.world.scene.add(node);
 
-    const top = new THREE.Mesh(new THREE.CircleGeometry(radius - style.shoulder * 0.64, 48), surfaceMaterial);
-    top.position.set(point[0], surfaceY + 0.028, point[1]);
+    const top = new THREE.Mesh(new THREE.CircleGeometry(radius - style.shoulder * 0.42, 72), topMaterial);
+    top.name = `ROAD_${path.id}_node_cap`;
+    top.position.set(point[0], surfaceY + 0.034, point[1]);
     top.rotation.x = -Math.PI / 2;
-    top.receiveShadow = true;
-    top.renderOrder = 5 + layer;
+    top.receiveShadow = false;
+    top.renderOrder = 12 + layer;
     this.world.scene.add(top);
+  }
+
+  createRoadPlane(width, length, material, renderOrder = 1, rotation = 0) {
+    const roadMaterial = this.offsetMaterial(material, renderOrder);
+    const mesh = new THREE.Mesh(createOrientedPlaneGeometry(width, length, rotation), roadMaterial);
+    mesh.renderOrder = renderOrder;
+    return mesh;
+  }
+
+  offsetMaterial(material, layer) {
+    const clone = material.clone();
+    clone.polygonOffset = true;
+    clone.polygonOffsetFactor = -layer;
+    clone.polygonOffsetUnits = -layer;
+    return clone;
+  }
+
+  cleanCapMaterial(material) {
+    const clone = new THREE.MeshBasicMaterial({
+      color: material.color ? material.color.clone() : new THREE.Color(0x5f584d),
+      map: material.map || null,
+      transparent: material.transparent,
+      opacity: material.opacity ?? 1,
+      depthWrite: material.depthWrite ?? true
+    });
+    clone.polygonOffset = true;
+    clone.polygonOffsetFactor = -14;
+    clone.polygonOffsetUnits = -14;
+    return clone;
   }
 
   isNear(x, z, margin = 0) {
@@ -130,4 +153,35 @@ export class Roads {
       return Math.abs(localX) <= width / 2 + margin && Math.abs(localZ) <= length / 2 + margin;
     });
   }
+}
+
+function createOrientedPlaneGeometry(width, length, rotation) {
+  const halfWidth = width / 2;
+  const halfLength = length / 2;
+  const rightX = Math.cos(rotation);
+  const rightZ = -Math.sin(rotation);
+  const forwardX = Math.sin(rotation);
+  const forwardZ = Math.cos(rotation);
+  const corners = [
+    [-halfWidth, -halfLength],
+    [halfWidth, -halfLength],
+    [halfWidth, halfLength],
+    [-halfWidth, halfLength]
+  ];
+  const vertices = new Float32Array(corners.flatMap(([localX, localZ]) => [
+    rightX * localX + forwardX * localZ,
+    0,
+    rightZ * localX + forwardZ * localZ
+  ]));
+  const geometry = new THREE.BufferGeometry();
+  geometry.setAttribute('position', new THREE.BufferAttribute(vertices, 3));
+  geometry.setAttribute('uv', new THREE.BufferAttribute(new Float32Array([
+    0, 0,
+    1, 0,
+    1, 1,
+    0, 1
+  ]), 2));
+  geometry.setIndex([0, 2, 1, 0, 3, 2]);
+  geometry.computeVertexNormals();
+  return geometry;
 }
