@@ -146,14 +146,14 @@ export class AudioSystem {
 
   update(speed, driveState = {}) {
     if (!this.context || !this.engineOsc || !this.engineGain) return;
-    const normalized = Math.min(1, Math.abs(speed) / 42);
+    const normalized = Math.min(1, Math.abs(speed) / 70);
     const throttle = Math.min(1, Math.abs(driveState.throttle ?? 0));
     const boost = driveState.boost ? 1 : 0;
     const slip = driveState.slip ?? 0;
     const wobble = Math.sin(this.context.currentTime * (18 + normalized * 28)) * (2 + normalized * 5);
-    this.engineOsc.frequency.setTargetAtTime(42 + normalized * 148 + throttle * 42 + boost * 30 + wobble, this.context.currentTime, 0.055);
-    this.engineGain.gain.setTargetAtTime(this.muted ? 0 : 0.034 + normalized * 0.084 + throttle * 0.025 + boost * 0.02, this.context.currentTime, 0.075);
-    this.engineFilter?.frequency.setTargetAtTime(240 + normalized * 650 + throttle * 180 + boost * 240, this.context.currentTime, 0.12);
+    this.engineOsc.frequency.setTargetAtTime(38 + normalized * 176 + throttle * 56 + boost * 38 + wobble, this.context.currentTime, 0.055);
+    this.engineGain.gain.setTargetAtTime(this.muted ? 0 : 0.04 + normalized * 0.095 + throttle * 0.034 + boost * 0.026, this.context.currentTime, 0.075);
+    this.engineFilter?.frequency.setTargetAtTime(220 + normalized * 760 + throttle * 230 + boost * 280, this.context.currentTime, 0.12);
     if (this.engineSubOsc && this.engineSubGain) {
       this.engineSubOsc.frequency.setTargetAtTime(23 + normalized * 52 + throttle * 10, this.context.currentTime, 0.08);
       this.engineSubGain.gain.setTargetAtTime(this.muted ? 0 : 0.027 + normalized * 0.05 + throttle * 0.018, this.context.currentTime, 0.12);

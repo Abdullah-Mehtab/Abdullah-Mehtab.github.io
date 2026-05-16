@@ -160,8 +160,7 @@ export class Game {
       if (canDrive) {
         this.vehicle.update(this.input, fixedDt);
         const pad = this.world.checkBoostPad(this.vehicle.position);
-        if (pad) {
-          this.vehicle.boostFromPad(pad);
+        if (pad && this.vehicle.boostFromPad(pad)) {
           this.ui?.notify?.('Boost pad launched');
         }
         const collected = this.world.checkCollectibles(this.vehicle.position);

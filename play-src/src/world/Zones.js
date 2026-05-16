@@ -289,7 +289,7 @@ function landmarkCollider(shape) {
     case 'foundry':
       return { type: 'box', size: [6.8, 3.1, 5.0] };
     case 'office':
-      return { type: 'box', size: [11.8, 17.2, 10.8] };
+      return { type: 'box', size: [10.4, 17.2, 9.2] };
     case 'library':
       return { type: 'box', size: [7.2, 3.2, 5.4] };
     case 'terminal':

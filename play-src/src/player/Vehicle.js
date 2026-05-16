@@ -235,17 +235,18 @@ export class Vehicle {
   }
 
   boostFromPad(pad) {
-    if (!pad || this.lastBoostPad === pad.id) return;
-    this.lastBoostPad = pad.id;
+    if (!pad || this.lastBoostPad === pad.id) return false;
     const velocity = this.body.linvel();
     const current = new THREE.Vector3(velocity.x, 0, velocity.z);
     let direction = current.lengthSq() > 1 ? current.normalize() : new THREE.Vector3(0, 0, 1).applyQuaternion(this.group.quaternion).normalize();
-    this.controller.boost(direction, 20);
+    if (!this.controller.boost(direction, 26)) return false;
+    this.lastBoostPad = pad.id;
     this.achievements.unlock('boost_pad');
     this.audio.click(940);
     window.setTimeout(() => {
       if (this.lastBoostPad === pad.id) this.lastBoostPad = null;
-    }, 550);
+    }, 900);
+    return true;
   }
 
   respawn(position = START, heading = 0) {

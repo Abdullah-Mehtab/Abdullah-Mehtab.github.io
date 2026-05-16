@@ -286,10 +286,10 @@ def add_glass_and_frames(parent, mats):
 
 
 def add_stripes(parent, mats):
-    add_cube("Stripe_FlushHoodCenter", (0, 1.067, 1.6), (0.42, 0.017, 1.96), mats["stripe"], parent, bevel=0.004)
-    add_cube("Stripe_FlushRoofCenter", (0, 1.505, -0.12), (0.34, 0.017, 0.78), mats["stripe"], parent, bevel=0.004)
-    add_cube("Stripe_FlushRearDeckCenter", (0, 1.045, -1.86), (0.42, 0.017, 1.36), mats["stripe"], parent, bevel=0.004)
-    add_cube("Stripe_FrontNoseReturn", (0, 0.9, 2.66), (0.42, 0.018, 0.34), mats["stripe"], parent, bevel=0.004)
+    add_cube("Stripe_FlushHoodCenter", (0, 1.094, 1.6), (0.42, 0.028, 1.96), mats["stripe"], parent, bevel=0.004)
+    add_cube("Stripe_FlushRoofCenter", (0, 1.532, -0.12), (0.34, 0.028, 0.78), mats["stripe"], parent, bevel=0.004)
+    add_cube("Stripe_FlushRearDeckCenter", (0, 1.072, -1.86), (0.42, 0.028, 1.36), mats["stripe"], parent, bevel=0.004)
+    add_cube("Stripe_FrontNoseReturn", (0, 0.925, 2.66), (0.42, 0.026, 0.34), mats["stripe"], parent, bevel=0.004)
 
 
 def add_front_and_rear_detail(parent, mats):

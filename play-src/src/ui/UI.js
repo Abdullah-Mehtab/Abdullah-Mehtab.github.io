@@ -8,6 +8,7 @@ export class UI {
     this.projectIndex = 0;
     this.activeTab = 'options';
     this.mapState = { scale: 1, x: 0, y: 0, dragging: false, lastX: 0, lastY: 0 };
+    this.lastNotification = { message: '', time: 0 };
     this.refs = {
       loading: document.getElementById('loading'),
       titleScreen: document.getElementById('title-screen'),
@@ -331,9 +332,8 @@ export class UI {
   renderControls() {
     const rows = [
       ['WASD / Arrows', 'Drive'],
-      ['Left Ctrl', 'Boost'],
-      ['Shift', 'Handbrake / drift'],
-      ['Right Ctrl / B', 'Brake'],
+      ['Shift', 'Boost'],
+      ['Ctrl / B', 'Brake'],
       ['Space', 'Jump'],
       ['E / Enter', 'Interact'],
       ['P', 'Summon potato at the farm'],
@@ -493,6 +493,9 @@ export class UI {
   }
 
   notify(message) {
+    const now = performance.now();
+    if (message === this.lastNotification.message && now - this.lastNotification.time < 950) return;
+    this.lastNotification = { message, time: now };
     const item = document.createElement('div');
     item.className = 'notification';
     item.textContent = message;
