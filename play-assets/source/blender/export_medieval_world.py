@@ -56,11 +56,12 @@ def materials():
         "water": mat("farm_water", (0.1, 0.42, 0.78, 0.72), 0.36, alpha=0.72),
         "crop": mat("potato_crop", (0.32, 0.66, 0.28, 1), 0.9),
         "potato": mat("voxel_potato", (0.72, 0.46, 0.18, 1), 0.94),
-        "tkxel_glass": mat("tkxel_babar_block_blue_green_glass", (0.04, 0.34, 0.44, 0.78), 0.18, metallic=0.05, alpha=0.78, emission=(0.01, 0.09, 0.12, 1)),
-        "tkxel_dark_glass": mat("tkxel_babar_block_dark_curtain_wall", (0.015, 0.045, 0.06, 0.92), 0.2, metallic=0.08, alpha=0.92),
+        "tkxel_glass": mat("tkxel_babar_block_blue_green_glass", (0.035, 0.30, 0.34, 1), 0.16, metallic=0.08, emission=(0.006, 0.055, 0.07, 1)),
+        "tkxel_dark_glass": mat("tkxel_babar_block_dark_curtain_wall", (0.012, 0.035, 0.045, 1), 0.22, metallic=0.1),
         "tkxel_frame": mat("tkxel_babar_block_black_aluminium_frame", (0.025, 0.035, 0.04, 1), 0.42, metallic=0.35),
-        "tkxel_concrete": mat("tkxel_babar_block_warm_concrete", (0.72, 0.69, 0.62, 1), 0.82),
-        "tkxel_concrete_shadow": mat("tkxel_babar_block_recess_shadow", (0.42, 0.39, 0.33, 1), 0.86),
+        "tkxel_concrete": mat("tkxel_babar_block_warm_concrete", (0.55, 0.53, 0.46, 1), 0.86),
+        "tkxel_concrete_shadow": mat("tkxel_babar_block_recess_shadow", (0.32, 0.31, 0.27, 1), 0.88),
+        "tkxel_interior": mat("tkxel_babar_block_occupied_shadow", (0.018, 0.025, 0.028, 1), 0.7, metallic=0.08),
         "tkxel_roof": mat("tkxel_babar_block_roof_parapet", (0.05, 0.07, 0.075, 1), 0.56, metallic=0.18),
         "tkxel_metal": mat("tkxel_babar_block_roof_metal", (0.64, 0.58, 0.43, 1), 0.44, metallic=0.36),
     }
@@ -379,6 +380,14 @@ def create_tkxel_babar_block_building(mats):
     cube("BabarBlock_RightBeigeWing", group, (5.12, 8.0, 1.75), (1.88, 15.6, 5.85), mats["tkxel_concrete"], bevel=0.025)
     cube("BabarBlock_RearBeigeWing", group, (0.78, 7.85, 4.55), (8.0, 15.2, 0.65), mats["tkxel_concrete"], bevel=0.018)
 
+    # Opaque inner mass/floors keep the curtain wall from reading as a hollow shell at
+    # close range while preserving the glass-tower silhouette.
+    cube("BabarBlock_InteriorOccupiedCore", group, (-0.1, 8.25, -1.25), (8.55, 14.75, 4.9), mats["tkxel_interior"], bevel=0.012)
+    cube("BabarBlock_InteriorLobbyShadow", group, (-0.35, 1.35, -2.95), (7.8, 1.85, 1.4), mats["tkxel_interior"], bevel=0.01)
+    for floor in range(10):
+        y = 2.35 + floor * 1.32
+        cube(f"BabarBlock_InteriorFloorPlate_{floor}", group, (-0.05, y, -1.28), (8.35, 0.08, 4.65), mats["tkxel_concrete_shadow"], bevel=0.003)
+
     cube("BabarBlock_FrontGlassLeft", group, (-2.22, 8.75, -3.72), (5.05, 16.45, 0.26), mats["tkxel_glass"], bevel=0.018)
     cube("BabarBlock_FrontGlassRight", group, (2.24, 8.72, -3.68), (4.15, 16.35, 0.24), mats["tkxel_glass"], bevel=0.018)
     cube("BabarBlock_CentralSteppedGlassBay", group, (0.28, 8.78, -4.02), (1.54, 15.35, 0.34), mats["tkxel_glass"], bevel=0.016)
@@ -408,11 +417,19 @@ def create_tkxel_babar_block_building(mats):
         for i, z in enumerate([-0.82, 0.18, 1.18, 2.18, 3.18]):
             cube(f"BabarBlock_RightWingWindow_{floor}_{i}", group, (6.09, y, z), (0.055, 0.34, 0.36), mats["tkxel_dark_glass"], bevel=0.003)
         cube(f"BabarBlock_RightWingFloorGroove_{floor}", group, (6.13, y + 0.55, 1.35), (0.03, 0.035, 5.15), mats["tkxel_concrete_shadow"], bevel=0.002)
+        for i, z in enumerate([-2.25, -1.08, 0.1, 1.28, 2.46]):
+            cube(f"BabarBlock_LeftReturnWindow_{floor}_{i}", group, (-4.96, y, z), (0.06, 0.34, 0.34), mats["tkxel_dark_glass"], bevel=0.003)
+        cube(f"BabarBlock_LeftReturnFloorGroove_{floor}", group, (-5.0, y + 0.55, 0.05), (0.035, 0.035, 5.45), mats["tkxel_concrete_shadow"], bevel=0.002)
 
     for floor in range(9):
         y = 2.7 + floor * 1.34
         for i, x in enumerate([-3.2, -1.85, -0.5, 0.85, 2.2, 3.55]):
             cube(f"BabarBlock_RearWindow_{floor}_{i}", group, (x, y, 4.72), (0.52, 0.38, 0.07), mats["tkxel_dark_glass"], bevel=0.004)
+        cube(f"BabarBlock_RearFloorGroove_{floor}", group, (0.2, y + 0.55, 4.94), (7.1, 0.035, 0.035), mats["tkxel_concrete_shadow"], bevel=0.002)
+
+    for floor in range(8):
+        y = 3.0 + floor * 1.48
+        cube(f"BabarBlock_FrontWingSideWindow_{floor}", group, (4.78, y, -3.28), (0.06, 0.46, 0.34), mats["tkxel_dark_glass"], bevel=0.004)
 
     cube("BabarBlock_RoofSlab", group, (-0.1, 16.72, -0.2), (10.25, 0.3, 8.75), mats["tkxel_roof"], bevel=0.018)
     cube("BabarBlock_RoofGlassParapetFront", group, (-0.1, 17.12, -3.8), (9.65, 0.38, 0.16), mats["tkxel_glass"], bevel=0.006)
