@@ -21,6 +21,6 @@ boot().catch((error) => {
   console.error('Portfolio Drive failed to boot:', error);
   const loading = document.getElementById('loading');
   if (loading) {
-    loading.innerHTML = '<span class="boot-error">World failed to load. Check the console.</span>';
+    loading.innerHTML = '<span class="boot-error">World failed to load. Refresh or try again in a moment.</span>';
   }
 });

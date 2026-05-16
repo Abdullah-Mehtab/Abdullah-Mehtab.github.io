@@ -1,9 +1,7 @@
 import * as THREE from 'three';
 import {
   circuitCheckpoints,
-  ISLAND_RADIUS,
   roadSegments,
-  WORLD_HALF_SIZE,
   worldZones
 } from './worldData.js';
 import { Atmosphere } from './Atmosphere.js';
@@ -225,9 +223,6 @@ export class World {
   }
 
   update(dt, elapsed, vehiclePosition) {
-    if (vehiclePosition && (vehiclePosition.y < -8 || Math.hypot(vehiclePosition.x, vehiclePosition.z) > WORLD_HALF_SIZE + 18)) {
-      // Game owns the actual vehicle respawn. This marker keeps water/fall checks centralized.
-    }
     this.water.update(dt, elapsed);
     this.foliage.update(dt, elapsed, vehiclePosition);
     this.potatoFarm.update(dt);

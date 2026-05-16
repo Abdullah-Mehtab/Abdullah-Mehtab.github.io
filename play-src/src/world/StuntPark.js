@@ -21,7 +21,7 @@ export class StuntPark {
     ];
     for (const ramp of ramps) {
       const rampShape = createRampShape(ramp.width, ramp.length, ramp.height);
-      const mesh = new THREE.Mesh(rampShape.geometry, this.world.materials.stoneRoad);
+      const mesh = new THREE.Mesh(rampShape.geometry, this.world.materials.stuntRamp);
       mesh.name = `STUNT_${ramp.id}`;
       mesh.position.set(ramp.x, ramp.y, ramp.z);
       mesh.rotation.y = ramp.rot;
