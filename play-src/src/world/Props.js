@@ -90,7 +90,7 @@ export class Props {
       this.world.scene.add(rock);
       this.groundObject(rock, 0.03);
       this.items.push(rock);
-      this.world.physics.createFixedBall([x, 0.34 * rock.scale.x, z], 0.42 * rock.scale.x, {
+      this.world.physics.createFixedBall([x, 0.28 * rock.scale.x, z], 0.32 * rock.scale.x, {
         friction: 0.95,
         restitution: 0.01
       });

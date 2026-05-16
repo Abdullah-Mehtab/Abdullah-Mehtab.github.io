@@ -61,9 +61,9 @@ export class VehicleController {
     this.speed = Math.hypot(velocity.x, velocity.y * 0.12, velocity.z);
     this.localSpeed = localVelocity.z;
     const horizontalSpeed = Math.hypot(velocity.x, velocity.z);
-    const speedNorm = THREE.MathUtils.clamp(horizontalSpeed / 40, 0, 1);
+    const speedNorm = THREE.MathUtils.clamp(horizontalSpeed / 52, 0, 1);
     const rawSteer = THREE.MathUtils.clamp((left ? 1 : 0) + (right ? -1 : 0) + THREE.MathUtils.clamp(-joy.x, -1, 1), -1, 1);
-    const steerLimit = THREE.MathUtils.lerp(0.54, 0.24, speedNorm) * (handbrake ? 1.22 : 1);
+    const steerLimit = THREE.MathUtils.lerp(0.56, 0.22, speedNorm) * (handbrake ? 1.22 : 1);
     const steerTarget = rawSteer * steerLimit;
     this.steering += (steerTarget - this.steering) * Math.min(1, dt * (handbrake ? 10.5 : 7.8));
 
@@ -71,13 +71,13 @@ export class VehicleController {
     const throttleRate = throttleTarget === 0 ? 4.4 : 6.6;
     this.throttle += (throttleTarget - this.throttle) * Math.min(1, dt * throttleRate);
 
-    const topSpeed = boost ? 52 : 34;
-    const reverseTopSpeed = 13;
+    const topSpeed = boost ? 82 : 54;
+    const reverseTopSpeed = 18;
     const top = this.throttle >= 0 ? topSpeed : reverseTopSpeed;
     const overflow = Math.max(0, Math.abs(this.localSpeed) - top);
     const speedRatio = THREE.MathUtils.clamp(Math.abs(this.localSpeed) / top, 0, 1.25);
-    const launchBonus = this.throttle > 0 && this.localSpeed < 5 ? 1.34 : 1;
-    const engineBase = this.throttle >= 0 ? (boost ? 470 : 258) : 124;
+    const launchBonus = this.throttle > 0 && this.localSpeed < 8 ? 1.62 : 1;
+    const engineBase = this.throttle >= 0 ? (boost ? 900 : 520) : 178;
     let engine = this.throttle * engineBase * launchBonus * (1 - Math.min(0.82, speedRatio * 0.72));
     engine /= 1 + overflow * 0.36;
     if (boost && forward && horizontalSpeed > 3 && this.groundedWheels > 1) {
@@ -143,10 +143,11 @@ export class VehicleController {
   }
 
   boost(direction, strength = 18) {
-    if (this.boostCooldown > 0) return;
+    if (this.boostCooldown > 0) return false;
     const mass = this.body.mass();
     this.body.applyImpulse({ x: direction.x * strength * mass, y: 0.08 * mass, z: direction.z * strength * mass }, true);
-    this.boostCooldown = 0.5;
+    this.boostCooldown = 0.62;
+    return true;
   }
 
   flipRecovery() {
@@ -198,7 +199,7 @@ export class VehicleController {
 
   getWheelSlip(isFront, handbrake, boost) {
     if (handbrake) return isFront ? 1.7 : 0.86;
-    return boost ? 2.08 : 1.86;
+    return boost ? 2.18 : 1.94;
   }
 
   getWheelSideFriction(isFront, handbrake) {
@@ -224,7 +225,7 @@ export class VehicleController {
     const mass = this.body.mass();
     const current = new THREE.Vector3(velocity.x, 0, velocity.z);
     const direction = current.lengthSq() > 5 ? current.normalize() : this.getForwardVector();
-    const force = mass * 0.23 * Math.min(1, dt * 60);
+    const force = mass * 0.46 * Math.min(1, dt * 60);
     this.body.applyImpulse({ x: direction.x * force, y: -0.01 * mass, z: direction.z * force }, true);
   }
 
