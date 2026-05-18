@@ -64,6 +64,14 @@ def materials():
         "tkxel_interior": mat("tkxel_babar_block_occupied_shadow", (0.018, 0.025, 0.028, 1), 0.7, metallic=0.08),
         "tkxel_roof": mat("tkxel_babar_block_roof_parapet", (0.05, 0.07, 0.075, 1), 0.56, metallic=0.18),
         "tkxel_metal": mat("tkxel_babar_block_roof_metal", (0.64, 0.58, 0.43, 1), 0.44, metallic=0.36),
+        "armacost_brick": mat("fccu_armacost_warm_red_brick", (0.48, 0.19, 0.12, 1), 0.9),
+        "armacost_brick_dark": mat("fccu_armacost_recessed_brick_shadow", (0.22, 0.075, 0.045, 1), 0.94),
+        "armacost_brick_light": mat("fccu_armacost_sunlit_brick_edges", (0.63, 0.29, 0.18, 1), 0.88),
+        "armacost_mortar": mat("fccu_armacost_mortar_lines", (0.25, 0.18, 0.14, 1), 0.96),
+        "armacost_limestone": mat("fccu_armacost_pale_limestone_trim", (0.71, 0.62, 0.48, 1), 0.82),
+        "armacost_window": mat("fccu_armacost_green_tinted_glass", (0.035, 0.42, 0.38, 1), 0.24, metallic=0.06, emission=(0.0, 0.035, 0.03, 1)),
+        "armacost_shadow": mat("fccu_armacost_deep_arch_shadow", (0.028, 0.022, 0.018, 1), 0.8),
+        "armacost_metal": mat("fccu_armacost_dark_railing_metal", (0.055, 0.05, 0.045, 1), 0.54, metallic=0.42),
     }
 
 
@@ -181,6 +189,7 @@ def create_props(mats):
     create_potato_crop(mats)
     create_potato(mats)
     create_potato_farm(mats)
+    create_armacost_s_block_building(mats)
     create_tkxel_babar_block_building(mats)
 
 
@@ -363,6 +372,202 @@ def create_potato_farm(mats):
     for z in [-5.0, -2.5, 0, 2.5, 5.0]:
         cube("Farm_Fence_SidePost", group, (-7.6, 0.88, z), (0.28, 1.75, 0.28), mats["wood"], bevel=0.02)
         cube("Farm_Fence_SidePost", group, (7.6, 0.88, z), (0.28, 1.75, 0.28), mats["wood"], bevel=0.02)
+
+
+def create_armacost_s_block_building(mats):
+    group = root("EnvLandmark_library")
+
+    # FCCU S-block / Armacost Building identity:
+    # long red-brick academic mass, central recessed entrance, stacked balconies,
+    # green windows, brick jaali panels, and an octagonal S-octa courtyard core.
+    cube("Armacost_SitePlinth", group, (0, 0.12, 0.35), (18.8, 0.24, 12.6), mats["armacost_limestone"], bevel=0.025)
+    cube("Armacost_FrontSteps", group, (0, 0.24, -5.72), (6.0, 0.28, 1.15), mats["armacost_limestone"], bevel=0.018)
+    for index, width in enumerate([5.5, 4.8, 4.1]):
+        cube(f"Armacost_Step_{index}", group, (0, 0.18 + index * 0.16, -6.15 + index * 0.36), (width, 0.16, 0.34), mats["armacost_limestone"], bevel=0.012)
+
+    cube("Armacost_LeftMainBlock", group, (-5.2, 5.62, -0.92), (6.55, 11.2, 2.55), mats["armacost_brick"], bevel=0.028)
+    cube("Armacost_RightMainBlock", group, (5.2, 5.62, -0.92), (6.55, 11.2, 2.55), mats["armacost_brick"], bevel=0.028)
+    cube("Armacost_CentralEntryTower", group, (0, 6.35, -1.02), (4.25, 12.65, 2.75), mats["armacost_brick"], bevel=0.028)
+    cube("Armacost_LeftRearWing", group, (-7.2, 5.42, 2.8), (2.85, 10.85, 8.7), mats["armacost_brick"], bevel=0.026)
+    cube("Armacost_RightRearWing", group, (7.2, 5.42, 2.8), (2.85, 10.85, 8.7), mats["armacost_brick"], bevel=0.026)
+    cube("Armacost_RearBlock", group, (0, 5.3, 6.72), (12.0, 10.6, 2.55), mats["armacost_brick"], bevel=0.026)
+
+    for x in [-8.88, -4.02, -2.16, 2.16, 4.02, 8.88]:
+        cube(f"Armacost_FrontVerticalPier_{x:+.2f}", group, (x, 5.82, -2.42), (0.42, 11.45, 0.58), mats["armacost_brick_dark"], bevel=0.018)
+        cube(f"Armacost_PierSunEdge_{x:+.2f}", group, (x - 0.16, 5.82, -2.74), (0.05, 10.8, 0.08), mats["armacost_brick_light"], bevel=0.004)
+
+    for y in [1.12, 2.9, 4.72, 6.54, 8.36, 10.18]:
+        cube(f"Armacost_FrontFloorBand_{y:.1f}", group, (0, y, -2.74), (17.2, 0.12, 0.18), mats["armacost_mortar"], bevel=0.003)
+        cube(f"Armacost_BackFloorBand_{y:.1f}", group, (0, y, 8.04), (10.6, 0.1, 0.15), mats["armacost_mortar"], bevel=0.003)
+
+    add_armacost_brick_texture(group, "Front", z=-2.76, x_center=0, width=17.25, y_min=0.72, y_max=11.15, mats=mats)
+    add_armacost_brick_texture(group, "Rear", z=8.08, x_center=0, width=10.8, y_min=0.72, y_max=10.6, mats=mats)
+    add_armacost_side_brick_texture(group, "Left", x=-8.74, z_center=2.58, depth=7.5, y_min=0.82, y_max=10.45, mats=mats)
+    add_armacost_side_brick_texture(group, "Right", x=8.74, z_center=2.58, depth=7.5, y_min=0.82, y_max=10.45, mats=mats)
+
+    for side, x_positions in [
+        ("Left", [-7.2, -6.05, -4.85, -3.65]),
+        ("Right", [3.65, 4.85, 6.05, 7.2]),
+    ]:
+        for floor, y in enumerate([2.0, 3.78, 5.58, 7.38, 9.18]):
+            for x in x_positions:
+                add_armacost_window(group, f"Armacost_{side}_Window_{floor}_{x:+.1f}", x, y, -2.88, 0.62, 0.92, mats)
+
+    for floor, y in enumerate([2.12, 4.0, 5.88, 7.76, 9.64]):
+        add_armacost_window(group, f"Armacost_CenterLeft_Window_{floor}", -1.42, y, -2.9, 0.54, 0.84, mats)
+        add_armacost_window(group, f"Armacost_CenterRight_Window_{floor}", 1.42, y, -2.9, 0.54, 0.84, mats)
+        add_armacost_balcony(group, floor, 0, y, -3.08, mats)
+
+    for floor, y in enumerate([2.0, 3.76, 5.52, 7.28, 9.04]):
+        for x in [-4.75, -3.45, -2.15, -0.85, 0.85, 2.15, 3.45, 4.75]:
+            add_armacost_rear_window(group, f"Armacost_Rear_Window_{floor}_{x:+.1f}", x, y, 8.16, 0.56, 0.82, mats)
+        for side, x in [("Left", -8.9), ("Right", 8.9)]:
+            for z in [-0.2, 1.18, 2.56, 3.94, 5.32]:
+                add_armacost_side_window(group, f"Armacost_{side}_SideWindow_{floor}_{z:+.1f}", x, y, z, side, mats)
+
+    for x in [-2.7, 0, 2.7]:
+        add_armacost_arch(group, f"Armacost_GroundArch_{x:+.1f}", x, 1.08, -3.08, 1.2, 1.82, mats)
+    cube("Armacost_EntranceShadow", group, (0, 0.9, -3.2), (2.1, 1.65, 0.16), mats["armacost_shadow"], bevel=0.008)
+    cube("Armacost_EntranceLintel", group, (0, 1.98, -3.16), (4.6, 0.22, 0.26), mats["armacost_limestone"], bevel=0.012)
+    add_jaali_panel(group, "Armacost_EntranceJaaliLeft", -3.85, 1.58, -3.05, 1.12, 0.9, mats)
+    add_jaali_panel(group, "Armacost_EntranceJaaliRight", 3.85, 1.58, -3.05, 1.12, 0.9, mats)
+
+    for side, x in [("Left", -3.05), ("Right", 3.05)]:
+        add_armacost_spiral_stair(group, f"Armacost_{side}_SpiralStair", x, 4.9, -3.04, mats)
+
+    add_armacost_octa_courtyard(group, mats)
+
+    for x in [-7.2, -4.8, -2.2, 2.2, 4.8, 7.2]:
+        cube(f"Armacost_RoofParapetFront_{x:+.1f}", group, (x, 11.47, -2.58), (1.2, 0.52, 0.5), mats["armacost_brick_dark"], bevel=0.012)
+    cube("Armacost_RoofLineFront", group, (0, 11.42, -2.55), (17.4, 0.22, 0.38), mats["armacost_limestone"], bevel=0.01)
+    cube("Armacost_RoofLineRear", group, (0, 10.92, 8.02), (11.4, 0.22, 0.34), mats["armacost_limestone"], bevel=0.01)
+    cube("Armacost_RooftopUtility_A", group, (-2.4, 11.88, 4.85), (2.2, 0.72, 1.25), mats["armacost_limestone"], bevel=0.014)
+    cube("Armacost_RooftopUtility_B", group, (2.3, 11.82, 5.1), (1.65, 0.62, 1.1), mats["armacost_limestone"], bevel=0.014)
+
+
+def add_armacost_window(group, name, x, y, z, width, height, mats):
+    cube(f"{name}_ShadowBox", group, (x, y, z + 0.012), (width + 0.18, height + 0.18, 0.12), mats["armacost_shadow"], bevel=0.004)
+    cube(f"{name}_Glass", group, (x, y, z - 0.055), (width, height, 0.08), mats["armacost_window"], bevel=0.004)
+    cube(f"{name}_TopBrickLintel", group, (x, y + height / 2 + 0.13, z - 0.07), (width + 0.34, 0.08, 0.1), mats["armacost_brick_light"], bevel=0.004)
+    cube(f"{name}_Sill", group, (x, y - height / 2 - 0.12, z - 0.08), (width + 0.28, 0.08, 0.14), mats["armacost_limestone"], bevel=0.004)
+
+
+def add_armacost_rear_window(group, name, x, y, z, width, height, mats):
+    cube(f"{name}_ShadowBox", group, (x, y, z - 0.012), (width + 0.18, height + 0.18, 0.12), mats["armacost_shadow"], bevel=0.004)
+    cube(f"{name}_Glass", group, (x, y, z + 0.055), (width, height, 0.08), mats["armacost_window"], bevel=0.004)
+    cube(f"{name}_TopBrickLintel", group, (x, y + height / 2 + 0.13, z + 0.07), (width + 0.34, 0.08, 0.1), mats["armacost_brick_light"], bevel=0.004)
+    cube(f"{name}_Sill", group, (x, y - height / 2 - 0.12, z + 0.08), (width + 0.28, 0.08, 0.14), mats["armacost_limestone"], bevel=0.004)
+
+
+def add_armacost_side_window(group, name, x, y, z, side, mats):
+    sign = -1 if side == "Left" else 1
+    cube(f"{name}_ShadowBox", group, (x, y, z), (0.12, 0.96, 0.76), mats["armacost_shadow"], bevel=0.004)
+    cube(f"{name}_Glass", group, (x + sign * 0.052, y, z), (0.08, 0.78, 0.56), mats["armacost_window"], bevel=0.004)
+    cube(f"{name}_Lintel", group, (x + sign * 0.07, y + 0.52, z), (0.1, 0.08, 0.76), mats["armacost_brick_light"], bevel=0.003)
+    cube(f"{name}_Sill", group, (x + sign * 0.07, y - 0.52, z), (0.1, 0.08, 0.72), mats["armacost_limestone"], bevel=0.003)
+
+
+def add_armacost_arch(group, name, x, y, z, width, height, mats):
+    cube(f"{name}_RectShadow", group, (x, y - 0.16, z), (width, height * 0.78, 0.12), mats["armacost_shadow"], bevel=0.006)
+    create_arch_plane(f"{name}_ArchShadow", group, x, y + height * 0.22, z - 0.055, width, height * 0.62, mats["armacost_shadow"])
+    cube(f"{name}_LeftJamb", group, (x - width / 2 - 0.11, y - 0.1, z - 0.02), (0.16, height * 0.82, 0.18), mats["armacost_brick_light"], bevel=0.006)
+    cube(f"{name}_RightJamb", group, (x + width / 2 + 0.11, y - 0.1, z - 0.02), (0.16, height * 0.82, 0.18), mats["armacost_brick_light"], bevel=0.006)
+
+
+def create_arch_plane(name, group, x, y, z, width, height, material):
+    half = width / 2
+    radius = half
+    base_h = max(0.01, height - radius)
+    verts = [(-half, -height / 2, 0), (half, -height / 2, 0), (half, -height / 2 + base_h, 0)]
+    for i in range(10):
+        angle = math.pi * (i / 9)
+        verts.append((math.cos(angle) * radius, -height / 2 + base_h + math.sin(angle) * radius, 0))
+    verts.append((-half, -height / 2 + base_h, 0))
+    faces = [tuple(range(len(verts)))]
+    mesh = bpy.data.meshes.new(f"{name}Mesh")
+    mesh.from_pydata(verts, [], faces)
+    mesh.update()
+    obj = bpy.data.objects.new(name, mesh)
+    bpy.context.collection.objects.link(obj)
+    obj.location = (x, y, z)
+    obj.data.materials.append(material)
+    obj.parent = group
+    return obj
+
+
+def add_armacost_balcony(group, floor, x, y, z, mats):
+    cube(f"Armacost_CentralBalcony_{floor}_Slab", group, (x, y - 0.48, z - 0.28), (1.52, 0.12, 0.72), mats["armacost_limestone"], bevel=0.008)
+    cube(f"Armacost_CentralBalcony_{floor}_BackShadow", group, (x, y, z - 0.03), (1.28, 1.05, 0.12), mats["armacost_shadow"], bevel=0.004)
+    add_jaali_panel(group, f"Armacost_CentralBalcony_{floor}_Jaali", x, y - 0.08, z - 0.48, 1.28, 0.42, mats)
+    for sx in [-0.68, 0.68]:
+        cube(f"Armacost_CentralBalcony_{floor}_SidePier_{sx:+.1f}", group, (x + sx, y, z - 0.18), (0.12, 1.22, 0.28), mats["armacost_brick_light"], bevel=0.004)
+
+
+def add_jaali_panel(group, name, x, y, z, width, height, mats):
+    cube(f"{name}_Base", group, (x, y, z), (width, height, 0.08), mats["armacost_brick_dark"], bevel=0.004)
+    cols = max(3, int(width / 0.18))
+    rows = max(2, int(height / 0.16))
+    for row in range(rows):
+        for col in range(cols):
+            if (row + col) % 2:
+                px = x - width * 0.42 + col * (width * 0.84 / max(cols - 1, 1))
+                py = y - height * 0.36 + row * (height * 0.72 / max(rows - 1, 1))
+                cube(f"{name}_Vent_{row}_{col}", group, (px, py, z - 0.055), (0.06, 0.055, 0.035), mats["armacost_shadow"], bevel=0.002)
+
+
+def add_armacost_spiral_stair(group, prefix, x, y, z, mats):
+    cyl(f"{prefix}_Core", group, (x, y, z - 0.06), 0.18, 8.4, mats["armacost_brick_dark"], 14)
+    for index in range(32):
+        angle = index * 0.46
+        sy = 1.0 + index * 0.25
+        sx = x + math.cos(angle) * 0.42
+        sz = z + math.sin(angle) * 0.42
+        cube(f"{prefix}_Step_{index}", group, (sx, sy, sz), (0.5, 0.045, 0.18), mats["armacost_limestone"], rot=(0, angle, 0), bevel=0.003)
+    for index in range(7):
+        cube(f"{prefix}_Landing_{index}", group, (x, 1.25 + index * 1.22, z - 0.5), (1.25, 0.08, 0.24), mats["armacost_limestone"], bevel=0.004)
+
+
+def add_armacost_octa_courtyard(group, mats):
+    center_z = 3.35
+    radius = 2.25
+    for i in range(8):
+        angle = i / 8 * math.tau + math.pi / 8
+        x = math.cos(angle) * radius
+        z = center_z + math.sin(angle) * radius
+        length = 1.85
+        cube(f"Armacost_SOCTA_Wall_{i}", group, (x, 4.92, z), (length, 8.65, 0.22), mats["armacost_brick"], rot=(0, -angle, 0), bevel=0.01)
+        for level, y in enumerate([2.2, 3.9, 5.6, 7.3]):
+            cube(f"Armacost_SOCTA_Opening_{i}_{level}", group, (x, y, z - 0.14), (0.82, 0.82, 0.08), mats["armacost_shadow"], rot=(0, -angle, 0), bevel=0.004)
+    cube("Armacost_SOCTA_CourtyardGarden", group, (0, 0.22, center_z), (3.6, 0.12, 3.6), mats["grass"], bevel=0.02)
+    cyl("Armacost_SOCTA_CentralPlanter", group, (0, 0.48, center_z), 0.62, 0.34, mats["armacost_limestone"], 18)
+    for i in range(5):
+        angle = i / 5 * math.tau
+        ico(f"Armacost_SOCTA_Shrub_{i}", group, (math.cos(angle) * 1.1, 0.72, center_z + math.sin(angle) * 1.1), 0.32, mats["leaf"], scale=(1.2, 0.55, 0.85))
+
+
+def add_armacost_brick_texture(group, prefix, z, x_center, width, y_min, y_max, mats):
+    rows = int((y_max - y_min) / 0.34)
+    for row in range(rows):
+        y = y_min + row * 0.34
+        cube(f"Armacost_{prefix}_MortarRow_{row}", group, (x_center, y, z), (width, 0.025, 0.028), mats["armacost_mortar"], bevel=0.001)
+        if row % 3 == 0:
+            bricks = 16
+            for col in range(bricks):
+                x = x_center - width * 0.46 + col * (width * 0.92 / (bricks - 1))
+                if abs(x) < 2.3 and 1.4 < y < 10.4:
+                    continue
+                cube(f"Armacost_{prefix}_BrickTick_{row}_{col}", group, (x, y + 0.14, z - 0.018), (0.028, 0.18, 0.025), mats["armacost_brick_dark"], bevel=0.001)
+
+
+def add_armacost_side_brick_texture(group, prefix, x, z_center, depth, y_min, y_max, mats):
+    rows = int((y_max - y_min) / 0.38)
+    for row in range(rows):
+        y = y_min + row * 0.38
+        cube(f"Armacost_{prefix}_SideMortarRow_{row}", group, (x, y, z_center), (0.03, 0.022, depth), mats["armacost_mortar"], bevel=0.001)
+        if row % 4 == 0:
+            for col in range(8):
+                z = z_center - depth * 0.42 + col * (depth * 0.84 / 7)
+                cube(f"Armacost_{prefix}_SideBrickTick_{row}_{col}", group, (x - 0.018 if x > 0 else x + 0.018, y + 0.14, z), (0.026, 0.17, 0.03), mats["armacost_brick_dark"], bevel=0.001)
 
 
 def create_tkxel_babar_block_building(mats):
