@@ -292,7 +292,8 @@ def create_lantern(mats):
 
 def create_rock(mats):
     group = root("EnvShoreRock")
-    ico("Rock_Body", group, (0, 0.4, 0), 0.9, mats["cliff"], scale=(1.25, 0.58, 0.86), rot=(0.2, 0.4, 0.1))
+    cyl("Rock_GroundedBase", group, (0, 0.12, 0), 0.72, 0.18, mats["cliff"], 14)
+    ico("Rock_Body", group, (0, 0.36, 0), 0.9, mats["cliff"], scale=(1.25, 0.52, 0.86), rot=(0.2, 0.4, 0.1))
 
 
 def create_barrel(mats):
@@ -391,6 +392,13 @@ def create_armacost_s_block_building(mats):
     cube("Armacost_LeftRearWing", group, (-7.2, 5.42, 2.8), (2.85, 10.85, 8.7), mats["armacost_brick"], bevel=0.026)
     cube("Armacost_RightRearWing", group, (7.2, 5.42, 2.8), (2.85, 10.85, 8.7), mats["armacost_brick"], bevel=0.026)
     cube("Armacost_RearBlock", group, (0, 5.3, 6.72), (12.0, 10.6, 2.55), mats["armacost_brick"], bevel=0.026)
+    cube("Armacost_FrontFacadeSkin", group, (0, 5.58, -2.78), (17.82, 10.98, 0.22), mats["armacost_brick"], bevel=0.006)
+    cube("Armacost_RearFacadeSkin", group, (0, 5.3, 8.08), (12.35, 10.45, 0.22), mats["armacost_brick"], bevel=0.006)
+    cube("Armacost_LeftFacadeSkin", group, (-8.72, 5.34, 2.52), (0.22, 10.55, 7.72), mats["armacost_brick"], bevel=0.006)
+    cube("Armacost_RightFacadeSkin", group, (8.72, 5.34, 2.52), (0.22, 10.55, 7.72), mats["armacost_brick"], bevel=0.006)
+    cube("Armacost_MainRoofDeck", group, (0, 11.32, -0.56), (17.9, 0.24, 3.2), mats["armacost_brick_dark"], bevel=0.01)
+    cube("Armacost_RearRoofDeck", group, (0, 10.78, 4.65), (15.2, 0.24, 7.15), mats["armacost_brick_dark"], bevel=0.01)
+    cube("Armacost_CentralTowerRoofDeck", group, (0, 12.79, -1.0), (4.65, 0.22, 2.95), mats["armacost_brick_dark"], bevel=0.01)
 
     for x in [-8.88, -4.02, -2.16, 2.16, 4.02, 8.88]:
         cube(f"Armacost_FrontVerticalPier_{x:+.2f}", group, (x, 5.82, -2.42), (0.42, 11.45, 0.58), mats["armacost_brick_dark"], bevel=0.018)
@@ -433,7 +441,7 @@ def create_armacost_s_block_building(mats):
     add_jaali_panel(group, "Armacost_EntranceJaaliRight", 3.85, 1.58, -3.05, 1.12, 0.9, mats)
 
     for side, x in [("Left", -3.05), ("Right", 3.05)]:
-        add_armacost_spiral_stair(group, f"Armacost_{side}_SpiralStair", x, 4.9, -3.04, mats)
+        add_armacost_stairwell_stack(group, f"Armacost_{side}_Stairwell", x, mats)
 
     add_armacost_octa_courtyard(group, mats)
 
@@ -441,8 +449,8 @@ def create_armacost_s_block_building(mats):
         cube(f"Armacost_RoofParapetFront_{x:+.1f}", group, (x, 11.47, -2.58), (1.2, 0.52, 0.5), mats["armacost_brick_dark"], bevel=0.012)
     cube("Armacost_RoofLineFront", group, (0, 11.42, -2.55), (17.4, 0.22, 0.38), mats["armacost_limestone"], bevel=0.01)
     cube("Armacost_RoofLineRear", group, (0, 10.92, 8.02), (11.4, 0.22, 0.34), mats["armacost_limestone"], bevel=0.01)
-    cube("Armacost_RooftopUtility_A", group, (-2.4, 11.88, 4.85), (2.2, 0.72, 1.25), mats["armacost_limestone"], bevel=0.014)
-    cube("Armacost_RooftopUtility_B", group, (2.3, 11.82, 5.1), (1.65, 0.62, 1.1), mats["armacost_limestone"], bevel=0.014)
+    cube("Armacost_RooftopUtility_A", group, (-2.4, 11.2, 4.85), (2.2, 0.72, 1.25), mats["armacost_limestone"], bevel=0.014)
+    cube("Armacost_RooftopUtility_B", group, (2.3, 11.09, 5.1), (1.65, 0.62, 1.1), mats["armacost_limestone"], bevel=0.014)
 
 
 def add_armacost_window(group, name, x, y, z, width, height, mats):
@@ -515,16 +523,17 @@ def add_jaali_panel(group, name, x, y, z, width, height, mats):
                 cube(f"{name}_Vent_{row}_{col}", group, (px, py, z - 0.055), (0.06, 0.055, 0.035), mats["armacost_shadow"], bevel=0.002)
 
 
-def add_armacost_spiral_stair(group, prefix, x, y, z, mats):
-    cyl(f"{prefix}_Core", group, (x, y, z - 0.06), 0.18, 8.4, mats["armacost_brick_dark"], 14)
-    for index in range(32):
-        angle = index * 0.46
-        sy = 1.0 + index * 0.25
-        sx = x + math.cos(angle) * 0.42
-        sz = z + math.sin(angle) * 0.42
-        cube(f"{prefix}_Step_{index}", group, (sx, sy, sz), (0.5, 0.045, 0.18), mats["armacost_limestone"], rot=(0, angle, 0), bevel=0.003)
-    for index in range(7):
-        cube(f"{prefix}_Landing_{index}", group, (x, 1.25 + index * 1.22, z - 0.5), (1.25, 0.08, 0.24), mats["armacost_limestone"], bevel=0.004)
+def add_armacost_stairwell_stack(group, prefix, x, mats):
+    cube(f"{prefix}_Recess", group, (x, 5.45, -3.0), (0.92, 8.8, 0.16), mats["armacost_shadow"], bevel=0.004)
+    cube(f"{prefix}_LeftReveal", group, (x - 0.56, 5.45, -2.96), (0.1, 8.95, 0.2), mats["armacost_brick_light"], bevel=0.003)
+    cube(f"{prefix}_RightReveal", group, (x + 0.56, 5.45, -2.96), (0.1, 8.95, 0.2), mats["armacost_brick_light"], bevel=0.003)
+    for floor, y in enumerate([1.78, 3.35, 4.92, 6.49, 8.06, 9.63]):
+        cube(f"{prefix}_LandingSlab_{floor}", group, (x, y, -3.13), (1.22, 0.08, 0.36), mats["armacost_limestone"], bevel=0.004)
+        cube(f"{prefix}_Rail_{floor}", group, (x, y + 0.28, -3.28), (1.02, 0.08, 0.08), mats["armacost_metal"], bevel=0.002)
+        for sx in [-0.42, 0, 0.42]:
+            cube(f"{prefix}_RailPost_{floor}_{sx:+.2f}", group, (x + sx, y + 0.14, -3.28), (0.045, 0.32, 0.045), mats["armacost_metal"], bevel=0.002)
+    for floor, y in enumerate([2.55, 4.12, 5.69, 7.26, 8.83]):
+        cube(f"{prefix}_ShadowFlight_{floor}", group, (x, y, -3.18), (0.82, 0.5, 0.08), mats["armacost_shadow"], rot=(0, 0, -0.28), bevel=0.003)
 
 
 def add_armacost_octa_courtyard(group, mats):

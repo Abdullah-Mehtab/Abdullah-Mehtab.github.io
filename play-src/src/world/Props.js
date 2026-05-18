@@ -84,11 +84,11 @@ export class Props {
       const z = Math.sin(angle) * radius;
       if (this.world.roads.isNear(x, z, 6.5)) continue;
       const rock = this.world.cloneEnvironmentAsset('EnvShoreRock') || this.createRock();
-      rock.position.set(x, 0.08, z);
+      rock.position.set(x, 0, z);
       rock.rotation.y = pseudoRandom(i * 3.7) * Math.PI * 2;
       rock.scale.setScalar(0.72 + pseudoRandom(i * 7.3) * 1.25);
       this.world.scene.add(rock);
-      this.groundObject(rock, 0.03);
+      this.groundObject(rock, -0.045);
       this.items.push(rock);
       this.world.physics.createFixedBall([x, 0.28 * rock.scale.x, z], 0.32 * rock.scale.x, {
         friction: 0.95,
