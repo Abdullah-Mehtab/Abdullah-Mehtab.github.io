@@ -291,7 +291,7 @@ function landmarkCollider(shape) {
     case 'office':
       return { type: 'box', size: [10.4, 17.2, 9.2] };
     case 'library':
-      return { type: 'box', size: [7.2, 3.2, 5.4] };
+      return { type: 'box', size: [17.2, 12.4, 11.6] };
     case 'terminal':
       return { type: 'box', size: [4.4, 2.2, 1.2] };
     case 'trophy':
