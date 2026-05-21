@@ -120,8 +120,8 @@ def reset_scene():
 
 def create_materials():
     return {
-        "paint": material("deep_burnt_red_metallic_paint", (0.48, 0.06, 0.022, 1), metallic=0.62, roughness=0.32),
-        "paint_dark": material("dark_red_shadowed_cabin_paint", (0.18, 0.018, 0.014, 1), metallic=0.48, roughness=0.34),
+        "paint": material("deep_burnt_red_metallic_paint", (0.48, 0.06, 0.022, 1), metallic=0.46, roughness=0.48),
+        "paint_dark": material("dark_red_shadowed_cabin_paint", (0.18, 0.018, 0.014, 1), metallic=0.32, roughness=0.5),
         "stripe": material("aged_ivory_center_racing_stripe", (0.72, 0.68, 0.54, 1), metallic=0.03, roughness=0.62),
         "glass": material("attached_smoked_black_glass", (0.012, 0.028, 0.038, 0.88), metallic=0.0, roughness=0.26, alpha=0.88),
         "interior": material("visible_black_leather_interior", (0.01, 0.009, 0.008, 1), metallic=0.0, roughness=0.66),
@@ -336,8 +336,8 @@ def add_side_trim(parent, mats):
 
 def add_wheels(parent, mats):
     for side, label in [(-1, "Left"), (1, "Right")]:
-        add_wheel(f"WheelFront{label}", (side * 1.105, 0.37, 1.6), side, mats, parent)
-        add_wheel(f"WheelRear{label}", (side * 1.105, 0.37, -1.66), side, mats, parent)
+        add_wheel(f"WheelFront{label}", (side * 1.105, 0.47, 1.6), side, mats, parent)
+        add_wheel(f"WheelRear{label}", (side * 1.105, 0.47, -1.66), side, mats, parent)
 
 
 def add_wheel(name, location, side, mats, parent):
@@ -347,24 +347,46 @@ def add_wheel(name, location, side, mats, parent):
     empty.parent = parent
 
     tire = add_cylinder(
-        f"WheelMesh_{name}",
+        f"WheelMesh_{name}_TreadBarrel",
         location,
-        radius=0.39,
-        depth=0.31,
+        radius=0.43,
+        depth=0.38,
         mat=mats["sidewall"],
         parent=empty,
         rotation=(0, math.radians(90), 0),
-        vertices=56,
+        vertices=64,
     )
     tire.location = (0, 0, 0)
     tire.rotation_euler = (0, math.radians(90), 0)
+    for face, x in [("Outer", 0.19 * side), ("Inner", -0.19 * side)]:
+        ring = add_torus(
+            f"WheelMesh_{name}_{face}RoundedSidewall",
+            (x, 0, 0),
+            major_radius=0.34,
+            minor_radius=0.075,
+            mat=mats["rubber"],
+            parent=empty,
+            rotation=(0, math.radians(90), 0),
+        )
+        ring.rotation_euler = (0, math.radians(90), 0)
+    for index, angle in enumerate([0, math.pi / 4, math.pi / 2, math.pi * 3 / 4]):
+        groove = add_cube(
+            f"WheelMesh_{name}_TreadGroove_{index}",
+            (0, math.sin(angle) * 0.43, math.cos(angle) * 0.43),
+            (0.42, 0.026, 0.05),
+            mats["rubber"],
+            empty,
+            rotation=(0, 0, angle),
+            bevel=0.002,
+        )
+        groove.location = (0, math.sin(angle) * 0.43, math.cos(angle) * 0.43)
 
     hub_x = 0.18 * side
     cap = add_cylinder(
-        f"Hubcap_{name}",
+        f"WheelMesh_Hubcap_{name}",
         (hub_x, 0, 0),
-        radius=0.275,
-        depth=0.04,
+        radius=0.295,
+        depth=0.046,
         mat=mats["hubcap"],
         parent=empty,
         rotation=(0, math.radians(90), 0),
@@ -372,9 +394,9 @@ def add_wheel(name, location, side, mats, parent):
     )
     cap.rotation_euler = (0, math.radians(90), 0)
     add_cylinder(
-        f"Hubcap_DarkInset_{name}",
+        f"WheelMesh_Hubcap_DarkInset_{name}",
         (hub_x + 0.024 * side, 0, 0),
-        radius=0.17,
+        radius=0.185,
         depth=0.022,
         mat=mats["dark_chrome"],
         parent=empty,
@@ -382,9 +404,9 @@ def add_wheel(name, location, side, mats, parent):
         vertices=40,
     )
     add_cylinder(
-        f"Hubcap_CenterButton_{name}",
+        f"WheelMesh_Hubcap_CenterButton_{name}",
         (hub_x + 0.048 * side, 0, 0),
-        radius=0.055,
+        radius=0.065,
         depth=0.018,
         mat=mats["hubcap"],
         parent=empty,
@@ -423,6 +445,23 @@ def add_shadow_helpers(parent, mats):
 
 def add_cylinder(name, location, radius, depth, mat, parent, rotation=(0, 0, 0), vertices=32):
     bpy.ops.mesh.primitive_cylinder_add(vertices=vertices, radius=radius, depth=depth, location=location, rotation=rotation)
+    obj = bpy.context.object
+    obj.name = name
+    obj.data.materials.append(mat)
+    obj.parent = parent
+    shade_smooth(obj)
+    return obj
+
+
+def add_torus(name, location, major_radius, minor_radius, mat, parent, rotation=(0, 0, 0), major_segments=64, minor_segments=12):
+    bpy.ops.mesh.primitive_torus_add(
+        major_segments=major_segments,
+        minor_segments=minor_segments,
+        major_radius=major_radius,
+        minor_radius=minor_radius,
+        location=location,
+        rotation=rotation,
+    )
     obj = bpy.context.object
     obj.name = name
     obj.data.materials.append(mat)
