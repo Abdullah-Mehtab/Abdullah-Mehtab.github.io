@@ -120,10 +120,10 @@ def reset_scene():
 
 def create_materials():
     return {
-        "paint": material("deep_burnt_red_metallic_paint", (0.48, 0.06, 0.022, 1), metallic=0.46, roughness=0.48),
-        "paint_dark": material("dark_red_shadowed_cabin_paint", (0.18, 0.018, 0.014, 1), metallic=0.32, roughness=0.5),
+        "paint": material("deep_burnt_red_metallic_paint", (0.56, 0.075, 0.026, 1), metallic=0.58, roughness=0.36),
+        "paint_dark": material("dark_red_shadowed_cabin_paint", (0.38, 0.045, 0.024, 1), metallic=0.48, roughness=0.4),
         "stripe": material("aged_ivory_center_racing_stripe", (0.72, 0.68, 0.54, 1), metallic=0.03, roughness=0.62),
-        "glass": material("attached_smoked_black_glass", (0.012, 0.028, 0.038, 0.88), metallic=0.0, roughness=0.26, alpha=0.88),
+        "glass": material("attached_smoked_reflective_glass", (0.095, 0.15, 0.17, 0.68), metallic=0.0, roughness=0.16, alpha=0.68),
         "interior": material("visible_black_leather_interior", (0.01, 0.009, 0.008, 1), metallic=0.0, roughness=0.66),
         "rubber": material("deep_black_rubber", (0.006, 0.006, 0.007, 1), metallic=0.0, roughness=0.78),
         "sidewall": material("satin_tire_sidewall", (0.012, 0.012, 0.014, 1), metallic=0.0, roughness=0.88),
@@ -341,18 +341,23 @@ def add_wheels(parent, mats):
 
 
 def add_wheel(name, location, side, mats, parent):
-    empty = bpy.data.objects.new(name, None)
-    bpy.context.collection.objects.link(empty)
-    empty.location = location
-    empty.parent = parent
+    steer_pivot = bpy.data.objects.new(name, None)
+    bpy.context.collection.objects.link(steer_pivot)
+    steer_pivot.location = location
+    steer_pivot.parent = parent
+
+    spin_pivot = bpy.data.objects.new(f"WheelSpin{name}", None)
+    bpy.context.collection.objects.link(spin_pivot)
+    spin_pivot.location = (0, 0, 0)
+    spin_pivot.parent = steer_pivot
 
     tire = add_cylinder(
         f"WheelMesh_{name}_TreadBarrel",
-        location,
+        (0, 0, 0),
         radius=0.43,
         depth=0.38,
         mat=mats["sidewall"],
-        parent=empty,
+        parent=spin_pivot,
         rotation=(0, math.radians(90), 0),
         vertices=64,
     )
@@ -365,21 +370,22 @@ def add_wheel(name, location, side, mats, parent):
             major_radius=0.34,
             minor_radius=0.075,
             mat=mats["rubber"],
-            parent=empty,
+            parent=spin_pivot,
             rotation=(0, math.radians(90), 0),
         )
         ring.rotation_euler = (0, math.radians(90), 0)
-    for index, angle in enumerate([0, math.pi / 4, math.pi / 2, math.pi * 3 / 4]):
-        groove = add_cube(
-            f"WheelMesh_{name}_TreadGroove_{index}",
-            (0, math.sin(angle) * 0.43, math.cos(angle) * 0.43),
-            (0.42, 0.026, 0.05),
-            mats["rubber"],
-            empty,
-            rotation=(0, 0, angle),
-            bevel=0.002,
+    for x in [-0.12 * side, 0.12 * side]:
+        add_torus(
+            f"WheelMesh_{name}_SubtleSidewallGroove_{x:+.2f}",
+            (x, 0, 0),
+            major_radius=0.37,
+            minor_radius=0.012,
+            mat=mats["rubber"],
+            parent=spin_pivot,
+            rotation=(0, math.radians(90), 0),
+            major_segments=64,
+            minor_segments=6,
         )
-        groove.location = (0, math.sin(angle) * 0.43, math.cos(angle) * 0.43)
 
     hub_x = 0.18 * side
     cap = add_cylinder(
@@ -388,7 +394,7 @@ def add_wheel(name, location, side, mats, parent):
         radius=0.295,
         depth=0.046,
         mat=mats["hubcap"],
-        parent=empty,
+        parent=spin_pivot,
         rotation=(0, math.radians(90), 0),
         vertices=42,
     )
@@ -399,7 +405,7 @@ def add_wheel(name, location, side, mats, parent):
         radius=0.185,
         depth=0.022,
         mat=mats["dark_chrome"],
-        parent=empty,
+        parent=spin_pivot,
         rotation=(0, math.radians(90), 0),
         vertices=40,
     )
@@ -409,7 +415,7 @@ def add_wheel(name, location, side, mats, parent):
         radius=0.065,
         depth=0.018,
         mat=mats["hubcap"],
-        parent=empty,
+        parent=spin_pivot,
         rotation=(0, math.radians(90), 0),
         vertices=24,
     )

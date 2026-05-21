@@ -334,7 +334,7 @@ export class UI {
       ['WASD / Arrows', 'Drive'],
       ['Shift', 'Boost'],
       ['Ctrl / B', 'Brake'],
-      ['W + S', 'Charge burnout, release S for wheelie'],
+      ['W + S from rest', 'Charge burnout, release S for wheelie'],
       ['Space', 'Jump'],
       ['E / Enter', 'Interact'],
       ['P', 'Summon potato at the farm'],

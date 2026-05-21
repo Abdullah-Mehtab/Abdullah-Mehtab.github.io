@@ -8,6 +8,7 @@ const WHEEL_OFFSETS = [
 ];
 
 const WHEEL_RADIUS = 0.43;
+const BURNOUT_START_SPEED = 2.6;
 
 export class VehicleController {
   constructor({ physics, body }) {
@@ -23,6 +24,8 @@ export class VehicleController {
     this.boostCooldown = 0;
     this.burnoutCharge = 0;
     this.wasBurnout = false;
+    this.burnoutBlocked = false;
+    this.forwardHoldTime = 0;
     this.wheelieTimer = 0;
     this.wheelieCooldown = 0;
     this.stuckTimer = 0;
@@ -61,20 +64,34 @@ export class VehicleController {
     const right = input.actions.right || joy.x > 0.22;
     const handbrake = input.actions.handbrake;
     const brakeInput = input.actions.brake;
-    const burnout = forward && (reverse || brakeInput);
-    const boost = input.actions.boost && !burnout && !input.actions.handbrake;
     const velocity = this.body.linvel();
     const localVelocity = this.getLocalVelocity(velocity);
     this.speed = Math.hypot(velocity.x, velocity.y * 0.12, velocity.z);
     this.localSpeed = localVelocity.z;
     const horizontalSpeed = Math.hypot(velocity.x, velocity.z);
+    this.forwardHoldTime = forward ? this.forwardHoldTime + dt : 0;
+    const wantsBurnout = forward && (reverse || brakeInput);
+    const freshRestInput = wantsBurnout && this.forwardHoldTime < 0.32 && horizontalSpeed < 8;
+    if (!wantsBurnout) {
+      this.burnoutBlocked = false;
+    } else if (!this.wasBurnout && !freshRestInput && horizontalSpeed >= BURNOUT_START_SPEED) {
+      this.burnoutBlocked = true;
+    }
+    const canStartBurnout = wantsBurnout && !this.burnoutBlocked && (
+      freshRestInput ||
+      (horizontalSpeed < BURNOUT_START_SPEED && Math.abs(this.localSpeed) < BURNOUT_START_SPEED)
+    );
+    const canHoldBurnout = this.wasBurnout && horizontalSpeed < 4.2;
+    const burnout = wantsBurnout && (canStartBurnout || canHoldBurnout);
+    const boost = input.actions.boost && !burnout && !input.actions.handbrake;
+    const brakingAgainstForward = !burnout && forward && (brakeInput || (reverse && this.localSpeed > 0.8));
     const speedNorm = THREE.MathUtils.clamp(horizontalSpeed / 52, 0, 1);
     const rawSteer = THREE.MathUtils.clamp((left ? 1 : 0) + (right ? -1 : 0) + THREE.MathUtils.clamp(-joy.x, -1, 1), -1, 1);
     const steerLimit = THREE.MathUtils.lerp(0.56, 0.22, speedNorm) * (handbrake ? 1.22 : 1);
     const steerTarget = rawSteer * steerLimit;
     this.steering += (steerTarget - this.steering) * Math.min(1, dt * (handbrake ? 10.5 : 7.8));
 
-    const throttleTarget = burnout ? 1 : forward ? 1 : reverse ? -0.58 : 0;
+    const throttleTarget = burnout ? 1 : brakingAgainstForward ? 0 : forward ? 1 : reverse ? -0.58 : 0;
     const throttleRate = throttleTarget === 0 ? 4.4 : 6.6;
     this.throttle += (throttleTarget - this.throttle) * Math.min(1, dt * throttleRate);
 
@@ -97,6 +114,11 @@ export class VehicleController {
     if (changingDirection) {
       frontBrake = Math.max(frontBrake, 30);
       rearBrake = Math.max(rearBrake, 30);
+    }
+    if (brakingAgainstForward) {
+      frontBrake = Math.max(frontBrake, 44);
+      rearBrake = Math.max(rearBrake, 44);
+      engine = 0;
     }
     if (handbrake) {
       rearBrake = Math.max(rearBrake, 38);
@@ -328,5 +350,17 @@ export class VehicleController {
       this.body.applyTorqueImpulse({ x: 0, y: -intent.rawSteer * mass * 0.42, z: 0 }, true);
     }
     this.stuckTimer = 0.24;
+  }
+
+  resetTransientState() {
+    this.burnoutCharge = 0;
+    this.wasBurnout = false;
+    this.burnoutBlocked = false;
+    this.wheelieTimer = 0;
+    this.wheelieCooldown = 0;
+    this.stuckTimer = 0;
+    this.boostCooldown = 0;
+    this.forwardHoldTime = 0;
+    this.driveState = { boost: false, handbrake: false, throttle: this.throttle, slip: 0, burnout: false, wheelie: false };
   }
 }

@@ -100,10 +100,12 @@ export class Vehicle {
   installVehicleModel(model) {
     this.modelRoot.clear();
     model.name = 'VehicleModel_SabreTurboGLB';
+    const materialCache = new Map();
     model.traverse((object) => {
       if (object.isMesh) {
         object.castShadow = true;
         object.receiveShadow = false;
+        object.material = prepareVehicleMaterial(object.material, materialCache);
         if (object.material?.transparent) object.renderOrder = 7;
       }
     });
@@ -111,7 +113,7 @@ export class Vehicle {
     this.wheels = [];
     this.frontWheels = [];
     model.traverse((object) => {
-      if (object.name.startsWith('WheelFront') || object.name.startsWith('WheelRear')) {
+      if (object.name.startsWith('WheelSpin')) {
         this.wheels.push(object);
       }
       if (object.name.startsWith('WheelFront')) {
@@ -315,6 +317,7 @@ export class Vehicle {
     this.body.setRotation(yawQuaternion(heading), true);
     this.body.setLinvel({ x: 0, y: 0, z: 0 }, true);
     this.body.setAngvel({ x: 0, y: 0, z: 0 }, true);
+    this.controller?.resetTransientState();
     this.speed = 0;
     this.lastPosition.copy(position);
     this.syncModel();
@@ -336,4 +339,76 @@ export class Vehicle {
 function yawQuaternion(heading) {
   const quaternion = new THREE.Quaternion().setFromEuler(new THREE.Euler(0, heading, 0));
   return { x: quaternion.x, y: quaternion.y, z: quaternion.z, w: quaternion.w };
+}
+
+function prepareVehicleMaterial(material, cache) {
+  if (Array.isArray(material)) {
+    return material.map((item) => prepareVehicleMaterial(item, cache));
+  }
+  if (!material) return material;
+  const name = material.name || '';
+  if (cache.has(name)) return cache.get(name);
+
+  let next = material;
+  if (name.includes('metallic_paint') || name.includes('cabin_paint')) {
+    const isCabin = name.includes('cabin');
+    next = new THREE.MeshPhysicalMaterial({
+      name,
+      color: isCabin ? 0x76170c : 0x9b210d,
+      metalness: isCabin ? 0.54 : 0.66,
+      roughness: isCabin ? 0.42 : 0.34,
+      clearcoat: 0.52,
+      clearcoatRoughness: 0.28
+    });
+    addObjectSpacePaintGrain(next, isCabin);
+  } else if (name.includes('reflective_glass') || name.includes('smoked') || name.includes('glass')) {
+    next = new THREE.MeshPhysicalMaterial({
+      name,
+      color: 0x1b3035,
+      metalness: 0.0,
+      roughness: 0.12,
+      clearcoat: 0.34,
+      clearcoatRoughness: 0.1,
+      transparent: true,
+      opacity: 0.64,
+      depthWrite: false,
+      side: THREE.DoubleSide
+    });
+  }
+
+  cache.set(name, next);
+  return next;
+}
+
+function addObjectSpacePaintGrain(material, darker = false) {
+  material.onBeforeCompile = (shader) => {
+    shader.vertexShader = shader.vertexShader
+      .replace('#include <common>', '#include <common>\nvarying vec3 vSabrePaintPosition;')
+      .replace('#include <begin_vertex>', '#include <begin_vertex>\nvSabrePaintPosition = position;');
+    shader.fragmentShader = shader.fragmentShader
+      .replace('#include <common>', `#include <common>
+varying vec3 vSabrePaintPosition;
+float sabreHash(vec2 p) {
+  vec3 p3 = fract(vec3(p.xyx) * 0.1031);
+  p3 += dot(p3, p3.yzx + 33.33);
+  return fract((p3.x + p3.y) * p3.z);
+}
+float sabreNoise(vec2 p) {
+  vec2 i = floor(p);
+  vec2 f = fract(p);
+  f = f * f * (3.0 - 2.0 * f);
+  float a = sabreHash(i);
+  float b = sabreHash(i + vec2(1.0, 0.0));
+  float c = sabreHash(i + vec2(0.0, 1.0));
+  float d = sabreHash(i + vec2(1.0, 1.0));
+  return mix(mix(a, b, f.x), mix(c, d, f.x), f.y);
+}`)
+      .replace('#include <color_fragment>', `#include <color_fragment>
+float sabreFleck = sabreNoise(vSabrePaintPosition.xz * 34.0 + vSabrePaintPosition.yy * 7.0);
+float sabreFine = sabreNoise(vSabrePaintPosition.xy * 71.0 + vSabrePaintPosition.zz * 4.0);
+float sabreShade = ${darker ? '0.93' : '0.96'} + sabreFleck * 0.075 + sabreFine * 0.035;
+diffuseColor.rgb *= sabreShade;
+diffuseColor.rgb += vec3(0.035, 0.012, 0.004) * sabreFine;`);
+  };
+  material.customProgramCacheKey = () => `sabre-object-paint-grain-${darker ? 'dark' : 'red'}`;
 }
