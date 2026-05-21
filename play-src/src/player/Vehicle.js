@@ -26,8 +26,10 @@ export class Vehicle {
     this.lastBoostPad = null;
     this.distanceAccumulator = 0;
     this.lastPosition = START.clone();
+    this.visualRumbleTime = 0;
     this.trails = [];
     this.trailGeometry = new THREE.SphereGeometry(0.08, 8, 5);
+    this.smokeGeometry = new THREE.SphereGeometry(0.16, 10, 6);
     this.createBody();
     this.createLights();
     this.loadVehicleModel();
@@ -101,7 +103,7 @@ export class Vehicle {
     model.traverse((object) => {
       if (object.isMesh) {
         object.castShadow = true;
-        object.receiveShadow = true;
+        object.receiveShadow = false;
         if (object.material?.transparent) object.renderOrder = 7;
       }
     });
@@ -109,8 +111,12 @@ export class Vehicle {
     this.wheels = [];
     this.frontWheels = [];
     model.traverse((object) => {
-      if (object.name.startsWith('WheelMesh_')) this.wheels.push(object);
-      if (object.name.startsWith('WheelFront')) this.frontWheels.push(object);
+      if (object.name.startsWith('WheelFront') || object.name.startsWith('WheelRear')) {
+        this.wheels.push(object);
+      }
+      if (object.name.startsWith('WheelFront')) {
+        this.frontWheels.push(object);
+      }
     });
   }
 
@@ -157,13 +163,17 @@ export class Vehicle {
 
     this.trackDistance();
     this.syncModel();
+    this.updateVisualRumble(dt);
     this.updateWheelVisuals(dt);
     this.updateTrails(dt);
+    if (state.burnout) this.spawnRearSmoke(true);
+    if (state.wheelie && this.controller.speed > 4) this.spawnRearSmoke(false);
     if (this.controller.speed > 10 || (state.handbrake && this.controller.speed > 4)) this.spawnTrail(state.boost, state.handbrake);
   }
 
   postPhysics() {
     this.syncModel();
+    this.updateVisualRumble(0);
   }
 
   idleDampen() {
@@ -187,6 +197,28 @@ export class Vehicle {
     const rotation = this.body.rotation();
     this.group.position.set(translation.x, translation.y, translation.z);
     this.group.quaternion.set(rotation.x, rotation.y, rotation.z, rotation.w);
+  }
+
+  updateVisualRumble(dt) {
+    this.visualRumbleTime += dt * (1 + Math.min(3.2, this.speed * 0.035));
+    const state = this.controller?.driveState || {};
+    const rumble = state.burnout
+      ? 0.022
+      : state.wheelie
+        ? 0.012
+        : Math.min(0.008, this.speed * 0.00012);
+    const idle = this.speed < 1 ? 0.003 : 0;
+    const amount = rumble + idle;
+    this.modelRoot.position.set(
+      0,
+      VISUAL_Y_OFFSET + Math.sin(this.visualRumbleTime * 35) * amount,
+      0
+    );
+    this.modelRoot.rotation.set(
+      Math.sin(this.visualRumbleTime * 22) * amount * 0.18,
+      0,
+      Math.sin(this.visualRumbleTime * 29) * amount * 0.12
+    );
   }
 
   updateWheelVisuals(dt) {
@@ -217,6 +249,35 @@ export class Vehicle {
       life: boosting ? 0.46 : drifting ? 0.38 : 0.28,
       velocity: new THREE.Vector3((Math.random() - 0.5) * 0.28, 0.16 + Math.random() * 0.18, (Math.random() - 0.5) * 0.28)
     });
+  }
+
+  spawnRearSmoke(burnout = false) {
+    if (this.trails.length > 82) return;
+    const rearOffsets = [-0.88, 0.88];
+    for (const side of rearOffsets) {
+      const local = new THREE.Vector3(side, -0.42, -1.78);
+      const position = local.applyQuaternion(this.group.quaternion).add(this.group.position);
+      const particle = new THREE.Mesh(
+        this.smokeGeometry,
+        new THREE.MeshBasicMaterial({
+          color: burnout ? 0xded8cb : 0xc9c2b5,
+          transparent: true,
+          opacity: burnout ? 0.28 : 0.16,
+          depthWrite: false
+        })
+      );
+      particle.position.set(
+        position.x + (Math.random() - 0.5) * 0.36,
+        Math.max(0.2, position.y),
+        position.z + (Math.random() - 0.5) * 0.36
+      );
+      this.scene.add(particle);
+      this.trails.push({
+        mesh: particle,
+        life: burnout ? 0.72 : 0.42,
+        velocity: new THREE.Vector3((Math.random() - 0.5) * 0.38, 0.22 + Math.random() * 0.22, (Math.random() - 0.5) * 0.38)
+      });
+    }
   }
 
   updateTrails(dt) {

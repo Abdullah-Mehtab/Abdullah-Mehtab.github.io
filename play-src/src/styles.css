@@ -64,13 +64,7 @@ button {
 }
 
 .noise-layer {
-  z-index: 3;
-  opacity: 0.18;
-  mix-blend-mode: screen;
-  background:
-    linear-gradient(rgba(255, 255, 255, 0.04) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(104, 216, 255, 0.035) 1px, transparent 1px);
-  background-size: 100% 7px, 48px 100%;
+  display: none;
 }
 
 .hud {

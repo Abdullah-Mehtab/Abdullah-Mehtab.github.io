@@ -334,13 +334,14 @@ export class UI {
       ['WASD / Arrows', 'Drive'],
       ['Shift', 'Boost'],
       ['Ctrl / B', 'Brake'],
+      ['W + S', 'Charge burnout, release S for wheelie'],
       ['Space', 'Jump'],
       ['E / Enter', 'Interact'],
       ['P', 'Summon potato at the farm'],
       ['M', 'Map'],
       ['R', 'Respawn'],
       ['Mouse drag', 'Move camera'],
-      ['Gamepad', 'Left stick, A interact, B boost, RB handbrake, Y jump']
+      ['Gamepad', 'Left stick, A interact, B boost, LT brake, Y jump']
     ];
     const grid = document.createElement('div');
     grid.className = 'control-grid';
