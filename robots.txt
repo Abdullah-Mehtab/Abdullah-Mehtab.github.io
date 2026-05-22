@@ -1,6 +1,6 @@
 User-agent: *
-Allow: /Abdullah-Mehtab/
-Disallow: /Abdullah-Mehtab/classic/
-Disallow: /Abdullah-Mehtab/admin.html
+Allow: /
+Disallow: /classic/
+Disallow: /admin.html
 
-Sitemap: https://abdullah-mehtab.github.io/Abdullah-Mehtab/sitemap.xml
+Sitemap: https://abdullah-mehtab.github.io/sitemap.xml
