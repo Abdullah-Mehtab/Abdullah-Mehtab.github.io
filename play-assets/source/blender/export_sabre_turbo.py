@@ -120,8 +120,8 @@ def reset_scene():
 
 def create_materials():
     return {
-        "paint": material("deep_burnt_red_metallic_paint", (0.56, 0.075, 0.026, 1), metallic=0.58, roughness=0.36),
-        "paint_dark": material("dark_red_shadowed_cabin_paint", (0.38, 0.045, 0.024, 1), metallic=0.48, roughness=0.4),
+        "paint": material("sabre_copper_red_metallic_paint", (0.78, 0.18, 0.055, 1), metallic=0.66, roughness=0.3),
+        "paint_dark": material("sabre_warm_shadow_red_metallic_paint", (0.64, 0.12, 0.04, 1), metallic=0.6, roughness=0.34),
         "stripe": material("aged_ivory_center_racing_stripe", (0.72, 0.68, 0.54, 1), metallic=0.03, roughness=0.62),
         "glass": material("attached_smoked_reflective_glass", (0.095, 0.15, 0.17, 0.68), metallic=0.0, roughness=0.16, alpha=0.68),
         "interior": material("visible_black_leather_interior", (0.01, 0.009, 0.008, 1), metallic=0.0, roughness=0.66),
