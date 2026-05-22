@@ -354,11 +354,11 @@ function prepareVehicleMaterial(material, cache) {
     const isCabin = name.includes('cabin');
     next = new THREE.MeshPhysicalMaterial({
       name,
-      color: isCabin ? 0x76170c : 0x9b210d,
-      metalness: isCabin ? 0.54 : 0.66,
-      roughness: isCabin ? 0.42 : 0.34,
-      clearcoat: 0.52,
-      clearcoatRoughness: 0.28
+      color: isCabin ? 0xa52912 : 0xbf3514,
+      metalness: isCabin ? 0.62 : 0.72,
+      roughness: isCabin ? 0.33 : 0.27,
+      clearcoat: 0.78,
+      clearcoatRoughness: 0.2
     });
     addObjectSpacePaintGrain(next, isCabin);
   } else if (name.includes('reflective_glass') || name.includes('smoked') || name.includes('glass')) {
@@ -404,11 +404,13 @@ float sabreNoise(vec2 p) {
   return mix(mix(a, b, f.x), mix(c, d, f.x), f.y);
 }`)
       .replace('#include <color_fragment>', `#include <color_fragment>
-float sabreFleck = sabreNoise(vSabrePaintPosition.xz * 34.0 + vSabrePaintPosition.yy * 7.0);
-float sabreFine = sabreNoise(vSabrePaintPosition.xy * 71.0 + vSabrePaintPosition.zz * 4.0);
-float sabreShade = ${darker ? '0.93' : '0.96'} + sabreFleck * 0.075 + sabreFine * 0.035;
+float sabreFleck = sabreNoise(vSabrePaintPosition.xz * 21.0 + vSabrePaintPosition.yy * 5.0);
+float sabreFine = sabreNoise(vSabrePaintPosition.xy * 58.0 + vSabrePaintPosition.zz * 4.0);
+float sabreBrush = sin((vSabrePaintPosition.z + vSabrePaintPosition.y * 0.18) * 42.0) * 0.5 + 0.5;
+float sabreShade = ${darker ? '0.995' : '1.02'} + sabreFleck * 0.045 + sabreFine * 0.018 + sabreBrush * 0.012;
 diffuseColor.rgb *= sabreShade;
-diffuseColor.rgb += vec3(0.035, 0.012, 0.004) * sabreFine;`);
+diffuseColor.rgb = mix(diffuseColor.rgb, vec3(0.95, 0.20, 0.055), ${darker ? '0.08' : '0.14'});
+diffuseColor.rgb += vec3(0.055, 0.018, 0.004) * sabreFine;`);
   };
   material.customProgramCacheKey = () => `sabre-object-paint-grain-${darker ? 'dark' : 'red'}`;
 }
