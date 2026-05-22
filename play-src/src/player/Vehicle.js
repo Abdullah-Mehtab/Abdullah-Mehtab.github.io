@@ -105,7 +105,7 @@ export class Vehicle {
       if (object.isMesh) {
         object.castShadow = true;
         object.receiveShadow = false;
-        object.material = prepareVehicleMaterial(object.material, materialCache);
+        object.material = prepareVehicleMaterial(object.material, materialCache, object.name);
         if (object.material?.transparent) object.renderOrder = 7;
       }
     });
@@ -341,13 +341,15 @@ function yawQuaternion(heading) {
   return { x: quaternion.x, y: quaternion.y, z: quaternion.z, w: quaternion.w };
 }
 
-function prepareVehicleMaterial(material, cache) {
+function prepareVehicleMaterial(material, cache, objectName = '') {
   if (Array.isArray(material)) {
-    return material.map((item) => prepareVehicleMaterial(item, cache));
+    return material.map((item) => prepareVehicleMaterial(item, cache, objectName));
   }
   if (!material) return material;
   const name = material.name || '';
-  if (cache.has(name)) return cache.get(name);
+  const isWindshield = objectName.includes('Windshield') && !objectName.includes('Reflection') && !objectName.includes('Wiper');
+  const cacheKey = `${name}:${isWindshield ? 'windshield' : 'standard'}`;
+  if (cache.has(cacheKey)) return cache.get(cacheKey);
 
   let next = material;
   if (name.includes('metallic_paint') || name.includes('cabin_paint')) {
@@ -362,21 +364,34 @@ function prepareVehicleMaterial(material, cache) {
     });
     addObjectSpacePaintGrain(next, isCabin);
   } else if (name.includes('reflective_glass') || name.includes('smoked') || name.includes('glass')) {
-    next = new THREE.MeshPhysicalMaterial({
-      name,
-      color: 0x1b3035,
-      metalness: 0.0,
-      roughness: 0.12,
-      clearcoat: 0.34,
-      clearcoatRoughness: 0.1,
-      transparent: true,
-      opacity: 0.64,
-      depthWrite: false,
-      side: THREE.DoubleSide
-    });
+    next = isWindshield
+      ? new THREE.MeshPhysicalMaterial({
+          name,
+          color: 0x182b31,
+          metalness: 0.0,
+          roughness: 0.045,
+          clearcoat: 0.96,
+          clearcoatRoughness: 0.04,
+          transparent: false,
+          opacity: 1,
+          depthWrite: true,
+          side: THREE.DoubleSide
+        })
+      : new THREE.MeshPhysicalMaterial({
+          name,
+          color: 0x29494f,
+          metalness: 0.0,
+          roughness: 0.06,
+          clearcoat: 0.82,
+          clearcoatRoughness: 0.06,
+          transparent: true,
+          opacity: 0.78,
+          depthWrite: false,
+          side: THREE.DoubleSide
+        });
   }
 
-  cache.set(name, next);
+  cache.set(cacheKey, next);
   return next;
 }
 
