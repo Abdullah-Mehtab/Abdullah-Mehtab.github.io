@@ -123,7 +123,9 @@ def create_materials():
         "paint": material("sabre_copper_red_metallic_paint", (0.78, 0.18, 0.055, 1), metallic=0.66, roughness=0.3),
         "paint_dark": material("sabre_warm_shadow_red_metallic_paint", (0.64, 0.12, 0.04, 1), metallic=0.6, roughness=0.34),
         "stripe": material("aged_ivory_center_racing_stripe", (0.72, 0.68, 0.54, 1), metallic=0.03, roughness=0.62),
-        "glass": material("attached_smoked_reflective_glass", (0.095, 0.15, 0.17, 0.68), metallic=0.0, roughness=0.16, alpha=0.68),
+        "glass": material("attached_smoked_reflective_glass", (0.11, 0.2, 0.22, 0.76), metallic=0.0, roughness=0.08, alpha=0.76),
+        "windshield_glass": material("attached_sabre_front_windshield_black_glass", (0.045, 0.075, 0.085, 1), metallic=0.0, roughness=0.05),
+        "glass_sheen": material("pale_sky_reflection_overlay", (0.56, 0.75, 0.78, 0.18), metallic=0.0, roughness=0.18, alpha=0.18),
         "interior": material("visible_black_leather_interior", (0.01, 0.009, 0.008, 1), metallic=0.0, roughness=0.66),
         "rubber": material("deep_black_rubber", (0.006, 0.006, 0.007, 1), metallic=0.0, roughness=0.78),
         "sidewall": material("satin_tire_sidewall", (0.012, 0.012, 0.014, 1), metallic=0.0, roughness=0.88),
@@ -241,7 +243,7 @@ def add_glass_and_frames(parent, mats):
             (0.55, 1.405, 0.26 + EPS),
             (-0.55, 1.405, 0.26 + EPS),
         ],
-        mats["glass"],
+        mats["windshield_glass"],
         parent,
     )
     create_panel(
@@ -260,8 +262,39 @@ def add_glass_and_frames(parent, mats):
     add_cube("Interior_FrontBenchSeat", (0, 0.89, -0.2), (1.24, 0.24, 0.4), mats["interior"], parent, bevel=0.02)
     add_cube("Interior_RearBenchSeat", (0, 0.86, -0.94), (1.18, 0.22, 0.34), mats["interior"], parent, bevel=0.02)
     add_cube("Interior_SteeringWheel", (-0.38, 1.03, 0.45), (0.11, 0.11, 0.11), mats["dark_chrome"], parent, rotation=(0.4, 0.1, 0.0), bevel=0.035)
-    add_cube("Glass_WindshieldWiper_Left", (-0.23, 1.075, 0.73), (0.03, 0.032, 0.52), mats["rubber"], parent, rotation=(0.16, 0.0, -0.18), bevel=0.003)
-    add_cube("Glass_WindshieldWiper_Right", (0.23, 1.075, 0.73), (0.03, 0.032, 0.52), mats["rubber"], parent, rotation=(0.16, 0.0, 0.18), bevel=0.003)
+    create_panel(
+        "Reflection_FrontGlassUpperSheen",
+        [
+            (-0.51, 1.345, 0.37 + EPS * 2),
+            (0.51, 1.345, 0.37 + EPS * 2),
+            (0.47, 1.275, 0.49 + EPS * 2),
+            (-0.47, 1.275, 0.49 + EPS * 2),
+        ],
+        mats["glass_sheen"],
+        parent,
+    )
+    create_panel(
+        "Reflection_FrontGlassLowerSheen",
+        [
+            (-0.46, 1.18, 0.65 + EPS * 2),
+            (0.08, 1.18, 0.65 + EPS * 2),
+            (0.04, 1.14, 0.72 + EPS * 2),
+            (-0.49, 1.14, 0.72 + EPS * 2),
+        ],
+        mats["glass_sheen"],
+        parent,
+    )
+    windshield_frame = [
+        (-0.68, 1.06, 0.83),
+        (0.68, 1.06, 0.83),
+        (0.57, 1.415, 0.25),
+        (-0.57, 1.415, 0.25),
+    ]
+    add_polyline("Trim_WindshieldRubberSeal", windshield_frame, mats["dark_chrome"], parent, thickness=0.034)
+    add_polyline("Trim_WindshieldChromeLip", windshield_frame, mats["chrome"], parent, thickness=0.014)
+    add_segment("Glass_WindshieldWiper_Left", (-0.58, 1.087, 0.78), (-0.12, 1.112, 0.72), mats["rubber"], parent, 0.018)
+    add_segment("Glass_WindshieldWiper_Right", (0.12, 1.112, 0.72), (0.58, 1.087, 0.78), mats["rubber"], parent, 0.018)
+    add_cube("Trim_WindshieldCowlVent", (0, 1.105, 0.895), (1.28, 0.026, 0.075), mats["dark_chrome"], parent, bevel=0.006)
     for index, z in enumerate([-0.84, -0.98, -1.12]):
         add_cube(f"Glass_RearWindowLouver_{index}", (0, 1.36 - index * 0.045, z), (1.16, 0.035, 0.04), mats["dark_chrome"], parent, bevel=0.004)
 
@@ -286,7 +319,7 @@ def add_glass_and_frames(parent, mats):
 
 
 def add_stripes(parent, mats):
-    add_cube("Stripe_FlushHoodCenter", (0, 1.094, 1.6), (0.42, 0.028, 1.96), mats["stripe"], parent, bevel=0.004)
+    add_cube("Stripe_FlushHoodCenter", (0, 1.094, 1.76), (0.42, 0.028, 1.64), mats["stripe"], parent, bevel=0.004)
     add_cube("Stripe_FlushRoofCenter", (0, 1.532, -0.12), (0.34, 0.028, 0.78), mats["stripe"], parent, bevel=0.004)
     add_cube("Stripe_FlushRearDeckCenter", (0, 1.072, -1.86), (0.42, 0.028, 1.36), mats["stripe"], parent, bevel=0.004)
     add_cube("Stripe_FrontNoseReturn", (0, 0.925, 2.66), (0.42, 0.026, 0.34), mats["stripe"], parent, bevel=0.004)
