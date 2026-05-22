@@ -4,7 +4,7 @@ Portfolio website for Abdullah Mehtab, focused on offensive security, full-stack
 
 Live site:
 
-https://abdullah-mehtab.github.io/Abdullah-Mehtab/
+https://abdullah-mehtab.github.io/
 
 ## Main Pages
 

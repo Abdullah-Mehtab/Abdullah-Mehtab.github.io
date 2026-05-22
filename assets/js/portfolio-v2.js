@@ -1,4 +1,11 @@
 (function () {
+  const legacyProjectPath = /^\/Abdullah-Mehtab(?=\/|$)/;
+  if (window.location.hostname === "abdullah-mehtab.github.io" && legacyProjectPath.test(window.location.pathname)) {
+    const nextPath = window.location.pathname.replace(legacyProjectPath, "") || "/";
+    window.location.replace(`${window.location.origin}${nextPath}${window.location.search}${window.location.hash}`);
+    return;
+  }
+
   const themeOptions = [
     ["professional", "Professional"],
     ["dark", "Dark Mode"],
