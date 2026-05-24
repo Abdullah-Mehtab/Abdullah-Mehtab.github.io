@@ -32,3 +32,19 @@ The site records lightweight visitor analytics through Supabase. Events include 
 ## Tech
 
 The site is built with static HTML, CSS, and JavaScript and is hosted through GitHub Pages. Interactive comments and lightweight visitor proof use Supabase.
+
+## Development Workflow
+
+This repository is the source for the live root GitHub Pages site:
+
+https://abdullah-mehtab.github.io/
+
+Use this workflow for future updates:
+
+```powershell
+git add .
+git commit -m "Describe the update"
+git push origin main
+```
+
+The `Abdullah-Mehtab/Abdullah-Mehtab` repository is profile-only and should not receive website updates.
