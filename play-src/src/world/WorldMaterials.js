@@ -2,9 +2,9 @@ import * as THREE from 'three';
 
 export const WATER_Y = -0.55;
 export const QUALITY_PROFILES = {
-  low: { trees: 30, grassTufts: 110, leaves: 50, clouds: 8, props: 22, fireflies: 18, shadows: false, water: 'low' },
-  medium: { trees: 58, grassTufts: 300, leaves: 135, clouds: 16, props: 44, fireflies: 46, shadows: true, water: 'medium' },
-  high: { trees: 86, grassTufts: 640, leaves: 260, clouds: 28, props: 72, fireflies: 90, shadows: true, water: 'high' }
+  low: { trees: 48, grassTufts: 180, leaves: 80, clouds: 9, props: 32, fireflies: 26, shadows: false, water: 'low' },
+  medium: { trees: 108, grassTufts: 720, leaves: 220, clouds: 18, props: 82, fireflies: 86, shadows: true, water: 'medium' },
+  high: { trees: 168, grassTufts: 1240, leaves: 420, clouds: 30, props: 138, fireflies: 160, shadows: true, water: 'high' }
 };
 export const QUALITY_ORDER = ['low', 'medium', 'high'];
 
@@ -38,8 +38,11 @@ export function createWorldMaterials() {
       side: THREE.DoubleSide
     }),
     stoneRoad: new THREE.MeshStandardMaterial({ color: 0x605a4d, map: stoneTexture, roughness: 0.94, metalness: 0.02 }),
+    plazaRoad: new THREE.MeshStandardMaterial({ color: 0x6f6758, map: stoneTexture, roughness: 0.9, metalness: 0.02 }),
+    securityRoad: new THREE.MeshStandardMaterial({ color: 0x253743, roughness: 0.72, metalness: 0.12, emissive: 0x061923, emissiveIntensity: 0.26 }),
     roadEdge: new THREE.MeshStandardMaterial({ color: 0x474239, roughness: 0.92, metalness: 0.02 }),
     roadLine: new THREE.MeshBasicMaterial({ color: 0xd8c48a, transparent: true, opacity: 0.36 }),
+    roadLineBright: new THREE.MeshBasicMaterial({ color: 0x9df7ff, transparent: true, opacity: 0.58 }),
     stuntRamp: new THREE.MeshStandardMaterial({ color: 0x80624a, roughness: 0.88, metalness: 0.02 }),
     sand: new THREE.MeshStandardMaterial({ color: 0xf4d59a, map: sandTexture, roughness: 0.98, metalness: 0.0 }),
     grassSandBlend: makeRadialBlendMaterial({
@@ -80,6 +83,12 @@ export function createWorldMaterials() {
     gold: new THREE.MeshStandardMaterial({ color: 0xe0b94f, roughness: 0.42, metalness: 0.45 }),
     glass: new THREE.MeshStandardMaterial({ color: 0x79d7ff, roughness: 0.22, metalness: 0.08, transparent: true, opacity: 0.62 }),
     glow: new THREE.MeshBasicMaterial({ color: 0x8fffd0, transparent: true, opacity: 0.72 }),
+    glowBlue: new THREE.MeshBasicMaterial({ color: 0x68d8ff, transparent: true, opacity: 0.78 }),
+    glowPink: new THREE.MeshBasicMaterial({ color: 0xff6d8d, transparent: true, opacity: 0.74 }),
+    warmGlow: new THREE.MeshBasicMaterial({ color: 0xffc36a, transparent: true, opacity: 0.78 }),
+    screen: new THREE.MeshStandardMaterial({ color: 0x062a35, emissive: 0x29d7ff, emissiveIntensity: 0.72, roughness: 0.36, metalness: 0.08 }),
+    cable: new THREE.MeshStandardMaterial({ color: 0x10191f, roughness: 0.74, metalness: 0.14 }),
+    campusBrick: new THREE.MeshStandardMaterial({ color: 0x9f3f27, roughness: 0.82, metalness: 0.02 }),
     potato: new THREE.MeshStandardMaterial({ color: 0xb5742b, roughness: 0.94, metalness: 0.0 }),
     crop: new THREE.MeshStandardMaterial({ color: 0x63a950, roughness: 0.9, metalness: 0.0 }),
     water: makeWaterMaterial(),

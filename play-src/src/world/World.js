@@ -9,6 +9,7 @@ import { Foliage } from './Foliage.js';
 import { PotatoFarm } from './PotatoFarm.js';
 import { Props } from './Props.js';
 import { Roads } from './Roads.js';
+import { SetPieces } from './SetPieces.js';
 import { StuntPark } from './StuntPark.js';
 import { Terrain } from './Terrain.js';
 import { Water } from './Water.js';
@@ -37,6 +38,11 @@ export class World {
       checkpoint: 0,
       best: Number(localStorage.getItem('portfolio-drive-best-lap') || 0)
     };
+    this.securityScan = {
+      active: false,
+      complete: false,
+      startedAt: 0
+    };
 
     this.build();
   }
@@ -47,6 +53,7 @@ export class World {
     this.roads = new Roads(this);
     this.zonesSystem = new Zones(this);
     this.stuntPark = new StuntPark(this);
+    this.setPieces = new SetPieces(this);
     this.props = new Props(this);
     this.foliage = new Foliage(this);
     this.potatoFarm = new PotatoFarm(this);
@@ -57,6 +64,7 @@ export class World {
     this.roads.build();
     this.zonesSystem.build();
     this.stuntPark.build();
+    this.setPieces.build();
     this.potatoFarm.build();
     this.props.build();
     this.foliage.build();
@@ -186,7 +194,8 @@ export class World {
     if (zone.id === 'landing') {
       return { position: new THREE.Vector3(10, 1.08, 27), heading: 0.15 };
     }
-    const offset = new THREE.Vector3(Math.sin(zone.rotation || 0) * -9, 1.08, Math.cos(zone.rotation || 0) * -9);
+    const distance = zone.id === 'education' ? 13.6 : zone.id === 'security' ? 13.2 : 9;
+    const offset = new THREE.Vector3(Math.sin(zone.rotation || 0) * -distance, 1.08, Math.cos(zone.rotation || 0) * -distance);
     return {
       position: zone.position.clone().add(offset),
       heading: zone.rotation || 0
@@ -201,6 +210,18 @@ export class World {
     this.circuit.active = true;
     this.circuit.startedAt = now;
     this.circuit.checkpoint = 0;
+  }
+
+  startSecurityScan(now) {
+    if (this.securityScan.active) return false;
+    this.securityScan.active = true;
+    this.securityScan.startedAt = now;
+    return true;
+  }
+
+  completeSecurityScan() {
+    this.securityScan.active = false;
+    this.securityScan.complete = true;
   }
 
   updateCircuit(position, now) {
@@ -226,6 +247,7 @@ export class World {
     this.water.update(dt, elapsed);
     this.foliage.update(dt, elapsed, vehiclePosition);
     this.potatoFarm.update(dt);
+    this.setPieces.update(dt, elapsed);
     this.atmosphere.update(dt, elapsed);
     for (const item of this.collectibles) {
       if (!item.collected) {

@@ -144,6 +144,27 @@ export class AudioSystem {
     osc.stop(this.context.currentTime + 0.14);
   }
 
+  sweep(start = 220, end = 880, duration = 0.32, gainValue = 0.06) {
+    if (!this.context || this.muted) return;
+    const osc = this.context.createOscillator();
+    const gain = this.context.createGain();
+    const filter = this.context.createBiquadFilter();
+    osc.type = 'sawtooth';
+    filter.type = 'bandpass';
+    filter.frequency.value = Math.max(start, end);
+    filter.Q.value = 2.2;
+    osc.frequency.setValueAtTime(start, this.context.currentTime);
+    osc.frequency.exponentialRampToValueAtTime(Math.max(1, end), this.context.currentTime + duration);
+    gain.gain.setValueAtTime(0.001, this.context.currentTime);
+    gain.gain.exponentialRampToValueAtTime(gainValue, this.context.currentTime + 0.035);
+    gain.gain.exponentialRampToValueAtTime(0.001, this.context.currentTime + duration);
+    osc.connect(filter);
+    filter.connect(gain);
+    gain.connect(this.master);
+    osc.start();
+    osc.stop(this.context.currentTime + duration + 0.02);
+  }
+
   update(speed, driveState = {}) {
     if (!this.context || !this.engineOsc || !this.engineGain) return;
     const normalized = Math.min(1, Math.abs(speed) / 70);
@@ -165,7 +186,7 @@ export class AudioSystem {
       this.enginePulseGain.gain.setTargetAtTime(this.muted ? 0 : 0.013 + normalized * 0.028 + boost * 0.018 + burnout * 0.018, this.context.currentTime, 0.1);
     }
     if (this.engineNoiseGain) {
-      this.engineNoiseGain.gain.setTargetAtTime(this.muted ? 0 : 0.004 + normalized * 0.017 + slip * 0.065 + boost * 0.018 + burnout * 0.055, this.context.currentTime, 0.08);
+    this.engineNoiseGain.gain.setTargetAtTime(this.muted ? 0 : 0.006 + normalized * 0.019 + slip * 0.09 + boost * 0.026 + burnout * 0.07, this.context.currentTime, 0.08);
     }
     if (this.windGain) {
       this.windGain.gain.setTargetAtTime(this.muted ? 0 : 0.008 + normalized * 0.025, this.context.currentTime, 0.2);

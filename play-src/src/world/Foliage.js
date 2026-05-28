@@ -33,7 +33,10 @@ export class Foliage {
     let placed = 0;
     for (let zoneIndex = 0; zoneIndex < scenicPropZones.length && placed < maxTrees; zoneIndex += 1) {
       const zone = scenicPropZones[zoneIndex];
-      const target = Math.min(maxTrees - placed, perZone + (zone.kind === 'grove' ? 4 : zone.kind === 'meadow' ? -2 : 0));
+      const target = Math.min(
+        maxTrees - placed,
+        perZone + (zone.kind === 'campus' ? 10 : zone.kind === 'security' ? 8 : zone.kind === 'grove' ? 4 : zone.kind === 'meadow' ? -2 : 0)
+      );
       let zonePlaced = 0;
       for (let attempt = 0; attempt < 360 && zonePlaced < target; attempt += 1) {
         const seed = zoneIndex * 1000 + attempt;
@@ -194,6 +197,8 @@ export class Foliage {
 function pickTreeTemplate(zone, seed) {
   const n = pseudoRandom(seed * 11.31);
   if (zone.kind === 'coast') return n > 0.35 ? 'EnvCypressTree' : 'EnvBlossomTree';
+  if (zone.kind === 'campus') return n > 0.18 ? 'EnvBlossomTree' : 'EnvOakTree';
+  if (zone.kind === 'security') return n > 0.38 ? 'EnvCypressTree' : 'EnvOakTree';
   if (zone.kind === 'meadow') return n > 0.58 ? 'EnvBlossomTree' : 'EnvOakTree';
   if (zone.kind === 'farm') return n > 0.42 ? 'EnvBlossomTree' : 'EnvOakTree';
   return n > 0.22 ? 'EnvBlossomTree' : 'EnvOakTree';

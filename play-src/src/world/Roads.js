@@ -5,6 +5,8 @@ const ROAD_STYLE = {
   ring: { shoulder: 1.6, line: 0xe0c46b },
   avenue: { shoulder: 1.3, line: 0xd6c4a2 },
   street: { shoulder: 1.1, line: 0xc8b38a },
+  plaza: { shoulder: 1.05, line: 0xf3e7bd },
+  security: { shoulder: 1.25, line: 0x68d8ff },
   stunt: { shoulder: 1.4, line: 0xff9b6d },
   dirt: { shoulder: 1.8, line: 0x8d6338 },
   bridge: { shoulder: 1.4, line: 0xe8edf0 }
@@ -14,6 +16,8 @@ const ROAD_LAYER = {
   ring: 0,
   avenue: 1,
   street: 2,
+  plaza: 3,
+  security: 3,
   dirt: 2,
   stunt: 3,
   bridge: 4
@@ -57,7 +61,13 @@ export class Roads {
     const surfaceY = 0.104 + layer * 0.006;
 
     const edgeMaterial = path.hierarchy === 'dirt' ? this.world.materials.sand : this.world.materials.roadEdge;
-    const surfaceMaterial = path.hierarchy === 'dirt' ? this.world.materials.wood : this.world.materials.stoneRoad;
+    const surfaceMaterial = path.hierarchy === 'dirt'
+      ? this.world.materials.wood
+      : path.hierarchy === 'security'
+        ? this.world.materials.securityRoad
+        : path.hierarchy === 'plaza'
+          ? this.world.materials.plazaRoad
+          : this.world.materials.stoneRoad;
     const shoulder = this.createRoadPlane(width + style.shoulder * 2, length + width * 0.45, edgeMaterial, 1 + layer, rotation);
     shoulder.name = `ROAD_${path.id}_shoulder`;
     shoulder.position.set(x, shoulderY, z);
@@ -95,7 +105,13 @@ export class Roads {
     const shoulderY = 0.086 + layer * 0.003;
     const surfaceY = 0.142 + layer * 0.007;
     const edgeMaterial = path.hierarchy === 'dirt' ? this.world.materials.sand : this.world.materials.roadEdge;
-    const surfaceMaterial = path.hierarchy === 'dirt' ? this.world.materials.wood : this.world.materials.stoneRoad;
+    const surfaceMaterial = path.hierarchy === 'dirt'
+      ? this.world.materials.wood
+      : path.hierarchy === 'security'
+        ? this.world.materials.securityRoad
+        : path.hierarchy === 'plaza'
+          ? this.world.materials.plazaRoad
+          : this.world.materials.stoneRoad;
     const nodeMaterial = this.cleanCapMaterial(edgeMaterial);
     const topMaterial = this.cleanCapMaterial(surfaceMaterial);
     const node = new THREE.Mesh(new THREE.CircleGeometry(radius, 72), nodeMaterial);

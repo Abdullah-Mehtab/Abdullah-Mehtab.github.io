@@ -98,6 +98,8 @@ export class UI {
     this.refs.promptTitle.textContent = zone.name;
     if (zone.potatoFarm) {
       this.refs.promptAction.textContent = 'Press P to summon. Press E for farm log';
+    } else if (zone.scanRequired && !this.game.world.securityScan.complete) {
+      this.refs.promptAction.textContent = 'Press E to run scanner';
     } else {
       this.refs.promptAction.textContent = zone.startsCircuit ? 'Press E to start circuit' : 'Press E to interact';
     }
@@ -108,8 +110,12 @@ export class UI {
     this.refs.prompt.hidden = true;
   }
 
-  openZone(zone) {
+  openZone(zone, options = {}) {
     this.audio.click();
+    if (zone.scanRequired && !options.skipScan && !this.game.world.securityScan.complete) {
+      this.game.runSecurityScan(zone);
+      return;
+    }
     this.achievements.visitZone(zone);
     this.game.recordZoneVisit(zone);
     if (zone.startsCircuit) {
