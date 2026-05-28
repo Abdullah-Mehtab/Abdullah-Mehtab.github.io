@@ -44,24 +44,13 @@ export class Roads {
   }
 
   addPath(path) {
-    const limit = path.closed ? path.points.length : path.points.length - 1;
-    for (let i = 0; i < limit; i += 1) {
-      const a = path.points[i];
-      const b = path.points[(i + 1) % path.points.length];
-      this.addSegment(a, b, path);
-    }
+    this.addPathRibbon(path);
     for (const point of path.points) {
       this.addNode(point, path);
     }
   }
 
-  addSegment(a, b, path) {
-    const dx = b[0] - a[0];
-    const dz = b[1] - a[1];
-    const length = Math.hypot(dx, dz);
-    const x = (a[0] + b[0]) / 2;
-    const z = (a[1] + b[1]) / 2;
-    const rotation = Math.atan2(dx, dz);
+  addPathRibbon(path) {
     const style = ROAD_STYLE[path.hierarchy] || ROAD_STYLE.street;
     const width = path.width;
     const layer = ROAD_LAYER[path.hierarchy] ?? 1;
@@ -76,38 +65,48 @@ export class Roads {
         : path.hierarchy === 'plaza'
           ? this.world.materials.plazaRoad
           : this.world.materials.stoneRoad;
-    const shoulder = this.createRoadPlane(width + style.shoulder * 2, length + width * 0.45, edgeMaterial, 1 + layer, rotation);
+
+    const shoulder = new THREE.Mesh(
+      createPathRibbonGeometry(path.points, width + style.shoulder * 2, path.closed, shoulderY, 9),
+      this.offsetMaterial(edgeMaterial, 1 + layer)
+    );
     shoulder.name = `ROAD_${path.id}_shoulder`;
-    shoulder.position.set(x, shoulderY, z);
+    shoulder.renderOrder = 1 + layer;
     shoulder.receiveShadow = true;
     this.roadGroup.add(shoulder);
 
-    const stone = this.createRoadPlane(width, length + width * 0.28, surfaceMaterial, 3 + layer, rotation);
-    stone.name = `ROAD_${path.id}_stone`;
-    stone.position.set(x, surfaceY, z);
-    stone.receiveShadow = true;
-    this.roadGroup.add(stone);
+    const surface = new THREE.Mesh(
+      createPathRibbonGeometry(path.points, width, path.closed, surfaceY, 9),
+      this.offsetMaterial(surfaceMaterial, 3 + layer)
+    );
+    surface.name = `ROAD_${path.id}_surface`;
+    surface.renderOrder = 3 + layer;
+    surface.receiveShadow = true;
+    this.roadGroup.add(surface);
 
     if (path.hierarchy !== 'dirt') {
       for (const side of [-1, 1]) {
-        const curb = this.createRoadPlane(style.curb || 0.22, length + width * 0.18, this.world.materials.roadCurb, 6 + layer, rotation);
-        curb.name = `ROAD_${path.id}_curb`;
-        curb.position.set(
-          x + Math.cos(rotation) * (width / 2 + (style.curb || 0.22) * 0.62) * side,
-          surfaceY + 0.046,
-          z - Math.sin(rotation) * (width / 2 + (style.curb || 0.22) * 0.62) * side
+        const curb = new THREE.Mesh(
+          createPathRibbonGeometry(path.points, style.curb || 0.22, path.closed, surfaceY + 0.046, 9, (width / 2 + (style.curb || 0.22) * 0.66) * side),
+          this.offsetMaterial(this.world.materials.roadCurb, 6 + layer)
         );
+        curb.name = `ROAD_${path.id}_curb`;
+        curb.renderOrder = 6 + layer;
         this.roadGroup.add(curb);
       }
     }
 
     const lineMaterial = this.cachedLineMaterial(style.line);
-    const lineLength = Math.max(0, length - width * 2.4);
-    const dashCount = Math.max(0, Math.floor(lineLength / 12));
-    for (let i = 0; i < dashCount; i += 1) {
+    const curve = makePathCurve(path.points, path.closed);
+    const totalLength = curve.getLength();
+    const dashSpacing = path.hierarchy === 'stunt' ? 8.5 : 12;
+    for (let distance = width * 1.35; distance < totalLength - width * 1.35; distance += dashSpacing) {
+      const t = distance / totalLength;
+      const point = curve.getPointAt(t);
+      const tangent = curve.getTangentAt(t);
+      const rotation = Math.atan2(tangent.x, tangent.z);
       const dash = this.createRoadPlane(0.38, 3.2, lineMaterial, 8 + layer, rotation);
-      const t = (i + 0.5) / dashCount - 0.5;
-      dash.position.set(x + Math.sin(rotation) * lineLength * t, surfaceY + 0.034, z + Math.cos(rotation) * lineLength * t);
+      dash.position.set(point.x, surfaceY + 0.034, point.z);
       this.roadGroup.add(dash);
     }
 
@@ -130,18 +129,16 @@ export class Roads {
           : this.world.materials.stoneRoad;
     const nodeMaterial = this.cleanCapMaterial(edgeMaterial);
     const topMaterial = this.cleanCapMaterial(surfaceMaterial);
-    const node = new THREE.Mesh(new THREE.BoxGeometry(size + style.shoulder * 0.9, 0.035, size + style.shoulder * 0.9), nodeMaterial);
+    const node = new THREE.Mesh(new THREE.CylinderGeometry((size + style.shoulder * 0.9) / 2, (size + style.shoulder * 0.9) / 2, 0.035, 18), nodeMaterial);
     node.name = `ROAD_${path.id}_junction`;
     node.position.set(point[0], shoulderY, point[1]);
-    node.rotation.y = Math.PI / 4;
     node.receiveShadow = false;
     node.renderOrder = 10 + layer;
     this.roadGroup.add(node);
 
-    const top = new THREE.Mesh(new THREE.BoxGeometry(size, 0.035, size), topMaterial);
+    const top = new THREE.Mesh(new THREE.CylinderGeometry(size / 2, size / 2, 0.035, 18), topMaterial);
     top.name = `ROAD_${path.id}_junction_cap`;
     top.position.set(point[0], surfaceY + 0.034, point[1]);
-    top.rotation.y = Math.PI / 4;
     top.receiveShadow = false;
     top.renderOrder = 12 + layer;
     this.roadGroup.add(top);
@@ -231,4 +228,65 @@ function createOrientedPlaneGeometry(width, length, rotation) {
   geometry.setIndex([0, 2, 1, 0, 3, 2]);
   geometry.computeVertexNormals();
   return geometry;
+}
+
+function makePathCurve(points, closed) {
+  const vectors = points.map(([x, z]) => new THREE.Vector3(x, 0, z));
+  const curve = new THREE.CatmullRomCurve3(vectors, closed, 'centripetal', 0.35);
+  curve.arcLengthDivisions = Math.max(64, points.length * 18);
+  curve.updateArcLengths();
+  return curve;
+}
+
+function createPathRibbonGeometry(points, width, closed, y, samplesPerSegment = 8, offset = 0) {
+  const curve = makePathCurve(points, closed);
+  const divisions = Math.max(12, (closed ? points.length : points.length - 1) * samplesPerSegment);
+  const vertexCount = (divisions + 1) * 2;
+  const vertices = new Float32Array(vertexCount * 3);
+  const uvs = new Float32Array(vertexCount * 2);
+  const indices = [];
+  let previous = null;
+  let accumulated = 0;
+
+  for (let i = 0; i <= divisions; i += 1) {
+    const t = i / divisions;
+    const point = curve.getPointAt(t);
+    const tangent = curve.getTangentAt(t).normalize();
+    const rightX = tangent.z;
+    const rightZ = -tangent.x;
+    const centerX = point.x + rightX * offset;
+    const centerZ = point.z + rightZ * offset;
+
+    if (previous) {
+      accumulated += Math.hypot(centerX - previous.x, centerZ - previous.z);
+    }
+    previous = { x: centerX, z: centerZ };
+
+    const left = i * 2;
+    const right = left + 1;
+    writeRibbonVertex(vertices, left, centerX - rightX * width * 0.5, y, centerZ - rightZ * width * 0.5);
+    writeRibbonVertex(vertices, right, centerX + rightX * width * 0.5, y, centerZ + rightZ * width * 0.5);
+    uvs[left * 2] = accumulated / 9;
+    uvs[left * 2 + 1] = 0;
+    uvs[right * 2] = accumulated / 9;
+    uvs[right * 2 + 1] = 1;
+
+    if (i < divisions) {
+      indices.push(left, left + 2, right, right, left + 2, right + 2);
+    }
+  }
+
+  const geometry = new THREE.BufferGeometry();
+  geometry.setAttribute('position', new THREE.BufferAttribute(vertices, 3));
+  geometry.setAttribute('uv', new THREE.BufferAttribute(uvs, 2));
+  geometry.setIndex(indices);
+  geometry.computeVertexNormals();
+  return geometry;
+}
+
+function writeRibbonVertex(vertices, index, x, y, z) {
+  const cursor = index * 3;
+  vertices[cursor] = x;
+  vertices[cursor + 1] = y;
+  vertices[cursor + 2] = z;
 }
