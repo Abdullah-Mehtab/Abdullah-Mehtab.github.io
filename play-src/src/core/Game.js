@@ -1,3 +1,5 @@
+// ABOUTME: Coordinates the /play driving experience, lifecycle, systems, and runtime loop.
+// ABOUTME: Owns scene setup, input handling, zone interactions, and verification hooks.
 import * as THREE from 'three';
 import { Ticker } from './Ticker.js';
 import { Input } from './Input.js';
@@ -25,8 +27,8 @@ export class Game {
     this.activeZone = null;
     this.resumeData = null;
     this.lights = {};
-    this.fogDay = new THREE.Color(0xcdeef7);
-    this.fogWarm = new THREE.Color(0xf4e5bd);
+    this.fogDay = new THREE.Color(0xbdebf4);
+    this.fogWarm = new THREE.Color(0xffc6a4);
     this.debugReadout = null;
     this.debugEnabled = false;
     this.debugFrame = 0;
@@ -82,29 +84,29 @@ export class Game {
   }
 
   setupScene() {
-    this.scene.background = new THREE.Color(0x8fcff0);
-    this.scene.fog = new THREE.Fog(0xcdeef7, 165, 620);
+    this.scene.background = new THREE.Color(0x96ddf4);
+    this.scene.fog = new THREE.Fog(0xbdebf4, 145, 560);
     this.camera.position.set(0, 9, -18);
 
-    const hemi = new THREE.HemisphereLight(0xfff0da, 0x10261d, 1.24);
+    const hemi = new THREE.HemisphereLight(0xffddbd, 0x1b2741, 1.05);
     this.scene.add(hemi);
 
-    const sun = new THREE.DirectionalLight(0xffc879, 4.15);
-    sun.position.set(-116, 86, -92);
+    const sun = new THREE.DirectionalLight(0xff9b6d, 3.35);
+    sun.position.set(-118, 72, -86);
     sun.castShadow = true;
-    sun.shadow.mapSize.set(2048, 2048);
-    sun.shadow.camera.left = -190;
-    sun.shadow.camera.right = 190;
-    sun.shadow.camera.top = 190;
-    sun.shadow.camera.bottom = -190;
+    sun.shadow.mapSize.set(1024, 1024);
+    sun.shadow.camera.left = -96;
+    sun.shadow.camera.right = 96;
+    sun.shadow.camera.top = 96;
+    sun.shadow.camera.bottom = -96;
     sun.shadow.camera.near = 1;
     sun.shadow.camera.far = 360;
     sun.shadow.bias = -0.00015;
     sun.shadow.normalBias = 0.08;
     this.scene.add(sun);
 
-    const rim = new THREE.DirectionalLight(0x9cecff, 1.18);
-    rim.position.set(64, 42, 78);
+    const rim = new THREE.DirectionalLight(0x76e2ff, 1.42);
+    rim.position.set(64, 38, 82);
     this.scene.add(rim);
 
     this.lights = { hemi, sun, rim };
@@ -129,6 +131,7 @@ export class Game {
     window.__portfolioDrive = {
       game: this,
       sampleCanvas: () => {
+        this.rendererSystem.render();
         const gl = this.renderer.getContext();
         const width = Math.max(1, Math.min(16, this.renderer.domElement.width));
         const height = Math.max(1, Math.min(16, this.renderer.domElement.height));
@@ -276,9 +279,9 @@ export class Game {
 
   updateLighting(elapsed) {
     const cycle = Math.sin(elapsed * 0.035) * 0.5 + 0.5;
-    this.lights.sun.intensity = 3.65 + cycle * 0.82;
-    this.lights.rim.intensity = 1.0 + (1 - cycle) * 0.52;
-    this.scene.fog.color.lerpColors(this.fogDay, this.fogWarm, cycle * 0.28);
+    this.lights.sun.intensity = 3.05 + cycle * 0.72;
+    this.lights.rim.intensity = 1.18 + (1 - cycle) * 0.5;
+    this.scene.fog.color.lerpColors(this.fogDay, this.fogWarm, cycle * 0.38);
   }
 
   updateDebugReadout(dt) {

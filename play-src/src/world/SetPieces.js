@@ -40,7 +40,12 @@ export class SetPieces {
       material.opacity = 0.32 + activePulse * 0.42 + Math.sin(elapsed * 8) * activePulse * 0.12;
     }
     for (const light of this.securityScanObjects) {
-      light.intensity = light.userData.baseIntensity + activePulse * light.userData.boost + Math.sin(elapsed * 12) * activePulse * 0.55;
+      if (light.isLight) {
+        light.intensity = light.userData.baseIntensity + activePulse * light.userData.boost + Math.sin(elapsed * 12) * activePulse * 0.55;
+      } else if (light.material) {
+        light.material.opacity = 0.48 + activePulse * 0.34;
+        light.scale.setScalar(1 + activePulse * 0.24);
+      }
     }
   }
 
@@ -49,9 +54,9 @@ export class SetPieces {
     const group = new THREE.Group();
     group.name = 'SETPIECE_Start_Diorama';
 
-    this.groundDisc(group, zone.position, 17.5, this.world.materials.plazaRoad, 0.118, 'StartStoneCircle');
-    this.ring(group, zone.position, 14.2, 0x7cffb2, 0.36, 'StartGlowRing');
-    this.ring(group, [zone.position[0], zone.position[1], zone.position[2]], 10.8, 0x68d8ff, 0.18, 'StartInnerGlowRing', -0.22);
+    this.groundRect(group, zone.position[0] + 2, zone.position[2] - 4, 27, 18, this.world.materials.plazaRoad, 0.118, 'StartLaunchPad');
+    this.box(group, zone.position[0] + 2, 0.18, zone.position[2] - 12.9, 24, 0.04, 0.36, this.world.materials.glowBlue, 0, 'StartPadFrontGlow');
+    this.box(group, zone.position[0] - 11.4, 0.18, zone.position[2] - 4, 0.36, 0.04, 15, this.world.materials.glow, 0, 'StartPadLeftGlow');
 
     const pavers = [
       [-7.5, -9.5, 3.2, 1.5, -0.48],
@@ -66,9 +71,9 @@ export class SetPieces {
       this.box(group, zone.position[0] + dx, 0.13, zone.position[2] + dz, sx, 0.08, sz, this.world.materials.paleStone, rot, 'StartPaver');
     }
 
-    this.addLamp(group, zone.position[0] - 13.6, zone.position[2] - 7.5, 0xffc36a, 3.1, 'StartLampLeft');
-    this.addLamp(group, zone.position[0] + 13.2, zone.position[2] - 6.2, 0x7cffb2, 3.0, 'StartLampRight');
-    this.addLamp(group, zone.position[0] - 9.5, zone.position[2] + 12.4, 0x68d8ff, 2.8, 'StartLampRear');
+    this.addLamp(group, zone.position[0] - 11.4, zone.position[2] - 10.5, 0xffc36a, 3.1, 'StartLampLeft');
+    this.addLamp(group, zone.position[0] + 14.2, zone.position[2] - 9.4, 0x7cffb2, 3.0, 'StartLampRight');
+    this.addLamp(group, zone.position[0] - 8.5, zone.position[2] + 7.4, 0x68d8ff, 2.8, 'StartLampRear');
 
     this.addSign(group, 'CLICK TO DRIVE', 'Portfolio Drive', zone.position[0] + 14.4, zone.position[2] + 5.8, -0.88, 0x7cffb2, 3.4, 'StartClickSign');
     this.addSign(group, 'FCCU', 'Education Grove', zone.position[0] - 20.5, zone.position[2] + 14.0, 0.74, 0x9ccfff, 2.6, 'StartFccSign');
@@ -129,8 +134,9 @@ export class SetPieces {
     group.name = 'SETPIECE_Security_Lab';
 
     this.groundRect(group, zone.position[0], zone.position[2], 32, 28, this.world.materials.securityRoad, 0.13, 'SecurityScannerPad');
-    this.ring(group, zone.position, 13.2, 0x68d8ff, 0.22, 'SecurityPerimeterRing', 0.3);
-    this.ring(group, zone.position, 8.2, 0xff6d8d, 0.16, 'SecurityAlertRing', -0.42);
+    this.box(group, zone.position[0], 0.18, zone.position[2] - 14.2, 26, 0.04, 0.32, this.world.materials.glowBlue, 0, 'SecurityPadFrontTrace');
+    this.box(group, zone.position[0] - 16.2, 0.18, zone.position[2], 0.32, 0.04, 24, this.world.materials.glowBlue, 0, 'SecurityPadLeftTrace');
+    this.box(group, zone.position[0] + 16.2, 0.18, zone.position[2], 0.32, 0.04, 24, this.world.materials.glowPink, 0, 'SecurityPadRightTrace');
 
     this.securityGate(group, zone.position[0] - 2.8, zone.position[2] - 11.2, 0.18);
     this.addSign(group, 'SECURITY SCAN', 'Authorized Assessments', zone.position[0] + 12.8, zone.position[2] - 11.8, -0.55, 0x68d8ff, 3.0, 'SecurityScanSign');
@@ -181,7 +187,8 @@ export class SetPieces {
 
     this.addSign(group, 'CV VAULT', 'Documents', 22, -89, 0.25, 0xe6f3ff, 2.5, 'CvVaultSign');
     this.addLamp(group, 28, -68, 0xe6f3ff, 2.8, 'CvLamp');
-    this.ring(group, [32, 0, -78], 9.7, 0xe6f3ff, 0.12, 'CvVaultGlow', 0.16);
+    this.groundRect(group, 32, -78, 13, 9, this.world.materials.plazaRoad, 0.13, 'CvVaultDocumentPad');
+    this.box(group, 32, 0.19, -82.8, 10.6, 0.04, 0.28, this.world.materials.glowBlue, 0, 'CvVaultFrontTrace');
 
     this.addSign(group, 'CONTACT', 'Harbor Signal', 121, 76, -0.65, 0x78b7ff, 2.5, 'HarborSign');
     for (const [x, z] of [[128, 58], [135, 70], [119, 65]]) {
@@ -189,7 +196,8 @@ export class SetPieces {
     }
 
     this.addSign(group, 'STUNT', 'Boost Yard', 103, -67, -0.55, 0xff9b6d, 2.6, 'StuntSign');
-    this.ring(group, [112, 0, -78], 13.8, 0xff9b6d, 0.13, 'StuntYardGlow', -0.34);
+    this.groundRect(group, 112, -78, 25, 17, this.world.materials.stuntRamp, 0.12, 'StuntYardRunoffPad');
+    this.box(group, 112, 0.18, -68.8, 20, 0.04, 0.28, this.world.materials.warmGlow, 0, 'StuntYardStartTrace');
     this.addSign(group, 'DATA', 'Visitor Trail', -145, 30, 0.75, 0x79ffc5, 2.5, 'DataPierSign');
     this.world.scene.add(group);
   }
@@ -213,56 +221,30 @@ export class SetPieces {
     this.world.scene.add(group);
   }
 
-  groundDisc(group, position, radius, material, y, name) {
-    const mesh = new THREE.Mesh(new THREE.CircleGeometry(radius, 72), material.clone());
-    mesh.name = name;
-    mesh.rotation.x = -Math.PI / 2;
-    mesh.position.set(position[0], y, position[2]);
-    mesh.receiveShadow = true;
-    group.add(mesh);
-  }
-
   groundRect(group, x, z, width, depth, material, y, name) {
-    const mesh = new THREE.Mesh(new THREE.BoxGeometry(width, 0.05, depth), material.clone());
+    const mesh = new THREE.Mesh(new THREE.BoxGeometry(width, 0.05, depth), material);
     mesh.name = name;
     mesh.position.set(x, y, z);
     mesh.receiveShadow = true;
     group.add(mesh);
-  }
-
-  ring(group, position, radius, color, opacity, name, speed = 0.12) {
-    const material = new THREE.MeshBasicMaterial({
-      color,
-      transparent: true,
-      opacity,
-      depthWrite: false,
-      side: THREE.DoubleSide
-    });
-    const mesh = new THREE.Mesh(new THREE.TorusGeometry(radius, 0.075, 8, 96), material);
-    mesh.name = name;
-    mesh.rotation.x = Math.PI / 2;
-    mesh.position.set(position[0], 0.28, position[2]);
-    group.add(mesh);
-    this.animated.push({ kind: 'ring', mesh, speed, baseOpacity: opacity, opacityRange: opacity * 0.28, pulse: 1.8, phase: radius * 0.13 });
-    return mesh;
   }
 
   box(group, x, y, z, sx, sy, sz, material, rotation = 0, name = 'SetPieceBox') {
-    const mesh = new THREE.Mesh(new THREE.BoxGeometry(sx, sy, sz), material.clone ? material.clone() : material);
+    const mesh = new THREE.Mesh(new THREE.BoxGeometry(sx, sy, sz), material);
     mesh.name = name;
     mesh.position.set(x, y, z);
     mesh.rotation.y = rotation;
-    mesh.castShadow = true;
+    mesh.castShadow = false;
     mesh.receiveShadow = true;
     group.add(mesh);
     return mesh;
   }
 
   cylinder(group, x, y, z, radius, height, material, sides = 16, name = 'SetPieceCylinder') {
-    const mesh = new THREE.Mesh(new THREE.CylinderGeometry(radius, radius, height, sides), material.clone ? material.clone() : material);
+    const mesh = new THREE.Mesh(new THREE.CylinderGeometry(radius, radius, height, sides), material);
     mesh.name = name;
     mesh.position.set(x, y, z);
-    mesh.castShadow = true;
+    mesh.castShadow = false;
     mesh.receiveShadow = true;
     group.add(mesh);
     return mesh;
@@ -277,15 +259,10 @@ export class SetPieces {
     const glow = new THREE.Mesh(new THREE.SphereGeometry(0.26, 12, 8), glowMaterial);
     glow.name = `${name}_Glow`;
     glow.position.set(0.78, height - 0.34, 0);
-    const light = new THREE.PointLight(color, 1.85, 22, 2.1);
-    light.position.copy(glow.position);
-    light.userData.baseIntensity = 1.85;
-    light.userData.boost = 0.45;
-    lamp.add(glow, light);
+    lamp.add(glow);
     lamp.position.set(x, 0.16, z);
     lamp.rotation.y = Math.sin(x * 0.2 + z * 0.1) * 0.35;
     group.add(lamp);
-    this.animated.push({ kind: 'light', light, base: 1.85, range: 0.18, speed: 1.1, phase: x * 0.1 });
   }
 
   addSign(group, title, subtitle, x, z, rotation, color, scale, name) {
@@ -383,15 +360,6 @@ export class SetPieces {
       gate.add(beam);
     }
 
-    const leftLight = new THREE.PointLight(0x68d8ff, 1.4, 20, 1.8);
-    const rightLight = new THREE.PointLight(0xff6d8d, 1.1, 18, 1.8);
-    leftLight.position.set(-3.2, 3.3, 0.1);
-    rightLight.position.set(3.2, 3.3, 0.1);
-    leftLight.userData = { baseIntensity: 1.4, boost: 1.8 };
-    rightLight.userData = { baseIntensity: 1.1, boost: 1.6 };
-    gate.add(leftLight, rightLight);
-    this.securityScanObjects.push(leftLight, rightLight);
-
     gate.position.set(x, 0.16, z);
     gate.rotation.y = rotation;
     group.add(gate);
@@ -404,9 +372,6 @@ export class SetPieces {
     for (let i = 0; i < 5; i += 1) {
       this.box(rack, 0, 0.42 + i * 0.38, -0.39, 0.88, 0.08, 0.04, this.world.materials.screen, 0, 'ServerGlowLine');
     }
-    const light = new THREE.PointLight(0x29d7ff, 0.7, 8, 2);
-    light.position.set(0, 1.4, -0.55);
-    rack.add(light);
     rack.position.set(x, 0.16, z);
     rack.rotation.y = rotation;
     group.add(rack);
@@ -423,7 +388,7 @@ export class SetPieces {
       new THREE.MeshStandardMaterial({ color, roughness: 0.8, metalness: 0.08 })
     );
     mesh.name = 'SecurityGroundCable';
-    mesh.castShadow = true;
+    mesh.castShadow = false;
     mesh.receiveShadow = true;
     group.add(mesh);
   }
@@ -434,14 +399,10 @@ export class SetPieces {
     this.cylinder(beacon, 0, 0.62, 0, 0.16, 1.24, this.world.materials.cable, 10, 'BeaconPost');
     const glow = new THREE.Mesh(new THREE.SphereGeometry(0.34, 12, 8), new THREE.MeshBasicMaterial({ color, transparent: true, opacity: 0.88 }));
     glow.position.y = 1.34;
-    const light = new THREE.PointLight(color, 1.2, 18, 2);
-    light.position.copy(glow.position);
-    light.userData = { baseIntensity: 1.2, boost: 1.4 };
-    beacon.add(glow, light);
+    beacon.add(glow);
     beacon.position.set(x, 0.16, z);
     group.add(beacon);
-    this.animated.push({ kind: 'light', light, base: 1.2, range: 0.28, speed: 1.9, phase: x * 0.15 });
-    return light;
+    return glow;
   }
 }
 

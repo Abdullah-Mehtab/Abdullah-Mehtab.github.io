@@ -1,3 +1,5 @@
+// ABOUTME: Adds the stylized sky, sun disk, and distant cloud motion for /play.
+// ABOUTME: Uses cheap geometry and quality gates instead of expensive volumetric effects.
 import * as THREE from 'three';
 import { WORLD_HALF_SIZE } from './worldData.js';
 import { QUALITY_PROFILES } from './WorldMaterials.js';
@@ -19,10 +21,10 @@ export class Atmosphere {
     const material = new THREE.ShaderMaterial({
       side: THREE.BackSide,
       uniforms: {
-        zenith: { value: new THREE.Color(0x2e9ee9) },
-        upper: { value: new THREE.Color(0x76d1ff) },
-        horizon: { value: new THREE.Color(0xf2d6aa) },
-        low: { value: new THREE.Color(0xa9e8f4) }
+        zenith: { value: new THREE.Color(0x497be6) },
+        upper: { value: new THREE.Color(0x82d8ff) },
+        horizon: { value: new THREE.Color(0xffb98e) },
+        low: { value: new THREE.Color(0xa8edf1) }
       },
       vertexShader: `
         varying vec3 vWorldPosition;
@@ -54,14 +56,14 @@ export class Atmosphere {
     this.world.scene.add(dome);
 
     const sunMaterial = new THREE.MeshBasicMaterial({
-      color: 0xffe4a5,
+      color: 0xffa66d,
       transparent: true,
-      opacity: 0.78,
+      opacity: 0.72,
       depthWrite: false
     });
     this.sunDisk = new THREE.Mesh(new THREE.CircleGeometry(18, 48), sunMaterial);
     this.sunDisk.name = 'CinematicSunDisk';
-    this.sunDisk.position.set(-155, 84, -125);
+    this.sunDisk.position.set(-158, 66, -132);
     this.sunDisk.lookAt(0, 22, 0);
     this.world.scene.add(this.sunDisk);
   }
@@ -72,9 +74,9 @@ export class Atmosphere {
       const group = new THREE.Group();
       group.name = `Cloud_${i}`;
       const material = new THREE.MeshBasicMaterial({
-        color: i % 4 === 0 ? 0xfff2dd : 0xffffff,
+        color: i % 4 === 0 ? 0xffd9c2 : 0xffffff,
         transparent: true,
-        opacity: 0.64,
+        opacity: 0.58,
         depthWrite: false
       });
       const lobes = 6 + (i % 4);

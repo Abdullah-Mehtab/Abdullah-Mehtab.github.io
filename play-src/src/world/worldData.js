@@ -32,160 +32,119 @@ export const scenicPropZones = [
 
 export const roadPaths = [
   {
-    id: 'island-loop',
-    name: 'Stone Coast Loop',
-    width: 8.8,
+    id: 'coastal-drive',
+    name: 'Coastal Drive',
+    width: 8.2,
     hierarchy: 'ring',
     closed: true,
     points: [
-      [-88, 78],
-      [-122, 12],
-      [-96, -74],
-      [-28, -120],
-      [56, -112],
-      [118, -56],
-      [130, 34],
-      [84, 100],
+      [-80, 86],
+      [-126, 18],
+      [-106, -70],
+      [-36, -122],
+      [50, -116],
+      [118, -58],
+      [134, 34],
+      [92, 94],
       [16, 126],
       [-60, 112]
     ]
   },
   {
-    id: 'agora-way',
-    name: 'Courtyard Way',
-    width: 7.2,
+    id: 'portfolio-avenue',
+    name: 'Portfolio Avenue',
+    width: 6.8,
     hierarchy: 'avenue',
     closed: false,
     points: [
-      [-122, 12],
-      [-62, 18],
-      [0, 26],
-      [62, 18],
-      [130, 34]
+      [-126, 18],
+      [-74, 22],
+      [-20, 24],
+      [24, 26],
+      [72, 26],
+      [134, 30]
     ]
   },
   {
-    id: 'acropolis-climb',
+    id: 'watchtower-climb',
     name: 'Watchtower Climb',
-    width: 6.2,
+    width: 5.4,
     hierarchy: 'street',
     closed: false,
     points: [
-      [0, 26],
-      [6, 66],
-      [22, 104],
+      [-20, 24],
+      [0, 66],
+      [28, 96],
       [16, 126]
     ]
   },
   {
-    id: 'academy-lane',
-    name: 'Library Lane',
-    width: 6,
-    hierarchy: 'street',
-    closed: false,
-    points: [
-      [-62, 18],
-      [-92, 54],
-      [-104, 86],
-      [-88, 78]
-    ]
-  },
-  {
-    id: 'start-plaza-loop',
-    name: 'Start Plaza Loop',
-    width: 4.8,
-    hierarchy: 'plaza',
-    closed: true,
-    points: [
-      [0, 36],
-      [10, 54],
-      [32, 52],
-      [42, 36],
-      [28, 24],
-      [6, 24]
-    ]
-  },
-  {
-    id: 'campus-quad-loop',
-    name: 'FCC Quad Loop',
-    width: 4.8,
-    hierarchy: 'plaza',
-    closed: true,
-    points: [
-      [-132, 54],
-      [-138, 70],
-      [-122, 96],
-      [-98, 96],
-      [-82, 80],
-      [-92, 58],
-      [-114, 52]
-    ]
-  },
-  {
-    id: 'campus-approach',
+    id: 'fcc-approach',
     name: 'FCC Approach',
-    width: 4.6,
+    width: 5.2,
     hierarchy: 'street',
     closed: false,
     points: [
-      [-92, 54],
-      [-104, 58],
-      [-122, 62]
+      [-74, 22],
+      [-92, 50],
+      [-112, 61],
+      [-126, 66]
     ]
   },
   {
-    id: 'security-lab-lane',
-    name: 'Security Lab Lane',
+    id: 'security-descent',
+    name: 'Security Descent',
     width: 5.6,
     hierarchy: 'security',
     closed: false,
     points: [
-      [-122, 12],
-      [-140, -16],
-      [-144, -36],
+      [-126, 18],
+      [-136, -16],
+      [-142, -36],
       [-130, -62],
-      [-104, -66],
-      [-96, -74]
+      [-106, -70]
     ]
   },
   {
-    id: 'security-scan-loop',
-    name: 'Security Scan Loop',
-    width: 4.8,
-    hierarchy: 'security',
-    closed: true,
-    points: [
-      [-144, -34],
-      [-137, -60],
-      [-113, -64],
-      [-101, -44],
-      [-112, -25],
-      [-136, -22]
-    ]
-  },
-  {
-    id: 'vault-run',
-    name: 'Vault Run',
+    id: 'south-tech-run',
+    name: 'South Tech Run',
     width: 5.8,
     hierarchy: 'street',
     closed: false,
     points: [
-      [0, 26],
-      [24, -36],
-      [44, -86],
-      [56, -112]
+      [-20, 24],
+      [8, -22],
+      [18, -72],
+      [46, -104],
+      [50, -116]
     ]
   },
   {
-    id: 'stunt-cove-loop',
-    name: 'Stunt Courtyard Approach',
-    width: 7,
+    id: 'career-link',
+    name: 'Career Link',
+    width: 5.2,
+    hierarchy: 'street',
+    closed: false,
+    points: [
+      [72, 26],
+      [82, 0],
+      [80, -26],
+      [58, -58],
+      [48, -70]
+    ]
+  },
+  {
+    id: 'stunt-run',
+    name: 'Stunt Run',
+    width: 6.4,
     hierarchy: 'stunt',
     closed: false,
     points: [
-      [56, -112],
-      [84, -96],
-      [104, -96]
+      [50, -116],
+      [96, -104],
+      [124, -92],
+      [124, -64],
+      [118, -58]
     ]
   },
   {
@@ -194,10 +153,35 @@ export const roadPaths = [
     width: 5.2,
     hierarchy: 'dirt',
     closed: false,
-    turnaround: true,
     points: [
-      [-28, -120],
-      [-44, -124]
+      [-36, -122],
+      [-58, -112],
+      [-102, -82],
+      [-106, -70]
+    ]
+  },
+  {
+    id: 'data-pier-spur',
+    name: 'Data Pier Spur',
+    width: 4.6,
+    hierarchy: 'street',
+    closed: false,
+    points: [
+      [-126, 18],
+      [-146, 42],
+      [-150, 36]
+    ]
+  },
+  {
+    id: 'harbor-spur',
+    name: 'Harbor Spur',
+    width: 4.8,
+    hierarchy: 'street',
+    closed: false,
+    points: [
+      [116, 54],
+      [134, 50],
+      [134, 30]
     ]
   }
 ];
@@ -205,9 +189,9 @@ export const roadPaths = [
 export const roadSegments = roadPaths.flatMap((path) => pathToSegments(path));
 
 export const boostPads = [
-  { id: 'southern-curve-boost', position: [0, 0, -123], rotation: Math.PI / 2 - 0.2, color: '#68d8ff', district: 'loop' },
-  { id: 'east-loop-boost', position: [122, 0, -18], rotation: 0.1, color: '#7cffb2', district: 'loop' },
-  { id: 'stunt-cove-boost', position: [78, 0, -106], rotation: -0.6, color: '#ff9b6d', district: 'stunt' }
+  { id: 'southern-curve-boost', position: [2, 0, -119], rotation: 1.5, color: '#68d8ff', district: 'loop' },
+  { id: 'east-loop-boost', position: [110, 0, -64], rotation: -0.55, color: '#7cffb2', district: 'loop' },
+  { id: 'stunt-cove-boost', position: [82, 0, -96], rotation: -0.7, color: '#ff9b6d', district: 'stunt' }
 ];
 
 export const worldZones = [

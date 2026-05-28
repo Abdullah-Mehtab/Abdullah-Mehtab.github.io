@@ -16,7 +16,7 @@ export class Props {
 
   placeRoadLanterns() {
     let placed = 0;
-    const lanternLimit = Math.floor(this.world.getQualityProfile().props * 0.44);
+    const lanternLimit = Math.floor(this.world.getQualityProfile().props * 0.28);
     for (const segment of this.world.roadSegments) {
       if (placed >= lanternLimit) break;
       const [cx, cz, width, length, rotation] = segment;
@@ -28,7 +28,7 @@ export class Props {
         const x = cx + Math.sin(rotation) * length * t + Math.cos(rotation) * (width * 0.92) * side;
         const z = cz + Math.cos(rotation) * length * t - Math.sin(rotation) * (width * 0.92) * side;
         if (!this.world.terrain.containsPoint(x, z, 12)) continue;
-        const lamp = this.world.cloneEnvironmentAsset('EnvMedievalLantern') || this.createLantern();
+        const lamp = this.createLantern();
         lamp.position.set(x, 0.2, z);
         lamp.rotation.y = rotation + Math.PI * (side > 0 ? 0.5 : -0.5);
         this.world.scene.add(lamp);
@@ -94,17 +94,13 @@ export class Props {
       const x = Math.cos(angle) * radius;
       const z = Math.sin(angle) * radius;
       if (this.world.roads.isNear(x, z, 6.5)) continue;
-      const rock = this.world.cloneEnvironmentAsset('EnvShoreRock') || this.createRock();
+      const rock = this.createRock();
       rock.position.set(x, 0, z);
       rock.rotation.y = pseudoRandom(i * 3.7) * Math.PI * 2;
       rock.scale.setScalar(0.72 + pseudoRandom(i * 7.3) * 1.25);
       this.world.scene.add(rock);
       this.groundObject(rock, -0.045);
       this.items.push(rock);
-      this.world.physics.createFixedBall([x, 0.28 * rock.scale.x, z], 0.32 * rock.scale.x, {
-        friction: 0.95,
-        restitution: 0.01
-      });
     }
   }
 
@@ -118,7 +114,7 @@ export class Props {
       this.world.scene.add(pad);
       this.items.push(pad);
     }
-    const prop = this.world.cloneEnvironmentAsset(name) || this.createFallbackProp(name);
+    const prop = this.createFallbackProp(name);
     prop.position.set(x, 0.12, z);
     prop.rotation.y = rotation;
     prop.scale.setScalar(scale);
@@ -141,11 +137,12 @@ export class Props {
     post.position.y = 1.6;
     const arm = new THREE.Mesh(new THREE.BoxGeometry(0.9, 0.08, 0.08), this.world.materials.darkWood);
     arm.position.set(0.34, 3.0, 0);
-    const glow = new THREE.Mesh(new THREE.SphereGeometry(0.22, 12, 8), this.world.materials.glow);
+    const glow = new THREE.Mesh(new THREE.SphereGeometry(0.22, 8, 6), this.world.materials.warmGlow);
     glow.position.set(0.82, 2.75, 0);
-    const light = new THREE.PointLight(0xffc36a, 1.6, 18, 2.2);
-    light.position.copy(glow.position);
-    group.add(post, arm, glow, light);
+    post.castShadow = false;
+    arm.castShadow = false;
+    glow.castShadow = false;
+    group.add(post, arm, glow);
     return group;
   }
 

@@ -13,16 +13,18 @@ export class GameRenderer {
       canvas,
       antialias: true,
       powerPreference: 'high-performance',
-      preserveDrawingBuffer: true
+      preserveDrawingBuffer: false
     });
     this.composer = null;
     this.bloom = null;
+    this.postprocessingEnabled = false;
+    this.maxPixelRatio = 1.15;
   }
 
   setup() {
-    this.renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 1.8));
+    this.renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, this.maxPixelRatio));
     this.renderer.setSize(window.innerWidth, window.innerHeight, false);
-    this.renderer.shadowMap.enabled = true;
+    this.renderer.shadowMap.enabled = false;
     this.renderer.shadowMap.type = THREE.PCFShadowMap;
     this.renderer.outputColorSpace = THREE.SRGBColorSpace;
     this.renderer.toneMapping = THREE.ACESFilmicToneMapping;
@@ -36,26 +38,33 @@ export class GameRenderer {
   }
 
   setQuality(quality) {
+    const profile = {
+      low: { pixelRatio: 1, shadows: false, post: false, bloom: 0.04 },
+      medium: { pixelRatio: 1.15, shadows: false, post: false, bloom: 0.08 },
+      high: { pixelRatio: 1.35, shadows: true, post: true, bloom: 0.18 }
+    }[quality] || { pixelRatio: 1.15, shadows: false, post: false, bloom: 0.08 };
+    this.maxPixelRatio = profile.pixelRatio;
+    this.renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, this.maxPixelRatio));
+    this.renderer.shadowMap.enabled = profile.shadows;
+    this.postprocessingEnabled = profile.post;
     if (!this.bloom) return;
+    this.bloom.strength = profile.bloom;
     if (quality === 'low') {
-      this.bloom.strength = 0.06;
-      this.renderer.shadowMap.enabled = false;
+      this.bloom.radius = 0.32;
     } else if (quality === 'high') {
-      this.bloom.strength = 0.28;
-      this.renderer.shadowMap.enabled = true;
+      this.bloom.radius = 0.52;
     } else {
-      this.bloom.strength = 0.18;
-      this.renderer.shadowMap.enabled = true;
+      this.bloom.radius = 0.4;
     }
   }
 
   render() {
-    if (this.composer) this.composer.render();
+    if (this.composer && this.postprocessingEnabled) this.composer.render();
     else this.renderer.render(this.scene, this.camera);
   }
 
   resize() {
-    const pixelRatio = Math.min(window.devicePixelRatio || 1, 1.8);
+    const pixelRatio = Math.min(window.devicePixelRatio || 1, this.maxPixelRatio);
     this.renderer.setPixelRatio(pixelRatio);
     this.renderer.setSize(window.innerWidth, window.innerHeight, false);
     this.composer?.setSize(window.innerWidth, window.innerHeight);
