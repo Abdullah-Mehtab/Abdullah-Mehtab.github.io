@@ -1,3 +1,5 @@
+// ABOUTME: Builds the potato counter pocket and temporary potato summons.
+// ABOUTME: Keeps farm props visual-only so the driving route remains unblocked.
 import * as THREE from 'three';
 import { pseudoRandom } from './WorldMaterials.js';
 
@@ -23,7 +25,6 @@ export class PotatoFarm {
     this.addField();
     this.addCounter();
     this.addSummonPad();
-    this.addFenceColliders(zone);
   }
 
   addField() {
@@ -100,23 +101,6 @@ export class PotatoFarm {
     pad.name = 'PotatoSummonPad';
     pad.position.set(0, 0.28, 9.45);
     this.group.add(pad);
-  }
-
-  addFenceColliders(zone) {
-    const rotation = zone.rotation || 0;
-    for (const item of [
-      { local: [0, 0.84, -6.25], size: [15.8, 1.7, 0.34] },
-      { local: [0, 0.84, 6.25], size: [15.8, 1.7, 0.34] },
-      { local: [-7.75, 0.84, 0], size: [0.34, 1.7, 12.5] },
-      { local: [7.75, 0.84, 0], size: [0.34, 1.7, 12.5] }
-    ]) {
-      const local = new THREE.Vector3(item.local[0], item.local[1], item.local[2]).applyAxisAngle(new THREE.Vector3(0, 1, 0), rotation);
-      this.world.physics.createFixedBox([zone.position.x + local.x, local.y, zone.position.z + local.z], item.size, {
-        rotation: [0, rotation, 0],
-        friction: 0.92,
-        restitution: 0.02
-      });
-    }
   }
 
   setPotatoCount(count) {

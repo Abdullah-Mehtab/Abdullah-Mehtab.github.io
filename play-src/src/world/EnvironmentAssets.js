@@ -1,6 +1,5 @@
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 import islandVisualUrl from '../../assets/models/world/island-visual.glb?url';
-import islandPhysicsUrl from '../../assets/models/world/island-physics.glb?url';
 import medievalPropsUrl from '../../assets/models/world/medieval-props.glb?url';
 
 export async function loadEnvironmentAssets() {
@@ -10,7 +9,6 @@ export async function loadEnvironmentAssets() {
 
   await Promise.all([
     loadPack(loader, 'islandVisual', islandVisualUrl, packs, templates),
-    loadPack(loader, 'islandPhysics', islandPhysicsUrl, packs, templates),
     loadPack(loader, 'medievalProps', medievalPropsUrl, packs, templates)
   ]);
 
@@ -27,7 +25,6 @@ export async function loadEnvironmentAssets() {
         if (object.isMesh) {
           object.castShadow = true;
           object.receiveShadow = true;
-          if (object.material) object.material = object.material.clone();
         }
       });
       return clone;
@@ -42,7 +39,6 @@ export async function loadEnvironmentAssets() {
         if (object.isMesh) {
           object.castShadow = true;
           object.receiveShadow = true;
-          if (object.material) object.material = object.material.clone();
         }
       });
       return clone;

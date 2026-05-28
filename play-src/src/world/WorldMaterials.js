@@ -2,9 +2,9 @@ import * as THREE from 'three';
 
 export const WATER_Y = -0.55;
 export const QUALITY_PROFILES = {
-  low: { trees: 48, grassTufts: 180, leaves: 80, clouds: 9, props: 32, fireflies: 26, shadows: false, water: 'low' },
-  medium: { trees: 108, grassTufts: 720, leaves: 220, clouds: 18, props: 82, fireflies: 86, shadows: true, water: 'medium' },
-  high: { trees: 168, grassTufts: 1240, leaves: 420, clouds: 30, props: 138, fireflies: 160, shadows: true, water: 'high' }
+  low: { trees: 28, grassTufts: 160, leaves: 36, clouds: 5, props: 18, fireflies: 14, shadows: false, water: 'low', post: false, pixelRatio: 1 },
+  medium: { trees: 54, grassTufts: 320, leaves: 72, clouds: 8, props: 30, fireflies: 28, shadows: false, water: 'medium', post: false, pixelRatio: 1.15 },
+  high: { trees: 82, grassTufts: 520, leaves: 120, clouds: 12, props: 44, fireflies: 48, shadows: true, water: 'high', post: true, pixelRatio: 1.35 }
 };
 export const QUALITY_ORDER = ['low', 'medium', 'high'];
 
@@ -30,21 +30,21 @@ export function createWorldMaterials() {
 
   return {
     ground: new THREE.MeshStandardMaterial({
-      color: 0x356f2f,
+      color: 0x3f7a38,
       map: grassTexture,
       roughness: 0.96,
       metalness: 0.01,
       vertexColors: false,
       side: THREE.DoubleSide
     }),
-    stoneRoad: new THREE.MeshStandardMaterial({ color: 0x605a4d, map: stoneTexture, roughness: 0.94, metalness: 0.02 }),
-    plazaRoad: new THREE.MeshStandardMaterial({ color: 0x6f6758, map: stoneTexture, roughness: 0.9, metalness: 0.02 }),
+    stoneRoad: new THREE.MeshStandardMaterial({ color: 0x8d7668, map: stoneTexture, roughness: 0.94, metalness: 0.02 }),
+    plazaRoad: new THREE.MeshStandardMaterial({ color: 0xa88970, map: stoneTexture, roughness: 0.9, metalness: 0.02 }),
     securityRoad: new THREE.MeshStandardMaterial({ color: 0x253743, roughness: 0.72, metalness: 0.12, emissive: 0x061923, emissiveIntensity: 0.26 }),
-    roadEdge: new THREE.MeshStandardMaterial({ color: 0x474239, roughness: 0.92, metalness: 0.02 }),
+    roadEdge: new THREE.MeshStandardMaterial({ color: 0x5a4a50, roughness: 0.92, metalness: 0.02 }),
     roadLine: new THREE.MeshBasicMaterial({ color: 0xd8c48a, transparent: true, opacity: 0.36 }),
     roadLineBright: new THREE.MeshBasicMaterial({ color: 0x9df7ff, transparent: true, opacity: 0.58 }),
     stuntRamp: new THREE.MeshStandardMaterial({ color: 0x80624a, roughness: 0.88, metalness: 0.02 }),
-    sand: new THREE.MeshStandardMaterial({ color: 0xf4d59a, map: sandTexture, roughness: 0.98, metalness: 0.0 }),
+    sand: new THREE.MeshStandardMaterial({ color: 0xf2bc82, map: sandTexture, roughness: 0.98, metalness: 0.0 }),
     grassSandBlend: makeRadialBlendMaterial({
       inner: 136,
       outer: 151,

@@ -1,3 +1,5 @@
+// ABOUTME: Builds the visible driving routes and junction markings for /play.
+// ABOUTME: Keeps roads visual-only so decorative route geometry cannot block the car.
 import * as THREE from 'three';
 import { roadPaths, roadSegments } from './worldData.js';
 
@@ -27,6 +29,7 @@ export class Roads {
   constructor(world) {
     this.world = world;
     this.segments = roadSegments;
+    this.materialCache = new Map();
   }
 
   build() {
@@ -80,8 +83,7 @@ export class Roads {
     stone.receiveShadow = true;
     this.world.scene.add(stone);
 
-    const lineMaterial = this.world.materials.roadLine.clone();
-    lineMaterial.color.setHex(style.line);
+    const lineMaterial = this.cachedLineMaterial(style.line);
     const lineLength = Math.max(0, length - width * 2.4);
     const dashCount = Math.max(0, Math.floor(lineLength / 12));
     for (let i = 0; i < dashCount; i += 1) {
@@ -91,16 +93,12 @@ export class Roads {
       this.world.scene.add(dash);
     }
 
-    this.world.physics.createFixedBox([x, 0.025, z], [width + style.shoulder * 2, 0.05, length + width * 0.45], {
-      rotation: [0, rotation, 0],
-      friction: path.hierarchy === 'dirt' ? 0.82 : 1.15,
-      restitution: 0.01
-    });
+    // Roads stay visual so the car always drives on one continuous terrain collider.
   }
 
   addNode(point, path) {
     const style = ROAD_STYLE[path.hierarchy] || ROAD_STYLE.street;
-    const radius = path.width * 0.54 + style.shoulder * 0.52;
+    const size = path.width * 0.78 + style.shoulder * 0.42;
     const layer = ROAD_LAYER[path.hierarchy] ?? 1;
     const shoulderY = 0.086 + layer * 0.003;
     const surfaceY = 0.142 + layer * 0.007;
@@ -114,18 +112,18 @@ export class Roads {
           : this.world.materials.stoneRoad;
     const nodeMaterial = this.cleanCapMaterial(edgeMaterial);
     const topMaterial = this.cleanCapMaterial(surfaceMaterial);
-    const node = new THREE.Mesh(new THREE.CircleGeometry(radius, 72), nodeMaterial);
-    node.name = `ROAD_${path.id}_node`;
+    const node = new THREE.Mesh(new THREE.BoxGeometry(size + style.shoulder * 0.9, 0.035, size + style.shoulder * 0.9), nodeMaterial);
+    node.name = `ROAD_${path.id}_junction`;
     node.position.set(point[0], shoulderY, point[1]);
-    node.rotation.x = -Math.PI / 2;
+    node.rotation.y = Math.PI / 4;
     node.receiveShadow = false;
     node.renderOrder = 10 + layer;
     this.world.scene.add(node);
 
-    const top = new THREE.Mesh(new THREE.CircleGeometry(radius - style.shoulder * 0.42, 72), topMaterial);
-    top.name = `ROAD_${path.id}_node_cap`;
+    const top = new THREE.Mesh(new THREE.BoxGeometry(size, 0.035, size), topMaterial);
+    top.name = `ROAD_${path.id}_junction_cap`;
     top.position.set(point[0], surfaceY + 0.034, point[1]);
-    top.rotation.x = -Math.PI / 2;
+    top.rotation.y = Math.PI / 4;
     top.receiveShadow = false;
     top.renderOrder = 12 + layer;
     this.world.scene.add(top);
@@ -139,14 +137,19 @@ export class Roads {
   }
 
   offsetMaterial(material, layer) {
+    const key = `offset:${material.uuid}:${layer}`;
+    if (this.materialCache.has(key)) return this.materialCache.get(key);
     const clone = material.clone();
     clone.polygonOffset = true;
     clone.polygonOffsetFactor = -layer;
     clone.polygonOffsetUnits = -layer;
+    this.materialCache.set(key, clone);
     return clone;
   }
 
   cleanCapMaterial(material) {
+    const key = `cap:${material.uuid}`;
+    if (this.materialCache.has(key)) return this.materialCache.get(key);
     const clone = new THREE.MeshBasicMaterial({
       color: material.color ? material.color.clone() : new THREE.Color(0x5f584d),
       map: material.map || null,
@@ -157,7 +160,17 @@ export class Roads {
     clone.polygonOffset = true;
     clone.polygonOffsetFactor = -14;
     clone.polygonOffsetUnits = -14;
+    this.materialCache.set(key, clone);
     return clone;
+  }
+
+  cachedLineMaterial(color) {
+    const key = `line:${color}`;
+    if (this.materialCache.has(key)) return this.materialCache.get(key);
+    const material = this.world.materials.roadLine.clone();
+    material.color.setHex(color);
+    this.materialCache.set(key, material);
+    return material;
   }
 
   isNear(x, z, margin = 0) {

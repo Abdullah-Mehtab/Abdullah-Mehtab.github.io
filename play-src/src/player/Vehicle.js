@@ -34,6 +34,7 @@ export class Vehicle {
     this.skidGeometry = new THREE.BoxGeometry(0.26, 0.012, 2.2);
     this.boostGeometry = new THREE.ConeGeometry(0.18, 0.9, 8);
     this.createBody();
+    this.createContactShadow();
     this.createLights();
     this.loadVehicleModel();
     this.scene.add(this.group);
@@ -76,6 +77,19 @@ export class Vehicle {
       true
     );
     this.controller = new VehicleController({ physics: this.physics, body: this.body });
+  }
+
+  createContactShadow() {
+    const shadow = new THREE.Mesh(
+      new THREE.CircleGeometry(1.9, 28),
+      new THREE.MeshBasicMaterial({ color: 0x070b0c, transparent: true, opacity: 0.28, depthWrite: false })
+    );
+    shadow.name = 'VehicleContactShadow';
+    shadow.rotation.x = -Math.PI / 2;
+    shadow.position.set(0, -0.82, -0.15);
+    shadow.scale.set(0.82, 1.55, 1);
+    shadow.renderOrder = 5;
+    this.group.add(shadow);
   }
 
   createLights() {
