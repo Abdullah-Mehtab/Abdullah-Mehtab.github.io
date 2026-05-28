@@ -32,6 +32,7 @@ export class Game {
     this.debugReadout = null;
     this.debugEnabled = false;
     this.debugFrame = 0;
+    this.debugColliderOverlay = null;
   }
 
   async init() {
@@ -144,12 +145,15 @@ export class Game {
       respawn: (zoneId) => this.respawn(zoneId),
       summonPotato: () => this.summonPotato(),
       nearest: () => this.activeZone?.name || null,
+      colliders: () => this.physics.getColliderDebugData(),
+      showColliders: () => this.createColliderDebugOverlay(),
       debug: (enabled = true) => {
         this.debugEnabled = Boolean(enabled);
         localStorage.setItem('portfolio-drive-debug', this.debugEnabled ? '1' : '0');
         if (this.debugReadout) this.debugReadout.hidden = !this.debugEnabled;
       }
     };
+    if (params.has('debugColliders')) this.createColliderDebugOverlay();
   }
 
   startDriving() {
@@ -296,9 +300,56 @@ export class Game {
       `wheels ${this.vehicle.controller?.groundedWheels ?? 0}`,
       `slip ${Number(driveState.slip || 0).toFixed(2)}`,
       `zone ${this.activeZone?.id || 'none'}`,
+      `colliders ${this.physics.getColliderDebugData().length}`,
       `calls ${info.render.calls}`,
       `tris ${info.render.triangles}`
     ].join(' | ');
+  }
+
+  createColliderDebugOverlay() {
+    if (this.debugColliderOverlay) {
+      this.debugColliderOverlay.visible = true;
+      return this.debugColliderOverlay;
+    }
+    const group = new THREE.Group();
+    group.name = 'DEBUG_ColliderOverlay';
+    const materials = {
+      box: new THREE.MeshBasicMaterial({ color: 0xffc36a, wireframe: true, transparent: true, opacity: 0.42, depthTest: false }),
+      cylinder: new THREE.MeshBasicMaterial({ color: 0x9ccfff, wireframe: true, transparent: true, opacity: 0.42, depthTest: false }),
+      ball: new THREE.MeshBasicMaterial({ color: 0xff6d8d, wireframe: true, transparent: true, opacity: 0.42, depthTest: false }),
+      trimesh: new THREE.MeshBasicMaterial({ color: 0x7cffb2, wireframe: true, transparent: true, opacity: 0.32, depthTest: false }),
+      sensor: new THREE.MeshBasicMaterial({ color: 0xb6a0ff, wireframe: true, transparent: true, opacity: 0.38, depthTest: false })
+    };
+
+    for (const collider of this.physics.getColliderDebugData()) {
+      const material = collider.sensor ? materials.sensor : materials[collider.type] || materials.box;
+      let geometry = null;
+      if (collider.type === 'box') {
+        geometry = new THREE.BoxGeometry(collider.size[0], collider.size[1], collider.size[2]);
+      } else if (collider.type === 'cylinder') {
+        geometry = new THREE.CylinderGeometry(collider.radius, collider.radius, collider.halfHeight * 2, 16, 1);
+      } else if (collider.type === 'ball') {
+        geometry = new THREE.SphereGeometry(collider.radius, 16, 10);
+      } else if (collider.type === 'trimesh') {
+        geometry = new THREE.BufferGeometry();
+        geometry.setAttribute('position', new THREE.BufferAttribute(collider.vertices, 3));
+        geometry.setIndex(new THREE.BufferAttribute(collider.indices, 1));
+        geometry.computeBoundingSphere();
+      }
+      if (!geometry) continue;
+      const mesh = new THREE.Mesh(geometry, material);
+      mesh.name = `DEBUG_Collider_${collider.name || collider.type}`;
+      mesh.position.set(collider.position[0], collider.position[1], collider.position[2]);
+      if (collider.rotation) {
+        mesh.rotation.set(collider.rotation[0], collider.rotation[1], collider.rotation[2]);
+      }
+      mesh.renderOrder = 999;
+      group.add(mesh);
+    }
+
+    this.debugColliderOverlay = group;
+    this.scene.add(group);
+    return group;
   }
 
   getZoneLines(zone) {

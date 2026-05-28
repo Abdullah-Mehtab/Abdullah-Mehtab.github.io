@@ -1,3 +1,5 @@
+// ABOUTME: Normalizes keyboard, pointer, touch, and gamepad input for the /play car.
+// ABOUTME: Keeps transient actions consumable while held driving controls remain stable.
 const KEY_BINDINGS = {
   KeyW: 'forward',
   ArrowUp: 'forward',
@@ -12,6 +14,7 @@ const KEY_BINDINGS = {
   ControlLeft: 'brake',
   ControlRight: 'brake',
   KeyB: 'brake',
+  KeyC: 'handbrake',
   Space: 'jump',
   KeyE: 'interact',
   Enter: 'interact',

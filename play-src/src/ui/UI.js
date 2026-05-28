@@ -339,6 +339,7 @@ export class UI {
     const rows = [
       ['WASD / Arrows', 'Drive'],
       ['Shift', 'Boost'],
+      ['C', 'Handbrake drift'],
       ['Ctrl / B', 'Brake'],
       ['W + S from rest', 'Charge burnout, release S for wheelie'],
       ['Space', 'Jump'],
