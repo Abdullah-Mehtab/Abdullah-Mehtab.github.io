@@ -39,6 +39,15 @@ This repository is the source for the live root GitHub Pages site:
 
 https://abdullah-mehtab.github.io/
 
+Run the maintenance checks before pushing structural, asset, or play-world changes:
+
+```powershell
+npm run test
+npm run play:build
+```
+
+See `docs/maintenance.md` before moving root files or public assets. The live GitHub Pages URLs are intentionally protected even when the root directory looks busy.
+
 Use this workflow for future updates:
 
 ```powershell
