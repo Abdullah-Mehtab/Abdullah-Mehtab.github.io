@@ -27,6 +27,9 @@ export class Game {
     this.lights = {};
     this.fogDay = new THREE.Color(0xcdeef7);
     this.fogWarm = new THREE.Color(0xf4e5bd);
+    this.debugReadout = null;
+    this.debugEnabled = false;
+    this.debugFrame = 0;
   }
 
   async init() {
@@ -79,15 +82,15 @@ export class Game {
   }
 
   setupScene() {
-    this.scene.background = new THREE.Color(0x94dcfb);
-    this.scene.fog = new THREE.Fog(0xcdeef7, 230, 720);
+    this.scene.background = new THREE.Color(0x8fcff0);
+    this.scene.fog = new THREE.Fog(0xcdeef7, 165, 620);
     this.camera.position.set(0, 9, -18);
 
-    const hemi = new THREE.HemisphereLight(0xfff7e8, 0x173a20, 1.58);
+    const hemi = new THREE.HemisphereLight(0xfff0da, 0x10261d, 1.24);
     this.scene.add(hemi);
 
-    const sun = new THREE.DirectionalLight(0xffd48a, 3.35);
-    sun.position.set(-112, 96, -88);
+    const sun = new THREE.DirectionalLight(0xffc879, 4.15);
+    sun.position.set(-116, 86, -92);
     sun.castShadow = true;
     sun.shadow.mapSize.set(2048, 2048);
     sun.shadow.camera.left = -190;
@@ -100,8 +103,8 @@ export class Game {
     sun.shadow.normalBias = 0.08;
     this.scene.add(sun);
 
-    const rim = new THREE.DirectionalLight(0xb7f0ff, 0.76);
-    rim.position.set(62, 35, 70);
+    const rim = new THREE.DirectionalLight(0x9cecff, 1.18);
+    rim.position.set(64, 42, 78);
     this.scene.add(rim);
 
     this.lights = { hemi, sun, rim };
@@ -119,6 +122,10 @@ export class Game {
   }
 
   setupDebug() {
+    this.debugReadout = document.getElementById('debug-readout');
+    const params = new URLSearchParams(window.location.search);
+    this.debugEnabled = params.has('debugDrive') || localStorage.getItem('portfolio-drive-debug') === '1';
+    if (this.debugReadout && this.debugEnabled) this.debugReadout.hidden = false;
     window.__portfolioDrive = {
       game: this,
       sampleCanvas: () => {
@@ -133,7 +140,12 @@ export class Game {
       start: () => this.startDriving(),
       respawn: (zoneId) => this.respawn(zoneId),
       summonPotato: () => this.summonPotato(),
-      nearest: () => this.activeZone?.name || null
+      nearest: () => this.activeZone?.name || null,
+      debug: (enabled = true) => {
+        this.debugEnabled = Boolean(enabled);
+        localStorage.setItem('portfolio-drive-debug', this.debugEnabled ? '1' : '0');
+        if (this.debugReadout) this.debugReadout.hidden = !this.debugEnabled;
+      }
     };
   }
 
@@ -187,6 +199,7 @@ export class Game {
     this.cameraRig.update(dt);
     this.audio.update(this.vehicle.speed, this.vehicle.controller?.driveState);
     this.ui.update({ speed: this.vehicle.speed, activeZone: this.activeZone, circuit: this.world.circuit });
+    this.updateDebugReadout(dt);
 
     const circuitEvent = this.world.updateCircuit(this.vehicle.position, elapsed);
     if (circuitEvent?.finished) {
@@ -243,11 +256,46 @@ export class Game {
     }
   }
 
+  runSecurityScan(zone) {
+    if (!this.world.startSecurityScan(this.ticker.elapsed)) {
+      this.ui.notify('Scanner already running');
+      return;
+    }
+    this.ui.notify('Security scanner warming up');
+    this.audio.click(880);
+    this.audio.sweep(180, 920, 0.42, 0.045);
+    window.setTimeout(() => {
+      this.world.completeSecurityScan();
+      this.achievements.unlock('security_scan');
+      this.audio.click(1180);
+      this.audio.sweep(520, 1280, 0.24, 0.035);
+      this.ui.notify('Security scan complete');
+      this.ui.openZone(zone, { skipScan: true });
+    }, 1250);
+  }
+
   updateLighting(elapsed) {
     const cycle = Math.sin(elapsed * 0.035) * 0.5 + 0.5;
-    this.lights.sun.intensity = 3.05 + cycle * 0.62;
-    this.lights.rim.intensity = 0.7 + (1 - cycle) * 0.44;
-    this.scene.fog.color.lerpColors(this.fogDay, this.fogWarm, cycle * 0.2);
+    this.lights.sun.intensity = 3.65 + cycle * 0.82;
+    this.lights.rim.intensity = 1.0 + (1 - cycle) * 0.52;
+    this.scene.fog.color.lerpColors(this.fogDay, this.fogWarm, cycle * 0.28);
+  }
+
+  updateDebugReadout(dt) {
+    if (!this.debugEnabled || !this.debugReadout) return;
+    this.debugFrame = (this.debugFrame + 1) % 8;
+    if (this.debugFrame !== 0) return;
+    const driveState = this.vehicle.controller?.driveState || {};
+    const info = this.renderer.info;
+    this.debugReadout.textContent = [
+      `fps ${Math.round(1 / Math.max(dt, 0.001))}`,
+      `speed ${Math.round(this.vehicle.speed)} km/h`,
+      `wheels ${this.vehicle.controller?.groundedWheels ?? 0}`,
+      `slip ${Number(driveState.slip || 0).toFixed(2)}`,
+      `zone ${this.activeZone?.id || 'none'}`,
+      `calls ${info.render.calls}`,
+      `tris ${info.render.triangles}`
+    ].join(' | ');
   }
 
   getZoneLines(zone) {

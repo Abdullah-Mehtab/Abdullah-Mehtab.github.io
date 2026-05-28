@@ -17,7 +17,9 @@ export class StuntPark {
     const baseX = zone.position[0];
     const baseZ = zone.position[2];
     const ramps = [
-      { id: 'cove-main-ramp', x: baseX - 14, z: baseZ - 18, y: 0.12, rot: Math.PI / 2, width: 8.8, length: 22, height: 2.1 }
+      { id: 'cove-main-ramp', x: baseX - 14, z: baseZ - 18, y: 0.12, rot: Math.PI / 2, width: 8.8, length: 22, height: 2.1 },
+      { id: 'cove-return-ramp', x: baseX + 12, z: baseZ - 2, y: 0.12, rot: -Math.PI / 2.6, width: 6.4, length: 16, height: 1.55 },
+      { id: 'cove-short-hop', x: baseX - 2, z: baseZ + 16, y: 0.12, rot: 0.1, width: 5.4, length: 12, height: 1.15 }
     ];
     for (const ramp of ramps) {
       const rampShape = createRampShape(ramp.width, ramp.length, ramp.height);
@@ -35,6 +37,7 @@ export class StuntPark {
         restitution: 0.02
       });
       this.addGuardrails(ramp);
+      this.addLandingMarkers(ramp);
     }
   }
 
@@ -47,6 +50,24 @@ export class StuntPark {
       rail.castShadow = true;
       rail.receiveShadow = true;
       this.world.scene.add(rail);
+    }
+  }
+
+  addLandingMarkers(ramp) {
+    const landingDistance = ramp.length * 0.72;
+    const centerX = ramp.x + Math.sin(ramp.rot) * landingDistance;
+    const centerZ = ramp.z + Math.cos(ramp.rot) * landingDistance;
+    for (const side of [-1, 1]) {
+      const marker = new THREE.Group();
+      marker.name = `STUNT_${ramp.id}_landing_marker`;
+      marker.position.set(centerX + Math.cos(ramp.rot) * side * (ramp.width * 0.62), 0.18, centerZ - Math.sin(ramp.rot) * side * (ramp.width * 0.62));
+      marker.rotation.y = ramp.rot;
+      const post = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.08, 1.6, 8), this.world.materials.darkWood);
+      post.position.y = 0.8;
+      const flag = new THREE.Mesh(new THREE.BoxGeometry(0.9, 0.45, 0.04), this.world.materials.warmGlow);
+      flag.position.set(0.48, 1.32, 0);
+      marker.add(post, flag);
+      this.world.scene.add(marker);
     }
   }
 

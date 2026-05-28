@@ -16,12 +16,13 @@ export class Props {
 
   placeRoadLanterns() {
     let placed = 0;
+    const lanternLimit = Math.floor(this.world.getQualityProfile().props * 0.44);
     for (const segment of this.world.roadSegments) {
-      if (placed >= this.world.getQualityProfile().props * 0.32) break;
+      if (placed >= lanternLimit) break;
       const [cx, cz, width, length, rotation] = segment;
       if (length < 18) continue;
-      const stepCount = Math.max(1, Math.floor(length / 28));
-      for (let i = 0; i < stepCount && placed < 24; i += 1) {
+      const stepCount = Math.max(1, Math.floor(length / 22));
+      for (let i = 0; i < stepCount && placed < lanternLimit; i += 1) {
         const t = (i + 0.5) / stepCount - 0.5;
         const side = pseudoRandom(placed * 4.1) > 0.5 ? 1 : -1;
         const x = cx + Math.sin(rotation) * length * t + Math.cos(rotation) * (width * 0.92) * side;
@@ -44,11 +45,21 @@ export class Props {
       ['EnvBench', 34, 55, 0.42, 0.92],
       ['EnvBench', 42, 34, 2.86, 0.88],
       ['EnvBench', -34, 40, -0.2, 0.86],
+      ['EnvCrate', 4, 58, 0.4, 0.82],
+      ['EnvBarrel', 48, 40, -0.6, 0.78],
 
       // Education grove: benches face the library approach and stay outside the driving line.
       ['EnvBench', -133, 69, 0.98, 0.9],
       ['EnvBench', -121, 50, 0.36, 0.86],
       ['EnvBench', -86, 96, -0.8, 0.86],
+      ['EnvCrate', -145, 76, 0.2, 0.78],
+      ['EnvBarrel', -101, 103, -0.2, 0.78],
+
+      // Security campus equipment and checkpoints.
+      ['EnvCrate', -141, -44, 0.2, 0.9],
+      ['EnvCrate', -109, -50, -0.4, 0.86],
+      ['EnvBarrel', -132, -63, 0.32, 0.8],
+      ['EnvBarrel', -111, -28, -0.18, 0.8],
 
       // Harbor / foundry / farm storage groups.
       ['EnvCrate', 116, 82, 0.2, 0.92],

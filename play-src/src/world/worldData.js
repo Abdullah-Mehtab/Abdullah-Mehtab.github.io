@@ -5,17 +5,21 @@ export const ISLAND_RADIUS = 158;
 export const canalSegments = [];
 
 export const districtFootprints = [
-  { id: 'courtyard', label: 'Portfolio Courtyard', center: [16, 40], size: [44, 36], color: '#7cffb2', kind: 'plaza' },
+  { id: 'courtyard', label: 'Portfolio Courtyard', center: [16, 40], size: [58, 48], color: '#7cffb2', kind: 'plaza' },
   { id: 'watchtower', label: 'Sentinel Watchtower', center: [38, 104], size: [46, 34], color: '#ff6d8d', kind: 'keep' },
-  { id: 'library-grove', label: 'Education Grove', center: [-112, 72], size: [48, 38], color: '#9ccfff', kind: 'library' },
+  { id: 'library-grove', label: 'FCC Education Grove', center: [-112, 72], size: [68, 54], color: '#9ccfff', kind: 'library' },
   { id: 'forge', label: 'Projects Foundry', center: [62, 42], size: [48, 36], color: '#ffcc66', kind: 'forge' },
   { id: 'harbor', label: 'Contact Harbor', center: [130, 64], size: [34, 30], color: '#78b7ff', kind: 'waterfront' },
   { id: 'archive', label: 'Archive Garden', center: [-24, 60], size: [36, 28], color: '#ffdf8a', kind: 'civic' },
+  { id: 'security-campus', label: 'Security Lab Campus', center: [-126, -42], size: [62, 52], color: '#68d8ff', kind: 'security' },
   { id: 'cove', label: 'Stunt Courtyard', center: [112, -78], size: [40, 28], color: '#ff9b6d', kind: 'stunt' },
   { id: 'farm', label: 'Voxel Farm Pocket', center: [-56, -126], size: [34, 28], color: '#c79b56', kind: 'farm' }
 ];
 
 export const scenicPropZones = [
+  { id: 'start-diorama', center: [16, 40], size: [58, 48], kind: 'garden' },
+  { id: 'security-pines', center: [-126, -42], size: [70, 56], kind: 'security' },
+  { id: 'fcc-campus-walk', center: [-112, 72], size: [74, 58], kind: 'campus' },
   { id: 'western-sakura', center: [-124, 28], size: [34, 48], kind: 'grove' },
   { id: 'library-sakura', center: [-122, 112], size: [30, 28], kind: 'grove' },
   { id: 'north-meadow', center: [-12, 110], size: [54, 28], kind: 'meadow' },
@@ -87,6 +91,79 @@ export const roadPaths = [
     ]
   },
   {
+    id: 'start-plaza-loop',
+    name: 'Start Plaza Loop',
+    width: 4.8,
+    hierarchy: 'plaza',
+    closed: true,
+    points: [
+      [0, 36],
+      [10, 54],
+      [32, 52],
+      [42, 36],
+      [28, 24],
+      [6, 24]
+    ]
+  },
+  {
+    id: 'campus-quad-loop',
+    name: 'FCC Quad Loop',
+    width: 4.8,
+    hierarchy: 'plaza',
+    closed: true,
+    points: [
+      [-132, 54],
+      [-138, 70],
+      [-122, 96],
+      [-98, 96],
+      [-82, 80],
+      [-92, 58],
+      [-114, 52]
+    ]
+  },
+  {
+    id: 'campus-approach',
+    name: 'FCC Approach',
+    width: 4.6,
+    hierarchy: 'street',
+    closed: false,
+    points: [
+      [-92, 54],
+      [-104, 58],
+      [-122, 62]
+    ]
+  },
+  {
+    id: 'security-lab-lane',
+    name: 'Security Lab Lane',
+    width: 5.6,
+    hierarchy: 'security',
+    closed: false,
+    points: [
+      [-122, 12],
+      [-140, -16],
+      [-144, -36],
+      [-130, -62],
+      [-104, -66],
+      [-96, -74]
+    ]
+  },
+  {
+    id: 'security-scan-loop',
+    name: 'Security Scan Loop',
+    width: 4.8,
+    hierarchy: 'security',
+    closed: true,
+    points: [
+      [-144, -34],
+      [-137, -60],
+      [-113, -64],
+      [-101, -44],
+      [-112, -25],
+      [-136, -22]
+    ]
+  },
+  {
     id: 'vault-run',
     name: 'Vault Run',
     width: 5.8,
@@ -152,7 +229,7 @@ export const worldZones = [
   },
   {
     id: 'security',
-    name: 'Security Keep',
+    name: 'Security Lab Gate',
     kind: 'Offensive Security',
     position: [-126, 0, -42],
     rotation: 0.18,
@@ -161,6 +238,7 @@ export const worldZones = [
     shape: 'lab',
     dialogueId: '1',
     achievement: 'security_lab',
+    scanRequired: true,
     actions: [
       { label: 'CV', href: '../cv.html' },
       { label: 'Cyber Sentinel', href: '../cyber-sentinel.html' }
@@ -228,7 +306,7 @@ export const worldZones = [
   },
   {
     id: 'education',
-    name: 'Education Library',
+    name: 'FCC Education Grove',
     kind: 'Academics',
     position: [-112, 0, 72],
     rotation: 0.18,
@@ -395,6 +473,7 @@ export const worldZones = [
 export const achievementDefinitions = [
   ['first_stop', 'First Stop', 'Interact with the Start Hub.'],
   ['security_lab', 'Security Pass', 'Open the Security Lab.'],
+  ['security_scan', 'Security Scan', 'Complete the scanner gate sequence.'],
   ['projects_foundry', 'Project Heat', 'Open the Projects Foundry.'],
   ['cyber_sentinel', 'Sentinel Signal', 'Visit Cyber Sentinel Tower.'],
   ['career_office', 'Work Log', 'Open the Career Office.'],

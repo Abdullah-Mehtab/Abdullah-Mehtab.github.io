@@ -28,8 +28,11 @@ export class Vehicle {
     this.lastPosition = START.clone();
     this.visualRumbleTime = 0;
     this.trails = [];
+    this.skidMarks = [];
     this.trailGeometry = new THREE.SphereGeometry(0.08, 8, 5);
     this.smokeGeometry = new THREE.SphereGeometry(0.16, 10, 6);
+    this.skidGeometry = new THREE.BoxGeometry(0.26, 0.012, 2.2);
+    this.boostGeometry = new THREE.ConeGeometry(0.18, 0.9, 8);
     this.createBody();
     this.createLights();
     this.loadVehicleModel();
@@ -76,11 +79,26 @@ export class Vehicle {
   }
 
   createLights() {
+    this.brakeLights = [];
+    this.reverseLights = [];
+    this.boostLights = [];
     for (const x of [-0.62, 0.62]) {
       const light = new THREE.SpotLight(0xfff0c4, 4.8, 26, Math.PI / 10, 0.45, 1.6);
       light.position.set(x, 0.78 + VISUAL_Y_OFFSET, 2.86);
       light.target.position.set(x, 0.32 + VISUAL_Y_OFFSET, 10);
       this.group.add(light, light.target);
+    }
+    for (const x of [-0.64, 0.64]) {
+      const brake = new THREE.PointLight(0xff2b20, 0.35, 7, 2);
+      brake.position.set(x, 0.58 + VISUAL_Y_OFFSET, -2.62);
+      const reverse = new THREE.PointLight(0xdff7ff, 0.0, 5, 2);
+      reverse.position.set(x * 0.72, 0.5 + VISUAL_Y_OFFSET, -2.66);
+      const boost = new THREE.PointLight(0xff8c3a, 0.0, 10, 2);
+      boost.position.set(x * 0.55, 0.3 + VISUAL_Y_OFFSET, -2.9);
+      this.brakeLights.push(brake);
+      this.reverseLights.push(reverse);
+      this.boostLights.push(boost);
+      this.group.add(brake, reverse, boost);
     }
   }
 
@@ -165,11 +183,14 @@ export class Vehicle {
 
     this.trackDistance();
     this.syncModel();
+    this.updateVehicleLights(input, state);
     this.updateVisualRumble(dt);
     this.updateWheelVisuals(dt);
     this.updateTrails(dt);
     if (state.burnout) this.spawnRearSmoke(true);
     if (state.wheelie && this.controller.speed > 4) this.spawnRearSmoke(false);
+    if (state.boost && this.controller.speed > 8) this.spawnBoostFlame();
+    if (state.handbrake && this.controller.speed > 6) this.spawnSkidMark();
     if (this.controller.speed > 10 || (state.handbrake && this.controller.speed > 4)) this.spawnTrail(state.boost, state.handbrake);
   }
 
@@ -232,6 +253,21 @@ export class Vehicle {
     }
   }
 
+  updateVehicleLights(input, state) {
+    const braking = input.actions.brake || input.actions.handbrake || (input.actions.backward && this.controller.localSpeed > 1);
+    const reversing = input.actions.backward && this.controller.localSpeed < -0.5;
+    for (const light of this.brakeLights) {
+      light.intensity = braking ? 2.2 : state.burnout ? 1.1 : 0.35;
+      light.distance = braking ? 10 : 6;
+    }
+    for (const light of this.reverseLights) {
+      light.intensity = reversing ? 1.4 : 0;
+    }
+    for (const light of this.boostLights) {
+      light.intensity = state.boost ? 2.4 : state.wheelie ? 0.8 : 0;
+    }
+  }
+
   spawnTrail(boosting, drifting = false) {
     if (this.trails.length > 45) return;
     const rear = new THREE.Vector3(0, 0.2, -2.6).applyQuaternion(this.group.quaternion).add(this.group.position);
@@ -282,6 +318,58 @@ export class Vehicle {
     }
   }
 
+  spawnBoostFlame() {
+    if (this.trails.length > 96) return;
+    for (const side of [-0.48, 0.48]) {
+      const local = new THREE.Vector3(side, -0.35, -2.74);
+      const position = local.applyQuaternion(this.group.quaternion).add(this.group.position);
+      const flame = new THREE.Mesh(
+        this.boostGeometry,
+        new THREE.MeshBasicMaterial({
+          color: 0xff9a4c,
+          transparent: true,
+          opacity: 0.48,
+          depthWrite: false
+        })
+      );
+      flame.position.copy(position);
+      flame.quaternion.copy(this.group.quaternion);
+      flame.rotateX(Math.PI / 2);
+      this.scene.add(flame);
+      this.trails.push({
+        mesh: flame,
+        life: 0.18,
+        velocity: new THREE.Vector3((Math.random() - 0.5) * 0.12, 0.06, (Math.random() - 0.5) * 0.12)
+      });
+    }
+  }
+
+  spawnSkidMark() {
+    if (this.skidMarks.length > 64) {
+      const old = this.skidMarks.shift();
+      this.scene.remove(old.mesh);
+      old.mesh.material.dispose();
+    }
+    for (const side of [-0.82, 0.82]) {
+      const local = new THREE.Vector3(side, -0.84, -1.56);
+      const position = local.applyQuaternion(this.group.quaternion).add(this.group.position);
+      const mark = new THREE.Mesh(
+        this.skidGeometry,
+        new THREE.MeshBasicMaterial({
+          color: 0x161410,
+          transparent: true,
+          opacity: 0.22,
+          depthWrite: false
+        })
+      );
+      mark.name = 'VehicleSkidMark';
+      mark.position.set(position.x, 0.17, position.z);
+      mark.rotation.y = this.heading;
+      this.scene.add(mark);
+      this.skidMarks.push({ mesh: mark, life: 4.5 });
+    }
+  }
+
   updateTrails(dt) {
     for (let i = this.trails.length - 1; i >= 0; i -= 1) {
       const trail = this.trails[i];
@@ -295,6 +383,16 @@ export class Vehicle {
         this.trails.splice(i, 1);
       }
     }
+    for (let i = this.skidMarks.length - 1; i >= 0; i -= 1) {
+      const mark = this.skidMarks[i];
+      mark.life -= dt;
+      mark.mesh.material.opacity = Math.max(0, mark.life / 4.5) * 0.22;
+      if (mark.life <= 0) {
+        this.scene.remove(mark.mesh);
+        mark.mesh.material.dispose();
+        this.skidMarks.splice(i, 1);
+      }
+    }
   }
 
   boostFromPad(pad) {
@@ -306,6 +404,7 @@ export class Vehicle {
     this.lastBoostPad = pad.id;
     this.achievements.unlock('boost_pad');
     this.audio.click(940);
+    this.audio.sweep?.(140, 720, 0.2, 0.04);
     window.setTimeout(() => {
       if (this.lastBoostPad === pad.id) this.lastBoostPad = null;
     }, 900);
