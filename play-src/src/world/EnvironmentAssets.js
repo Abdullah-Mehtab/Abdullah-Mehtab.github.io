@@ -1,5 +1,6 @@
+// ABOUTME: Loads reusable GLB templates for protected and optional /play world props.
+// ABOUTME: Keeps the FCC/S-block landmark available while the island terrain is generated in code.
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
-import islandVisualUrl from '../../assets/models/world/island-visual.glb?url';
 import medievalPropsUrl from '../../assets/models/world/medieval-props.glb?url';
 
 export async function loadEnvironmentAssets() {
@@ -7,10 +8,7 @@ export async function loadEnvironmentAssets() {
   const packs = new Map();
   const templates = new Map();
 
-  await Promise.all([
-    loadPack(loader, 'islandVisual', islandVisualUrl, packs, templates),
-    loadPack(loader, 'medievalProps', medievalPropsUrl, packs, templates)
-  ]);
+  await loadPack(loader, 'medievalProps', medievalPropsUrl, packs, templates);
 
   return {
     has(name) {

@@ -2,6 +2,7 @@
 // ABOUTME: Keeps protected assets intact while adding roadsides, signs, lights, and interaction scenery.
 import * as THREE from 'three';
 import { worldZones } from './worldData.js';
+import { mergeStaticMeshesInGroup } from './StaticBatching.js';
 
 const Y = 0.16;
 
@@ -90,6 +91,7 @@ export class SetPieces {
       this.arrowMarker(group, x, z, -0.1 + i * 0.04, i % 2 ? 0x68d8ff : 0x7cffb2, 'StartRouteArrow');
     }
 
+    mergeStaticMeshesInGroup(group, { namePrefix: 'SETPIECE_start' });
     this.world.scene.add(group);
   }
 
@@ -102,29 +104,30 @@ export class SetPieces {
     this.groundRect(group, zone.position[0], zone.position[2] + 12.2, 30, 11, this.world.materials.paleStone, 0.118, 'FCCRearWalk');
     this.addSign(group, 'FCCU S BLOCK', 'Forman Christian College', zone.position[0] - 18.5, zone.position[2] - 16.2, 0.2, 0x9ccfff, 3.7, 'FCCIdentitySign');
 
-    for (const x of [-128, -120, -104, -96]) {
-      this.addLamp(group, x, zone.position[2] - 18.5, 0x9ccfff, 3.2, 'FCCFrontLamp');
+    for (const dx of [-18, -7, 7, 18]) {
+      this.addLamp(group, zone.position[0] + dx, zone.position[2] - 19, 0x9ccfff, 3.2, 'FCCFrontLamp');
     }
     for (const [x, z, rot] of [
-      [-133, 63, 0.84],
-      [-126, 92, -0.62],
-      [-98, 58, -0.38],
-      [-91, 88, 0.48]
+      [zone.position[0] - 23, zone.position[2] - 9, 0.84],
+      [zone.position[0] - 14, zone.position[2] + 21, -0.62],
+      [zone.position[0] + 14, zone.position[2] - 12, -0.38],
+      [zone.position[0] + 25, zone.position[2] + 14, 0.48]
     ]) {
       this.addBench(group, x, z, rot, 0.96);
     }
 
     for (const [x, z] of [
-      [-139, 61],
-      [-136, 88],
-      [-86, 63],
-      [-90, 94],
-      [-116, 104]
+      [zone.position[0] - 27, zone.position[2] - 14],
+      [zone.position[0] - 22, zone.position[2] + 15],
+      [zone.position[0] + 25, zone.position[2] - 12],
+      [zone.position[0] + 22, zone.position[2] + 16],
+      [zone.position[0] - 2, zone.position[2] + 27]
     ]) {
       this.addPlanterCluster(group, x, z, 0x9ccfff);
     }
 
     this.campusArch(group, zone.position[0] - 15.5, zone.position[2] - 18.8, 0.08);
+    mergeStaticMeshesInGroup(group, { namePrefix: 'SETPIECE_fcc' });
     this.world.scene.add(group);
   }
 
@@ -172,33 +175,53 @@ export class SetPieces {
       this.animated.push({ kind: 'float', mesh: packet, baseY: packet.position.y, speed: 1.2, phase: i * 0.7, range: 0.34, rotationSpeed: 1.1 + i * 0.05 });
     }
 
+    mergeStaticMeshesInGroup(group, {
+      namePrefix: 'SETPIECE_security',
+      shouldSkip: (object) => object.name === 'SecurityPacketShard' || object.name === 'SetPieceBeaconGlow'
+    });
     this.world.scene.add(group);
   }
 
   createDistrictDressing() {
     const group = new THREE.Group();
     group.name = 'SETPIECE_District_Dressing';
-    this.addSign(group, 'PROJECTS', 'Foundry', 52, 58, -0.35, 0xffcc66, 2.7, 'ProjectsFoundrySign');
-    this.addLamp(group, 72, 58, 0xff9b6d, 3.0, 'FoundryLampA');
-    this.addLamp(group, 47, 33, 0xffcc66, 2.7, 'FoundryLampB');
-    for (const [x, z] of [[70, 51], [75, 48], [58, 59], [64, 62]]) {
+    const projects = findZone('projects');
+    this.addSign(group, 'PROJECTS', 'Build Yard', projects.position[0] - 12, projects.position[2] + 13, -0.35, 0xffcc66, 2.7, 'ProjectsFoundrySign');
+    this.addLamp(group, projects.position[0] + 10, projects.position[2] + 12, 0xff9b6d, 3.0, 'FoundryLampA');
+    this.addLamp(group, projects.position[0] - 16, projects.position[2] - 7, 0xffcc66, 2.7, 'FoundryLampB');
+    for (const [x, z] of [
+      [projects.position[0] + 8, projects.position[2] - 4],
+      [projects.position[0] + 13, projects.position[2] - 7],
+      [projects.position[0] - 4, projects.position[2] + 8],
+      [projects.position[0] + 2, projects.position[2] + 11]
+    ]) {
       this.box(group, x, 0.6, z, 1.25, 1.1, 1.25, this.world.materials.darkWood, 0.3, 'FoundryCrateStack');
     }
 
-    this.addSign(group, 'CV VAULT', 'Documents', 22, -89, 0.25, 0xe6f3ff, 2.5, 'CvVaultSign');
-    this.addLamp(group, 28, -68, 0xe6f3ff, 2.8, 'CvLamp');
-    this.groundRect(group, 32, -78, 13, 9, this.world.materials.plazaRoad, 0.13, 'CvVaultDocumentPad');
-    this.box(group, 32, 0.19, -82.8, 10.6, 0.04, 0.28, this.world.materials.glowBlue, 0, 'CvVaultFrontTrace');
+    const cv = findZone('cv');
+    this.addSign(group, 'CV VAULT', 'Documents', cv.position[0] - 10, cv.position[2] - 12, 0.25, 0xe6f3ff, 2.5, 'CvVaultSign');
+    this.addLamp(group, cv.position[0] + 8, cv.position[2] + 9, 0xe6f3ff, 2.8, 'CvLamp');
+    this.groundRect(group, cv.position[0], cv.position[2], 13, 9, this.world.materials.plazaRoad, 0.13, 'CvVaultDocumentPad');
+    this.box(group, cv.position[0], 0.19, cv.position[2] - 4.8, 10.6, 0.04, 0.28, this.world.materials.glowBlue, 0, 'CvVaultFrontTrace');
 
-    this.addSign(group, 'CONTACT', 'Harbor Signal', 121, 76, -0.65, 0x78b7ff, 2.5, 'HarborSign');
-    for (const [x, z] of [[128, 58], [135, 70], [119, 65]]) {
+    const contact = findZone('contact');
+    this.addSign(group, 'CONTACT', 'Harbor Signal', contact.position[0] - 8, contact.position[2] + 15, -0.65, 0x78b7ff, 2.5, 'HarborSign');
+    for (const [x, z] of [
+      [contact.position[0], contact.position[2] + 2],
+      [contact.position[0] + 7, contact.position[2] + 11],
+      [contact.position[0] - 9, contact.position[2] + 8]
+    ]) {
       this.beacon(group, x, z, 0x78b7ff);
     }
 
-    this.addSign(group, 'STUNT', 'Boost Yard', 103, -67, -0.55, 0xff9b6d, 2.6, 'StuntSign');
-    this.groundRect(group, 112, -78, 25, 17, this.world.materials.stuntRamp, 0.12, 'StuntYardRunoffPad');
-    this.box(group, 112, 0.18, -68.8, 20, 0.04, 0.28, this.world.materials.warmGlow, 0, 'StuntYardStartTrace');
-    this.addSign(group, 'DATA', 'Visitor Trail', -145, 30, 0.75, 0x79ffc5, 2.5, 'DataPierSign');
+    const stunt = findZone('drift');
+    this.addSign(group, 'STUNT', 'Boost Yard', stunt.position[0] - 9, stunt.position[2] + 16, -0.55, 0xff9b6d, 2.6, 'StuntSign');
+    this.groundRect(group, stunt.position[0], stunt.position[2], 25, 17, this.world.materials.stuntRamp, 0.12, 'StuntYardRunoffPad');
+    this.box(group, stunt.position[0], 0.18, stunt.position[2] + 9.2, 20, 0.04, 0.28, this.world.materials.warmGlow, 0, 'StuntYardStartTrace');
+
+    const data = findZone('data-pier');
+    this.addSign(group, 'DATA', 'Visitor Trail', data.position[0] - 8, data.position[2] - 13, 0.75, 0x79ffc5, 2.5, 'DataPierSign');
+    mergeStaticMeshesInGroup(group, { namePrefix: 'SETPIECE_district' });
     this.world.scene.add(group);
   }
 
@@ -206,18 +229,21 @@ export class SetPieces {
     const group = new THREE.Group();
     group.name = 'SETPIECE_Route_Guidance';
     const guides = [
-      [-34, 28, 0.1, 0x9ccfff],
-      [-72, 42, 0.42, 0x9ccfff],
-      [-102, 58, 0.68, 0x9ccfff],
-      [-118, 4, -0.46, 0x68d8ff],
-      [-130, -18, -0.15, 0x68d8ff],
-      [-124, -62, 0.2, 0x68d8ff],
-      [24, -28, 0.04, 0xe6f3ff],
-      [88, -92, -0.7, 0xff9b6d]
+      [-28, 36, 0.24, 0x9ccfff],
+      [-54, 58, 0.42, 0x9ccfff],
+      [-64, 86, 0.68, 0x9ccfff],
+      [-28, 6, -0.76, 0x68d8ff],
+      [-72, -20, -0.56, 0x68d8ff],
+      [-104, -54, -0.3, 0x68d8ff],
+      [22, -20, 0.2, 0xe6f3ff],
+      [76, -92, 1.2, 0xff9b6d],
+      [84, 50, 0.95, 0x78b7ff],
+      [-132, 54, 0.8, 0x79ffc5]
     ];
     for (const [x, z, rot, color] of guides) {
       this.arrowMarker(group, x, z, rot, color, 'RouteArrow');
     }
+    mergeStaticMeshesInGroup(group, { namePrefix: 'SETPIECE_route' });
     this.world.scene.add(group);
   }
 
@@ -398,6 +424,7 @@ export class SetPieces {
     beacon.name = 'SetPieceBeacon';
     this.cylinder(beacon, 0, 0.62, 0, 0.16, 1.24, this.world.materials.cable, 10, 'BeaconPost');
     const glow = new THREE.Mesh(new THREE.SphereGeometry(0.34, 12, 8), new THREE.MeshBasicMaterial({ color, transparent: true, opacity: 0.88 }));
+    glow.name = 'SetPieceBeaconGlow';
     glow.position.y = 1.34;
     beacon.add(glow);
     beacon.position.set(x, 0.16, z);

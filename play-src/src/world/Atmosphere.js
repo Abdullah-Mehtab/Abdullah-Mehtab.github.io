@@ -1,6 +1,7 @@
 // ABOUTME: Adds the stylized sky, sun disk, and distant cloud motion for /play.
 // ABOUTME: Uses cheap geometry and quality gates instead of expensive volumetric effects.
 import * as THREE from 'three';
+import { mergeGeometries } from 'three/examples/jsm/utils/BufferGeometryUtils.js';
 import { WORLD_HALF_SIZE } from './worldData.js';
 import { QUALITY_PROFILES } from './WorldMaterials.js';
 
@@ -80,12 +81,22 @@ export class Atmosphere {
         depthWrite: false
       });
       const lobes = 6 + (i % 4);
+      const geometries = [];
       for (let j = 0; j < lobes; j += 1) {
-        const mesh = new THREE.Mesh(new THREE.IcosahedronGeometry(3.2 + (j % 3) * 0.55, 2), material);
-        mesh.position.set((j - lobes / 2) * 3.1, Math.sin(j * 1.8) * 0.7, Math.cos(j * 2.1) * 1.65);
-        mesh.scale.set(1.55 + (j % 2) * 0.28, 0.46, 0.84 + (j % 3) * 0.12);
-        group.add(mesh);
+        const geometry = new THREE.IcosahedronGeometry(3.2 + (j % 3) * 0.55, 2);
+        const matrix = new THREE.Matrix4()
+          .compose(
+            new THREE.Vector3((j - lobes / 2) * 3.1, Math.sin(j * 1.8) * 0.7, Math.cos(j * 2.1) * 1.65),
+            new THREE.Quaternion(),
+            new THREE.Vector3(1.55 + (j % 2) * 0.28, 0.46, 0.84 + (j % 3) * 0.12)
+          );
+        geometry.applyMatrix4(matrix);
+        geometries.push(geometry);
       }
+      const merged = mergeGeometries(geometries, false);
+      const mesh = new THREE.Mesh(merged, material);
+      mesh.name = `Cloud_${i}_merged_lobes`;
+      group.add(mesh);
       const angle = (i / maxClouds) * Math.PI * 2;
       const radius = 132 + (i % 5) * 26;
       group.position.set(Math.cos(angle) * radius, 58 + (i % 4) * 6, Math.sin(angle) * radius);

@@ -1,5 +1,8 @@
+// ABOUTME: Builds the driveable stunt yard ramps, boost pads, and visual markers.
+// ABOUTME: Keeps only ramp surfaces physical so yard decoration does not block the car.
 import * as THREE from 'three';
 import { boostPads, worldZones } from './worldData.js';
+import { mergeStaticMeshesInGroup } from './StaticBatching.js';
 
 export class StuntPark {
   constructor(world) {
@@ -7,8 +10,63 @@ export class StuntPark {
   }
 
   build() {
+    this.createYardDressing();
     this.createRamps();
     this.createBoostPads();
+  }
+
+  createYardDressing() {
+    const zone = worldZones.find((item) => item.id === 'drift');
+    if (!zone) return;
+    const group = new THREE.Group();
+    group.name = 'STUNT_Yard_Dressing';
+    const baseX = zone.position[0];
+    const baseZ = zone.position[2];
+
+    this.addRunwayStripe(group, baseX - 10, baseZ - 18, 24, Math.PI / 2, 0xff9b6d);
+    this.addRunwayStripe(group, baseX + 9, baseZ - 2, 18, -Math.PI / 2.6, 0xffc36a);
+    this.addRunwayStripe(group, baseX - 2, baseZ + 16, 14, 0.1, 0x68d8ff);
+
+    for (let i = 0; i < 12; i += 1) {
+      const side = i % 2 === 0 ? -1 : 1;
+      const cone = new THREE.Mesh(new THREE.ConeGeometry(0.34, 0.9, 5), this.world.materials.warmGlow);
+      cone.name = 'STUNT_slalom_cone';
+      cone.position.set(baseX - 6 + i * 2.6, 0.6, baseZ + side * 4.2);
+      cone.rotation.y = i * 0.7;
+      group.add(cone);
+    }
+
+    for (const [dx, dz, rot] of [
+      [-21, -8, 0.2],
+      [-18, 10, -0.4],
+      [18, -16, 0.6],
+      [23, 7, -0.2],
+      [4, 22, 0.1]
+    ]) {
+      const stack = new THREE.Group();
+      stack.name = 'STUNT_tire_stack';
+      for (let i = 0; i < 3; i += 1) {
+        const tire = new THREE.Mesh(new THREE.TorusGeometry(0.55, 0.16, 8, 16), this.world.materials.cable);
+        tire.position.y = 0.28 + i * 0.24;
+        tire.rotation.x = Math.PI / 2;
+        stack.add(tire);
+      }
+      stack.position.set(baseX + dx, 0.18, baseZ + dz);
+      stack.rotation.y = rot;
+      group.add(stack);
+    }
+
+    mergeStaticMeshesInGroup(group, { namePrefix: 'STUNT_yard' });
+    this.world.scene.add(group);
+  }
+
+  addRunwayStripe(group, x, z, length, rotation, color) {
+    const material = new THREE.MeshBasicMaterial({ color, transparent: true, opacity: 0.52, depthWrite: false });
+    const stripe = new THREE.Mesh(new THREE.BoxGeometry(0.46, 0.035, length), material);
+    stripe.name = 'STUNT_runway_glow';
+    stripe.position.set(x, 0.22, z);
+    stripe.rotation.y = rotation;
+    group.add(stripe);
   }
 
   createRamps() {

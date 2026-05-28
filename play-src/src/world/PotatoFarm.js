@@ -28,52 +28,73 @@ export class PotatoFarm {
   }
 
   addField() {
-    const farmAsset = this.world.cloneEnvironmentAsset('EnvPotatoFarm');
-    if (farmAsset) {
-      farmAsset.name = 'EnvPotatoFarm_BlockyVoxelField';
-      farmAsset.position.set(0, 0, 0);
-      farmAsset.rotation.y = 0;
-      this.group.add(farmAsset);
-      return;
-    }
+    const dummy = new THREE.Object3D();
+    const soilBlocks = [];
+    const waterBlocks = [];
+    const cropBlocks = [];
 
     for (let row = -3; row <= 3; row += 1) {
       for (let col = -4; col <= 4; col += 1) {
         const wet = col === 0;
-        const block = new THREE.Mesh(
-          new THREE.BoxGeometry(1.25, 0.34, 1.25),
-          wet ? this.world.materials.water : this.world.materials.darkWood
-        );
-        block.position.set(col * 1.34, 0.16, row * 1.34);
-        this.group.add(block);
-        if (!wet && (row + col) % 2 === 0) {
-          const crop = this.world.cloneEnvironmentAsset('EnvPotatoCrop') || new THREE.Mesh(new THREE.BoxGeometry(0.42, 0.62, 0.42), this.world.materials.crop);
-          crop.position.set(col * 1.34, 0.68, row * 1.34);
-          crop.rotation.y = pseudoRandom((row + 8) * (col + 10)) * Math.PI * 2;
-          this.group.add(crop);
-        }
+        const target = wet ? waterBlocks : soilBlocks;
+        target.push({ x: col * 1.34, y: 0.16, z: row * 1.34, rotation: 0, scale: [1, 1, 1] });
+        if (!wet && (row + col) % 2 === 0) cropBlocks.push({
+          x: col * 1.34,
+          y: 0.68,
+          z: row * 1.34,
+          rotation: pseudoRandom((row + 8) * (col + 10)) * Math.PI * 2,
+          scale: [1, 1, 1]
+        });
       }
     }
+
+    this.addInstances('PotatoSoilBlocks', new THREE.BoxGeometry(1.25, 0.34, 1.25), this.world.materials.darkWood, soilBlocks, dummy);
+    this.addInstances('PotatoWaterBlocks', new THREE.BoxGeometry(1.25, 0.2, 1.25), this.world.materials.shallow, waterBlocks, dummy);
+    this.addInstances('PotatoCropBlocks', new THREE.BoxGeometry(0.42, 0.62, 0.42), this.world.materials.crop, cropBlocks, dummy);
     this.addFence();
   }
 
   addFence() {
-    const fenceTemplate = this.world.cloneEnvironmentAsset('EnvFencePost');
+    const dummy = new THREE.Object3D();
+    const posts = [];
+    const rails = [];
+
     for (let x = -6; x <= 6; x += 1.5) {
-      this.addFencePiece(fenceTemplate, x, 0.8, -5.5, 0);
-      this.addFencePiece(fenceTemplate, x, 0.8, 5.5, 0);
+      posts.push({ x, y: 0.8, z: -5.5, rotation: 0, scale: [1, 1, 1] });
+      posts.push({ x, y: 0.8, z: 5.5, rotation: 0, scale: [1, 1, 1] });
+      if (x < 6) {
+        rails.push({ x: x + 0.75, y: 1.05, z: -5.5, rotation: Math.PI / 2, scale: [1, 1, 1] });
+        rails.push({ x: x + 0.75, y: 1.05, z: 5.5, rotation: Math.PI / 2, scale: [1, 1, 1] });
+      }
     }
     for (let z = -4.5; z <= 4.5; z += 1.5) {
-      this.addFencePiece(fenceTemplate, -6.4, 0.8, z, Math.PI / 2);
-      this.addFencePiece(fenceTemplate, 6.4, 0.8, z, Math.PI / 2);
+      posts.push({ x: -6.4, y: 0.8, z, rotation: Math.PI / 2, scale: [1, 1, 1] });
+      posts.push({ x: 6.4, y: 0.8, z, rotation: Math.PI / 2, scale: [1, 1, 1] });
+      if (z < 4.5) {
+        rails.push({ x: -6.4, y: 1.05, z: z + 0.75, rotation: 0, scale: [1, 1, 1] });
+        rails.push({ x: 6.4, y: 1.05, z: z + 0.75, rotation: 0, scale: [1, 1, 1] });
+      }
     }
+
+    this.addInstances('PotatoFencePosts', new THREE.BoxGeometry(0.22, 1.35, 0.22), this.world.materials.wood, posts, dummy);
+    this.addInstances('PotatoFenceRails', new THREE.BoxGeometry(0.14, 0.16, 1.45), this.world.materials.wood, rails, dummy);
   }
 
-  addFencePiece(template, x, y, z, rotation) {
-    const post = template ? template.clone(true) : new THREE.Mesh(new THREE.BoxGeometry(0.22, 1.35, 0.22), this.world.materials.wood);
-    post.position.set(x, y, z);
-    post.rotation.y = rotation;
-    this.group.add(post);
+  addInstances(name, geometry, material, entries, dummy) {
+    if (!entries.length) return;
+    const mesh = new THREE.InstancedMesh(geometry, material, entries.length);
+    mesh.name = name;
+    mesh.castShadow = false;
+    mesh.receiveShadow = true;
+    entries.forEach((entry, index) => {
+      dummy.position.set(entry.x, entry.y, entry.z);
+      dummy.rotation.set(0, entry.rotation || 0, 0);
+      dummy.scale.set(entry.scale[0], entry.scale[1], entry.scale[2]);
+      dummy.updateMatrix();
+      mesh.setMatrixAt(index, dummy.matrix);
+    });
+    mesh.instanceMatrix.needsUpdate = true;
+    this.group.add(mesh);
   }
 
   addCounter() {
@@ -116,7 +137,7 @@ export class PotatoFarm {
   spawnPotato() {
     const zone = this.world.zones.find((item) => item.id === 'potato');
     if (!zone) return null;
-    const potato = this.world.cloneEnvironmentAsset('EnvMinecraftPotato') || new THREE.Mesh(new THREE.BoxGeometry(0.75, 0.55, 0.55), this.world.materials.potato);
+    const potato = new THREE.Mesh(new THREE.BoxGeometry(0.75, 0.55, 0.55), this.world.materials.potato);
     const offset = new THREE.Vector3(
       (Math.random() - 0.5) * 7.2,
       2.5,

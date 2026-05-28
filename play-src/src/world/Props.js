@@ -1,5 +1,7 @@
+// ABOUTME: Places lightweight non-colliding props around roads, districts, and shorelines.
+// ABOUTME: Keeps decoration procedural so optional GLB props cannot create hidden blockers.
 import * as THREE from 'three';
-import { ISLAND_RADIUS } from './worldData.js';
+import { ISLAND_RADIUS, worldZones } from './worldData.js';
 import { pseudoRandom } from './WorldMaterials.js';
 
 export class Props {
@@ -39,45 +41,49 @@ export class Props {
   }
 
   placeScenicProps() {
+    const zone = (id) => worldZones.find((item) => item.id === id)?.position || [0, 0, 0];
+    const landing = zone('landing');
+    const education = zone('education');
+    const security = zone('security');
+    const projects = zone('projects');
+    const contact = zone('contact');
+    const cv = zone('cv');
+    const drift = zone('drift');
+    const data = zone('data-pier');
+    const potato = zone('potato');
     const placements = [
-      // Courtyard seating, placed like a small public square instead of random clutter.
-      ['EnvBench', -8, 48, -0.35, 0.92],
-      ['EnvBench', 34, 55, 0.42, 0.92],
-      ['EnvBench', 42, 34, 2.86, 0.88],
-      ['EnvBench', -34, 40, -0.2, 0.86],
-      ['EnvCrate', 4, 58, 0.4, 0.82],
-      ['EnvBarrel', 48, 40, -0.6, 0.78],
+      ['EnvBench', landing[0] - 16, landing[2] + 7, -0.35, 0.92],
+      ['EnvBench', landing[0] + 18, landing[2] + 10, 0.42, 0.92],
+      ['EnvCrate', landing[0] + 10, landing[2] - 13, 0.4, 0.82],
+      ['EnvBarrel', landing[0] - 20, landing[2] - 8, -0.6, 0.78],
 
-      // Education grove: benches face the library approach and stay outside the driving line.
-      ['EnvBench', -133, 69, 0.98, 0.9],
-      ['EnvBench', -121, 50, 0.36, 0.86],
-      ['EnvBench', -86, 96, -0.8, 0.86],
-      ['EnvCrate', -145, 76, 0.2, 0.78],
-      ['EnvBarrel', -101, 103, -0.2, 0.78],
+      ['EnvBench', education[0] - 24, education[2] - 4, 0.98, 0.9],
+      ['EnvBench', education[0] + 20, education[2] - 16, 0.36, 0.86],
+      ['EnvBench', education[0] + 16, education[2] + 20, -0.8, 0.86],
+      ['EnvCrate', education[0] - 29, education[2] + 12, 0.2, 0.78],
+      ['EnvBarrel', education[0] + 27, education[2] + 18, -0.2, 0.78],
 
-      // Security campus equipment and checkpoints.
-      ['EnvCrate', -141, -44, 0.2, 0.9],
-      ['EnvCrate', -109, -50, -0.4, 0.86],
-      ['EnvBarrel', -132, -63, 0.32, 0.8],
-      ['EnvBarrel', -111, -28, -0.18, 0.8],
+      ['EnvCrate', security[0] - 18, security[2] + 2, 0.2, 0.9],
+      ['EnvCrate', security[0] + 14, security[2] - 7, -0.4, 0.86],
+      ['EnvBarrel', security[0] - 10, security[2] - 16, 0.32, 0.8],
+      ['EnvBarrel', security[0] + 22, security[2] + 10, -0.18, 0.8],
 
-      // Harbor / foundry / farm storage groups.
-      ['EnvCrate', 116, 82, 0.2, 0.92],
-      ['EnvBarrel', 120, 88, -0.2, 0.86],
-      ['EnvCrate', 78, 57, 0.38, 0.88],
-      ['EnvBarrel', 84, 51, -0.4, 0.82],
-      ['EnvCrate', 54, 82, 0.12, 0.82],
-      ['EnvBarrel', 56, 89, -0.34, 0.78],
+      ['EnvCrate', projects[0] + 16, projects[2] - 10, 0.38, 0.88],
+      ['EnvBarrel', projects[0] + 22, projects[2] - 4, -0.4, 0.82],
+      ['EnvCrate', projects[0] - 18, projects[2] + 12, 0.12, 0.82],
+      ['EnvBarrel', projects[0] - 13, projects[2] + 18, -0.34, 0.78],
 
-      // Small rest points near the outer loop.
-      ['EnvBench', -138, -12, 1.34, 0.86],
-      ['EnvBench', -111, -88, 0.7, 0.86],
-      ['EnvBench', 104, -34, -0.85, 0.86],
-      ['EnvBench', -20, -102, 0.18, 0.84],
+      ['EnvCrate', contact[0] - 12, contact[2] + 20, 0.2, 0.92],
+      ['EnvBarrel', contact[0] - 5, contact[2] + 25, -0.2, 0.86],
+      ['EnvBench', contact[0] - 19, contact[2] - 8, -0.85, 0.86],
 
-      // Pier data props.
-      ['EnvCrate', -145, 34, 0.34, 0.84],
-      ['EnvBarrel', -135, 39, -0.22, 0.8]
+      ['EnvBench', cv[0] - 16, cv[2] + 10, 0.18, 0.84],
+      ['EnvCrate', drift[0] - 20, drift[2] + 14, 0.34, 0.84],
+      ['EnvBarrel', drift[0] + 18, drift[2] - 8, -0.22, 0.8],
+      ['EnvCrate', data[0] - 10, data[2] + 8, 0.34, 0.84],
+      ['EnvBarrel', data[0] + 4, data[2] - 10, -0.22, 0.8],
+      ['EnvCrate', potato[0] + 16, potato[2] + 6, 0.34, 0.84],
+      ['EnvBarrel', potato[0] - 15, potato[2] + 8, -0.22, 0.8]
     ];
 
     for (const [name, x, z, rotation, scale] of placements) {
