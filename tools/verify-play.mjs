@@ -5,7 +5,7 @@ import { existsSync, readFile, statSync } from 'node:fs';
 import { mkdir, writeFile } from 'node:fs/promises';
 import { extname, join, resolve } from 'node:path';
 import puppeteer from 'puppeteer-core';
-import { worldZones } from '../play-src/src/world/worldData.js';
+import { ISLAND_RADIUS, worldZones } from '../play-src/src/world/worldData.js';
 
 const repoRoot = resolve(import.meta.dirname, '..');
 const chromePath = findChrome();
@@ -44,6 +44,8 @@ try {
 
   const gameplay = await exerciseGameplay(page);
   await screenshot(page, '03-driving-stress.png');
+  const water = await exerciseWater(page, ISLAND_RADIUS);
+  await screenshot(page, '04-water-interaction.png');
 
   for (const zone of worldZones) {
     await page.evaluate((zoneId) => window.__portfolioDrive.respawn(zoneId), zone.id);
@@ -65,7 +67,7 @@ try {
   await delay(300);
   await screenshot(page, 'debug-colliders.png');
 
-  const metrics = await collectRuntimeMetrics(page, loadMs, gameplay);
+  const metrics = await collectRuntimeMetrics(page, loadMs, gameplay, water);
   const mobile = await captureMobile(browser);
   const result = {
     baseUrl,
@@ -205,14 +207,18 @@ async function exerciseGameplay(page) {
     await delay(350);
     samples.groundedBeforeJump = await waitForGrounded();
     const beforeJumpY = game.vehicle.position.y;
-    input.pressed.add('jump');
-    input.actions.jump = true;
     let maxJumpY = beforeJumpY;
-    for (let i = 0; i < 12; i += 1) {
-      await delay(70);
+    for (let i = 0; i < 6; i += 1) {
+      input.pressed.add('jump');
+      input.actions.jump = true;
+      await delay(50);
       maxJumpY = Math.max(maxJumpY, game.vehicle.position.y);
     }
     input.actions.jump = false;
+    for (let i = 0; i < 10; i += 1) {
+      await delay(70);
+      maxJumpY = Math.max(maxJumpY, game.vehicle.position.y);
+    }
     samples.jumpSeen = maxJumpY > beforeJumpY + 0.12;
     samples.jumpDelta = Number((maxJumpY - beforeJumpY).toFixed(2));
 
@@ -255,7 +261,49 @@ async function exerciseGameplay(page) {
   }, keyboardHandbrake);
 }
 
-async function collectRuntimeMetrics(page, loadMs, gameplay) {
+async function exerciseWater(page, islandRadius) {
+  return page.evaluate(async (radius) => {
+    const delay = (ms) => new Promise((resolveDelay) => setTimeout(resolveDelay, ms));
+    const game = window.__portfolioDrive.game;
+    const horizontalSpeed = () => {
+      const velocity = game.vehicle.body.linvel();
+      return Math.hypot(velocity.x, velocity.z);
+    };
+
+    game.vehicle.respawn({ x: radius * 1.022, y: 1.08, z: 0 }, Math.PI * 0.5);
+    game.vehicle.body.setLinvel({ x: 18, y: 0, z: 0 }, true);
+
+    const beforeSpeed = horizontalSpeed();
+    let surfaceSeen = false;
+    let splashSeen = false;
+    for (let i = 0; i < 14; i += 1) {
+      await delay(80);
+      surfaceSeen = surfaceSeen || game.world.surfaceState?.inWater === true;
+      splashSeen = splashSeen || (game.world.water?.splashes?.length || 0) > 0;
+    }
+    const afterSpeed = horizontalSpeed();
+
+    game.vehicle.respawn({ x: radius * 1.044, y: 0.7, z: 0 }, Math.PI * 0.5);
+    for (let i = 0; i < 18; i += 1) {
+      await delay(80);
+    }
+    const afterRespawn = game.vehicle.position;
+    const respawnDistance = Math.hypot(afterRespawn.x, afterRespawn.z);
+
+    return {
+      surfaceSeen,
+      splashSeen,
+      beforeSpeed: Number(beforeSpeed.toFixed(2)),
+      afterSpeed: Number(afterSpeed.toFixed(2)),
+      dragReduced: afterSpeed < beforeSpeed * 0.82,
+      submergeRespawned: respawnDistance < radius * 0.55,
+      finalDistance: Number(respawnDistance.toFixed(2)),
+      splashCount: game.world.water?.splashes?.length || 0
+    };
+  }, islandRadius);
+}
+
+async function collectRuntimeMetrics(page, loadMs, gameplay, water) {
   const runtime = await page.evaluate(async () => {
     const frameDeltas = [];
     await new Promise((resolveFrames) => {
@@ -307,6 +355,7 @@ async function collectRuntimeMetrics(page, loadMs, gameplay) {
   return {
     loadMs,
     gameplay,
+    water,
     ...runtime
   };
 }
@@ -355,6 +404,10 @@ function assertVerification(result) {
   for (const key of ['keyboardHandbrake', 'boostSeen', 'jumpSeen', 'burnoutSeen', 'wheelieSeen', 'handbrakeSeen']) {
     if (!result.gameplay[key]) failures.push(`gameplay probe failed: ${key}`);
   }
+  if (!result.water?.surfaceSeen) failures.push('water probe failed: surface state');
+  if (!result.water?.splashSeen) failures.push('water probe failed: splash particles');
+  if (!result.water?.dragReduced) failures.push('water probe failed: drag');
+  if (!result.water?.submergeRespawned) failures.push('water probe failed: submerge respawn');
   if (!result.mobile.ready || result.mobile.canvasSample <= 0) failures.push('mobile canvas did not render');
   if (failures.length) {
     throw new Error(`Play verification failed: ${failures.join('; ')}`);

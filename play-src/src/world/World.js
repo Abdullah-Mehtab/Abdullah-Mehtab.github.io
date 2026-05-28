@@ -31,6 +31,7 @@ export class World {
     this.ramps = [];
     this.collectibles = [];
     this.potatoes = [];
+    this.surfaceState = { label: 'land', inWater: false, nearShore: false };
     this.roadSegments = roadSegments;
     this.checkpoints = circuitCheckpoints.map(([x, y, z]) => new THREE.Vector3(x, y, z));
     this.landscapeQuality = this.readLandscapeQuality();
@@ -91,6 +92,7 @@ export class World {
     if (!QUALITY_PROFILES[quality]) return this.landscapeQuality;
     this.landscapeQuality = quality;
     localStorage.setItem('portfolio-drive-landscape-quality', quality);
+    this.water?.applyQuality?.();
     this.foliage?.applyQuality();
     this.atmosphere?.applyQuality?.();
     this.onQualityChange?.(quality);
@@ -248,8 +250,8 @@ export class World {
     return { checkpoint: this.circuit.checkpoint };
   }
 
-  update(dt, elapsed, vehiclePosition) {
-    this.water.update(dt, elapsed);
+  update(dt, elapsed, vehiclePosition, vehicle) {
+    this.water.update(dt, elapsed, vehiclePosition, vehicle);
     this.foliage.update(dt, elapsed, vehiclePosition);
     this.potatoFarm.update(dt);
     this.setPieces.update(dt, elapsed);
