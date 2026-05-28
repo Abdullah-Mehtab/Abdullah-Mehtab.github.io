@@ -1,3 +1,6 @@
+// ABOUTME: Prepares Portfolio Drive model assets for the Vite build.
+// ABOUTME: Reuses committed GLBs by default and rebuilds them only when requested.
+
 import { access, mkdir, writeFile } from 'node:fs/promises';
 import { constants } from 'node:fs';
 import { dirname, resolve } from 'node:path';
@@ -12,6 +15,13 @@ const islandVisualOutput = resolve(root, 'play-src', 'assets', 'models', 'world'
 const islandPhysicsOutput = resolve(root, 'play-src', 'assets', 'models', 'world', 'island-physics.glb');
 const medievalPropsOutput = resolve(root, 'play-src', 'assets', 'models', 'world', 'medieval-props.glb');
 const manifest = resolve(root, 'play-src', 'assets', 'models', 'asset-manifest.json');
+const assetOutputs = [
+  vehicleOutput,
+  environmentOutput,
+  islandVisualOutput,
+  islandPhysicsOutput,
+  medievalPropsOutput
+];
 
 await mkdir(dirname(vehicleOutput), { recursive: true });
 await mkdir(dirname(environmentOutput), { recursive: true });
@@ -21,7 +31,13 @@ await mkdir(dirname(medievalPropsOutput), { recursive: true });
 await mkdir(dirname(manifest), { recursive: true });
 
 const blenderRequested = process.env.PLAY_ASSETS_BLENDER === '1';
-const blenderBinary = await resolveBlenderBinary(blenderRequested);
+const rebuildRequested = blenderRequested || process.env.PLAY_ASSETS_REBUILD === '1';
+if (!rebuildRequested && await allFilesExist([...assetOutputs, manifest])) {
+  console.log('Using committed play assets. Set PLAY_ASSETS_REBUILD=1 or PLAY_ASSETS_BLENDER=1 to regenerate GLBs.');
+  process.exit(0);
+}
+
+const blenderBinary = blenderRequested ? await resolveBlenderBinary(true) : null;
 const vehicleBlenderScript = resolve(root, 'play-assets', 'source', 'blender', 'export_sabre_turbo.py');
 const environmentBlenderScript = resolve(root, 'play-assets', 'source', 'blender', 'export_environment.py');
 const medievalWorldScript = resolve(root, 'play-assets', 'source', 'blender', 'export_medieval_world.py');
@@ -104,6 +120,11 @@ async function fileExists(path) {
   } catch {
     return false;
   }
+}
+
+async function allFilesExist(paths) {
+  const checks = await Promise.all(paths.map((path) => fileExists(path)));
+  return checks.every(Boolean);
 }
 
 async function canExecute(command) {

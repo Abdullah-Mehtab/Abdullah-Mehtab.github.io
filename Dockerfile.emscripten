@@ -1,5 +1,0 @@
-FROM emscripten/emsdk:3.1.61
-WORKDIR /build
-COPY play/src/ ./src/
-RUN mkdir -p dist
-CMD ["make", "-C", "src", "DIST_DIR=/build/dist"]

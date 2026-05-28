@@ -1,0 +1,51 @@
+name: Validate Site
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - '*.html'
+      - 'assets/**'
+      - 'classic/**'
+      - 'play/**'
+      - 'play-assets/**'
+      - 'play-src/**'
+      - 'supabase/**'
+      - 'tools/**'
+      - 'package.json'
+      - 'package-lock.json'
+      - '.github/workflows/validate-site.yml'
+  pull_request:
+    paths:
+      - '*.html'
+      - 'assets/**'
+      - 'classic/**'
+      - 'play/**'
+      - 'play-assets/**'
+      - 'play-src/**'
+      - 'supabase/**'
+      - 'tools/**'
+      - 'package.json'
+      - 'package-lock.json'
+      - '.github/workflows/validate-site.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - run: npm ci
+
+      - run: npm run test
+
+      - run: npm run play:build
