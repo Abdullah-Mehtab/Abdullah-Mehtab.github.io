@@ -1,3 +1,5 @@
+// ABOUTME: Orchestrates terrain, roads, landmarks, interactions, and world updates for /play.
+// ABOUTME: Preserves portfolio zone contracts while allowing the island layout to be rebuilt.
 import * as THREE from 'three';
 import {
   circuitCheckpoints,
@@ -113,13 +115,13 @@ export class World {
 
   createCollectibles() {
     const points = [
-      [-88, 0, 68],
-      [44, 0, 92],
-      [118, 0, -20],
-      [-92, 0, -84],
-      [18, 0, -116],
-      [124, 0, 58],
-      [-18, 0, 34]
+      [-62, 0, 68],
+      [28, 0, 96],
+      [96, 0, -18],
+      [-84, 0, -54],
+      [18, 0, -112],
+      [120, 0, 58],
+      [-24, 0, 34]
     ];
     for (let i = 0; i < points.length; i += 1) {
       const mesh = new THREE.Mesh(
@@ -189,12 +191,12 @@ export class World {
   getRespawnPose(zoneId = 'landing') {
     const zone = this.zones.find((item) => item.id === zoneId) || this.zones.find((item) => item.id === 'landing');
     if (!zone) {
-      return { position: new THREE.Vector3(10, 1.45, 27), heading: 0 };
+      return { position: new THREE.Vector3(4, 1.45, 26), heading: 0 };
     }
     if (zone.id === 'landing') {
-      return { position: new THREE.Vector3(10, 1.08, 27), heading: 0.15 };
+      return { position: zone.position.clone().add(new THREE.Vector3(4, 1.08, -16)), heading: 0.15 };
     }
-    const distance = zone.id === 'education' ? 13.6 : zone.id === 'security' ? 13.2 : 9;
+    const distance = zone.id === 'education' ? 18 : zone.id === 'security' ? 15 : 10;
     const offset = new THREE.Vector3(Math.sin(zone.rotation || 0) * -distance, 1.08, Math.cos(zone.rotation || 0) * -distance);
     return {
       position: zone.position.clone().add(offset),

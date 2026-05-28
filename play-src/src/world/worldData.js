@@ -1,3 +1,6 @@
+// ABOUTME: Defines the authored /play island layout, districts, roads, zones, and rewards.
+// ABOUTME: Keeps portfolio zone ids stable while allowing the island itself to be rebuilt.
+
 export const WORLD_HALF_SIZE = 190;
 export const MAP_PADDING = 24;
 export const ISLAND_RADIUS = 158;
@@ -5,146 +8,100 @@ export const ISLAND_RADIUS = 158;
 export const canalSegments = [];
 
 export const districtFootprints = [
-  { id: 'courtyard', label: 'Portfolio Courtyard', center: [16, 40], size: [58, 48], color: '#7cffb2', kind: 'plaza' },
-  { id: 'watchtower', label: 'Sentinel Watchtower', center: [38, 104], size: [46, 34], color: '#ff6d8d', kind: 'keep' },
-  { id: 'library-grove', label: 'FCC Education Grove', center: [-112, 72], size: [68, 54], color: '#9ccfff', kind: 'library' },
-  { id: 'forge', label: 'Projects Foundry', center: [62, 42], size: [48, 36], color: '#ffcc66', kind: 'forge' },
-  { id: 'harbor', label: 'Contact Harbor', center: [130, 64], size: [34, 30], color: '#78b7ff', kind: 'waterfront' },
-  { id: 'archive', label: 'Archive Garden', center: [-24, 60], size: [36, 28], color: '#ffdf8a', kind: 'civic' },
-  { id: 'security-campus', label: 'Security Lab Campus', center: [-126, -42], size: [62, 52], color: '#68d8ff', kind: 'security' },
-  { id: 'cove', label: 'Stunt Courtyard', center: [112, -78], size: [40, 28], color: '#ff9b6d', kind: 'stunt' },
-  { id: 'farm', label: 'Voxel Farm Pocket', center: [-56, -126], size: [34, 28], color: '#c79b56', kind: 'farm' }
+  { id: 'start-plaza', label: 'Launch Plaza', center: [0, 28], size: [50, 38], color: '#7cffb2', kind: 'plaza' },
+  { id: 'fcc-campus', label: 'FCC Education Grove', center: [-78, 82], size: [58, 48], color: '#9ccfff', kind: 'campus' },
+  { id: 'security-campus', label: 'Security Lab', center: [-94, -66], size: [56, 44], color: '#68d8ff', kind: 'security' },
+  { id: 'project-yard', label: 'Projects Yard', center: [62, 56], size: [44, 36], color: '#ffcc66', kind: 'workshop' },
+  { id: 'ridge', label: 'Sentinel Ridge', center: [16, 112], size: [46, 34], color: '#ff6d8d', kind: 'tower' },
+  { id: 'archive', label: 'Archive Steps', center: [-44, 72], size: [36, 30], color: '#ffdf8a', kind: 'archive' },
+  { id: 'south-loop', label: 'Stunt And CV Run', center: [58, -82], size: [82, 46], color: '#ff9b6d', kind: 'driving' },
+  { id: 'west-trail', label: 'Skills And Farm Trail', center: [-58, -104], size: [62, 46], color: '#92ffea', kind: 'trail' },
+  { id: 'harbor', label: 'Signal Harbor', center: [126, 46], size: [36, 38], color: '#78b7ff', kind: 'harbor' },
+  { id: 'data-pier', label: 'Data Pier', center: [-126, 66], size: [32, 34], color: '#79ffc5', kind: 'pier' }
 ];
 
 export const scenicPropZones = [
-  { id: 'start-diorama', center: [16, 40], size: [58, 48], kind: 'garden' },
-  { id: 'security-pines', center: [-126, -42], size: [70, 56], kind: 'security' },
-  { id: 'fcc-campus-walk', center: [-112, 72], size: [74, 58], kind: 'campus' },
-  { id: 'western-sakura', center: [-124, 28], size: [34, 48], kind: 'grove' },
-  { id: 'library-sakura', center: [-122, 112], size: [30, 28], kind: 'grove' },
-  { id: 'north-meadow', center: [-12, 110], size: [54, 28], kind: 'meadow' },
-  { id: 'harbor-cypress', center: [128, 76], size: [24, 32], kind: 'coast' },
-  { id: 'southern-oaks', center: [-22, -116], size: [58, 26], kind: 'meadow' },
-  { id: 'farm-orchard', center: [-60, -126], size: [30, 24], kind: 'farm' },
-  { id: 'east-park', center: [114, -12], size: [26, 34], kind: 'garden' },
-  { id: 'west-cove', center: [-118, -60], size: [30, 34], kind: 'coast' }
+  { id: 'start-gardens', center: [0, 28], size: [68, 52], kind: 'garden' },
+  { id: 'fcc-tree-walk', center: [-78, 82], size: [72, 56], kind: 'campus' },
+  { id: 'security-pines', center: [-94, -66], size: [62, 50], kind: 'security' },
+  { id: 'project-grove', center: [62, 56], size: [54, 42], kind: 'garden' },
+  { id: 'north-ridge', center: [16, 112], size: [58, 34], kind: 'grove' },
+  { id: 'archive-sakura', center: [-44, 72], size: [38, 34], kind: 'grove' },
+  { id: 'harbor-palms', center: [126, 46], size: [34, 44], kind: 'coast' },
+  { id: 'south-oaks', center: [48, -96], size: [82, 44], kind: 'meadow' },
+  { id: 'farm-pocket', center: [-48, -132], size: [44, 26], kind: 'farm' },
+  { id: 'skills-cypress', center: [-62, -84], size: [44, 38], kind: 'security' },
+  { id: 'west-beach', center: [-136, -12], size: [34, 72], kind: 'coast' }
 ];
 
 export const roadPaths = [
   {
-    id: 'coastal-drive',
-    name: 'Coastal Drive',
-    width: 8.2,
-    hierarchy: 'ring',
-    closed: true,
-    points: [
-      [-80, 86],
-      [-126, 18],
-      [-106, -70],
-      [-36, -122],
-      [50, -116],
-      [118, -58],
-      [134, 34],
-      [92, 94],
-      [16, 126],
-      [-60, 112]
-    ]
-  },
-  {
-    id: 'portfolio-avenue',
-    name: 'Portfolio Avenue',
-    width: 6.8,
+    id: 'gallery-spine',
+    name: 'Gallery Spine',
+    width: 7.4,
     hierarchy: 'avenue',
     closed: false,
     points: [
-      [-126, 18],
-      [-74, 22],
-      [-20, 24],
-      [24, 26],
-      [72, 26],
-      [134, 30]
+      [-118, 42],
+      [-78, 40],
+      [-36, 30],
+      [0, 24],
+      [42, 34],
+      [84, 48],
+      [126, 34]
     ]
   },
   {
-    id: 'watchtower-climb',
-    name: 'Watchtower Climb',
+    id: 'fcc-walk',
+    name: 'FCC Walk',
     width: 5.4,
-    hierarchy: 'street',
+    hierarchy: 'plaza',
     closed: false,
     points: [
-      [-20, 24],
-      [0, 66],
-      [28, 96],
-      [16, 126]
+      [-36, 30],
+      [-52, 52],
+      [-64, 74],
+      [-54, 94]
     ]
   },
   {
-    id: 'fcc-approach',
-    name: 'FCC Approach',
-    width: 5.2,
-    hierarchy: 'street',
-    closed: false,
-    points: [
-      [-74, 22],
-      [-92, 50],
-      [-112, 61],
-      [-126, 66]
-    ]
-  },
-  {
-    id: 'security-descent',
-    name: 'Security Descent',
-    width: 5.6,
+    id: 'security-run',
+    name: 'Scanner Run',
+    width: 5.8,
     hierarchy: 'security',
     closed: false,
     points: [
-      [-126, 18],
-      [-136, -16],
-      [-142, -36],
-      [-130, -62],
-      [-106, -70]
+      [0, 24],
+      [-28, 4],
+      [-64, -12],
+      [-96, -34],
+      [-120, -58]
     ]
   },
   {
-    id: 'south-tech-run',
-    name: 'South Tech Run',
+    id: 'cv-run',
+    name: 'Document Run',
     width: 5.8,
     hierarchy: 'street',
     closed: false,
     points: [
-      [-20, 24],
-      [8, -22],
-      [18, -72],
-      [46, -104],
-      [50, -116]
+      [0, 24],
+      [18, -10],
+      [34, -42],
+      [52, -72],
+      [76, -96]
     ]
   },
   {
-    id: 'career-link',
-    name: 'Career Link',
-    width: 5.2,
-    hierarchy: 'street',
-    closed: false,
-    points: [
-      [72, 26],
-      [82, 0],
-      [80, -26],
-      [58, -58],
-      [48, -70]
-    ]
-  },
-  {
-    id: 'stunt-run',
-    name: 'Stunt Run',
-    width: 6.4,
+    id: 'stunt-causeway',
+    name: 'Stunt Causeway',
+    width: 6.6,
     hierarchy: 'stunt',
     closed: false,
     points: [
-      [50, -116],
-      [96, -104],
-      [124, -92],
-      [124, -64],
-      [118, -58]
+      [76, -96],
+      [104, -94],
+      [132, -70]
     ]
   },
   {
@@ -154,34 +111,87 @@ export const roadPaths = [
     hierarchy: 'dirt',
     closed: false,
     points: [
-      [-36, -122],
-      [-58, -112],
-      [-102, -82],
-      [-106, -70]
+      [18, -118],
+      [-22, -128],
+      [-62, -118],
+      [-98, -92],
+      [-120, -58]
     ]
   },
   {
-    id: 'data-pier-spur',
-    name: 'Data Pier Spur',
-    width: 4.6,
+    id: 'sentinel-ridge',
+    name: 'Sentinel Ridge',
+    width: 5.2,
     hierarchy: 'street',
     closed: false,
     points: [
-      [-126, 18],
-      [-146, 42],
-      [-150, 36]
+      [-36, 30],
+      [-18, 66],
+      [10, 94],
+      [38, 116]
     ]
   },
   {
-    id: 'harbor-spur',
-    name: 'Harbor Spur',
+    id: 'career-link',
+    name: 'Career Link',
+    width: 5.2,
+    hierarchy: 'street',
+    closed: false,
+    points: [
+      [42, 34],
+      [68, 8],
+      [92, -18],
+      [116, -22],
+      [126, 34]
+    ]
+  },
+  {
+    id: 'harbor-link',
+    name: 'Harbor Link',
+    width: 5,
+    hierarchy: 'street',
+    closed: false,
+    points: [
+      [84, 48],
+      [112, 66],
+      [130, 76]
+    ]
+  },
+  {
+    id: 'data-pier',
+    name: 'Data Pier',
     width: 4.8,
+    hierarchy: 'bridge',
+    closed: false,
+    points: [
+      [-118, 42],
+      [-132, 50],
+      [-138, 62]
+    ]
+  },
+  {
+    id: 'behind-spur',
+    name: 'Build Spur',
+    width: 5.2,
     hierarchy: 'street',
     closed: false,
     points: [
-      [116, 54],
-      [134, 50],
-      [134, 30]
+      [34, -42],
+      [10, -76],
+      [-4, -104],
+      [18, -118]
+    ]
+  },
+  {
+    id: 'awards-link',
+    name: 'Archive Steps',
+    width: 4.8,
+    hierarchy: 'plaza',
+    closed: false,
+    points: [
+      [-36, 30],
+      [-28, 58],
+      [-24, 82]
     ]
   }
 ];
@@ -189,19 +199,19 @@ export const roadPaths = [
 export const roadSegments = roadPaths.flatMap((path) => pathToSegments(path));
 
 export const boostPads = [
-  { id: 'southern-curve-boost', position: [2, 0, -119], rotation: 1.5, color: '#68d8ff', district: 'loop' },
-  { id: 'east-loop-boost', position: [110, 0, -64], rotation: -0.55, color: '#7cffb2', district: 'loop' },
-  { id: 'stunt-cove-boost', position: [82, 0, -96], rotation: -0.7, color: '#ff9b6d', district: 'stunt' }
+  { id: 'scanner-boost', position: [-64, 0, -12], rotation: -2.17, color: '#68d8ff', district: 'security' },
+  { id: 'document-run-boost', position: [22, 0, -18], rotation: 2.68, color: '#7cffb2', district: 'cv' },
+  { id: 'stunt-yard-boost', position: [72, 0, -96], rotation: Math.PI / 2, color: '#ff9b6d', district: 'stunt' }
 ];
 
 export const worldZones = [
   {
     id: 'landing',
-    name: 'Portfolio Courtyard',
+    name: 'Launch Plaza',
     kind: 'Home',
-    position: [16, 0, 40],
-    rotation: 0,
-    radius: 11,
+    position: [0, 0, 42],
+    rotation: 0.18,
+    radius: 10,
     color: '#7cffb2',
     shape: 'hub',
     dialogueId: '0',
@@ -215,8 +225,8 @@ export const worldZones = [
     id: 'security',
     name: 'Security Lab Gate',
     kind: 'Offensive Security',
-    position: [-126, 0, -42],
-    rotation: 0.18,
+    position: [-94, 0, -66],
+    rotation: -0.28,
     radius: 10,
     color: '#68d8ff',
     shape: 'lab',
@@ -230,10 +240,10 @@ export const worldZones = [
   },
   {
     id: 'projects',
-    name: 'Projects Foundry',
+    name: 'Projects Yard',
     kind: 'Project Gallery',
-    position: [64, 0, 42],
-    rotation: -0.34,
+    position: [62, 0, 56],
+    rotation: -0.44,
     radius: 10,
     color: '#ffcc66',
     shape: 'foundry',
@@ -245,10 +255,10 @@ export const worldZones = [
   },
   {
     id: 'sentinel',
-    name: 'Cyber Sentinel Watchtower',
+    name: 'Cyber Sentinel Ridge',
     kind: 'Final Year Project',
-    position: [38, 0, 104],
-    rotation: 0,
+    position: [16, 0, 112],
+    rotation: -0.12,
     radius: 12,
     color: '#ff6d8d',
     shape: 'tower',
@@ -260,10 +270,10 @@ export const worldZones = [
   },
   {
     id: 'career',
-    name: 'Career Guild Hall',
+    name: 'Career Signal Office',
     kind: 'Experience',
-    position: [90, 0, -28],
-    rotation: -0.15,
+    position: [96, 0, -40],
+    rotation: -0.24,
     radius: 10,
     color: '#b6a0ff',
     shape: 'office',
@@ -275,10 +285,10 @@ export const worldZones = [
   },
   {
     id: 'skills',
-    name: 'Skills Oracle',
+    name: 'Skills Terminal',
     kind: 'Stack',
-    position: [-86, 0, -102],
-    rotation: 0.28,
+    position: [-62, 0, -84],
+    rotation: 0.24,
     radius: 9,
     color: '#92ffea',
     shape: 'terminal',
@@ -292,9 +302,9 @@ export const worldZones = [
     id: 'education',
     name: 'FCC Education Grove',
     kind: 'Academics',
-    position: [-112, 0, 72],
-    rotation: 0.18,
-    radius: 10,
+    position: [-78, 0, 82],
+    rotation: -0.08,
+    radius: 11,
     color: '#9ccfff',
     shape: 'library',
     dialogueId: '6',
@@ -305,9 +315,9 @@ export const worldZones = [
   },
   {
     id: 'awards',
-    name: 'Awards Shrine',
+    name: 'Archive Steps',
     kind: 'Certificates',
-    position: [-24, 0, 60],
+    position: [-44, 0, 72],
     rotation: -0.18,
     radius: 8,
     color: '#ffdf8a',
@@ -322,8 +332,8 @@ export const worldZones = [
     id: 'cv',
     name: 'CV Vault',
     kind: 'Resume',
-    position: [32, 0, -78],
-    rotation: 0.28,
+    position: [8, 0, -58],
+    rotation: 0.12,
     radius: 8,
     color: '#e6f3ff',
     shape: 'vault',
@@ -342,8 +352,8 @@ export const worldZones = [
     id: 'todo',
     name: 'Todo Board',
     kind: 'Blog / List',
-    position: [-88, 0, 0],
-    rotation: 0.18,
+    position: [-82, 0, 14],
+    rotation: 0.34,
     radius: 8,
     color: '#d8ff92',
     shape: 'board',
@@ -360,8 +370,8 @@ export const worldZones = [
     id: 'circuit',
     name: 'Circuit Gate',
     kind: 'Time Trial',
-    position: [84, 0, 100],
-    rotation: -0.22,
+    position: [56, 0, 100],
+    rotation: -0.28,
     radius: 9,
     color: '#ff9b6d',
     shape: 'gate',
@@ -374,10 +384,10 @@ export const worldZones = [
   },
   {
     id: 'contact',
-    name: 'Contact Harbor Lighthouse',
+    name: 'Signal Harbor',
     kind: 'Links',
-    position: [130, 0, 64],
-    rotation: -0.18,
+    position: [128, 0, 56],
+    rotation: -0.34,
     radius: 8,
     color: '#78b7ff',
     shape: 'post',
@@ -393,7 +403,7 @@ export const worldZones = [
     id: 'behind',
     name: 'Behind The Build',
     kind: 'Stack',
-    position: [36, 0, -104],
+    position: [-18, 0, -96],
     rotation: 0.08,
     radius: 8,
     color: '#a8a6ff',
@@ -409,10 +419,10 @@ export const worldZones = [
   },
   {
     id: 'drift',
-    name: 'Stunt Courtyard',
+    name: 'Stunt Yard',
     kind: 'Driving',
-    position: [112, 0, -78],
-    rotation: -0.45,
+    position: [106, 0, -72],
+    rotation: -0.48,
     radius: 11,
     color: '#ff9b6d',
     shape: 'rampyard',
@@ -425,8 +435,8 @@ export const worldZones = [
     id: 'data-pier',
     name: 'Data Pier',
     kind: 'Visitor Trail',
-    position: [-138, 0, 20],
-    rotation: 0.42,
+    position: [-126, 0, 66],
+    rotation: 0.68,
     radius: 9,
     color: '#79ffc5',
     shape: 'pier',
@@ -440,8 +450,8 @@ export const worldZones = [
     id: 'potato',
     name: 'Potato Farm',
     kind: 'Farm Counter',
-    position: [-56, 0, -126],
-    rotation: 1.15,
+    position: [-48, 0, -132],
+    rotation: 0.18,
     radius: 10,
     color: '#c79b56',
     shape: 'farm',
@@ -483,17 +493,19 @@ export const achievementDefinitions = [
 ];
 
 export const circuitCheckpoints = [
-  [84, 0, 100],
-  [16, 0, 126],
-  [-60, 0, 112],
-  [-88, 0, 78],
-  [-122, 0, 12],
-  [-96, 0, -74],
-  [-28, 0, -120],
-  [56, 0, -112],
-  [118, 0, -56],
-  [130, 0, 34],
-  [84, 0, 100]
+  [56, 0, 100],
+  [16, 0, 112],
+  [-24, 0, 82],
+  [-78, 0, 82],
+  [-118, 0, 42],
+  [-120, 0, -58],
+  [-62, 0, -118],
+  [18, 0, -118],
+  [76, 0, -96],
+  [132, 0, -70],
+  [126, 0, 34],
+  [84, 0, 48],
+  [56, 0, 100]
 ];
 
 function pathToSegments(path) {

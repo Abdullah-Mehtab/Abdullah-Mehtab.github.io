@@ -52,7 +52,8 @@ export class Zones {
 
   addLandmark(group, zone) {
     const protectedAsset = zone.id === 'education' ? this.world.cloneEnvironmentAsset(`EnvLandmark_${zone.shape}`) : null;
-    const asset = protectedAsset ? this.mergeStaticMeshes(protectedAsset, zone.id) : this.createFallbackLandmark(zone);
+    const rawAsset = protectedAsset || this.createFallbackLandmark(zone);
+    const asset = this.mergeStaticMeshes(rawAsset, zone.id);
     asset.name = `VIS_Landmark_${zone.id}`;
     asset.traverse?.((object) => {
       if (object.isMesh) {
@@ -95,7 +96,7 @@ export class Zones {
       const material = object.material;
       const geometry = object.geometry.clone();
       geometry.applyMatrix4(object.matrixWorld);
-      const key = `${material.uuid}:${geometrySignature(geometry)}`;
+      const key = `${materialSignature(material)}:${geometrySignature(geometry)}`;
       if (!byMaterial.has(key)) byMaterial.set(key, { material, geometries: [] });
       byMaterial.get(key).geometries.push(geometry);
     });
@@ -359,4 +360,26 @@ function geometrySignature(geometry) {
     .sort()
     .join('|');
   return `${geometry.index ? 'indexed' : 'plain'}:${attributes}`;
+}
+
+function materialSignature(material) {
+  return [
+    material.type,
+    material.color?.getHexString?.() || '',
+    material.emissive?.getHexString?.() || '',
+    material.emissiveIntensity ?? '',
+    material.roughness ?? '',
+    material.metalness ?? '',
+    material.opacity ?? 1,
+    material.transparent ? 1 : 0,
+    material.side ?? THREE.FrontSide,
+    material.vertexColors ? 1 : 0,
+    material.alphaTest ?? 0,
+    textureSignature(material.map)
+  ].join(':');
+}
+
+function textureSignature(texture) {
+  if (!texture) return '';
+  return texture.source?.uuid || texture.image?.src || texture.uuid;
 }

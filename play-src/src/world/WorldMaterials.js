@@ -1,10 +1,12 @@
+// ABOUTME: Defines reusable materials, procedural textures, and island geometry helpers.
+// ABOUTME: Keeps the /play world stylized and cheap enough for static GitHub Pages.
 import * as THREE from 'three';
 
 export const WATER_Y = -0.55;
 export const QUALITY_PROFILES = {
-  low: { trees: 28, grassTufts: 160, leaves: 36, clouds: 5, props: 18, fireflies: 14, shadows: false, water: 'low', post: false, pixelRatio: 1 },
-  medium: { trees: 54, grassTufts: 320, leaves: 72, clouds: 8, props: 30, fireflies: 28, shadows: false, water: 'medium', post: false, pixelRatio: 1.15 },
-  high: { trees: 82, grassTufts: 520, leaves: 120, clouds: 12, props: 44, fireflies: 48, shadows: true, water: 'high', post: true, pixelRatio: 1.35 }
+  low: { trees: 42, grassTufts: 220, leaves: 42, clouds: 5, props: 18, fireflies: 14, shadows: false, water: 'low', post: false, pixelRatio: 1 },
+  medium: { trees: 92, grassTufts: 620, leaves: 96, clouds: 9, props: 34, fireflies: 32, shadows: false, water: 'medium', post: false, pixelRatio: 1.15 },
+  high: { trees: 132, grassTufts: 900, leaves: 150, clouds: 12, props: 48, fireflies: 56, shadows: true, water: 'high', post: true, pixelRatio: 1.35 }
 };
 export const QUALITY_ORDER = ['low', 'medium', 'high'];
 
@@ -115,33 +117,90 @@ export function createWorldMaterials() {
   };
 }
 
-export function makeIslandGeometry(radius, segments = 160) {
-  const geometry = new THREE.CircleGeometry(radius, segments);
+export function makeIslandGeometry(radius, segments = 144, scale = 1) {
+  const shape = makeIslandShape(radius, segments, scale);
+  const geometry = new THREE.ShapeGeometry(shape);
   const position = geometry.attributes.position;
   const colors = [];
-  const deepGrass = new THREE.Color(0x1f4a25);
-  const meadow = new THREE.Color(0x356f2f);
-  const highGrass = new THREE.Color(0x5f8f42);
-  const coast = new THREE.Color(0x89764d);
+  const deepGrass = new THREE.Color(0x1f4f31);
+  const meadow = new THREE.Color(0x4b8b42);
+  const warmGrass = new THREE.Color(0x7a984d);
+  const coast = new THREE.Color(0xb88361);
   const temp = new THREE.Color();
 
   for (let i = 0; i < position.count; i += 1) {
     const x = position.getX(i);
     const y = position.getY(i);
-    const dist = Math.hypot(x, y) / radius;
+    const dist = Math.hypot(x, y) / (radius * scale);
     const noise = pseudoRandom(i * 13.71) * 0.18;
-    const coastAmount = THREE.MathUtils.smoothstep(dist, 0.74, 1.0);
-    temp.copy(deepGrass).lerp(meadow, Math.min(1, dist * 0.85 + noise));
-    temp.lerp(highGrass, Math.max(0, 0.55 - dist) * 0.45);
-    temp.lerp(coast, coastAmount * 0.45);
+    const coastAmount = THREE.MathUtils.smoothstep(dist, 0.66, 1.0);
+    temp.copy(deepGrass).lerp(meadow, Math.min(1, dist * 0.72 + noise));
+    temp.lerp(warmGrass, Math.max(0, 0.5 - dist) * 0.34);
+    temp.lerp(coast, coastAmount * 0.32);
     colors.push(temp.r, temp.g, temp.b);
-    position.setZ(i, (pseudoRandom(i * 9.17) - 0.5) * 0.12);
   }
 
   geometry.setAttribute('color', new THREE.Float32BufferAttribute(colors, 3));
   geometry.rotateX(-Math.PI / 2);
   geometry.computeVertexNormals();
   return geometry;
+}
+
+export function makeIslandBandGeometry(radius, innerScale, outerScale, segments = 144) {
+  const shape = makeIslandShape(radius, segments, outerScale);
+  const hole = makeIslandPath(radius, segments, innerScale, true);
+  shape.holes.push(hole);
+  const geometry = new THREE.ShapeGeometry(shape);
+  geometry.rotateX(-Math.PI / 2);
+  geometry.computeVertexNormals();
+  return geometry;
+}
+
+export function getIslandCoastPoints(radius, scale = 1, segments = 144) {
+  const points = [];
+  for (let i = 0; i < segments; i += 1) {
+    const angle = (i / segments) * Math.PI * 2;
+    const r = islandRadiusAt(angle, radius) * scale;
+    points.push([Math.cos(angle) * r, Math.sin(angle) * r]);
+  }
+  return points;
+}
+
+function makeIslandShape(radius, segments, scale) {
+  const shape = new THREE.Shape();
+  const points = getIslandCoastPoints(radius, scale, segments);
+  points.forEach(([x, y], index) => {
+    if (index === 0) shape.moveTo(x, y);
+    else shape.lineTo(x, y);
+  });
+  shape.closePath();
+  return shape;
+}
+
+function makeIslandPath(radius, segments, scale, reverse = false) {
+  const points = getIslandCoastPoints(radius, scale, segments);
+  const ordered = reverse ? points.reverse() : points;
+  const path = new THREE.Path();
+  ordered.forEach(([x, y], index) => {
+    if (index === 0) path.moveTo(x, y);
+    else path.lineTo(x, y);
+  });
+  path.closePath();
+  return path;
+}
+
+function islandRadiusAt(angle, radius) {
+  const long = Math.sin(angle * 3.0 + 0.4) * 0.052;
+  const medium = Math.cos(angle * 5.0 - 0.8) * 0.038;
+  const small = Math.sin(angle * 9.0 + 1.7) * 0.018;
+  const northHeadland = Math.exp(-Math.pow(angleDistance(angle, Math.PI * 0.5), 2) / 0.28) * 0.09;
+  const westBite = Math.exp(-Math.pow(angleDistance(angle, Math.PI * 0.96), 2) / 0.18) * -0.08;
+  const southShelf = Math.exp(-Math.pow(angleDistance(angle, Math.PI * 1.48), 2) / 0.22) * 0.045;
+  return radius * (0.92 + long + medium + small + northHeadland + westBite + southShelf);
+}
+
+function angleDistance(a, b) {
+  return Math.atan2(Math.sin(a - b), Math.cos(a - b));
 }
 
 export function makeRingGeometry(innerRadius, outerRadius, segments = 160, wobble = 3.4) {

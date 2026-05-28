@@ -1,6 +1,8 @@
+// ABOUTME: Builds the procedural toy-island terrain used by /play.
+// ABOUTME: Replaces the old authored island GLB while keeping a stable visible driving floor.
 import * as THREE from 'three';
-import { ISLAND_RADIUS, WORLD_HALF_SIZE } from './worldData.js';
-import { makeIslandGeometry, makeRingGeometry, WATER_Y } from './WorldMaterials.js';
+import { districtFootprints, ISLAND_RADIUS } from './worldData.js';
+import { getIslandCoastPoints, makeIslandBandGeometry, makeIslandGeometry, makePatchGeometry, WATER_Y } from './WorldMaterials.js';
 
 export class Terrain {
   constructor(world) {
@@ -9,118 +11,91 @@ export class Terrain {
   }
 
   build() {
-    this.authoredIslandLoaded = this.addAuthoredIsland();
-    if (!this.authoredIslandLoaded) {
-      this.addFallbackGround();
-      this.addBeachAndCliffs();
-    }
+    this.addBeachBase();
+    this.addGrassPlateau();
+    this.addDistrictGrounding();
+    this.addCoastalEdges();
     this.addPhysicsFloor();
   }
 
-  addAuthoredIsland() {
-    const visual = this.world.environmentAssets?.cloneScene?.('islandVisual');
-    if (!visual) return false;
-    visual.name = 'MedievalIslandVisual';
-    visual.traverse((object) => {
-      if (/^(SPAWN_|ZONE_|WATER_)/.test(object.name)) {
-        object.visible = false;
-        return;
-      }
-      if (object.isMesh) {
-        object.geometry?.computeVertexNormals?.();
-        if (object.name.includes('IslandTerrain')) object.material = this.world.materials.ground;
-        else if (object.name.includes('Beach')) object.material = this.world.materials.sand;
-        else if (object.name.includes('Cliff')) object.material = this.world.materials.cliff;
-        object.receiveShadow = true;
-        object.castShadow = false;
-      }
-    });
-    this.world.scene.add(visual);
-    this.world.decor.push({ type: 'authoredIsland', mesh: visual });
-    this.addInteriorGrassCap();
-    this.addCleanShoreBand();
-    return true;
-  }
-
-  addInteriorGrassCap() {
-    const cap = new THREE.Mesh(new THREE.CircleGeometry(ISLAND_RADIUS * 0.925, 260), this.world.materials.ground);
-    cap.name = 'MedievalIslandInteriorGrassCap';
-    cap.rotation.x = -Math.PI / 2;
-    cap.position.y = 0.066;
-    cap.receiveShadow = true;
-    this.world.scene.add(cap);
-    this.world.decor.push({ type: 'grassCap', mesh: cap });
-  }
-
-  addCleanShoreBand() {
-    const shore = new THREE.Mesh(
-      makeRingGeometry(ISLAND_RADIUS * 0.895, ISLAND_RADIUS * 1.055, 240, 2.6),
-      this.world.materials.sand
-    );
-    shore.name = 'MedievalIslandCleanBeachBand';
-    shore.position.y = 0.074;
-    shore.receiveShadow = true;
-    this.world.scene.add(shore);
-
-    const grassBlend = new THREE.Mesh(
-      makeRingGeometry(ISLAND_RADIUS * 0.86, ISLAND_RADIUS * 0.965, 240, 3.2),
-      this.world.materials.grassSandBlend
-    );
-    grassBlend.name = 'MedievalIslandGrassToSandFeather';
-    grassBlend.position.y = 0.086;
-    grassBlend.renderOrder = 2;
-    this.world.scene.add(grassBlend);
-
-    const wetBlend = new THREE.Mesh(
-      makeRingGeometry(ISLAND_RADIUS * 0.965, ISLAND_RADIUS * 1.065, 260, 2.8),
-      this.world.materials.wetSandBlend
-    );
-    wetBlend.name = 'MedievalIslandWetSandFeather';
-    wetBlend.position.y = 0.092;
-    wetBlend.renderOrder = 3;
-    this.world.scene.add(wetBlend);
-
-    this.world.decor.push(
-      { type: 'shoreBand', mesh: shore },
-      { type: 'shoreBlend', mesh: grassBlend },
-      { type: 'wetSandBlend', mesh: wetBlend }
-    );
-  }
-
-  addFallbackGround() {
-    const geometry = makeIslandGeometry(ISLAND_RADIUS, 180);
-    const ground = new THREE.Mesh(geometry, this.world.materials.ground);
-    ground.name = 'FallbackMedievalIslandGrass';
-    ground.receiveShadow = true;
-    ground.position.y = 0;
-    this.world.scene.add(ground);
-    this.world.decor.push({ type: 'ground', mesh: ground });
-  }
-
-  addBeachAndCliffs() {
-    const beach = new THREE.Mesh(
-      makeRingGeometry(ISLAND_RADIUS * 0.92, ISLAND_RADIUS * 1.01, 180, 2.4),
-      this.world.materials.sand
-    );
-    beach.name = 'MedievalIslandBeachBlend';
-    beach.position.y = 0.028;
+  addBeachBase() {
+    const beach = new THREE.Mesh(makeIslandGeometry(ISLAND_RADIUS, 156, 1.02), this.world.materials.sand);
+    beach.name = 'ToyIslandBeachBase';
+    beach.position.y = 0.025;
     beach.receiveShadow = true;
     this.world.scene.add(beach);
 
+    const wetEdge = new THREE.Mesh(
+      makeIslandBandGeometry(ISLAND_RADIUS, 0.985, 1.055, 156),
+      this.world.materials.wetSandBlend
+    );
+    wetEdge.name = 'ToyIslandWetEdge';
+    wetEdge.position.y = 0.042;
+    wetEdge.renderOrder = 2;
+    this.world.scene.add(wetEdge);
+  }
+
+  addGrassPlateau() {
+    const grass = new THREE.Mesh(makeIslandGeometry(ISLAND_RADIUS, 156, 0.93), this.world.materials.ground);
+    grass.name = 'ToyIslandGrassPlateau';
+    grass.position.y = 0.062;
+    grass.receiveShadow = true;
+    this.world.scene.add(grass);
+    this.world.decor.push({ type: 'ground', mesh: grass });
+
+    const feather = new THREE.Mesh(
+      makeIslandBandGeometry(ISLAND_RADIUS, 0.865, 0.955, 156),
+      this.world.materials.grassSandBlend
+    );
+    feather.name = 'ToyIslandGrassToBeachFeather';
+    feather.position.y = 0.078;
+    feather.renderOrder = 3;
+    this.world.scene.add(feather);
+  }
+
+  addDistrictGrounding() {
+    const materials = {
+      plaza: this.world.materials.plazaRoad,
+      campus: this.world.materials.paleStone,
+      security: this.world.materials.securityRoad,
+      workshop: this.world.materials.stoneRoad,
+      tower: this.world.materials.stone,
+      archive: this.world.materials.paleStone,
+      driving: this.world.materials.stuntRamp,
+      trail: this.world.materials.wood,
+      harbor: this.world.materials.sand,
+      pier: this.world.materials.wood
+    };
+
+    districtFootprints.forEach((district, index) => {
+      const patch = new THREE.Mesh(
+        makePatchGeometry(district.size[0], district.size[1], index + 4),
+        materials[district.kind] || this.world.materials.plazaRoad
+      );
+      patch.name = `ToyIslandDistrictPatch_${district.id}`;
+      patch.position.set(district.center[0], 0.075 + index * 0.0008, district.center[1]);
+      patch.rotation.y = (index % 3 - 1) * 0.08;
+      patch.receiveShadow = true;
+      patch.renderOrder = 4 + index;
+      this.world.scene.add(patch);
+    });
+  }
+
+  addCoastalEdges() {
     const cliff = new THREE.Mesh(
-      makeRingGeometry(ISLAND_RADIUS * 0.985, ISLAND_RADIUS * 1.06, 160, 2.8),
+      makeIslandBandGeometry(ISLAND_RADIUS, 1.025, 1.075, 156),
       this.world.materials.cliff
     );
-    cliff.name = 'MedievalIslandCliffEdge';
-    cliff.position.y = WATER_Y + 0.12;
+    cliff.name = 'ToyIslandLowCliffEdge';
+    cliff.position.y = WATER_Y + 0.42;
     cliff.receiveShadow = true;
     this.world.scene.add(cliff);
-
-    this.world.decor.push({ type: 'beach', mesh: beach }, { type: 'cliff', mesh: cliff });
   }
 
   addPhysicsFloor() {
-    this.world.physics.createFixedBox([0, -0.47, 0], [WORLD_HALF_SIZE * 2.1, 1, WORLD_HALF_SIZE * 2.1], {
+    const { vertices, indices } = makeIslandColliderMesh(ISLAND_RADIUS, 1.01, 112, 0.04, -0.95);
+
+    this.world.physics.createFixedTrimesh([0, 0, 0], vertices, indices, {
       friction: 1.08,
       restitution: 0.01
     });
@@ -129,4 +104,51 @@ export class Terrain {
   containsPoint(x, z, margin = 0) {
     return Math.hypot(x, z) <= ISLAND_RADIUS - margin;
   }
+}
+
+function makeIslandColliderMesh(radius, scale, segments, topY, bottomY) {
+  const points = getIslandCoastPoints(radius, scale, segments);
+  const vertices = new Float32Array((2 + points.length * 2) * 3);
+  writeVertex(vertices, 0, 0, topY, 0);
+  writeVertex(vertices, 1, 0, bottomY, 0);
+
+  for (let i = 0; i < points.length; i += 1) {
+    const [x, z] = points[i];
+    writeVertex(vertices, 2 + i, x, topY, z);
+    writeVertex(vertices, 2 + points.length + i, x, bottomY, z);
+  }
+
+  const indices = new Uint32Array(points.length * 12);
+  let cursor = 0;
+  for (let i = 0; i < points.length; i += 1) {
+    const next = (i + 1) % points.length;
+    const topCurrent = 2 + i;
+    const topNext = 2 + next;
+    const bottomCurrent = 2 + points.length + i;
+    const bottomNext = 2 + points.length + next;
+
+    indices[cursor++] = 0;
+    indices[cursor++] = topNext;
+    indices[cursor++] = topCurrent;
+
+    indices[cursor++] = 1;
+    indices[cursor++] = bottomCurrent;
+    indices[cursor++] = bottomNext;
+
+    indices[cursor++] = topCurrent;
+    indices[cursor++] = topNext;
+    indices[cursor++] = bottomNext;
+
+    indices[cursor++] = topCurrent;
+    indices[cursor++] = bottomNext;
+    indices[cursor++] = bottomCurrent;
+  }
+  return { vertices, indices };
+}
+
+function writeVertex(vertices, index, x, y, z) {
+  const cursor = index * 3;
+  vertices[cursor] = x;
+  vertices[cursor + 1] = y;
+  vertices[cursor + 2] = z;
 }

@@ -2,6 +2,7 @@
 // ABOUTME: Keeps roads visual-only so decorative route geometry cannot block the car.
 import * as THREE from 'three';
 import { roadPaths, roadSegments } from './worldData.js';
+import { mergeStaticMeshesInGroup } from './StaticBatching.js';
 
 const ROAD_STYLE = {
   ring: { shoulder: 1.6, line: 0xe0c46b },
@@ -30,12 +31,16 @@ export class Roads {
     this.world = world;
     this.segments = roadSegments;
     this.materialCache = new Map();
+    this.roadGroup = new THREE.Group();
+    this.roadGroup.name = 'ROAD_Network';
   }
 
   build() {
+    this.world.scene.add(this.roadGroup);
     for (const path of roadPaths) {
       this.addPath(path);
     }
+    mergeStaticMeshesInGroup(this.roadGroup, { namePrefix: 'ROAD_batch' });
   }
 
   addPath(path) {
@@ -75,13 +80,13 @@ export class Roads {
     shoulder.name = `ROAD_${path.id}_shoulder`;
     shoulder.position.set(x, shoulderY, z);
     shoulder.receiveShadow = true;
-    this.world.scene.add(shoulder);
+    this.roadGroup.add(shoulder);
 
     const stone = this.createRoadPlane(width, length + width * 0.28, surfaceMaterial, 3 + layer, rotation);
     stone.name = `ROAD_${path.id}_stone`;
     stone.position.set(x, surfaceY, z);
     stone.receiveShadow = true;
-    this.world.scene.add(stone);
+    this.roadGroup.add(stone);
 
     const lineMaterial = this.cachedLineMaterial(style.line);
     const lineLength = Math.max(0, length - width * 2.4);
@@ -90,7 +95,7 @@ export class Roads {
       const dash = this.createRoadPlane(0.38, 3.2, lineMaterial, 8 + layer, rotation);
       const t = (i + 0.5) / dashCount - 0.5;
       dash.position.set(x + Math.sin(rotation) * lineLength * t, surfaceY + 0.034, z + Math.cos(rotation) * lineLength * t);
-      this.world.scene.add(dash);
+      this.roadGroup.add(dash);
     }
 
     // Roads stay visual so the car always drives on one continuous terrain collider.
@@ -118,7 +123,7 @@ export class Roads {
     node.rotation.y = Math.PI / 4;
     node.receiveShadow = false;
     node.renderOrder = 10 + layer;
-    this.world.scene.add(node);
+    this.roadGroup.add(node);
 
     const top = new THREE.Mesh(new THREE.BoxGeometry(size, 0.035, size), topMaterial);
     top.name = `ROAD_${path.id}_junction_cap`;
@@ -126,7 +131,7 @@ export class Roads {
     top.rotation.y = Math.PI / 4;
     top.receiveShadow = false;
     top.renderOrder = 12 + layer;
-    this.world.scene.add(top);
+    this.roadGroup.add(top);
   }
 
   createRoadPlane(width, length, material, renderOrder = 1, rotation = 0) {
