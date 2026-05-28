@@ -1,3 +1,5 @@
+// ABOUTME: Wraps Rapier world creation, stepping, debug collider records, and visual syncing.
+// ABOUTME: Keeps physics colliders auditable so invisible blockers can be found during verification.
 import * as THREE from 'three';
 
 export class PhysicsWorld {
@@ -7,6 +9,7 @@ export class PhysicsWorld {
     this.accumulator = 0;
     this.fixedStep = 1 / 60;
     this.dynamicVisuals = [];
+    this.staticColliders = [];
   }
 
   createFixedBox(position, size, options = {}) {
@@ -21,6 +24,12 @@ export class PhysicsWorld {
       .setRestitution(options.restitution ?? 0.05);
     if (options.sensor) collider.setSensor(true);
     this.world.createCollider(collider, body);
+    this.recordStaticCollider('box', position, {
+      name: options.debugName || 'FixedBox',
+      size,
+      rotation: options.rotation || [0, 0, 0],
+      sensor: Boolean(options.sensor)
+    });
     return body;
   }
 
@@ -36,6 +45,13 @@ export class PhysicsWorld {
       .setRestitution(options.restitution ?? 0.04);
     if (options.sensor) collider.setSensor(true);
     this.world.createCollider(collider, body);
+    this.recordStaticCollider('cylinder', position, {
+      name: options.debugName || 'FixedCylinder',
+      halfHeight,
+      radius,
+      rotation: options.rotation || [0, 0, 0],
+      sensor: Boolean(options.sensor)
+    });
     return body;
   }
 
@@ -48,6 +64,11 @@ export class PhysicsWorld {
       .setRestitution(options.restitution ?? 0.04);
     if (options.sensor) collider.setSensor(true);
     this.world.createCollider(collider, body);
+    this.recordStaticCollider('ball', position, {
+      name: options.debugName || 'FixedBall',
+      radius,
+      sensor: Boolean(options.sensor)
+    });
     return body;
   }
 
@@ -63,6 +84,13 @@ export class PhysicsWorld {
       .setRestitution(options.restitution ?? 0.04);
     if (options.sensor) collider.setSensor(true);
     this.world.createCollider(collider, body);
+    this.recordStaticCollider('trimesh', position, {
+      name: options.debugName || 'FixedTrimesh',
+      vertices: Float32Array.from(vertices),
+      indices: Uint32Array.from(indices),
+      rotation: options.rotation || [0, 0, 0],
+      sensor: Boolean(options.sensor)
+    });
     return body;
   }
 
@@ -124,6 +152,18 @@ export class PhysicsWorld {
       item.object.position.set(translation.x, translation.y, translation.z);
       item.object.quaternion.set(rotation.x, rotation.y, rotation.z, rotation.w);
     }
+  }
+
+  recordStaticCollider(type, position, data) {
+    this.staticColliders.push({
+      type,
+      position: [...position],
+      ...data
+    });
+  }
+
+  getColliderDebugData() {
+    return this.staticColliders.map((collider) => ({ ...collider }));
   }
 }
 

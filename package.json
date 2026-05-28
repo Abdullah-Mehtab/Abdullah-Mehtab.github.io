@@ -8,6 +8,7 @@
     "check:screenshots": "node tools/check-site.mjs --screenshots",
     "play:assets": "node play-assets/tools/build-assets.mjs",
     "play:validate-map": "node play-assets/tools/validate-map.mjs",
+    "play:verify": "node tools/verify-play.mjs",
     "play:dev": "vite --config play-src/vite.config.mjs --host 127.0.0.1",
     "play:build": "npm run play:validate-map && npm run play:assets && vite build --config play-src/vite.config.mjs",
     "play:preview": "vite preview --config play-src/vite.config.mjs --host 127.0.0.1",
