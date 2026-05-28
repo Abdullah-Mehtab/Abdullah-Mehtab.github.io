@@ -1,11 +1,12 @@
-const VISITOR_PROOF_ENDPOINT = 'https://zvuklviflletxyhniwdm.supabase.co/functions/v1/visitor-proof';
-const SUPABASE_ANON_KEY = 'sb_publishable_almN_FPps-MxiLAF0Uypmw_jaCZ6VrI';
+// ABOUTME: Sends Portfolio Drive visitor events to the shared visitor-proof endpoint.
+// ABOUTME: Reads public Supabase configuration from the root site config.
+
 const STORAGE_VISITOR_ID = 'portfolio-drive-visitor-id';
 const SESSION_ID = crypto.randomUUID?.() || `${Date.now()}-${Math.random().toString(16).slice(2)}`;
 
 export class Analytics {
   constructor() {
-    this.isEnabled = Boolean(VISITOR_PROOF_ENDPOINT && SUPABASE_ANON_KEY);
+    this.isEnabled = Boolean(getVisitorProofEndpoint() && getSupabaseAnonKey());
     this.visitorId = getOrCreateVisitorId();
     this.fingerprintHash = '';
     this.potatoCount = null;
@@ -42,14 +43,18 @@ export class Analytics {
 
   async fetchPotatoCount() {
     if (!this.isEnabled) return null;
+    const endpoint = getVisitorProofEndpoint();
+    const anonKey = getSupabaseAnonKey();
+    if (!endpoint || !anonKey) return null;
+
     try {
-      const url = new URL(VISITOR_PROOF_ENDPOINT);
+      const url = new URL(endpoint);
       url.searchParams.set('page_slug', 'play');
       url.searchParams.set('event_type', 'potato_summon_count');
       const response = await fetch(url, {
         headers: {
-          apikey: SUPABASE_ANON_KEY,
-          authorization: `Bearer ${SUPABASE_ANON_KEY}`
+          apikey: anonKey,
+          authorization: `Bearer ${anonKey}`
         }
       });
       if (!response.ok) return null;
@@ -62,6 +67,10 @@ export class Analytics {
 
   async record(eventType, options = {}) {
     if (!this.isEnabled) return null;
+    const endpoint = getVisitorProofEndpoint();
+    const anonKey = getSupabaseAnonKey();
+    if (!endpoint || !anonKey) return null;
+
     try {
       const payload = {
         page_slug: 'play',
@@ -81,12 +90,12 @@ export class Analytics {
         language: navigator.language || '',
         platform: navigator.platform || ''
       };
-      const response = await fetch(VISITOR_PROOF_ENDPOINT, {
+      const response = await fetch(endpoint, {
         method: 'POST',
         headers: {
           'content-type': 'application/json',
-          apikey: SUPABASE_ANON_KEY,
-          authorization: `Bearer ${SUPABASE_ANON_KEY}`
+          apikey: anonKey,
+          authorization: `Bearer ${anonKey}`
         },
         body: JSON.stringify(payload),
         keepalive: eventType === 'page_view'
@@ -97,6 +106,20 @@ export class Analytics {
       return null;
     }
   }
+}
+
+function getPortfolioConfig() {
+  return globalThis.PORTFOLIO_CONFIG || {};
+}
+
+function getVisitorProofEndpoint() {
+  const config = getPortfolioConfig();
+  return config.visitorProofEndpoint
+    || (config.supabaseUrl ? `${config.supabaseUrl.replace(/\/$/, '')}/functions/v1/visitor-proof` : '');
+}
+
+function getSupabaseAnonKey() {
+  return getPortfolioConfig().supabaseAnonKey || '';
 }
 
 function getOrCreateVisitorId() {
