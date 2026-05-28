@@ -198,7 +198,7 @@ export class Game {
       this.vehicle.idleDampen();
     }
 
-    this.world.update(dt, elapsed, this.vehicle.position);
+    this.world.update(dt, elapsed, this.vehicle.position, this.vehicle);
     if (this.world.checkRampAir(this.vehicle.position, this.vehicle.body.linvel().y)) {
       this.achievements.unlock('ramp_jump');
     }
@@ -299,6 +299,7 @@ export class Game {
       `speed ${Math.round(this.vehicle.speed)} km/h`,
       `wheels ${this.vehicle.controller?.groundedWheels ?? 0}`,
       `slip ${Number(driveState.slip || 0).toFixed(2)}`,
+      `surface ${this.world.surfaceState?.label || 'land'}`,
       `zone ${this.activeZone?.id || 'none'}`,
       `colliders ${this.physics.getColliderDebugData().length}`,
       `calls ${info.render.calls}`,
