@@ -22,10 +22,10 @@ export class Atmosphere {
     const material = new THREE.ShaderMaterial({
       side: THREE.BackSide,
       uniforms: {
-        zenith: { value: new THREE.Color(0x497be6) },
-        upper: { value: new THREE.Color(0x82d8ff) },
-        horizon: { value: new THREE.Color(0xffb98e) },
-        low: { value: new THREE.Color(0xa8edf1) }
+        zenith: { value: new THREE.Color(0x4e8ee7) },
+        upper: { value: new THREE.Color(0x8fdbff) },
+        horizon: { value: new THREE.Color(0xffc083) },
+        low: { value: new THREE.Color(0xa3efe2) }
       },
       vertexShader: `
         varying vec3 vWorldPosition;
@@ -57,14 +57,14 @@ export class Atmosphere {
     this.world.scene.add(dome);
 
     const sunMaterial = new THREE.MeshBasicMaterial({
-      color: 0xffa66d,
+      color: 0xffb56f,
       transparent: true,
-      opacity: 0.72,
+      opacity: 0.78,
       depthWrite: false
     });
     this.sunDisk = new THREE.Mesh(new THREE.CircleGeometry(18, 48), sunMaterial);
     this.sunDisk.name = 'CinematicSunDisk';
-    this.sunDisk.position.set(-158, 66, -132);
+    this.sunDisk.position.set(-162, 58, -138);
     this.sunDisk.lookAt(0, 22, 0);
     this.world.scene.add(this.sunDisk);
   }

@@ -34,6 +34,21 @@ export const scenicPropZones = [
   { id: 'west-beach', center: [-136, -12], size: [34, 72], kind: 'coast' }
 ];
 
+export const terrainBrushes = [
+  { id: 'start-meadow-light', center: [-12, 34], size: [72, 46], rotation: -0.12, material: 'meadowLight' },
+  { id: 'start-shadow-pocket', center: [32, 26], size: [40, 22], rotation: 0.18, material: 'meadowDark' },
+  { id: 'fcc-lawn', center: [-78, 73], size: [78, 34], rotation: -0.08, material: 'meadowLight' },
+  { id: 'fcc-flower-walk', center: [-58, 94], size: [38, 16], rotation: 0.35, material: 'flowerField' },
+  { id: 'security-dark-pad', center: [-96, -58], size: [66, 40], rotation: -0.2, material: 'meadowDark' },
+  { id: 'security-blue-grit', center: [-112, -34], size: [30, 18], rotation: 0.48, material: 'wildflowerBlue' },
+  { id: 'project-yard-dust', center: [62, 48], size: [52, 34], rotation: -0.36, material: 'warmStone' },
+  { id: 'sentinel-ridge-grass', center: [18, 108], size: [54, 22], rotation: 0.24, material: 'meadowLight' },
+  { id: 'south-stunt-rubber', center: [86, -86], size: [78, 36], rotation: 0.08, material: 'meadowDark' },
+  { id: 'farm-gold-field', center: [-50, -126], size: [54, 30], rotation: -0.16, material: 'warmStone' },
+  { id: 'harbor-sand-apron', center: [126, 52], size: [42, 34], rotation: -0.18, material: 'sand' },
+  { id: 'west-data-beach', center: [-132, 60], size: [36, 32], rotation: 0.42, material: 'sand' }
+];
+
 export const roadPaths = [
   {
     id: 'gallery-spine',
