@@ -1,7 +1,7 @@
 // ABOUTME: Builds the procedural toy-island terrain used by /play.
 // ABOUTME: Replaces the old authored island GLB while keeping a stable visible driving floor.
 import * as THREE from 'three';
-import { districtFootprints, ISLAND_RADIUS } from './worldData.js';
+import { districtFootprints, ISLAND_RADIUS, terrainBrushes } from './worldData.js';
 import { getIslandCoastPoints, makeIslandBandGeometry, makeIslandGeometry, makePatchGeometry, WATER_Y } from './WorldMaterials.js';
 
 export class Terrain {
@@ -13,6 +13,7 @@ export class Terrain {
   build() {
     this.addBeachBase();
     this.addGrassPlateau();
+    this.addTerrainBrushes();
     this.addDistrictGrounding();
     this.addCoastalEdges();
     this.addPhysicsFloor();
@@ -76,6 +77,23 @@ export class Terrain {
       patch.position.set(district.center[0], 0.075 + index * 0.0008, district.center[1]);
       patch.rotation.y = (index % 3 - 1) * 0.08;
       patch.receiveShadow = true;
+      patch.renderOrder = 4 + index;
+      this.world.scene.add(patch);
+    });
+  }
+
+  addTerrainBrushes() {
+    terrainBrushes.forEach((brush, index) => {
+      const material = this.world.materials[brush.material];
+      if (!material) return;
+      const patch = new THREE.Mesh(
+        makePatchGeometry(brush.size[0], brush.size[1], index + 43),
+        material
+      );
+      patch.name = `ToyIslandTerrainBrush_${brush.id}`;
+      patch.position.set(brush.center[0], 0.066 + index * 0.0005, brush.center[1]);
+      patch.rotation.y = brush.rotation || 0;
+      patch.receiveShadow = false;
       patch.renderOrder = 4 + index;
       this.world.scene.add(patch);
     });

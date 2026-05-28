@@ -6,6 +6,7 @@
     "environment": "models/environment/play-environment.glb",
     "islandVisual": "models/world/island-visual.glb",
     "islandPhysics": "models/world/island-physics.glb",
-    "medievalProps": "models/world/medieval-props.glb"
+    "medievalProps": "models/world/medieval-props.glb",
+    "polishProps": "models/world/polish-props.glb"
   }
 }

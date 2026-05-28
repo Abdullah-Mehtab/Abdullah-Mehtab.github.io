@@ -82,8 +82,13 @@ export class SetPieces {
 
     this.addBench(group, zone.position[0] - 11.8, zone.position[2] + 4.5, 0.42, 0.92);
     this.addBench(group, zone.position[0] + 8.4, zone.position[2] + 11.2, -0.72, 0.88);
+    this.addPolishAsset(group, 'EnvPolishInfoKiosk', zone.position[0] + 13.0, zone.position[2] - 2.2, -0.72, 0.82);
+    this.addPolishAsset(group, 'EnvPolishSignalTotem', zone.position[0] - 13.2, zone.position[2] - 8.6, 0.22, 0.92);
+    this.addPolishAsset(group, 'EnvPolishBenchPlanter', zone.position[0] - 5.2, zone.position[2] + 10.8, 0.18, 0.8);
     this.addPlanterCluster(group, zone.position[0] - 15.2, zone.position[2] - 0.4, 0x7cffb2);
     this.addPlanterCluster(group, zone.position[0] + 16.2, zone.position[2] + 0.8, 0x68d8ff);
+    this.checkerStripe(group, zone.position[0] + 2, zone.position[2] - 13.8, 24, 0);
+    this.campusArch(group, zone.position[0] - 15.8, zone.position[2] - 12.8, -0.18);
 
     for (let i = 0; i < 7; i += 1) {
       const x = zone.position[0] - 7 + i * 4.2;
@@ -126,7 +131,15 @@ export class SetPieces {
       this.addPlanterCluster(group, x, z, 0x9ccfff);
     }
 
+    this.addPolishAsset(group, 'EnvPolishInfoKiosk', zone.position[0] + 20.4, zone.position[2] - 16.5, -0.34, 0.82);
+    this.addPolishAsset(group, 'EnvPolishBenchPlanter', zone.position[0] - 20.8, zone.position[2] + 5.2, 0.64, 0.9);
+    this.addPolishAsset(group, 'EnvPolishBenchPlanter', zone.position[0] + 20.2, zone.position[2] + 6.4, -0.62, 0.9);
     this.campusArch(group, zone.position[0] - 15.5, zone.position[2] - 18.8, 0.08);
+    this.hedgeLine(group, zone.position[0] - 23, zone.position[2] - 20, 45, 0);
+    this.hedgeLine(group, zone.position[0] + 23, zone.position[2] - 20, 45, 0);
+    for (const dx of [-9, 0, 9]) {
+      this.flagPole(group, zone.position[0] + dx, zone.position[2] - 23.5, 0x9ccfff);
+    }
     mergeStaticMeshesInGroup(group, { namePrefix: 'SETPIECE_fcc' });
     this.world.scene.add(group);
   }
@@ -142,6 +155,9 @@ export class SetPieces {
     this.box(group, zone.position[0] + 16.2, 0.18, zone.position[2], 0.32, 0.04, 24, this.world.materials.glowPink, 0, 'SecurityPadRightTrace');
 
     this.securityGate(group, zone.position[0] - 2.8, zone.position[2] - 11.2, 0.18);
+    this.addPolishAsset(group, 'EnvPolishSecurityScanner', zone.position[0] + 4.8, zone.position[2] + 3.0, -0.28, 0.92);
+    this.addPolishAsset(group, 'EnvPolishTerminalPillar', zone.position[0] - 12.2, zone.position[2] + 9.5, 0.34, 1.05);
+    this.addPolishAsset(group, 'EnvPolishSignalTotem', zone.position[0] + 13.8, zone.position[2] + 8.2, -0.44, 1.05);
     this.addSign(group, 'SECURITY SCAN', 'Authorized Assessments', zone.position[0] + 12.8, zone.position[2] - 11.8, -0.55, 0x68d8ff, 3.0, 'SecurityScanSign');
 
     for (const [x, z, rot] of [
@@ -189,6 +205,8 @@ export class SetPieces {
     this.addSign(group, 'PROJECTS', 'Build Yard', projects.position[0] - 12, projects.position[2] + 13, -0.35, 0xffcc66, 2.7, 'ProjectsFoundrySign');
     this.addLamp(group, projects.position[0] + 10, projects.position[2] + 12, 0xff9b6d, 3.0, 'FoundryLampA');
     this.addLamp(group, projects.position[0] - 16, projects.position[2] - 7, 0xffcc66, 2.7, 'FoundryLampB');
+    this.addPolishAsset(group, 'EnvPolishInfoKiosk', projects.position[0] - 8.4, projects.position[2] - 8.8, 0.34, 0.78);
+    this.addPolishAsset(group, 'EnvPolishRoadBarrier', projects.position[0] + 14.2, projects.position[2] + 1.2, -0.46, 0.82);
     for (const [x, z] of [
       [projects.position[0] + 8, projects.position[2] - 4],
       [projects.position[0] + 13, projects.position[2] - 7],
@@ -201,11 +219,14 @@ export class SetPieces {
     const cv = findZone('cv');
     this.addSign(group, 'CV VAULT', 'Documents', cv.position[0] - 10, cv.position[2] - 12, 0.25, 0xe6f3ff, 2.5, 'CvVaultSign');
     this.addLamp(group, cv.position[0] + 8, cv.position[2] + 9, 0xe6f3ff, 2.8, 'CvLamp');
+    this.addPolishAsset(group, 'EnvPolishTerminalPillar', cv.position[0] + 8.8, cv.position[2] - 3.6, -0.22, 0.88);
     this.groundRect(group, cv.position[0], cv.position[2], 13, 9, this.world.materials.plazaRoad, 0.13, 'CvVaultDocumentPad');
     this.box(group, cv.position[0], 0.19, cv.position[2] - 4.8, 10.6, 0.04, 0.28, this.world.materials.glowBlue, 0, 'CvVaultFrontTrace');
 
     const contact = findZone('contact');
     this.addSign(group, 'CONTACT', 'Harbor Signal', contact.position[0] - 8, contact.position[2] + 15, -0.65, 0x78b7ff, 2.5, 'HarborSign');
+    this.addPolishAsset(group, 'EnvPolishPalm', contact.position[0] - 13.2, contact.position[2] + 5.8, 0.28, 1.08);
+    this.addPolishAsset(group, 'EnvPolishPalm', contact.position[0] + 13.4, contact.position[2] + 2.2, -0.18, 0.98);
     for (const [x, z] of [
       [contact.position[0], contact.position[2] + 2],
       [contact.position[0] + 7, contact.position[2] + 11],
@@ -218,9 +239,64 @@ export class SetPieces {
     this.addSign(group, 'STUNT', 'Boost Yard', stunt.position[0] - 9, stunt.position[2] + 16, -0.55, 0xff9b6d, 2.6, 'StuntSign');
     this.groundRect(group, stunt.position[0], stunt.position[2], 25, 17, this.world.materials.stuntRamp, 0.12, 'StuntYardRunoffPad');
     this.box(group, stunt.position[0], 0.18, stunt.position[2] + 9.2, 20, 0.04, 0.28, this.world.materials.warmGlow, 0, 'StuntYardStartTrace');
+    this.addPolishAsset(group, 'EnvPolishRoadBarrier', stunt.position[0] - 12.6, stunt.position[2] - 6.2, 0.42, 0.9);
+    this.addPolishAsset(group, 'EnvPolishRoadBarrier', stunt.position[0] + 12.2, stunt.position[2] - 5.8, -0.36, 0.9);
 
     const data = findZone('data-pier');
     this.addSign(group, 'DATA', 'Visitor Trail', data.position[0] - 8, data.position[2] - 13, 0.75, 0x79ffc5, 2.5, 'DataPierSign');
+    this.addPolishAsset(group, 'EnvPolishInfoKiosk', data.position[0] + 9.8, data.position[2] - 5.4, 0.72, 0.72);
+    for (let i = 0; i < 7; i += 1) {
+      this.box(group, data.position[0] + i * 1.6 - 4.8, 0.26, data.position[2] + 2.6, 1.3, 0.14, 7.2, this.world.materials.wood, 0.1, 'DataPierPlank');
+    }
+    this.addLamp(group, data.position[0] - 7, data.position[2] + 7, 0x79ffc5, 2.6, 'DataPierLampA');
+    this.addLamp(group, data.position[0] + 7, data.position[2] + 7, 0x79ffc5, 2.6, 'DataPierLampB');
+
+    const sentinel = findZone('sentinel');
+    this.addSign(group, 'SENTINEL', 'Cyber Ridge', sentinel.position[0] - 12, sentinel.position[2] - 12, 0.22, 0xff6d8d, 2.7, 'SentinelRidgeSign');
+    this.addPolishAsset(group, 'EnvPolishSignalTotem', sentinel.position[0] + 2.4, sentinel.position[2] + 11.8, -0.18, 1.05);
+    this.antennaCluster(group, sentinel.position[0] + 10, sentinel.position[2] - 4, 0xff6d8d);
+    this.antennaCluster(group, sentinel.position[0] - 8, sentinel.position[2] + 8, 0x68d8ff);
+
+    const skills = findZone('skills');
+    this.addSign(group, 'STACK', 'Skills Terminal', skills.position[0] - 11, skills.position[2] + 10, -0.62, 0x92ffea, 2.4, 'SkillsTerminalSign');
+    this.addPolishAsset(group, 'EnvPolishTerminalPillar', skills.position[0] + 10.8, skills.position[2] + 5.6, -0.62, 0.9);
+    for (let i = 0; i < 5; i += 1) {
+      this.box(group, skills.position[0] - 7 + i * 3.5, 0.95, skills.position[2] - 8, 1.5, 1.5, 0.22, this.world.materials.screen, -0.2, 'SkillsScreen');
+      this.cylinder(group, skills.position[0] - 7 + i * 3.5, 0.5, skills.position[2] - 7.75, 0.08, 1.0, this.world.materials.cable, 8, 'SkillsScreenPost');
+    }
+
+    const awards = findZone('awards');
+    this.addSign(group, 'AWARDS', 'Archive Steps', awards.position[0] - 9, awards.position[2] + 8, -0.2, 0xffdf8a, 2.3, 'AwardsSign');
+    this.addPolishAsset(group, 'EnvPolishBenchPlanter', awards.position[0] + 7.5, awards.position[2] + 6.2, -0.34, 0.78);
+    for (let i = 0; i < 4; i += 1) {
+      this.box(group, awards.position[0], 0.22 + i * 0.16, awards.position[2] - 2 + i * 1.25, 10 - i * 1.2, 0.22, 1.0, this.world.materials.warmStone, 0, 'AwardsStep');
+    }
+
+    const todo = findZone('todo');
+    this.addSign(group, 'TODO', 'Build Queue', todo.position[0] - 8, todo.position[2] - 7, 0.68, 0xb6a0ff, 2.2, 'TodoSign');
+    this.addPolishAsset(group, 'EnvPolishInfoKiosk', todo.position[0] + 6.8, todo.position[2] - 5.2, -0.24, 0.72);
+    for (let i = 0; i < 4; i += 1) {
+      this.box(group, todo.position[0] + i * 2.0 - 3, 1.1, todo.position[2] + 6, 1.35, 1.4, 0.18, i % 2 ? this.world.materials.glowPink : this.world.materials.glowBlue, 0.1, 'TodoCards');
+    }
+
+    const career = findZone('career');
+    this.addSign(group, 'CAREER', 'Signal Office', career.position[0] - 10, career.position[2] + 9, -0.35, 0xb6a0ff, 2.4, 'CareerSign');
+    this.box(group, career.position[0] + 7, 0.22, career.position[2] - 6, 9, 0.16, 5.5, this.world.materials.plazaRoad, 0.12, 'CareerOfficeDeck');
+    this.flagPole(group, career.position[0] + 13, career.position[2] - 6, 0xb6a0ff);
+    this.addPolishAsset(group, 'EnvPolishSignalTotem', career.position[0] + 1.4, career.position[2] - 10.8, -0.18, 0.88);
+
+    const circuit = findZone('circuit');
+    this.addSign(group, 'CIRCUIT', 'Checkpoint Run', circuit.position[0] - 10, circuit.position[2] - 10, 0.4, 0xff9b6d, 2.4, 'CircuitSign');
+    this.checkerStripe(group, circuit.position[0] + 1, circuit.position[2] + 8, 18, -0.22);
+    this.addPolishAsset(group, 'EnvPolishRoadBarrier', circuit.position[0] - 7.8, circuit.position[2] + 3.6, 0.44, 0.84);
+
+    const behind = findZone('behind');
+    this.addSign(group, 'BEHIND', 'Process Yard', behind.position[0] - 10, behind.position[2] + 8, -0.2, 0x8fd3ff, 2.3, 'BehindSign');
+    this.addPolishAsset(group, 'EnvPolishTerminalPillar', behind.position[0] + 8.4, behind.position[2] + 3.6, 0.3, 0.82);
+    for (const [dx, dz, sx, sz] of [[-6, -5, 5, 2.2], [1, -7, 3.5, 2.2], [7, -3, 4, 2.2]]) {
+      this.box(group, behind.position[0] + dx, 0.56, behind.position[2] + dz, sx, 1.0, sz, this.world.materials.darkWood, 0.25, 'BehindWorkshopCrate');
+    }
+
     mergeStaticMeshesInGroup(group, { namePrefix: 'SETPIECE_district' });
     this.world.scene.add(group);
   }
@@ -321,6 +397,51 @@ export class SetPieces {
     bench.rotation.y = rotation;
     bench.scale.setScalar(scale);
     group.add(bench);
+  }
+
+  addPolishAsset(group, assetName, x, z, rotation, scale) {
+    const asset = this.world.cloneEnvironmentAsset(assetName);
+    if (!asset) return false;
+    asset.name = `SetPiece_${assetName}`;
+    asset.position.set(x, 0.16, z);
+    asset.rotation.y = rotation;
+    asset.scale.setScalar(scale);
+    group.add(asset);
+    return true;
+  }
+
+  checkerStripe(group, x, z, width, rotation) {
+    const tileWidth = 1.45;
+    const count = Math.floor(width / tileWidth);
+    for (let i = 0; i < count; i += 1) {
+      const material = i % 2 === 0 ? this.world.materials.paleStone : this.world.materials.cable;
+      this.box(group, x - width / 2 + i * tileWidth + tileWidth / 2, 0.215, z, tileWidth, 0.035, 1.4, material, rotation, 'CheckerStartTile');
+    }
+  }
+
+  hedgeLine(group, x, z, length, rotation) {
+    const count = Math.max(3, Math.floor(length / 4));
+    for (let i = 0; i < count; i += 1) {
+      const offset = -length / 2 + i * 4 + 2;
+      const localX = Math.cos(rotation) * offset;
+      const localZ = Math.sin(rotation) * offset;
+      this.box(group, x + localX, 0.55, z + localZ, 3.4, 0.72, 0.68, this.world.materials.meadowDark, rotation, 'CampusHedge');
+    }
+  }
+
+  flagPole(group, x, z, color) {
+    this.cylinder(group, x, 1.75, z, 0.055, 3.5, this.world.materials.cable, 8, 'FlagPole');
+    const material = new THREE.MeshBasicMaterial({ color, transparent: true, opacity: 0.88 });
+    this.box(group, x + 0.55, 2.85, z, 1.05, 0.56, 0.035, material, 0, 'FlagBanner');
+  }
+
+  antennaCluster(group, x, z, color) {
+    const glow = new THREE.MeshBasicMaterial({ color, transparent: true, opacity: 0.78 });
+    for (let i = 0; i < 3; i += 1) {
+      const dx = i * 1.4 - 1.4;
+      this.cylinder(group, x + dx, 1.75 + i * 0.25, z, 0.08, 3.5 + i * 0.5, this.world.materials.cable, 8, 'AntennaMast');
+      this.box(group, x + dx, 3.0 + i * 0.45, z + 0.22, 1.4, 0.08, 0.08, glow, 0, 'AntennaGlowBar');
+    }
   }
 
   createBenchFallback() {

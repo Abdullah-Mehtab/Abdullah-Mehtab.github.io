@@ -13,6 +13,7 @@ export class Foliage {
     this.grassEntries = [];
     this.treeMeshes = {};
     this.grassMesh = null;
+    this.flowerMeshes = {};
     this.leafCloud = null;
     this.fireflies = null;
     this.dummy = new THREE.Object3D();
@@ -23,6 +24,7 @@ export class Foliage {
     this.prepareGrassEntries();
     this.createTreeInstances();
     this.createGrassInstances();
+    this.createFlowerInstances();
     this.createFallingLeaves();
     this.createFireflies();
     this.applyQuality();
@@ -32,6 +34,7 @@ export class Foliage {
     const profile = this.world.getQualityProfile();
     this.writeTreeInstances(profile.trees);
     this.writeGrassInstances(profile.grassTufts);
+    this.writeFlowerInstances(Math.floor(profile.grassTufts * 0.42));
     this.leafCloud?.geometry.setDrawRange(0, profile.leaves);
     this.fireflies?.geometry.setDrawRange(0, profile.fireflies);
   }
@@ -116,6 +119,23 @@ export class Foliage {
     this.world.decor.push({ type: 'grassInstances', mesh: this.grassMesh });
   }
 
+  createFlowerInstances() {
+    const count = Math.floor(QUALITY_PROFILES.high.grassTufts * 0.42);
+    const stemGeometry = new THREE.ConeGeometry(0.045, 0.42, 4);
+    const bloomGeometry = new THREE.IcosahedronGeometry(0.12, 0);
+    this.flowerMeshes.stem = new THREE.InstancedMesh(stemGeometry, new THREE.MeshStandardMaterial({ color: 0x4f8d45, roughness: 0.92 }), count);
+    this.flowerMeshes.pink = new THREE.InstancedMesh(bloomGeometry, new THREE.MeshBasicMaterial({ color: 0xf2a4b4 }), count);
+    this.flowerMeshes.blue = new THREE.InstancedMesh(bloomGeometry, new THREE.MeshBasicMaterial({ color: 0x80d8ff }), count);
+    for (const [name, mesh] of Object.entries(this.flowerMeshes)) {
+      mesh.name = `FOLIAGE_flower_${name}_instances`;
+      mesh.castShadow = false;
+      mesh.receiveShadow = false;
+      mesh.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
+      this.world.scene.add(mesh);
+      this.world.decor.push({ type: 'flowerInstances', mesh });
+    }
+  }
+
   writeTreeInstances(limit) {
     const counts = { trunk: 0, oak: 0, blossom: 0, cypress: 0 };
     const visible = Math.min(limit, this.treeEntries.length);
@@ -162,6 +182,35 @@ export class Foliage {
     }
     this.grassMesh.count = visible;
     this.grassMesh.instanceMatrix.needsUpdate = true;
+  }
+
+  writeFlowerInstances(limit) {
+    const visible = Math.min(limit, this.grassEntries.length);
+    let stem = 0;
+    let pink = 0;
+    let blue = 0;
+    for (let i = 0; i < visible; i += 1) {
+      if (i % 3 === 0) continue;
+      const entry = this.grassEntries[i];
+      const height = 0.4 * entry.scale;
+      this.dummy.position.set(entry.x, height * 0.5, entry.z);
+      this.dummy.rotation.set(0, entry.rotation, 0);
+      this.dummy.scale.set(entry.scale * 0.82, entry.scale, entry.scale * 0.82);
+      this.dummy.updateMatrix();
+      this.flowerMeshes.stem.setMatrixAt(stem++, this.dummy.matrix);
+
+      const bloomMesh = i % 2 === 0 ? this.flowerMeshes.pink : this.flowerMeshes.blue;
+      const index = i % 2 === 0 ? pink++ : blue++;
+      this.dummy.position.set(entry.x, height + 0.18, entry.z);
+      this.dummy.rotation.set(0, entry.rotation, 0);
+      this.dummy.scale.set(entry.scale, entry.scale, entry.scale);
+      this.dummy.updateMatrix();
+      bloomMesh.setMatrixAt(index, this.dummy.matrix);
+    }
+    this.flowerMeshes.stem.count = stem;
+    this.flowerMeshes.pink.count = pink;
+    this.flowerMeshes.blue.count = blue;
+    for (const mesh of Object.values(this.flowerMeshes)) mesh.instanceMatrix.needsUpdate = true;
   }
 
   createFallingLeaves() {

@@ -196,6 +196,9 @@ export class World {
     if (zone.id === 'landing') {
       return { position: zone.position.clone().add(new THREE.Vector3(4, 1.08, -16)), heading: 0.15 };
     }
+    if (zone.id === 'drift') {
+      return { position: zone.position.clone().add(new THREE.Vector3(-18, 1.08, -30)), heading: 0.18 };
+    }
     const distance = zone.id === 'education' ? 18 : zone.id === 'security' ? 15 : 10;
     const offset = new THREE.Vector3(Math.sin(zone.rotation || 0) * -distance, 1.08, Math.cos(zone.rotation || 0) * -distance);
     return {

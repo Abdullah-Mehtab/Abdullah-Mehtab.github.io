@@ -27,8 +27,8 @@ export class Game {
     this.activeZone = null;
     this.resumeData = null;
     this.lights = {};
-    this.fogDay = new THREE.Color(0xbdebf4);
-    this.fogWarm = new THREE.Color(0xffc6a4);
+    this.fogDay = new THREE.Color(0xb7e8ee);
+    this.fogWarm = new THREE.Color(0xffbf86);
     this.debugReadout = null;
     this.debugEnabled = false;
     this.debugFrame = 0;
@@ -84,15 +84,15 @@ export class Game {
   }
 
   setupScene() {
-    this.scene.background = new THREE.Color(0x96ddf4);
-    this.scene.fog = new THREE.Fog(0xbdebf4, 145, 560);
+    this.scene.background = new THREE.Color(0x8fd6f3);
+    this.scene.fog = new THREE.Fog(0xb7e8ee, 132, 520);
     this.camera.position.set(0, 9, -18);
 
-    const hemi = new THREE.HemisphereLight(0xffddbd, 0x1b2741, 1.05);
+    const hemi = new THREE.HemisphereLight(0xffe3bf, 0x203c3c, 1.22);
     this.scene.add(hemi);
 
-    const sun = new THREE.DirectionalLight(0xff9b6d, 3.35);
-    sun.position.set(-118, 72, -86);
+    const sun = new THREE.DirectionalLight(0xffb36f, 3.85);
+    sun.position.set(-132, 58, -102);
     sun.castShadow = true;
     sun.shadow.mapSize.set(1024, 1024);
     sun.shadow.camera.left = -96;
@@ -105,8 +105,8 @@ export class Game {
     sun.shadow.normalBias = 0.08;
     this.scene.add(sun);
 
-    const rim = new THREE.DirectionalLight(0x76e2ff, 1.42);
-    rim.position.set(64, 38, 82);
+    const rim = new THREE.DirectionalLight(0x74e8ff, 1.68);
+    rim.position.set(72, 34, 92);
     this.scene.add(rim);
 
     this.lights = { hemi, sun, rim };

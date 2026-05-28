@@ -1,7 +1,10 @@
 // ABOUTME: Loads reusable GLB templates for protected and optional /play world props.
 // ABOUTME: Keeps the FCC/S-block landmark available while the island terrain is generated in code.
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
+import * as THREE from 'three';
 import medievalPropsUrl from '../../assets/models/world/medieval-props.glb?url';
+import polishPropsUrl from '../../assets/models/world/polish-props.glb?url';
+import { mergeStaticMeshesInGroup } from './StaticBatching.js';
 
 export async function loadEnvironmentAssets() {
   const loader = new GLTFLoader();
@@ -9,6 +12,7 @@ export async function loadEnvironmentAssets() {
   const templates = new Map();
 
   await loadPack(loader, 'medievalProps', medievalPropsUrl, packs, templates);
+  await loadPack(loader, 'polishProps', polishPropsUrl, packs, templates);
 
   return {
     has(name) {
@@ -51,12 +55,29 @@ async function loadPack(loader, packName, url, packs, templates) {
     scene.name = packName;
     scene.visible = false;
     packs.set(packName, scene);
-    scene.traverse((object) => {
-      if (object.parent === scene && (object.name.startsWith('Env') || object.name.startsWith('VIS_') || object.name.startsWith('PHY_') || object.name.startsWith('SPAWN_') || object.name.startsWith('ZONE_'))) {
-        object.visible = false;
-        templates.set(object.name, object);
+    const templateRoots = scene.children.filter((object) => (
+      object.name.startsWith('Env')
+      || object.name.startsWith('VIS_')
+      || object.name.startsWith('PHY_')
+      || object.name.startsWith('SPAWN_')
+      || object.name.startsWith('ZONE_')
+    ));
+    for (const object of templateRoots) {
+      if (object.name.startsWith('EnvPolish')) {
+        mergeStaticMeshesInGroup(object, { namePrefix: `TEMPLATE_${object.name}` });
       }
+      object.visible = false;
+      templates.set(object.name, object);
+    }
+    scene.traverse((object) => {
       if (object.isMesh) {
+        if (Array.isArray(object.material)) {
+          object.material.forEach((material) => {
+            material.side = THREE.FrontSide;
+          });
+        } else {
+          object.material.side = THREE.FrontSide;
+        }
         object.castShadow = true;
         object.receiveShadow = true;
       }

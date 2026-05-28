@@ -5,14 +5,14 @@ import { roadPaths, roadSegments } from './worldData.js';
 import { mergeStaticMeshesInGroup } from './StaticBatching.js';
 
 const ROAD_STYLE = {
-  ring: { shoulder: 1.6, line: 0xe0c46b },
-  avenue: { shoulder: 1.3, line: 0xd6c4a2 },
-  street: { shoulder: 1.1, line: 0xc8b38a },
-  plaza: { shoulder: 1.05, line: 0xf3e7bd },
+  ring: { shoulder: 1.6, curb: 0.28, line: 0xf0d477 },
+  avenue: { shoulder: 1.3, curb: 0.26, line: 0xeed9a6 },
+  street: { shoulder: 1.1, curb: 0.22, line: 0xd9d6c7 },
+  plaza: { shoulder: 1.05, curb: 0.3, line: 0xf3e7bd },
   security: { shoulder: 1.25, line: 0x68d8ff },
-  stunt: { shoulder: 1.4, line: 0xff9b6d },
+  stunt: { shoulder: 1.4, curb: 0.28, line: 0xff9b6d },
   dirt: { shoulder: 1.8, line: 0x8d6338 },
-  bridge: { shoulder: 1.4, line: 0xe8edf0 }
+  bridge: { shoulder: 1.4, curb: 0.22, line: 0xe8edf0 }
 };
 
 const ROAD_LAYER = {
@@ -68,9 +68,9 @@ export class Roads {
     const shoulderY = 0.068 + layer * 0.001;
     const surfaceY = 0.104 + layer * 0.006;
 
-    const edgeMaterial = path.hierarchy === 'dirt' ? this.world.materials.sand : this.world.materials.roadEdge;
+    const edgeMaterial = path.hierarchy === 'dirt' ? this.world.materials.sand : this.world.materials.roadShoulder;
     const surfaceMaterial = path.hierarchy === 'dirt'
-      ? this.world.materials.wood
+      ? this.world.materials.dirtRoad
       : path.hierarchy === 'security'
         ? this.world.materials.securityRoad
         : path.hierarchy === 'plaza'
@@ -87,6 +87,19 @@ export class Roads {
     stone.position.set(x, surfaceY, z);
     stone.receiveShadow = true;
     this.roadGroup.add(stone);
+
+    if (path.hierarchy !== 'dirt') {
+      for (const side of [-1, 1]) {
+        const curb = this.createRoadPlane(style.curb || 0.22, length + width * 0.18, this.world.materials.roadCurb, 6 + layer, rotation);
+        curb.name = `ROAD_${path.id}_curb`;
+        curb.position.set(
+          x + Math.cos(rotation) * (width / 2 + (style.curb || 0.22) * 0.62) * side,
+          surfaceY + 0.046,
+          z - Math.sin(rotation) * (width / 2 + (style.curb || 0.22) * 0.62) * side
+        );
+        this.roadGroup.add(curb);
+      }
+    }
 
     const lineMaterial = this.cachedLineMaterial(style.line);
     const lineLength = Math.max(0, length - width * 2.4);
@@ -107,9 +120,9 @@ export class Roads {
     const layer = ROAD_LAYER[path.hierarchy] ?? 1;
     const shoulderY = 0.086 + layer * 0.003;
     const surfaceY = 0.142 + layer * 0.007;
-    const edgeMaterial = path.hierarchy === 'dirt' ? this.world.materials.sand : this.world.materials.roadEdge;
+    const edgeMaterial = path.hierarchy === 'dirt' ? this.world.materials.sand : this.world.materials.roadShoulder;
     const surfaceMaterial = path.hierarchy === 'dirt'
-      ? this.world.materials.wood
+      ? this.world.materials.dirtRoad
       : path.hierarchy === 'security'
         ? this.world.materials.securityRoad
         : path.hierarchy === 'plaza'
