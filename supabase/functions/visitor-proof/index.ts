@@ -1,3 +1,6 @@
+// ABOUTME: Supabase Edge Function for sanitized visitor analytics ingestion.
+// ABOUTME: Records public visitor events while suppressing recent duplicate low-value events.
+
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const corsHeaders = {
@@ -13,6 +16,13 @@ const allowedEventTypes = new Set([
   "play_data_shard",
   "play_boost_pad"
 ]);
+
+const duplicateCheckedEventTypes = new Set([
+  "page_view",
+  "play_zone_visit"
+]);
+
+const duplicateWindowMs = 10 * 60 * 1000;
 
 function clean(value: unknown, maxLength: number, pattern = /[<>`"'\u0000-\u001F\u007F]/g) {
   return String(value || "")
@@ -44,6 +54,36 @@ function getIp(request: Request) {
     || forwarded.split(",")[0]
     || ""
   ).trim();
+}
+
+async function hasRecentDuplicate(
+  supabase: ReturnType<typeof createClient>,
+  payload: {
+    page_slug: string;
+    event_type: string;
+    source_token: string;
+    visitor_id: string;
+  }
+) {
+  if (!duplicateCheckedEventTypes.has(payload.event_type) || !payload.visitor_id) {
+    return false;
+  }
+
+  const since = new Date(Date.now() - duplicateWindowMs).toISOString();
+  let query = supabase
+    .from("visitor_events")
+    .select("id", { count: "exact", head: true })
+    .eq("page_slug", payload.page_slug)
+    .eq("event_type", payload.event_type)
+    .eq("visitor_id", payload.visitor_id)
+    .gte("created_at", since);
+
+  if (payload.source_token) {
+    query = query.eq("source_token", payload.source_token);
+  }
+
+  const { count, error } = await query;
+  return !error && Number(count) > 0;
 }
 
 Deno.serve(async (request) => {
@@ -122,6 +162,13 @@ Deno.serve(async (request) => {
     language: clean(body.language, 40, /[^a-zA-Z0-9_-]/g),
     platform: clean(body.platform, 80)
   };
+
+  const isDuplicate = await hasRecentDuplicate(supabase, payload);
+  if (isDuplicate) {
+    return new Response(JSON.stringify({ ok: true, duplicate: true, potato_count: null }), {
+      headers: { ...corsHeaders, "content-type": "application/json" }
+    });
+  }
 
   const { error } = await supabase.from("visitor_events").insert(payload);
 
