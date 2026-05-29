@@ -69,6 +69,8 @@ try {
     await screenshot(page, `zone-${slug(zone.id)}.png`);
   }
 
+  const panelUi = await exercisePanelUi(page);
+
   await page.click('#map-button');
   await delay(350);
   await screenshot(page, 'map.png');
@@ -94,6 +96,7 @@ try {
     glbAssets: getGlbAssetSizes(),
     mobile,
     mobileSavedPreference,
+    panelUi,
     ...metrics
   };
 
@@ -554,6 +557,32 @@ async function sampleWorldLife(page) {
   });
 }
 
+async function exercisePanelUi(page) {
+  await page.evaluate(() => {
+    const game = window.__portfolioDrive.game;
+    const zone = game.world.zones.find((item) => item.id === 'security');
+    game.ui.openZone(zone, { skipScan: true });
+  });
+  await delay(350);
+  await screenshot(page, 'panel-security.png');
+  const sample = await page.evaluate(() => {
+    const panel = document.getElementById('panel');
+    const card = panel?.querySelector('.panel-card');
+    const meta = document.getElementById('panel-meta');
+    return {
+      visible: Boolean(panel && !panel.hidden),
+      zoneId: panel?.dataset.zoneId || null,
+      mode: panel?.dataset.panelMode || null,
+      zoneColor: panel?.style.getPropertyValue('--zone-color') || null,
+      metaItems: meta?.querySelectorAll('span').length || 0,
+      title: document.getElementById('panel-title')?.textContent || '',
+      cardWidth: Math.round(card?.getBoundingClientRect().width || 0)
+    };
+  });
+  await page.click('#panel-close');
+  return sample;
+}
+
 async function collectRuntimeMetrics(page, loadMs, gameplay, water, surfaces, routeReplay, worldLife) {
   const runtime = await page.evaluate(async (expectedAssets) => {
     const frameDeltas = [];
@@ -821,6 +850,10 @@ function assertVerification(result) {
   if ((result.camera?.stats?.tests || 0) < 1) failures.push('camera occlusion stats did not record tests');
   if ((result.audio?.zoneStingersPlayed || 0) < 1) failures.push('audio probe failed: zone stingers');
   if ((result.audio?.landingEvents || 0) < 1) failures.push('audio probe failed: landing event counter');
+  if (!result.panelUi?.visible || result.panelUi.zoneId !== 'security') failures.push('panel UI probe failed: security terminal did not open');
+  if (result.panelUi?.mode !== 'terminal') failures.push(`panel UI probe failed: mode=${result.panelUi?.mode}`);
+  if ((result.panelUi?.metaItems || 0) < 4) failures.push(`panel UI probe failed: meta items=${result.panelUi?.metaItems || 0}`);
+  if ((result.panelUi?.cardWidth || 0) > 620) failures.push(`panel UI probe failed: card too wide=${result.panelUi?.cardWidth || 0}`);
   if (!result.water?.surfaceSeen) failures.push('water probe failed: surface state');
   if (!result.water?.splashSeen) failures.push('water probe failed: splash particles');
   if (!result.water?.dragReduced) failures.push('water probe failed: drag');

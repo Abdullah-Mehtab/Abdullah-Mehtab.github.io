@@ -24,6 +24,7 @@ export class UI {
       panel: document.getElementById('panel'),
       panelKind: document.getElementById('panel-kind'),
       panelTitle: document.getElementById('panel-title'),
+      panelMeta: document.getElementById('panel-meta'),
       panelBody: document.getElementById('panel-body'),
       panelActions: document.getElementById('panel-actions'),
       panelClose: document.getElementById('panel-close'),
@@ -96,15 +97,11 @@ export class UI {
       this.refs.prompt.hidden = true;
       return;
     }
+    this.refs.prompt.dataset.zoneId = zone.id;
+    this.refs.prompt.style.setProperty('--zone-color', zone.color || '#7cffb2');
     this.refs.promptKind.textContent = zone.kind;
     this.refs.promptTitle.textContent = zone.name;
-    if (zone.potatoFarm) {
-      this.refs.promptAction.textContent = 'Press P to summon. Press E for farm log';
-    } else if (zone.scanRequired && !this.game.world.securityScan.complete) {
-      this.refs.promptAction.textContent = 'Press E to run scanner';
-    } else {
-      this.refs.promptAction.textContent = zone.startsCircuit ? 'Press E to start circuit' : 'Press E to interact';
-    }
+    this.refs.promptAction.textContent = promptStatusFor(zone, this.game);
     this.refs.prompt.hidden = false;
   }
 
@@ -129,10 +126,7 @@ export class UI {
     }
 
     const lines = this.game.getZoneLines(zone);
-    this.refs.panelKind.textContent = zone.kind;
-    this.refs.panelTitle.textContent = zone.name;
-    clear(this.refs.panelBody);
-    clear(this.refs.panelActions);
+    this.preparePanel(zone, zone.startsCircuit ? 'circuit' : 'terminal');
     for (const line of lines) {
       const p = document.createElement('p');
       p.textContent = line;
@@ -160,10 +154,7 @@ export class UI {
   }
 
   openProjectGallery(zone) {
-    this.refs.panelKind.textContent = zone.kind;
-    this.refs.panelTitle.textContent = zone.name;
-    clear(this.refs.panelBody);
-    clear(this.refs.panelActions);
+    this.preparePanel(zone, 'gallery');
 
     const projects = this.game.resumeData.projects || [];
     const current = projects[this.projectIndex % projects.length] || 'Project data unavailable.';
@@ -177,7 +168,7 @@ export class UI {
     body.textContent = description || current;
     const hint = document.createElement('p');
     hint.className = 'panel-muted';
-    hint.textContent = 'Use Previous and Next to browse the project record from the resume data.';
+    hint.textContent = 'Resume project record from the portfolio data.';
     this.refs.panelBody.append(index, title, body, hint);
 
     const previous = button('Previous', () => {
@@ -192,6 +183,41 @@ export class UI {
     this.addActions(zone.actions || []);
     this.refs.panel.hidden = false;
     this.game.focusZone(zone);
+  }
+
+  preparePanel(zone, mode) {
+    this.refs.panel.dataset.zoneId = zone.id;
+    this.refs.panel.dataset.panelMode = mode;
+    this.refs.panel.style.setProperty('--zone-color', zone.color || '#68d8ff');
+    this.refs.panelKind.textContent = zone.kind;
+    this.refs.panelTitle.textContent = zone.name;
+    clear(this.refs.panelBody);
+    clear(this.refs.panelActions);
+    this.renderPanelMeta(zone, mode);
+  }
+
+  renderPanelMeta(zone, mode) {
+    clear(this.refs.panelMeta);
+    const district = nearestDistrict(zone);
+    const entries = [
+      ['Signal', terminalLabelFor(zone, mode)],
+      ['District', district?.label || 'Island route'],
+      ['Stop', zone.id]
+    ];
+    if (zone.actions?.length) entries.push(['Links', `${zone.actions.length}`]);
+    if (zone.scanRequired) entries.push(['Scanner', this.game.world.securityScan.complete ? 'Clear' : 'Armed']);
+    if (zone.potatoFarm) entries.push(['Counter', this.game.analytics?.potatoCountLabel || '--']);
+    if (zone.startsCircuit) entries.push(['Circuit', this.game.world.circuit?.active ? 'Running' : 'Ready']);
+
+    for (const [label, value] of entries) {
+      const item = document.createElement('span');
+      const key = document.createElement('small');
+      key.textContent = label;
+      const text = document.createElement('strong');
+      text.textContent = value;
+      item.append(key, text);
+      this.refs.panelMeta.append(item);
+    }
   }
 
   addActions(actions) {
@@ -597,4 +623,34 @@ function optionButton(title, description, onClick) {
 
 function capitalize(value) {
   return `${value.charAt(0).toUpperCase()}${value.slice(1)}`;
+}
+
+function promptStatusFor(zone, game) {
+  if (zone.potatoFarm) return 'Farm counter online';
+  if (zone.scanRequired && !game.world.securityScan.complete) return 'Scanner gate waiting';
+  if (zone.startsCircuit) return 'Circuit gate armed';
+  if (zone.projectGallery) return 'Project records ready';
+  return 'Portfolio terminal ready';
+}
+
+function terminalLabelFor(zone, mode) {
+  if (mode === 'gallery') return 'Gallery';
+  if (zone.scanRequired) return 'Scanner';
+  if (zone.startsCircuit) return 'Circuit';
+  if (zone.potatoFarm) return 'Counter';
+  if (zone.actions?.length) return 'Link node';
+  return 'Terminal';
+}
+
+function nearestDistrict(zone) {
+  const position = zone.position;
+  const x = Array.isArray(position) ? position[0] : position?.x;
+  const z = Array.isArray(position) ? position[2] : position?.z;
+  if (!Number.isFinite(x) || !Number.isFinite(z)) return null;
+  let best = null;
+  for (const district of districtFootprints) {
+    const distance = Math.hypot(x - district.center[0], z - district.center[1]);
+    if (!best || distance < best.distance) best = { ...district, distance };
+  }
+  return best;
 }
