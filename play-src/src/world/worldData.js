@@ -518,9 +518,9 @@ export const zonePresentation = {
   },
   education: {
     respawn: { position: [-60, 1.08, 64], heading: -0.79 },
-    camera: [-48, 12, 58],
-    target: [-78, 5.5, 82],
-    fov: 39
+    camera: [-44, 13, 52],
+    target: [-78, 5.2, 82],
+    fov: 43
   },
   awards: {
     respawn: { position: [-30, 1.08, 54], heading: -0.66 },

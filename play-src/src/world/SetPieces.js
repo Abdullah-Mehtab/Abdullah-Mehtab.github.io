@@ -311,6 +311,15 @@ export class SetPieces {
 
     this.groundRect(group, zone.position[0], zone.position[2] - 8.6, 35, 18, this.world.materials.plazaRoad, 0.12, 'FCCFrontQuad');
     this.groundRect(group, zone.position[0], zone.position[2] + 12.2, 30, 11, this.world.materials.paleStone, 0.118, 'FCCRearWalk');
+    this.groundRect(group, zone.position[0] - 16.4, zone.position[2] + 1.8, 6.8, 23, this.world.materials.paleStone, 0.121, 'FCCLeftStudyWalk');
+    this.groundRect(group, zone.position[0] + 17.6, zone.position[2] - 1.2, 7.2, 21, this.world.materials.paleStone, 0.121, 'FCCRightGardenWalk');
+    for (let i = 0; i < 8; i += 1) {
+      this.box(group, zone.position[0] - 14 + i * 4, 0.19, zone.position[2] - 21.8, 2.35, 0.045, 0.42, i % 2 ? this.world.materials.glowBlue : this.world.materials.paleStone, 0.04, 'FCCArrivalPaver');
+    }
+    for (let i = 0; i < 7; i += 1) {
+      this.box(group, zone.position[0] - 15.8, 0.19, zone.position[2] - 6.8 + i * 3.4, 0.42, 0.045, 1.7, i % 2 ? this.world.materials.paleStone : this.world.materials.glowBlue, -0.08, 'FCCLeftWalkGuide');
+      this.box(group, zone.position[0] + 17.8, 0.19, zone.position[2] - 7.2 + i * 3.1, 0.42, 0.045, 1.55, i % 2 ? this.world.materials.warmGlow : this.world.materials.paleStone, 0.08, 'FCCRightWalkGuide');
+    }
     this.addSign(group, 'FCCU S BLOCK', 'Forman Christian College', zone.position[0] - 18.5, zone.position[2] - 16.2, 0.2, 0x9ccfff, 3.7, 'FCCIdentitySign');
 
     for (const dx of [-18, -7, 7, 18]) {
@@ -336,6 +345,11 @@ export class SetPieces {
     }
 
     this.addPolishAsset(group, 'EnvPolishInfoKiosk', zone.position[0] + 20.4, zone.position[2] - 16.5, -0.34, 0.82);
+    this.addPolishAsset(group, 'EnvPolishCampusWalkwayPavilion', zone.position[0] - 1.4, zone.position[2] - 22.8, 0.05, 0.9);
+    this.addPolishAsset(group, 'EnvPolishCampusFountain', zone.position[0] + 16.8, zone.position[2] - 8.8, -0.12, 0.72);
+    this.addPolishAsset(group, 'EnvPolishCampusNoticeBoard', zone.position[0] - 22.6, zone.position[2] - 8.8, 0.34, 0.76);
+    this.addPolishAsset(group, 'EnvPolishCampusStudyBench', zone.position[0] - 19.4, zone.position[2] + 10.8, 0.52, 0.76);
+    this.addPolishAsset(group, 'EnvPolishCampusStudyBench', zone.position[0] + 18.8, zone.position[2] + 10.4, -0.52, 0.74);
     this.addPolishAsset(group, 'EnvPolishBenchPlanter', zone.position[0] - 20.8, zone.position[2] + 5.2, 0.64, 0.9);
     this.addPolishAsset(group, 'EnvPolishBenchPlanter', zone.position[0] + 20.2, zone.position[2] + 6.4, -0.62, 0.9);
     this.addPolishAsset(group, 'EnvPolishGardenArch', zone.position[0] + 17.6, zone.position[2] - 18.6, -0.12, 0.78);
