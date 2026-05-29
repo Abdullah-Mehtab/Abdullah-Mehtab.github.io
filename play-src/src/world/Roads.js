@@ -391,7 +391,7 @@ export class Roads {
       const color = roadMarkerColor(path);
       const chevronSpacing = roadMarkerSpacing(path);
       const studSpacing = Math.max(6, chevronSpacing * 0.5);
-      const inset = path.width * 0.5 + Math.min(1.15, style.shoulder * 0.62);
+      const inset = path.width * (path.hierarchy === 'plaza' ? 0.24 : path.hierarchy === 'dirt' ? 0.2 : 0.32);
 
       for (let distance = chevronSpacing * 0.85; distance < totalLength - chevronSpacing * 0.75; distance += chevronSpacing) {
         const t = distance / totalLength;
@@ -405,7 +405,7 @@ export class Roads {
           y: surfaceY + 0.074,
           z: point.z + rightZ * inset * side,
           rotation: Math.atan2(tangent.x, tangent.z),
-          scale: path.hierarchy === 'stunt' ? 1.08 : path.hierarchy === 'bridge' ? 0.86 : 0.94,
+          scale: path.hierarchy === 'stunt' ? 0.82 : path.hierarchy === 'bridge' ? 0.62 : 0.68,
           color
         });
       }
@@ -479,6 +479,9 @@ export class Roads {
       color: 0xffffff,
       side: THREE.DoubleSide,
       vertexColors: true,
+      transparent: true,
+      opacity: 0.78,
+      depthWrite: false,
       polygonOffset: true,
       polygonOffsetFactor: -24,
       polygonOffsetUnits: -24
@@ -642,20 +645,36 @@ function distanceToBendSide(curve, t) {
 }
 
 function createChevronGeometry() {
-  const vertices = new Float32Array([
-    0, 0, 1.1,
-    -0.82, 0, -0.86,
-    0.82, 0, -0.86
-  ]);
-  const uvs = new Float32Array([
-    0.5, 1,
-    0, 0,
-    1, 0
-  ]);
+  const bars = [
+    [[0, 0.88], [-0.78, -0.5]],
+    [[0, 0.88], [0.78, -0.5]]
+  ];
+  const halfWidth = 0.105;
+  const vertices = [];
+  const uvs = [];
+  const indices = [];
+
+  for (const [start, end] of bars) {
+    const index = vertices.length / 3;
+    const dx = end[0] - start[0];
+    const dz = end[1] - start[1];
+    const length = Math.hypot(dx, dz) || 1;
+    const nx = -dz / length * halfWidth;
+    const nz = dx / length * halfWidth;
+    vertices.push(
+      start[0] + nx, 0, start[1] + nz,
+      start[0] - nx, 0, start[1] - nz,
+      end[0] - nx, 0, end[1] - nz,
+      end[0] + nx, 0, end[1] + nz
+    );
+    uvs.push(0, 1, 1, 1, 1, 0, 0, 0);
+    indices.push(index, index + 1, index + 2, index, index + 2, index + 3);
+  }
+
   const geometry = new THREE.BufferGeometry();
-  geometry.setAttribute('position', new THREE.BufferAttribute(vertices, 3));
-  geometry.setAttribute('uv', new THREE.BufferAttribute(uvs, 2));
-  geometry.setIndex([0, 1, 2]);
+  geometry.setAttribute('position', new THREE.BufferAttribute(new Float32Array(vertices), 3));
+  geometry.setAttribute('uv', new THREE.BufferAttribute(new Float32Array(uvs), 2));
+  geometry.setIndex(indices);
   applyWhiteVertexColors(geometry);
   geometry.computeVertexNormals();
   return geometry;
