@@ -476,13 +476,13 @@ body:not(.is-driving) .interaction-prompt {
 }
 
 .map-district-label {
-  max-width: 82px;
-  padding: 3px 6px;
+  max-width: 76px;
+  padding: 3px 5px;
   border: 1px solid color-mix(in srgb, var(--district-color), transparent 42%);
   border-radius: 6px;
-  background: rgba(2, 8, 13, 0.68);
+  background: rgba(2, 8, 13, 0.62);
   color: color-mix(in srgb, var(--district-color), white 28%);
-  font-size: 0.56rem;
+  font-size: 0.52rem;
   font-weight: 800;
   line-height: 1.05;
   text-align: center;
@@ -491,21 +491,23 @@ body:not(.is-driving) .interaction-prompt {
   box-shadow:
     0 0 12px color-mix(in srgb, var(--district-color), transparent 62%),
     inset 0 1px 0 rgba(255, 255, 255, 0.08);
+  opacity: 0.86;
 }
 
 .map-route-label {
-  padding: 2px 6px;
-  border: 1px solid rgba(255, 223, 138, 0.22);
+  padding: 2px 5px;
+  border: 1px solid rgba(255, 223, 138, 0.18);
   border-radius: 999px;
-  background: rgba(2, 8, 13, 0.72);
-  color: rgba(255, 246, 220, 0.86);
-  font-size: 0.5rem;
+  background: rgba(2, 8, 13, 0.64);
+  color: rgba(255, 246, 220, 0.78);
+  font-size: 0.46rem;
   font-weight: 800;
   line-height: 1;
   text-transform: uppercase;
   transform: translate(-50%, -50%);
   white-space: nowrap;
   box-shadow: 0 0 10px rgba(0, 0, 0, 0.34);
+  opacity: 0.82;
 }
 
 .map-route-security {
@@ -770,8 +772,8 @@ body:not(.is-driving) .interaction-prompt {
   place-items: start end;
   padding: 92px 18px 18px;
   background:
-    radial-gradient(circle at 78% 28%, rgba(124, 255, 178, 0.08), transparent 26%),
-    linear-gradient(90deg, transparent 0 52%, rgba(3, 8, 13, 0.72));
+    radial-gradient(circle at 78% 28%, rgba(124, 255, 178, 0.1), transparent 26%),
+    linear-gradient(90deg, transparent 0 44%, rgba(2, 8, 13, 0.42) 58%, rgba(3, 8, 13, 0.78));
 }
 
 .menu-card {
@@ -798,14 +800,17 @@ body:not(.is-driving) .interaction-prompt {
 .option-tile {
   display: grid;
   gap: 6px;
-  min-height: 94px;
+  min-height: 78px;
   text-align: left;
+  background:
+    linear-gradient(90deg, rgba(104, 216, 255, 0.1), transparent 52%),
+    rgba(3, 8, 13, 0.8);
 }
 
 .map-modal {
   background:
-    radial-gradient(circle at 50% 38%, rgba(104, 216, 255, 0.08), transparent 34%),
-    linear-gradient(180deg, rgba(3, 8, 13, 0.22), rgba(3, 8, 13, 0.58));
+    radial-gradient(circle at 50% 38%, rgba(104, 216, 255, 0.1), transparent 34%),
+    linear-gradient(180deg, rgba(3, 8, 13, 0.18), rgba(3, 8, 13, 0.66));
 }
 
 .map-card {
@@ -816,6 +821,75 @@ body:not(.is-driving) .interaction-prompt {
 
 .map-card .menu-top h2 {
   font-size: clamp(1.55rem, 3.2vw, 2.55rem);
+}
+
+.menu-card.drive-console,
+.map-card.drive-console {
+  position: relative;
+  border-color: rgba(104, 216, 255, 0.34);
+  border-radius: 6px;
+  background:
+    linear-gradient(90deg, rgba(104, 216, 255, 0.08) 0 1px, transparent 1px),
+    linear-gradient(rgba(255, 255, 255, 0.035) 0 1px, transparent 1px),
+    radial-gradient(circle at 18% 0%, rgba(124, 255, 178, 0.13), transparent 34%),
+    radial-gradient(circle at 100% 18%, rgba(255, 223, 138, 0.1), transparent 28%),
+    linear-gradient(145deg, rgba(7, 19, 27, 0.9), rgba(3, 8, 13, 0.84) 58%, rgba(18, 12, 8, 0.82));
+  background-size: 24px 24px, 100% 7px, auto, auto, auto;
+  box-shadow:
+    0 24px 76px rgba(0, 0, 0, 0.42),
+    0 0 34px rgba(104, 216, 255, 0.13),
+    inset 0 1px 0 rgba(255, 255, 255, 0.1),
+    inset 0 -18px 36px rgba(0, 0, 0, 0.2);
+}
+
+.menu-card.drive-console::before,
+.map-card.drive-console::before,
+.menu-card.drive-console::after,
+.map-card.drive-console::after {
+  content: '';
+  position: absolute;
+  pointer-events: none;
+}
+
+.menu-card.drive-console::before,
+.map-card.drive-console::before {
+  left: 14px;
+  right: 14px;
+  top: 9px;
+  height: 3px;
+  border-radius: 999px;
+  background: linear-gradient(90deg, var(--accent), var(--accent-2), var(--gold), transparent);
+  box-shadow:
+    0 0 18px rgba(104, 216, 255, 0.4),
+    0 0 24px rgba(124, 255, 178, 0.2);
+}
+
+.menu-card.drive-console::after,
+.map-card.drive-console::after {
+  inset: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.055);
+  border-radius: 4px;
+  background:
+    linear-gradient(var(--accent), var(--accent)) left top / 34px 1px no-repeat,
+    linear-gradient(var(--accent), var(--accent)) left top / 1px 34px no-repeat,
+    linear-gradient(var(--gold), var(--gold)) right bottom / 34px 1px no-repeat,
+    linear-gradient(var(--gold), var(--gold)) right bottom / 1px 34px no-repeat;
+  opacity: 0.58;
+}
+
+.menu-card.drive-console {
+  width: min(90vw, 440px);
+  padding: clamp(16px, 2.4vw, 24px);
+}
+
+.map-card.drive-console {
+  width: min(92vw, 680px);
+  padding: clamp(16px, 2.4vw, 24px);
+}
+
+.menu-card.drive-console .menu-top h2,
+.map-card.drive-console .menu-top h2 {
+  font-size: clamp(1.25rem, 2.5vw, 2rem);
 }
 
 .option-tile span {
@@ -859,21 +933,37 @@ body:not(.is-driving) .interaction-prompt {
 
 .world-map {
   position: relative;
-  width: min(76vw, 600px, calc(84vh - 190px));
+  width: min(76vw, 610px, calc(86vh - 180px));
   min-width: min(82vw, 420px);
   aspect-ratio: 1;
   margin: 14px auto 0;
-  border: 1px solid var(--line);
-  border-radius: 8px;
+  border: 1px solid rgba(104, 216, 255, 0.28);
+  border-radius: 6px;
   overflow: hidden;
   background:
-    radial-gradient(circle at 50% 50%, rgba(73, 194, 207, 0.18), transparent 49%),
-    radial-gradient(circle at 50% 50%, rgba(255, 223, 138, 0.08), transparent 61%),
-    linear-gradient(rgba(255, 223, 138, 0.04) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(255, 223, 138, 0.04) 1px, transparent 1px),
-    radial-gradient(circle at 50% 50%, rgba(7, 48, 71, 0.96), rgba(2, 10, 18, 0.96));
-  background-size: auto, auto, 32px 32px, 32px 32px, auto;
+    radial-gradient(circle at 50% 48%, rgba(73, 194, 207, 0.2), transparent 46%),
+    radial-gradient(circle at 50% 50%, rgba(255, 223, 138, 0.07), transparent 62%),
+    linear-gradient(rgba(104, 216, 255, 0.045) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(104, 216, 255, 0.045) 1px, transparent 1px),
+    radial-gradient(circle at 50% 50%, rgba(7, 48, 71, 0.96), rgba(2, 10, 18, 0.97));
+  background-size: auto, auto, 28px 28px, 28px 28px, auto;
+  box-shadow:
+    0 0 0 1px rgba(255, 255, 255, 0.035),
+    0 18px 42px rgba(0, 0, 0, 0.34),
+    inset 0 0 42px rgba(104, 216, 255, 0.1);
   cursor: grab;
+}
+
+.world-map::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 4;
+  background:
+    linear-gradient(rgba(255, 255, 255, 0.035) 0 1px, transparent 1px),
+    radial-gradient(circle at 50% 50%, transparent 48%, rgba(2, 8, 13, 0.22));
+  background-size: 100% 5px, auto;
+  pointer-events: none;
 }
 
 .world-map::before {
@@ -911,7 +1001,7 @@ body:not(.is-driving) .interaction-prompt {
   align-items: center;
   flex-wrap: wrap;
   gap: 8px;
-  margin-top: 18px;
+  margin-top: 14px;
 }
 
 .map-toolbar button {
@@ -930,7 +1020,7 @@ body:not(.is-driving) .interaction-prompt {
 
 .map-pin {
   position: absolute;
-  z-index: 5;
+  z-index: 6;
   width: 12px;
   height: 12px;
   min-height: 12px;
@@ -952,7 +1042,7 @@ body:not(.is-driving) .interaction-prompt {
   color: var(--text);
   background: rgba(5, 12, 20, 0.96);
   transform: translate(-50%, -50%);
-  z-index: 4;
+  z-index: 9;
 }
 
 .map-pin:hover,
@@ -965,7 +1055,7 @@ body:not(.is-driving) .interaction-prompt {
   color: var(--text);
   background: rgba(5, 12, 20, 0.95);
   transform: translate(-50%, -50%);
-  z-index: 3;
+  z-index: 10;
 }
 
 .notifications {
@@ -997,6 +1087,12 @@ body:not(.is-driving) .interaction-prompt {
   white-space: normal;
   pointer-events: none;
   backdrop-filter: blur(10px);
+}
+
+body:has(.panel:not([hidden])) .debug-readout,
+body:has(.menu:not([hidden])) .debug-readout,
+body:has(.map-modal:not([hidden])) .debug-readout {
+  display: none;
 }
 
 .notification {
@@ -1198,6 +1294,34 @@ body:not(.is-driving) .interaction-prompt {
     max-height: 86vh;
   }
 
+  .menu-card.drive-console,
+  .map-card.drive-console {
+    width: min(94vw, 520px);
+    padding: 16px;
+  }
+
+  .menu-card.drive-console {
+    max-height: min(78vh, 620px);
+  }
+
+  .map-card.drive-console {
+    max-height: min(82vh, 720px);
+  }
+
+  .menu-tabs {
+    gap: 6px;
+    margin: 16px 0 14px;
+  }
+
+  .menu-tabs button {
+    min-height: 36px;
+    padding: 8px 10px;
+  }
+
+  .option-tile {
+    min-height: 70px;
+  }
+
   .panel-top,
   .menu-top {
     align-items: flex-start;
@@ -1206,6 +1330,20 @@ body:not(.is-driving) .interaction-prompt {
   .world-map {
     width: min(84vw, calc(86vh - 170px));
     min-width: 0;
+  }
+
+  .map-route-label {
+    display: none;
+  }
+
+  .map-district-label {
+    max-width: 62px;
+    font-size: 0.48rem;
+  }
+
+  .map-legend {
+    transform: scale(0.88);
+    transform-origin: right bottom;
   }
 
   .minimap {
