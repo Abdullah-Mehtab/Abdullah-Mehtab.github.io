@@ -30,6 +30,10 @@ const authoredDistrictAssets = [
   'EnvPolishCareerOffice',
   'EnvPolishAwardsMonument',
   'EnvPolishTodoBoard',
+  'EnvPolishDocumentArcade',
+  'EnvPolishTerminalCanopy',
+  'EnvPolishQueueMarquee',
+  'EnvPolishProcessCrane',
   'EnvPolishCircuitGate',
   'EnvPolishBuildWorkbench',
   'EnvPolishFarmIrrigator',
@@ -1443,11 +1447,11 @@ function assertVerification(result) {
   if ((result.districtComposition?.pathMarks || 0) < 70) failures.push(`district composition probe failed: pathMarks=${result.districtComposition?.pathMarks || 0}`);
   if ((result.districtComposition?.lamps || 0) < 13) failures.push(`district composition probe failed: lamps=${result.districtComposition?.lamps || 0}`);
   if ((result.districtComposition?.planters || 0) < 3) failures.push(`district composition probe failed: planters=${result.districtComposition?.planters || 0}`);
-  if ((result.districtComposition?.authoredAssets || 0) < 140) failures.push(`district composition probe failed: authoredAssets=${result.districtComposition?.authoredAssets || 0}`);
+  if ((result.districtComposition?.authoredAssets || 0) < 148) failures.push(`district composition probe failed: authoredAssets=${result.districtComposition?.authoredAssets || 0}`);
   if ((result.districtComposition?.edgeTrims || 0) < 80) failures.push(`district composition probe failed: edgeTrims=${result.districtComposition?.edgeTrims || 0}`);
   if ((result.districtComposition?.surfaceMarks || 0) < 13) failures.push(`district composition probe failed: surfaceMarks=${result.districtComposition?.surfaceMarks || 0}`);
   if ((result.districtComposition?.rails || 0) < 6) failures.push(`district composition probe failed: rails=${result.districtComposition?.rails || 0}`);
-  if ((result.districtComposition?.silhouetteAnchors || 0) < 7) failures.push(`district composition probe failed: silhouetteAnchors=${result.districtComposition?.silhouetteAnchors || 0}`);
+  if ((result.districtComposition?.silhouetteAnchors || 0) < 11) failures.push(`district composition probe failed: silhouetteAnchors=${result.districtComposition?.silhouetteAnchors || 0}`);
   if ((result.districtComposition?.careerConnectors || 0) < 7) failures.push(`district composition probe failed: careerConnectors=${result.districtComposition?.careerConnectors || 0}`);
   if ((result.districtComposition?.farmRows || 0) < 8) failures.push(`district composition probe failed: farmRows=${result.districtComposition?.farmRows || 0}`);
   if ((result.districtComposition?.farmFences || 0) < 12) failures.push(`district composition probe failed: farmFences=${result.districtComposition?.farmFences || 0}`);

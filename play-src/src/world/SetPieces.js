@@ -471,11 +471,15 @@ export class SetPieces {
     const cv = findZone('cv');
     this.addSign(group, 'CV VAULT', 'Documents', cv.position[0] - 10, cv.position[2] - 12, 0.25, 0xe6f3ff, 2.5, 'CvVaultSign');
     this.addLamp(group, cv.position[0] + 8, cv.position[2] + 9, 0xe6f3ff, 2.8, 'CvLamp');
-    this.addPolishAsset(group, 'EnvPolishCvVault', cv.position[0] - 0.4, cv.position[2] + 1.2, 0.12, 1.05);
+    this.addPolishAsset(group, 'EnvPolishCvVault', cv.position[0] - 0.4, cv.position[2] + 1.2, Math.PI + 0.12, 1.05);
     this.addPolishAsset(group, 'EnvPolishTerminalPillar', cv.position[0] + 8.8, cv.position[2] - 3.6, -0.22, 0.88);
     this.addCompositionPad(group, cv.position[0], cv.position[2], 13, 9, this.world.materials.plazaRoad, 0.13, 'CvVaultDocumentPad');
+    this.addCompositionPad(group, cv.position[0] - 2.8, cv.position[2] + 3.6, 19, 12, this.world.materials.paleStone, 0.118, 'CvArchiveCourt');
+    this.addSilhouetteAnchor(group, 'EnvPolishDocumentArcade', cv.position[0] - 4.2, cv.position[2] + 6.4, Math.PI + 0.16, 0.92);
+    this.addCompositionAsset(group, 'EnvPolishQueueMarquee', cv.position[0] + 7.2, cv.position[2] + 4.8, Math.PI - 0.28, 0.62);
     this.box(group, cv.position[0], 0.19, cv.position[2] - 4.8, 10.6, 0.04, 0.28, this.world.materials.glowBlue, 0, 'CvVaultFrontTrace');
     this.addYardEdgeDetails(group, cv.position[0], cv.position[2], 13, 9);
+    this.addYardEdgeDetails(group, cv.position[0] - 2.8, cv.position[2] + 3.6, 19, 12);
     for (const [dx, dz, rotation, scale] of [
       [-3.9, 1.9, 0.22, 0.62],
       [3.6, -1.8, -0.12, 0.58]
@@ -517,6 +521,9 @@ export class SetPieces {
     this.addPolishAsset(group, 'EnvPolishSkillsArray', skills.position[0] - 0.6, skills.position[2] - 1.4, -0.62, 1.02);
     this.addPolishAsset(group, 'EnvPolishTerminalPillar', skills.position[0] + 10.8, skills.position[2] + 5.6, -0.62, 0.9);
     this.addSilhouetteAnchor(group, 'EnvPolishSignalSpire', skills.position[0] - 10.2, skills.position[2] - 2.8, -0.62, 0.9);
+    this.addCompositionPad(group, skills.position[0] - 0.8, skills.position[2] - 2.8, 21, 12, this.world.materials.securityRoad, 0.122, 'SkillsTerminalCourt');
+    this.addSilhouetteAnchor(group, 'EnvPolishTerminalCanopy', skills.position[0] - 1.8, skills.position[2] - 4.4, -0.62, 0.86);
+    this.addCompositionAsset(group, 'EnvPolishProcessCrane', skills.position[0] + 9.8, skills.position[2] - 5.2, -0.62, 0.58);
     for (const [x, z, rotation, scale] of [
       [skills.position[0] - 4.8, skills.position[2] - 7.6, -0.2, 0.74],
       [skills.position[0] + 5.2, skills.position[2] - 8.0, -0.12, 0.7]
@@ -548,6 +555,8 @@ export class SetPieces {
     this.addSign(group, 'TODO', 'Build Queue', todo.position[0] - 8, todo.position[2] - 7, 0.68, 0xb6a0ff, 2.2, 'TodoSign');
     this.addPolishAsset(group, 'EnvPolishTodoBoard', todo.position[0] + 0.6, todo.position[2] + 1.0, 0.34, 1.02);
     this.addPolishAsset(group, 'EnvPolishInfoKiosk', todo.position[0] + 6.8, todo.position[2] - 5.2, -0.24, 0.72);
+    this.addSilhouetteAnchor(group, 'EnvPolishQueueMarquee', todo.position[0] - 3.8, todo.position[2] + 7.9, 0.34, 0.72);
+    this.addCompositionAsset(group, 'EnvPolishProcessCrane', todo.position[0] + 7.8, todo.position[2] + 1.8, 0.34, 0.56);
     this.addDistrictStoryAsset(group, 'EnvPolishTodoCardStack', todo.position[0] - 1.4, todo.position[2] + 6.2, 0.1, 0.86, 'todoStacks');
     this.addCompositionLamp(group, todo.position[0] - 11.6, todo.position[2] + 7.0, 0xb6a0ff, 2.6, 'TodoLampA');
     this.addCompositionLamp(group, todo.position[0] + 9.8, todo.position[2] - 6.2, 0x68d8ff, 2.5, 'TodoLampB');
@@ -619,6 +628,8 @@ export class SetPieces {
     this.addSign(group, 'BEHIND', 'Process Yard', behind.position[0] - 10, behind.position[2] + 8, -0.2, 0x8fd3ff, 2.3, 'BehindSign');
     this.addPolishAsset(group, 'EnvPolishBuildWorkbench', behind.position[0] + 0.6, behind.position[2] - 1.2, 0.08, 1.08);
     this.addPolishAsset(group, 'EnvPolishTerminalPillar', behind.position[0] + 8.4, behind.position[2] + 3.6, 0.3, 0.82);
+    this.addSilhouetteAnchor(group, 'EnvPolishProcessCrane', behind.position[0] - 2.8, behind.position[2] - 6.6, -0.22, 0.82);
+    this.addCompositionAsset(group, 'EnvPolishTerminalCanopy', behind.position[0] + 5.4, behind.position[2] + 5.8, -0.24, 0.64);
     for (const [dx, dz, rotation, scale] of [[-6, -5, 0.22, 0.86], [1, -7, -0.12, 0.72], [7, -3, 0.42, 0.76]]) {
       this.addDistrictStoryAsset(group, 'EnvPolishBuildCrateStack', behind.position[0] + dx, behind.position[2] + dz, rotation, scale, 'crateStacks');
     }
