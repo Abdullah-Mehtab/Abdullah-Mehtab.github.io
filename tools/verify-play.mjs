@@ -586,6 +586,7 @@ async function collectRuntimeMetrics(page, loadMs, gameplay, water, surfaces, ro
       calls: info.calls,
       triangles: info.triangles,
       sceneObjects: countSceneObjects(game.scene),
+      renderProfile: profileScene(game.scene),
       authoredDistrictAssets: expectedAssets.map((name) => ({
         name,
         template: game.environmentAssets?.has?.(name) === true,
@@ -612,6 +613,61 @@ async function collectRuntimeMetrics(page, loadMs, gameplay, water, surfaces, ro
         if (object.isLight) lights += 1;
       });
       return { objects, meshes, lights };
+    }
+
+    function profileScene(root) {
+      const buckets = new Map();
+      root.traverse((object) => {
+        if (!object.isMesh || !isEffectivelyVisible(object)) return;
+        const bucketName = getRenderBucketName(object, root);
+        const materials = Array.isArray(object.material) ? object.material.length : 1;
+        const triangles = estimateTriangles(object);
+        if (!buckets.has(bucketName)) {
+          buckets.set(bucketName, {
+            name: bucketName,
+            meshes: 0,
+            materials: 0,
+            triangles: 0
+          });
+        }
+        const bucket = buckets.get(bucketName);
+        bucket.meshes += 1;
+        bucket.materials += materials;
+        bucket.triangles += triangles;
+      });
+      return [...buckets.values()]
+        .map((bucket) => ({
+          ...bucket,
+          triangles: Math.round(bucket.triangles)
+        }))
+        .sort((a, b) => b.materials - a.materials)
+        .slice(0, 16);
+    }
+
+    function isEffectivelyVisible(object) {
+      let current = object;
+      while (current) {
+        if (current.visible === false) return false;
+        current = current.parent;
+      }
+      return true;
+    }
+
+    function getRenderBucketName(object, root) {
+      let current = object;
+      while (current.parent && current.parent !== root) current = current.parent;
+      return current.name || object.name || 'unnamed-root';
+    }
+
+    function estimateTriangles(object) {
+      const geometry = object.geometry;
+      const instanceCount = object.isInstancedMesh ? object.count || 1 : 1;
+      const base = geometry?.index
+        ? geometry.index.count / 3
+        : geometry?.attributes?.position
+          ? geometry.attributes.position.count / 3
+          : 0;
+      return base * instanceCount;
     }
 
     function auditColliders(colliders, scene) {
@@ -732,6 +788,7 @@ function assertVerification(result) {
   for (const key of ['grassAnimated', 'bannerAnimated', 'pulseAnimated', 'beaconAnimated', 'motionAdvanced']) {
     if (!result.worldLife?.[key]) failures.push(`world life probe failed: ${key}`);
   }
+  if (result.calls > 560) failures.push(`desktop draw-call budget exceeded: ${result.calls}`);
   if (result.p95FrameMs > 20) failures.push(`p95 frame time too high: ${result.p95FrameMs}ms`);
   if (result.gameplay.movementMeters < 5) failures.push(`drive movement too small: ${result.gameplay.movementMeters}m`);
   for (const key of ['keyboardHandbrake', 'boostSeen', 'jumpSeen', 'landingSeen', 'impactAudioSeen', 'burnoutSeen', 'wheelieSeen', 'handbrakeSeen']) {
@@ -753,6 +810,7 @@ function assertVerification(result) {
   if (!result.mobile.ready || result.mobile.canvasSample <= 0) failures.push('mobile canvas did not render');
   if (result.mobile.quality !== 'low') failures.push(`mobile quality tier mismatch: ${result.mobile.quality}`);
   if (result.mobile.savedQuality !== null) failures.push(`mobile default quality should not write saved preference: ${result.mobile.savedQuality}`);
+  if (result.mobile.calls > 260) failures.push(`mobile draw-call budget exceeded: ${result.mobile.calls}`);
   if ((result.mobile.lifeStats?.visibleTotal || 0) >= (result.worldLife?.quality?.medium?.visibleTotal || Infinity)) {
     failures.push('mobile quality probe failed: visible life signals were not reduced');
   }
