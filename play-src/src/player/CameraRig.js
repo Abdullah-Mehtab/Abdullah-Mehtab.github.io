@@ -3,16 +3,18 @@
 import * as THREE from 'three';
 
 export class CameraRig {
-  constructor(camera, vehicle, input) {
+  constructor(camera, vehicle, input, physics = null) {
     this.camera = camera;
     this.vehicle = vehicle;
     this.input = input;
+    this.physics = physics;
     this.focus = new THREE.Vector3();
     this.smoothedTarget = new THREE.Vector3();
     this.mode = 'follow';
     this.cinematicTarget = null;
     this.cinematicPosition = null;
     this.baseFov = camera.fov;
+    this.occlusionStats = { tests: 0, hits: 0, lastHitDistance: 0, lastResolvedDistance: 0 };
   }
 
   setCinematic(position, target) {
@@ -80,7 +82,8 @@ export class CameraRig {
 
     const cameraEase = 1 - Math.pow(0.001, dt);
     const targetEase = 1 - Math.pow(0.0005, dt);
-    this.camera.position.lerp(desired, cameraEase * 0.62);
+    const resolvedDesired = this.resolveCameraOcclusion(target, desired);
+    this.camera.position.lerp(resolvedDesired, cameraEase * 0.62);
     this.smoothedTarget.lerp(target, targetEase * 0.7);
     const fovTarget = this.baseFov
       + Math.min(6.5, Math.abs(this.vehicle.speed) * 0.12)
@@ -90,5 +93,55 @@ export class CameraRig {
     this.camera.fov += (fovTarget - this.camera.fov) * Math.min(1, dt * 4.2);
     this.camera.updateProjectionMatrix();
     this.camera.lookAt(this.smoothedTarget);
+  }
+
+  resolveCameraOcclusion(target, desired) {
+    if (!this.physics?.world || !this.physics?.RAPIER) return desired;
+    const offset = desired.clone().sub(target);
+    const distance = offset.length();
+    if (distance < 1) return desired;
+
+    const direction = offset.multiplyScalar(1 / distance);
+    const hit = this.physics.castStaticCameraRay?.(target, direction, distance) || this.castRapierRay(target, direction, distance);
+
+    this.occlusionStats.tests += 1;
+    if (!hit || !Number.isFinite(hit.toi)) return desired;
+
+    const resolvedDistance = Math.max(3.2, hit.toi - 1.05);
+    this.occlusionStats.hits += 1;
+    this.occlusionStats.lastHitDistance = Number(hit.toi.toFixed(2));
+    this.occlusionStats.lastResolvedDistance = Number(resolvedDistance.toFixed(2));
+    return target.clone().addScaledVector(direction, resolvedDistance);
+  }
+
+  castRapierRay(target, direction, distance) {
+    const ray = new this.physics.RAPIER.Ray(
+      { x: target.x, y: target.y, z: target.z },
+      { x: direction.x, y: direction.y, z: direction.z }
+    );
+    return this.physics.world.castRay(
+      ray,
+      distance,
+      true,
+      undefined,
+      undefined,
+      undefined,
+      this.vehicle?.body || undefined
+    );
+  }
+
+  probeOcclusion(target, desired) {
+    const resolved = this.resolveCameraOcclusion(target, desired);
+    return {
+      desiredDistance: Number(target.distanceTo(desired).toFixed(2)),
+      resolvedDistance: Number(target.distanceTo(resolved).toFixed(2)),
+      resolvedCloser: target.distanceTo(resolved) < target.distanceTo(desired) - 0.5,
+      hits: this.occlusionStats.hits,
+      tests: this.occlusionStats.tests
+    };
+  }
+
+  getDebugStats() {
+    return { ...this.occlusionStats };
   }
 }

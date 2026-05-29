@@ -59,7 +59,7 @@ export class Game {
       achievements: this.achievements,
       audio: this.audio
     });
-    this.cameraRig = new CameraRig(this.camera, this.vehicle, this.input);
+    this.cameraRig = new CameraRig(this.camera, this.vehicle, this.input, this.physics);
     this.analytics = new Analytics();
     this.ui = new UI({ game: this, achievements: this.achievements, audio: this.audio });
     this.analytics.init().then(() => {

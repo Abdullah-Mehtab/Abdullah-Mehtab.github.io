@@ -597,6 +597,10 @@ async function collectRuntimeMetrics(page, loadMs, gameplay, water, surfaces, ro
         reflectorStuds: game.scene.getObjectByName('ROAD_Reflector_Studs')?.count || 0
       },
       vehicleFx: game.vehicle.getEffectStats?.() || {},
+      camera: {
+        occlusion: sampleCameraOcclusion(game),
+        stats: game.cameraRig?.getDebugStats?.() || {}
+      },
       colliderCount: window.__portfolioDrive.colliders().length,
       debugOverlayObjects: game.debugColliderOverlay?.children?.length || 0,
       colliderAudit: auditColliders(window.__portfolioDrive.colliders(), game.scene),
@@ -694,6 +698,15 @@ async function collectRuntimeMetrics(page, loadMs, gameplay, water, surfaces, ro
         return item;
       });
       return { total: summary.length, failures, summary };
+    }
+
+    function sampleCameraOcclusion(game) {
+      const education = game.world.zones.find((zone) => zone.id === 'education');
+      const target = education?.position?.clone?.() || game.vehicle.position.clone();
+      const desired = target.clone();
+      target.set(-78, 2, 68);
+      desired.set(-78, 7, 100);
+      return game.cameraRig?.probeOcclusion?.(target, desired) || null;
     }
   }, authoredDistrictAssets);
   return {
@@ -804,6 +817,8 @@ function assertVerification(result) {
   if ((vehicleFx.spawnedSmoke || 0) < 2) failures.push(`vehicle FX probe failed: smoke=${vehicleFx.spawnedSmoke || 0}`);
   if ((vehicleFx.spawnedBoost || 0) < 1) failures.push(`vehicle FX probe failed: boost=${vehicleFx.spawnedBoost || 0}`);
   if ((vehicleFx.spawnedSkid || 0) < 2) failures.push(`vehicle FX probe failed: skid=${vehicleFx.spawnedSkid || 0}`);
+  if (!result.camera?.occlusion?.resolvedCloser) failures.push('camera occlusion probe failed');
+  if ((result.camera?.stats?.tests || 0) < 1) failures.push('camera occlusion stats did not record tests');
   if ((result.audio?.zoneStingersPlayed || 0) < 1) failures.push('audio probe failed: zone stingers');
   if ((result.audio?.landingEvents || 0) < 1) failures.push('audio probe failed: landing event counter');
   if (!result.water?.surfaceSeen) failures.push('water probe failed: surface state');
