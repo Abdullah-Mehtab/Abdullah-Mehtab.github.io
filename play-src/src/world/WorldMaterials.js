@@ -383,8 +383,9 @@ export function makeWaterMaterial() {
     depthWrite: false,
     uniforms: {
       time: { value: 0 },
-      deep: { value: new THREE.Color(0x063e66) },
-      shallow: { value: new THREE.Color(0x38c7d3) },
+      deep: { value: new THREE.Color(0x188eb0) },
+      shallow: { value: new THREE.Color(0x38d3d5) },
+      horizon: { value: new THREE.Color(0xc4f4ff) },
       sun: { value: new THREE.Color(0xfff1b8) }
     },
     vertexShader: `
@@ -411,17 +412,24 @@ export function makeWaterMaterial() {
       varying float vWave;
       uniform vec3 deep;
       uniform vec3 shallow;
+      uniform vec3 horizon;
       uniform vec3 sun;
       uniform float time;
       void main() {
-        float longBands = sin((vUv.x * 32.0 + vUv.y * 19.0) + time * 0.75) * 0.5 + 0.5;
-        float fineBands = sin((vUv.x - vUv.y) * 145.0 - time * 1.15) * 0.5 + 0.5;
-        float depthFade = smoothstep(-180.0, 150.0, vWorld.z + vWorld.x * 0.12);
-        float sparkle = pow(max(0.0, fineBands * longBands), 8.0) * 0.24;
-        vec3 color = mix(deep, shallow, smoothstep(0.12, 0.95, depthFade + vWave * 0.25));
-        color += longBands * 0.035 + sparkle * sun;
-        color = mix(color, vec3(0.72, 0.94, 0.98), 0.08);
-        gl_FragColor = vec4(color, 0.84);
+        float radius = length(vWorld.xz);
+        float shallowMix = 1.0 - smoothstep(142.0, 244.0, radius);
+        float horizonMix = smoothstep(150.0, 380.0, radius);
+        float longBands = sin(dot(vWorld.xz, vec2(0.028, 0.041)) + time * 0.55) * 0.5 + 0.5;
+        float crossBands = sin(dot(vWorld.xz, vec2(-0.034, 0.026)) - time * 0.38) * 0.5 + 0.5;
+        float fineBands = sin(dot(vWorld.xz, vec2(0.19, -0.16)) - time * 1.05) * 0.5 + 0.5;
+        float sparkle = pow(max(0.0, fineBands * longBands), 10.0) * (1.0 - horizonMix * 0.72) * 0.22;
+        vec3 color = mix(deep, shallow, clamp(shallowMix + vWave * 0.18, 0.0, 1.0));
+        color += (longBands * 0.028 + crossBands * 0.018) * (1.0 - horizonMix * 0.42);
+        color += sparkle * sun;
+        color = mix(color, horizon, horizonMix * 0.82);
+        color = mix(color, vec3(0.72, 0.94, 0.98), 0.08 + horizonMix * 0.16);
+        float alpha = mix(0.9, 0.88, horizonMix);
+        gl_FragColor = vec4(color, alpha);
       }
     `
   });
