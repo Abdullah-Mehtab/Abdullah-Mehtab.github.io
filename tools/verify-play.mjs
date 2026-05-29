@@ -875,6 +875,7 @@ async function collectRuntimeMetrics(page, loadMs, gameplay, water, surfaces, su
       surfaceDetails: game.world.terrain?.surfaceDetailStats || {},
       terrainRelief: game.world.terrain?.getReliefStats?.() || {},
       shoreline: game.world.terrain?.getShorelineStats?.() || {},
+      setPieceQuality: game.world.setPieces?.getQualityStats?.() || {},
       approachDressing: game.world.setPieces?.getApproachStats?.() || {},
       districtGateways: game.world.setPieces?.getGatewayStats?.() || {},
       districtStory: game.world.setPieces?.getDistrictStoryStats?.() || {},
@@ -1085,6 +1086,7 @@ async function captureMobile(browser) {
       quality: game.world.landscapeQuality,
       savedQuality: localStorage.getItem('portfolio-drive-landscape-quality'),
       lifeStats: game.world.setPieces?.getLifeStats?.() || { ...(game.world.setPieces?.lifeStats || {}) },
+      setPieceQuality: game.world.setPieces?.getQualityStats?.() || {},
       atmosphere: game.world.atmosphere?.getStats?.() || {},
       calls: render.calls,
       triangles: render.triangles
@@ -1258,6 +1260,10 @@ function assertVerification(result) {
   if ((result.terrainRelief?.beachRipples || 0) < 44) failures.push(`terrain relief probe failed: beachRipples=${result.terrainRelief?.beachRipples || 0}`);
   if ((result.shoreline?.edgeBands || 0) < 1) failures.push(`shoreline probe failed: edgeBands=${result.shoreline?.edgeBands || 0}`);
   if ((result.shoreline?.foamBreaks || 0) < 36) failures.push(`shoreline probe failed: foamBreaks=${result.shoreline?.foamBreaks || 0}`);
+  if ((result.setPieceQuality?.secondaryGroups || 0) < 2) failures.push(`set-piece quality probe failed: secondaryGroups=${result.setPieceQuality?.secondaryGroups || 0}`);
+  if ((result.setPieceQuality?.visibleSecondaryGroups || 0) !== (result.setPieceQuality?.secondaryGroups || 0)) {
+    failures.push(`set-piece quality probe failed: medium visibleSecondaryGroups=${result.setPieceQuality?.visibleSecondaryGroups || 0}/${result.setPieceQuality?.secondaryGroups || 0}`);
+  }
   if ((result.approachDressing?.clusters || 0) < 12) failures.push(`approach dressing probe failed: clusters=${result.approachDressing?.clusters || 0}`);
   if ((result.approachDressing?.signs || 0) < 12) failures.push(`approach dressing probe failed: signs=${result.approachDressing?.signs || 0}`);
   if ((result.approachDressing?.lamps || 0) < 12) failures.push(`approach dressing probe failed: lamps=${result.approachDressing?.lamps || 0}`);
@@ -1336,7 +1342,11 @@ function assertVerification(result) {
   if (!result.mobile.ready || result.mobile.canvasSample <= 0) failures.push('mobile canvas did not render');
   if (result.mobile.quality !== 'low') failures.push(`mobile quality tier mismatch: ${result.mobile.quality}`);
   if (result.mobile.savedQuality !== null) failures.push(`mobile default quality should not write saved preference: ${result.mobile.savedQuality}`);
-  if (result.mobile.calls > 260) failures.push(`mobile draw-call budget exceeded: ${result.mobile.calls}`);
+  if ((result.mobile.setPieceQuality?.secondaryGroups || 0) < 2) failures.push(`mobile set-piece quality probe failed: secondaryGroups=${result.mobile.setPieceQuality?.secondaryGroups || 0}`);
+  if ((result.mobile.setPieceQuality?.visibleSecondaryGroups || 0) !== 0) {
+    failures.push(`mobile set-piece quality probe failed: visibleSecondaryGroups=${result.mobile.setPieceQuality?.visibleSecondaryGroups || 0}`);
+  }
+  if (result.mobile.calls > 235) failures.push(`mobile draw-call budget exceeded: ${result.mobile.calls}`);
   if ((result.mobile.atmosphere?.visibleClouds || 0) > 5) failures.push(`mobile atmosphere probe failed: visibleClouds=${result.mobile.atmosphere?.visibleClouds || 0}`);
   if ((result.mobile.atmosphere?.visibleSunGlows || 0) > 1) failures.push(`mobile atmosphere probe failed: visibleSunGlows=${result.mobile.atmosphere?.visibleSunGlows || 0}`);
   if ((result.mobile.atmosphere?.visibleHorizonRibbons || 0) > 1) failures.push(`mobile atmosphere probe failed: visibleHorizonRibbons=${result.mobile.atmosphere?.visibleHorizonRibbons || 0}`);

@@ -28,6 +28,11 @@ export class SetPieces {
       whisperBeacons: [],
       terminalPulses: []
     };
+    this.qualityGroups = [];
+    this.qualityStats = {
+      secondaryGroups: 0,
+      visibleSecondaryGroups: 0
+    };
     this.lifeStats = {
       zonePulses: 0,
       windBanners: 0,
@@ -166,12 +171,32 @@ export class SetPieces {
     this.applyLifeLimit('whisperBeacons', limits.whisperBeacons);
     this.applyLifeLimit('terminalPulses', limits.terminalPulses);
     this.applyDistrictAmbienceLimit(limits.districtMotes);
+    this.applyQualityGroups();
     this.lifeStats.visibleTotal =
       this.lifeStats.visibleZonePulses +
       this.lifeStats.visibleWindBanners +
       this.lifeStats.visibleWhisperBeacons +
       this.lifeStats.visibleTerminalPulses +
       this.lifeStats.visibleDistrictMotes;
+  }
+
+  applyQualityGroups() {
+    const hideSecondary = this.world.landscapeQuality === 'low';
+    let secondaryGroups = 0;
+    let visibleSecondaryGroups = 0;
+    for (const entry of this.qualityGroups) {
+      if (entry.tier !== 'secondary') continue;
+      secondaryGroups += 1;
+      entry.group.visible = !hideSecondary;
+      if (entry.group.visible) visibleSecondaryGroups += 1;
+    }
+    this.qualityStats.secondaryGroups = secondaryGroups;
+    this.qualityStats.visibleSecondaryGroups = visibleSecondaryGroups;
+  }
+
+  registerQualityGroup(group, tier) {
+    this.qualityGroups.push({ group, tier });
+    return group;
   }
 
   applyLifeLimit(category, limit) {
@@ -195,6 +220,10 @@ export class SetPieces {
 
   getLifeStats() {
     return { ...this.lifeStats };
+  }
+
+  getQualityStats() {
+    return { ...this.qualityStats };
   }
 
   getApproachStats() {
@@ -570,6 +599,7 @@ export class SetPieces {
       shouldSkip: (object) => object.name.startsWith('ApproachBeaconGlow')
     });
     group.userData.approachStats = { ...this.approachStats };
+    this.registerQualityGroup(group, 'secondary');
     this.world.scene.add(group);
   }
 
@@ -594,6 +624,7 @@ export class SetPieces {
     gateways.forEach((spec, index) => this.addDistrictGateway(group, spec, index));
     mergeStaticMeshesInGroup(group, { namePrefix: 'SETPIECE_gateway' });
     group.userData.gatewayStats = { ...this.gatewayStats };
+    this.registerQualityGroup(group, 'secondary');
     this.world.scene.add(group);
   }
 
