@@ -78,7 +78,7 @@ try {
   });
 
   const startedAt = Date.now();
-  await page.goto(`${baseUrl}/play/?debugDrive=1`, { waitUntil: 'networkidle0', timeout: 60000 });
+  await page.goto(`${baseUrl}/play/?debugDrive=1`, { waitUntil: 'domcontentloaded', timeout: 60000 });
   await waitForReady(page);
   const loadMs = Date.now() - startedAt;
   await screenshot(page, '01-title.png');
@@ -1256,7 +1256,7 @@ async function captureMobile(browser) {
     localStorage.removeItem('portfolio-drive-landscape-quality');
     localStorage.setItem('portfolio-drive-muted', '1');
   });
-  await page.goto(`${baseUrl}/play/?debugDrive=1`, { waitUntil: 'networkidle0', timeout: 60000 });
+  await page.goto(`${baseUrl}/play/?debugDrive=1`, { waitUntil: 'domcontentloaded', timeout: 60000 });
   await waitForReady(page);
   await page.evaluate(() => window.__portfolioDrive.start());
   await delay(700);
@@ -1377,7 +1377,9 @@ function assertVerification(result) {
   }
   if (result.calls > 560) failures.push(`desktop draw-call budget exceeded: ${result.calls}`);
   if (result.triangles > 280000) failures.push(`desktop triangle budget exceeded: ${result.triangles}`);
+  if (result.loadMs > 15000) failures.push(`app-ready load time too high: ${result.loadMs}ms`);
   if (result.p95FrameMs > 20) failures.push(`p95 frame time too high: ${result.p95FrameMs}ms`);
+  if (result.fps < 60) failures.push(`desktop FPS too low: ${result.fps}`);
   const polishPropsBytes = result.glbAssets?.['play/game-assets/polish-props.glb'] || 0;
   if (polishPropsBytes > 2500000) failures.push(`polish props GLB budget exceeded: ${polishPropsBytes}`);
   if (result.gameplay.movementMeters < 5) failures.push(`drive movement too small: ${result.gameplay.movementMeters}m`);

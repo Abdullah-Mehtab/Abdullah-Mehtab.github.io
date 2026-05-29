@@ -11,8 +11,10 @@ export async function loadEnvironmentAssets() {
   const packs = new Map();
   const templates = new Map();
 
-  await loadPack(loader, 'medievalProps', medievalPropsUrl, packs, templates);
-  await loadPack(loader, 'polishProps', polishPropsUrl, packs, templates);
+  await Promise.all([
+    loadPack(loader, 'medievalProps', medievalPropsUrl, packs, templates),
+    loadPack(loader, 'polishProps', polishPropsUrl, packs, templates)
+  ]);
 
   return {
     has(name) {
