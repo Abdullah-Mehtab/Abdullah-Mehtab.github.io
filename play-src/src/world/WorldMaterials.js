@@ -4,9 +4,51 @@ import * as THREE from 'three';
 
 export const WATER_Y = -0.55;
 export const QUALITY_PROFILES = {
-  low: { trees: 42, grassTufts: 220, leaves: 42, clouds: 5, props: 18, fireflies: 14, shadows: false, water: 'low', post: false, pixelRatio: 1 },
-  medium: { trees: 92, grassTufts: 620, leaves: 96, clouds: 9, props: 34, fireflies: 32, shadows: false, water: 'medium', post: false, pixelRatio: 1.15 },
-  high: { trees: 132, grassTufts: 900, leaves: 150, clouds: 12, props: 48, fireflies: 56, shadows: true, water: 'high', post: true, pixelRatio: 1.35 }
+  low: {
+    trees: 42,
+    grassTufts: 220,
+    leaves: 42,
+    clouds: 5,
+    props: 18,
+    fireflies: 14,
+    lifeSignals: { zonePulses: 8, windBanners: 4, whisperBeacons: 4, terminalPulses: 2 },
+    windCadence: 6,
+    particleCadence: 3,
+    shadows: false,
+    water: 'low',
+    post: false,
+    pixelRatio: 1
+  },
+  medium: {
+    trees: 92,
+    grassTufts: 620,
+    leaves: 96,
+    clouds: 9,
+    props: 34,
+    fireflies: 32,
+    lifeSignals: { zonePulses: 16, windBanners: 8, whisperBeacons: 8, terminalPulses: 5 },
+    windCadence: 3,
+    particleCadence: 2,
+    shadows: false,
+    water: 'medium',
+    post: false,
+    pixelRatio: 1.15
+  },
+  high: {
+    trees: 132,
+    grassTufts: 900,
+    leaves: 150,
+    clouds: 12,
+    props: 48,
+    fireflies: 56,
+    lifeSignals: { zonePulses: 16, windBanners: 10, whisperBeacons: 10, terminalPulses: 6 },
+    windCadence: 2,
+    particleCadence: 1,
+    shadows: true,
+    water: 'high',
+    post: true,
+    pixelRatio: 1.35
+  }
 };
 export const QUALITY_ORDER = ['low', 'medium', 'high'];
 

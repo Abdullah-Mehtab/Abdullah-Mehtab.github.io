@@ -18,7 +18,8 @@ export class Foliage {
     this.fireflies = null;
     this.dummy = new THREE.Object3D();
     this.windFrame = 0;
-    this.windSamples = { grassUpdates: 0, treeUpdates: 0 };
+    this.particleFrame = 0;
+    this.windSamples = { grassUpdates: 0, treeUpdates: 0, windCadence: 2, particleCadence: 1 };
   }
 
   build() {
@@ -259,15 +260,17 @@ export class Foliage {
   }
 
   update(dt, elapsed) {
+    const profile = this.world.getQualityProfile();
     this.updateWind(elapsed);
-    this.updateLeaves(dt);
+    this.particleFrame = (this.particleFrame + 1) % (profile.particleCadence || 1);
+    if (this.particleFrame === 0) this.updateLeaves(dt * (profile.particleCadence || 1));
     if (this.fireflies) {
+      if (this.particleFrame !== 0) return;
       const pos = this.fireflies.geometry.attributes.position;
-      const profile = this.world.getQualityProfile();
       const limit = Math.min(profile.fireflies, pos.count);
       for (let i = 0; i < limit; i += 1) {
         const phase = this.fireflies.phases[i];
-        pos.setY(i, pos.getY(i) + Math.sin(elapsed * 1.4 + phase) * 0.002);
+        pos.setY(i, pos.getY(i) + Math.sin(elapsed * 1.4 + phase) * 0.002 * (profile.particleCadence || 1));
       }
       pos.needsUpdate = true;
       this.fireflies.mesh.material.opacity = 0.5 + Math.sin(elapsed * 1.6) * 0.18;
@@ -275,9 +278,12 @@ export class Foliage {
   }
 
   updateWind(elapsed) {
-    this.windFrame = (this.windFrame + 1) % 2;
-    if (this.windFrame !== 0) return;
     const profile = this.world.getQualityProfile();
+    const cadence = profile.windCadence || 2;
+    this.windSamples.windCadence = cadence;
+    this.windSamples.particleCadence = profile.particleCadence || 1;
+    this.windFrame = (this.windFrame + 1) % cadence;
+    if (this.windFrame !== 0) return;
     this.writeTreeInstances(profile.trees, elapsed);
     this.writeGrassInstances(profile.grassTufts, elapsed);
     this.windSamples.treeUpdates += 1;

@@ -443,6 +443,7 @@ async function sampleWorldLife(page) {
     const delay = (ms) => new Promise((resolveDelay) => setTimeout(resolveDelay, ms));
     const game = window.__portfolioDrive.game;
     const scene = game.scene;
+    const lifeStats = () => game.world.setPieces?.getLifeStats?.() || { ...(game.world.setPieces?.lifeStats || {}) };
     const grass = scene.getObjectByName('FOLIAGE_grass_instances');
     const banner = scene.getObjectByName('Life_WindBanner_0');
     const pulse = scene.getObjectByName('Life_ZonePulse_landing');
@@ -452,7 +453,7 @@ async function sampleWorldLife(page) {
       bannerRotation: banner?.rotation?.z ?? null,
       pulseRotation: pulse?.rotation?.z ?? null,
       beaconY: beacon?.position?.y ?? null,
-      motionSamples: game.world.setPieces?.lifeStats?.motionSamples || 0
+      motionSamples: lifeStats().motionSamples || 0
     };
     await delay(720);
     const after = {
@@ -460,11 +461,34 @@ async function sampleWorldLife(page) {
       bannerRotation: banner?.rotation?.z ?? null,
       pulseRotation: pulse?.rotation?.z ?? null,
       beaconY: beacon?.position?.y ?? null,
-      motionSamples: game.world.setPieces?.lifeStats?.motionSamples || 0
+      motionSamples: lifeStats().motionSamples || 0
     };
+
+    const mediumStats = lifeStats();
+    const mediumWind = { ...(game.world.foliage?.windSamples || {}) };
+    game.world.setLandscapeQuality('low');
+    await delay(360);
+    const lowStats = lifeStats();
+    const lowWind = { ...(game.world.foliage?.windSamples || {}) };
+    game.world.setLandscapeQuality('medium');
+    await delay(360);
+    const restoredStats = lifeStats();
+    const restoredWind = { ...(game.world.foliage?.windSamples || {}) };
+
     return {
-      counts: { ...(game.world.setPieces?.lifeStats || {}) },
-      foliageWind: { ...(game.world.foliage?.windSamples || {}) },
+      counts: mediumStats,
+      foliageWind: restoredWind,
+      quality: {
+        medium: mediumStats,
+        low: lowStats,
+        restored: restoredStats,
+        mediumWind,
+        lowWind,
+        restoredWind,
+        lowReduced: totalVisible(lowStats) < totalVisible(mediumStats),
+        restoredMatchesMedium: totalVisible(restoredStats) === totalVisible(mediumStats),
+        lowWindReduced: (lowWind.windCadence || 0) > (mediumWind.windCadence || 0)
+      },
       grassAnimated: matrixDelta(before.grass, after.grass) > 0.0001,
       bannerAnimated: numericDelta(before.bannerRotation, after.bannerRotation) > 0.005,
       pulseAnimated: numericDelta(before.pulseRotation, after.pulseRotation) > 0.005,
@@ -487,6 +511,15 @@ async function sampleWorldLife(page) {
     function numericDelta(a, b) {
       if (!Number.isFinite(a) || !Number.isFinite(b)) return 0;
       return Math.abs(a - b);
+    }
+
+    function totalVisible(stats) {
+      return (
+        (stats.visibleZonePulses || 0) +
+        (stats.visibleWindBanners || 0) +
+        (stats.visibleWhisperBeacons || 0) +
+        (stats.visibleTerminalPulses || 0)
+      );
     }
   });
 }
@@ -588,7 +621,7 @@ async function captureMobile(browser) {
   wirePageDiagnostics(page);
   await page.setViewport({ width: 390, height: 844, isMobile: true, deviceScaleFactor: 2 });
   await page.evaluateOnNewDocument(() => {
-    localStorage.setItem('portfolio-drive-landscape-quality', 'medium');
+    localStorage.setItem('portfolio-drive-landscape-quality', 'low');
     localStorage.setItem('portfolio-drive-muted', '1');
   });
   await page.goto(`${baseUrl}/play/?debugDrive=1`, { waitUntil: 'networkidle0', timeout: 60000 });
@@ -596,9 +629,19 @@ async function captureMobile(browser) {
   await page.evaluate(() => window.__portfolioDrive.start());
   await delay(700);
   await page.screenshot({ path: join(outputDir, 'mobile-start.png'), fullPage: true });
-  const sample = await page.evaluate(() => window.__portfolioDrive.sampleCanvas());
+  const sample = await page.evaluate(() => {
+    const game = window.__portfolioDrive.game;
+    const render = game.renderer.info.render;
+    return {
+      canvasSample: window.__portfolioDrive.sampleCanvas(),
+      quality: game.world.landscapeQuality,
+      lifeStats: game.world.setPieces?.getLifeStats?.() || { ...(game.world.setPieces?.lifeStats || {}) },
+      calls: render.calls,
+      triangles: render.triangles
+    };
+  });
   await page.close();
-  return { ready: true, canvasSample: sample };
+  return { ready: true, ...sample };
 }
 
 function getGlbAssetSizes() {
@@ -629,6 +672,12 @@ function assertVerification(result) {
   if ((result.worldLife?.counts?.windBanners || 0) < 8) failures.push('world life probe failed: wind banners');
   if ((result.worldLife?.counts?.whisperBeacons || 0) < 8) failures.push('world life probe failed: whisper beacons');
   if ((result.worldLife?.counts?.terminalPulses || 0) < 5) failures.push('world life probe failed: terminal pulses');
+  if (!result.worldLife?.quality?.lowReduced) failures.push('quality probe failed: low world-life tier did not reduce visible signals');
+  if (!result.worldLife?.quality?.restoredMatchesMedium) failures.push('quality probe failed: medium world-life tier did not restore');
+  if (!result.worldLife?.quality?.lowWindReduced) failures.push('quality probe failed: low foliage wind cadence did not reduce work');
+  if ((result.worldLife?.quality?.low?.visibleWindBanners || 0) > 4) failures.push('quality probe failed: low wind banners exceeded budget');
+  if ((result.worldLife?.quality?.low?.visibleWhisperBeacons || 0) > 4) failures.push('quality probe failed: low whisper beacons exceeded budget');
+  if ((result.worldLife?.quality?.low?.visibleTerminalPulses || 0) > 2) failures.push('quality probe failed: low terminal pulses exceeded budget');
   for (const key of ['grassAnimated', 'bannerAnimated', 'pulseAnimated', 'beaconAnimated', 'motionAdvanced']) {
     if (!result.worldLife?.[key]) failures.push(`world life probe failed: ${key}`);
   }
@@ -651,6 +700,10 @@ function assertVerification(result) {
   const missingAuthored = (result.authoredDistrictAssets || []).filter((asset) => !asset.template || !asset.placed);
   if (missingAuthored.length) failures.push(`authored district assets missing: ${missingAuthored.map((asset) => asset.name).join(', ')}`);
   if (!result.mobile.ready || result.mobile.canvasSample <= 0) failures.push('mobile canvas did not render');
+  if (result.mobile.quality !== 'low') failures.push(`mobile quality tier mismatch: ${result.mobile.quality}`);
+  if ((result.mobile.lifeStats?.visibleTotal || 0) >= (result.worldLife?.quality?.medium?.visibleTotal || Infinity)) {
+    failures.push('mobile quality probe failed: visible life signals were not reduced');
+  }
   if (failures.length) {
     throw new Error(`Play verification failed: ${failures.join('; ')}`);
   }

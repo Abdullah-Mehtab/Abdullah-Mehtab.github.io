@@ -12,7 +12,24 @@ export class SetPieces {
     this.animated = [];
     this.securityScanObjects = [];
     this.securityScanMaterials = [];
-    this.lifeStats = { zonePulses: 0, windBanners: 0, whisperBeacons: 0, terminalPulses: 0, motionSamples: 0 };
+    this.lifeItems = {
+      zonePulses: [],
+      windBanners: [],
+      whisperBeacons: [],
+      terminalPulses: []
+    };
+    this.lifeStats = {
+      zonePulses: 0,
+      windBanners: 0,
+      whisperBeacons: 0,
+      terminalPulses: 0,
+      visibleZonePulses: 0,
+      visibleWindBanners: 0,
+      visibleWhisperBeacons: 0,
+      visibleTerminalPulses: 0,
+      visibleTotal: 0,
+      motionSamples: 0
+    };
   }
 
   build() {
@@ -22,10 +39,12 @@ export class SetPieces {
     this.createDistrictDressing();
     this.createRouteGuidance();
     this.createLivingSignals();
+    this.applyQuality();
   }
 
   update(dt, elapsed) {
     for (const item of this.animated) {
+      if (item.active === false) continue;
       if (item.kind === 'ring') {
         item.mesh.rotation.z += dt * item.speed;
         item.mesh.material.opacity = item.baseOpacity + Math.sin(elapsed * item.pulse + item.phase) * item.opacityRange;
@@ -65,6 +84,38 @@ export class SetPieces {
         light.scale.setScalar(1 + activePulse * 0.24);
       }
     }
+  }
+
+  applyQuality() {
+    const limits = this.world.getQualityProfile().lifeSignals || {};
+    this.applyLifeLimit('zonePulses', limits.zonePulses);
+    this.applyLifeLimit('windBanners', limits.windBanners);
+    this.applyLifeLimit('whisperBeacons', limits.whisperBeacons);
+    this.applyLifeLimit('terminalPulses', limits.terminalPulses);
+    this.lifeStats.visibleTotal =
+      this.lifeStats.visibleZonePulses +
+      this.lifeStats.visibleWindBanners +
+      this.lifeStats.visibleWhisperBeacons +
+      this.lifeStats.visibleTerminalPulses;
+  }
+
+  applyLifeLimit(category, limit) {
+    const items = this.lifeItems[category];
+    const visibleLimit = Math.min(items.length, Number.isFinite(limit) ? limit : items.length);
+    let visible = 0;
+    for (let index = 0; index < items.length; index += 1) {
+      const item = items[index];
+      const active = index < visibleLimit;
+      item.entry.active = active;
+      item.root.visible = active;
+      if (active) visible += 1;
+    }
+    const statName = `visible${category[0].toUpperCase()}${category.slice(1)}`;
+    this.lifeStats[statName] = visible;
+  }
+
+  getLifeStats() {
+    return { ...this.lifeStats };
   }
 
   createStartDiorama() {
@@ -377,7 +428,7 @@ export class SetPieces {
       pulse.rotation.z = Math.PI / 4;
       pulse.position.set(zone.position[0], 0.245, zone.position[2]);
       group.add(pulse);
-      this.animated.push({
+      const entry = {
         kind: 'pulse',
         mesh: pulse,
         baseScale: 1,
@@ -387,7 +438,9 @@ export class SetPieces {
         rotationSpeed: 0.18,
         baseOpacity: 0.12,
         opacityRange: 0.06
-      });
+      };
+      this.animated.push(entry);
+      this.lifeItems.zonePulses.push({ root: pulse, entry });
       this.lifeStats.zonePulses += 1;
     }
 
@@ -556,14 +609,16 @@ export class SetPieces {
     banner.position.set(x, 0.15, z);
     banner.rotation.y = rotation;
     group.add(banner);
-    this.animated.push({
+    const entry = {
       kind: 'banner',
       mesh: cloth,
       baseScale: 1,
       range: 0.16,
       speed: 1.1 + index * 0.07,
       phase: index * 0.61
-    });
+    };
+    this.animated.push(entry);
+    this.lifeItems.windBanners.push({ root: banner, entry });
     this.lifeStats.windBanners += 1;
   }
 
@@ -573,7 +628,7 @@ export class SetPieces {
     beacon.name = `Life_WhisperBeacon_${index}`;
     beacon.position.set(x, 1.45 + (index % 3) * 0.12, z);
     group.add(beacon);
-    this.animated.push({
+    const entry = {
       kind: 'beacon',
       mesh: beacon,
       baseY: beacon.position.y,
@@ -583,7 +638,9 @@ export class SetPieces {
       rotationSpeed: 0.7 + index * 0.03,
       baseOpacity: 0.48,
       opacityRange: 0.18
-    });
+    };
+    this.animated.push(entry);
+    this.lifeItems.whisperBeacons.push({ root: beacon, entry });
     this.lifeStats.whisperBeacons += 1;
   }
 
@@ -594,7 +651,7 @@ export class SetPieces {
     pulse.position.set(x, 1.15 + (index % 2) * 0.18, z);
     pulse.rotation.x = -Math.PI / 2;
     group.add(pulse);
-    this.animated.push({
+    const entry = {
       kind: 'pulse',
       mesh: pulse,
       baseScale: 1,
@@ -604,7 +661,9 @@ export class SetPieces {
       rotationSpeed: 0.65,
       baseOpacity: 0.18,
       opacityRange: 0.14
-    });
+    };
+    this.animated.push(entry);
+    this.lifeItems.terminalPulses.push({ root: pulse, entry });
     this.lifeStats.terminalPulses += 1;
   }
 
