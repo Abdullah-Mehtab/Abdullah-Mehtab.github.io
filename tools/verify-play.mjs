@@ -5,7 +5,7 @@ import { existsSync, readFile, statSync } from 'node:fs';
 import { mkdir, writeFile } from 'node:fs/promises';
 import { extname, join, resolve } from 'node:path';
 import puppeteer from 'puppeteer-core';
-import { ISLAND_RADIUS, worldZones } from '../play-src/src/world/worldData.js';
+import { ISLAND_RADIUS, roadPaths, worldZones } from '../play-src/src/world/worldData.js';
 
 const repoRoot = resolve(import.meta.dirname, '..');
 const chromePath = findChrome();
@@ -14,6 +14,7 @@ let serverInstance = null;
 const baseUrl = process.env.BASE_URL || await startStaticServer();
 const consoleMessages = [];
 const pageErrors = [];
+const routeReplaySegments = getRouteReplaySegments();
 const authoredDistrictAssets = [
   'EnvPolishProjectForge',
   'EnvPolishCvVault',
@@ -59,6 +60,7 @@ try {
   const water = await exerciseWater(page, ISLAND_RADIUS);
   await screenshot(page, '04-water-interaction.png');
   const surfaces = await sampleSurfaces(page, ISLAND_RADIUS);
+  const routeReplay = await exerciseRouteReplay(page, routeReplaySegments);
 
   for (const zone of worldZones) {
     await page.evaluate((zoneId) => window.__portfolioDrive.respawn(zoneId), zone.id);
@@ -80,7 +82,7 @@ try {
   await delay(300);
   await screenshot(page, 'debug-colliders.png');
 
-  const metrics = await collectRuntimeMetrics(page, loadMs, gameplay, water, surfaces);
+  const metrics = await collectRuntimeMetrics(page, loadMs, gameplay, water, surfaces, routeReplay);
   const mobile = await captureMobile(browser);
   const result = {
     baseUrl,
@@ -344,7 +346,98 @@ async function sampleSurfaces(page, islandRadius) {
   }, islandRadius);
 }
 
-async function collectRuntimeMetrics(page, loadMs, gameplay, water, surfaces) {
+async function exerciseRouteReplay(page, segments) {
+  return page.evaluate(async (replaySegments) => {
+    const delay = (ms) => new Promise((resolveDelay) => setTimeout(resolveDelay, ms));
+    const game = window.__portfolioDrive.game;
+    const input = game.input;
+    const failures = [];
+    const samples = [];
+
+    const clearInput = () => {
+      input.actions.forward = false;
+      input.actions.backward = false;
+      input.actions.left = false;
+      input.actions.right = false;
+      input.actions.boost = false;
+      input.actions.handbrake = false;
+      input.actions.brake = false;
+      input.actions.jump = false;
+    };
+
+    const waitForGrounded = async () => {
+      for (let i = 0; i < 48; i += 1) {
+        if ((game.vehicle.controller?.groundedWheels || 0) >= 2) return true;
+        await delay(35);
+      }
+      return false;
+    };
+
+    for (const segment of replaySegments) {
+      clearInput();
+      const offset = Math.min(12, Math.max(4, segment.length * 0.28));
+      const heading = segment.rotation;
+      const start = {
+        x: segment.cx - Math.sin(heading) * offset,
+        y: 1.12,
+        z: segment.cz - Math.cos(heading) * offset
+      };
+      game.vehicle.respawn(start, heading);
+      await delay(90);
+      const grounded = await waitForGrounded();
+      const before = game.vehicle.position.clone();
+      const startSurface = game.world.getSurfaceInfo(before).id;
+      game.vehicle.body.setLinvel({
+        x: Math.sin(heading) * 13,
+        y: 0,
+        z: Math.cos(heading) * 13
+      }, true);
+
+      let distance = 0;
+      let minY = before.y;
+      let groundedFrames = 0;
+      let badSurface = null;
+      for (let i = 0; i < 11; i += 1) {
+        await delay(55);
+        const current = game.vehicle.position;
+        distance = Math.max(distance, before.distanceTo(current));
+        minY = Math.min(minY, current.y);
+        if ((game.vehicle.controller?.groundedWheels || 0) >= 2) groundedFrames += 1;
+        const surface = game.world.getSurfaceInfo(current).id;
+        if (surface === 'water') badSurface = surface;
+      }
+      const final = game.vehicle.position.clone();
+      const finalSurface = game.world.getSurfaceInfo(final).id;
+      const pass = grounded && startSurface === 'road' && !badSurface && distance > 2.8 && minY > -0.3 && groundedFrames >= 2;
+      const sample = {
+        id: segment.id,
+        index: segment.index,
+        startSurface,
+        finalSurface,
+        distance: Number(distance.toFixed(2)),
+        minY: Number(minY.toFixed(2)),
+        grounded,
+        groundedFrames,
+        pass
+      };
+      samples.push(sample);
+      if (!pass) failures.push(sample);
+    }
+
+    clearInput();
+    window.__portfolioDrive.respawn('landing');
+    return {
+      total: replaySegments.length,
+      passed: samples.filter((sample) => sample.pass).length,
+      failed: failures.length,
+      minDistance: Number(Math.min(...samples.map((sample) => sample.distance)).toFixed(2)),
+      minY: Number(Math.min(...samples.map((sample) => sample.minY)).toFixed(2)),
+      failures
+    };
+  }, segments);
+}
+
+async function collectRuntimeMetrics(page, loadMs, gameplay, water, surfaces, routeReplay) {
   const runtime = await page.evaluate(async (expectedAssets) => {
     const frameDeltas = [];
     await new Promise((resolveFrames) => {
@@ -383,6 +476,7 @@ async function collectRuntimeMetrics(page, loadMs, gameplay, water, surfaces) {
       })),
       colliderCount: window.__portfolioDrive.colliders().length,
       debugOverlayObjects: game.debugColliderOverlay?.children?.length || 0,
+      colliderAudit: auditColliders(window.__portfolioDrive.colliders(), game.scene),
       zoneCount: game.world.zones.length,
       audio: {
         zoneStingersPlayed: game.audio?.zoneStingersPlayed || 0,
@@ -402,12 +496,34 @@ async function collectRuntimeMetrics(page, loadMs, gameplay, water, surfaces) {
       });
       return { objects, meshes, lights };
     }
+
+    function auditColliders(colliders, scene) {
+      const failures = [];
+      const summary = colliders.map((collider) => {
+        const genericName = /^Fixed(Box|Cylinder|Ball|Trimesh)$/.test(collider.name || '');
+        const visualName = collider.visualName || null;
+        const visualExists = collider.sensor || (visualName && Boolean(scene.getObjectByName(visualName)));
+        const pass = !genericName && Boolean(visualExists);
+        const item = {
+          name: collider.name || null,
+          type: collider.type,
+          sensor: Boolean(collider.sensor),
+          visualName,
+          visualExists: Boolean(visualExists),
+          pass
+        };
+        if (!pass) failures.push(item);
+        return item;
+      });
+      return { total: summary.length, failures, summary };
+    }
   }, authoredDistrictAssets);
   return {
     loadMs,
     gameplay,
     water,
     surfaces,
+    routeReplay,
     ...runtime
   };
 }
@@ -451,6 +567,9 @@ function assertVerification(result) {
   if (!result.ready || result.canvasSample <= 0) failures.push('canvas did not render');
   if (result.zoneCount !== worldZones.length) failures.push(`zone count mismatch: ${result.zoneCount}/${worldZones.length}`);
   if (result.colliderCount <= 0 || result.debugOverlayObjects <= 0) failures.push('collider debug overlay did not render');
+  if (result.colliderAudit?.failures?.length) failures.push(`collider audit failed: ${result.colliderAudit.failures.map((item) => item.name).join(', ')}`);
+  if (result.routeReplay?.total !== routeReplaySegments.length) failures.push(`route replay count mismatch: ${result.routeReplay?.total}/${routeReplaySegments.length}`);
+  if (result.routeReplay?.failed) failures.push(`route replay failed: ${result.routeReplay.failed}/${result.routeReplay.total}`);
   if (result.p95FrameMs > 20) failures.push(`p95 frame time too high: ${result.p95FrameMs}ms`);
   if (result.gameplay.movementMeters < 5) failures.push(`drive movement too small: ${result.gameplay.movementMeters}m`);
   for (const key of ['keyboardHandbrake', 'boostSeen', 'jumpSeen', 'landingSeen', 'impactAudioSeen', 'burnoutSeen', 'wheelieSeen', 'handbrakeSeen']) {
@@ -473,6 +592,31 @@ function assertVerification(result) {
   if (failures.length) {
     throw new Error(`Play verification failed: ${failures.join('; ')}`);
   }
+}
+
+function getRouteReplaySegments() {
+  const segments = [];
+  for (const path of roadPaths) {
+    const limit = path.closed ? path.points.length : path.points.length - 1;
+    for (let index = 0; index < limit; index += 1) {
+      const a = path.points[index];
+      const b = path.points[(index + 1) % path.points.length];
+      const dx = b[0] - a[0];
+      const dz = b[1] - a[1];
+      const length = Math.hypot(dx, dz);
+      if (length < 6) continue;
+      segments.push({
+        id: path.id,
+        index,
+        cx: (a[0] + b[0]) / 2,
+        cz: (a[1] + b[1]) / 2,
+        width: path.width,
+        length,
+        rotation: Math.atan2(dx, dz)
+      });
+    }
+  }
+  return segments;
 }
 
 function findChrome() {

@@ -71,7 +71,12 @@ export class Zones {
         [zone.position.x, collider.height / 2, zone.position.z],
         collider.height / 2,
         collider.radius,
-        { friction: 0.85, restitution: 0.02 }
+        {
+          debugName: `ZONE_${zone.id}_protected_landmark_collider`,
+          visualName: `VIS_Landmark_${zone.id}`,
+          friction: 0.85,
+          restitution: 0.02
+        }
       );
       return;
     }
@@ -79,7 +84,13 @@ export class Zones {
     this.world.physics.createFixedBox(
       [zone.position.x, collider.size[1] / 2, zone.position.z],
       collider.size,
-      { rotation: [0, zone.rotation || 0, 0], friction: 0.85, restitution: 0.02 }
+      {
+        debugName: `ZONE_${zone.id}_protected_landmark_collider`,
+        visualName: `VIS_Landmark_${zone.id}`,
+        rotation: [0, zone.rotation || 0, 0],
+        friction: 0.85,
+        restitution: 0.02
+      }
     );
   }
 

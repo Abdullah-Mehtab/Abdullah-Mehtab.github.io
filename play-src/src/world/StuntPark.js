@@ -90,6 +90,8 @@ export class StuntPark {
       this.world.scene.add(mesh);
       this.world.ramps.push({ id: ramp.id, position: new THREE.Vector3(ramp.x, 0, ramp.z), radius: 11, triggered: false });
       this.world.physics.createFixedTrimesh([ramp.x, ramp.y, ramp.z], rampShape.vertices, rampShape.indices, {
+        debugName: `STUNT_${ramp.id}_ramp_collider`,
+        visualName: `STUNT_${ramp.id}`,
         rotation: [0, ramp.rot, 0],
         friction: 0.92,
         restitution: 0.02
