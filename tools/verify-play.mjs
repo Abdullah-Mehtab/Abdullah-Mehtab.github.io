@@ -27,6 +27,11 @@ const authoredDistrictAssets = [
   'EnvPolishFarmIrrigator',
   'EnvPolishHarborSignal'
 ];
+const authoredStuntAssets = [
+  'EnvPolishStuntCheckpoint',
+  'EnvPolishStuntScoreTower',
+  'EnvPolishStuntArrowFence'
+];
 
 await mkdir(outputDir, { recursive: true });
 
@@ -822,10 +827,15 @@ async function collectRuntimeMetrics(page, loadMs, gameplay, water, surfaces, su
       triangles: info.triangles,
       sceneObjects: countSceneObjects(game.scene),
       renderProfile: profileScene(game.scene),
-      authoredDistrictAssets: expectedAssets.map((name) => ({
+      authoredDistrictAssets: expectedAssets.district.map((name) => ({
         name,
         template: game.environmentAssets?.has?.(name) === true,
         placed: Boolean(game.scene.getObjectByName(`SetPiece_${name}`))
+      })),
+      authoredStuntAssets: expectedAssets.stunt.map((name) => ({
+        name,
+        template: game.environmentAssets?.has?.(name) === true,
+        placed: Boolean(game.scene.getObjectByName(`STUNT_${name}`))
       })),
       roadGuidance: {
         chevrons: game.scene.getObjectByName('ROAD_Guidance_Chevrons')?.count || 0,
@@ -838,6 +848,7 @@ async function collectRuntimeMetrics(page, loadMs, gameplay, water, surfaces, su
       },
       surfaceDetails: game.world.terrain?.surfaceDetailStats || {},
       approachDressing: game.world.setPieces?.getApproachStats?.() || {},
+      stuntPark: game.world.stuntPark?.getStats?.() || {},
       waterStats: game.world.water?.getStats?.() || {},
       protectedLandmarks,
       vehicleFx: game.vehicle.getEffectStats?.() || {},
@@ -973,7 +984,7 @@ async function collectRuntimeMetrics(page, loadMs, gameplay, water, surfaces, su
         restored: restored.education || null
       };
     }
-  }, authoredDistrictAssets);
+  }, { district: authoredDistrictAssets, stunt: authoredStuntAssets });
   return {
     loadMs,
     gameplay,
@@ -1135,6 +1146,15 @@ function assertVerification(result) {
   if ((result.approachDressing?.lamps || 0) < 12) failures.push(`approach dressing probe failed: lamps=${result.approachDressing?.lamps || 0}`);
   if ((result.approachDressing?.authoredAssets || 0) < 20) failures.push(`approach dressing probe failed: authoredAssets=${result.approachDressing?.authoredAssets || 0}`);
   if ((result.approachDressing?.roadMarks || 0) < 36) failures.push(`approach dressing probe failed: roadMarks=${result.approachDressing?.roadMarks || 0}`);
+  if ((result.stuntPark?.ramps || 0) < 3) failures.push(`stunt park probe failed: ramps=${result.stuntPark?.ramps || 0}`);
+  if ((result.stuntPark?.boostPads || 0) < 3) failures.push(`stunt park probe failed: boostPads=${result.stuntPark?.boostPads || 0}`);
+  if ((result.stuntPark?.cones || 0) < 12) failures.push(`stunt park probe failed: cones=${result.stuntPark?.cones || 0}`);
+  if ((result.stuntPark?.tireStacks || 0) < 5) failures.push(`stunt park probe failed: tireStacks=${result.stuntPark?.tireStacks || 0}`);
+  if ((result.stuntPark?.landingMarkers || 0) < 6) failures.push(`stunt park probe failed: landingMarkers=${result.stuntPark?.landingMarkers || 0}`);
+  if ((result.stuntPark?.authoredAssets || 0) < 7) failures.push(`stunt park probe failed: authoredAssets=${result.stuntPark?.authoredAssets || 0}`);
+  if ((result.stuntPark?.laneChevrons || 0) < 18) failures.push(`stunt park probe failed: laneChevrons=${result.stuntPark?.laneChevrons || 0}`);
+  if ((result.stuntPark?.trackScuffs || 0) < 30) failures.push(`stunt park probe failed: trackScuffs=${result.stuntPark?.trackScuffs || 0}`);
+  if ((result.stuntPark?.gates || 0) < 2) failures.push(`stunt park probe failed: gates=${result.stuntPark?.gates || 0}`);
   const fccFar = result.protectedLandmarks?.far;
   const fccNear = result.protectedLandmarks?.near;
   const fccRestored = result.protectedLandmarks?.restored;
@@ -1151,6 +1171,8 @@ function assertVerification(result) {
   if ((fccFar?.silhouetteTriangles || Infinity) > 2000) failures.push(`protected FCC silhouette too heavy: triangles=${fccFar?.silhouetteTriangles}`);
   const missingAuthored = (result.authoredDistrictAssets || []).filter((asset) => !asset.template || !asset.placed);
   if (missingAuthored.length) failures.push(`authored district assets missing: ${missingAuthored.map((asset) => asset.name).join(', ')}`);
+  const missingStunt = (result.authoredStuntAssets || []).filter((asset) => !asset.template || !asset.placed);
+  if (missingStunt.length) failures.push(`authored stunt assets missing: ${missingStunt.map((asset) => asset.name).join(', ')}`);
   if (!result.mobile.ready || result.mobile.canvasSample <= 0) failures.push('mobile canvas did not render');
   if (result.mobile.quality !== 'low') failures.push(`mobile quality tier mismatch: ${result.mobile.quality}`);
   if (result.mobile.savedQuality !== null) failures.push(`mobile default quality should not write saved preference: ${result.mobile.savedQuality}`);
