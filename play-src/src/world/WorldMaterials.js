@@ -91,6 +91,16 @@ export function createWorldMaterials() {
     roadEdge: new THREE.MeshStandardMaterial({ color: 0x343a38, roughness: 0.94, metalness: 0.02 }),
     roadShoulder: new THREE.MeshStandardMaterial({ color: 0x6f745f, roughness: 0.96, metalness: 0.0 }),
     roadCurb: new THREE.MeshStandardMaterial({ color: 0xd7c99f, roughness: 0.86, metalness: 0.02 }),
+    roadVerge: new THREE.MeshBasicMaterial({
+      color: 0xffffff,
+      transparent: true,
+      opacity: 0.24,
+      depthWrite: false,
+      side: THREE.DoubleSide,
+      polygonOffset: true,
+      polygonOffsetFactor: -18,
+      polygonOffsetUnits: -18
+    }),
     roadLine: new THREE.MeshBasicMaterial({ color: 0xf4ddb1, transparent: true, opacity: 0.58 }),
     roadLineBright: new THREE.MeshBasicMaterial({ color: 0x9df7ff, transparent: true, opacity: 0.58 }),
     surfaceSeam: new THREE.MeshBasicMaterial({

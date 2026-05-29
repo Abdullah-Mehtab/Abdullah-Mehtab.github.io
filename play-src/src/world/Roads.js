@@ -38,6 +38,7 @@ export class Roads {
 
   build() {
     this.world.scene.add(this.roadGroup);
+    this.roadGroup.userData.edgeFeatherCount = 0;
     for (const path of roadPaths) {
       this.addPath(path);
     }
@@ -95,6 +96,7 @@ export class Roads {
         this.roadGroup.add(curb);
       }
     }
+    this.addEdgeFeathers(path, style, width, layer);
 
     const lineMaterial = this.cachedLineMaterial(style.line);
     const curve = makePathCurve(path.points, path.closed);
@@ -111,6 +113,23 @@ export class Roads {
     }
 
     // Roads stay visual so the car always drives on one continuous terrain collider.
+  }
+
+  addEdgeFeathers(path, style, width, layer) {
+    const featherWidth = path.hierarchy === 'bridge' ? 0.82 : path.hierarchy === 'dirt' ? 1.72 : 1.18;
+    const y = 0.098 + layer * 0.006;
+    const material = this.vergeMaterial(path);
+    for (const side of [-1, 1]) {
+      const offset = (width / 2 + style.shoulder + featherWidth * 0.18) * side;
+      const feather = new THREE.Mesh(
+        createPathRibbonGeometry(path.points, featherWidth, path.closed, y, 9, offset),
+        material
+      );
+      feather.name = `ROAD_${path.id}_verge_${side > 0 ? 'right' : 'left'}`;
+      feather.renderOrder = 5 + layer;
+      this.roadGroup.add(feather);
+      this.roadGroup.userData.edgeFeatherCount += 1;
+    }
   }
 
   addJunctionPatches() {
@@ -202,6 +221,18 @@ export class Roads {
     if (this.materialCache.has(key)) return this.materialCache.get(key);
     const material = this.world.materials.roadLine.clone();
     material.color.setHex(color);
+    this.materialCache.set(key, material);
+    return material;
+  }
+
+  vergeMaterial(path) {
+    const color = roadVergeColor(path);
+    const opacity = path.hierarchy === 'security' ? 0.2 : path.hierarchy === 'dirt' ? 0.15 : 0.16;
+    const key = `verge:${color}:${opacity}`;
+    if (this.materialCache.has(key)) return this.materialCache.get(key);
+    const material = this.world.materials.roadVerge.clone();
+    material.color.setHex(color);
+    material.opacity = opacity;
     this.materialCache.set(key, material);
     return material;
   }
@@ -341,6 +372,15 @@ function roadMarkerColor(path) {
   if (path.hierarchy === 'bridge') return 0x79ffc5;
   if (path.hierarchy === 'plaza') return 0xf3e7bd;
   return (ROAD_STYLE[path.hierarchy] || ROAD_STYLE.street).line;
+}
+
+function roadVergeColor(path) {
+  if (path.hierarchy === 'security') return 0x54aabc;
+  if (path.hierarchy === 'stunt') return 0xb87955;
+  if (path.hierarchy === 'dirt') return 0xc89a5b;
+  if (path.hierarchy === 'bridge') return 0x79ffc5;
+  if (path.hierarchy === 'plaza') return 0xb7ac87;
+  return 0x587c4d;
 }
 
 function roadMarkerSpacing(path) {
