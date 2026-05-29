@@ -86,6 +86,9 @@ try {
   const surfaceFeedback = await exerciseSurfaceFeedback(page, ISLAND_RADIUS);
   await screenshot(page, '05-surface-feedback.png');
   const routeReplay = await exerciseRouteReplay(page, routeReplaySegments);
+  const circuitPreview = await previewCircuit(page);
+  await screenshot(page, '06-circuit-target.png');
+  const circuit = await finishCircuit(page, circuitPreview);
   const worldLife = await sampleWorldLife(page);
 
   for (const zone of worldZones) {
@@ -155,7 +158,7 @@ try {
   await delay(300);
   await screenshot(page, 'debug-colliders.png');
 
-  const metrics = await collectRuntimeMetrics(page, loadMs, gameplay, water, surfaces, surfaceFeedback, routeReplay, worldLife);
+  const metrics = await collectRuntimeMetrics(page, loadMs, gameplay, water, surfaces, surfaceFeedback, routeReplay, circuit, worldLife);
   const mobile = await captureMobile(browser);
   const mobileSavedPreference = await captureMobileSavedPreference(browser);
   const result = {
@@ -631,6 +634,92 @@ async function exerciseRouteReplay(page, segments) {
   }, segments);
 }
 
+async function previewCircuit(page) {
+  return page.evaluate(async () => {
+    const delay = (ms) => new Promise((resolveDelay) => setTimeout(resolveDelay, ms));
+    const game = window.__portfolioDrive.game;
+    game.ui.closePanel?.();
+    game.ui.closeMap?.();
+    game.ui.closeMenu?.();
+    game.achievements.unlocked.delete('circuit_finish');
+    game.achievements.save?.();
+    game.startDriving();
+    game.startCircuit();
+    const target = game.world.checkpoints[1].clone();
+    game.vehicle.respawn({ x: target.x - 13, y: 1.08, z: target.z - 8 }, 0.82);
+    const cameraPosition = target.clone();
+    cameraPosition.x -= 14;
+    cameraPosition.y += 8;
+    cameraPosition.z -= 18;
+    const lookAt = target.clone();
+    lookAt.y += 1.7;
+    game.cameraRig.setCinematic(cameraPosition, lookAt, 42);
+    game.cameraRig.smoothedTarget.copy(lookAt);
+    game.camera.position.copy(cameraPosition);
+    game.camera.fov = 42;
+    game.camera.updateProjectionMatrix();
+    game.camera.lookAt(lookAt);
+    await delay(300);
+    const stats = game.world.stuntPark?.getStats?.() || {};
+    return {
+      targetCount: game.world.checkpoints.length - 1,
+      active: game.world.circuit.active,
+      activeTarget: game.world.circuit.checkpoint + 1,
+      markerActiveTarget: stats.activeCircuitTarget || 0,
+      ringInstances: game.scene.getObjectByName('STUNT_Circuit_Target_Rings')?.count || 0,
+      arrowInstances: game.scene.getObjectByName('STUNT_Circuit_Target_Arrows')?.count || 0,
+      gates: stats.circuitCheckpointGates || 0
+    };
+  });
+}
+
+async function finishCircuit(page, preview) {
+  return page.evaluate(async (previewStats) => {
+    const delay = (ms) => new Promise((resolveDelay) => setTimeout(resolveDelay, ms));
+    const game = window.__portfolioDrive.game;
+    const beforeFinished = game.world.circuit.finishedCount || 0;
+    const targetCount = game.world.checkpoints.length - 1;
+    const checkpointSamples = [];
+
+    for (let targetIndex = 1; targetIndex <= targetCount; targetIndex += 1) {
+      const target = game.world.checkpoints[targetIndex];
+      const previous = game.world.checkpoints[Math.max(0, targetIndex - 1)];
+      const heading = Math.atan2(target.x - previous.x, target.z - previous.z);
+      game.vehicle.respawn({ x: target.x, y: 1.08, z: target.z }, heading);
+      await delay(140);
+      checkpointSamples.push({
+        targetIndex,
+        active: game.world.circuit.active,
+        checkpoint: game.world.circuit.checkpoint,
+        events: game.world.circuit.checkpointEvents
+      });
+    }
+
+    await delay(220);
+    const stats = game.world.stuntPark?.getStats?.() || {};
+    const finishedCount = game.world.circuit.finishedCount || 0;
+    const lastLap = game.world.circuit.lastLap || 0;
+    const best = game.world.circuit.best || 0;
+    game.clearFocus();
+    window.__portfolioDrive.respawn('landing');
+    return {
+      preview: previewStats,
+      targetCount,
+      checkpointSamples,
+      checkpointEvents: game.world.circuit.checkpointEvents || 0,
+      finished: finishedCount > beforeFinished,
+      finishedCountDelta: finishedCount - beforeFinished,
+      activeAfterFinish: game.world.circuit.active,
+      lastLap: Number(lastLap.toFixed(2)),
+      best: Number(best.toFixed(2)),
+      achievementUnlocked: game.achievements.unlocked.has('circuit_finish'),
+      stats,
+      ringInstances: game.scene.getObjectByName('STUNT_Circuit_Target_Rings')?.count || 0,
+      arrowInstances: game.scene.getObjectByName('STUNT_Circuit_Target_Arrows')?.count || 0
+    };
+  }, preview);
+}
+
 async function sampleWorldLife(page) {
   return page.evaluate(async () => {
     const delay = (ms) => new Promise((resolveDelay) => setTimeout(resolveDelay, ms));
@@ -818,7 +907,7 @@ async function sampleOverlayUi(page) {
   return page.evaluate(() => window.__portfolioDrive.game.ui?.getOverlayStats?.() || {});
 }
 
-async function collectRuntimeMetrics(page, loadMs, gameplay, water, surfaces, surfaceFeedback, routeReplay, worldLife) {
+async function collectRuntimeMetrics(page, loadMs, gameplay, water, surfaces, surfaceFeedback, routeReplay, circuit, worldLife) {
   const runtime = await page.evaluate(async (expectedAssets) => {
     const frameDeltas = [];
     await new Promise((resolveFrames) => {
@@ -1061,6 +1150,7 @@ async function collectRuntimeMetrics(page, loadMs, gameplay, water, surfaces, su
     surfaces,
     surfaceFeedback,
     routeReplay,
+    circuit,
     worldLife,
     ...runtime
   };
@@ -1152,6 +1242,17 @@ function assertVerification(result) {
   if (result.colliderAudit?.failures?.length) failures.push(`collider audit failed: ${result.colliderAudit.failures.map((item) => item.name).join(', ')}`);
   if (result.routeReplay?.total !== routeReplaySegments.length) failures.push(`route replay count mismatch: ${result.routeReplay?.total}/${routeReplaySegments.length}`);
   if (result.routeReplay?.failed) failures.push(`route replay failed: ${result.routeReplay.failed}/${result.routeReplay.total}`);
+  if (result.circuit?.targetCount !== circuitCheckpoints.length - 1) failures.push(`circuit probe failed: targetCount=${result.circuit?.targetCount}/${circuitCheckpoints.length - 1}`);
+  if (!result.circuit?.preview?.active) failures.push('circuit probe failed: preview inactive');
+  if (result.circuit?.preview?.activeTarget !== 1) failures.push(`circuit probe failed: preview target=${result.circuit?.preview?.activeTarget}`);
+  if (result.circuit?.preview?.markerActiveTarget !== 1) failures.push(`circuit probe failed: marker target=${result.circuit?.preview?.markerActiveTarget}`);
+  if (!result.circuit?.finished) failures.push('circuit probe failed: finish event');
+  if (result.circuit?.activeAfterFinish) failures.push('circuit probe failed: still active after finish');
+  if ((result.circuit?.checkpointEvents || 0) < circuitCheckpoints.length - 1) failures.push(`circuit probe failed: checkpointEvents=${result.circuit?.checkpointEvents || 0}`);
+  if (!result.circuit?.achievementUnlocked) failures.push('circuit probe failed: circuit_finish achievement');
+  if ((result.circuit?.lastLap || 0) <= 0 || (result.circuit?.best || 0) <= 0) failures.push(`circuit probe failed: lap=${result.circuit?.lastLap || 0}, best=${result.circuit?.best || 0}`);
+  if ((result.circuit?.ringInstances || 0) !== circuitCheckpoints.length - 1) failures.push(`circuit probe failed: ring instances=${result.circuit?.ringInstances || 0}`);
+  if ((result.circuit?.arrowInstances || 0) !== circuitCheckpoints.length - 1) failures.push(`circuit probe failed: arrow instances=${result.circuit?.arrowInstances || 0}`);
   if (result.worldLife?.counts?.zonePulses !== worldZones.length) failures.push(`world life probe failed: zone pulses ${result.worldLife?.counts?.zonePulses}/${worldZones.length}`);
   if ((result.worldLife?.counts?.windBanners || 0) < 8) failures.push('world life probe failed: wind banners');
   if ((result.worldLife?.counts?.whisperBeacons || 0) < 8) failures.push('world life probe failed: whisper beacons');
@@ -1335,6 +1436,10 @@ function assertVerification(result) {
   if ((result.stuntPark?.laneChevrons || 0) < 18) failures.push(`stunt park probe failed: laneChevrons=${result.stuntPark?.laneChevrons || 0}`);
   if ((result.stuntPark?.trackScuffs || 0) < 30) failures.push(`stunt park probe failed: trackScuffs=${result.stuntPark?.trackScuffs || 0}`);
   if ((result.stuntPark?.gates || 0) < 2) failures.push(`stunt park probe failed: gates=${result.stuntPark?.gates || 0}`);
+  if ((result.stuntPark?.circuitCheckpointGates || 0) < circuitCheckpoints.length - 2) failures.push(`stunt park probe failed: circuitCheckpointGates=${result.stuntPark?.circuitCheckpointGates || 0}`);
+  if ((result.stuntPark?.circuitTargetRings || 0) !== circuitCheckpoints.length - 1) failures.push(`stunt park probe failed: circuitTargetRings=${result.stuntPark?.circuitTargetRings || 0}`);
+  if ((result.stuntPark?.circuitTargetArrows || 0) !== circuitCheckpoints.length - 1) failures.push(`stunt park probe failed: circuitTargetArrows=${result.stuntPark?.circuitTargetArrows || 0}`);
+  if ((result.stuntPark?.circuitMotionSamples || 0) < circuitCheckpoints.length - 1) failures.push(`stunt park probe failed: circuitMotionSamples=${result.stuntPark?.circuitMotionSamples || 0}`);
   const fccFar = result.protectedLandmarks?.far;
   const fccNear = result.protectedLandmarks?.near;
   const fccRestored = result.protectedLandmarks?.restored;

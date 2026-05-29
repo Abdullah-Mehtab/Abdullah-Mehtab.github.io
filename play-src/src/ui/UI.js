@@ -533,9 +533,11 @@ export class UI {
     this.refs.speedReadout.textContent = `${Math.round(Math.abs(speed) * 3.6)} km/h`;
     this.refs.zoneReadout.textContent = activeZone ? activeZone.name : 'Road';
     this.refs.soundButton.textContent = this.audio.muted ? 'Muted' : 'Sound';
-    this.showPrompt(activeZone);
     if (circuit?.active) {
       this.refs.zoneReadout.textContent = `Circuit ${circuit.checkpoint}/${this.game.world.checkpoints.length - 1}`;
+      this.hidePrompt();
+    } else {
+      this.showPrompt(activeZone);
     }
     this.updateMapMarkers(activeZone);
   }
