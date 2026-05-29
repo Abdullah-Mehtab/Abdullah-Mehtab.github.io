@@ -30,6 +30,10 @@ def main():
     create_project_display_rack(mats)
     create_project_parts_cart(mats)
     create_project_cable_reel(mats)
+    create_campus_fountain(mats)
+    create_campus_notice_board(mats)
+    create_campus_walkway_pavilion(mats)
+    create_campus_study_bench(mats)
     create_cv_vault(mats)
     create_skills_array(mats)
     create_career_office(mats)
@@ -101,6 +105,7 @@ def materials():
         "purple": mat("polish_soft_purple_light", (0.48, 0.36, 0.95, 1), 0.38, emission=(0.28, 0.16, 0.72, 1)),
         "gold": mat("polish_award_gold", (0.95, 0.68, 0.22, 1), 0.44, metallic=0.36, emission=(0.18, 0.1, 0.02, 1)),
         "crop": mat("polish_crop_green", (0.32, 0.68, 0.22, 1), 0.9),
+        "brick": mat("polish_campus_brick", (0.58, 0.22, 0.13, 1), 0.86),
         "islet_sand": mat("polish_distant_islet_sand", (0.78, 0.50, 0.24, 1), 0.94),
         "islet_meadow": mat("polish_distant_islet_meadow", (0.22, 0.48, 0.25, 1), 0.92),
     }
@@ -357,6 +362,59 @@ def create_project_cable_reel(mats):
     cube("ProjectCableReel_GlowTag", group, (0, 1.48, -0.62), (1.1, 0.18, 0.08), mats["mint"], bevel=0.006)
     cube("ProjectCableReel_LooseCableA", group, (-0.15, 0.2, -1.18), (2.6, 0.1, 0.12), mats["rope"], rot=(0, 0.18, 0), bevel=0.014)
     cube("ProjectCableReel_LooseCableB", group, (1.18, 0.18, -1.55), (1.4, 0.1, 0.12), mats["rope"], rot=(0, -0.42, 0), bevel=0.014)
+
+
+def create_campus_fountain(mats):
+    group = root("EnvPolishCampusFountain")
+    cube("CampusFountain_Base", group, (0, 0.14, 0), (4.6, 0.28, 4.6), mats["stone"], bevel=0.08)
+    cube("CampusFountain_Basin", group, (0, 0.48, 0), (3.6, 0.52, 3.6), mats["stone"], bevel=0.12)
+    cube("CampusFountain_Water", group, (0, 0.78, 0), (3.05, 0.08, 3.05), mats["glass"], bevel=0.06)
+    cube("CampusFountain_Platform", group, (0, 0.92, 0), (1.26, 0.28, 1.26), mats["stone_shadow"], bevel=0.05)
+    cube("CampusFountain_Core", group, (0, 1.55, 0), (0.52, 1.28, 0.52), mats["brick"], bevel=0.035)
+    cube("CampusFountain_Top", group, (0, 2.3, 0), (1.1, 0.24, 1.1), mats["stone"], bevel=0.05)
+    for angle in [0, math.pi * 0.5, math.pi, math.pi * 1.5]:
+        x = math.sin(angle) * 1.02
+        z = math.cos(angle) * 1.02
+        cube("CampusFountain_WaterJet", group, (x, 1.38, z), (0.08, 1.02, 0.08), mats["aqua"], rot=(0.18, angle, 0), bevel=0.005)
+        cube("CampusFountain_GlowTile", group, (x * 1.72, 0.94, z * 1.72), (0.52, 0.08, 0.12), mats["mint"], rot=(0, angle, 0), bevel=0.006)
+
+
+def create_campus_notice_board(mats):
+    group = root("EnvPolishCampusNoticeBoard")
+    cube("CampusNoticeBoard_Base", group, (0, 0.12, 0), (4.7, 0.24, 1.1), mats["stone"], bevel=0.035)
+    for x in [-1.85, 1.85]:
+        cube("CampusNoticeBoard_Post", group, (x, 1.48, 0), (0.2, 2.7, 0.2), mats["dark"], bevel=0.014)
+    cube("CampusNoticeBoard_Back", group, (0, 1.75, -0.06), (4.25, 2.05, 0.16), mats["brick"], bevel=0.026)
+    cube("CampusNoticeBoard_Header", group, (0, 2.92, -0.12), (4.65, 0.28, 0.26), mats["wood"], bevel=0.025)
+    cube("CampusNoticeBoard_HeaderGlow", group, (0, 2.7, -0.23), (3.6, 0.08, 0.055), mats["mint"], bevel=0.004)
+    for index, (x, y, material) in enumerate([(-1.18, 1.45, "paper"), (-0.28, 1.78, "screen"), (0.62, 1.42, "amber"), (1.28, 1.86, "paper")]):
+        cube(f"CampusNoticeBoard_Card_{index}", group, (x, y, -0.18), (0.72, 0.5, 0.055), mats[material], rot=(0, 0, 0.08 - index * 0.05), bevel=0.006)
+    cube("CampusNoticeBoard_PathArrow", group, (0, 0.42, -0.62), (1.4, 0.08, 0.16), mats["aqua"], bevel=0.006)
+
+
+def create_campus_walkway_pavilion(mats):
+    group = root("EnvPolishCampusWalkwayPavilion")
+    cube("CampusPavilion_Deck", group, (0, 0.12, 0), (6.8, 0.24, 3.0), mats["paper"], bevel=0.04)
+    for x in [-2.7, -0.9, 0.9, 2.7]:
+        cube("CampusPavilion_Column", group, (x, 1.58, 0), (0.28, 2.9, 0.28), mats["brick"], bevel=0.025)
+        cube("CampusPavilion_Lantern", group, (x, 2.38, -0.34), (0.3, 0.24, 0.08), mats["amber"], bevel=0.014)
+    cube("CampusPavilion_Beam", group, (0, 3.08, 0), (7.25, 0.36, 0.42), mats["wood"], bevel=0.035)
+    cube("CampusPavilion_GlowStrip", group, (0, 2.82, -0.26), (5.8, 0.08, 0.06), mats["mint"], bevel=0.004)
+    for x in [-2.05, 0, 2.05]:
+        cube("CampusPavilion_PathStone", group, (x, 0.25, -1.15), (1.15, 0.08, 0.58), mats["stone"], rot=(0, 0.12 * x, 0), bevel=0.025)
+
+
+def create_campus_study_bench(mats):
+    group = root("EnvPolishCampusStudyBench")
+    cube("CampusStudyBench_Planter", group, (0, 0.28, 0), (4.9, 0.56, 1.35), mats["stone"], bevel=0.04)
+    cube("CampusStudyBench_SeatA", group, (-1.25, 0.78, -0.36), (1.8, 0.22, 0.52), mats["wood"], bevel=0.025)
+    cube("CampusStudyBench_SeatB", group, (1.25, 0.78, 0.36), (1.8, 0.22, 0.52), mats["wood"], bevel=0.025)
+    cube("CampusStudyBench_Table", group, (0, 0.94, 0), (1.05, 0.2, 0.82), mats["paper"], bevel=0.022)
+    cube("CampusStudyBench_OpenBook", group, (-0.2, 1.1, -0.05), (0.68, 0.08, 0.44), mats["paper"], rot=(0, 0.14, 0), bevel=0.006)
+    cube("CampusStudyBench_Screen", group, (0.56, 1.18, 0.08), (0.5, 0.34, 0.055), mats["screen"], rot=(0, -0.18, 0), bevel=0.006)
+    for x in [-1.9, -1.32, 1.32, 1.9]:
+        cone("CampusStudyBench_GrassBlade", group, (x, 0.92, 0.08), 0.08, 0.7, mats["leaf"], vertices=5, rot=(0.18, x * 0.24, 0.05))
+        cube("CampusStudyBench_Flower", group, (x, 1.25, -0.14), (0.16, 0.12, 0.14), mats["flower"], bevel=0.016)
 
 
 def create_cv_vault(mats):
