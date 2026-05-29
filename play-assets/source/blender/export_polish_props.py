@@ -31,6 +31,9 @@ def main():
     create_awards_monument(mats)
     create_todo_board(mats)
     create_circuit_gate(mats)
+    create_stunt_checkpoint(mats)
+    create_stunt_score_tower(mats)
+    create_stunt_arrow_fence(mats)
     create_build_workbench(mats)
     create_farm_irrigator(mats)
     create_harbor_signal(mats)
@@ -298,6 +301,47 @@ def create_circuit_gate(mats):
     for i, x in enumerate([-1.8, -1.2, -0.6, 0, 0.6, 1.2, 1.8]):
         cube(f"CircuitGate_Checker_{i}", group, (x, 3.3, -0.25), (0.48, 0.36, 0.06), mats["paper" if i % 2 else "rubber"], bevel=0.004)
     cube("CircuitGate_Glow", group, (0, 3.86, -0.28), (4.2, 0.08, 0.08), mats["amber"], bevel=0.006)
+
+
+def create_stunt_checkpoint(mats):
+    group = root("EnvPolishStuntCheckpoint")
+    cube("StuntCheckpoint_LeftBase", group, (-3.1, 0.2, 0), (0.9, 0.4, 0.9), mats["rubber"], bevel=0.04)
+    cube("StuntCheckpoint_RightBase", group, (3.1, 0.2, 0), (0.9, 0.4, 0.9), mats["rubber"], bevel=0.04)
+    for x in [-3.1, 3.1]:
+        cube("StuntCheckpoint_Post", group, (x, 2.0, 0), (0.42, 3.55, 0.42), mats["dark"], bevel=0.025)
+        cube("StuntCheckpoint_PostGlow", group, (x, 2.0, -0.27), (0.16, 2.7, 0.055), mats["amber"], bevel=0.006)
+    cube("StuntCheckpoint_Header", group, (0, 3.72, 0), (6.7, 0.48, 0.52), mats["dark"], bevel=0.03)
+    for i, x in enumerate([-2.55, -1.7, -0.85, 0, 0.85, 1.7, 2.55]):
+        cube(f"StuntCheckpoint_Checker_{i}", group, (x, 3.37, -0.3), (0.62, 0.38, 0.06), mats["paper" if i % 2 else "rubber"], bevel=0.004)
+    cube("StuntCheckpoint_LaunchGlow", group, (0, 4.08, -0.31), (5.4, 0.09, 0.08), mats["amber"], bevel=0.006)
+    for x in [-1.7, 0, 1.7]:
+        cube("StuntCheckpoint_StartLamp", group, (x, 2.84, -0.32), (0.34, 0.34, 0.08), mats["pink" if x == 0 else "mint"], bevel=0.018)
+
+
+def create_stunt_score_tower(mats):
+    group = root("EnvPolishStuntScoreTower")
+    cube("StuntScoreTower_Base", group, (0, 0.2, 0), (2.2, 0.4, 1.7), mats["stone_shadow"], bevel=0.04)
+    cube("StuntScoreTower_Mast", group, (0, 2.0, 0.35), (0.42, 3.25, 0.42), mats["dark"], bevel=0.025)
+    cube("StuntScoreTower_Board", group, (0, 2.75, -0.18), (4.4, 1.7, 0.22), mats["dark"], bevel=0.035)
+    cube("StuntScoreTower_Screen", group, (0, 2.78, -0.34), (3.7, 1.12, 0.08), mats["screen"], bevel=0.012)
+    for i, y in enumerate([2.4, 2.75, 3.1]):
+        cube(f"StuntScoreTower_Line_{i}", group, (0, y, -0.4), (2.5 - i * 0.36, 0.06, 0.055), mats["mint" if i % 2 else "amber"], bevel=0.004)
+    cube("StuntScoreTower_Roof", group, (0, 3.74, -0.12), (4.9, 0.26, 0.56), mats["wood"], bevel=0.025)
+    for x in [-2.3, 2.3]:
+        cube("StuntScoreTower_FlagPole", group, (x, 4.18, -0.12), (0.08, 0.86, 0.08), mats["dark"], bevel=0.006)
+        cube("StuntScoreTower_Flag", group, (x + 0.34, 4.36, -0.12), (0.62, 0.34, 0.05), mats["pink" if x < 0 else "amber"], bevel=0.004)
+
+
+def create_stunt_arrow_fence(mats):
+    group = root("EnvPolishStuntArrowFence")
+    cube("StuntArrowFence_LeftFoot", group, (-2.4, 0.16, 0), (0.76, 0.32, 0.76), mats["rubber"], bevel=0.03)
+    cube("StuntArrowFence_RightFoot", group, (2.4, 0.16, 0), (0.76, 0.32, 0.76), mats["rubber"], bevel=0.03)
+    cube("StuntArrowFence_Rail", group, (0, 0.86, 0), (5.7, 0.28, 0.28), mats["wood"], bevel=0.025)
+    cube("StuntArrowFence_Back", group, (0, 1.42, -0.04), (4.8, 0.78, 0.16), mats["dark"], bevel=0.025)
+    for i, x in enumerate([-1.56, -0.52, 0.52, 1.56]):
+        cube(f"StuntArrowFence_Arrow_{i}", group, (x, 1.42, -0.16), (0.64, 0.46, 0.055), mats["amber" if i % 2 else "mint"], rot=(0, 0, -0.32), bevel=0.006)
+    for x in [-2.9, 2.9]:
+        cube("StuntArrowFence_Cone", group, (x, 0.52, -0.62), (0.42, 0.78, 0.42), mats["amber"], bevel=0.025)
 
 
 def create_build_workbench(mats):

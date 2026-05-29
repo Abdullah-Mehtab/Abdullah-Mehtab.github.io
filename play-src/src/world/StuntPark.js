@@ -4,15 +4,45 @@ import * as THREE from 'three';
 import { boostPads, worldZones } from './worldData.js';
 import { mergeStaticMeshesInGroup } from './StaticBatching.js';
 
+function stuntRampLayout(baseX, baseZ) {
+  return [
+    { id: 'cove-main-ramp', x: baseX - 14, z: baseZ - 18, y: 0.12, rot: Math.PI / 2, width: 8.8, length: 22, height: 2.1, color: 0xff9b6d },
+    { id: 'cove-return-ramp', x: baseX + 12, z: baseZ - 2, y: 0.12, rot: -Math.PI / 2.6, width: 6.4, length: 16, height: 1.55, color: 0xffc36a },
+    { id: 'cove-short-hop', x: baseX - 2, z: baseZ + 16, y: 0.12, rot: 0.1, width: 5.4, length: 12, height: 1.15, color: 0x68d8ff }
+  ];
+}
+
 export class StuntPark {
   constructor(world) {
     this.world = world;
+    this.markerDummy = new THREE.Object3D();
+    this.stats = this.createStats();
   }
 
   build() {
+    this.stats = this.createStats();
     this.createYardDressing();
     this.createRamps();
     this.createBoostPads();
+  }
+
+  createStats() {
+    return {
+      ramps: 0,
+      boostPads: 0,
+      cones: 0,
+      tireStacks: 0,
+      landingMarkers: 0,
+      authoredAssets: 0,
+      laneChevrons: 0,
+      trackScuffs: 0,
+      visualBarriers: 0,
+      gates: 0
+    };
+  }
+
+  getStats() {
+    return { ...this.stats };
   }
 
   createYardDressing() {
@@ -22,10 +52,13 @@ export class StuntPark {
     group.name = 'STUNT_Yard_Dressing';
     const baseX = zone.position[0];
     const baseZ = zone.position[2];
+    const ramps = stuntRampLayout(baseX, baseZ);
 
     this.addRunwayStripe(group, baseX - 10, baseZ - 18, 24, Math.PI / 2, 0xff9b6d);
     this.addRunwayStripe(group, baseX + 9, baseZ - 2, 18, -Math.PI / 2.6, 0xffc36a);
     this.addRunwayStripe(group, baseX - 2, baseZ + 16, 14, 0.1, 0x68d8ff);
+    this.addCircuitChevrons(group, ramps);
+    this.addRubberScuffs(group, baseX, baseZ);
 
     for (let i = 0; i < 12; i += 1) {
       const side = i % 2 === 0 ? -1 : 1;
@@ -34,6 +67,7 @@ export class StuntPark {
       cone.position.set(baseX - 6 + i * 2.6, 0.6, baseZ + side * 4.2);
       cone.rotation.y = i * 0.7;
       group.add(cone);
+      this.stats.cones += 1;
     }
 
     for (const [dx, dz, rot] of [
@@ -54,6 +88,24 @@ export class StuntPark {
       stack.position.set(baseX + dx, 0.18, baseZ + dz);
       stack.rotation.y = rot;
       group.add(stack);
+      this.stats.tireStacks += 1;
+    }
+
+    const authored = [
+      ['EnvPolishStuntCheckpoint', baseX - 26, baseZ - 23.5, Math.PI / 2, 1.05],
+      ['EnvPolishStuntCheckpoint', baseX + 25, baseZ - 3.2, -Math.PI / 2.6, 0.88],
+      ['EnvPolishStuntScoreTower', baseX + 24, baseZ + 16, -0.38, 1.05],
+      ['EnvPolishStuntScoreTower', baseX - 24, baseZ + 8, 0.72, 0.86],
+      ['EnvPolishStuntArrowFence', baseX - 25, baseZ - 8, 0.18, 1.0],
+      ['EnvPolishStuntArrowFence', baseX + 22, baseZ - 17, -0.42, 0.96],
+      ['EnvPolishStuntArrowFence', baseX + 8, baseZ + 24, 0.1, 0.92]
+    ];
+    for (const [assetName, x, z, rotation, scale] of authored) {
+      if (this.addPolishAsset(group, assetName, x, z, rotation, scale)) {
+        this.stats.authoredAssets += 1;
+        if (assetName === 'EnvPolishStuntCheckpoint') this.stats.gates += 1;
+        if (assetName === 'EnvPolishStuntArrowFence') this.stats.visualBarriers += 1;
+      }
     }
 
     mergeStaticMeshesInGroup(group, { namePrefix: 'STUNT_yard' });
@@ -69,16 +121,112 @@ export class StuntPark {
     group.add(stripe);
   }
 
+  addRubberScuffs(group, baseX, baseZ) {
+    const specs = [];
+    for (let i = 0; i < 18; i += 1) {
+      const angle = -0.72 + i * 0.19;
+      const radius = 7.5 + (i % 5) * 1.45;
+      specs.push({
+        x: baseX + 12 + Math.cos(angle) * radius,
+        z: baseZ + 1 + Math.sin(angle) * radius,
+        rotation: angle + Math.PI * 0.5,
+        width: 0.34 + (i % 3) * 0.08,
+        length: 3.2 + (i % 4) * 0.72
+      });
+    }
+    for (let i = 0; i < 14; i += 1) {
+      const angle = 1.9 + i * 0.17;
+      const radius = 5.2 + (i % 4) * 1.2;
+      specs.push({
+        x: baseX - 12 + Math.cos(angle) * radius,
+        z: baseZ - 16 + Math.sin(angle) * radius,
+        rotation: angle + Math.PI * 0.5,
+        width: 0.3 + (i % 2) * 0.1,
+        length: 2.8 + (i % 5) * 0.62
+      });
+    }
+
+    const material = new THREE.MeshBasicMaterial({
+      color: 0x1d1712,
+      transparent: true,
+      opacity: 0.26,
+      depthWrite: false,
+      polygonOffset: true,
+      polygonOffsetFactor: -30,
+      polygonOffsetUnits: -30
+    });
+    const mesh = new THREE.InstancedMesh(new THREE.BoxGeometry(1, 0.025, 1), material, specs.length);
+    mesh.name = 'STUNT_Rubber_Scuffs';
+    mesh.renderOrder = 35;
+    mesh.frustumCulled = false;
+    specs.forEach((spec, index) => {
+      this.markerDummy.position.set(spec.x, 0.285, spec.z);
+      this.markerDummy.rotation.set(0, spec.rotation, 0);
+      this.markerDummy.scale.set(spec.width, 1, spec.length);
+      this.markerDummy.updateMatrix();
+      mesh.setMatrixAt(index, this.markerDummy.matrix);
+    });
+    mesh.instanceMatrix.needsUpdate = true;
+    group.add(mesh);
+    this.stats.trackScuffs += specs.length;
+  }
+
+  addCircuitChevrons(group, ramps) {
+    const specs = [];
+    for (const ramp of ramps) {
+      const forwardX = Math.sin(ramp.rot);
+      const forwardZ = Math.cos(ramp.rot);
+      const rightX = Math.cos(ramp.rot);
+      const rightZ = -Math.sin(ramp.rot);
+      for (let distance = -ramp.length * 0.72; distance <= ramp.length * 0.95; distance += 4.8) {
+        const side = distance < 0 ? -1 : 1;
+        specs.push({
+          x: ramp.x + forwardX * distance + rightX * side * ramp.width * 0.18,
+          z: ramp.z + forwardZ * distance + rightZ * side * ramp.width * 0.18,
+          rotation: ramp.rot,
+          scale: ramp.id === 'cove-main-ramp' ? 1.1 : 0.92,
+          color: ramp.color
+        });
+      }
+    }
+    if (!specs.length) return;
+    const geometry = createStuntChevronGeometry();
+    const material = new THREE.MeshBasicMaterial({
+      color: 0xffffff,
+      vertexColors: true,
+      transparent: true,
+      opacity: 0.72,
+      depthWrite: false,
+      side: THREE.DoubleSide,
+      polygonOffset: true,
+      polygonOffsetFactor: -28,
+      polygonOffsetUnits: -28
+    });
+    const mesh = new THREE.InstancedMesh(geometry, material, specs.length);
+    mesh.name = 'STUNT_Circuit_Chevrons';
+    mesh.renderOrder = 34;
+    mesh.frustumCulled = false;
+    const color = new THREE.Color();
+    specs.forEach((spec, index) => {
+      this.markerDummy.position.set(spec.x, 0.275, spec.z);
+      this.markerDummy.rotation.set(0, spec.rotation, 0);
+      this.markerDummy.scale.setScalar(spec.scale);
+      this.markerDummy.updateMatrix();
+      mesh.setMatrixAt(index, this.markerDummy.matrix);
+      mesh.setColorAt(index, color.setHex(spec.color));
+    });
+    mesh.instanceMatrix.needsUpdate = true;
+    if (mesh.instanceColor) mesh.instanceColor.needsUpdate = true;
+    group.add(mesh);
+    this.stats.laneChevrons += specs.length;
+  }
+
   createRamps() {
     const zone = worldZones.find((item) => item.id === 'drift');
     if (!zone) return;
     const baseX = zone.position[0];
     const baseZ = zone.position[2];
-    const ramps = [
-      { id: 'cove-main-ramp', x: baseX - 14, z: baseZ - 18, y: 0.12, rot: Math.PI / 2, width: 8.8, length: 22, height: 2.1 },
-      { id: 'cove-return-ramp', x: baseX + 12, z: baseZ - 2, y: 0.12, rot: -Math.PI / 2.6, width: 6.4, length: 16, height: 1.55 },
-      { id: 'cove-short-hop', x: baseX - 2, z: baseZ + 16, y: 0.12, rot: 0.1, width: 5.4, length: 12, height: 1.15 }
-    ];
+    const ramps = stuntRampLayout(baseX, baseZ);
     for (const ramp of ramps) {
       const rampShape = createRampShape(ramp.width, ramp.length, ramp.height);
       const mesh = new THREE.Mesh(rampShape.geometry, this.world.materials.stuntRamp);
@@ -98,6 +246,7 @@ export class StuntPark {
       });
       this.addGuardrails(ramp);
       this.addLandingMarkers(ramp);
+      this.stats.ramps += 1;
     }
   }
 
@@ -128,6 +277,7 @@ export class StuntPark {
       flag.position.set(0.48, 1.32, 0);
       marker.add(post, flag);
       this.world.scene.add(marker);
+      this.stats.landingMarkers += 1;
     }
   }
 
@@ -147,7 +297,19 @@ export class StuntPark {
       group.add(base, arrow);
       this.world.scene.add(group);
       this.world.boostPads.push({ ...pad, position: new THREE.Vector3(pad.position[0], 0, pad.position[2]) });
+      this.stats.boostPads += 1;
     }
+  }
+
+  addPolishAsset(group, assetName, x, z, rotation, scale) {
+    const asset = this.world.cloneEnvironmentAsset(assetName);
+    if (!asset) return false;
+    asset.name = `STUNT_${assetName}`;
+    asset.position.set(x, 0.16, z);
+    asset.rotation.y = rotation;
+    asset.scale.setScalar(scale);
+    group.add(asset);
+    return true;
   }
 }
 
@@ -179,4 +341,24 @@ function createRampShape(width, length, height) {
   geometry.setIndex(new THREE.BufferAttribute(indices, 1));
   geometry.computeVertexNormals();
   return { geometry, vertices, indices };
+}
+
+function createStuntChevronGeometry() {
+  const vertices = new Float32Array([
+    0, 0, 1.55,
+    -1.05, 0, -0.95,
+    0, 0, -0.42,
+    1.05, 0, -0.95
+  ]);
+  const geometry = new THREE.BufferGeometry();
+  geometry.setAttribute('position', new THREE.BufferAttribute(vertices, 3));
+  geometry.setAttribute('color', new THREE.BufferAttribute(new Float32Array([
+    1, 1, 1,
+    1, 1, 1,
+    1, 1, 1,
+    1, 1, 1
+  ]), 3));
+  geometry.setIndex([0, 1, 2, 0, 2, 3]);
+  geometry.computeVertexNormals();
+  return geometry;
 }
