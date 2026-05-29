@@ -17,6 +17,10 @@ const pageErrors = [];
 const routeReplaySegments = getRouteReplaySegments();
 const authoredDistrictAssets = [
   'EnvPolishProjectForge',
+  'EnvPolishProjectGantry',
+  'EnvPolishProjectDisplayRack',
+  'EnvPolishProjectPartsCart',
+  'EnvPolishProjectCableReel',
   'EnvPolishCvVault',
   'EnvPolishSkillsArray',
   'EnvPolishCareerOffice',
@@ -1431,14 +1435,14 @@ function assertVerification(result) {
   if ((result.districtStory?.terminalBanks || 0) < 2) failures.push(`district story probe failed: terminalBanks=${result.districtStory?.terminalBanks || 0}`);
   if ((result.districtStory?.archiveSteps || 0) < 1) failures.push(`district story probe failed: archiveSteps=${result.districtStory?.archiveSteps || 0}`);
   if ((result.districtStory?.todoStacks || 0) < 1) failures.push(`district story probe failed: todoStacks=${result.districtStory?.todoStacks || 0}`);
-  if ((result.districtComposition?.pads || 0) < 6) failures.push(`district composition probe failed: pads=${result.districtComposition?.pads || 0}`);
-  if ((result.districtComposition?.pathMarks || 0) < 15) failures.push(`district composition probe failed: pathMarks=${result.districtComposition?.pathMarks || 0}`);
-  if ((result.districtComposition?.lamps || 0) < 4) failures.push(`district composition probe failed: lamps=${result.districtComposition?.lamps || 0}`);
-  if ((result.districtComposition?.planters || 0) < 2) failures.push(`district composition probe failed: planters=${result.districtComposition?.planters || 0}`);
-  if ((result.districtComposition?.authoredAssets || 0) < 57) failures.push(`district composition probe failed: authoredAssets=${result.districtComposition?.authoredAssets || 0}`);
-  if ((result.districtComposition?.edgeTrims || 0) < 36) failures.push(`district composition probe failed: edgeTrims=${result.districtComposition?.edgeTrims || 0}`);
-  if ((result.districtComposition?.surfaceMarks || 0) < 10) failures.push(`district composition probe failed: surfaceMarks=${result.districtComposition?.surfaceMarks || 0}`);
-  if ((result.districtComposition?.rails || 0) < 5) failures.push(`district composition probe failed: rails=${result.districtComposition?.rails || 0}`);
+  if ((result.districtComposition?.pads || 0) < 15) failures.push(`district composition probe failed: pads=${result.districtComposition?.pads || 0}`);
+  if ((result.districtComposition?.pathMarks || 0) < 70) failures.push(`district composition probe failed: pathMarks=${result.districtComposition?.pathMarks || 0}`);
+  if ((result.districtComposition?.lamps || 0) < 13) failures.push(`district composition probe failed: lamps=${result.districtComposition?.lamps || 0}`);
+  if ((result.districtComposition?.planters || 0) < 3) failures.push(`district composition probe failed: planters=${result.districtComposition?.planters || 0}`);
+  if ((result.districtComposition?.authoredAssets || 0) < 140) failures.push(`district composition probe failed: authoredAssets=${result.districtComposition?.authoredAssets || 0}`);
+  if ((result.districtComposition?.edgeTrims || 0) < 80) failures.push(`district composition probe failed: edgeTrims=${result.districtComposition?.edgeTrims || 0}`);
+  if ((result.districtComposition?.surfaceMarks || 0) < 13) failures.push(`district composition probe failed: surfaceMarks=${result.districtComposition?.surfaceMarks || 0}`);
+  if ((result.districtComposition?.rails || 0) < 6) failures.push(`district composition probe failed: rails=${result.districtComposition?.rails || 0}`);
   if ((result.districtComposition?.silhouetteAnchors || 0) < 7) failures.push(`district composition probe failed: silhouetteAnchors=${result.districtComposition?.silhouetteAnchors || 0}`);
   if ((result.districtComposition?.careerConnectors || 0) < 7) failures.push(`district composition probe failed: careerConnectors=${result.districtComposition?.careerConnectors || 0}`);
   if ((result.districtComposition?.farmRows || 0) < 8) failures.push(`district composition probe failed: farmRows=${result.districtComposition?.farmRows || 0}`);

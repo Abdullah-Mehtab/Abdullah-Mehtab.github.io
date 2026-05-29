@@ -407,20 +407,52 @@ export class SetPieces {
     const group = new THREE.Group();
     group.name = 'SETPIECE_District_Dressing';
     const projects = findZone('projects');
+    this.addCompositionPad(group, projects.position[0] + 1.6, projects.position[2] + 0.8, 29, 18, this.world.materials.warmStone, 0.121, 'ProjectsAssemblyDeck');
+    this.addCompositionPad(group, projects.position[0] - 7.8, projects.position[2] - 3.4, 7.2, 14, this.world.materials.plazaRoad, 0.126, 'ProjectsProcessLane');
+    for (let i = 0; i < 8; i += 1) {
+      this.addCompositionPathMark(
+        group,
+        projects.position[0] - 12.4 + i * 3.1,
+        projects.position[2] - 7.4 + i * 1.18,
+        1.5,
+        0.14,
+        i % 2 ? this.world.materials.warmGlow : this.world.materials.glowBlue,
+        0.42,
+        'ProjectsProcessGuideMark'
+      );
+    }
     this.addSign(group, 'PROJECTS', 'Build Yard', projects.position[0] - 12, projects.position[2] + 13, -0.35, 0xffcc66, 2.7, 'ProjectsFoundrySign');
     this.addLamp(group, projects.position[0] + 10, projects.position[2] + 12, 0xff9b6d, 3.0, 'FoundryLampA');
     this.addLamp(group, projects.position[0] - 16, projects.position[2] - 7, 0xffcc66, 2.7, 'FoundryLampB');
+    this.addCompositionLamp(group, projects.position[0] + 15.2, projects.position[2] - 6.8, 0xffcc66, 2.6, 'ProjectsWorkLampA');
+    this.addCompositionLamp(group, projects.position[0] - 13.4, projects.position[2] + 7.4, 0x68d8ff, 2.5, 'ProjectsWorkLampB');
     this.addPolishAsset(group, 'EnvPolishProjectForge', projects.position[0] + 4.6, projects.position[2] + 1.8, -0.52, 1.04);
     this.addPolishAsset(group, 'EnvPolishInfoKiosk', projects.position[0] - 8.4, projects.position[2] - 8.8, 0.34, 0.78);
     this.addPolishAsset(group, 'EnvPolishRoadBarrier', projects.position[0] + 14.2, projects.position[2] + 1.2, -0.46, 0.82);
     this.addSilhouetteAnchor(group, 'EnvPolishWorkshopCanopy', projects.position[0] + 1.4, projects.position[2] - 6.2, -0.42, 0.92);
+    this.addCompositionAsset(group, 'EnvPolishProjectGantry', projects.position[0] - 4.8, projects.position[2] + 1.8, -0.34, 0.98);
+    this.addCompositionAsset(group, 'EnvPolishProjectDisplayRack', projects.position[0] + 10.4, projects.position[2] + 6.8, -0.7, 0.82);
+    this.addCompositionAsset(group, 'EnvPolishProjectPartsCart', projects.position[0] - 12.4, projects.position[2] - 2.4, 0.28, 0.86);
+    this.addCompositionAsset(group, 'EnvPolishProjectCableReel', projects.position[0] + 11.4, projects.position[2] - 6.6, -0.22, 0.88);
+    this.addCompositionAsset(group, 'EnvPolishBuildWorkbench', projects.position[0] - 3.8, projects.position[2] + 8.2, -0.18, 0.78);
     for (const [x, z, rotation, scale] of [
       [projects.position[0] + 9.0, projects.position[2] - 4.6, 0.34, 0.82],
       [projects.position[0] - 4.2, projects.position[2] + 8.4, -0.18, 0.74],
-      [projects.position[0] + 3.0, projects.position[2] + 11.2, 0.56, 0.68]
+      [projects.position[0] + 3.0, projects.position[2] + 11.2, 0.56, 0.68],
+      [projects.position[0] + 14.0, projects.position[2] + 0.4, -0.38, 0.64]
     ]) {
       this.addDistrictStoryAsset(group, 'EnvPolishBuildCrateStack', x, z, rotation, scale, 'crateStacks');
     }
+    this.addCompositionPlanter(group, projects.position[0] - 14.2, projects.position[2] + 9.0, 0xffcc66);
+    this.addYardEdgeDetails(group, projects.position[0] + 1.6, projects.position[2] + 0.8, 29, 18);
+    for (const [dx, dz, rotation, scale] of [
+      [-9.2, 4.3, 0.24, 0.76],
+      [1.8, -2.2, -0.12, 0.72],
+      [8.4, 2.7, 0.38, 0.7]
+    ]) {
+      this.addCompositionDetailAsset(group, 'EnvPolishYardSurfaceMarks', projects.position[0] + dx, projects.position[2] + dz, rotation, scale, 'surfaceMarks');
+    }
+    this.addCompositionDetailAsset(group, 'EnvPolishWorkshopProcessRail', projects.position[0] - 12.4, projects.position[2] - 8.2, 0.36, 0.74, 'rails');
 
     const cv = findZone('cv');
     this.addSign(group, 'CV VAULT', 'Documents', cv.position[0] - 10, cv.position[2] - 12, 0.25, 0xe6f3ff, 2.5, 'CvVaultSign');

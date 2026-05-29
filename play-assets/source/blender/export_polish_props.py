@@ -26,6 +26,10 @@ def main():
     create_wave_marker(mats)
     create_distant_islet(mats)
     create_project_forge(mats)
+    create_project_gantry(mats)
+    create_project_display_rack(mats)
+    create_project_parts_cart(mats)
+    create_project_cable_reel(mats)
     create_cv_vault(mats)
     create_skills_array(mats)
     create_career_office(mats)
@@ -294,6 +298,65 @@ def create_project_forge(mats):
     cube("ProjectForge_FireBox", group, (-1.35, 0.56, 0.54), (1.34, 0.48, 0.86), mats["amber"], bevel=0.03)
     for x in [-1.5, -0.5, 0.55, 1.55]:
         cube("ProjectForge_ToolRack", group, (x, 2.42, 1.0), (0.12, 0.9, 0.08), mats["mint" if x > 0 else "amber"], bevel=0.006)
+
+
+def create_project_gantry(mats):
+    group = root("EnvPolishProjectGantry")
+    cube("ProjectGantry_BaseLeft", group, (-2.95, 0.18, 0), (1.05, 0.36, 1.3), mats["stone_shadow"], bevel=0.04)
+    cube("ProjectGantry_BaseRight", group, (2.95, 0.18, 0), (1.05, 0.36, 1.3), mats["stone_shadow"], bevel=0.04)
+    for x in [-2.95, 2.95]:
+        cube("ProjectGantry_PostA", group, (x, 1.72, -0.42), (0.22, 3.08, 0.22), mats["dark"], bevel=0.018)
+        cube("ProjectGantry_PostB", group, (x, 1.72, 0.42), (0.22, 3.08, 0.22), mats["dark"], bevel=0.018)
+        cube("ProjectGantry_PostGlow", group, (x, 1.78, -0.58), (0.09, 2.2, 0.055), mats["amber"], bevel=0.004)
+    cube("ProjectGantry_TopBeam", group, (0, 3.34, 0), (6.55, 0.34, 0.5), mats["wood"], bevel=0.03)
+    cube("ProjectGantry_RunwayGlow", group, (0, 3.08, -0.32), (5.6, 0.08, 0.065), mats["mint"], bevel=0.004)
+    cube("ProjectGantry_Trolley", group, (-0.55, 2.82, -0.02), (0.9, 0.34, 0.66), mats["dark"], bevel=0.025)
+    cube("ProjectGantry_Cable", group, (-0.55, 2.12, -0.02), (0.08, 1.3, 0.08), mats["rope"], bevel=0.006)
+    cube("ProjectGantry_Hook", group, (-0.55, 1.36, -0.02), (0.48, 0.36, 0.18), mats["gold"], bevel=0.018)
+    cube("ProjectGantry_Payload", group, (-0.55, 0.84, 0.28), (1.3, 0.72, 0.86), mats["stone"], rot=(0, -0.12, 0), bevel=0.035)
+    for x in [-1.8, -0.9, 0.0, 0.9, 1.8]:
+        cube("ProjectGantry_Checker", group, (x, 3.45, -0.31), (0.46, 0.22, 0.055), mats["paper" if x == 0 else "rubber"], bevel=0.004)
+
+
+def create_project_display_rack(mats):
+    group = root("EnvPolishProjectDisplayRack")
+    cube("ProjectDisplayRack_Base", group, (0, 0.14, 0), (5.8, 0.28, 1.55), mats["stone"], bevel=0.04)
+    cube("ProjectDisplayRack_BackRail", group, (0, 1.82, 0.42), (5.4, 2.9, 0.18), mats["dark"], bevel=0.025)
+    for index, x in enumerate([-1.9, 0, 1.9]):
+        cube(f"ProjectDisplayRack_Screen_{index}", group, (x, 1.82, 0.22), (1.34, 1.12, 0.08), [mats["screen"], mats["mint"], mats["purple"]][index], bevel=0.012)
+        cube(f"ProjectDisplayRack_LowerCard_{index}", group, (x, 0.86, -0.42), (1.12, 0.42, 0.08), [mats["paper"], mats["amber"], mats["aqua"]][index], bevel=0.008)
+        for line in range(3):
+            cube(f"ProjectDisplayRack_Line_{index}_{line}", group, (x, 1.48 + line * 0.22, 0.16), (0.78 - line * 0.12, 0.045, 0.055), mats["paper" if line == 1 else "aqua"], bevel=0.004)
+    cube("ProjectDisplayRack_Header", group, (0, 3.34, 0.36), (4.7, 0.18, 0.18), mats["wood"], bevel=0.018)
+    cube("ProjectDisplayRack_HeaderGlow", group, (0, 3.18, 0.18), (3.9, 0.08, 0.055), mats["amber"], bevel=0.004)
+    for x in [-2.7, 2.7]:
+        cube("ProjectDisplayRack_SideLamp", group, (x, 2.62, 0.16), (0.32, 0.28, 0.08), mats["mint"], bevel=0.018)
+
+
+def create_project_parts_cart(mats):
+    group = root("EnvPolishProjectPartsCart")
+    cube("ProjectPartsCart_Deck", group, (0, 0.58, 0), (3.9, 0.28, 2.15), mats["wood"], bevel=0.035)
+    for x in [-1.45, 1.45]:
+        for z in [-0.75, 0.75]:
+            cube("ProjectPartsCart_Wheel", group, (x, 0.24, z), (0.44, 0.44, 0.2), mats["rubber"], rot=(0, 0.28, 0), bevel=0.05)
+    cube("ProjectPartsCart_Handle", group, (-2.12, 1.08, 0), (0.14, 1.28, 1.6), mats["dark"], bevel=0.014)
+    cube("ProjectPartsCart_LongBox", group, (-0.82, 1.02, -0.24), (1.38, 0.62, 0.82), mats["stone"], rot=(0, 0.12, 0), bevel=0.03)
+    cube("ProjectPartsCart_ToolBox", group, (0.72, 1.02, 0.18), (1.24, 0.58, 0.78), mats["pink"], rot=(0, -0.16, 0), bevel=0.03)
+    cube("ProjectPartsCart_ScreenCase", group, (1.32, 1.42, -0.46), (0.78, 0.52, 0.08), mats["screen"], bevel=0.01)
+    for x in [-1.15, -0.35, 0.48, 1.2]:
+        cube("ProjectPartsCart_Tool", group, (x, 1.36, 0.84), (0.54, 0.08, 0.08), mats["mint" if x > 0 else "amber"], bevel=0.004)
+
+
+def create_project_cable_reel(mats):
+    group = root("EnvPolishProjectCableReel")
+    cube("ProjectCableReel_Axle", group, (0, 0.72, 0), (2.2, 0.18, 0.18), mats["dark"], bevel=0.018)
+    for x in [-1.12, 1.12]:
+        cube("ProjectCableReel_Side", group, (x, 0.72, 0), (0.18, 1.62, 1.62), mats["wood"], bevel=0.08)
+    for y in [0.36, 0.72, 1.08]:
+        cube("ProjectCableReel_CableBand", group, (0, y, 0), (2.0, 0.18, 1.1), mats["rope"], bevel=0.055)
+    cube("ProjectCableReel_GlowTag", group, (0, 1.48, -0.62), (1.1, 0.18, 0.08), mats["mint"], bevel=0.006)
+    cube("ProjectCableReel_LooseCableA", group, (-0.15, 0.2, -1.18), (2.6, 0.1, 0.12), mats["rope"], rot=(0, 0.18, 0), bevel=0.014)
+    cube("ProjectCableReel_LooseCableB", group, (1.18, 0.18, -1.55), (1.4, 0.1, 0.12), mats["rope"], rot=(0, -0.42, 0), bevel=0.014)
 
 
 def create_cv_vault(mats):
