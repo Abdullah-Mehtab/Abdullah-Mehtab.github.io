@@ -24,6 +24,16 @@ def main():
     create_shore_buoy(mats)
     create_dock_float(mats)
     create_wave_marker(mats)
+    create_project_forge(mats)
+    create_cv_vault(mats)
+    create_skills_array(mats)
+    create_career_office(mats)
+    create_awards_monument(mats)
+    create_todo_board(mats)
+    create_circuit_gate(mats)
+    create_build_workbench(mats)
+    create_farm_irrigator(mats)
+    create_harbor_signal(mats)
 
     output = Path(args.output)
     output.parent.mkdir(parents=True, exist_ok=True)
@@ -61,6 +71,10 @@ def materials():
         "foam": mat("polish_seafoam_white", (0.82, 1.0, 0.94, 1), 0.58, emission=(0.08, 0.16, 0.12, 1)),
         "aqua": mat("polish_aqua_marker", (0.08, 0.55, 0.62, 1), 0.5, metallic=0.05, emission=(0.01, 0.18, 0.22, 1)),
         "rope": mat("polish_salt_rope", (0.72, 0.58, 0.36, 1), 0.9),
+        "paper": mat("polish_cv_paper", (0.92, 0.86, 0.68, 1), 0.78),
+        "purple": mat("polish_soft_purple_light", (0.48, 0.36, 0.95, 1), 0.38, emission=(0.28, 0.16, 0.72, 1)),
+        "gold": mat("polish_award_gold", (0.95, 0.68, 0.22, 1), 0.44, metallic=0.36, emission=(0.18, 0.1, 0.02, 1)),
+        "crop": mat("polish_crop_green", (0.32, 0.68, 0.22, 1), 0.9),
     }
 
 
@@ -211,6 +225,110 @@ def create_wave_marker(mats):
     cube("WaveMarker_Top", group, (0, 0.62, 0), (1.06, 0.36, 0.36), mats["foam"], bevel=0.045)
     cube("WaveMarker_Amber", group, (-0.42, 0.86, -0.02), (0.22, 0.18, 0.3), mats["amber"], bevel=0.012)
     cube("WaveMarker_Mint", group, (0.42, 0.86, -0.02), (0.22, 0.18, 0.3), mats["mint"], bevel=0.012)
+
+
+def create_project_forge(mats):
+    group = root("EnvPolishProjectForge")
+    cube("ProjectForge_Floor", group, (0, 0.08, 0), (5.2, 0.16, 3.4), mats["stone_shadow"], bevel=0.035)
+    cube("ProjectForge_BackWall", group, (0, 1.45, 1.18), (4.6, 2.5, 0.28), mats["dark"], bevel=0.03)
+    cube("ProjectForge_Anvil", group, (-1.35, 0.82, -0.35), (1.3, 0.7, 0.86), mats["stone"], bevel=0.045)
+    cube("ProjectForge_Worktop", group, (1.15, 0.82, -0.38), (2.0, 0.32, 1.0), mats["wood"], bevel=0.035)
+    cube("ProjectForge_Screen", group, (0.86, 1.72, 1.0), (1.8, 1.0, 0.08), mats["screen"], bevel=0.012)
+    cube("ProjectForge_FireBox", group, (-1.35, 0.56, 0.54), (1.34, 0.48, 0.86), mats["amber"], bevel=0.03)
+    for x in [-1.5, -0.5, 0.55, 1.55]:
+        cube("ProjectForge_ToolRack", group, (x, 2.42, 1.0), (0.12, 0.9, 0.08), mats["mint" if x > 0 else "amber"], bevel=0.006)
+
+
+def create_cv_vault(mats):
+    group = root("EnvPolishCvVault")
+    cube("CvVault_Base", group, (0, 0.12, 0), (4.4, 0.24, 3.2), mats["stone"], bevel=0.045)
+    cube("CvVault_Back", group, (0, 1.4, 1.15), (4.0, 2.3, 0.32), mats["stone_shadow"], bevel=0.04)
+    cube("CvVault_Door", group, (0, 1.08, -0.48), (1.55, 1.8, 0.18), mats["dark"], bevel=0.035)
+    cube("CvVault_DoorGlow", group, (0, 1.08, -0.59), (1.18, 1.36, 0.06), mats["screen"], bevel=0.012)
+    for i, x in enumerate([-1.38, -0.46, 0.46, 1.38]):
+        cube(f"CvVault_File_{i}", group, (x, 1.82, 0.92), (0.54, 0.72, 0.08), mats["paper"], rot=(0, 0, 0.08 - i * 0.04), bevel=0.008)
+    cube("CvVault_HeaderGlow", group, (0, 2.64, 0.98), (3.2, 0.1, 0.08), mats["mint"], bevel=0.006)
+
+
+def create_skills_array(mats):
+    group = root("EnvPolishSkillsArray")
+    cube("SkillsArray_Base", group, (0, 0.12, 0), (5.0, 0.24, 2.2), mats["stone_shadow"], bevel=0.035)
+    for i, x in enumerate([-1.9, -0.95, 0, 0.95, 1.9]):
+        cube(f"SkillsArray_Pillar_{i}", group, (x, 1.12 + i * 0.08, 0), (0.46, 1.95 + i * 0.16, 0.46), mats["dark"], bevel=0.025)
+        cube(f"SkillsArray_Screen_{i}", group, (x, 1.18 + i * 0.08, -0.27), (0.34, 1.22, 0.06), [mats["screen"], mats["mint"], mats["purple"], mats["aqua"], mats["screen"]][i], bevel=0.006)
+    cube("SkillsArray_CableRun", group, (0, 0.44, 0.76), (4.4, 0.12, 0.16), mats["rope"], bevel=0.015)
+
+
+def create_career_office(mats):
+    group = root("EnvPolishCareerOffice")
+    cube("CareerOffice_Deck", group, (0, 0.14, 0), (4.8, 0.28, 3.2), mats["stone"], bevel=0.04)
+    cube("CareerOffice_Core", group, (0, 1.22, 0.22), (3.4, 2.1, 1.74), mats["stone_shadow"], bevel=0.035)
+    cube("CareerOffice_Window", group, (0, 1.38, -0.68), (2.48, 1.08, 0.08), mats["glass"], bevel=0.012)
+    cube("CareerOffice_Roof", group, (0, 2.42, 0.18), (3.9, 0.28, 2.12), mats["wood"], bevel=0.035)
+    cube("CareerOffice_SignalMast", group, (1.72, 3.05, -0.24), (0.16, 1.62, 0.16), mats["dark"], bevel=0.012)
+    cube("CareerOffice_SignalBar", group, (1.72, 3.68, -0.24), (1.08, 0.1, 0.1), mats["purple"], bevel=0.008)
+
+
+def create_awards_monument(mats):
+    group = root("EnvPolishAwardsMonument")
+    cube("AwardsMonument_Step0", group, (0, 0.14, 0), (4.8, 0.28, 3.4), mats["stone"], bevel=0.04)
+    cube("AwardsMonument_Step1", group, (0, 0.42, 0), (3.6, 0.28, 2.42), mats["paper"], bevel=0.035)
+    cube("AwardsMonument_Plinth", group, (0, 0.92, 0), (1.42, 0.74, 1.22), mats["stone_shadow"], bevel=0.035)
+    cube("AwardsMonument_Cup", group, (0, 1.55, 0), (1.05, 0.8, 0.72), mats["gold"], bevel=0.08)
+    cube("AwardsMonument_Stem", group, (0, 2.15, 0), (0.28, 0.66, 0.28), mats["gold"], bevel=0.035)
+    cube("AwardsMonument_Glow", group, (0, 2.54, -0.08), (1.2, 0.18, 0.18), mats["amber"], bevel=0.018)
+
+
+def create_todo_board(mats):
+    group = root("EnvPolishTodoBoard")
+    cube("TodoBoard_Base", group, (0, 0.14, 0), (4.5, 0.28, 1.4), mats["stone"], bevel=0.035)
+    cube("TodoBoard_Back", group, (0, 1.48, 0.32), (4.0, 2.35, 0.28), mats["dark"], bevel=0.03)
+    for i, (x, y) in enumerate([(-1.2, 1.05), (0, 1.3), (1.18, 1.05), (-0.58, 1.86), (0.88, 1.9)]):
+        cube(f"TodoBoard_Card_{i}", group, (x, y, 0.12), (0.82, 0.48, 0.06), [mats["paper"], mats["mint"], mats["purple"], mats["amber"], mats["aqua"]][i], rot=(0, 0, 0.08 - i * 0.04), bevel=0.008)
+    cube("TodoBoard_Header", group, (0, 2.72, 0.18), (3.2, 0.1, 0.08), mats["purple"], bevel=0.006)
+
+
+def create_circuit_gate(mats):
+    group = root("EnvPolishCircuitGate")
+    cube("CircuitGate_LeftBase", group, (-2.4, 0.2, 0), (0.74, 0.4, 0.74), mats["rubber"], bevel=0.035)
+    cube("CircuitGate_RightBase", group, (2.4, 0.2, 0), (0.74, 0.4, 0.74), mats["rubber"], bevel=0.035)
+    cube("CircuitGate_LeftPost", group, (-2.4, 1.9, 0), (0.34, 3.3, 0.34), mats["dark"], bevel=0.02)
+    cube("CircuitGate_RightPost", group, (2.4, 1.9, 0), (0.34, 3.3, 0.34), mats["dark"], bevel=0.02)
+    cube("CircuitGate_Top", group, (0, 3.55, 0), (5.35, 0.38, 0.42), mats["dark"], bevel=0.026)
+    for i, x in enumerate([-1.8, -1.2, -0.6, 0, 0.6, 1.2, 1.8]):
+        cube(f"CircuitGate_Checker_{i}", group, (x, 3.3, -0.25), (0.48, 0.36, 0.06), mats["paper" if i % 2 else "rubber"], bevel=0.004)
+    cube("CircuitGate_Glow", group, (0, 3.86, -0.28), (4.2, 0.08, 0.08), mats["amber"], bevel=0.006)
+
+
+def create_build_workbench(mats):
+    group = root("EnvPolishBuildWorkbench")
+    cube("BuildWorkbench_Table", group, (0, 0.82, 0), (4.4, 0.32, 1.8), mats["wood"], bevel=0.035)
+    for x in [-1.72, 1.72]:
+        cube("BuildWorkbench_Leg", group, (x, 0.42, -0.58), (0.2, 0.82, 0.2), mats["dark"], bevel=0.012)
+        cube("BuildWorkbench_Leg", group, (x, 0.42, 0.58), (0.2, 0.82, 0.2), mats["dark"], bevel=0.012)
+    cube("BuildWorkbench_Monitor", group, (-1.05, 1.54, -0.35), (1.36, 0.88, 0.08), mats["screen"], bevel=0.012)
+    cube("BuildWorkbench_Toolbox", group, (1.15, 1.1, 0.1), (1.1, 0.52, 0.72), mats["pink"], bevel=0.025)
+    for i, x in enumerate([-1.78, -0.72, 0.48, 1.78]):
+        cube(f"BuildWorkbench_Tool_{i}", group, (x, 1.12, 0.72), (0.52, 0.08, 0.08), mats["mint" if i % 2 else "amber"], bevel=0.004)
+
+
+def create_farm_irrigator(mats):
+    group = root("EnvPolishFarmIrrigator")
+    cube("FarmIrrigator_PumpBase", group, (0, 0.24, 0), (1.5, 0.48, 1.1), mats["stone_shadow"], bevel=0.035)
+    cube("FarmIrrigator_Tank", group, (0, 1.02, 0), (1.0, 1.0, 0.82), mats["aqua"], bevel=0.08)
+    cube("FarmIrrigator_Boom", group, (0, 1.62, -0.02), (5.2, 0.12, 0.12), mats["rope"], bevel=0.012)
+    for x in [-2.2, -1.1, 0, 1.1, 2.2]:
+        cube("FarmIrrigator_Spray", group, (x, 1.28, -0.12), (0.08, 0.64, 0.08), mats["glass"], bevel=0.004)
+        cube("FarmIrrigator_Crop", group, (x, 0.45, 0.58), (0.28, 0.72, 0.28), mats["crop"], bevel=0.012)
+
+
+def create_harbor_signal(mats):
+    group = root("EnvPolishHarborSignal")
+    cube("HarborSignal_Base", group, (0, 0.18, 0), (2.0, 0.36, 1.6), mats["stone"], bevel=0.04)
+    cube("HarborSignal_Tower", group, (0, 1.45, 0), (0.72, 2.5, 0.72), mats["stone_shadow"], bevel=0.035)
+    cube("HarborSignal_Lantern", group, (0, 2.88, -0.08), (1.08, 0.62, 0.82), mats["glass"], bevel=0.035)
+    cube("HarborSignal_Roof", group, (0, 3.32, 0), (1.42, 0.26, 1.12), mats["wood"], bevel=0.03)
+    cube("HarborSignal_Beam", group, (0, 2.88, -0.58), (2.5, 0.08, 0.08), mats["mint"], bevel=0.006)
 
 
 if __name__ == "__main__":
