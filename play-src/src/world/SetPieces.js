@@ -49,6 +49,12 @@ export class SetPieces {
       authoredAssets: 0,
       roadMarks: 0
     };
+    this.gatewayStats = {
+      gateways: 0,
+      lanterns: 0,
+      authoredAssets: 0,
+      guideStrips: 0
+    };
   }
 
   build() {
@@ -57,6 +63,7 @@ export class SetPieces {
     this.createSecurityLab();
     this.createDistrictDressing();
     this.createApproachDressing();
+    this.createDistrictGateways();
     this.createRouteGuidance();
     this.createLivingSignals();
     this.createDistrictAmbience();
@@ -155,6 +162,10 @@ export class SetPieces {
 
   getApproachStats() {
     return { ...this.approachStats };
+  }
+
+  getGatewayStats() {
+    return { ...this.gatewayStats };
   }
 
   createStartDiorama() {
@@ -448,6 +459,58 @@ export class SetPieces {
     });
     group.userData.approachStats = { ...this.approachStats };
     this.world.scene.add(group);
+  }
+
+  createDistrictGateways() {
+    const group = new THREE.Group();
+    group.name = 'SETPIECE_District_Gateways';
+    const gateways = [
+      { x: 36, z: 33, rotation: 1.34, color: 0xffcc66, width: 11.5 },
+      { x: -55, z: 61, rotation: -0.5, color: 0x9ccfff, width: 10.5 },
+      { x: -82, z: -25, rotation: -2.17, color: 0x68d8ff, width: 10.8 },
+      { x: 27, z: -27, rotation: 2.68, color: 0xe6f3ff, width: 10.5 },
+      { x: 94, z: -95, rotation: 1.5, color: 0xff9b6d, width: 11.2 },
+      { x: -42, z: -123, rotation: -1.82, color: 0xc79b56, width: 10.2 },
+      { x: 24, z: 104, rotation: 0.9, color: 0xff6d8d, width: 10.2 },
+      { x: 80, z: -5, rotation: 2.4, color: 0xb6a0ff, width: 10.2 },
+      { x: 105, z: 61, rotation: 1.0, color: 0x78b7ff, width: 10.0 },
+      { x: -126, z: 47, rotation: -1.05, color: 0x79ffc5, width: 9.4 },
+      { x: 22, z: -59, rotation: -2.53, color: 0xa8a6ff, width: 10.2 },
+      { x: -26, z: 70, rotation: 0.17, color: 0xffdf8a, width: 9.6 }
+    ];
+
+    gateways.forEach((spec, index) => this.addDistrictGateway(group, spec, index));
+    mergeStaticMeshesInGroup(group, { namePrefix: 'SETPIECE_gateway' });
+    group.userData.gatewayStats = { ...this.gatewayStats };
+    this.world.scene.add(group);
+  }
+
+  addDistrictGateway(group, spec, index) {
+    const forwardX = Math.sin(spec.rotation);
+    const forwardZ = Math.cos(spec.rotation);
+    const rightX = Math.cos(spec.rotation);
+    const rightZ = -Math.sin(spec.rotation);
+    if (this.addPolishAsset(group, 'EnvPolishDistrictGateway', spec.x, spec.z, spec.rotation, 0.86)) {
+      this.gatewayStats.gateways += 1;
+      this.gatewayStats.authoredAssets += 1;
+    }
+    for (const side of [-1, 1]) {
+      const x = spec.x + rightX * side * (spec.width * 0.5);
+      const z = spec.z + rightZ * side * (spec.width * 0.5);
+      if (this.addPolishAsset(group, 'EnvPolishRouteLantern', x - forwardX * 2.2, z - forwardZ * 2.2, spec.rotation + side * 0.18, 0.72)) {
+        this.gatewayStats.lanterns += 1;
+        this.gatewayStats.authoredAssets += 1;
+      }
+    }
+    const stripMaterial = new THREE.MeshBasicMaterial({ color: spec.color, transparent: true, opacity: 0.46, depthWrite: false });
+    for (let i = -2; i <= 2; i += 1) {
+      const marker = new THREE.Mesh(new THREE.BoxGeometry(0.32, 0.035, 1.42), stripMaterial);
+      marker.name = `GatewayGuideStrip_${index}`;
+      marker.position.set(spec.x + forwardX * i * 1.35, 0.225, spec.z + forwardZ * i * 1.35);
+      marker.rotation.y = spec.rotation;
+      group.add(marker);
+      this.gatewayStats.guideStrips += 1;
+    }
   }
 
   addApproachCluster(group, spec, index) {

@@ -37,6 +37,8 @@ def main():
     create_build_workbench(mats)
     create_farm_irrigator(mats)
     create_harbor_signal(mats)
+    create_district_gateway(mats)
+    create_route_lantern(mats)
 
     output = Path(args.output)
     output.parent.mkdir(parents=True, exist_ok=True)
@@ -373,6 +375,34 @@ def create_harbor_signal(mats):
     cube("HarborSignal_Lantern", group, (0, 2.88, -0.08), (1.08, 0.62, 0.82), mats["glass"], bevel=0.035)
     cube("HarborSignal_Roof", group, (0, 3.32, 0), (1.42, 0.26, 1.12), mats["wood"], bevel=0.03)
     cube("HarborSignal_Beam", group, (0, 2.88, -0.58), (2.5, 0.08, 0.08), mats["mint"], bevel=0.006)
+
+
+def create_district_gateway(mats):
+    group = root("EnvPolishDistrictGateway")
+    for x in [-3.9, 3.9]:
+        cube("DistrictGateway_Foot", group, (x, 0.18, 0), (1.02, 0.36, 1.18), mats["stone_shadow"], bevel=0.045)
+        cube("DistrictGateway_Pillar", group, (x, 1.9, 0), (0.42, 3.35, 0.42), mats["dark"], bevel=0.03)
+        cube("DistrictGateway_SideGlow", group, (x, 1.95, -0.25), (0.15, 2.55, 0.055), mats["screen"], bevel=0.006)
+        cube("DistrictGateway_Lamp", group, (x, 3.7, -0.04), (0.62, 0.28, 0.62), mats["amber"], bevel=0.05)
+    cube("DistrictGateway_Header", group, (0, 3.78, 0), (8.2, 0.42, 0.52), mats["dark"], bevel=0.035)
+    cube("DistrictGateway_HeaderGlow", group, (0, 3.48, -0.3), (6.7, 0.09, 0.075), mats["mint"], bevel=0.006)
+    cube("DistrictGateway_Crest", group, (0, 4.18, -0.02), (1.0, 0.45, 0.32), mats["gold"], bevel=0.04)
+    for i, x in enumerate([-2.8, -1.88, -0.94, 0, 0.94, 1.88, 2.8]):
+        cube(f"DistrictGateway_Tile_{i}", group, (x, 3.83, -0.31), (0.55, 0.26, 0.055), mats["paper" if i % 2 else "rubber"], bevel=0.004)
+    for x in [-2.25, 2.25]:
+        cube("DistrictGateway_RoadEdgeMarker", group, (x, 0.33, -0.9), (0.42, 0.24, 1.15), mats["foam"], bevel=0.025)
+
+
+def create_route_lantern(mats):
+    group = root("EnvPolishRouteLantern")
+    cube("RouteLantern_Base", group, (0, 0.14, 0), (1.15, 0.28, 1.15), mats["stone"], bevel=0.035)
+    cube("RouteLantern_Post", group, (0, 1.32, 0), (0.18, 2.36, 0.18), mats["dark"], bevel=0.018)
+    cube("RouteLantern_SignArm", group, (0.54, 2.24, 0), (1.18, 0.12, 0.12), mats["dark"], bevel=0.008)
+    cube("RouteLantern_Panel", group, (1.05, 2.24, -0.02), (0.86, 0.42, 0.06), mats["screen"], bevel=0.012)
+    cube("RouteLantern_Lamp", group, (0, 2.72, 0), (0.52, 0.34, 0.52), mats["amber"], bevel=0.05)
+    cube("RouteLantern_Halo", group, (0, 2.72, -0.02), (0.76, 0.08, 0.76), mats["mint"], bevel=0.035)
+    for y in [0.78, 1.16, 1.54]:
+        cube("RouteLantern_CableRing", group, (0, y, 0), (0.38, 0.055, 0.38), mats["rope"], bevel=0.012)
 
 
 if __name__ == "__main__":
