@@ -41,15 +41,13 @@ export class Roads {
     for (const path of roadPaths) {
       this.addPath(path);
     }
+    this.addJunctionPatches();
     mergeStaticMeshesInGroup(this.roadGroup, { namePrefix: 'ROAD_batch' });
     this.createGuidanceMarkers();
   }
 
   addPath(path) {
     this.addPathRibbon(path);
-    for (const point of path.points) {
-      this.addNode(point, path);
-    }
   }
 
   addPathRibbon(path) {
@@ -115,35 +113,53 @@ export class Roads {
     // Roads stay visual so the car always drives on one continuous terrain collider.
   }
 
-  addNode(point, path) {
-    const style = ROAD_STYLE[path.hierarchy] || ROAD_STYLE.street;
-    const size = path.width * 0.78 + style.shoulder * 0.42;
-    const layer = ROAD_LAYER[path.hierarchy] ?? 1;
-    const shoulderY = 0.086 + layer * 0.003;
-    const surfaceY = 0.142 + layer * 0.007;
-    const edgeMaterial = path.hierarchy === 'dirt' ? this.world.materials.sand : this.world.materials.roadShoulder;
-    const surfaceMaterial = path.hierarchy === 'dirt'
-      ? this.world.materials.dirtRoad
-      : path.hierarchy === 'security'
-        ? this.world.materials.securityRoad
-        : path.hierarchy === 'plaza'
-          ? this.world.materials.plazaRoad
-          : this.world.materials.stoneRoad;
-    const nodeMaterial = this.cleanCapMaterial(edgeMaterial);
-    const topMaterial = this.cleanCapMaterial(surfaceMaterial);
-    const node = new THREE.Mesh(new THREE.CylinderGeometry((size + style.shoulder * 0.9) / 2, (size + style.shoulder * 0.9) / 2, 0.035, 18), nodeMaterial);
-    node.name = `ROAD_${path.id}_junction`;
-    node.position.set(point[0], shoulderY, point[1]);
-    node.receiveShadow = false;
-    node.renderOrder = 10 + layer;
-    this.roadGroup.add(node);
+  addJunctionPatches() {
+    const graph = new Map();
+    for (const path of roadPaths) {
+      for (let index = 0; index < path.points.length; index += 1) {
+        const point = path.points[index];
+        const key = pointKey(point);
+        if (!graph.has(key)) {
+          graph.set(key, { point, connections: [], pathIds: new Set() });
+        }
+        const node = graph.get(key);
+        node.pathIds.add(path.id);
+        if (index > 0) {
+          node.connections.push(createJunctionConnection(point, path.points[index - 1], path));
+        }
+        if (index < path.points.length - 1) {
+          node.connections.push(createJunctionConnection(point, path.points[index + 1], path));
+        }
+      }
+    }
 
-    const top = new THREE.Mesh(new THREE.CylinderGeometry(size / 2, size / 2, 0.035, 18), topMaterial);
-    top.name = `ROAD_${path.id}_junction_cap`;
-    top.position.set(point[0], surfaceY + 0.034, point[1]);
-    top.receiveShadow = false;
-    top.renderOrder = 12 + layer;
-    this.roadGroup.add(top);
+    let patches = 0;
+    for (const node of graph.values()) {
+      if (node.pathIds.size < 2 || node.connections.length < 2) continue;
+      const dominant = dominantRoadPath(node.connections.map((connection) => connection.path));
+      const style = ROAD_STYLE[dominant.hierarchy] || ROAD_STYLE.street;
+      const layer = ROAD_LAYER[dominant.hierarchy] ?? 1;
+      const shoulderPadding = style.shoulder * 0.46;
+      const shoulderGeometry = createJunctionBlendGeometry(node.point, node.connections, shoulderPadding, 0.088 + layer * 0.003);
+      const surfaceGeometry = createJunctionBlendGeometry(node.point, node.connections, 0.12, 0.148 + layer * 0.007);
+      const edgeMaterial = dominant.hierarchy === 'dirt' ? this.world.materials.sand : this.world.materials.roadShoulder;
+      const surfaceMaterial = this.roadSurfaceMaterial(dominant);
+      const shoulder = new THREE.Mesh(shoulderGeometry, this.cleanCapMaterial(edgeMaterial));
+      shoulder.name = `ROAD_JunctionBlend_${patches}_shoulder`;
+      shoulder.receiveShadow = false;
+      shoulder.renderOrder = 10 + layer;
+      this.roadGroup.add(shoulder);
+
+      const surface = new THREE.Mesh(surfaceGeometry, this.cleanCapMaterial(surfaceMaterial));
+      surface.name = `ROAD_JunctionBlend_${patches}_surface`;
+      surface.receiveShadow = false;
+      surface.renderOrder = 12 + layer;
+      this.roadGroup.add(surface);
+      patches += 1;
+    }
+
+    this.roadGroup.userData.junctionPatchCount = patches;
+    this.roadGroup.userData.circularPointCaps = 0;
   }
 
   createRoadPlane(width, length, material, renderOrder = 1, rotation = 0) {
@@ -188,6 +204,14 @@ export class Roads {
     material.color.setHex(color);
     this.materialCache.set(key, material);
     return material;
+  }
+
+  roadSurfaceMaterial(path) {
+    if (path.hierarchy === 'dirt') return this.world.materials.dirtRoad;
+    if (path.hierarchy === 'security') return this.world.materials.securityRoad;
+    if (path.hierarchy === 'plaza') return this.world.materials.plazaRoad;
+    if (path.hierarchy === 'stunt') return this.world.materials.stuntRamp;
+    return this.world.materials.stoneRoad;
   }
 
   createGuidanceMarkers() {
@@ -326,6 +350,83 @@ function roadMarkerSpacing(path) {
   if (path.hierarchy === 'dirt') return 16;
   if (path.hierarchy === 'avenue') return 15;
   return 13.5;
+}
+
+function pointKey(point) {
+  return `${point[0].toFixed(2)}:${point[1].toFixed(2)}`;
+}
+
+function createJunctionConnection(point, neighbor, path) {
+  const dx = neighbor[0] - point[0];
+  const dz = neighbor[1] - point[1];
+  const length = Math.hypot(dx, dz) || 1;
+  return {
+    path,
+    width: path.width,
+    direction: { x: dx / length, z: dz / length }
+  };
+}
+
+function dominantRoadPath(paths) {
+  return paths.reduce((best, path) => {
+    const bestLayer = ROAD_LAYER[best.hierarchy] ?? 1;
+    const pathLayer = ROAD_LAYER[path.hierarchy] ?? 1;
+    if (pathLayer !== bestLayer) return pathLayer > bestLayer ? path : best;
+    return path.width > best.width ? path : best;
+  }, paths[0]);
+}
+
+function createJunctionBlendGeometry(point, connections, padding, y) {
+  const center = { x: point[0], z: point[1] };
+  const outline = [];
+  for (const connection of connections) {
+    const halfWidth = connection.width * 0.5 + padding;
+    const reach = Math.max(connection.width * 0.72 + padding * 1.8, 4.8);
+    const right = { x: connection.direction.z, z: -connection.direction.x };
+    const forward = {
+      x: center.x + connection.direction.x * reach,
+      z: center.z + connection.direction.z * reach
+    };
+    outline.push({
+      x: forward.x - right.x * halfWidth,
+      z: forward.z - right.z * halfWidth
+    });
+    outline.push({
+      x: forward.x + right.x * halfWidth,
+      z: forward.z + right.z * halfWidth
+    });
+  }
+  outline.sort((a, b) => Math.atan2(a.z - center.z, a.x - center.x) - Math.atan2(b.z - center.z, b.x - center.x));
+
+  const vertices = new Float32Array((outline.length + 1) * 3);
+  const uvs = new Float32Array((outline.length + 1) * 2);
+  vertices[0] = center.x;
+  vertices[1] = y;
+  vertices[2] = center.z;
+  uvs[0] = 0.5;
+  uvs[1] = 0.5;
+  const textureScale = 22;
+  for (let i = 0; i < outline.length; i += 1) {
+    const vertex = outline[i];
+    const cursor = (i + 1) * 3;
+    vertices[cursor] = vertex.x;
+    vertices[cursor + 1] = y;
+    vertices[cursor + 2] = vertex.z;
+    const uvCursor = (i + 1) * 2;
+    uvs[uvCursor] = 0.5 + (vertex.x - center.x) / textureScale;
+    uvs[uvCursor + 1] = 0.5 + (vertex.z - center.z) / textureScale;
+  }
+
+  const indices = [];
+  for (let i = 0; i < outline.length; i += 1) {
+    indices.push(0, ((i + 1) % outline.length) + 1, i + 1);
+  }
+  const geometry = new THREE.BufferGeometry();
+  geometry.setAttribute('position', new THREE.BufferAttribute(vertices, 3));
+  geometry.setAttribute('uv', new THREE.BufferAttribute(uvs, 2));
+  geometry.setIndex(indices);
+  geometry.computeVertexNormals();
+  return geometry;
 }
 
 function distanceToBendSide(curve, t) {

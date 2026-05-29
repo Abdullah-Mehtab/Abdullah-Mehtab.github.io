@@ -701,6 +701,10 @@ async function collectRuntimeMetrics(page, loadMs, gameplay, water, surfaces, ro
         chevrons: game.scene.getObjectByName('ROAD_Guidance_Chevrons')?.count || 0,
         reflectorStuds: game.scene.getObjectByName('ROAD_Reflector_Studs')?.count || 0
       },
+      roadJunctions: {
+        blendPatches: game.world.roads?.roadGroup?.userData?.junctionPatchCount || 0,
+        circularPointCaps: game.world.roads?.roadGroup?.userData?.circularPointCaps || 0
+      },
       vehicleFx: game.vehicle.getEffectStats?.() || {},
       camera: {
         occlusion: sampleCameraOcclusion(game),
@@ -950,6 +954,8 @@ function assertVerification(result) {
   if (result.surfaces?.water !== 'water') failures.push(`surface probe failed: water=${result.surfaces?.water}`);
   if ((result.roadGuidance?.chevrons || 0) < 40) failures.push(`road guidance probe failed: chevrons=${result.roadGuidance?.chevrons || 0}`);
   if ((result.roadGuidance?.reflectorStuds || 0) < 140) failures.push(`road guidance probe failed: reflectorStuds=${result.roadGuidance?.reflectorStuds || 0}`);
+  if ((result.roadJunctions?.blendPatches || 0) < 8) failures.push(`road junction probe failed: blendPatches=${result.roadJunctions?.blendPatches || 0}`);
+  if ((result.roadJunctions?.circularPointCaps || 0) !== 0) failures.push(`road junction probe failed: circularPointCaps=${result.roadJunctions?.circularPointCaps || 0}`);
   const missingAuthored = (result.authoredDistrictAssets || []).filter((asset) => !asset.template || !asset.placed);
   if (missingAuthored.length) failures.push(`authored district assets missing: ${missingAuthored.map((asset) => asset.name).join(', ')}`);
   if (!result.mobile.ready || result.mobile.canvasSample <= 0) failures.push('mobile canvas did not render');
