@@ -132,11 +132,13 @@ try {
   await page.click('#map-button');
   await delay(350);
   await screenshot(page, 'map.png');
+  const mapUi = await sampleOverlayUi(page);
   await page.click('#map-close');
 
   await page.click('#menu-button');
   await delay(350);
   await screenshot(page, 'menu.png');
+  const menuUi = await sampleOverlayUi(page);
   await page.click('#menu-close');
 
   const collectibles = await exerciseCollectibles(page);
@@ -162,6 +164,7 @@ try {
     mobile,
     mobileSavedPreference,
     panelUi,
+    overlayUi: { map: mapUi, menu: menuUi },
     collectibles,
     ...metrics
   };
@@ -808,6 +811,10 @@ async function exercisePanelUi(page) {
   return sample;
 }
 
+async function sampleOverlayUi(page) {
+  return page.evaluate(() => window.__portfolioDrive.game.ui?.getOverlayStats?.() || {});
+}
+
 async function collectRuntimeMetrics(page, loadMs, gameplay, water, surfaces, surfaceFeedback, routeReplay, worldLife) {
   const runtime = await page.evaluate(async (expectedAssets) => {
     const frameDeltas = [];
@@ -1190,6 +1197,11 @@ function assertVerification(result) {
   if (result.panelUi?.mode !== 'terminal') failures.push(`panel UI probe failed: mode=${result.panelUi?.mode}`);
   if ((result.panelUi?.metaItems || 0) < 4) failures.push(`panel UI probe failed: meta items=${result.panelUi?.metaItems || 0}`);
   if ((result.panelUi?.cardWidth || 0) > 620) failures.push(`panel UI probe failed: card too wide=${result.panelUi?.cardWidth || 0}`);
+  if (!result.overlayUi?.map?.mapVisible || !result.overlayUi?.map?.mapDashboard || !result.overlayUi?.map?.mapConsole) failures.push('overlay UI probe failed: map console styling not active');
+  if (!result.overlayUi?.menu?.menuVisible || !result.overlayUi?.menu?.menuDashboard) failures.push('overlay UI probe failed: menu console styling not active');
+  if ((result.overlayUi?.map?.mapCardWidth || 0) > 700) failures.push(`overlay UI probe failed: map card too wide=${result.overlayUi?.map?.mapCardWidth || 0}`);
+  if ((result.overlayUi?.menu?.menuCardWidth || 0) > 480) failures.push(`overlay UI probe failed: menu card too wide=${result.overlayUi?.menu?.menuCardWidth || 0}`);
+  if ((result.overlayUi?.map?.mapPins || 0) !== worldZones.length) failures.push(`overlay UI probe failed: map pins=${result.overlayUi?.map?.mapPins || 0}/${worldZones.length}`);
   if (!result.water?.surfaceSeen) failures.push('water probe failed: surface state');
   if (!result.water?.splashSeen) failures.push('water probe failed: splash particles');
   if (!result.water?.wakeSeen) failures.push('water probe failed: wake rings');

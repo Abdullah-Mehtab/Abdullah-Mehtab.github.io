@@ -435,6 +435,7 @@ export class UI {
       pin.style.left = `${coords.x}%`;
       pin.style.top = `${coords.y}%`;
       pin.style.setProperty('--pin-color', zone.color);
+      pin.dataset.zoneId = zone.id;
       pin.textContent = zone.name;
       pin.title = `${zone.name} - ${zone.kind}`;
       pin.addEventListener('click', () => {
@@ -553,8 +554,9 @@ export class UI {
       this.minimapPlayer.style.top = `${coords.y}%`;
       this.minimapPlayer.style.transform = `translate(-50%, -50%) rotate(${rotation}rad)`;
     }
+    const activeZoneId = activeZone?.id || null;
     document.querySelectorAll('.map-pin').forEach((pin) => {
-      pin.classList.toggle('is-active', activeZone && pin.textContent === activeZone.name);
+      pin.classList.toggle('is-active', Boolean(activeZoneId && pin.dataset.zoneId === activeZoneId));
     });
   }
 
@@ -579,6 +581,24 @@ export class UI {
 
   getMapStats() {
     return { ...this.mapStats };
+  }
+
+  getOverlayStats() {
+    const menuCard = this.refs.menu?.querySelector('.menu-card');
+    const mapCard = this.refs.mapModal?.querySelector('.map-card');
+    const worldMap = this.refs.worldMap;
+    return {
+      menuDashboard: Boolean(menuCard?.classList.contains('drive-console')),
+      mapDashboard: Boolean(mapCard?.classList.contains('drive-console')),
+      mapConsole: Boolean(mapCard?.classList.contains('map-console')),
+      menuVisible: Boolean(this.refs.menu && !this.refs.menu.hidden),
+      mapVisible: Boolean(this.refs.mapModal && !this.refs.mapModal.hidden),
+      menuCardWidth: Math.round(menuCard?.getBoundingClientRect?.().width || 0),
+      mapCardWidth: Math.round(mapCard?.getBoundingClientRect?.().width || 0),
+      worldMapWidth: Math.round(worldMap?.getBoundingClientRect?.().width || 0),
+      mapPins: this.refs.worldMapLayer?.querySelectorAll('.map-pin').length || 0,
+      activeMapPins: this.refs.worldMapLayer?.querySelectorAll('.map-pin.is-active').length || 0
+    };
   }
 }
 
