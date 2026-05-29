@@ -1,3 +1,5 @@
+// ABOUTME: Loads and animates the protected Sabre Turbo-style car for /play.
+// ABOUTME: Adds lights, smoke, skid marks, surface feedback, respawn, and muscle-car tricks.
 import * as THREE from 'three';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 import { VehicleController } from '../physics/VehicleController.js';
@@ -6,6 +8,7 @@ import sabreTurboModelUrl from '../../assets/models/vehicles/sabre-turbo.glb?url
 
 const START = new THREE.Vector3(10, 1.08, 27);
 const VISUAL_Y_OFFSET = -0.88;
+const DEFAULT_SURFACE = { id: 'road', drag: 1, dustColor: 0x6f6250, skidColor: 0x161410, skidMarks: true };
 
 export class Vehicle {
   constructor({ scene, physics, achievements, audio }) {
@@ -27,6 +30,7 @@ export class Vehicle {
     this.distanceAccumulator = 0;
     this.lastPosition = START.clone();
     this.visualRumbleTime = 0;
+    this.surface = DEFAULT_SURFACE;
     this.trails = [];
     this.skidMarks = [];
     this.trailGeometry = new THREE.SphereGeometry(0.08, 8, 5);
@@ -39,6 +43,11 @@ export class Vehicle {
     this.loadVehicleModel();
     this.scene.add(this.group);
     this.respawn();
+  }
+
+  setSurface(surface) {
+    this.surface = surface ? { ...DEFAULT_SURFACE, ...surface } : DEFAULT_SURFACE;
+    this.controller?.setSurface(this.surface);
   }
 
   createBody() {
@@ -179,6 +188,7 @@ export class Vehicle {
     }
 
     const state = this.controller.update(input, dt);
+    const surface = this.surface || DEFAULT_SURFACE;
     this.speed = this.controller.speed;
     if (state.boost && this.controller.speed > 3) this.achievements.unlock('boost');
     if (input.consume('jump')) {
@@ -195,6 +205,7 @@ export class Vehicle {
     }
     if (input.consume('respawn')) this.respawn();
 
+    this.applySurfaceDrag(surface, dt);
     this.trackDistance();
     this.syncModel();
     this.updateVehicleLights(input, state);
@@ -205,7 +216,7 @@ export class Vehicle {
     if (state.wheelie && this.controller.speed > 4) this.spawnRearSmoke(false);
     if (state.boost && this.controller.speed > 8) this.spawnBoostFlame();
     if (state.handbrake && this.controller.speed > 6) this.spawnSkidMark();
-    if (this.controller.speed > 10 || (state.handbrake && this.controller.speed > 4)) this.spawnTrail(state.boost, state.handbrake);
+    if (this.controller.speed > 10 || (state.handbrake && this.controller.speed > 4)) this.spawnTrail(state.boost, state.handbrake, surface);
   }
 
   postPhysics() {
@@ -229,6 +240,13 @@ export class Vehicle {
     this.lastPosition.copy(pos);
   }
 
+  applySurfaceDrag(surface, dt) {
+    if (!surface || surface.drag >= 1 || this.controller.groundedWheels < 2) return;
+    const damp = Math.pow(surface.drag, Math.min(2, dt * 60));
+    const velocity = this.body.linvel();
+    this.body.setLinvel({ x: velocity.x * damp, y: velocity.y, z: velocity.z * damp }, true);
+  }
+
   syncModel() {
     const translation = this.body.translation();
     const rotation = this.body.rotation();
@@ -239,13 +257,16 @@ export class Vehicle {
   updateVisualRumble(dt) {
     this.visualRumbleTime += dt * (1 + Math.min(3.2, this.speed * 0.035));
     const state = this.controller?.driveState || {};
+    const surfaceRumble = ['grass', 'sand', 'shore'].includes(this.surface?.id) && this.controller.groundedWheels > 1
+      ? Math.min(0.006, this.speed * 0.00018)
+      : 0;
     const rumble = state.burnout
       ? 0.022
       : state.wheelie
         ? 0.012
         : Math.min(0.008, this.speed * 0.00012);
     const idle = this.speed < 1 ? 0.003 : 0;
-    const amount = rumble + idle;
+    const amount = rumble + idle + surfaceRumble;
     this.modelRoot.position.set(
       0,
       VISUAL_Y_OFFSET + Math.sin(this.visualRumbleTime * 35) * amount,
@@ -282,15 +303,15 @@ export class Vehicle {
     }
   }
 
-  spawnTrail(boosting, drifting = false) {
+  spawnTrail(boosting, drifting = false, surface = this.surface) {
     if (this.trails.length > 45) return;
     const rear = new THREE.Vector3(0, 0.2, -2.6).applyQuaternion(this.group.quaternion).add(this.group.position);
     const particle = new THREE.Mesh(
       this.trailGeometry,
       new THREE.MeshBasicMaterial({
-        color: boosting ? 0xff9a4c : drifting ? 0xcfd4cf : 0x6f6250,
+        color: boosting ? 0xff9a4c : drifting ? (surface?.skidColor ?? 0xcfd4cf) : (surface?.dustColor ?? 0x6f6250),
         transparent: true,
-        opacity: boosting ? 0.18 : drifting ? 0.16 : 0.09,
+        opacity: boosting ? 0.18 : drifting ? 0.17 : ['sand', 'shore', 'grass'].includes(surface?.id) ? 0.14 : 0.09,
         depthWrite: false
       })
     );
@@ -359,6 +380,7 @@ export class Vehicle {
   }
 
   spawnSkidMark() {
+    if (this.surface?.skidMarks === false) return;
     if (this.skidMarks.length > 64) {
       const old = this.skidMarks.shift();
       this.scene.remove(old.mesh);

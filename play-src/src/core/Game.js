@@ -173,6 +173,7 @@ export class Game {
     const vehiclePosition = this.vehicle.position;
     const nearest = this.world.nearestZone(vehiclePosition);
     this.activeZone = nearest?.zone || null;
+    this.vehicle.setSurface(this.world.getSurfaceInfo(vehiclePosition));
 
     const canDrive = this.started && !this.ui.isPanelOpen();
     this.physics.step(dt, (fixedDt) => {

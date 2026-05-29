@@ -46,6 +46,7 @@ try {
   await screenshot(page, '03-driving-stress.png');
   const water = await exerciseWater(page, ISLAND_RADIUS);
   await screenshot(page, '04-water-interaction.png');
+  const surfaces = await sampleSurfaces(page, ISLAND_RADIUS);
 
   for (const zone of worldZones) {
     await page.evaluate((zoneId) => window.__portfolioDrive.respawn(zoneId), zone.id);
@@ -67,7 +68,7 @@ try {
   await delay(300);
   await screenshot(page, 'debug-colliders.png');
 
-  const metrics = await collectRuntimeMetrics(page, loadMs, gameplay, water);
+  const metrics = await collectRuntimeMetrics(page, loadMs, gameplay, water, surfaces);
   const mobile = await captureMobile(browser);
   const result = {
     baseUrl,
@@ -303,7 +304,23 @@ async function exerciseWater(page, islandRadius) {
   }, islandRadius);
 }
 
-async function collectRuntimeMetrics(page, loadMs, gameplay, water) {
+async function sampleSurfaces(page, islandRadius) {
+  return page.evaluate((radius) => {
+    const game = window.__portfolioDrive.game;
+    const sample = (x, z) => game.world.getSurfaceInfo({ x, y: 1.08, z }).id;
+    const grassCandidates = [[32, 0], [-18, 112], [42, 8], [-22, -28], [106, 18]];
+    const grass = grassCandidates.map(([x, z]) => sample(x, z)).find((id) => id === 'grass') || null;
+    return {
+      road: sample(0, 24),
+      grass,
+      sand: sample(radius * 0.91, 0),
+      shore: sample(radius * 0.985, 0),
+      water: sample(radius * 1.025, 0)
+    };
+  }, islandRadius);
+}
+
+async function collectRuntimeMetrics(page, loadMs, gameplay, water, surfaces) {
   const runtime = await page.evaluate(async () => {
     const frameDeltas = [];
     await new Promise((resolveFrames) => {
@@ -356,6 +373,7 @@ async function collectRuntimeMetrics(page, loadMs, gameplay, water) {
     loadMs,
     gameplay,
     water,
+    surfaces,
     ...runtime
   };
 }
@@ -408,6 +426,11 @@ function assertVerification(result) {
   if (!result.water?.splashSeen) failures.push('water probe failed: splash particles');
   if (!result.water?.dragReduced) failures.push('water probe failed: drag');
   if (!result.water?.submergeRespawned) failures.push('water probe failed: submerge respawn');
+  if (result.surfaces?.road !== 'road') failures.push(`surface probe failed: road=${result.surfaces?.road}`);
+  if (result.surfaces?.grass !== 'grass') failures.push(`surface probe failed: grass=${result.surfaces?.grass}`);
+  if (result.surfaces?.sand !== 'sand') failures.push(`surface probe failed: sand=${result.surfaces?.sand}`);
+  if (result.surfaces?.shore !== 'shore') failures.push(`surface probe failed: shore=${result.surfaces?.shore}`);
+  if (result.surfaces?.water !== 'water') failures.push(`surface probe failed: water=${result.surfaces?.water}`);
   if (!result.mobile.ready || result.mobile.canvasSample <= 0) failures.push('mobile canvas did not render');
   if (failures.length) {
     throw new Error(`Play verification failed: ${failures.join('; ')}`);

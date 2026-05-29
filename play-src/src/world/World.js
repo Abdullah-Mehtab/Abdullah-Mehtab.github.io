@@ -2,6 +2,7 @@
 // ABOUTME: Preserves portfolio zone contracts while allowing the island layout to be rebuilt.
 import * as THREE from 'three';
 import {
+  ISLAND_RADIUS,
   circuitCheckpoints,
   roadSegments,
   worldZones
@@ -16,7 +17,15 @@ import { StuntPark } from './StuntPark.js';
 import { Terrain } from './Terrain.js';
 import { Water } from './Water.js';
 import { Zones } from './Zones.js';
-import { createWorldMaterials, QUALITY_ORDER, QUALITY_PROFILES } from './WorldMaterials.js';
+import { createWorldMaterials, QUALITY_ORDER, QUALITY_PROFILES, WATER_Y } from './WorldMaterials.js';
+
+const SURFACES = {
+  road: { id: 'road', label: 'road', forwardGrip: 1, sideGrip: 1, engineFactor: 1, topSpeedFactor: 1, drag: 1, dustColor: 0x6f6250, skidColor: 0x161410, skidMarks: true },
+  grass: { id: 'grass', label: 'grass', forwardGrip: 0.86, sideGrip: 0.72, engineFactor: 0.92, topSpeedFactor: 0.86, drag: 0.988, dustColor: 0x6e8c42, skidColor: 0x26381d, skidMarks: false },
+  sand: { id: 'sand', label: 'sand', forwardGrip: 0.72, sideGrip: 0.56, engineFactor: 0.76, topSpeedFactor: 0.68, drag: 0.965, dustColor: 0xd2a56f, skidColor: 0x8d6338, skidMarks: false },
+  shore: { id: 'shore', label: 'shore', forwardGrip: 0.68, sideGrip: 0.48, engineFactor: 0.7, topSpeedFactor: 0.58, drag: 0.948, dustColor: 0x9bd6cf, skidColor: 0x6fa1a0, skidMarks: false },
+  water: { id: 'water', label: 'water', forwardGrip: 0.38, sideGrip: 0.28, engineFactor: 0.42, topSpeedFactor: 0.36, drag: 1, dustColor: 0xb8fff0, skidColor: 0x7edbd4, skidMarks: false }
+};
 
 export class World {
   constructor({ scene, physics, resumeData, environmentAssets }) {
@@ -211,6 +220,30 @@ export class World {
 
   getRespawnPosition(zoneId = 'landing') {
     return this.getRespawnPose(zoneId).position;
+  }
+
+  getSurfaceInfo(position) {
+    if (!position) return SURFACES.road;
+    const distance = Math.hypot(position.x, position.z);
+    const inWater = distance > ISLAND_RADIUS * 1.012 || position.y < WATER_Y + 0.24;
+    const onRoad = this.roads?.isNear(position.x, position.z, 0.9);
+    let surface = SURFACES.grass;
+    if (inWater) {
+      surface = SURFACES.water;
+    } else if (onRoad) {
+      surface = SURFACES.road;
+    } else if (distance > ISLAND_RADIUS * 0.965) {
+      surface = SURFACES.shore;
+    } else if (distance > ISLAND_RADIUS * 0.88) {
+      surface = SURFACES.sand;
+    }
+    this.surfaceState = {
+      label: surface.label,
+      inWater: surface.id === 'water',
+      nearShore: surface.id === 'shore' || surface.id === 'sand',
+      onRoad
+    };
+    return surface;
   }
 
   startCircuit(now) {
