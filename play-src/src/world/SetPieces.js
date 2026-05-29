@@ -55,6 +55,13 @@ export class SetPieces {
       authoredAssets: 0,
       guideStrips: 0
     };
+    this.districtStoryStats = {
+      authoredAssets: 0,
+      crateStacks: 0,
+      terminalBanks: 0,
+      archiveSteps: 0,
+      todoStacks: 0
+    };
   }
 
   build() {
@@ -166,6 +173,10 @@ export class SetPieces {
 
   getGatewayStats() {
     return { ...this.gatewayStats };
+  }
+
+  getDistrictStoryStats() {
+    return { ...this.districtStoryStats };
   }
 
   createStartDiorama() {
@@ -326,13 +337,12 @@ export class SetPieces {
     this.addPolishAsset(group, 'EnvPolishProjectForge', projects.position[0] + 4.6, projects.position[2] + 1.8, -0.52, 1.04);
     this.addPolishAsset(group, 'EnvPolishInfoKiosk', projects.position[0] - 8.4, projects.position[2] - 8.8, 0.34, 0.78);
     this.addPolishAsset(group, 'EnvPolishRoadBarrier', projects.position[0] + 14.2, projects.position[2] + 1.2, -0.46, 0.82);
-    for (const [x, z] of [
-      [projects.position[0] + 8, projects.position[2] - 4],
-      [projects.position[0] + 13, projects.position[2] - 7],
-      [projects.position[0] - 4, projects.position[2] + 8],
-      [projects.position[0] + 2, projects.position[2] + 11]
+    for (const [x, z, rotation, scale] of [
+      [projects.position[0] + 9.0, projects.position[2] - 4.6, 0.34, 0.82],
+      [projects.position[0] - 4.2, projects.position[2] + 8.4, -0.18, 0.74],
+      [projects.position[0] + 3.0, projects.position[2] + 11.2, 0.56, 0.68]
     ]) {
-      this.box(group, x, 0.6, z, 1.25, 1.1, 1.25, this.world.materials.darkWood, 0.3, 'FoundryCrateStack');
+      this.addDistrictStoryAsset(group, 'EnvPolishBuildCrateStack', x, z, rotation, scale, 'crateStacks');
     }
 
     const cv = findZone('cv');
@@ -384,26 +394,24 @@ export class SetPieces {
     this.addSign(group, 'STACK', 'Skills Terminal', skills.position[0] - 11, skills.position[2] + 10, -0.62, 0x92ffea, 2.4, 'SkillsTerminalSign');
     this.addPolishAsset(group, 'EnvPolishSkillsArray', skills.position[0] - 0.6, skills.position[2] - 1.4, -0.62, 1.02);
     this.addPolishAsset(group, 'EnvPolishTerminalPillar', skills.position[0] + 10.8, skills.position[2] + 5.6, -0.62, 0.9);
-    for (let i = 0; i < 5; i += 1) {
-      this.box(group, skills.position[0] - 7 + i * 3.5, 0.95, skills.position[2] - 8, 1.5, 1.5, 0.22, this.world.materials.screen, -0.2, 'SkillsScreen');
-      this.cylinder(group, skills.position[0] - 7 + i * 3.5, 0.5, skills.position[2] - 7.75, 0.08, 1.0, this.world.materials.cable, 8, 'SkillsScreenPost');
+    for (const [x, z, rotation, scale] of [
+      [skills.position[0] - 4.8, skills.position[2] - 7.6, -0.2, 0.74],
+      [skills.position[0] + 5.2, skills.position[2] - 8.0, -0.12, 0.7]
+    ]) {
+      this.addDistrictStoryAsset(group, 'EnvPolishTerminalBank', x, z, rotation, scale, 'terminalBanks');
     }
 
     const awards = findZone('awards');
     this.addSign(group, 'AWARDS', 'Archive Steps', awards.position[0] - 9, awards.position[2] + 8, -0.2, 0xffdf8a, 2.3, 'AwardsSign');
     this.addPolishAsset(group, 'EnvPolishAwardsMonument', awards.position[0] + 0.2, awards.position[2] + 1.4, -0.18, 1.05);
     this.addPolishAsset(group, 'EnvPolishBenchPlanter', awards.position[0] + 7.5, awards.position[2] + 6.2, -0.34, 0.78);
-    for (let i = 0; i < 4; i += 1) {
-      this.box(group, awards.position[0], 0.22 + i * 0.16, awards.position[2] - 2 + i * 1.25, 10 - i * 1.2, 0.22, 1.0, this.world.materials.warmStone, 0, 'AwardsStep');
-    }
+    this.addDistrictStoryAsset(group, 'EnvPolishArchiveStepCluster', awards.position[0] - 1.2, awards.position[2] - 3.1, 0.02, 0.9, 'archiveSteps');
 
     const todo = findZone('todo');
     this.addSign(group, 'TODO', 'Build Queue', todo.position[0] - 8, todo.position[2] - 7, 0.68, 0xb6a0ff, 2.2, 'TodoSign');
     this.addPolishAsset(group, 'EnvPolishTodoBoard', todo.position[0] + 0.6, todo.position[2] + 1.0, 0.34, 1.02);
     this.addPolishAsset(group, 'EnvPolishInfoKiosk', todo.position[0] + 6.8, todo.position[2] - 5.2, -0.24, 0.72);
-    for (let i = 0; i < 4; i += 1) {
-      this.box(group, todo.position[0] + i * 2.0 - 3, 1.1, todo.position[2] + 6, 1.35, 1.4, 0.18, i % 2 ? this.world.materials.glowPink : this.world.materials.glowBlue, 0.1, 'TodoCards');
-    }
+    this.addDistrictStoryAsset(group, 'EnvPolishTodoCardStack', todo.position[0] - 1.4, todo.position[2] + 6.2, 0.1, 0.86, 'todoStacks');
 
     const career = findZone('career');
     this.addSign(group, 'CAREER', 'Signal Office', career.position[0] - 10, career.position[2] + 9, -0.35, 0xb6a0ff, 2.4, 'CareerSign');
@@ -422,8 +430,8 @@ export class SetPieces {
     this.addSign(group, 'BEHIND', 'Process Yard', behind.position[0] - 10, behind.position[2] + 8, -0.2, 0x8fd3ff, 2.3, 'BehindSign');
     this.addPolishAsset(group, 'EnvPolishBuildWorkbench', behind.position[0] + 0.6, behind.position[2] - 1.2, 0.08, 1.08);
     this.addPolishAsset(group, 'EnvPolishTerminalPillar', behind.position[0] + 8.4, behind.position[2] + 3.6, 0.3, 0.82);
-    for (const [dx, dz, sx, sz] of [[-6, -5, 5, 2.2], [1, -7, 3.5, 2.2], [7, -3, 4, 2.2]]) {
-      this.box(group, behind.position[0] + dx, 0.56, behind.position[2] + dz, sx, 1.0, sz, this.world.materials.darkWood, 0.25, 'BehindWorkshopCrate');
+    for (const [dx, dz, rotation, scale] of [[-6, -5, 0.22, 0.86], [1, -7, -0.12, 0.72], [7, -3, 0.42, 0.76]]) {
+      this.addDistrictStoryAsset(group, 'EnvPolishBuildCrateStack', behind.position[0] + dx, behind.position[2] + dz, rotation, scale, 'crateStacks');
     }
 
     const potato = findZone('potato');
@@ -979,6 +987,14 @@ export class SetPieces {
     asset.rotation.y = rotation;
     asset.scale.setScalar(scale);
     group.add(asset);
+    return true;
+  }
+
+  addDistrictStoryAsset(group, assetName, x, z, rotation, scale, statName) {
+    const placed = this.addPolishAsset(group, assetName, x, z, rotation, scale);
+    if (!placed) return false;
+    this.districtStoryStats.authoredAssets += 1;
+    this.districtStoryStats[statName] = (this.districtStoryStats[statName] || 0) + 1;
     return true;
   }
 

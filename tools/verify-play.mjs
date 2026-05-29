@@ -27,7 +27,11 @@ const authoredDistrictAssets = [
   'EnvPolishFarmIrrigator',
   'EnvPolishHarborSignal',
   'EnvPolishDistrictGateway',
-  'EnvPolishRouteLantern'
+  'EnvPolishRouteLantern',
+  'EnvPolishBuildCrateStack',
+  'EnvPolishTerminalBank',
+  'EnvPolishArchiveStepCluster',
+  'EnvPolishTodoCardStack'
 ];
 const authoredStuntAssets = [
   'EnvPolishStuntCheckpoint',
@@ -854,6 +858,7 @@ async function collectRuntimeMetrics(page, loadMs, gameplay, water, surfaces, su
       terrainRelief: game.world.terrain?.getReliefStats?.() || {},
       approachDressing: game.world.setPieces?.getApproachStats?.() || {},
       districtGateways: game.world.setPieces?.getGatewayStats?.() || {},
+      districtStory: game.world.setPieces?.getDistrictStoryStats?.() || {},
       props: game.world.props?.getStats?.() || {},
       stuntPark: game.world.stuntPark?.getStats?.() || {},
       waterStats: game.world.water?.getStats?.() || {},
@@ -1180,6 +1185,11 @@ function assertVerification(result) {
   if ((result.districtGateways?.lanterns || 0) < 24) failures.push(`district gateway probe failed: lanterns=${result.districtGateways?.lanterns || 0}`);
   if ((result.districtGateways?.authoredAssets || 0) < 36) failures.push(`district gateway probe failed: authoredAssets=${result.districtGateways?.authoredAssets || 0}`);
   if ((result.districtGateways?.guideStrips || 0) < 60) failures.push(`district gateway probe failed: guideStrips=${result.districtGateways?.guideStrips || 0}`);
+  if ((result.districtStory?.authoredAssets || 0) < 10) failures.push(`district story probe failed: authoredAssets=${result.districtStory?.authoredAssets || 0}`);
+  if ((result.districtStory?.crateStacks || 0) < 6) failures.push(`district story probe failed: crateStacks=${result.districtStory?.crateStacks || 0}`);
+  if ((result.districtStory?.terminalBanks || 0) < 2) failures.push(`district story probe failed: terminalBanks=${result.districtStory?.terminalBanks || 0}`);
+  if ((result.districtStory?.archiveSteps || 0) < 1) failures.push(`district story probe failed: archiveSteps=${result.districtStory?.archiveSteps || 0}`);
+  if ((result.districtStory?.todoStacks || 0) < 1) failures.push(`district story probe failed: todoStacks=${result.districtStory?.todoStacks || 0}`);
   if ((result.props?.roadLanterns || 0) < 8) failures.push(`props probe failed: roadLanterns=${result.props?.roadLanterns || 0}`);
   if ((result.props?.authoredLanterns || 0) !== (result.props?.roadLanterns || 0)) failures.push(`props probe failed: authoredLanterns=${result.props?.authoredLanterns || 0}/${result.props?.roadLanterns || 0}`);
   if ((result.props?.fallbackLanterns || 0) !== 0) failures.push(`props probe failed: fallbackLanterns=${result.props?.fallbackLanterns || 0}`);

@@ -41,6 +41,10 @@ def main():
     create_route_lantern(mats)
     create_coast_rock_cluster(mats)
     create_beach_grass_clump(mats)
+    create_build_crate_stack(mats)
+    create_terminal_bank(mats)
+    create_archive_step_cluster(mats)
+    create_todo_card_stack(mats)
 
     output = Path(args.output)
     output.parent.mkdir(parents=True, exist_ok=True)
@@ -381,6 +385,24 @@ def create_build_workbench(mats):
         cube(f"BuildWorkbench_Tool_{i}", group, (x, 1.12, 0.72), (0.52, 0.08, 0.08), mats["mint" if i % 2 else "amber"], bevel=0.004)
 
 
+def create_build_crate_stack(mats):
+    group = root("EnvPolishBuildCrateStack")
+    cube("BuildCrateStack_Pallet", group, (0, 0.12, 0), (3.8, 0.24, 1.9), mats["wood"], bevel=0.028)
+    crate_specs = [
+        (-1.15, 0.6, -0.25, 1.25, 0.92, 1.05, -0.08, "stone_shadow"),
+        (0.08, 0.52, 0.22, 1.08, 0.78, 0.92, 0.16, "wood"),
+        (1.05, 0.72, -0.18, 1.32, 1.12, 1.0, -0.18, "stone"),
+        (0.28, 1.32, -0.16, 0.86, 0.62, 0.82, 0.12, "dark"),
+    ]
+    for index, (x, y, z, sx, sy, sz, rot, material) in enumerate(crate_specs):
+        cube(f"BuildCrateStack_Crate_{index}", group, (x, y, z), (sx, sy, sz), mats[material], rot=(0, rot, 0), bevel=0.035)
+    cube("BuildCrateStack_StripeAmber", group, (-1.15, 1.08, -0.82), (1.0, 0.08, 0.065), mats["amber"], rot=(0, -0.08, 0), bevel=0.004)
+    cube("BuildCrateStack_StripeMint", group, (1.05, 1.26, -0.76), (1.08, 0.08, 0.065), mats["mint"], rot=(0, -0.18, 0), bevel=0.004)
+    cube("BuildCrateStack_Cable", group, (0.1, 0.32, 0.84), (3.05, 0.1, 0.12), mats["rope"], rot=(0, 0.06, 0), bevel=0.014)
+    for x in [-1.62, -0.54, 0.54, 1.62]:
+        cube("BuildCrateStack_FootGlow", group, (x, 0.28, -1.02), (0.34, 0.12, 0.08), mats["screen"], bevel=0.006)
+
+
 def create_farm_irrigator(mats):
     group = root("EnvPolishFarmIrrigator")
     cube("FarmIrrigator_PumpBase", group, (0, 0.24, 0), (1.5, 0.48, 1.1), mats["stone_shadow"], bevel=0.035)
@@ -451,6 +473,54 @@ def create_beach_grass_clump(mats):
         cone("BeachGrass_Blade", group, (x, 0.42 + index * 0.015, 0.02 + math.sin(index) * 0.16), 0.095, 0.74 + index * 0.035, mats["leaf"], vertices=5, rot=(0.2, x * 0.35, -0.06 + index * 0.02))
     for x in [-0.5, 0.05, 0.54]:
         cube("BeachGrass_Flower", group, (x, 0.82, -0.18), (0.14, 0.12, 0.14), mats["flower"], bevel=0.018)
+
+
+def create_terminal_bank(mats):
+    group = root("EnvPolishTerminalBank")
+    cube("TerminalBank_Base", group, (0, 0.14, 0), (5.4, 0.28, 1.45), mats["stone_shadow"], bevel=0.04)
+    for index, x in enumerate([-1.75, 0, 1.75]):
+        cube(f"TerminalBank_Post_{index}", group, (x, 1.42, 0.18), (0.22, 2.42, 0.22), mats["dark"], bevel=0.018)
+        cube(f"TerminalBank_Screen_{index}", group, (x, 1.52, -0.2), (1.28, 1.56, 0.08), [mats["screen"], mats["mint"], mats["purple"]][index], rot=(0, 0.04 * (index - 1), 0), bevel=0.012)
+        for line in range(3):
+            cube(f"TerminalBank_Line_{index}_{line}", group, (x, 1.12 + line * 0.33, -0.255), (0.72 - line * 0.08, 0.045, 0.055), mats["paper" if line == 1 else "aqua"], bevel=0.004)
+    cube("TerminalBank_Header", group, (0, 2.68, -0.08), (4.8, 0.22, 0.22), mats["dark"], bevel=0.018)
+    cube("TerminalBank_HeaderGlow", group, (0, 2.48, -0.22), (4.1, 0.08, 0.06), mats["mint"], bevel=0.004)
+    cube("TerminalBank_CableRun", group, (0, 0.42, 0.62), (4.6, 0.1, 0.13), mats["rope"], bevel=0.012)
+    for x in [-2.25, 2.25]:
+        cube("TerminalBank_SideLamp", group, (x, 2.2, -0.18), (0.32, 0.28, 0.08), mats["amber"], bevel=0.018)
+
+
+def create_archive_step_cluster(mats):
+    group = root("EnvPolishArchiveStepCluster")
+    step_specs = [
+        (0, 0.14, 0.62, 5.8, 0.28, 2.4, "stone"),
+        (0, 0.42, 0.18, 4.6, 0.28, 1.75, "paper"),
+        (0, 0.7, -0.16, 3.3, 0.28, 1.22, "stone_shadow"),
+    ]
+    for index, (x, y, z, sx, sy, sz, material) in enumerate(step_specs):
+        cube(f"ArchiveStepCluster_Step_{index}", group, (x, y, z), (sx, sy, sz), mats[material], bevel=0.035)
+    for index, x in enumerate([-1.55, -0.52, 0.52, 1.55]):
+        cube(f"ArchiveStepCluster_Card_{index}", group, (x, 1.06 + index * 0.04, -0.82), (0.64, 0.52, 0.08), [mats["gold"], mats["paper"], mats["mint"], mats["amber"]][index], rot=(0, 0, 0.08 - index * 0.05), bevel=0.008)
+    cube("ArchiveStepCluster_Trophy", group, (0, 1.38, -0.06), (0.92, 0.78, 0.66), mats["gold"], bevel=0.07)
+    cube("ArchiveStepCluster_Glow", group, (0, 1.88, -0.46), (1.55, 0.12, 0.08), mats["amber"], bevel=0.006)
+    for x in [-2.5, 2.5]:
+        cube("ArchiveStepCluster_SideLight", group, (x, 0.9, -0.64), (0.24, 0.42, 0.08), mats["purple"], bevel=0.014)
+
+
+def create_todo_card_stack(mats):
+    group = root("EnvPolishTodoCardStack")
+    cube("TodoCardStack_Base", group, (0, 0.12, 0), (4.2, 0.24, 1.3), mats["stone"], bevel=0.035)
+    card_specs = [
+        (-1.4, 0.84, -0.08, 0.96, 1.12, "paper", -0.12),
+        (-0.48, 1.02, -0.04, 0.96, 1.36, "mint", 0.06),
+        (0.48, 0.88, -0.06, 0.96, 1.18, "purple", -0.04),
+        (1.42, 1.06, -0.08, 0.96, 1.42, "amber", 0.12),
+    ]
+    for index, (x, y, z, sx, sy, material, rot) in enumerate(card_specs):
+        cube(f"TodoCardStack_Card_{index}", group, (x, y, z), (sx, sy, 0.08), mats[material], rot=(0, rot, 0), bevel=0.012)
+        cube(f"TodoCardStack_Pin_{index}", group, (x, y + sy * 0.32, z - 0.055), (0.18, 0.12, 0.04), mats["pink" if index % 2 else "aqua"], rot=(0, rot, 0), bevel=0.006)
+    cube("TodoCardStack_HeaderGlow", group, (0, 1.84, -0.12), (3.5, 0.08, 0.06), mats["purple"], bevel=0.004)
+    cube("TodoCardStack_Cable", group, (0, 0.38, 0.58), (3.65, 0.08, 0.1), mats["rope"], bevel=0.012)
 
 
 if __name__ == "__main__":
