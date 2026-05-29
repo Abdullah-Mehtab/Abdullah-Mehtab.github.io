@@ -52,6 +52,9 @@ def main():
     create_yard_edge_trim(mats)
     create_yard_surface_marks(mats)
     create_workshop_process_rail(mats)
+    create_signal_spire(mats)
+    create_workshop_canopy(mats)
+    create_garden_arch(mats)
 
     output = Path(args.output)
     output.parent.mkdir(parents=True, exist_ok=True)
@@ -625,6 +628,61 @@ def create_workshop_process_rail(mats):
     cube("WorkshopProcessRail_LowerCable", group, (0, 0.94, -0.08), (4.55, 0.08, 0.08), mats["rope"], bevel=0.01)
     for index, x in enumerate([-1.38, 0, 1.38]):
         cube(f"WorkshopProcessRail_Tag_{index}", group, (x, 1.22, -0.15), (0.58, 0.34, 0.06), [mats["mint"], mats["amber"], mats["screen"]][index], bevel=0.006)
+
+
+def create_signal_spire(mats):
+    group = root("EnvPolishSignalSpire")
+    cube("SignalSpire_PlazaBase", group, (0, 0.14, 0), (3.3, 0.28, 3.3), mats["stone_shadow"], bevel=0.05)
+    cube("SignalSpire_Core", group, (0, 2.3, 0), (0.38, 4.15, 0.38), mats["dark"], bevel=0.025)
+    for index, y in enumerate([0.95, 1.8, 2.65, 3.5]):
+        radius = 1.42 - index * 0.16
+        cube(f"SignalSpire_RingX_{index}", group, (0, y, 0), (radius * 2, 0.08, 0.12), mats["rope"], bevel=0.01)
+        cube(f"SignalSpire_RingZ_{index}", group, (0, y, 0), (0.12, 0.08, radius * 2), mats["rope"], bevel=0.01)
+        cube(f"SignalSpire_GlowX_{index}", group, (0, y + 0.08, -radius), (radius * 1.5, 0.05, 0.055), [mats["screen"], mats["mint"], mats["purple"], mats["amber"]][index], bevel=0.004)
+    cube("SignalSpire_BeaconStem", group, (0, 4.85, 0), (0.18, 1.05, 0.18), mats["dark"], bevel=0.012)
+    cube("SignalSpire_Beacon", group, (0, 5.48, 0), (0.72, 0.42, 0.72), mats["amber"], bevel=0.06)
+    cube("SignalSpire_ScreenNorth", group, (0, 2.6, -0.48), (1.08, 1.26, 0.07), mats["screen"], bevel=0.01)
+    cube("SignalSpire_ScreenSouth", group, (0, 1.55, 0.48), (0.92, 1.0, 0.07), mats["purple"], rot=(0, math.pi, 0), bevel=0.01)
+    for angle in [0, math.pi * 0.5, math.pi, math.pi * 1.5]:
+        x = math.sin(angle) * 1.38
+        z = math.cos(angle) * 1.38
+        cube("SignalSpire_FootLamp", group, (x, 0.58, z), (0.36, 0.36, 0.36), mats["mint"], rot=(0, angle, 0), bevel=0.035)
+
+
+def create_workshop_canopy(mats):
+    group = root("EnvPolishWorkshopCanopy")
+    cube("WorkshopCanopy_Deck", group, (0, 0.12, 0), (6.6, 0.24, 4.4), mats["stone_shadow"], bevel=0.045)
+    for x in [-2.65, 2.65]:
+        for z in [-1.65, 1.65]:
+            cube("WorkshopCanopy_Post", group, (x, 1.58, z), (0.22, 2.9, 0.22), mats["dark"], bevel=0.016)
+            cube("WorkshopCanopy_PostLamp", group, (x, 2.58, z - 0.08), (0.3, 0.26, 0.08), mats["amber"], bevel=0.015)
+    cube("WorkshopCanopy_Roof", group, (0, 3.1, 0), (7.35, 0.32, 4.95), mats["wood"], bevel=0.05)
+    cube("WorkshopCanopy_RoofGlow", group, (0, 2.88, -2.54), (5.9, 0.08, 0.08), mats["mint"], bevel=0.006)
+    cube("WorkshopCanopy_BackPanel", group, (0, 1.72, 1.82), (5.4, 1.65, 0.16), mats["dark"], bevel=0.025)
+    cube("WorkshopCanopy_MainScreen", group, (-1.25, 1.78, 1.68), (2.05, 1.04, 0.08), mats["screen"], bevel=0.012)
+    cube("WorkshopCanopy_SideScreen", group, (1.48, 1.55, 1.68), (1.42, 0.78, 0.08), mats["purple"], bevel=0.012)
+    cube("WorkshopCanopy_Bench", group, (-1.35, 0.78, -0.58), (2.25, 0.3, 1.1), mats["wood"], bevel=0.035)
+    cube("WorkshopCanopy_ToolCrate", group, (1.8, 0.64, -0.52), (1.35, 0.92, 1.02), mats["stone"], rot=(0, -0.16, 0), bevel=0.035)
+    for x in [-2.2, -0.75, 0.75, 2.2]:
+        cube("WorkshopCanopy_CableDrop", group, (x, 2.24, -1.46), (0.08, 1.12, 0.08), mats["rope"], bevel=0.006)
+        cube("WorkshopCanopy_HangingLamp", group, (x, 1.62, -1.46), (0.4, 0.26, 0.4), mats["amber"], bevel=0.03)
+
+
+def create_garden_arch(mats):
+    group = root("EnvPolishGardenArch")
+    cube("GardenArch_LeftFoot", group, (-2.35, 0.16, 0), (0.9, 0.32, 1.05), mats["stone"], bevel=0.04)
+    cube("GardenArch_RightFoot", group, (2.35, 0.16, 0), (0.9, 0.32, 1.05), mats["stone"], bevel=0.04)
+    cube("GardenArch_LeftPost", group, (-2.35, 1.75, 0), (0.38, 3.05, 0.38), mats["wood"], bevel=0.03)
+    cube("GardenArch_RightPost", group, (2.35, 1.75, 0), (0.38, 3.05, 0.38), mats["wood"], bevel=0.03)
+    cube("GardenArch_TopBeam", group, (0, 3.34, 0), (5.45, 0.42, 0.48), mats["wood"], bevel=0.035)
+    cube("GardenArch_GlowStrip", group, (0, 3.08, -0.28), (4.3, 0.08, 0.06), mats["mint"], bevel=0.005)
+    for index, x in enumerate([-1.75, -1.05, -0.35, 0.35, 1.05, 1.75]):
+        cone("GardenArch_VineBlade", group, (x, 2.92 + math.sin(index) * 0.12, -0.16), 0.12, 0.82, mats["leaf"], vertices=5, rot=(0.12, x * 0.35, 0.25))
+        cube("GardenArch_Blossom", group, (x, 2.5 + math.cos(index) * 0.16, -0.28), (0.2, 0.16, 0.08), [mats["flower"], mats["amber"], mats["purple"]][index % 3], bevel=0.015)
+    for x in [-1.35, 1.35]:
+        cube("GardenArch_LampStem", group, (x, 2.35, -0.34), (0.08, 0.7, 0.08), mats["dark"], bevel=0.006)
+        cube("GardenArch_Lamp", group, (x, 1.92, -0.34), (0.34, 0.24, 0.34), mats["amber"], bevel=0.025)
+    cube("GardenArch_PathStone", group, (0, 0.08, -0.85), (4.55, 0.12, 0.72), mats["paper"], bevel=0.025)
 
 
 if __name__ == "__main__":

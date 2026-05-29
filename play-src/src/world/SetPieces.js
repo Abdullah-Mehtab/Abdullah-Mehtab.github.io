@@ -75,7 +75,8 @@ export class SetPieces {
       authoredAssets: 0,
       edgeTrims: 0,
       surfaceMarks: 0,
-      rails: 0
+      rails: 0,
+      silhouetteAnchors: 0
     };
     this.circuitStartStats = {
       pads: 0,
@@ -334,6 +335,7 @@ export class SetPieces {
     this.addPolishAsset(group, 'EnvPolishInfoKiosk', zone.position[0] + 20.4, zone.position[2] - 16.5, -0.34, 0.82);
     this.addPolishAsset(group, 'EnvPolishBenchPlanter', zone.position[0] - 20.8, zone.position[2] + 5.2, 0.64, 0.9);
     this.addPolishAsset(group, 'EnvPolishBenchPlanter', zone.position[0] + 20.2, zone.position[2] + 6.4, -0.62, 0.9);
+    this.addPolishAsset(group, 'EnvPolishGardenArch', zone.position[0] + 17.6, zone.position[2] - 18.6, -0.12, 0.78);
     this.campusArch(group, zone.position[0] - 15.5, zone.position[2] - 18.8, 0.08);
     this.hedgeLine(group, zone.position[0] - 23, zone.position[2] - 20, 45, 0);
     this.hedgeLine(group, zone.position[0] + 23, zone.position[2] - 20, 45, 0);
@@ -408,6 +410,7 @@ export class SetPieces {
     this.addPolishAsset(group, 'EnvPolishProjectForge', projects.position[0] + 4.6, projects.position[2] + 1.8, -0.52, 1.04);
     this.addPolishAsset(group, 'EnvPolishInfoKiosk', projects.position[0] - 8.4, projects.position[2] - 8.8, 0.34, 0.78);
     this.addPolishAsset(group, 'EnvPolishRoadBarrier', projects.position[0] + 14.2, projects.position[2] + 1.2, -0.46, 0.82);
+    this.addSilhouetteAnchor(group, 'EnvPolishWorkshopCanopy', projects.position[0] + 1.4, projects.position[2] - 6.2, -0.42, 0.92);
     for (const [x, z, rotation, scale] of [
       [projects.position[0] + 9.0, projects.position[2] - 4.6, 0.34, 0.82],
       [projects.position[0] - 4.2, projects.position[2] + 8.4, -0.18, 0.74],
@@ -456,6 +459,7 @@ export class SetPieces {
     this.addSign(group, 'SENTINEL', 'Cyber Ridge', sentinel.position[0] - 12, sentinel.position[2] - 12, 0.22, 0xff6d8d, 2.7, 'SentinelRidgeSign');
     this.addPolishAsset(group, 'EnvPolishSkillsArray', sentinel.position[0] - 4.4, sentinel.position[2] + 2.8, -0.12, 0.78);
     this.addPolishAsset(group, 'EnvPolishSignalTotem', sentinel.position[0] + 2.4, sentinel.position[2] + 11.8, -0.18, 1.05);
+    this.addSilhouetteAnchor(group, 'EnvPolishSignalSpire', sentinel.position[0] + 8.8, sentinel.position[2] + 6.8, -0.18, 1.04);
     this.antennaCluster(group, sentinel.position[0] + 10, sentinel.position[2] - 4, 0xff6d8d);
     this.antennaCluster(group, sentinel.position[0] - 8, sentinel.position[2] + 8, 0x68d8ff);
 
@@ -463,6 +467,7 @@ export class SetPieces {
     this.addSign(group, 'STACK', 'Skills Terminal', skills.position[0] - 11, skills.position[2] + 10, -0.62, 0x92ffea, 2.4, 'SkillsTerminalSign');
     this.addPolishAsset(group, 'EnvPolishSkillsArray', skills.position[0] - 0.6, skills.position[2] - 1.4, -0.62, 1.02);
     this.addPolishAsset(group, 'EnvPolishTerminalPillar', skills.position[0] + 10.8, skills.position[2] + 5.6, -0.62, 0.9);
+    this.addSilhouetteAnchor(group, 'EnvPolishSignalSpire', skills.position[0] - 10.2, skills.position[2] - 2.8, -0.62, 0.9);
     for (const [x, z, rotation, scale] of [
       [skills.position[0] - 4.8, skills.position[2] - 7.6, -0.2, 0.74],
       [skills.position[0] + 5.2, skills.position[2] - 8.0, -0.12, 0.7]
@@ -500,6 +505,7 @@ export class SetPieces {
     this.addCompositionAsset(group, 'EnvPolishBenchPlanter', todo.position[0] - 9.8, todo.position[2] + 7.2, -0.28, 0.72);
     this.addCompositionAsset(group, 'EnvPolishRoadBarrier', todo.position[0] + 10.8, todo.position[2] + 4.8, 0.18, 0.64);
     this.addCompositionAsset(group, 'EnvPolishRouteLantern', todo.position[0] - 12.8, todo.position[2] - 2.8, 0.42, 0.66);
+    this.addSilhouetteAnchor(group, 'EnvPolishGardenArch', todo.position[0] - 7.2, todo.position[2] - 8.8, 0.68, 0.82);
     this.addCompositionPlanter(group, todo.position[0] + 8.6, todo.position[2] + 7.6, 0xb6a0ff);
     this.addYardEdgeDetails(group, todo.position[0] - 1.2, todo.position[2] + 1.4, 22, 15);
     for (const [dx, dz, rotation, scale] of [
@@ -517,6 +523,7 @@ export class SetPieces {
     this.addCompositionPad(group, career.position[0] + 7, career.position[2] - 6, 9, 5.5, this.world.materials.plazaRoad, 0.16, 'CareerOfficeDeck');
     this.flagPole(group, career.position[0] + 13, career.position[2] - 6, 0xb6a0ff);
     this.addPolishAsset(group, 'EnvPolishSignalTotem', career.position[0] + 1.4, career.position[2] - 10.8, -0.18, 0.88);
+    this.addSilhouetteAnchor(group, 'EnvPolishSignalSpire', career.position[0] + 10.6, career.position[2] + 2.2, -0.34, 0.86);
     this.addYardEdgeDetails(group, career.position[0] + 7, career.position[2] - 6, 9, 5.5);
     for (const [dx, dz, rotation, scale] of [
       [4.1, -6.2, 0.12, 0.58],
@@ -555,6 +562,7 @@ export class SetPieces {
     this.addCompositionAsset(group, 'EnvPolishBenchPlanter', behind.position[0] - 10.4, behind.position[2] + 1.8, 0.28, 0.7);
     this.addCompositionAsset(group, 'EnvPolishRoadBarrier', behind.position[0] + 11.2, behind.position[2] - 7.2, -0.18, 0.62);
     this.addCompositionAsset(group, 'EnvPolishRouteLantern', behind.position[0] - 12.4, behind.position[2] - 2.6, -0.34, 0.66);
+    this.addSilhouetteAnchor(group, 'EnvPolishWorkshopCanopy', behind.position[0] - 2.6, behind.position[2] + 4.0, -0.22, 0.86);
     this.addCompositionPlanter(group, behind.position[0] + 8.8, behind.position[2] - 8.0, 0x8fd3ff);
     this.addYardEdgeDetails(group, behind.position[0] - 0.4, behind.position[2] - 1.2, 23, 15);
     for (const [dx, dz, rotation, scale] of [
@@ -571,6 +579,7 @@ export class SetPieces {
     this.addSign(group, 'FARM', 'Potato Counter', potato.position[0] - 11, potato.position[2] + 9, 0.32, 0xc79b56, 2.3, 'PotatoFarmSign');
     this.addPolishAsset(group, 'EnvPolishFarmIrrigator', potato.position[0] + 4.4, potato.position[2] - 1.8, 0.18, 1.04);
     this.addPolishAsset(group, 'EnvPolishBenchPlanter', potato.position[0] - 8.6, potato.position[2] + 1.4, 0.22, 0.78);
+    this.addSilhouetteAnchor(group, 'EnvPolishGardenArch', potato.position[0] - 5.4, potato.position[2] + 7.0, 0.28, 0.78);
 
     mergeStaticMeshesInGroup(group, { namePrefix: 'SETPIECE_district' });
     this.world.scene.add(group);
@@ -1157,6 +1166,12 @@ export class SetPieces {
   addCompositionDetailAsset(group, assetName, x, z, rotation, scale, statName) {
     const placed = this.addCompositionAsset(group, assetName, x, z, rotation, scale);
     if (placed) this.districtCompositionStats[statName] = (this.districtCompositionStats[statName] || 0) + 1;
+    return placed;
+  }
+
+  addSilhouetteAnchor(group, assetName, x, z, rotation, scale) {
+    const placed = this.addCompositionAsset(group, assetName, x, z, rotation, scale);
+    if (placed) this.districtCompositionStats.silhouetteAnchors += 1;
     return placed;
   }
 
