@@ -158,6 +158,24 @@ export class PhysicsWorld {
     }
   }
 
+  castStaticCameraRay(origin, direction, maxDistance) {
+    let nearest = null;
+    for (const collider of this.staticColliders) {
+      if (collider.sensor || collider.type === 'trimesh') continue;
+      const toi = intersectStaticCollider(origin, direction, collider);
+      if (!Number.isFinite(toi) || toi < 0 || toi > maxDistance) continue;
+      if (!nearest || toi < nearest.toi) {
+        nearest = {
+          toi,
+          name: collider.name,
+          type: collider.type,
+          visualName: collider.visualName || null
+        };
+      }
+    }
+    return nearest;
+  }
+
   recordStaticCollider(type, position, data) {
     this.staticColliders.push({
       type,
@@ -176,4 +194,81 @@ function toRapierQuaternion(eulerArray) {
     new THREE.Euler(eulerArray[0], eulerArray[1], eulerArray[2])
   );
   return { x: quaternion.x, y: quaternion.y, z: quaternion.z, w: quaternion.w };
+}
+
+function intersectStaticCollider(origin, direction, collider) {
+  if (collider.type === 'ball') {
+    return intersectSphere(origin, direction, new THREE.Vector3(...collider.position), collider.radius);
+  }
+
+  if (collider.type === 'box') {
+    return intersectOrientedBox(
+      origin,
+      direction,
+      new THREE.Vector3(...collider.position),
+      new THREE.Vector3(collider.size[0] / 2, collider.size[1] / 2, collider.size[2] / 2),
+      collider.rotation || [0, 0, 0]
+    );
+  }
+
+  if (collider.type === 'cylinder') {
+    return intersectOrientedBox(
+      origin,
+      direction,
+      new THREE.Vector3(...collider.position),
+      new THREE.Vector3(collider.radius, collider.halfHeight, collider.radius),
+      collider.rotation || [0, 0, 0]
+    );
+  }
+
+  return null;
+}
+
+function intersectSphere(origin, direction, center, radius) {
+  const offset = origin.clone().sub(center);
+  const b = offset.dot(direction);
+  const c = offset.dot(offset) - radius * radius;
+  const discriminant = b * b - c;
+  if (discriminant < 0) return null;
+  const root = Math.sqrt(discriminant);
+  const near = -b - root;
+  const far = -b + root;
+  if (near >= 0) return near;
+  if (far >= 0) return 0;
+  return null;
+}
+
+function intersectOrientedBox(origin, direction, center, halfExtents, rotation) {
+  const inverse = new THREE.Quaternion()
+    .setFromEuler(new THREE.Euler(rotation[0], rotation[1], rotation[2]))
+    .invert();
+  const localOrigin = origin.clone().sub(center).applyQuaternion(inverse);
+  const localDirection = direction.clone().applyQuaternion(inverse);
+  return intersectAxisAlignedBox(localOrigin, localDirection, halfExtents);
+}
+
+function intersectAxisAlignedBox(origin, direction, halfExtents) {
+  let near = 0;
+  let far = Infinity;
+  for (const axis of ['x', 'y', 'z']) {
+    const originValue = origin[axis];
+    const directionValue = direction[axis];
+    const half = halfExtents[axis];
+    if (Math.abs(directionValue) < 0.000001) {
+      if (originValue < -half || originValue > half) return null;
+      continue;
+    }
+
+    let first = (-half - originValue) / directionValue;
+    let second = (half - originValue) / directionValue;
+    if (first > second) {
+      const swap = first;
+      first = second;
+      second = swap;
+    }
+    near = Math.max(near, first);
+    far = Math.min(far, second);
+    if (near > far) return null;
+  }
+  return near;
 }
