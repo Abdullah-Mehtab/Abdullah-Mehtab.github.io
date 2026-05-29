@@ -27,8 +27,10 @@ export class Game {
     this.activeZone = null;
     this.resumeData = null;
     this.lights = {};
-    this.fogDay = new THREE.Color(0xb7e8ee);
-    this.fogWarm = new THREE.Color(0xffbf86);
+    this.skyDay = new THREE.Color(0x74c7ee);
+    this.skyWarm = new THREE.Color(0xf0bc88);
+    this.fogDay = new THREE.Color(0xa9dee8);
+    this.fogWarm = new THREE.Color(0xffc894);
     this.debugReadout = null;
     this.debugEnabled = false;
     this.debugFrame = 0;
@@ -86,15 +88,15 @@ export class Game {
   }
 
   setupScene() {
-    this.scene.background = new THREE.Color(0x8fd6f3);
-    this.scene.fog = new THREE.Fog(0xb7e8ee, 132, 520);
+    this.scene.background = this.skyDay.clone();
+    this.scene.fog = new THREE.Fog(this.fogDay.clone(), 118, 500);
     this.camera.position.set(0, 9, -18);
 
-    const hemi = new THREE.HemisphereLight(0xffe3bf, 0x203c3c, 1.22);
+    const hemi = new THREE.HemisphereLight(0xffdfbd, 0x264842, 1.12);
     this.scene.add(hemi);
 
-    const sun = new THREE.DirectionalLight(0xffb36f, 3.85);
-    sun.position.set(-132, 58, -102);
+    const sun = new THREE.DirectionalLight(0xffaa68, 3.52);
+    sun.position.set(-158, 34, -126);
     sun.castShadow = true;
     sun.shadow.mapSize.set(1024, 1024);
     sun.shadow.camera.left = -96;
@@ -107,8 +109,8 @@ export class Game {
     sun.shadow.normalBias = 0.08;
     this.scene.add(sun);
 
-    const rim = new THREE.DirectionalLight(0x74e8ff, 1.68);
-    rim.position.set(72, 34, 92);
+    const rim = new THREE.DirectionalLight(0x91f0ff, 1.54);
+    rim.position.set(82, 38, 106);
     this.scene.add(rim);
 
     this.lights = { hemi, sun, rim };
@@ -285,9 +287,41 @@ export class Game {
 
   updateLighting(elapsed) {
     const cycle = Math.sin(elapsed * 0.035) * 0.5 + 0.5;
-    this.lights.sun.intensity = 3.05 + cycle * 0.72;
-    this.lights.rim.intensity = 1.18 + (1 - cycle) * 0.5;
-    this.scene.fog.color.lerpColors(this.fogDay, this.fogWarm, cycle * 0.38);
+    const warmth = cycle * 0.28;
+    this.lights.hemi.intensity = 1.06 + cycle * 0.1;
+    this.lights.sun.intensity = 3.12 + cycle * 0.52;
+    this.lights.rim.intensity = 1.18 + (1 - cycle) * 0.44;
+    this.scene.fog.color.lerpColors(this.fogDay, this.fogWarm, warmth);
+    this.scene.background.lerpColors(this.skyDay, this.skyWarm, warmth * 0.38);
+  }
+
+  getLightingStats() {
+    return {
+      background: `#${this.scene.background.getHexString()}`,
+      fog: {
+        color: `#${this.scene.fog.color.getHexString()}`,
+        near: this.scene.fog.near,
+        far: this.scene.fog.far
+      },
+      hemi: {
+        intensity: Number(this.lights.hemi?.intensity.toFixed(2) || 0),
+        sky: `#${this.lights.hemi?.color.getHexString?.() || '000000'}`,
+        ground: `#${this.lights.hemi?.groundColor.getHexString?.() || '000000'}`
+      },
+      sun: {
+        intensity: Number(this.lights.sun?.intensity.toFixed(2) || 0),
+        color: `#${this.lights.sun?.color.getHexString?.() || '000000'}`,
+        position: this.lights.sun
+          ? [this.lights.sun.position.x, this.lights.sun.position.y, this.lights.sun.position.z].map((value) => Number(value.toFixed(2)))
+          : [0, 0, 0]
+      },
+      rim: {
+        intensity: Number(this.lights.rim?.intensity.toFixed(2) || 0),
+        color: `#${this.lights.rim?.color.getHexString?.() || '000000'}`
+      },
+      toneMappingExposure: Number(this.renderer.toneMappingExposure.toFixed(2)),
+      postprocessing: Boolean(this.rendererSystem?.postprocessingEnabled)
+    };
   }
 
   updateZoneStinger(zone) {
