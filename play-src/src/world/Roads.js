@@ -32,6 +32,8 @@ export class Roads {
     this.segments = roadSegments;
     this.materialCache = new Map();
     this.markerDummy = new THREE.Object3D();
+    this.detailDummy = new THREE.Object3D();
+    this.detailStats = { wearStrips: 0, laneSeams: 0 };
     this.roadGroup = new THREE.Group();
     this.roadGroup.name = 'ROAD_Network';
   }
@@ -44,6 +46,7 @@ export class Roads {
     }
     this.addJunctionPatches();
     mergeStaticMeshesInGroup(this.roadGroup, { namePrefix: 'ROAD_batch' });
+    this.createRoadSurfaceDetails();
     this.createGuidanceMarkers();
   }
 
@@ -245,6 +248,116 @@ export class Roads {
     return this.world.materials.stoneRoad;
   }
 
+  createRoadSurfaceDetails() {
+    const wearStrips = [];
+    const laneSeams = [];
+
+    for (let pathIndex = 0; pathIndex < roadPaths.length; pathIndex += 1) {
+      const path = roadPaths[pathIndex];
+      const curve = makePathCurve(path.points, path.closed);
+      const totalLength = curve.getLength();
+      const layer = ROAD_LAYER[path.hierarchy] ?? 1;
+      const surfaceY = 0.104 + layer * 0.006;
+      const wearColor = roadWearColor(path);
+      const seamColor = roadSeamColor(path);
+      const wearSpacing = path.hierarchy === 'dirt' ? 7.5 : path.hierarchy === 'stunt' ? 8.8 : 11.5;
+      const seamSpacing = path.hierarchy === 'avenue' ? 20 : 24;
+
+      for (let distance = path.width * 1.2; distance < totalLength - path.width * 1.2; distance += wearSpacing) {
+        const seed = pathIndex * 1000 + distance;
+        if (pseudoRoad(seed * 1.7) < 0.22) continue;
+        const t = distance / totalLength;
+        const point = curve.getPointAt(t);
+        const tangent = curve.getTangentAt(t).normalize();
+        const rightX = tangent.z;
+        const rightZ = -tangent.x;
+        const lateral = (pseudoRoad(seed * 2.3) - 0.5) * path.width * 0.62;
+        wearStrips.push({
+          x: point.x + rightX * lateral,
+          y: surfaceY + 0.082,
+          z: point.z + rightZ * lateral,
+          rotation: Math.atan2(tangent.x, tangent.z) + (pseudoRoad(seed * 3.1) - 0.5) * 0.18,
+          width: 0.22 + pseudoRoad(seed * 4.7) * 0.28,
+          length: 1.8 + pseudoRoad(seed * 5.9) * 3.6,
+          color: wearColor
+        });
+      }
+
+      for (let distance = path.width * 1.5; distance < totalLength - path.width * 1.5; distance += seamSpacing) {
+        const seed = pathIndex * 1400 + distance;
+        if (path.hierarchy === 'dirt' && pseudoRoad(seed * 2.1) < 0.54) continue;
+        const t = distance / totalLength;
+        const point = curve.getPointAt(t);
+        const tangent = curve.getTangentAt(t).normalize();
+        const side = pseudoRoad(seed * 3.9) > 0.5 ? 1 : -1;
+        const rightX = tangent.z;
+        const rightZ = -tangent.x;
+        const lateral = side * path.width * (0.18 + pseudoRoad(seed * 4.2) * 0.18);
+        laneSeams.push({
+          x: point.x + rightX * lateral,
+          y: surfaceY + 0.086,
+          z: point.z + rightZ * lateral,
+          rotation: Math.atan2(tangent.x, tangent.z) + (pseudoRoad(seed * 5.2) - 0.5) * 0.08,
+          width: 0.08 + pseudoRoad(seed * 6.7) * 0.12,
+          length: 3.4 + pseudoRoad(seed * 7.4) * 5.2,
+          color: seamColor
+        });
+      }
+    }
+
+    this.addRoadDetailInstances('ROAD_Surface_Wear_Strips', wearStrips, this.createRoadDetailMaterial('wear', 0.28), 28);
+    this.addRoadDetailInstances('ROAD_Lane_Seams', laneSeams, this.createRoadDetailMaterial('seam', 0.24), 29);
+    this.detailStats = { wearStrips: wearStrips.length, laneSeams: laneSeams.length };
+    this.roadGroup.userData.surfaceWearStrips = wearStrips.length;
+    this.roadGroup.userData.surfaceLaneSeams = laneSeams.length;
+  }
+
+  addRoadDetailInstances(name, specs, material, renderOrder) {
+    if (!specs.length) return;
+    const geometry = new THREE.PlaneGeometry(1, 1);
+    geometry.rotateX(-Math.PI / 2);
+    applyWhiteVertexColors(geometry);
+    const mesh = new THREE.InstancedMesh(geometry, material, specs.length);
+    mesh.name = name;
+    mesh.renderOrder = renderOrder;
+    mesh.frustumCulled = false;
+    const color = new THREE.Color();
+    for (let index = 0; index < specs.length; index += 1) {
+      const spec = specs[index];
+      this.detailDummy.position.set(spec.x, spec.y + index * 0.00002, spec.z);
+      this.detailDummy.rotation.set(0, spec.rotation, 0);
+      this.detailDummy.scale.set(spec.width, 1, spec.length);
+      this.detailDummy.updateMatrix();
+      mesh.setMatrixAt(index, this.detailDummy.matrix);
+      mesh.setColorAt(index, color.setHex(spec.color));
+    }
+    mesh.instanceMatrix.needsUpdate = true;
+    if (mesh.instanceColor) mesh.instanceColor.needsUpdate = true;
+    this.roadGroup.add(mesh);
+  }
+
+  createRoadDetailMaterial(key, opacity) {
+    const cacheKey = `road-detail:${key}:${opacity}`;
+    if (this.materialCache.has(cacheKey)) return this.materialCache.get(cacheKey);
+    const material = new THREE.MeshBasicMaterial({
+      color: 0xffffff,
+      transparent: true,
+      opacity,
+      depthWrite: false,
+      side: THREE.DoubleSide,
+      vertexColors: true,
+      polygonOffset: true,
+      polygonOffsetFactor: -30,
+      polygonOffsetUnits: -30
+    });
+    this.materialCache.set(cacheKey, material);
+    return material;
+  }
+
+  getDetailStats() {
+    return { ...this.detailStats };
+  }
+
   createGuidanceMarkers() {
     const chevrons = [];
     const studs = [];
@@ -390,6 +503,28 @@ function roadMarkerSpacing(path) {
   if (path.hierarchy === 'dirt') return 16;
   if (path.hierarchy === 'avenue') return 15;
   return 13.5;
+}
+
+function roadWearColor(path) {
+  if (path.hierarchy === 'security') return 0x0b1d24;
+  if (path.hierarchy === 'stunt') return 0x3a211c;
+  if (path.hierarchy === 'dirt') return 0x6b4828;
+  if (path.hierarchy === 'plaza') return 0x7f735f;
+  if (path.hierarchy === 'bridge') return 0x2e4d4b;
+  return 0x202a28;
+}
+
+function roadSeamColor(path) {
+  if (path.hierarchy === 'security') return 0x68d8ff;
+  if (path.hierarchy === 'stunt') return 0xffc0a5;
+  if (path.hierarchy === 'dirt') return 0xc9985a;
+  if (path.hierarchy === 'bridge') return 0x9df7ff;
+  return 0xf0d9a4;
+}
+
+function pseudoRoad(seed) {
+  const value = Math.sin(seed * 999.91) * 43758.5453;
+  return value - Math.floor(value);
 }
 
 function pointKey(point) {
