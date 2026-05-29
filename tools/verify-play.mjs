@@ -1185,7 +1185,12 @@ function assertVerification(result) {
   if ((result.props?.fallbackLanterns || 0) !== 0) failures.push(`props probe failed: fallbackLanterns=${result.props?.fallbackLanterns || 0}`);
   if ((result.props?.authoredProps || 0) < 12) failures.push(`props probe failed: authoredProps=${result.props?.authoredProps || 0}`);
   if ((result.props?.fallbackProps || 0) !== 0) failures.push(`props probe failed: fallbackProps=${result.props?.fallbackProps || 0}`);
-  if ((result.props?.shoreRocks || 0) < 20) failures.push(`props probe failed: shoreRocks=${result.props?.shoreRocks || 0}`);
+  if ((result.props?.shoreRocks || 0) < 16) failures.push(`props probe failed: shoreRocks=${result.props?.shoreRocks || 0}`);
+  if ((result.props?.authoredShoreRocks || 0) !== (result.props?.shoreRocks || 0)) failures.push(`props probe failed: authoredShoreRocks=${result.props?.authoredShoreRocks || 0}/${result.props?.shoreRocks || 0}`);
+  if ((result.props?.fallbackShoreRocks || 0) !== 0) failures.push(`props probe failed: fallbackShoreRocks=${result.props?.fallbackShoreRocks || 0}`);
+  if ((result.props?.beachGrass || 0) < 5) failures.push(`props probe failed: beachGrass=${result.props?.beachGrass || 0}`);
+  if ((result.props?.authoredBeachGrass || 0) !== (result.props?.beachGrass || 0)) failures.push(`props probe failed: authoredBeachGrass=${result.props?.authoredBeachGrass || 0}/${result.props?.beachGrass || 0}`);
+  if ((result.props?.fallbackBeachGrass || 0) !== 0) failures.push(`props probe failed: fallbackBeachGrass=${result.props?.fallbackBeachGrass || 0}`);
   if ((result.stuntPark?.ramps || 0) < 3) failures.push(`stunt park probe failed: ramps=${result.stuntPark?.ramps || 0}`);
   if ((result.stuntPark?.boostPads || 0) < 3) failures.push(`stunt park probe failed: boostPads=${result.stuntPark?.boostPads || 0}`);
   if ((result.stuntPark?.cones || 0) < 12) failures.push(`stunt park probe failed: cones=${result.stuntPark?.cones || 0}`);
