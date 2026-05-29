@@ -90,7 +90,8 @@ export class World {
 
   readLandscapeQuality() {
     const saved = localStorage.getItem('portfolio-drive-landscape-quality');
-    return QUALITY_PROFILES[saved] ? saved : 'medium';
+    if (QUALITY_PROFILES[saved]) return saved;
+    return prefersLightLandscape() ? 'low' : 'medium';
   }
 
   getQualityProfile() {
@@ -297,4 +298,11 @@ export class World {
       }
     }
   }
+}
+
+function prefersLightLandscape() {
+  const narrow = window.innerWidth <= 760;
+  const coarsePointer = window.matchMedia?.('(pointer: coarse)')?.matches === true;
+  const touch = navigator.maxTouchPoints > 1;
+  return narrow || coarsePointer || touch;
 }
