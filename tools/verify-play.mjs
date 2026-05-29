@@ -681,6 +681,7 @@ async function collectRuntimeMetrics(page, loadMs, gameplay, water, surfaces, ro
     const avgMs = frameDeltas.reduce((sum, value) => sum + value, 0) / frameDeltas.length;
     const p95Ms = sorted[Math.floor(sorted.length * 0.95)] || 0;
     const game = window.__portfolioDrive.game;
+    const protectedLandmarks = sampleProtectedLandmarks(game);
     const info = game.renderer.info.render;
     return {
       ready: window.__portfolioDrive.ready(),
@@ -708,6 +709,7 @@ async function collectRuntimeMetrics(page, loadMs, gameplay, water, surfaces, ro
       },
       surfaceDetails: game.world.terrain?.surfaceDetailStats || {},
       approachDressing: game.world.setPieces?.getApproachStats?.() || {},
+      protectedLandmarks,
       vehicleFx: game.vehicle.getEffectStats?.() || {},
       camera: {
         occlusion: sampleCameraOcclusion(game),
@@ -820,6 +822,26 @@ async function collectRuntimeMetrics(page, loadMs, gameplay, water, surfaces, ro
       target.set(-78, 2, 68);
       desired.set(-78, 7, 100);
       return game.cameraRig?.probeOcclusion?.(target, desired) || null;
+    }
+
+    function sampleProtectedLandmarks(game) {
+      const zones = game.world.zonesSystem;
+      if (!zones?.getProtectedLandmarkStats) return {};
+      window.__portfolioDrive.respawn('landing');
+      zones.update(game.vehicle.position);
+      const far = zones.getProtectedLandmarkStats();
+      const educationPose = game.world.getRespawnPose('education');
+      game.vehicle.respawn(educationPose.position, educationPose.heading);
+      zones.update(game.vehicle.position);
+      const near = zones.getProtectedLandmarkStats();
+      window.__portfolioDrive.respawn('landing');
+      zones.update(game.vehicle.position);
+      const restored = zones.getProtectedLandmarkStats();
+      return {
+        far: far.education || null,
+        near: near.education || null,
+        restored: restored.education || null
+      };
     }
   }, authoredDistrictAssets);
   return {
@@ -969,6 +991,20 @@ function assertVerification(result) {
   if ((result.approachDressing?.lamps || 0) < 12) failures.push(`approach dressing probe failed: lamps=${result.approachDressing?.lamps || 0}`);
   if ((result.approachDressing?.authoredAssets || 0) < 20) failures.push(`approach dressing probe failed: authoredAssets=${result.approachDressing?.authoredAssets || 0}`);
   if ((result.approachDressing?.roadMarks || 0) < 36) failures.push(`approach dressing probe failed: roadMarks=${result.approachDressing?.roadMarks || 0}`);
+  const fccFar = result.protectedLandmarks?.far;
+  const fccNear = result.protectedLandmarks?.near;
+  const fccRestored = result.protectedLandmarks?.restored;
+  if (fccFar?.mode !== 'silhouette' || fccFar?.exactVisible || !fccFar?.silhouetteVisible) {
+    failures.push(`protected FCC LOD failed at distance: mode=${fccFar?.mode}`);
+  }
+  if (fccNear?.mode !== 'exact' || !fccNear?.exactVisible || fccNear?.silhouetteVisible) {
+    failures.push(`protected FCC LOD failed near landmark: mode=${fccNear?.mode}`);
+  }
+  if (fccRestored?.mode !== 'silhouette' || fccRestored?.exactVisible || !fccRestored?.silhouetteVisible) {
+    failures.push(`protected FCC LOD failed after restore: mode=${fccRestored?.mode}`);
+  }
+  if ((fccNear?.exactTriangles || 0) < 100000) failures.push(`protected FCC exact model not preserved: triangles=${fccNear?.exactTriangles || 0}`);
+  if ((fccFar?.silhouetteTriangles || Infinity) > 2000) failures.push(`protected FCC silhouette too heavy: triangles=${fccFar?.silhouetteTriangles}`);
   const missingAuthored = (result.authoredDistrictAssets || []).filter((asset) => !asset.template || !asset.placed);
   if (missingAuthored.length) failures.push(`authored district assets missing: ${missingAuthored.map((asset) => asset.name).join(', ')}`);
   if (!result.mobile.ready || result.mobile.canvasSample <= 0) failures.push('mobile canvas did not render');

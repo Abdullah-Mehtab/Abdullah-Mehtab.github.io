@@ -333,6 +333,7 @@ export class World {
     this.water.update(dt, elapsed, vehiclePosition, vehicle);
     this.foliage.update(dt, elapsed, vehiclePosition);
     this.potatoFarm.update(dt);
+    this.zonesSystem.update(vehiclePosition);
     this.setPieces.update(dt, elapsed);
     this.atmosphere.update(dt, elapsed);
     this.updateCollectibles(dt, elapsed);
