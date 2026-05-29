@@ -72,6 +72,16 @@ export class SetPieces {
       surfaceMarks: 0,
       rails: 0
     };
+    this.circuitStartStats = {
+      pads: 0,
+      gridMarks: 0,
+      authoredAssets: 0,
+      checkpointGates: 0,
+      scoreTowers: 0,
+      arrowFences: 0,
+      laneLights: 0,
+      pitDetails: 0
+    };
   }
 
   build() {
@@ -191,6 +201,10 @@ export class SetPieces {
 
   getDistrictCompositionStats() {
     return { ...this.districtCompositionStats };
+  }
+
+  getCircuitStartStats() {
+    return { ...this.circuitStartStats };
   }
 
   createStartDiorama() {
@@ -480,10 +494,7 @@ export class SetPieces {
     this.addCompositionDetailAsset(group, 'EnvPolishWorkshopProcessRail', career.position[0] + 7.4, career.position[2] - 8.6, -0.08, 0.6, 'rails');
 
     const circuit = findZone('circuit');
-    this.addSign(group, 'CIRCUIT', 'Checkpoint Run', circuit.position[0] - 10, circuit.position[2] - 10, 0.4, 0xff9b6d, 2.4, 'CircuitSign');
-    this.addPolishAsset(group, 'EnvPolishCircuitGate', circuit.position[0] + 1.0, circuit.position[2] + 7.4, -0.22, 1.04);
-    this.checkerStripe(group, circuit.position[0] + 1, circuit.position[2] + 8, 18, -0.22);
-    this.addPolishAsset(group, 'EnvPolishRoadBarrier', circuit.position[0] - 7.8, circuit.position[2] + 3.6, 0.44, 0.84);
+    this.createCircuitStartComposition(group, circuit);
 
     const behind = findZone('behind');
     this.addCompositionPad(group, behind.position[0] - 0.4, behind.position[2] - 1.2, 23, 15, this.world.materials.plazaRoad, 0.121, 'BehindWorkshopPad');
@@ -1135,6 +1146,74 @@ export class SetPieces {
   addCompositionPlanter(group, x, z, color) {
     this.addPlanterCluster(group, x, z, color);
     this.districtCompositionStats.planters += 1;
+  }
+
+  createCircuitStartComposition(group, circuit) {
+    const x = circuit.position[0];
+    const z = circuit.position[2];
+    const rotation = -0.22;
+    this.addCircuitPad(group, x + 2, z + 6.4, 28, 18, this.world.materials.stuntRamp, rotation, 'CircuitStartGridPad');
+    this.addCircuitPad(group, x - 10.8, z + 1.6, 6.4, 15, this.world.materials.paleStone, rotation, 'CircuitPitLanePad');
+
+    this.addSign(group, 'CIRCUIT', 'Checkpoint Run', ...this.circuitPoint(circuit, -12.4, -8.8, rotation), rotation + 0.62, 0xff9b6d, 2.4, 'CircuitSign');
+    this.addCircuitAsset(group, 'EnvPolishCircuitGate', circuit, 0.6, 7.4, rotation, 1.04, null);
+    this.addCircuitAsset(group, 'EnvPolishStuntCheckpoint', circuit, 1.0, 15.0, rotation, 0.92, 'checkpointGates');
+    this.addCircuitAsset(group, 'EnvPolishStuntScoreTower', circuit, -12.5, 3.2, rotation + 0.44, 0.86, 'scoreTowers');
+    this.addCircuitAsset(group, 'EnvPolishStuntScoreTower', circuit, 13.5, -1.2, rotation - 0.58, 0.72, 'scoreTowers');
+    this.addCircuitAsset(group, 'EnvPolishStuntArrowFence', circuit, -13.8, 10.4, rotation + 0.08, 0.78, 'arrowFences');
+    this.addCircuitAsset(group, 'EnvPolishStuntArrowFence', circuit, 13.8, 6.2, rotation + Math.PI, 0.74, 'arrowFences');
+    this.addCircuitAsset(group, 'EnvPolishRoadBarrier', circuit, -14.5, -4.8, rotation + 0.3, 0.78, 'pitDetails');
+    this.addCircuitAsset(group, 'EnvPolishRoadBarrier', circuit, 14.3, -5.6, rotation - 0.22, 0.78, 'pitDetails');
+    this.addCircuitAsset(group, 'EnvPolishRouteLantern', circuit, -8.8, 13.4, rotation - 0.3, 0.7, 'laneLights');
+    this.addCircuitAsset(group, 'EnvPolishRouteLantern', circuit, 8.6, 13.2, rotation + 0.26, 0.7, 'laneLights');
+
+    this.checkerStripe(group, x + 1, z + 8, 20, rotation);
+    for (let row = 0; row < 4; row += 1) {
+      for (const side of [-1, 1]) {
+        const [gridX, gridZ] = this.circuitPoint(circuit, side * (2.3 + row * 1.55), 2.2 - row * 2.55, rotation);
+        this.addCircuitGridMark(group, gridX, gridZ, 1.45, 0.16, rotation + side * 0.08, row % 2 ? this.world.materials.glowBlue : this.world.materials.warmGlow, 'CircuitStartGridMark');
+      }
+    }
+    for (const side of [-1, 1]) {
+      for (let i = 0; i < 5; i += 1) {
+        const [railX, railZ] = this.circuitPoint(circuit, side * 14.8, -3.6 + i * 3.4, rotation);
+        this.addCircuitGridMark(group, railX, railZ, 0.34, 1.7, rotation, this.world.materials.paleStone, 'CircuitOuterCurbMarker');
+      }
+    }
+    for (let i = 0; i < 4; i += 1) {
+      const [lightX, lightZ] = this.circuitPoint(circuit, -5.1 + i * 3.4, 11.2, rotation);
+      this.box(group, lightX, 0.28, lightZ, 0.56, 0.12, 0.56, i < 2 ? this.world.materials.glow : this.world.materials.glowPink, rotation, 'CircuitStartLightTile');
+      this.circuitStartStats.laneLights += 1;
+    }
+    this.addYardEdgeDetails(group, x + 2, z + 6.4, 28, 18);
+  }
+
+  circuitPoint(circuit, right, forward, rotation) {
+    const x = circuit.position[0] + Math.cos(rotation) * right + Math.sin(rotation) * forward;
+    const z = circuit.position[2] - Math.sin(rotation) * right + Math.cos(rotation) * forward;
+    return [x, z];
+  }
+
+  addCircuitPad(group, x, z, width, depth, material, rotation, name) {
+    this.groundRect(group, x, z, width, depth, material, 0.122, name);
+    group.children[group.children.length - 1].rotation.y = rotation;
+    this.districtCompositionStats.pads += 1;
+    this.circuitStartStats.pads += 1;
+  }
+
+  addCircuitGridMark(group, x, z, width, depth, rotation, material, name) {
+    this.box(group, x, 0.205, z, width, 0.035, depth, material, rotation, name);
+    this.districtCompositionStats.pathMarks += 1;
+    this.circuitStartStats.gridMarks += 1;
+  }
+
+  addCircuitAsset(group, assetName, circuit, right, forward, rotation, scale, statName) {
+    const [x, z] = this.circuitPoint(circuit, right, forward, rotation);
+    const placed = this.addCompositionAsset(group, assetName, x, z, rotation, scale);
+    if (!placed) return false;
+    this.circuitStartStats.authoredAssets += 1;
+    if (statName) this.circuitStartStats[statName] = (this.circuitStartStats[statName] || 0) + 1;
+    return true;
   }
 
   checkerStripe(group, x, z, width, rotation) {
