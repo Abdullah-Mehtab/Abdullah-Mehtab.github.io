@@ -1294,6 +1294,9 @@ function assertVerification(result) {
   if ((result.districtComposition?.surfaceMarks || 0) < 10) failures.push(`district composition probe failed: surfaceMarks=${result.districtComposition?.surfaceMarks || 0}`);
   if ((result.districtComposition?.rails || 0) < 5) failures.push(`district composition probe failed: rails=${result.districtComposition?.rails || 0}`);
   if ((result.districtComposition?.silhouetteAnchors || 0) < 7) failures.push(`district composition probe failed: silhouetteAnchors=${result.districtComposition?.silhouetteAnchors || 0}`);
+  if ((result.districtComposition?.careerConnectors || 0) < 7) failures.push(`district composition probe failed: careerConnectors=${result.districtComposition?.careerConnectors || 0}`);
+  if ((result.districtComposition?.farmRows || 0) < 8) failures.push(`district composition probe failed: farmRows=${result.districtComposition?.farmRows || 0}`);
+  if ((result.districtComposition?.farmFences || 0) < 12) failures.push(`district composition probe failed: farmFences=${result.districtComposition?.farmFences || 0}`);
   if ((result.circuitStart?.pads || 0) < 2) failures.push(`circuit start probe failed: pads=${result.circuitStart?.pads || 0}`);
   if ((result.circuitStart?.gridMarks || 0) < 18) failures.push(`circuit start probe failed: gridMarks=${result.circuitStart?.gridMarks || 0}`);
   if ((result.circuitStart?.authoredAssets || 0) < 10) failures.push(`circuit start probe failed: authoredAssets=${result.circuitStart?.authoredAssets || 0}`);
