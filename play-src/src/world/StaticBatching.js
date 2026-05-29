@@ -3,18 +3,26 @@
 import * as THREE from 'three';
 import { mergeGeometries } from 'three/examples/jsm/utils/BufferGeometryUtils.js';
 
-export function mergeStaticMeshesInGroup(group, { namePrefix = 'StaticBatch', shouldSkip = () => false, pruneEmpty = true } = {}) {
+export function mergeStaticMeshesInGroup(group, {
+  namePrefix = 'StaticBatch',
+  shouldSkip = () => false,
+  pruneEmpty = true,
+  cellSize = 0
+} = {}) {
   group.updateMatrixWorld(true);
   const inverseGroupMatrix = new THREE.Matrix4().copy(group.matrixWorld).invert();
   const buckets = new Map();
   const removable = [];
+  const cells = new Set();
 
   group.traverse((object) => {
     if (object === group || !object.isMesh || !object.geometry || Array.isArray(object.material) || shouldSkip(object)) return;
     const geometry = object.geometry.clone();
     geometry.applyMatrix4(object.matrixWorld);
     geometry.applyMatrix4(inverseGroupMatrix);
-    const key = `${materialSignature(object.material)}:${geometrySignature(geometry)}:${object.renderOrder || 0}`;
+    const cell = spatialSignature(geometry, cellSize);
+    cells.add(cell);
+    const key = `${materialSignature(object.material)}:${geometrySignature(geometry)}:${object.renderOrder || 0}:${cell}`;
     if (!buckets.has(key)) {
       buckets.set(key, {
         material: object.material,
@@ -45,7 +53,8 @@ export function mergeStaticMeshesInGroup(group, { namePrefix = 'StaticBatch', sh
   group.userData.staticBatchStats = {
     batches: batchIndex,
     mergedMeshes: removable.length,
-    prunedEmptyGroups
+    prunedEmptyGroups,
+    cells: cells.size
   };
 
   return batchIndex;
@@ -73,6 +82,14 @@ function pruneEmptyDescendants(root) {
 function isMeaningfulEmptyRoot(object) {
   const name = object.name || '';
   return /^(SetPiece_|STUNT_|Shoreline_|Env|VIS_|PHY_|SPAWN_|ZONE_|Wheel|Life_|VehicleModel|SecurityScannerGate|SetPieceBeacon)/.test(name);
+}
+
+function spatialSignature(geometry, cellSize) {
+  if (!cellSize) return 'all';
+  geometry.computeBoundingSphere();
+  const center = geometry.boundingSphere?.center;
+  if (!center) return 'all';
+  return `${Math.floor(center.x / cellSize)}:${Math.floor(center.z / cellSize)}`;
 }
 
 function geometrySignature(geometry) {

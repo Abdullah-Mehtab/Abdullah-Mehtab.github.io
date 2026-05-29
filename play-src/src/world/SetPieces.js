@@ -601,7 +601,7 @@ export class SetPieces {
     this.addSilhouetteAnchor(group, 'EnvPolishGardenArch', potato.position[0] - 5.4, potato.position[2] + 7.0, 0.28, 0.78);
     this.createFarmFieldComposition(group, potato);
 
-    mergeStaticMeshesInGroup(group, { namePrefix: 'SETPIECE_district' });
+    mergeStaticMeshesInGroup(group, { namePrefix: 'SETPIECE_district', cellSize: 128 });
     this.world.scene.add(group);
   }
 
