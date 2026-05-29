@@ -5,18 +5,35 @@ import { ISLAND_RADIUS, scenicPropZones } from './worldData.js';
 import { pseudoRandom, QUALITY_PROFILES } from './WorldMaterials.js';
 
 const TREE_VARIANTS = ['oak', 'blossom', 'cypress'];
+const FLOWER_VARIANTS = ['pink', 'blue', 'gold'];
+const TREE_CROWN_COLORS = {
+  oak: [0x628f43, 0x78a94e, 0x456f3a, 0x8ca85a],
+  blossom: [0xf0b5bd, 0xffc4ad, 0xd99ac4, 0xffd4c4],
+  cypress: [0x2d6944, 0x1f5739, 0x3d7a4c, 0x194a35]
+};
+const TRUNK_COLORS = [0x7d4928, 0x8f5a31, 0x6c3d24, 0xa46a39];
+const GRASS_COLORS = [0x83a84b, 0x9ab95c, 0x5f9041, 0xb2b960, 0x6fa34e];
+const UNDERSTORY_COLORS = [0x8bb95d, 0x4f8543, 0xd0bf63, 0x6fc0a2, 0xf1b7bf];
+const FLOWER_COLORS = {
+  pink: [0xf2a4b4, 0xffc0c8, 0xd994be],
+  blue: [0x80d8ff, 0x9cf1ff, 0x62bddc],
+  gold: [0xffd36d, 0xffef99, 0xf0a95e]
+};
 
 export class Foliage {
   constructor(world) {
     this.world = world;
     this.treeEntries = [];
     this.grassEntries = [];
+    this.understoryEntries = [];
     this.treeMeshes = {};
     this.grassMesh = null;
+    this.understoryMesh = null;
     this.flowerMeshes = {};
     this.leafCloud = null;
     this.fireflies = null;
     this.dummy = new THREE.Object3D();
+    this.color = new THREE.Color();
     this.windFrame = 0;
     this.particleFrame = 0;
     this.windSamples = { grassUpdates: 0, treeUpdates: 0, windCadence: 2, particleCadence: 1 };
@@ -25,8 +42,10 @@ export class Foliage {
   build() {
     this.prepareTreeEntries();
     this.prepareGrassEntries();
+    this.prepareUnderstoryEntries();
     this.createTreeInstances();
     this.createGrassInstances();
+    this.createUnderstoryInstances();
     this.createFlowerInstances();
     this.createFallingLeaves();
     this.createFireflies();
@@ -37,6 +56,7 @@ export class Foliage {
     const profile = this.world.getQualityProfile();
     this.writeTreeInstances(profile.trees);
     this.writeGrassInstances(profile.grassTufts);
+    this.writeUnderstoryInstances(profile.understory);
     this.writeFlowerInstances(Math.floor(profile.grassTufts * 0.42));
     this.leafCloud?.geometry.setDrawRange(0, profile.leaves);
     this.fireflies?.geometry.setDrawRange(0, profile.fireflies);
@@ -59,31 +79,81 @@ export class Foliage {
         const radius = Math.hypot(x, z);
         if (radius > ISLAND_RADIUS * 0.88 || radius < 18) continue;
         if (!this.world.isClearForProp(x, z, 3.4)) continue;
+        if (this.isNearExistingTree(x, z, zone.kind === 'grove' ? 4.8 : 5.6)) continue;
         this.treeEntries.push({
           x,
           z,
           rotation: pseudoRandom(seed * 13.3) * Math.PI * 2,
           scale: 0.8 + pseudoRandom(seed * 17.1) * 0.58,
-          variant: pickTreeVariant(zone, seed)
+          variant: pickTreeVariant(zone, seed),
+          tone: Math.floor(pseudoRandom(seed * 21.9) * 4),
+          lean: pseudoRandom(seed * 25.7) - 0.5
         });
         zonePlaced += 1;
       }
     }
   }
 
+  isNearExistingTree(x, z, spacing) {
+    return this.treeEntries.some((entry) => Math.hypot(entry.x - x, entry.z - z) < spacing);
+  }
+
   prepareGrassEntries() {
     const maxGrass = QUALITY_PROFILES.high.grassTufts;
-    for (let i = 0; i < maxGrass * 4 && this.grassEntries.length < maxGrass; i += 1) {
+    const clusteredTarget = Math.floor(maxGrass * 0.68);
+    for (let zoneIndex = 0; zoneIndex < scenicPropZones.length && this.grassEntries.length < clusteredTarget; zoneIndex += 1) {
+      const zone = scenicPropZones[zoneIndex];
+      const target = Math.ceil(clusteredTarget / scenicPropZones.length) + (zone.kind === 'campus' || zone.kind === 'garden' ? 10 : 0);
+      let placed = 0;
+      for (let attempt = 0; attempt < 280 && placed < target && this.grassEntries.length < clusteredTarget; attempt += 1) {
+        const seed = zoneIndex * 1600 + attempt;
+        const x = zone.center[0] + (pseudoRandom(seed * 7.9) - 0.5) * zone.size[0] * 1.18;
+        const z = zone.center[1] + (pseudoRandom(seed * 8.7) - 0.5) * zone.size[1] * 1.18;
+        if (this.addGrassEntry(x, z, seed, zone.kind)) placed += 1;
+      }
+    }
+
+    for (let i = 0; i < maxGrass * 5 && this.grassEntries.length < maxGrass; i += 1) {
       const r = Math.sqrt(pseudoRandom(i * 8.1)) * ISLAND_RADIUS * 0.78;
       const a = pseudoRandom(i * 5.3) * Math.PI * 2;
       const x = Math.cos(a) * r;
       const z = Math.sin(a) * r;
-      if (!this.world.isClearForProp(x, z, 1.1)) continue;
-      this.grassEntries.push({
+      this.addGrassEntry(x, z, i, 'meadow');
+    }
+  }
+
+  addGrassEntry(x, z, seed, kind) {
+    if (!this.world.isClearForProp(x, z, 1.1)) return false;
+    this.grassEntries.push({
+      x,
+      z,
+      rotation: pseudoRandom(seed * 19.4) * Math.PI * 2,
+      scale: 0.55 + pseudoRandom(seed * 22.9) * 0.9,
+      tone: Math.floor(pseudoRandom(seed * 27.2) * GRASS_COLORS.length),
+      flowerTone: Math.floor(pseudoRandom(seed * 31.6) * 3),
+      kind
+    });
+    return true;
+  }
+
+  prepareUnderstoryEntries() {
+    const maxUnderstory = QUALITY_PROFILES.high.understory;
+    for (let i = 0; i < maxUnderstory * 3 && this.understoryEntries.length < maxUnderstory; i += 1) {
+      const source = this.treeEntries[i % this.treeEntries.length] || this.grassEntries[i % this.grassEntries.length];
+      if (!source) return;
+      const seed = i + 71;
+      const radius = 1.8 + pseudoRandom(seed * 3.6) * 4.8;
+      const angle = pseudoRandom(seed * 5.1) * Math.PI * 2;
+      const x = source.x + Math.cos(angle) * radius;
+      const z = source.z + Math.sin(angle) * radius;
+      if (!this.world.isClearForProp(x, z, 0.55)) continue;
+      this.understoryEntries.push({
         x,
         z,
-        rotation: pseudoRandom(i * 19.4) * Math.PI * 2,
-        scale: 0.55 + pseudoRandom(i * 22.9) * 0.9
+        rotation: angle + pseudoRandom(seed * 7.4) * 0.9,
+        width: 1.4 + pseudoRandom(seed * 11.2) * 3.2,
+        depth: 0.42 + pseudoRandom(seed * 13.5) * 1.25,
+        tone: Math.floor(pseudoRandom(seed * 17.3) * UNDERSTORY_COLORS.length)
       });
     }
   }
@@ -95,10 +165,11 @@ export class Foliage {
     const blossomGeometry = new THREE.IcosahedronGeometry(1.46, 1);
     const cypressGeometry = new THREE.ConeGeometry(1.08, 3.2, 7);
 
-    this.treeMeshes.trunk = new THREE.InstancedMesh(trunkGeometry, this.world.materials.wood, maxTrees);
-    this.treeMeshes.oak = new THREE.InstancedMesh(oakGeometry, new THREE.MeshStandardMaterial({ color: 0x5f8f42, roughness: 0.88 }), maxTrees);
-    this.treeMeshes.blossom = new THREE.InstancedMesh(blossomGeometry, new THREE.MeshStandardMaterial({ color: 0xf0b5bd, roughness: 0.82 }), maxTrees);
-    this.treeMeshes.cypress = new THREE.InstancedMesh(cypressGeometry, new THREE.MeshStandardMaterial({ color: 0x2d6944, roughness: 0.9 }), maxTrees);
+    const trunkMaterial = this.world.materials.wood.clone();
+    this.treeMeshes.trunk = new THREE.InstancedMesh(trunkGeometry, trunkMaterial, maxTrees);
+    this.treeMeshes.oak = new THREE.InstancedMesh(oakGeometry, new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.88 }), maxTrees);
+    this.treeMeshes.blossom = new THREE.InstancedMesh(blossomGeometry, new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.82 }), maxTrees);
+    this.treeMeshes.cypress = new THREE.InstancedMesh(cypressGeometry, new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.9 }), maxTrees);
 
     for (const [name, mesh] of Object.entries(this.treeMeshes)) {
       mesh.name = `FOLIAGE_${name}_instances`;
@@ -112,7 +183,7 @@ export class Foliage {
 
   createGrassInstances() {
     const geometry = new THREE.ConeGeometry(0.08, 0.7, 4);
-    const material = new THREE.MeshStandardMaterial({ color: 0x86a94c, roughness: 0.92, metalness: 0 });
+    const material = new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.92, metalness: 0 });
     this.grassMesh = new THREE.InstancedMesh(geometry, material, QUALITY_PROFILES.high.grassTufts);
     this.grassMesh.name = 'FOLIAGE_grass_instances';
     this.grassMesh.castShadow = false;
@@ -122,13 +193,36 @@ export class Foliage {
     this.world.decor.push({ type: 'grassInstances', mesh: this.grassMesh });
   }
 
+  createUnderstoryInstances() {
+    const geometry = new THREE.CircleGeometry(1, 10);
+    geometry.rotateX(-Math.PI / 2);
+    const material = new THREE.MeshBasicMaterial({
+      color: 0xffffff,
+      transparent: true,
+      opacity: 0.24,
+      depthWrite: false,
+      side: THREE.DoubleSide,
+      polygonOffset: true,
+      polygonOffsetFactor: -32,
+      polygonOffsetUnits: -32
+    });
+    this.understoryMesh = new THREE.InstancedMesh(geometry, material, QUALITY_PROFILES.high.understory);
+    this.understoryMesh.name = 'FOLIAGE_understory_patches';
+    this.understoryMesh.castShadow = false;
+    this.understoryMesh.receiveShadow = false;
+    this.understoryMesh.renderOrder = 8;
+    this.world.scene.add(this.understoryMesh);
+    this.world.decor.push({ type: 'understoryInstances', mesh: this.understoryMesh });
+  }
+
   createFlowerInstances() {
     const count = Math.floor(QUALITY_PROFILES.high.grassTufts * 0.42);
     const stemGeometry = new THREE.ConeGeometry(0.045, 0.42, 4);
     const bloomGeometry = new THREE.IcosahedronGeometry(0.12, 0);
     this.flowerMeshes.stem = new THREE.InstancedMesh(stemGeometry, new THREE.MeshStandardMaterial({ color: 0x4f8d45, roughness: 0.92 }), count);
-    this.flowerMeshes.pink = new THREE.InstancedMesh(bloomGeometry, new THREE.MeshBasicMaterial({ color: 0xf2a4b4 }), count);
-    this.flowerMeshes.blue = new THREE.InstancedMesh(bloomGeometry, new THREE.MeshBasicMaterial({ color: 0x80d8ff }), count);
+    this.flowerMeshes.pink = new THREE.InstancedMesh(bloomGeometry, new THREE.MeshBasicMaterial({ color: 0xffffff }), count);
+    this.flowerMeshes.blue = new THREE.InstancedMesh(bloomGeometry, new THREE.MeshBasicMaterial({ color: 0xffffff }), count);
+    this.flowerMeshes.gold = new THREE.InstancedMesh(bloomGeometry, new THREE.MeshBasicMaterial({ color: 0xffffff }), count);
     for (const [name, mesh] of Object.entries(this.flowerMeshes)) {
       mesh.name = `FOLIAGE_flower_${name}_instances`;
       mesh.castShadow = false;
@@ -150,16 +244,18 @@ export class Foliage {
     for (const name of ['trunk', ...TREE_VARIANTS]) {
       this.treeMeshes[name].count = counts[name];
       this.treeMeshes[name].instanceMatrix.needsUpdate = true;
+      if (this.treeMeshes[name].instanceColor) this.treeMeshes[name].instanceColor.needsUpdate = true;
     }
   }
 
   writeTrunk(entry, index, elapsed = 0) {
-    const sway = Math.sin(elapsed * 0.9 + entry.x * 0.035 + entry.z * 0.02) * 0.018;
+    const sway = Math.sin(elapsed * 0.9 + entry.x * 0.035 + entry.z * 0.02) * 0.018 + entry.lean * 0.012;
     this.dummy.position.set(entry.x, 1.32 * entry.scale, entry.z);
     this.dummy.rotation.set(sway, entry.rotation, sway * 0.65);
     this.dummy.scale.set(entry.scale * 0.78, entry.scale * 0.96, entry.scale * 0.78);
     this.dummy.updateMatrix();
     this.treeMeshes.trunk.setMatrixAt(index, this.dummy.matrix);
+    this.treeMeshes.trunk.setColorAt(index, this.color.setHex(TRUNK_COLORS[entry.tone % TRUNK_COLORS.length]));
   }
 
   writeCrown(entry, index, variant, elapsed = 0) {
@@ -173,6 +269,8 @@ export class Foliage {
     }
     this.dummy.updateMatrix();
     this.treeMeshes[variant].setMatrixAt(index, this.dummy.matrix);
+    const palette = TREE_CROWN_COLORS[variant];
+    this.treeMeshes[variant].setColorAt(index, this.color.setHex(palette[entry.tone % palette.length]));
   }
 
   writeGrassInstances(limit, elapsed = 0) {
@@ -185,16 +283,33 @@ export class Foliage {
       this.dummy.scale.set(entry.scale, entry.scale, entry.scale);
       this.dummy.updateMatrix();
       this.grassMesh.setMatrixAt(i, this.dummy.matrix);
+      this.grassMesh.setColorAt(i, this.color.setHex(GRASS_COLORS[entry.tone % GRASS_COLORS.length]));
     }
     this.grassMesh.count = visible;
     this.grassMesh.instanceMatrix.needsUpdate = true;
+    if (this.grassMesh.instanceColor) this.grassMesh.instanceColor.needsUpdate = true;
+  }
+
+  writeUnderstoryInstances(limit) {
+    const visible = Math.min(limit || 0, this.understoryEntries.length);
+    for (let i = 0; i < visible; i += 1) {
+      const entry = this.understoryEntries[i];
+      this.dummy.position.set(entry.x, 0.112 + i * 0.00003, entry.z);
+      this.dummy.rotation.set(0, entry.rotation, 0);
+      this.dummy.scale.set(entry.width, 1, entry.depth);
+      this.dummy.updateMatrix();
+      this.understoryMesh.setMatrixAt(i, this.dummy.matrix);
+      this.understoryMesh.setColorAt(i, this.color.setHex(UNDERSTORY_COLORS[entry.tone % UNDERSTORY_COLORS.length]));
+    }
+    this.understoryMesh.count = visible;
+    this.understoryMesh.instanceMatrix.needsUpdate = true;
+    if (this.understoryMesh.instanceColor) this.understoryMesh.instanceColor.needsUpdate = true;
   }
 
   writeFlowerInstances(limit) {
     const visible = Math.min(limit, this.grassEntries.length);
     let stem = 0;
-    let pink = 0;
-    let blue = 0;
+    const counts = { pink: 0, blue: 0, gold: 0 };
     for (let i = 0; i < visible; i += 1) {
       if (i % 3 === 0) continue;
       const entry = this.grassEntries[i];
@@ -205,18 +320,23 @@ export class Foliage {
       this.dummy.updateMatrix();
       this.flowerMeshes.stem.setMatrixAt(stem++, this.dummy.matrix);
 
-      const bloomMesh = i % 2 === 0 ? this.flowerMeshes.pink : this.flowerMeshes.blue;
-      const index = i % 2 === 0 ? pink++ : blue++;
+      const variant = FLOWER_VARIANTS[(i + entry.flowerTone) % FLOWER_VARIANTS.length];
+      const bloomMesh = this.flowerMeshes[variant];
+      const index = counts[variant]++;
       this.dummy.position.set(entry.x, height + 0.18, entry.z);
       this.dummy.rotation.set(0, entry.rotation, 0);
       this.dummy.scale.set(entry.scale, entry.scale, entry.scale);
       this.dummy.updateMatrix();
       bloomMesh.setMatrixAt(index, this.dummy.matrix);
+      const colors = FLOWER_COLORS[variant];
+      bloomMesh.setColorAt(index, this.color.setHex(colors[entry.flowerTone % colors.length]));
     }
     this.flowerMeshes.stem.count = stem;
-    this.flowerMeshes.pink.count = pink;
-    this.flowerMeshes.blue.count = blue;
-    for (const mesh of Object.values(this.flowerMeshes)) mesh.instanceMatrix.needsUpdate = true;
+    for (const variant of FLOWER_VARIANTS) this.flowerMeshes[variant].count = counts[variant];
+    for (const mesh of Object.values(this.flowerMeshes)) {
+      mesh.instanceMatrix.needsUpdate = true;
+      if (mesh.instanceColor) mesh.instanceColor.needsUpdate = true;
+    }
   }
 
   createFallingLeaves() {
@@ -302,6 +422,23 @@ export class Foliage {
       if (positions.getY(i) < 0.35) positions.setY(i, 7 + pseudoRandom(i * 5.2) * 10);
     }
     positions.needsUpdate = true;
+  }
+
+  getStats() {
+    const visibleTrees = TREE_VARIANTS.reduce((sum, variant) => sum + (this.treeMeshes[variant]?.count || 0), 0);
+    const visibleBlooms = FLOWER_VARIANTS.reduce((sum, variant) => sum + (this.flowerMeshes[variant]?.count || 0), 0);
+    return {
+      treeEntries: this.treeEntries.length,
+      grassEntries: this.grassEntries.length,
+      understoryEntries: this.understoryEntries.length,
+      visibleTrees,
+      visibleGrass: this.grassMesh?.count || 0,
+      visibleUnderstory: this.understoryMesh?.count || 0,
+      visibleBlooms,
+      treeColorVariants: Object.values(TREE_CROWN_COLORS).reduce((sum, colors) => sum + colors.length, 0),
+      grassColorVariants: GRASS_COLORS.length,
+      flowerColorVariants: Object.values(FLOWER_COLORS).reduce((sum, colors) => sum + colors.length, 0)
+    };
   }
 }
 

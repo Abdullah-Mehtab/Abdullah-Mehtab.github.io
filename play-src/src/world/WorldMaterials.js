@@ -7,6 +7,7 @@ export const QUALITY_PROFILES = {
   low: {
     trees: 42,
     grassTufts: 220,
+    understory: 46,
     leaves: 42,
     clouds: 5,
     props: 18,
@@ -22,6 +23,7 @@ export const QUALITY_PROFILES = {
   medium: {
     trees: 92,
     grassTufts: 620,
+    understory: 108,
     leaves: 96,
     clouds: 9,
     props: 34,
@@ -37,6 +39,7 @@ export const QUALITY_PROFILES = {
   high: {
     trees: 132,
     grassTufts: 900,
+    understory: 156,
     leaves: 150,
     clouds: 12,
     props: 48,
