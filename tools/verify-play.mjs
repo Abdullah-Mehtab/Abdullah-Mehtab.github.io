@@ -1016,7 +1016,9 @@ async function collectRuntimeMetrics(page, loadMs, gameplay, water, surfaces, su
         groups: 0,
         batches: 0,
         mergedMeshes: 0,
-        prunedEmptyGroups: 0
+        prunedEmptyGroups: 0,
+        cellGroups: 0,
+        cells: 0
       };
       root.traverse((object) => {
         const item = object.userData?.staticBatchStats;
@@ -1025,6 +1027,8 @@ async function collectRuntimeMetrics(page, loadMs, gameplay, water, surfaces, su
         stats.batches += item.batches || 0;
         stats.mergedMeshes += item.mergedMeshes || 0;
         stats.prunedEmptyGroups += item.prunedEmptyGroups || 0;
+        if ((item.cells || 0) > 1) stats.cellGroups += 1;
+        stats.cells += item.cells || 0;
       });
       return stats;
     }
@@ -1367,6 +1371,7 @@ function assertVerification(result) {
   if ((result.staticBatching?.groups || 0) < 8) failures.push(`static batching probe failed: groups=${result.staticBatching?.groups || 0}`);
   if ((result.staticBatching?.mergedMeshes || 0) <= (result.staticBatching?.batches || 0)) failures.push(`static batching probe failed: merged=${result.staticBatching?.mergedMeshes || 0}, batches=${result.staticBatching?.batches || 0}`);
   if ((result.staticBatching?.prunedEmptyGroups || 0) < 1) failures.push(`static batching probe failed: pruned=${result.staticBatching?.prunedEmptyGroups || 0}`);
+  if ((result.staticBatching?.cellGroups || 0) < 1) failures.push(`static batching probe failed: cellGroups=${result.staticBatching?.cellGroups || 0}`);
   if ((result.foliage?.understoryEntries || 0) < 120) failures.push(`foliage probe failed: understoryEntries=${result.foliage?.understoryEntries || 0}`);
   if ((result.foliage?.visibleUnderstory || 0) < 90) failures.push(`foliage probe failed: visibleUnderstory=${result.foliage?.visibleUnderstory || 0}`);
   if ((result.foliage?.treeColorVariants || 0) < 10) failures.push(`foliage probe failed: treeColorVariants=${result.foliage?.treeColorVariants || 0}`);
@@ -1494,6 +1499,7 @@ function assertVerification(result) {
   if (!result.mobile.ready || result.mobile.canvasSample <= 0) failures.push('mobile canvas did not render');
   if (result.mobile.quality !== 'low') failures.push(`mobile quality tier mismatch: ${result.mobile.quality}`);
   if (result.mobile.savedQuality !== null) failures.push(`mobile default quality should not write saved preference: ${result.mobile.savedQuality}`);
+  if (result.mobile.triangles > 220000) failures.push(`mobile triangle budget exceeded: ${result.mobile.triangles}`);
   if ((result.mobile.setPieceQuality?.secondaryGroups || 0) < 2) failures.push(`mobile set-piece quality probe failed: secondaryGroups=${result.mobile.setPieceQuality?.secondaryGroups || 0}`);
   if ((result.mobile.setPieceQuality?.visibleSecondaryGroups || 0) !== 0) {
     failures.push(`mobile set-piece quality probe failed: visibleSecondaryGroups=${result.mobile.setPieceQuality?.visibleSecondaryGroups || 0}`);
