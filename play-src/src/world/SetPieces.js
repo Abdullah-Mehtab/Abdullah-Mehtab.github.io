@@ -322,7 +322,7 @@ export class SetPieces {
     this.addLamp(group, zone.position[0] + 14.2, zone.position[2] - 9.4, 0x7cffb2, 3.0, 'StartLampRight');
     this.addLamp(group, zone.position[0] - 8.5, zone.position[2] + 7.4, 0x68d8ff, 2.8, 'StartLampRear');
 
-    this.addSign(group, 'CLICK TO DRIVE', 'Portfolio Drive', zone.position[0] + 14.4, zone.position[2] + 5.8, -0.88, 0x7cffb2, 3.4, 'StartClickSign');
+    this.addSign(group, 'START LINE', 'Portfolio Drive', zone.position[0] + 14.4, zone.position[2] + 5.8, -0.88, 0x7cffb2, 3.4, 'StartClickSign');
     this.addSign(group, 'FCCU', 'Education Grove', zone.position[0] - 20.5, zone.position[2] + 14.0, 0.74, 0x9ccfff, 2.6, 'StartFccSign');
     this.addSign(group, 'SECURITY', 'Scanner Route', zone.position[0] - 24.0, zone.position[2] - 12.0, 1.12, 0x68d8ff, 2.6, 'StartSecuritySign');
 
