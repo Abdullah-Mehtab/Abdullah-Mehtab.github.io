@@ -5,7 +5,7 @@ import { existsSync, readFile, statSync } from 'node:fs';
 import { mkdir, writeFile } from 'node:fs/promises';
 import { extname, join, resolve } from 'node:path';
 import puppeteer from 'puppeteer-core';
-import { circuitCheckpoints, districtFootprints, ISLAND_RADIUS, roadPaths, worldZones } from '../play-src/src/world/worldData.js';
+import { circuitCheckpoints, districtFootprints, ISLAND_RADIUS, roadPaths, worldZones, zonePresentation } from '../play-src/src/world/worldData.js';
 
 const repoRoot = resolve(import.meta.dirname, '..');
 const chromePath = findChrome();
@@ -86,10 +86,16 @@ try {
   const worldLife = await sampleWorldLife(page);
 
   for (const zone of worldZones) {
-    await page.evaluate((zoneId) => window.__portfolioDrive.respawn(zoneId), zone.id);
-    await delay(500);
+    await page.evaluate((zoneId) => {
+      const game = window.__portfolioDrive.game;
+      const zoneEntry = game.world.zones.find((item) => item.id === zoneId);
+      window.__portfolioDrive.respawn(zoneId);
+      if (zoneEntry) game.focusZone(zoneEntry);
+    }, zone.id);
+    await delay(650);
     await screenshot(page, `zone-${slug(zone.id)}.png`);
   }
+  await page.evaluate(() => window.__portfolioDrive.game.clearFocus());
 
   await page.evaluate(() => {
     const game = window.__portfolioDrive.game;
@@ -868,6 +874,7 @@ async function collectRuntimeMetrics(page, loadMs, gameplay, water, surfaces, su
       waterStats: game.world.water?.getStats?.() || {},
       protectedLandmarks,
       vehicleFx: game.vehicle.getEffectStats?.() || {},
+      zonePresentation: sampleZonePresentation(game),
       camera: {
         occlusion: sampleCameraOcclusion(game),
         stats: game.cameraRig?.getDebugStats?.() || {}
@@ -1000,6 +1007,38 @@ async function collectRuntimeMetrics(page, loadMs, gameplay, water, surfaces, su
         restored: restored.education || null
       };
     }
+
+    function sampleZonePresentation(game) {
+      const samples = game.world.zones.map((zone) => {
+        const respawn = game.world.getRespawnPose(zone.id);
+        const presentation = game.world.getPresentationPose(zone.id);
+        const respawnDistance = respawn.position.distanceTo(zone.position);
+        const cameraDistance = presentation.position.distanceTo(presentation.target);
+        const targetDistance = presentation.target.distanceTo(zone.position);
+        const surface = game.world.getSurfaceInfo(respawn.position).id;
+        return {
+          id: zone.id,
+          surface,
+          respawnDistance: Number(respawnDistance.toFixed(2)),
+          cameraDistance: Number(cameraDistance.toFixed(2)),
+          targetDistance: Number(targetDistance.toFixed(2)),
+          heading: Number(respawn.heading.toFixed(2)),
+          fov: presentation.fov
+        };
+      });
+      return {
+        samples,
+        badRespawns: samples.filter((sample) => sample.surface !== 'road'),
+        badCameras: samples.filter((sample) => (
+          sample.cameraDistance < 9 ||
+          sample.cameraDistance > 48 ||
+          sample.targetDistance > 16 ||
+          !Number.isFinite(sample.fov) ||
+          sample.fov < 34 ||
+          sample.fov > 50
+        ))
+      };
+    }
   }, { district: authoredDistrictAssets, stunt: authoredStuntAssets });
   return {
     loadMs,
@@ -1083,6 +1122,17 @@ function assertVerification(result) {
   if (consoleMessages.some((message) => message.type === 'error')) failures.push('console errors were emitted');
   if (!result.ready || result.canvasSample <= 0) failures.push('canvas did not render');
   if (result.zoneCount !== worldZones.length) failures.push(`zone count mismatch: ${result.zoneCount}/${worldZones.length}`);
+  const missingPresentation = worldZones.filter((zone) => !zonePresentation[zone.id]).map((zone) => zone.id);
+  if (missingPresentation.length) failures.push(`zone presentation definitions missing: ${missingPresentation.join(', ')}`);
+  if ((result.zonePresentation?.samples?.length || 0) !== worldZones.length) {
+    failures.push(`zone presentation probe failed: samples=${result.zonePresentation?.samples?.length || 0}/${worldZones.length}`);
+  }
+  if (result.zonePresentation?.badRespawns?.length) {
+    failures.push(`zone presentation probe failed: non-road respawns=${result.zonePresentation.badRespawns.map((sample) => `${sample.id}:${sample.surface}`).join(', ')}`);
+  }
+  if (result.zonePresentation?.badCameras?.length) {
+    failures.push(`zone presentation probe failed: bad cameras=${result.zonePresentation.badCameras.map((sample) => sample.id).join(', ')}`);
+  }
   if (result.colliderCount <= 0 || result.debugOverlayObjects <= 0) failures.push('collider debug overlay did not render');
   if (result.colliderAudit?.failures?.length) failures.push(`collider audit failed: ${result.colliderAudit.failures.map((item) => item.name).join(', ')}`);
   if (result.routeReplay?.total !== routeReplaySegments.length) failures.push(`route replay count mismatch: ${result.routeReplay?.total}/${routeReplaySegments.length}`);

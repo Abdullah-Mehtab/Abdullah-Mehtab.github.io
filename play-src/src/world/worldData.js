@@ -479,6 +479,105 @@ export const worldZones = [
   }
 ];
 
+export const zonePresentation = {
+  landing: {
+    respawn: { position: [4, 1.08, 26], heading: 0.15 },
+    camera: [17, 8, 57],
+    target: [2, 1.7, 36],
+    fov: 42
+  },
+  security: {
+    respawn: { position: [-72, 1.08, -17.5], heading: -2.17 },
+    camera: [-74, 10, -39],
+    target: [-99, 3, -68],
+    fov: 43
+  },
+  projects: {
+    respawn: { position: [43, 1.08, 34], heading: 0.71 },
+    camera: [40, 9, 44],
+    target: [64, 2.5, 58],
+    fov: 42
+  },
+  sentinel: {
+    respawn: { position: [10, 1.08, 94], heading: 0.91 },
+    camera: [-8, 10, 100],
+    target: [17, 4.5, 113],
+    fov: 42
+  },
+  career: {
+    respawn: { position: [112, 1.08, -23], heading: -2.42 },
+    camera: [120, 9, -12],
+    target: [99, 3, -42],
+    fov: 43
+  },
+  skills: {
+    respawn: { position: [-82, 1.08, -103.5], heading: 2.17 },
+    camera: [-92, 9, -62],
+    target: [-62, 2.6, -84],
+    fov: 42
+  },
+  education: {
+    respawn: { position: [-60, 1.08, 64], heading: -0.79 },
+    camera: [-48, 12, 58],
+    target: [-78, 5.5, 82],
+    fov: 39
+  },
+  awards: {
+    respawn: { position: [-30, 1.08, 54], heading: -0.66 },
+    camera: [-28, 8, 54],
+    target: [-44, 3, 73],
+    fov: 41
+  },
+  cv: {
+    respawn: { position: [30, 1.08, -42], heading: -2.2 },
+    camera: [34, 8, -34],
+    target: [8, 2.5, -59],
+    fov: 42
+  },
+  todo: {
+    respawn: { position: [-82, 1.08, 40], heading: 3.14 },
+    camera: [-63, 8, -8],
+    target: [-84, 2.6, 16],
+    fov: 42
+  },
+  circuit: {
+    respawn: { position: [38, 1.08, 116], heading: 2.3 },
+    camera: [34, 8, 87],
+    target: [57, 3, 102],
+    fov: 42
+  },
+  contact: {
+    respawn: { position: [112, 1.08, 66], heading: 2.13 },
+    camera: [104, 8, 74],
+    target: [128, 4, 56],
+    fov: 42
+  },
+  behind: {
+    respawn: { position: [8, 1.08, -78], heading: -2.18 },
+    camera: [14, 8, -70],
+    target: [-18, 2.6, -96],
+    fov: 42
+  },
+  drift: {
+    respawn: { position: [78, 1.08, -94], heading: 0.9 },
+    camera: [70, 8, -102],
+    target: [106, 3, -72],
+    fov: 42
+  },
+  'data-pier': {
+    respawn: { position: [-118, 1.08, 42], heading: -0.32 },
+    camera: [-108, 8, 38],
+    target: [-128, 2.4, 68],
+    fov: 42
+  },
+  potato: {
+    respawn: { position: [-22, 1.08, -128], heading: -1.72 },
+    camera: [-14, 8, -120],
+    target: [-50, 2.5, -132],
+    fov: 42
+  }
+};
+
 export const achievementDefinitions = [
   ['first_stop', 'First Stop', 'Interact with the Start Hub.'],
   ['security_lab', 'Security Pass', 'Open the Security Lab.'],
