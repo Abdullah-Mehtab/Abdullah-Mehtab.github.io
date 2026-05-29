@@ -61,6 +61,7 @@ try {
   await screenshot(page, '04-water-interaction.png');
   const surfaces = await sampleSurfaces(page, ISLAND_RADIUS);
   const routeReplay = await exerciseRouteReplay(page, routeReplaySegments);
+  const worldLife = await sampleWorldLife(page);
 
   for (const zone of worldZones) {
     await page.evaluate((zoneId) => window.__portfolioDrive.respawn(zoneId), zone.id);
@@ -82,7 +83,7 @@ try {
   await delay(300);
   await screenshot(page, 'debug-colliders.png');
 
-  const metrics = await collectRuntimeMetrics(page, loadMs, gameplay, water, surfaces, routeReplay);
+  const metrics = await collectRuntimeMetrics(page, loadMs, gameplay, water, surfaces, routeReplay, worldLife);
   const mobile = await captureMobile(browser);
   const result = {
     baseUrl,
@@ -437,7 +438,60 @@ async function exerciseRouteReplay(page, segments) {
   }, segments);
 }
 
-async function collectRuntimeMetrics(page, loadMs, gameplay, water, surfaces, routeReplay) {
+async function sampleWorldLife(page) {
+  return page.evaluate(async () => {
+    const delay = (ms) => new Promise((resolveDelay) => setTimeout(resolveDelay, ms));
+    const game = window.__portfolioDrive.game;
+    const scene = game.scene;
+    const grass = scene.getObjectByName('FOLIAGE_grass_instances');
+    const banner = scene.getObjectByName('Life_WindBanner_0');
+    const pulse = scene.getObjectByName('Life_ZonePulse_landing');
+    const beacon = scene.getObjectByName('Life_WhisperBeacon_0');
+    const before = {
+      grass: matrixSlice(grass),
+      bannerRotation: banner?.rotation?.z ?? null,
+      pulseRotation: pulse?.rotation?.z ?? null,
+      beaconY: beacon?.position?.y ?? null,
+      motionSamples: game.world.setPieces?.lifeStats?.motionSamples || 0
+    };
+    await delay(720);
+    const after = {
+      grass: matrixSlice(grass),
+      bannerRotation: banner?.rotation?.z ?? null,
+      pulseRotation: pulse?.rotation?.z ?? null,
+      beaconY: beacon?.position?.y ?? null,
+      motionSamples: game.world.setPieces?.lifeStats?.motionSamples || 0
+    };
+    return {
+      counts: { ...(game.world.setPieces?.lifeStats || {}) },
+      foliageWind: { ...(game.world.foliage?.windSamples || {}) },
+      grassAnimated: matrixDelta(before.grass, after.grass) > 0.0001,
+      bannerAnimated: numericDelta(before.bannerRotation, after.bannerRotation) > 0.005,
+      pulseAnimated: numericDelta(before.pulseRotation, after.pulseRotation) > 0.005,
+      beaconAnimated: numericDelta(before.beaconY, after.beaconY) > 0.005,
+      motionAdvanced: after.motionSamples > before.motionSamples
+    };
+
+    function matrixSlice(mesh) {
+      if (!mesh?.instanceMatrix?.array) return [];
+      return Array.from(mesh.instanceMatrix.array.slice(0, 16));
+    }
+
+    function matrixDelta(a, b) {
+      const length = Math.min(a.length, b.length);
+      let total = 0;
+      for (let i = 0; i < length; i += 1) total += Math.abs(a[i] - b[i]);
+      return total;
+    }
+
+    function numericDelta(a, b) {
+      if (!Number.isFinite(a) || !Number.isFinite(b)) return 0;
+      return Math.abs(a - b);
+    }
+  });
+}
+
+async function collectRuntimeMetrics(page, loadMs, gameplay, water, surfaces, routeReplay, worldLife) {
   const runtime = await page.evaluate(async (expectedAssets) => {
     const frameDeltas = [];
     await new Promise((resolveFrames) => {
@@ -524,6 +578,7 @@ async function collectRuntimeMetrics(page, loadMs, gameplay, water, surfaces, ro
     water,
     surfaces,
     routeReplay,
+    worldLife,
     ...runtime
   };
 }
@@ -570,6 +625,13 @@ function assertVerification(result) {
   if (result.colliderAudit?.failures?.length) failures.push(`collider audit failed: ${result.colliderAudit.failures.map((item) => item.name).join(', ')}`);
   if (result.routeReplay?.total !== routeReplaySegments.length) failures.push(`route replay count mismatch: ${result.routeReplay?.total}/${routeReplaySegments.length}`);
   if (result.routeReplay?.failed) failures.push(`route replay failed: ${result.routeReplay.failed}/${result.routeReplay.total}`);
+  if (result.worldLife?.counts?.zonePulses !== worldZones.length) failures.push(`world life probe failed: zone pulses ${result.worldLife?.counts?.zonePulses}/${worldZones.length}`);
+  if ((result.worldLife?.counts?.windBanners || 0) < 8) failures.push('world life probe failed: wind banners');
+  if ((result.worldLife?.counts?.whisperBeacons || 0) < 8) failures.push('world life probe failed: whisper beacons');
+  if ((result.worldLife?.counts?.terminalPulses || 0) < 5) failures.push('world life probe failed: terminal pulses');
+  for (const key of ['grassAnimated', 'bannerAnimated', 'pulseAnimated', 'beaconAnimated', 'motionAdvanced']) {
+    if (!result.worldLife?.[key]) failures.push(`world life probe failed: ${key}`);
+  }
   if (result.p95FrameMs > 20) failures.push(`p95 frame time too high: ${result.p95FrameMs}ms`);
   if (result.gameplay.movementMeters < 5) failures.push(`drive movement too small: ${result.gameplay.movementMeters}m`);
   for (const key of ['keyboardHandbrake', 'boostSeen', 'jumpSeen', 'landingSeen', 'impactAudioSeen', 'burnoutSeen', 'wheelieSeen', 'handbrakeSeen']) {

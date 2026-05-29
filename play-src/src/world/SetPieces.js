@@ -12,6 +12,7 @@ export class SetPieces {
     this.animated = [];
     this.securityScanObjects = [];
     this.securityScanMaterials = [];
+    this.lifeStats = { zonePulses: 0, windBanners: 0, whisperBeacons: 0, terminalPulses: 0, motionSamples: 0 };
   }
 
   build() {
@@ -20,6 +21,7 @@ export class SetPieces {
     this.createSecurityLab();
     this.createDistrictDressing();
     this.createRouteGuidance();
+    this.createLivingSignals();
   }
 
   update(dt, elapsed) {
@@ -32,6 +34,21 @@ export class SetPieces {
         item.mesh.rotation.y += dt * item.rotationSpeed;
       } else if (item.kind === 'light') {
         item.light.intensity = item.base + Math.sin(elapsed * item.speed + item.phase) * item.range;
+      } else if (item.kind === 'pulse') {
+        const pulse = item.baseScale + Math.sin(elapsed * item.speed + item.phase) * item.range;
+        item.mesh.scale.setScalar(pulse);
+        item.mesh.rotation.z += dt * item.rotationSpeed;
+        item.mesh.material.opacity = item.baseOpacity + Math.sin(elapsed * item.speed + item.phase) * item.opacityRange;
+        this.lifeStats.motionSamples += 1;
+      } else if (item.kind === 'banner') {
+        item.mesh.rotation.z = Math.sin(elapsed * item.speed + item.phase) * item.range;
+        item.mesh.scale.x = item.baseScale + Math.sin(elapsed * item.speed * 1.31 + item.phase) * 0.08;
+        this.lifeStats.motionSamples += 1;
+      } else if (item.kind === 'beacon') {
+        item.mesh.position.y = item.baseY + Math.sin(elapsed * item.speed + item.phase) * item.range;
+        item.mesh.rotation.y += dt * item.rotationSpeed;
+        item.mesh.material.opacity = item.baseOpacity + Math.sin(elapsed * item.speed + item.phase) * item.opacityRange;
+        this.lifeStats.motionSamples += 1;
       }
     }
 
@@ -339,6 +356,82 @@ export class SetPieces {
     this.world.scene.add(group);
   }
 
+  createLivingSignals() {
+    const group = new THREE.Group();
+    group.name = 'SETPIECE_Living_Signals';
+    const zones = worldZones;
+
+    for (const zone of zones) {
+      const pulse = new THREE.Mesh(
+        new THREE.RingGeometry(zone.radius + 1.7, zone.radius + 2.05, 4),
+        new THREE.MeshBasicMaterial({
+          color: zone.color,
+          transparent: true,
+          opacity: 0.13,
+          depthWrite: false,
+          side: THREE.DoubleSide
+        })
+      );
+      pulse.name = `Life_ZonePulse_${zone.id}`;
+      pulse.rotation.x = -Math.PI / 2;
+      pulse.rotation.z = Math.PI / 4;
+      pulse.position.set(zone.position[0], 0.245, zone.position[2]);
+      group.add(pulse);
+      this.animated.push({
+        kind: 'pulse',
+        mesh: pulse,
+        baseScale: 1,
+        range: 0.055,
+        speed: 0.9 + (this.lifeStats.zonePulses % 5) * 0.08,
+        phase: this.lifeStats.zonePulses * 0.73,
+        rotationSpeed: 0.18,
+        baseOpacity: 0.12,
+        opacityRange: 0.06
+      });
+      this.lifeStats.zonePulses += 1;
+    }
+
+    const bannerSpecs = [
+      [-24, 28, 0.18, 0x7cffb2],
+      [-52, 54, 0.52, 0x9ccfff],
+      [-86, -28, -0.48, 0x68d8ff],
+      [18, -18, 0.34, 0xe6f3ff],
+      [58, -78, -0.72, 0xff9b6d],
+      [102, 50, 0.86, 0x78b7ff],
+      [-112, 54, 0.68, 0x79ffc5],
+      [-42, -116, -0.2, 0xc79b56],
+      [26, 96, 0.18, 0xff6d8d],
+      [78, 18, -0.62, 0xb6a0ff]
+    ];
+    bannerSpecs.forEach(([x, z, rotation, color], index) => this.addWindBanner(group, x, z, rotation, color, index));
+
+    const whisperSpecs = [
+      [-40, 42, 0x9ccfff],
+      [-68, 78, 0x9ccfff],
+      [-36, 2, 0x68d8ff],
+      [-92, -42, 0x68d8ff],
+      [22, -34, 0xe6f3ff],
+      [78, -92, 0xff9b6d],
+      [84, 48, 0xffcc66],
+      [116, 60, 0x78b7ff],
+      [-126, 58, 0x79ffc5],
+      [-28, -94, 0xa8a6ff]
+    ];
+    whisperSpecs.forEach(([x, z, color], index) => this.addWhisperBeacon(group, x, z, color, index));
+
+    const terminalSpecs = [
+      [-94, -66, 0x68d8ff],
+      [62, 56, 0xffcc66],
+      [-62, -84, 0x92ffea],
+      [8, -58, 0xe6f3ff],
+      [-18, -96, 0xa8a6ff],
+      [128, 56, 0x78b7ff]
+    ];
+    terminalSpecs.forEach(([x, z, color], index) => this.addTerminalPulse(group, x, z, color, index));
+
+    this.world.scene.add(group);
+  }
+
   groundRect(group, x, z, width, depth, material, y, name) {
     const mesh = new THREE.Mesh(new THREE.BoxGeometry(width, 0.05, depth), material);
     mesh.name = name;
@@ -449,6 +542,70 @@ export class SetPieces {
     this.cylinder(group, x, 1.75, z, 0.055, 3.5, this.world.materials.cable, 8, 'FlagPole');
     const material = new THREE.MeshBasicMaterial({ color, transparent: true, opacity: 0.88 });
     this.box(group, x + 0.55, 2.85, z, 1.05, 0.56, 0.035, material, 0, 'FlagBanner');
+  }
+
+  addWindBanner(group, x, z, rotation, color, index) {
+    const banner = new THREE.Group();
+    banner.name = `Life_WindBannerGroup_${index}`;
+    this.cylinder(banner, 0, 1.25, 0, 0.045, 2.5, this.world.materials.darkWood, 7, `Life_WindBanner_${index}_Post`);
+    const material = new THREE.MeshBasicMaterial({ color, transparent: true, opacity: 0.72, side: THREE.DoubleSide });
+    const cloth = new THREE.Mesh(new THREE.PlaneGeometry(1.05, 0.56, 1, 1), material);
+    cloth.name = `Life_WindBanner_${index}`;
+    cloth.position.set(0.57, 2.1, 0);
+    banner.add(cloth);
+    banner.position.set(x, 0.15, z);
+    banner.rotation.y = rotation;
+    group.add(banner);
+    this.animated.push({
+      kind: 'banner',
+      mesh: cloth,
+      baseScale: 1,
+      range: 0.16,
+      speed: 1.1 + index * 0.07,
+      phase: index * 0.61
+    });
+    this.lifeStats.windBanners += 1;
+  }
+
+  addWhisperBeacon(group, x, z, color, index) {
+    const material = new THREE.MeshBasicMaterial({ color, transparent: true, opacity: 0.62, depthWrite: false });
+    const beacon = new THREE.Mesh(new THREE.OctahedronGeometry(0.42, 0), material);
+    beacon.name = `Life_WhisperBeacon_${index}`;
+    beacon.position.set(x, 1.45 + (index % 3) * 0.12, z);
+    group.add(beacon);
+    this.animated.push({
+      kind: 'beacon',
+      mesh: beacon,
+      baseY: beacon.position.y,
+      range: 0.34,
+      speed: 1.2 + index * 0.05,
+      phase: index * 0.7,
+      rotationSpeed: 0.7 + index * 0.03,
+      baseOpacity: 0.48,
+      opacityRange: 0.18
+    });
+    this.lifeStats.whisperBeacons += 1;
+  }
+
+  addTerminalPulse(group, x, z, color, index) {
+    const material = new THREE.MeshBasicMaterial({ color, transparent: true, opacity: 0.2, depthWrite: false, side: THREE.DoubleSide });
+    const pulse = new THREE.Mesh(new THREE.RingGeometry(1.1, 1.34, 5), material);
+    pulse.name = `Life_TerminalPulse_${index}`;
+    pulse.position.set(x, 1.15 + (index % 2) * 0.18, z);
+    pulse.rotation.x = -Math.PI / 2;
+    group.add(pulse);
+    this.animated.push({
+      kind: 'pulse',
+      mesh: pulse,
+      baseScale: 1,
+      range: 0.18,
+      speed: 1.35 + index * 0.11,
+      phase: index * 0.44,
+      rotationSpeed: 0.65,
+      baseOpacity: 0.18,
+      opacityRange: 0.14
+    });
+    this.lifeStats.terminalPulses += 1;
   }
 
   antennaCluster(group, x, z, color) {
