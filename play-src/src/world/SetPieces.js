@@ -60,6 +60,13 @@ export class SetPieces {
       authoredAssets: 0,
       guideStrips: 0
     };
+    this.routeCompositionStats = {
+      splitterIslands: 0,
+      plazaEdgeKits: 0,
+      bollardRuns: 0,
+      authoredAssets: 0,
+      guideTiles: 0
+    };
     this.districtStoryStats = {
       authoredAssets: 0,
       crateStacks: 0,
@@ -111,6 +118,7 @@ export class SetPieces {
     this.createApproachDressing();
     this.createDistrictGateways();
     this.createRouteGuidance();
+    this.createRouteComposition();
     this.createLivingSignals();
     this.createDistrictAmbience();
     this.applyQuality();
@@ -236,6 +244,10 @@ export class SetPieces {
 
   getGatewayStats() {
     return { ...this.gatewayStats };
+  }
+
+  getRouteCompositionStats() {
+    return { ...this.routeCompositionStats };
   }
 
   getDistrictStoryStats() {
@@ -794,6 +806,78 @@ export class SetPieces {
     this.world.scene.add(group);
   }
 
+  createRouteComposition() {
+    const group = new THREE.Group();
+    group.name = 'SETPIECE_Route_Composition';
+
+    const splitterIslands = [
+      [-13, 31, 0.18, 0.74],
+      [-37, 40, -0.5, 0.72],
+      [39, 29, 1.34, 0.74],
+      [-65, -13, -0.96, 0.72],
+      [23, -21, 2.68, 0.7],
+      [86, -92, 1.5, 0.76],
+      [102, 58, 1.0, 0.7],
+      [-121, 49, -1.05, 0.66]
+    ];
+    for (const [x, z, rotation, scale] of splitterIslands) {
+      this.addRouteCompositionAsset(group, 'EnvPolishRouteSplitterIsland', x, z, rotation, scale, 'splitterIslands');
+    }
+
+    const edgeKits = [
+      [-18, 43, 0.1, 0.78],
+      [17, 41, 0.14, 0.76],
+      [-51, 56, -0.5, 0.72],
+      [-68, 72, -0.42, 0.72],
+      [-87, -31, -0.72, 0.72],
+      [-111, -54, -0.3, 0.72],
+      [50, 43, 1.84, 0.72],
+      [78, -84, 2.46, 0.76],
+      [-36, -122, -1.82, 0.74],
+      [92, -10, 2.4, 0.72],
+      [109, 62, 1.0, 0.68],
+      [-130, 55, -1.05, 0.66]
+    ];
+    for (const [x, z, rotation, scale] of edgeKits) {
+      this.addRouteCompositionAsset(group, 'EnvPolishPlazaEdgeKit', x, z, rotation, scale, 'plazaEdgeKits');
+    }
+
+    const bollardRuns = [
+      [-29, 31, 0.24, 0.66],
+      [-46, 51, -0.5, 0.64],
+      [-58, 83, -0.42, 0.64],
+      [-31, 4, -0.95, 0.64],
+      [-74, -22, -0.72, 0.64],
+      [18, -12, 2.7, 0.64],
+      [62, -78, 2.46, 0.66],
+      [46, 38, 1.84, 0.64],
+      [93, 50, 1.02, 0.64],
+      [-83, -76, -2.2, 0.64],
+      [-28, -124, -1.82, 0.64],
+      [25, 64, 0.65, 0.64]
+    ];
+    for (const [x, z, rotation, scale] of bollardRuns) {
+      this.addRouteCompositionAsset(group, 'EnvPolishChevronBollardRun', x, z, rotation, scale, 'bollardRuns');
+    }
+
+    const guideRuns = [
+      { x: -12, z: 30, rotation: 0.18, color: this.world.materials.glow, count: 5 },
+      { x: -40, z: 42, rotation: -0.5, color: this.world.materials.glowBlue, count: 5 },
+      { x: 39, z: 31, rotation: 1.34, color: this.world.materials.warmGlow, count: 5 },
+      { x: -66, z: -13, rotation: -0.96, color: this.world.materials.glowBlue, count: 5 },
+      { x: 23, z: -22, rotation: 2.68, color: this.world.materials.paleStone, count: 5 },
+      { x: 84, z: -92, rotation: 1.5, color: this.world.materials.warmGlow, count: 5 },
+      { x: 101, z: 58, rotation: 1.0, color: this.world.materials.glowBlue, count: 5 },
+      { x: -120, z: 48, rotation: -1.05, color: this.world.materials.glow, count: 5 }
+    ];
+    for (const run of guideRuns) this.addRouteGuideTiles(group, run);
+
+    mergeStaticMeshesInGroup(group, { namePrefix: 'SETPIECE_route_composition' });
+    group.userData.routeCompositionStats = { ...this.routeCompositionStats };
+    this.registerQualityGroup(group, 'secondary');
+    this.world.scene.add(group);
+  }
+
   createLivingSignals() {
     const group = new THREE.Group();
     group.name = 'SETPIECE_Living_Signals';
@@ -1249,6 +1333,39 @@ export class SetPieces {
     const placed = this.addCompositionAsset(group, assetName, x, z, rotation, scale);
     if (placed) this.districtCompositionStats[statName] = (this.districtCompositionStats[statName] || 0) + 1;
     return placed;
+  }
+
+  addRouteCompositionAsset(group, assetName, x, z, rotation, scale, statName) {
+    const placed = this.addPolishAsset(group, assetName, x, z, rotation, scale);
+    if (!placed) return false;
+    this.routeCompositionStats.authoredAssets += 1;
+    this.routeCompositionStats[statName] = (this.routeCompositionStats[statName] || 0) + 1;
+    return true;
+  }
+
+  addRouteGuideTiles(group, run) {
+    const forwardX = Math.sin(run.rotation);
+    const forwardZ = Math.cos(run.rotation);
+    const rightX = Math.cos(run.rotation);
+    const rightZ = -Math.sin(run.rotation);
+    const count = run.count || 5;
+    for (let index = 0; index < count; index += 1) {
+      const offset = (index - (count - 1) / 2) * 1.55;
+      const side = index % 2 === 0 ? -1 : 1;
+      this.box(
+        group,
+        run.x + forwardX * offset + rightX * side * 2.4,
+        0.214,
+        run.z + forwardZ * offset + rightZ * side * 2.4,
+        0.28,
+        0.035,
+        1.18,
+        run.color,
+        run.rotation,
+        'RouteCompositionGuideTile'
+      );
+      this.routeCompositionStats.guideTiles += 1;
+    }
   }
 
   addSilhouetteAnchor(group, assetName, x, z, rotation, scale) {
