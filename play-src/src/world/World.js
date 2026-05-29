@@ -39,6 +39,9 @@ export class World {
     this.boostPads = [];
     this.ramps = [];
     this.collectibles = [];
+    this.collectibleDummy = new THREE.Object3D();
+    this.collectibleRingMesh = null;
+    this.collectibleBeamMesh = null;
     this.potatoes = [];
     this.surfaceState = { label: 'land', inWater: false, nearShore: false };
     this.roadSegments = roadSegments;
@@ -136,17 +139,37 @@ export class World {
       [120, 0, 58],
       [-24, 0, 34]
     ];
+    const shardGeometry = new THREE.OctahedronGeometry(1.32, 0);
+    const shardMaterial = new THREE.MeshStandardMaterial({ color: 0x79ffc5, emissive: 0x0d6d4f, emissiveIntensity: 1.45, roughness: 0.24, metalness: 0.12 });
+    this.collectibleRingMesh = new THREE.InstancedMesh(
+      new THREE.RingGeometry(1.58, 1.92, 6),
+      new THREE.MeshBasicMaterial({ color: 0x79ffc5, transparent: true, opacity: 0.42, side: THREE.DoubleSide, depthWrite: false }),
+      points.length
+    );
+    this.collectibleRingMesh.name = 'Collectible_DataShard_Rings';
+    this.collectibleRingMesh.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
+    this.scene.add(this.collectibleRingMesh);
+    this.collectibleBeamMesh = new THREE.InstancedMesh(
+      new THREE.CylinderGeometry(0.075, 0.075, 3.2, 6),
+      new THREE.MeshBasicMaterial({ color: 0x79ffc5, transparent: true, opacity: 0.32, depthWrite: false }),
+      points.length
+    );
+    this.collectibleBeamMesh.name = 'Collectible_DataShard_Beams';
+    this.collectibleBeamMesh.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
+    this.scene.add(this.collectibleBeamMesh);
+
     for (let i = 0; i < points.length; i += 1) {
-      const mesh = new THREE.Mesh(
-        new THREE.OctahedronGeometry(1.15, 0),
-        new THREE.MeshStandardMaterial({ color: 0x79ffc5, emissive: 0x0d6d4f, roughness: 0.24, metalness: 0.12 })
-      );
+      const mesh = new THREE.Mesh(shardGeometry, shardMaterial);
       mesh.name = `Collectible_DataShard_${i}`;
       mesh.position.set(points[i][0], 2.2, points[i][2]);
       this.scene.add(mesh);
-      this.collectibles.push({ mesh, collected: localStorage.getItem(`portfolio-drive-shard-${i}`) === '1', index: i });
-      mesh.visible = !this.collectibles[i].collected;
+      const item = { mesh, collected: localStorage.getItem(`portfolio-drive-shard-${i}`) === '1', index: i };
+      this.collectibles.push(item);
+      mesh.visible = !item.collected;
+      this.writeCollectibleVisual(item, 0);
     }
+    this.collectibleRingMesh.instanceMatrix.needsUpdate = true;
+    this.collectibleBeamMesh.instanceMatrix.needsUpdate = true;
   }
 
   checkBoostPad(position) {
@@ -173,13 +196,34 @@ export class World {
       item.collected = true;
       item.mesh.visible = false;
       localStorage.setItem(`portfolio-drive-shard-${item.index}`, '1');
+      this.writeCollectibleVisual(item, 0);
       collected.push(item);
     }
+    if (collected.length) this.refreshCollectibleVisuals();
     return collected;
   }
 
   getCollectedCount() {
     return this.collectibles.filter((item) => item.collected).length;
+  }
+
+  getCollectibleStats() {
+    const total = this.collectibles.length;
+    const collected = this.getCollectedCount();
+    return {
+      total,
+      collected,
+      visibleShards: this.collectibles.filter((item) => item.mesh.visible).length,
+      visibleRings: total - collected,
+      ringInstances: this.collectibleRingMesh?.count || 0,
+      beamInstances: this.collectibleBeamMesh?.count || 0
+    };
+  }
+
+  refreshCollectibleVisuals(elapsed = 0) {
+    for (const item of this.collectibles) this.writeCollectibleVisual(item, elapsed);
+    if (this.collectibleRingMesh) this.collectibleRingMesh.instanceMatrix.needsUpdate = true;
+    if (this.collectibleBeamMesh) this.collectibleBeamMesh.instanceMatrix.needsUpdate = true;
   }
 
   setPotatoCount(count) {
@@ -291,12 +335,46 @@ export class World {
     this.potatoFarm.update(dt);
     this.setPieces.update(dt, elapsed);
     this.atmosphere.update(dt, elapsed);
+    this.updateCollectibles(dt, elapsed);
+  }
+
+  updateCollectibles(dt, elapsed) {
     for (const item of this.collectibles) {
       if (!item.collected) {
         item.mesh.rotation.y += dt * 1.1;
         item.mesh.position.y = 2.2 + Math.sin(elapsed * 1.6 + item.index) * 0.28;
       }
+      this.writeCollectibleVisual(item, elapsed);
     }
+    if (this.collectibleRingMesh) this.collectibleRingMesh.instanceMatrix.needsUpdate = true;
+    if (this.collectibleBeamMesh) this.collectibleBeamMesh.instanceMatrix.needsUpdate = true;
+  }
+
+  writeCollectibleVisual(item, elapsed) {
+    if (!this.collectibleRingMesh || !this.collectibleBeamMesh) return;
+    const hidden = item.collected || !item.mesh.visible;
+    if (hidden) {
+      this.collectibleDummy.position.set(0, -1000, 0);
+      this.collectibleDummy.rotation.set(0, 0, 0);
+      this.collectibleDummy.scale.setScalar(0.001);
+      this.collectibleDummy.updateMatrix();
+      this.collectibleRingMesh.setMatrixAt(item.index, this.collectibleDummy.matrix);
+      this.collectibleBeamMesh.setMatrixAt(item.index, this.collectibleDummy.matrix);
+      return;
+    }
+
+    const pulse = 1 + Math.sin(elapsed * 1.7 + item.index * 0.7) * 0.16;
+    this.collectibleDummy.position.set(item.mesh.position.x, 0.34, item.mesh.position.z);
+    this.collectibleDummy.rotation.set(-Math.PI / 2, 0, elapsed * 0.62 + item.index * 0.48);
+    this.collectibleDummy.scale.setScalar(pulse);
+    this.collectibleDummy.updateMatrix();
+    this.collectibleRingMesh.setMatrixAt(item.index, this.collectibleDummy.matrix);
+
+    this.collectibleDummy.position.set(item.mesh.position.x, 1.5, item.mesh.position.z);
+    this.collectibleDummy.rotation.set(0, 0, 0);
+    this.collectibleDummy.scale.set(1, 0.9 + pulse * 0.2, 1);
+    this.collectibleDummy.updateMatrix();
+    this.collectibleBeamMesh.setMatrixAt(item.index, this.collectibleDummy.matrix);
   }
 }
 
