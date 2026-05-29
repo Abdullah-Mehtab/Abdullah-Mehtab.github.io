@@ -970,7 +970,8 @@ async function collectRuntimeMetrics(page, loadMs, gameplay, water, surfaces, su
       roadGuidance: {
         chevrons: game.scene.getObjectByName('ROAD_Guidance_Chevrons')?.count || 0,
         reflectorStuds: game.scene.getObjectByName('ROAD_Reflector_Studs')?.count || 0,
-        edgeFeathers: game.world.roads?.roadGroup?.userData?.edgeFeatherCount || 0
+        edgeFeathers: game.world.roads?.roadGroup?.userData?.edgeFeatherCount || 0,
+        laneEdges: game.world.roads?.roadGroup?.userData?.laneEdgeLineCount || 0
       },
       staticBatching: sampleStaticBatching(game.scene),
       foliage: game.world.foliage?.getStats?.() || {},
@@ -1383,6 +1384,7 @@ function assertVerification(result) {
   if ((result.roadGuidance?.chevrons || 0) < 40) failures.push(`road guidance probe failed: chevrons=${result.roadGuidance?.chevrons || 0}`);
   if ((result.roadGuidance?.reflectorStuds || 0) < 140) failures.push(`road guidance probe failed: reflectorStuds=${result.roadGuidance?.reflectorStuds || 0}`);
   if ((result.roadGuidance?.edgeFeathers || 0) < 24) failures.push(`road guidance probe failed: edgeFeathers=${result.roadGuidance?.edgeFeathers || 0}`);
+  if ((result.roadGuidance?.laneEdges || 0) < 20) failures.push(`road guidance probe failed: laneEdges=${result.roadGuidance?.laneEdges || 0}`);
   if ((result.staticBatching?.groups || 0) < 8) failures.push(`static batching probe failed: groups=${result.staticBatching?.groups || 0}`);
   if ((result.staticBatching?.mergedMeshes || 0) <= (result.staticBatching?.batches || 0)) failures.push(`static batching probe failed: merged=${result.staticBatching?.mergedMeshes || 0}, batches=${result.staticBatching?.batches || 0}`);
   if ((result.staticBatching?.prunedEmptyGroups || 0) < 1) failures.push(`static batching probe failed: pruned=${result.staticBatching?.prunedEmptyGroups || 0}`);
