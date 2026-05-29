@@ -3,7 +3,7 @@
 import * as THREE from 'three';
 import { mergeGeometries } from 'three/examples/jsm/utils/BufferGeometryUtils.js';
 
-export function mergeStaticMeshesInGroup(group, { namePrefix = 'StaticBatch', shouldSkip = () => false } = {}) {
+export function mergeStaticMeshesInGroup(group, { namePrefix = 'StaticBatch', shouldSkip = () => false, pruneEmpty = true } = {}) {
   group.updateMatrixWorld(true);
   const inverseGroupMatrix = new THREE.Matrix4().copy(group.matrixWorld).invert();
   const buckets = new Map();
@@ -41,7 +41,38 @@ export function mergeStaticMeshesInGroup(group, { namePrefix = 'StaticBatch', sh
     batchIndex += 1;
   }
 
+  const prunedEmptyGroups = pruneEmpty ? pruneEmptyDescendants(group) : 0;
+  group.userData.staticBatchStats = {
+    batches: batchIndex,
+    mergedMeshes: removable.length,
+    prunedEmptyGroups
+  };
+
   return batchIndex;
+}
+
+function pruneEmptyDescendants(root) {
+  const candidates = [];
+  root.traverse((object) => {
+    if (object !== root && !object.isMesh && !object.isLight && !object.isCamera) {
+      candidates.push(object);
+    }
+  });
+
+  let pruned = 0;
+  for (let index = candidates.length - 1; index >= 0; index -= 1) {
+    const object = candidates[index];
+    if (object.children.length > 0) continue;
+    if (isMeaningfulEmptyRoot(object)) continue;
+    object.parent?.remove(object);
+    pruned += 1;
+  }
+  return pruned;
+}
+
+function isMeaningfulEmptyRoot(object) {
+  const name = object.name || '';
+  return /^(SetPiece_|STUNT_|Shoreline_|Env|VIS_|PHY_|SPAWN_|ZONE_|Wheel|Life_|VehicleModel|SecurityScannerGate|SetPieceBeacon)/.test(name);
 }
 
 function geometrySignature(geometry) {

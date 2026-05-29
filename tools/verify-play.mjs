@@ -960,6 +960,7 @@ async function collectRuntimeMetrics(page, loadMs, gameplay, water, surfaces, su
         reflectorStuds: game.scene.getObjectByName('ROAD_Reflector_Studs')?.count || 0,
         edgeFeathers: game.world.roads?.roadGroup?.userData?.edgeFeatherCount || 0
       },
+      staticBatching: sampleStaticBatching(game.scene),
       foliage: game.world.foliage?.getStats?.() || {},
       mapStats: game.ui?.getMapStats?.() || {},
       atmosphere: game.world.atmosphere?.getStats?.() || {},
@@ -1008,6 +1009,24 @@ async function collectRuntimeMetrics(page, loadMs, gameplay, water, surfaces, su
         if (object.isLight) lights += 1;
       });
       return { objects, meshes, lights };
+    }
+
+    function sampleStaticBatching(root) {
+      const stats = {
+        groups: 0,
+        batches: 0,
+        mergedMeshes: 0,
+        prunedEmptyGroups: 0
+      };
+      root.traverse((object) => {
+        const item = object.userData?.staticBatchStats;
+        if (!item) return;
+        stats.groups += 1;
+        stats.batches += item.batches || 0;
+        stats.mergedMeshes += item.mergedMeshes || 0;
+        stats.prunedEmptyGroups += item.prunedEmptyGroups || 0;
+      });
+      return stats;
     }
 
     function profileScene(root) {
@@ -1345,6 +1364,9 @@ function assertVerification(result) {
   if ((result.roadGuidance?.chevrons || 0) < 40) failures.push(`road guidance probe failed: chevrons=${result.roadGuidance?.chevrons || 0}`);
   if ((result.roadGuidance?.reflectorStuds || 0) < 140) failures.push(`road guidance probe failed: reflectorStuds=${result.roadGuidance?.reflectorStuds || 0}`);
   if ((result.roadGuidance?.edgeFeathers || 0) < 24) failures.push(`road guidance probe failed: edgeFeathers=${result.roadGuidance?.edgeFeathers || 0}`);
+  if ((result.staticBatching?.groups || 0) < 8) failures.push(`static batching probe failed: groups=${result.staticBatching?.groups || 0}`);
+  if ((result.staticBatching?.mergedMeshes || 0) <= (result.staticBatching?.batches || 0)) failures.push(`static batching probe failed: merged=${result.staticBatching?.mergedMeshes || 0}, batches=${result.staticBatching?.batches || 0}`);
+  if ((result.staticBatching?.prunedEmptyGroups || 0) < 1) failures.push(`static batching probe failed: pruned=${result.staticBatching?.prunedEmptyGroups || 0}`);
   if ((result.foliage?.understoryEntries || 0) < 120) failures.push(`foliage probe failed: understoryEntries=${result.foliage?.understoryEntries || 0}`);
   if ((result.foliage?.visibleUnderstory || 0) < 90) failures.push(`foliage probe failed: visibleUnderstory=${result.foliage?.visibleUnderstory || 0}`);
   if ((result.foliage?.treeColorVariants || 0) < 10) failures.push(`foliage probe failed: treeColorVariants=${result.foliage?.treeColorVariants || 0}`);
