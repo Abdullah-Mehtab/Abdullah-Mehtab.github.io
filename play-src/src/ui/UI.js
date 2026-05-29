@@ -22,6 +22,10 @@ export class UI {
       promptKind: document.getElementById('prompt-kind'),
       promptTitle: document.getElementById('prompt-title'),
       promptAction: document.getElementById('prompt-action'),
+      circuitStatus: document.getElementById('circuit-status'),
+      circuitProgress: document.getElementById('circuit-progress'),
+      circuitTime: document.getElementById('circuit-time'),
+      circuitBest: document.getElementById('circuit-best'),
       panel: document.getElementById('panel'),
       panelKind: document.getElementById('panel-kind'),
       panelTitle: document.getElementById('panel-title'),
@@ -533,13 +537,41 @@ export class UI {
     this.refs.speedReadout.textContent = `${Math.round(Math.abs(speed) * 3.6)} km/h`;
     this.refs.zoneReadout.textContent = activeZone ? activeZone.name : 'Road';
     this.refs.soundButton.textContent = this.audio.muted ? 'Muted' : 'Sound';
+    const circuitVisible = this.updateCircuitStatus(circuit);
     if (circuit?.active) {
-      this.refs.zoneReadout.textContent = `Circuit ${circuit.checkpoint}/${this.game.world.checkpoints.length - 1}`;
+      this.refs.zoneReadout.textContent = `Circuit ${Math.min(circuit.checkpoint + 1, this.game.world.checkpoints.length - 1)}/${this.game.world.checkpoints.length - 1}`;
       this.hidePrompt();
     } else {
       this.showPrompt(activeZone);
     }
+    if (!circuitVisible && this.refs.circuitStatus) this.refs.circuitStatus.hidden = true;
     this.updateMapMarkers(activeZone);
+  }
+
+  updateCircuitStatus(circuit) {
+    if (!this.refs.circuitStatus || !circuit) return false;
+    const targetCount = Math.max(1, this.game.world.checkpoints.length - 1);
+    const now = this.game.ticker?.elapsed || 0;
+    const showSummary = !circuit.active && circuit.summaryUntil && now < circuit.summaryUntil;
+    if (!circuit.active && !showSummary) {
+      this.refs.circuitStatus.hidden = true;
+      this.refs.circuitStatus.classList.remove('is-pulsing');
+      return false;
+    }
+
+    const target = Math.min(circuit.checkpoint + 1, targetCount);
+    const elapsed = circuit.active ? Math.max(0, now - circuit.startedAt) : circuit.lastLap || 0;
+    const split = circuit.active && circuit.lastCheckpointTime
+      ? `Split ${formatTime(circuit.lastCheckpointTime)}`
+      : formatTime(elapsed);
+    this.refs.circuitProgress.textContent = circuit.active
+      ? `Checkpoint ${target}/${targetCount}`
+      : 'Circuit complete';
+    this.refs.circuitTime.textContent = split;
+    this.refs.circuitBest.textContent = circuit.best ? `Best ${formatTime(circuit.best)}` : 'Best --';
+    this.refs.circuitStatus.hidden = false;
+    this.refs.circuitStatus.classList.toggle('is-pulsing', (circuit.checkpointPulse || 0) > 0.22);
+    return true;
   }
 
   updateMapMarkers(activeZone) {
@@ -600,6 +632,20 @@ export class UI {
       worldMapWidth: Math.round(worldMap?.getBoundingClientRect?.().width || 0),
       mapPins: this.refs.worldMapLayer?.querySelectorAll('.map-pin').length || 0,
       activeMapPins: this.refs.worldMapLayer?.querySelectorAll('.map-pin.is-active').length || 0
+    };
+  }
+
+  getCircuitStats() {
+    const box = this.refs.circuitStatus?.getBoundingClientRect?.();
+    return {
+      visible: Boolean(this.refs.circuitStatus && !this.refs.circuitStatus.hidden),
+      text: this.refs.circuitStatus?.textContent?.replace(/\s+/g, ' ').trim() || '',
+      progress: this.refs.circuitProgress?.textContent || '',
+      time: this.refs.circuitTime?.textContent || '',
+      best: this.refs.circuitBest?.textContent || '',
+      pulsing: Boolean(this.refs.circuitStatus?.classList.contains('is-pulsing')),
+      width: Math.round(box?.width || 0),
+      height: Math.round(box?.height || 0)
     };
   }
 }
@@ -753,6 +799,13 @@ function optionButton(title, description, onClick) {
 
 function capitalize(value) {
   return `${value.charAt(0).toUpperCase()}${value.slice(1)}`;
+}
+
+function formatTime(seconds) {
+  const safe = Math.max(0, Number(seconds) || 0);
+  const minutes = Math.floor(safe / 60);
+  const rest = safe - minutes * 60;
+  return `${minutes}:${rest.toFixed(2).padStart(5, '0')}`;
 }
 
 function promptStatusFor(zone, game) {

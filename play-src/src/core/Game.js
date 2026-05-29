@@ -129,6 +129,7 @@ export class Game {
     this.debugReadout = document.getElementById('debug-readout');
     const params = new URLSearchParams(window.location.search);
     this.debugEnabled = params.has('debugDrive') || localStorage.getItem('portfolio-drive-debug') === '1';
+    document.body.classList.toggle('debug-drive', this.debugEnabled);
     if (this.debugReadout && this.debugEnabled) this.debugReadout.hidden = false;
     window.__portfolioDrive = {
       game: this,
@@ -151,6 +152,7 @@ export class Game {
       debug: (enabled = true) => {
         this.debugEnabled = Boolean(enabled);
         localStorage.setItem('portfolio-drive-debug', this.debugEnabled ? '1' : '0');
+        document.body.classList.toggle('debug-drive', this.debugEnabled);
         if (this.debugReadout) this.debugReadout.hidden = !this.debugEnabled;
       }
     };
@@ -201,8 +203,6 @@ export class Game {
     this.updateLighting(elapsed);
     this.cameraRig.update(dt);
     this.audio.update(this.vehicle.speed, this.vehicle.controller?.driveState);
-    this.ui.update({ speed: this.vehicle.speed, activeZone: this.activeZone, circuit: this.world.circuit });
-    this.updateDebugReadout(dt);
 
     const circuitEvent = this.world.updateCircuit(this.vehicle.position, elapsed);
     if (circuitEvent?.finished) {
@@ -213,6 +213,9 @@ export class Game {
       this.audio.click(700);
       this.ui.notify(`Checkpoint ${circuitEvent.checkpoint}`);
     }
+
+    this.ui.update({ speed: this.vehicle.speed, activeZone: this.activeZone, circuit: this.world.circuit });
+    this.updateDebugReadout(dt);
 
     this.rendererSystem.render();
     this.input.clearTransient();

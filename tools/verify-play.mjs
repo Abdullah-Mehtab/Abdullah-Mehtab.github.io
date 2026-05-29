@@ -661,11 +661,13 @@ async function previewCircuit(page) {
     game.camera.lookAt(lookAt);
     await delay(300);
     const stats = game.world.stuntPark?.getStats?.() || {};
+    const ui = game.ui?.getCircuitStats?.() || {};
     return {
       targetCount: game.world.checkpoints.length - 1,
       active: game.world.circuit.active,
       activeTarget: game.world.circuit.checkpoint + 1,
       markerActiveTarget: stats.activeCircuitTarget || 0,
+      ui,
       ringInstances: game.scene.getObjectByName('STUNT_Circuit_Target_Rings')?.count || 0,
       arrowInstances: game.scene.getObjectByName('STUNT_Circuit_Target_Arrows')?.count || 0,
       gates: stats.circuitCheckpointGates || 0
@@ -700,6 +702,7 @@ async function finishCircuit(page, preview) {
     const finishedCount = game.world.circuit.finishedCount || 0;
     const lastLap = game.world.circuit.lastLap || 0;
     const best = game.world.circuit.best || 0;
+    const uiAfterFinish = game.ui?.getCircuitStats?.() || {};
     game.clearFocus();
     window.__portfolioDrive.respawn('landing');
     return {
@@ -713,6 +716,7 @@ async function finishCircuit(page, preview) {
       lastLap: Number(lastLap.toFixed(2)),
       best: Number(best.toFixed(2)),
       achievementUnlocked: game.achievements.unlocked.has('circuit_finish'),
+      uiAfterFinish,
       stats,
       ringInstances: game.scene.getObjectByName('STUNT_Circuit_Target_Rings')?.count || 0,
       arrowInstances: game.scene.getObjectByName('STUNT_Circuit_Target_Arrows')?.count || 0
@@ -1246,11 +1250,18 @@ function assertVerification(result) {
   if (!result.circuit?.preview?.active) failures.push('circuit probe failed: preview inactive');
   if (result.circuit?.preview?.activeTarget !== 1) failures.push(`circuit probe failed: preview target=${result.circuit?.preview?.activeTarget}`);
   if (result.circuit?.preview?.markerActiveTarget !== 1) failures.push(`circuit probe failed: marker target=${result.circuit?.preview?.markerActiveTarget}`);
+  if (!result.circuit?.preview?.ui?.visible) failures.push('circuit UI probe failed: preview hidden');
+  if (!/Checkpoint 1\/\d+/.test(result.circuit?.preview?.ui?.text || '')) failures.push(`circuit UI probe failed: preview text=${result.circuit?.preview?.ui?.text || ''}`);
+  if ((result.circuit?.preview?.ui?.width || 0) > 420) failures.push(`circuit UI probe failed: preview width=${result.circuit?.preview?.ui?.width || 0}`);
   if (!result.circuit?.finished) failures.push('circuit probe failed: finish event');
   if (result.circuit?.activeAfterFinish) failures.push('circuit probe failed: still active after finish');
   if ((result.circuit?.checkpointEvents || 0) < circuitCheckpoints.length - 1) failures.push(`circuit probe failed: checkpointEvents=${result.circuit?.checkpointEvents || 0}`);
   if (!result.circuit?.achievementUnlocked) failures.push('circuit probe failed: circuit_finish achievement');
   if ((result.circuit?.lastLap || 0) <= 0 || (result.circuit?.best || 0) <= 0) failures.push(`circuit probe failed: lap=${result.circuit?.lastLap || 0}, best=${result.circuit?.best || 0}`);
+  if (!result.circuit?.uiAfterFinish?.visible) failures.push('circuit UI probe failed: finish summary hidden');
+  if (!/Circuit complete/.test(result.circuit?.uiAfterFinish?.text || '')) failures.push(`circuit UI probe failed: finish text=${result.circuit?.uiAfterFinish?.text || ''}`);
+  if ((result.circuit?.stats?.checkpointPulseSamples || 0) < 1) failures.push(`circuit feedback probe failed: pulse samples=${result.circuit?.stats?.checkpointPulseSamples || 0}`);
+  if ((result.circuit?.stats?.maxCheckpointPulse || 0) <= 0) failures.push(`circuit feedback probe failed: max pulse=${result.circuit?.stats?.maxCheckpointPulse || 0}`);
   if ((result.circuit?.ringInstances || 0) !== circuitCheckpoints.length - 1) failures.push(`circuit probe failed: ring instances=${result.circuit?.ringInstances || 0}`);
   if ((result.circuit?.arrowInstances || 0) !== circuitCheckpoints.length - 1) failures.push(`circuit probe failed: arrow instances=${result.circuit?.arrowInstances || 0}`);
   if (result.worldLife?.counts?.zonePulses !== worldZones.length) failures.push(`world life probe failed: zone pulses ${result.worldLife?.counts?.zonePulses}/${worldZones.length}`);

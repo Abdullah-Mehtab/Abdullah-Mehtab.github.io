@@ -53,8 +53,13 @@ export class World {
       startedAt: 0,
       checkpoint: 0,
       checkpointEvents: 0,
+      lastCheckpointAt: 0,
+      lastCheckpointIndex: 0,
+      lastCheckpointTime: 0,
+      checkpointPulse: 0,
       finishedCount: 0,
       lastLap: 0,
+      summaryUntil: 0,
       best: Number(localStorage.getItem('portfolio-drive-best-lap') || 0)
     };
     this.securityScan = {
@@ -338,7 +343,12 @@ export class World {
     this.circuit.startedAt = now;
     this.circuit.checkpoint = 0;
     this.circuit.checkpointEvents = 0;
+    this.circuit.lastCheckpointAt = 0;
+    this.circuit.lastCheckpointIndex = 0;
+    this.circuit.lastCheckpointTime = 0;
+    this.circuit.checkpointPulse = 0;
     this.circuit.lastLap = 0;
+    this.circuit.summaryUntil = 0;
   }
 
   startSecurityScan(now) {
@@ -360,12 +370,17 @@ export class World {
 
     this.circuit.checkpoint += 1;
     this.circuit.checkpointEvents += 1;
+    this.circuit.lastCheckpointAt = now;
+    this.circuit.lastCheckpointIndex = this.circuit.checkpoint;
+    this.circuit.lastCheckpointTime = now - this.circuit.startedAt;
+    this.circuit.checkpointPulse = 1;
     if (this.circuit.checkpoint >= this.checkpoints.length - 1) {
       const lap = now - this.circuit.startedAt;
       this.circuit.active = false;
       this.circuit.checkpoint = 0;
       this.circuit.finishedCount += 1;
       this.circuit.lastLap = lap;
+      this.circuit.summaryUntil = now + 4;
       if (!this.circuit.best || lap < this.circuit.best) {
         this.circuit.best = lap;
         localStorage.setItem('portfolio-drive-best-lap', String(lap));
@@ -380,10 +395,17 @@ export class World {
     this.foliage.update(dt, elapsed, vehiclePosition);
     this.potatoFarm.update(dt);
     this.zonesSystem.update(vehiclePosition);
+    this.updateCircuitFeedback(dt);
     this.stuntPark.update(dt, elapsed);
     this.setPieces.update(dt, elapsed);
     this.atmosphere.update(dt, elapsed);
     this.updateCollectibles(dt, elapsed);
+  }
+
+  updateCircuitFeedback(dt) {
+    if (this.circuit.checkpointPulse > 0) {
+      this.circuit.checkpointPulse = Math.max(0, this.circuit.checkpointPulse - dt * 1.75);
+    }
   }
 
   updateCollectibles(dt, elapsed) {
