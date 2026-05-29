@@ -43,10 +43,10 @@ export class Atmosphere {
     const material = new THREE.ShaderMaterial({
       side: THREE.BackSide,
       uniforms: {
-        zenith: { value: new THREE.Color(0x4e8ee7) },
-        upper: { value: new THREE.Color(0x8fdbff) },
-        horizon: { value: new THREE.Color(0xffc083) },
-        low: { value: new THREE.Color(0xa3efe2) }
+        zenith: { value: new THREE.Color(0x2f78ce) },
+        upper: { value: new THREE.Color(0x78c8f0) },
+        horizon: { value: new THREE.Color(0xffbd83) },
+        low: { value: new THREE.Color(0xb6f2ea) }
       },
       vertexShader: `
         varying vec3 vWorldPosition;
@@ -84,16 +84,16 @@ export class Atmosphere {
       opacity: 0.78,
       depthWrite: false
     });
-    this.sunDisk = new THREE.Mesh(new THREE.CircleGeometry(18, 48), sunMaterial);
+    this.sunDisk = new THREE.Mesh(new THREE.CircleGeometry(8.5, 48), sunMaterial);
     this.sunDisk.name = 'CinematicSunDisk';
-    this.sunDisk.position.set(-162, 58, -138);
-    this.sunDisk.lookAt(0, 22, 0);
+    this.sunDisk.position.set(-184, 34, -158);
+    this.sunDisk.lookAt(0, 15, 0);
     this.world.scene.add(this.sunDisk);
 
     const glowSpecs = [
-      { radius: 28, color: 0xffc083, opacity: 0.22 },
-      { radius: 44, color: 0xff8f67, opacity: 0.12 },
-      { radius: 66, color: 0x9be7ff, opacity: 0.055 }
+      { radius: 16, color: 0xffc083, opacity: 0.13 },
+      { radius: 28, color: 0xff8f67, opacity: 0.07 },
+      { radius: 44, color: 0x9be7ff, opacity: 0.032 }
     ];
     for (let i = 0; i < glowSpecs.length; i += 1) {
       const spec = glowSpecs[i];
@@ -110,7 +110,7 @@ export class Atmosphere {
       glow.name = `CinematicSunGlow_${i}`;
       glow.position.copy(this.sunDisk.position);
       glow.position.multiplyScalar(0.998 - i * 0.002);
-      glow.lookAt(0, 22, 0);
+      glow.lookAt(0, 15, 0);
       this.world.scene.add(glow);
       this.sunGlows.push(glow);
     }
@@ -351,7 +351,7 @@ export class Atmosphere {
     }
     for (let i = 0; i < this.sunGlows.length; i += 1) {
       const glow = this.sunGlows[i];
-      glow.material.opacity = (i === 0 ? 0.22 : i === 1 ? 0.12 : 0.055) + Math.sin(elapsed * 0.16 + i) * 0.018;
+      glow.material.opacity = (i === 0 ? 0.13 : i === 1 ? 0.07 : 0.032) + Math.sin(elapsed * 0.16 + i) * 0.01;
       glow.rotation.z += dt * (0.018 + i * 0.006);
     }
     for (let i = 0; i < this.horizonRibbons.length; i += 1) {
@@ -400,6 +400,9 @@ export class Atmosphere {
     return {
       skyDome: Boolean(this.skyDome),
       sunDisk: Boolean(this.sunDisk),
+      sunDiskPosition: this.sunDisk
+        ? [this.sunDisk.position.x, this.sunDisk.position.y, this.sunDisk.position.z].map((value) => Number(value.toFixed(2)))
+        : null,
       sunGlows: this.sunGlows.length,
       visibleSunGlows: this.sunGlows.filter((glow) => glow.visible).length,
       horizonRibbons: this.horizonRibbons.length,

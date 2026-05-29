@@ -1023,6 +1023,7 @@ async function collectRuntimeMetrics(page, loadMs, gameplay, water, surfaces, su
         laneEdges: game.world.roads?.roadGroup?.userData?.laneEdgeLineCount || 0
       },
       staticBatching: sampleStaticBatching(game.scene),
+      lighting: game.getLightingStats?.() || {},
       foliage: game.world.foliage?.getStats?.() || {},
       mapStats: game.ui?.getMapStats?.() || {},
       atmosphere: game.world.atmosphere?.getStats?.() || {},
@@ -1273,6 +1274,7 @@ async function captureMobile(browser) {
       setPieceQuality: game.world.setPieces?.getQualityStats?.() || {},
       fieldMotifs: game.world.terrain?.getFieldMotifStats?.() || {},
       atmosphere: game.world.atmosphere?.getStats?.() || {},
+      lighting: game.getLightingStats?.() || {},
       calls: render.calls,
       triangles: render.triangles
     };
@@ -1382,6 +1384,16 @@ function assertVerification(result) {
   if (result.loadMs > 15000) failures.push(`app-ready load time too high: ${result.loadMs}ms`);
   if (result.p95FrameMs > 20) failures.push(`p95 frame time too high: ${result.p95FrameMs}ms`);
   if (result.fps < 60) failures.push(`desktop FPS too low: ${result.fps}`);
+  if (!result.lighting?.sun) failures.push('lighting probe failed: missing sun stats');
+  if ((result.lighting?.sun?.position?.[1] || 0) < 30 || (result.lighting?.sun?.position?.[1] || 0) > 45) {
+    failures.push(`lighting probe failed: sun height=${result.lighting?.sun?.position?.[1]}`);
+  }
+  if ((result.lighting?.fog?.near || 0) > 124 || (result.lighting?.fog?.far || 0) > 510) {
+    failures.push(`lighting probe failed: fog range=${result.lighting?.fog?.near}/${result.lighting?.fog?.far}`);
+  }
+  if ((result.lighting?.toneMappingExposure || 0) > 1.08) {
+    failures.push(`lighting probe failed: exposure=${result.lighting?.toneMappingExposure}`);
+  }
   const polishPropsBytes = result.glbAssets?.['play/game-assets/polish-props.glb'] || 0;
   if (polishPropsBytes > 2500000) failures.push(`polish props GLB budget exceeded: ${polishPropsBytes}`);
   if (result.gameplay.movementMeters < 5) failures.push(`drive movement too small: ${result.gameplay.movementMeters}m`);
@@ -1609,6 +1621,9 @@ function assertVerification(result) {
     failures.push(`mobile field motif quality probe failed: visibleTotal=${result.mobile.fieldMotifs?.visibleTotal || 0}`);
   }
   if (result.mobile.calls > 235) failures.push(`mobile draw-call budget exceeded: ${result.mobile.calls}`);
+  if ((result.mobile.lighting?.sun?.position?.[1] || 0) < 30 || (result.mobile.lighting?.sun?.position?.[1] || 0) > 45) {
+    failures.push(`mobile lighting probe failed: sun height=${result.mobile.lighting?.sun?.position?.[1]}`);
+  }
   if ((result.mobile.atmosphere?.visibleClouds || 0) > 5) failures.push(`mobile atmosphere probe failed: visibleClouds=${result.mobile.atmosphere?.visibleClouds || 0}`);
   if ((result.mobile.atmosphere?.visibleSunGlows || 0) > 1) failures.push(`mobile atmosphere probe failed: visibleSunGlows=${result.mobile.atmosphere?.visibleSunGlows || 0}`);
   if ((result.mobile.atmosphere?.visibleHorizonRibbons || 0) > 1) failures.push(`mobile atmosphere probe failed: visibleHorizonRibbons=${result.mobile.atmosphere?.visibleHorizonRibbons || 0}`);
