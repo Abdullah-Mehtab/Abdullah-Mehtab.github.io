@@ -843,6 +843,7 @@ async function collectRuntimeMetrics(page, loadMs, gameplay, water, surfaces, su
         edgeFeathers: game.world.roads?.roadGroup?.userData?.edgeFeatherCount || 0
       },
       mapStats: game.ui?.getMapStats?.() || {},
+      atmosphere: game.world.atmosphere?.getStats?.() || {},
       roadJunctions: {
         blendPatches: game.world.roads?.roadGroup?.userData?.junctionPatchCount || 0,
         circularPointCaps: game.world.roads?.roadGroup?.userData?.circularPointCaps || 0
@@ -1020,6 +1021,7 @@ async function captureMobile(browser) {
       quality: game.world.landscapeQuality,
       savedQuality: localStorage.getItem('portfolio-drive-landscape-quality'),
       lifeStats: game.world.setPieces?.getLifeStats?.() || { ...(game.world.setPieces?.lifeStats || {}) },
+      atmosphere: game.world.atmosphere?.getStats?.() || {},
       calls: render.calls,
       triangles: render.triangles
     };
@@ -1144,6 +1146,15 @@ function assertVerification(result) {
   if ((result.mapStats?.roadLines || 0) !== roadPaths.length) failures.push(`map probe failed: roadLines=${result.mapStats?.roadLines || 0}/${roadPaths.length}`);
   if ((result.mapStats?.circuitCheckpoints || 0) !== circuitCheckpoints.length) failures.push(`map probe failed: circuitCheckpoints=${result.mapStats?.circuitCheckpoints || 0}/${circuitCheckpoints.length}`);
   if ((result.mapStats?.legendItems || 0) < 5) failures.push(`map probe failed: legendItems=${result.mapStats?.legendItems || 0}`);
+  if (!result.atmosphere?.skyDome) failures.push('atmosphere probe failed: sky dome');
+  if (!result.atmosphere?.sunDisk) failures.push('atmosphere probe failed: sun disk');
+  if ((result.atmosphere?.sunGlows || 0) < 3) failures.push(`atmosphere probe failed: sunGlows=${result.atmosphere?.sunGlows || 0}`);
+  if ((result.atmosphere?.visibleSunGlows || 0) < 3) failures.push(`atmosphere probe failed: visibleSunGlows=${result.atmosphere?.visibleSunGlows || 0}`);
+  if ((result.atmosphere?.horizonRibbons || 0) < 3) failures.push(`atmosphere probe failed: horizonRibbons=${result.atmosphere?.horizonRibbons || 0}`);
+  if ((result.atmosphere?.visibleHorizonRibbons || 0) < 3) failures.push(`atmosphere probe failed: visibleHorizonRibbons=${result.atmosphere?.visibleHorizonRibbons || 0}`);
+  if ((result.atmosphere?.visibleClouds || 0) < 9) failures.push(`atmosphere probe failed: visibleClouds=${result.atmosphere?.visibleClouds || 0}`);
+  if ((result.atmosphere?.cloudShadowInstances || 0) < (result.atmosphere?.visibleClouds || 0)) failures.push(`atmosphere probe failed: cloudShadowInstances=${result.atmosphere?.cloudShadowInstances || 0}`);
+  if ((result.atmosphere?.motionSamples || 0) < 1) failures.push('atmosphere probe failed: motion samples');
   if ((result.roadJunctions?.blendPatches || 0) < 8) failures.push(`road junction probe failed: blendPatches=${result.roadJunctions?.blendPatches || 0}`);
   if ((result.roadJunctions?.circularPointCaps || 0) !== 0) failures.push(`road junction probe failed: circularPointCaps=${result.roadJunctions?.circularPointCaps || 0}`);
   if ((result.surfaceDetails?.districts || 0) < 10) failures.push(`surface detail probe failed: districts=${result.surfaceDetails?.districts || 0}`);
@@ -1192,6 +1203,9 @@ function assertVerification(result) {
   if (result.mobile.quality !== 'low') failures.push(`mobile quality tier mismatch: ${result.mobile.quality}`);
   if (result.mobile.savedQuality !== null) failures.push(`mobile default quality should not write saved preference: ${result.mobile.savedQuality}`);
   if (result.mobile.calls > 260) failures.push(`mobile draw-call budget exceeded: ${result.mobile.calls}`);
+  if ((result.mobile.atmosphere?.visibleClouds || 0) > 5) failures.push(`mobile atmosphere probe failed: visibleClouds=${result.mobile.atmosphere?.visibleClouds || 0}`);
+  if ((result.mobile.atmosphere?.visibleSunGlows || 0) > 1) failures.push(`mobile atmosphere probe failed: visibleSunGlows=${result.mobile.atmosphere?.visibleSunGlows || 0}`);
+  if ((result.mobile.atmosphere?.visibleHorizonRibbons || 0) > 1) failures.push(`mobile atmosphere probe failed: visibleHorizonRibbons=${result.mobile.atmosphere?.visibleHorizonRibbons || 0}`);
   if ((result.mobile.lifeStats?.visibleTotal || 0) >= (result.worldLife?.quality?.medium?.visibleTotal || Infinity)) {
     failures.push('mobile quality probe failed: visible life signals were not reduced');
   }
