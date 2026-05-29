@@ -39,6 +39,10 @@ def main():
     create_career_office(mats)
     create_awards_monument(mats)
     create_todo_board(mats)
+    create_document_arcade(mats)
+    create_terminal_canopy(mats)
+    create_queue_marquee(mats)
+    create_process_crane(mats)
     create_circuit_gate(mats)
     create_stunt_checkpoint(mats)
     create_stunt_score_tower(mats)
@@ -464,6 +468,70 @@ def create_todo_board(mats):
     for i, (x, y) in enumerate([(-1.2, 1.05), (0, 1.3), (1.18, 1.05), (-0.58, 1.86), (0.88, 1.9)]):
         cube(f"TodoBoard_Card_{i}", group, (x, y, 0.12), (0.82, 0.48, 0.06), [mats["paper"], mats["mint"], mats["purple"], mats["amber"], mats["aqua"]][i], rot=(0, 0, 0.08 - i * 0.04), bevel=0.008)
     cube("TodoBoard_Header", group, (0, 2.72, 0.18), (3.2, 0.1, 0.08), mats["purple"], bevel=0.006)
+
+
+def create_document_arcade(mats):
+    group = root("EnvPolishDocumentArcade")
+    cube("DocumentArcade_Floor", group, (0, 0.14, 0), (8.6, 0.28, 3.4), mats["stone"], bevel=0.045)
+    for x in [-3.55, -1.18, 1.18, 3.55]:
+        cube("DocumentArcade_Column", group, (x, 1.55, -0.88), (0.34, 2.82, 0.34), mats["stone_shadow"], bevel=0.025)
+        cube("DocumentArcade_Lamp", group, (x, 2.66, -1.1), (0.36, 0.26, 0.08), mats["mint"], bevel=0.014)
+    cube("DocumentArcade_BackWall", group, (0, 1.52, 1.12), (8.3, 2.55, 0.28), mats["stone_shadow"], bevel=0.04)
+    cube("DocumentArcade_Roof", group, (0, 3.08, 0.06), (9.1, 0.34, 3.92), mats["wood"], bevel=0.045)
+    cube("DocumentArcade_HeaderGlow", group, (0, 2.84, -1.94), (7.2, 0.09, 0.075), mats["screen"], bevel=0.006)
+    for index, x in enumerate([-2.95, -1.78, -0.58, 0.58, 1.78, 2.95]):
+        material = [mats["paper"], mats["foam"], mats["paper"], mats["amber"], mats["paper"], mats["mint"]][index]
+        cube(f"DocumentArcade_File_{index}", group, (x, 1.5 + (index % 2) * 0.26, 0.88), (0.72, 0.78, 0.07), material, rot=(0, 0, 0.08 - index * 0.025), bevel=0.006)
+    for x in [-3.1, 3.1]:
+        cube("DocumentArcade_Step", group, (x, 0.36, -1.72), (1.8, 0.18, 0.56), mats["paper"], bevel=0.025)
+
+
+def create_terminal_canopy(mats):
+    group = root("EnvPolishTerminalCanopy")
+    cube("TerminalCanopy_Deck", group, (0, 0.14, 0), (7.8, 0.28, 4.2), mats["stone_shadow"], bevel=0.045)
+    for x in [-3.25, 3.25]:
+        for z in [-1.55, 1.55]:
+            cube("TerminalCanopy_Post", group, (x, 1.72, z), (0.26, 3.15, 0.26), mats["dark"], bevel=0.018)
+            cube("TerminalCanopy_PostGlow", group, (x, 1.72, z - 0.16), (0.08, 2.35, 0.055), mats["screen"], bevel=0.004)
+    cube("TerminalCanopy_Roof", group, (0, 3.34, 0), (8.6, 0.32, 4.82), mats["dark"], bevel=0.04)
+    cube("TerminalCanopy_RimGlow", group, (0, 3.12, -2.42), (7.0, 0.08, 0.07), mats["aqua"], bevel=0.004)
+    for index, x in enumerate([-2.2, 0, 2.2]):
+        cube(f"TerminalCanopy_HangingScreen_{index}", group, (x, 2.08, -0.52), (1.3, 1.15, 0.08), [mats["screen"], mats["purple"], mats["mint"]][index], bevel=0.012)
+        cube(f"TerminalCanopy_Cable_{index}", group, (x, 2.78, -0.52), (0.08, 0.92, 0.08), mats["rope"], bevel=0.006)
+    for z in [-1.35, 1.35]:
+        cube("TerminalCanopy_CableRun", group, (0, 0.45, z), (6.5, 0.1, 0.12), mats["rope"], bevel=0.012)
+    cube("TerminalCanopy_InputDesk", group, (0, 0.82, 1.1), (3.2, 0.42, 0.86), mats["wood"], bevel=0.025)
+
+
+def create_queue_marquee(mats):
+    group = root("EnvPolishQueueMarquee")
+    cube("QueueMarquee_Base", group, (0, 0.16, 0), (6.2, 0.32, 2.2), mats["stone"], bevel=0.04)
+    for x in [-2.65, 2.65]:
+        cube("QueueMarquee_Post", group, (x, 1.86, 0), (0.3, 3.36, 0.3), mats["dark"], bevel=0.02)
+        cube("QueueMarquee_FootLight", group, (x, 0.48, -0.82), (0.46, 0.18, 0.08), mats["pink"], bevel=0.012)
+    cube("QueueMarquee_Board", group, (0, 2.05, -0.1), (5.55, 2.26, 0.24), mats["dark"], bevel=0.03)
+    cube("QueueMarquee_Header", group, (0, 3.38, -0.18), (6.0, 0.32, 0.32), mats["wood"], bevel=0.025)
+    cube("QueueMarquee_HeaderGlow", group, (0, 3.14, -0.34), (4.9, 0.08, 0.06), mats["purple"], bevel=0.004)
+    card_specs = [(-1.8, 2.32, "paper"), (-0.6, 2.08, "mint"), (0.62, 2.38, "amber"), (1.82, 2.0, "aqua"), (-1.08, 1.34, "purple"), (1.06, 1.28, "paper")]
+    for index, (x, y, material) in enumerate(card_specs):
+        cube(f"QueueMarquee_Card_{index}", group, (x, y, -0.28), (0.88, 0.5, 0.06), mats[material], rot=(0, 0, 0.06 - index * 0.025), bevel=0.006)
+    cube("QueueMarquee_Arrow", group, (0, 0.48, -1.04), (1.8, 0.1, 0.16), mats["mint"], bevel=0.006)
+
+
+def create_process_crane(mats):
+    group = root("EnvPolishProcessCrane")
+    for x in [-3.2, 3.2]:
+        cube("ProcessCrane_Foot", group, (x, 0.18, 0), (0.9, 0.36, 1.1), mats["stone_shadow"], bevel=0.035)
+        cube("ProcessCrane_Post", group, (x, 2.0, 0), (0.32, 3.55, 0.32), mats["dark"], bevel=0.022)
+        cube("ProcessCrane_PostGlow", group, (x, 2.0, -0.2), (0.1, 2.6, 0.055), mats["amber"], bevel=0.005)
+    cube("ProcessCrane_TopBeam", group, (0, 3.76, 0), (7.1, 0.36, 0.42), mats["dark"], bevel=0.03)
+    cube("ProcessCrane_RailGlow", group, (0, 3.48, -0.26), (5.8, 0.08, 0.07), mats["mint"], bevel=0.004)
+    cube("ProcessCrane_Trolley", group, (0.85, 3.24, -0.02), (0.92, 0.42, 0.72), mats["wood"], bevel=0.025)
+    cube("ProcessCrane_Cable", group, (0.85, 2.12, -0.02), (0.08, 1.88, 0.08), mats["rope"], bevel=0.006)
+    cube("ProcessCrane_Hook", group, (0.85, 1.08, -0.02), (0.58, 0.34, 0.18), mats["amber"], bevel=0.025)
+    cube("ProcessCrane_Load", group, (0.85, 0.62, 0.26), (1.5, 0.62, 0.95), mats["stone"], rot=(0, -0.18, 0), bevel=0.035)
+    for x in [-1.7, 0, 1.7]:
+        cube("ProcessCrane_FloorGuide", group, (x, 0.26, -1.18), (1.05, 0.08, 0.16), mats["screen"], bevel=0.004)
 
 
 def create_circuit_gate(mats):

@@ -512,9 +512,9 @@ export const zonePresentation = {
   },
   skills: {
     respawn: { position: [-82, 1.08, -103.5], heading: 2.17 },
-    camera: [-92, 9, -62],
-    target: [-62, 2.6, -84],
-    fov: 42
+    camera: [-86, 9, -66],
+    target: [-62, 3.2, -84],
+    fov: 40
   },
   education: {
     respawn: { position: [-60, 1.08, 64], heading: -0.79 },
@@ -530,15 +530,15 @@ export const zonePresentation = {
   },
   cv: {
     respawn: { position: [30, 1.08, -42], heading: -2.2 },
-    camera: [34, 8, -34],
-    target: [8, 2.5, -59],
-    fov: 42
+    camera: [28, 8, -42],
+    target: [6, 3, -57],
+    fov: 41
   },
   todo: {
     respawn: { position: [-82, 1.08, 40], heading: 3.14 },
-    camera: [-63, 8, -8],
-    target: [-84, 2.6, 16],
-    fov: 42
+    camera: [-64, 9, -4],
+    target: [-83, 3, 15],
+    fov: 40
   },
   circuit: {
     respawn: { position: [38, 1.08, 116], heading: 2.3 },
@@ -554,9 +554,9 @@ export const zonePresentation = {
   },
   behind: {
     respawn: { position: [8, 1.08, -78], heading: -2.18 },
-    camera: [14, 8, -70],
-    target: [-18, 2.6, -96],
-    fov: 42
+    camera: [6, 8, -76],
+    target: [-17, 3, -96],
+    fov: 40
   },
   drift: {
     respawn: { position: [78, 1.08, -94], heading: 0.9 },
