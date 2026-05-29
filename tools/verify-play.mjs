@@ -854,6 +854,7 @@ async function collectRuntimeMetrics(page, loadMs, gameplay, water, surfaces, su
       terrainRelief: game.world.terrain?.getReliefStats?.() || {},
       approachDressing: game.world.setPieces?.getApproachStats?.() || {},
       districtGateways: game.world.setPieces?.getGatewayStats?.() || {},
+      props: game.world.props?.getStats?.() || {},
       stuntPark: game.world.stuntPark?.getStats?.() || {},
       waterStats: game.world.water?.getStats?.() || {},
       protectedLandmarks,
@@ -1179,6 +1180,12 @@ function assertVerification(result) {
   if ((result.districtGateways?.lanterns || 0) < 24) failures.push(`district gateway probe failed: lanterns=${result.districtGateways?.lanterns || 0}`);
   if ((result.districtGateways?.authoredAssets || 0) < 36) failures.push(`district gateway probe failed: authoredAssets=${result.districtGateways?.authoredAssets || 0}`);
   if ((result.districtGateways?.guideStrips || 0) < 60) failures.push(`district gateway probe failed: guideStrips=${result.districtGateways?.guideStrips || 0}`);
+  if ((result.props?.roadLanterns || 0) < 8) failures.push(`props probe failed: roadLanterns=${result.props?.roadLanterns || 0}`);
+  if ((result.props?.authoredLanterns || 0) !== (result.props?.roadLanterns || 0)) failures.push(`props probe failed: authoredLanterns=${result.props?.authoredLanterns || 0}/${result.props?.roadLanterns || 0}`);
+  if ((result.props?.fallbackLanterns || 0) !== 0) failures.push(`props probe failed: fallbackLanterns=${result.props?.fallbackLanterns || 0}`);
+  if ((result.props?.authoredProps || 0) < 12) failures.push(`props probe failed: authoredProps=${result.props?.authoredProps || 0}`);
+  if ((result.props?.fallbackProps || 0) !== 0) failures.push(`props probe failed: fallbackProps=${result.props?.fallbackProps || 0}`);
+  if ((result.props?.shoreRocks || 0) < 20) failures.push(`props probe failed: shoreRocks=${result.props?.shoreRocks || 0}`);
   if ((result.stuntPark?.ramps || 0) < 3) failures.push(`stunt park probe failed: ramps=${result.stuntPark?.ramps || 0}`);
   if ((result.stuntPark?.boostPads || 0) < 3) failures.push(`stunt park probe failed: boostPads=${result.stuntPark?.boostPads || 0}`);
   if ((result.stuntPark?.cones || 0) < 12) failures.push(`stunt park probe failed: cones=${result.stuntPark?.cones || 0}`);

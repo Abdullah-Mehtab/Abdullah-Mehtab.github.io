@@ -1,5 +1,5 @@
 // ABOUTME: Places lightweight non-colliding props around roads, districts, and shorelines.
-// ABOUTME: Keeps decoration procedural so optional GLB props cannot create hidden blockers.
+// ABOUTME: Prefers authored GLB templates while keeping emergency fallbacks visible and non-blocking.
 import * as THREE from 'three';
 import { ISLAND_RADIUS, worldZones } from './worldData.js';
 import { pseudoRandom } from './WorldMaterials.js';
@@ -11,6 +11,16 @@ export class Props {
     this.group = new THREE.Group();
     this.group.name = 'PROP_Static_Decor';
     this.items = [];
+    this.stats = {
+      roadLanterns: 0,
+      authoredLanterns: 0,
+      fallbackLanterns: 0,
+      placedProps: 0,
+      authoredProps: 0,
+      fallbackProps: 0,
+      benchPads: 0,
+      shoreRocks: 0
+    };
   }
 
   build() {
@@ -36,11 +46,14 @@ export class Props {
         const x = cx + Math.sin(rotation) * length * t + Math.cos(rotation) * (width * 0.92) * side;
         const z = cz + Math.cos(rotation) * length * t - Math.sin(rotation) * (width * 0.92) * side;
         if (!this.world.terrain.containsPoint(x, z, 12)) continue;
-        const lamp = this.createLantern();
+        const lamp = this.createRoadLantern();
         lamp.position.set(x, 0.2, z);
         lamp.rotation.y = rotation + Math.PI * (side > 0 ? 0.5 : -0.5);
         this.group.add(lamp);
         this.items.push(lamp);
+        this.stats.roadLanterns += 1;
+        if (lamp.userData.authoredAsset) this.stats.authoredLanterns += 1;
+        else this.stats.fallbackLanterns += 1;
         placed += 1;
       }
     }
@@ -113,6 +126,7 @@ export class Props {
       this.group.add(rock);
       this.groundObject(rock, -0.045);
       this.items.push(rock);
+      this.stats.shoreRocks += 1;
     }
   }
 
@@ -125,14 +139,18 @@ export class Props {
       pad.receiveShadow = true;
       this.group.add(pad);
       this.items.push(pad);
+      this.stats.benchPads += 1;
     }
-    const prop = this.createFallbackProp(name);
+    const prop = this.createAuthoredProp(name) || this.createFallbackProp(name);
     prop.position.set(x, 0.12, z);
     prop.rotation.y = rotation;
     prop.scale.setScalar(scale);
     this.group.add(prop);
     this.groundObject(prop, 0.035);
     this.items.push(prop);
+    this.stats.placedProps += 1;
+    if (prop.userData.authoredAsset) this.stats.authoredProps += 1;
+    else this.stats.fallbackProps += 1;
   }
 
   groundObject(object, targetY = 0.04) {
@@ -143,8 +161,21 @@ export class Props {
     }
   }
 
-  createLantern() {
+  createRoadLantern() {
+    const lantern = this.world.cloneEnvironmentAsset('EnvPolishRouteLantern');
+    if (lantern) {
+      lantern.name = 'PROP_EnvPolishRouteLantern';
+      lantern.scale.setScalar(0.64);
+      lantern.userData.authoredAsset = 'EnvPolishRouteLantern';
+      return lantern;
+    }
+    return this.createLanternFallback();
+  }
+
+  createLanternFallback() {
     const group = new THREE.Group();
+    group.name = 'PROP_LanternFallback';
+    group.userData.fallbackAsset = true;
     const post = new THREE.Mesh(new THREE.CylinderGeometry(0.08, 0.12, 3.2, 8), this.world.materials.darkWood);
     post.position.y = 1.6;
     const arm = new THREE.Mesh(new THREE.BoxGeometry(0.9, 0.08, 0.08), this.world.materials.darkWood);
@@ -158,24 +189,39 @@ export class Props {
     return group;
   }
 
+  createAuthoredProp(name) {
+    const prop = this.world.cloneEnvironmentAsset(name);
+    if (!prop) return null;
+    prop.name = `PROP_${name}`;
+    prop.userData.authoredAsset = name;
+    return prop;
+  }
+
   createFallbackProp(name) {
+    let prop;
     if (name.includes('Barrel')) {
-      return new THREE.Mesh(new THREE.CylinderGeometry(0.45, 0.5, 1.05, 10), this.world.materials.wood);
-    }
-    if (name.includes('Crate')) {
-      return new THREE.Mesh(new THREE.BoxGeometry(1, 1, 1), this.world.materials.darkWood);
-    }
-    if (name.includes('Bench')) {
+      prop = new THREE.Mesh(new THREE.CylinderGeometry(0.45, 0.5, 1.05, 10), this.world.materials.wood);
+    } else if (name.includes('Crate')) {
+      prop = new THREE.Mesh(new THREE.BoxGeometry(1, 1, 1), this.world.materials.darkWood);
+    } else if (name.includes('Bench')) {
       const group = new THREE.Group();
       const seat = new THREE.Mesh(new THREE.BoxGeometry(1.9, 0.18, 0.45), this.world.materials.wood);
       seat.position.y = 0.55;
       group.add(seat);
-      return group;
+      prop = group;
+    } else {
+      prop = this.createRock();
     }
-    return this.createRock();
+    prop.name = `PROP_${name}_Fallback`;
+    prop.userData.fallbackAsset = true;
+    return prop;
   }
 
   createRock() {
     return new THREE.Mesh(new THREE.IcosahedronGeometry(0.9, 1), this.world.materials.stone);
+  }
+
+  getStats() {
+    return { ...this.stats };
   }
 }
