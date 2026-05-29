@@ -3,17 +3,23 @@
 import * as THREE from 'three';
 import { ISLAND_RADIUS, worldZones } from './worldData.js';
 import { pseudoRandom } from './WorldMaterials.js';
+import { mergeStaticMeshesInGroup } from './StaticBatching.js';
 
 export class Props {
   constructor(world) {
     this.world = world;
+    this.group = new THREE.Group();
+    this.group.name = 'PROP_Static_Decor';
     this.items = [];
   }
 
   build() {
+    this.world.scene.add(this.group);
     this.placeRoadLanterns();
     this.placeScenicProps();
     this.placeShoreRocks();
+    mergeStaticMeshesInGroup(this.group, { namePrefix: 'PROP_batch' });
+    this.items = [...this.group.children];
   }
 
   placeRoadLanterns() {
@@ -33,7 +39,7 @@ export class Props {
         const lamp = this.createLantern();
         lamp.position.set(x, 0.2, z);
         lamp.rotation.y = rotation + Math.PI * (side > 0 ? 0.5 : -0.5);
-        this.world.scene.add(lamp);
+        this.group.add(lamp);
         this.items.push(lamp);
         placed += 1;
       }
@@ -104,7 +110,7 @@ export class Props {
       rock.position.set(x, 0, z);
       rock.rotation.y = pseudoRandom(i * 3.7) * Math.PI * 2;
       rock.scale.setScalar(0.72 + pseudoRandom(i * 7.3) * 1.25);
-      this.world.scene.add(rock);
+      this.group.add(rock);
       this.groundObject(rock, -0.045);
       this.items.push(rock);
     }
@@ -117,14 +123,14 @@ export class Props {
       pad.position.set(x, 0.085, z);
       pad.rotation.y = rotation;
       pad.receiveShadow = true;
-      this.world.scene.add(pad);
+      this.group.add(pad);
       this.items.push(pad);
     }
     const prop = this.createFallbackProp(name);
     prop.position.set(x, 0.12, z);
     prop.rotation.y = rotation;
     prop.scale.setScalar(scale);
-    this.world.scene.add(prop);
+    this.group.add(prop);
     this.groundObject(prop, 0.035);
     this.items.push(prop);
   }
