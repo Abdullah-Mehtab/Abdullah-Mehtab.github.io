@@ -1,7 +1,7 @@
 // ABOUTME: Builds the procedural toy-island terrain used by /play.
 // ABOUTME: Replaces the old authored island GLB while keeping a stable visible driving floor.
 import * as THREE from 'three';
-import { districtFootprints, ISLAND_RADIUS, terrainBrushes } from './worldData.js';
+import { districtFootprints, ISLAND_RADIUS, roadSegments, terrainBrushes } from './worldData.js';
 import { getIslandCoastPoints, makeIslandBandGeometry, makeIslandGeometry, makePatchGeometry, pseudoRandom, WATER_Y } from './WorldMaterials.js';
 
 const DISTRICT_DETAIL_STYLES = {
@@ -22,7 +22,9 @@ export class Terrain {
     this.world = world;
     this.authoredIslandLoaded = false;
     this.surfaceDetailDummy = new THREE.Object3D();
+    this.reliefDummy = new THREE.Object3D();
     this.surfaceDetailStats = { districts: 0, seams: 0, pavers: 0, accents: 0 };
+    this.reliefStats = { mounds: 0, cliffShelves: 0, rockOutcrops: 0, duneRidges: 0, contourBands: 0, beachRipples: 0 };
   }
 
   build() {
@@ -31,6 +33,7 @@ export class Terrain {
     this.addTerrainBrushes();
     this.addDistrictGrounding();
     this.addDistrictSurfaceDetails();
+    this.addScenicRelief();
     this.addCoastalEdges();
     this.addPhysicsFloor();
   }
@@ -170,6 +173,184 @@ export class Terrain {
     };
   }
 
+  addScenicRelief() {
+    const group = new THREE.Group();
+    group.name = 'ToyIslandScenicRelief';
+    const mounds = [
+      { x: 22, z: 130, width: 72, depth: 15, height: 1.05, rotation: 0.18, material: this.world.materials.meadowLight, seed: 3 },
+      { x: -116, z: 106, width: 46, depth: 13, height: 0.82, rotation: -0.42, material: this.world.materials.meadowDark, seed: 9 },
+      { x: 116, z: 92, width: 48, depth: 12, height: 0.76, rotation: 0.62, material: this.world.materials.meadowLight, seed: 13 },
+      { x: -132, z: -42, width: 42, depth: 14, height: 0.88, rotation: 0.12, material: this.world.materials.meadowDark, seed: 19 },
+      { x: 110, z: -128, width: 58, depth: 14, height: 0.9, rotation: -0.48, material: this.world.materials.meadowLight, seed: 23 },
+      { x: -44, z: -146, width: 62, depth: 12, height: 0.78, rotation: 0.24, material: this.world.materials.meadowDark, seed: 29 }
+    ];
+    for (const spec of mounds) {
+      const mound = new THREE.Mesh(createMoundGeometry(spec.width, spec.depth, spec.height, spec.seed), spec.material);
+      mound.name = 'TerrainRelief_Mound';
+      mound.position.set(spec.x, 0.08, spec.z);
+      mound.rotation.y = spec.rotation;
+      mound.receiveShadow = true;
+      group.add(mound);
+    }
+
+    const cliffShelves = [
+      { x: 146, z: 45, width: 22, depth: 4.5, rotation: 0.9 },
+      { x: 126, z: -126, width: 28, depth: 4.2, rotation: -0.42 },
+      { x: -150, z: 42, width: 26, depth: 4.6, rotation: -0.95 },
+      { x: -112, z: -124, width: 24, depth: 4.4, rotation: 0.54 },
+      { x: 4, z: 151, width: 34, depth: 4.8, rotation: 0.08 },
+      { x: 66, z: -148, width: 24, depth: 4.0, rotation: -0.22 }
+    ];
+    for (const spec of cliffShelves) {
+      const shelf = new THREE.Mesh(createShelfGeometry(spec.width, spec.depth), this.world.materials.cliff);
+      shelf.name = 'TerrainRelief_CliffShelf';
+      shelf.position.set(spec.x, 0.32, spec.z);
+      shelf.rotation.y = spec.rotation;
+      shelf.receiveShadow = true;
+      group.add(shelf);
+    }
+
+    const duneRidges = [
+      { x: 94, z: -141, width: 30, depth: 3.2, rotation: -0.36 },
+      { x: -78, z: -145, width: 28, depth: 3.0, rotation: 0.22 },
+      { x: -143, z: 4, width: 26, depth: 3.2, rotation: 1.42 },
+      { x: 144, z: 18, width: 24, depth: 3.0, rotation: -1.28 },
+      { x: 44, z: 144, width: 30, depth: 3.1, rotation: 0.36 },
+      { x: -38, z: 145, width: 26, depth: 3.0, rotation: -0.26 }
+    ];
+    for (const spec of duneRidges) {
+      const ridge = new THREE.Mesh(createDuneRidgeGeometry(spec.width, spec.depth), this.world.materials.sand);
+      ridge.name = 'TerrainRelief_DuneRidge';
+      ridge.position.set(spec.x, 0.18, spec.z);
+      ridge.rotation.y = spec.rotation;
+      ridge.receiveShadow = true;
+      group.add(ridge);
+    }
+
+    this.addContourBands(group);
+    this.addBeachRipples(group);
+    this.addRockOutcrops(group);
+    this.world.scene.add(group);
+    this.reliefStats = {
+      mounds: mounds.length,
+      cliffShelves: cliffShelves.length,
+      rockOutcrops: group.userData.rockOutcrops || 0,
+      duneRidges: duneRidges.length,
+      contourBands: group.userData.contourBands || 0,
+      beachRipples: group.userData.beachRipples || 0
+    };
+  }
+
+  addContourBands(group) {
+    const specs = [];
+    for (let attempt = 0; attempt < 180 && specs.length < 48; attempt += 1) {
+      const seed = attempt + 37;
+      const radius = (0.2 + pseudoRandom(seed * 3.1) * 0.62) * ISLAND_RADIUS;
+      const angle = pseudoRandom(seed * 5.7) * Math.PI * 2;
+      const x = Math.cos(angle) * radius;
+      const z = Math.sin(angle) * radius;
+      if (Math.hypot(x, z) > ISLAND_RADIUS * 0.82) continue;
+      if (isNearRoad(x, z, 9.5)) continue;
+      specs.push({
+        x,
+        z,
+        rotation: angle + Math.PI * 0.5 + (pseudoRandom(seed * 11.2) - 0.5) * 0.72,
+        width: 0.55 + pseudoRandom(seed * 13.4) * 0.34,
+        length: 7.5 + pseudoRandom(seed * 17.9) * 14
+      });
+    }
+    const material = new THREE.MeshBasicMaterial({
+      color: 0x1d4b2c,
+      transparent: true,
+      opacity: 0.18,
+      depthWrite: false,
+      polygonOffset: true,
+      polygonOffsetFactor: -34,
+      polygonOffsetUnits: -34
+    });
+    const mesh = this.addFlatDetailInstances('TerrainRelief_ContourBands', specs, material, 0.184);
+    group.add(mesh);
+    group.userData.contourBands = specs.length;
+  }
+
+  addBeachRipples(group) {
+    const specs = [];
+    for (let i = 0; i < 64; i += 1) {
+      const angle = (i / 64) * Math.PI * 2 + pseudoRandom(i * 5.6) * 0.055;
+      const radius = ISLAND_RADIUS * (0.89 + pseudoRandom(i * 7.4) * 0.08);
+      const x = Math.cos(angle) * radius;
+      const z = Math.sin(angle) * radius;
+      if (isNearRoad(x, z, 7.4)) continue;
+      specs.push({
+        x,
+        z,
+        rotation: angle + Math.PI * 0.5,
+        width: 0.18 + pseudoRandom(i * 11.1) * 0.16,
+        length: 4.2 + pseudoRandom(i * 13.8) * 7.6
+      });
+    }
+    const material = new THREE.MeshBasicMaterial({
+      color: 0x946638,
+      transparent: true,
+      opacity: 0.18,
+      depthWrite: false,
+      polygonOffset: true,
+      polygonOffsetFactor: -35,
+      polygonOffsetUnits: -35
+    });
+    const mesh = this.addFlatDetailInstances('TerrainRelief_BeachRipples', specs, material, 0.19);
+    group.add(mesh);
+    group.userData.beachRipples = specs.length;
+  }
+
+  addFlatDetailInstances(name, specs, material, y) {
+    const mesh = new THREE.InstancedMesh(new THREE.BoxGeometry(1, 0.02, 1), material, specs.length);
+    mesh.name = name;
+    mesh.renderOrder = 38;
+    mesh.frustumCulled = false;
+    specs.forEach((spec, index) => {
+      this.reliefDummy.position.set(spec.x, y, spec.z);
+      this.reliefDummy.rotation.set(0, spec.rotation, 0);
+      this.reliefDummy.scale.set(spec.width, 1, spec.length);
+      this.reliefDummy.updateMatrix();
+      mesh.setMatrixAt(index, this.reliefDummy.matrix);
+    });
+    mesh.instanceMatrix.needsUpdate = true;
+    return mesh;
+  }
+
+  addRockOutcrops(group) {
+    const specs = [
+      [142, 64, 0.9, 0.82],
+      [150, 20, -0.2, 0.72],
+      [130, -132, 0.4, 0.86],
+      [88, -151, -0.5, 0.7],
+      [-96, -145, 0.8, 0.76],
+      [-145, -62, -0.3, 0.82],
+      [-151, 24, 0.5, 0.72],
+      [-130, 102, -0.7, 0.8],
+      [-18, 150, 0.2, 0.74],
+      [54, 148, -0.2, 0.7],
+      [121, 121, 0.64, 0.78],
+      [-142, 74, -0.55, 0.7]
+    ];
+    const geometry = new THREE.IcosahedronGeometry(1, 0);
+    const mesh = new THREE.InstancedMesh(geometry, this.world.materials.cliff, specs.length);
+    mesh.name = 'TerrainRelief_RockOutcrops';
+    mesh.castShadow = false;
+    mesh.receiveShadow = true;
+    specs.forEach(([x, z, rotation, scale], index) => {
+      this.reliefDummy.position.set(x, 0.72 * scale, z);
+      this.reliefDummy.rotation.set(0.18 + index * 0.05, rotation, -0.08 + index * 0.03);
+      this.reliefDummy.scale.set(scale * 2.8, scale * 0.92, scale * 1.9);
+      this.reliefDummy.updateMatrix();
+      mesh.setMatrixAt(index, this.reliefDummy.matrix);
+    });
+    mesh.instanceMatrix.needsUpdate = true;
+    group.add(mesh);
+    group.userData.rockOutcrops = specs.length;
+  }
+
   addSurfaceDetailInstances(name, specs, material, renderOrder) {
     if (!specs.length) return;
     const mesh = new THREE.InstancedMesh(createHorizontalPlaneGeometry(), material, specs.length);
@@ -214,6 +395,10 @@ export class Terrain {
 
   containsPoint(x, z, margin = 0) {
     return Math.hypot(x, z) <= ISLAND_RADIUS - margin;
+  }
+
+  getReliefStats() {
+    return { ...this.reliefStats };
   }
 }
 
@@ -293,6 +478,104 @@ function createHorizontalPlaneGeometry() {
     0, 1
   ]), 2));
   geometry.setIndex([0, 2, 1, 0, 3, 2]);
+  geometry.computeVertexNormals();
+  return geometry;
+}
+
+function isNearRoad(x, z, margin) {
+  return roadSegments.some(([cx, cz, width, length, rotation]) => {
+    const dx = x - cx;
+    const dz = z - cz;
+    const localX = Math.cos(rotation) * dx - Math.sin(rotation) * dz;
+    const localZ = Math.sin(rotation) * dx + Math.cos(rotation) * dz;
+    return Math.abs(localX) <= width / 2 + margin && Math.abs(localZ) <= length / 2 + margin;
+  });
+}
+
+function createMoundGeometry(width, depth, height, seed) {
+  const columns = 9;
+  const rows = 5;
+  const vertices = [];
+  const uvs = [];
+  const indices = [];
+  for (let row = 0; row < rows; row += 1) {
+    const v = row / (rows - 1);
+    const z = (v - 0.5) * depth;
+    for (let column = 0; column < columns; column += 1) {
+      const u = column / (columns - 1);
+      const x = (u - 0.5) * width;
+      const nx = Math.abs(u - 0.5) * 2;
+      const nz = Math.abs(v - 0.5) * 2;
+      const falloff = Math.max(0, 1 - Math.pow(nx, 2.2)) * Math.max(0, 1 - Math.pow(nz, 1.65));
+      const noise = 0.86 + pseudoRandom(seed * 17 + column * 11.3 + row * 7.1) * 0.22;
+      vertices.push(x, falloff * height * noise, z);
+      uvs.push(u, v);
+    }
+  }
+  for (let row = 0; row < rows - 1; row += 1) {
+    for (let column = 0; column < columns - 1; column += 1) {
+      const a = row * columns + column;
+      const b = a + 1;
+      const c = a + columns;
+      const d = c + 1;
+      indices.push(a, c, b, b, c, d);
+    }
+  }
+  const geometry = new THREE.BufferGeometry();
+  geometry.setAttribute('position', new THREE.BufferAttribute(new Float32Array(vertices), 3));
+  geometry.setAttribute('uv', new THREE.BufferAttribute(new Float32Array(uvs), 2));
+  geometry.setIndex(indices);
+  geometry.computeVertexNormals();
+  return geometry;
+}
+
+function createShelfGeometry(width, depth) {
+  const halfWidth = width / 2;
+  const halfDepth = depth / 2;
+  const vertices = new Float32Array([
+    -halfWidth, 0.28, -halfDepth,
+    halfWidth, 0.22, -halfDepth,
+    halfWidth * 0.92, -0.3, halfDepth,
+    -halfWidth * 0.92, -0.24, halfDepth,
+    -halfWidth * 0.82, 0.62, -halfDepth * 0.28,
+    halfWidth * 0.78, 0.54, -halfDepth * 0.22
+  ]);
+  const geometry = new THREE.BufferGeometry();
+  geometry.setAttribute('position', new THREE.BufferAttribute(vertices, 3));
+  geometry.setIndex([
+    0, 1, 4,
+    1, 5, 4,
+    0, 2, 1,
+    0, 3, 2,
+    3, 4, 5,
+    3, 5, 2,
+    0, 4, 3,
+    1, 2, 5
+  ]);
+  geometry.computeVertexNormals();
+  return geometry;
+}
+
+function createDuneRidgeGeometry(width, depth) {
+  const halfWidth = width / 2;
+  const halfDepth = depth / 2;
+  const vertices = new Float32Array([
+    -halfWidth, 0, -halfDepth,
+    halfWidth, 0, -halfDepth,
+    halfWidth, 0, halfDepth,
+    -halfWidth, 0, halfDepth,
+    0, 0.58, 0
+  ]);
+  const geometry = new THREE.BufferGeometry();
+  geometry.setAttribute('position', new THREE.BufferAttribute(vertices, 3));
+  geometry.setIndex([
+    0, 1, 4,
+    1, 2, 4,
+    2, 3, 4,
+    3, 0, 4,
+    0, 3, 2,
+    0, 2, 1
+  ]);
   geometry.computeVertexNormals();
   return geometry;
 }
