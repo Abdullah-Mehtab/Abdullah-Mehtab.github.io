@@ -150,7 +150,7 @@ def cube(name, parent, loc, scale, material, rot=(0, 0, 0), bevel=0.0):
     if bevel:
         modifier = obj.modifiers.new("soft_edges", "BEVEL")
         modifier.width = bevel
-        modifier.segments = 2
+        modifier.segments = 1
         obj.modifiers.new("weighted_normals", "WEIGHTED_NORMAL")
     return obj
 

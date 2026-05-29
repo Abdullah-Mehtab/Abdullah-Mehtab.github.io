@@ -1325,7 +1325,10 @@ function assertVerification(result) {
     if (!result.worldLife?.[key]) failures.push(`world life probe failed: ${key}`);
   }
   if (result.calls > 560) failures.push(`desktop draw-call budget exceeded: ${result.calls}`);
+  if (result.triangles > 280000) failures.push(`desktop triangle budget exceeded: ${result.triangles}`);
   if (result.p95FrameMs > 20) failures.push(`p95 frame time too high: ${result.p95FrameMs}ms`);
+  const polishPropsBytes = result.glbAssets?.['play/game-assets/polish-props.glb'] || 0;
+  if (polishPropsBytes > 2500000) failures.push(`polish props GLB budget exceeded: ${polishPropsBytes}`);
   if (result.gameplay.movementMeters < 5) failures.push(`drive movement too small: ${result.gameplay.movementMeters}m`);
   for (const key of ['keyboardHandbrake', 'boostSeen', 'jumpSeen', 'landingSeen', 'impactAudioSeen', 'burnoutSeen', 'wheelieSeen', 'handbrakeSeen']) {
     if (!result.gameplay[key]) failures.push(`gameplay probe failed: ${key}`);
@@ -1538,7 +1541,7 @@ function assertVerification(result) {
   if (!result.mobile.ready || result.mobile.canvasSample <= 0) failures.push('mobile canvas did not render');
   if (result.mobile.quality !== 'low') failures.push(`mobile quality tier mismatch: ${result.mobile.quality}`);
   if (result.mobile.savedQuality !== null) failures.push(`mobile default quality should not write saved preference: ${result.mobile.savedQuality}`);
-  if (result.mobile.triangles > 220000) failures.push(`mobile triangle budget exceeded: ${result.mobile.triangles}`);
+  if (result.mobile.triangles > 180000) failures.push(`mobile triangle budget exceeded: ${result.mobile.triangles}`);
   if ((result.mobile.setPieceQuality?.secondaryGroups || 0) < 2) failures.push(`mobile set-piece quality probe failed: secondaryGroups=${result.mobile.setPieceQuality?.secondaryGroups || 0}`);
   if ((result.mobile.setPieceQuality?.visibleSecondaryGroups || 0) !== 0) {
     failures.push(`mobile set-piece quality probe failed: visibleSecondaryGroups=${result.mobile.setPieceQuality?.visibleSecondaryGroups || 0}`);
