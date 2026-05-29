@@ -7,6 +7,7 @@ import { worldZones } from './worldData.js';
 export class Zones {
   constructor(world) {
     this.world = world;
+    this.protectedLandmarks = [];
   }
 
   build() {
@@ -53,7 +54,8 @@ export class Zones {
   addLandmark(group, zone) {
     const protectedAsset = zone.id === 'education' ? this.world.cloneEnvironmentAsset(`EnvLandmark_${zone.shape}`) : null;
     const rawAsset = protectedAsset || this.createFallbackLandmark(zone);
-    const asset = this.mergeStaticMeshes(rawAsset, zone.id);
+    let asset = this.mergeStaticMeshes(rawAsset, zone.id);
+    if (protectedAsset) asset = this.createProtectedLandmarkDisplay(asset, zone);
     asset.name = `VIS_Landmark_${zone.id}`;
     asset.traverse?.((object) => {
       if (object.isMesh) {
@@ -94,6 +96,37 @@ export class Zones {
     );
   }
 
+  update(vehiclePosition) {
+    for (const entry of this.protectedLandmarks) {
+      const distance = vehiclePosition
+        ? Math.hypot(vehiclePosition.x - entry.worldPosition.x, vehiclePosition.z - entry.worldPosition.z)
+        : Infinity;
+      const showExact = entry.mode === 'exact'
+        ? distance < entry.hideDistance
+        : distance < entry.showDistance;
+      entry.exact.visible = showExact;
+      entry.silhouette.visible = !showExact;
+      entry.mode = showExact ? 'exact' : 'silhouette';
+      entry.distance = Number(distance.toFixed(2));
+    }
+  }
+
+  getProtectedLandmarkStats() {
+    return Object.fromEntries(this.protectedLandmarks.map((entry) => [
+      entry.id,
+      {
+        mode: entry.mode,
+        distance: entry.distance,
+        exactVisible: entry.exact.visible,
+        silhouetteVisible: entry.silhouette.visible,
+        exactTriangles: entry.exactTriangles,
+        silhouetteTriangles: entry.silhouetteTriangles,
+        showDistance: entry.showDistance,
+        hideDistance: entry.hideDistance
+      }
+    ]));
+  }
+
   mergeStaticMeshes(asset, zoneId) {
     asset.updateMatrixWorld(true);
     const byMaterial = new Map();
@@ -128,6 +161,60 @@ export class Zones {
     }
     for (const object of passthrough) group.add(object);
     return group.children.length ? group : asset;
+  }
+
+  createProtectedLandmarkDisplay(exact, zone) {
+    exact.name = `VIS_Landmark_${zone.id}_exact`;
+    const silhouette = this.mergeStaticMeshes(this.createFccSilhouette(), `${zone.id}_silhouette`);
+    silhouette.name = `VIS_Landmark_${zone.id}_silhouette`;
+    silhouette.visible = true;
+    exact.visible = false;
+
+    const group = new THREE.Group();
+    group.add(exact, silhouette);
+    const entry = {
+      id: zone.id,
+      exact,
+      silhouette,
+      worldPosition: zone.position.clone(),
+      mode: 'silhouette',
+      distance: Infinity,
+      showDistance: 58,
+      hideDistance: 70,
+      exactTriangles: countTriangles(exact),
+      silhouetteTriangles: countTriangles(silhouette)
+    };
+    this.protectedLandmarks.push(entry);
+    return group;
+  }
+
+  createFccSilhouette() {
+    const group = new THREE.Group();
+    this.box(group, 0, 4.65, 0, 16.8, 9.3, 8.6, this.world.materials.campusBrick);
+    this.box(group, 0, 5.65, 0.1, 4.2, 11.3, 9.2, this.world.materials.campusBrick);
+    this.box(group, 0, 10.18, 0.08, 17.4, 0.5, 9.0, this.world.materials.roof);
+    this.box(group, 0, 11.65, 0.1, 5.0, 2.3, 9.6, this.world.materials.campusBrick);
+    this.box(group, 0, 12.95, 0.1, 5.6, 0.44, 10.0, this.world.materials.roof);
+    this.box(group, 0, 2.3, 4.42, 1.45, 3.9, 0.16, this.world.materials.darkWood);
+    this.box(group, 0, 4.55, 4.55, 2.1, 0.34, 0.18, this.world.materials.paleStone);
+
+    for (const z of [4.42, -4.42]) {
+      for (const x of [-6.2, -3.8, -1.25, 1.25, 3.8, 6.2]) {
+        for (const y of [2.0, 3.95, 5.9, 7.85]) {
+          this.box(group, x, y, z, 0.82, 1.02, 0.12, this.world.materials.glass);
+        }
+      }
+      for (const x of [-1.25, 1.25]) {
+        for (const y of [9.7, 11.25]) {
+          this.box(group, x, y, z, 0.82, 0.86, 0.12, this.world.materials.glass);
+        }
+      }
+    }
+
+    for (const x of [-7.4, -4.8, 4.8, 7.4]) {
+      this.box(group, x, 10.88, 0.1, 1.25, 1.4, 8.7, this.world.materials.campusBrick);
+    }
+    return group;
   }
 
   createFallbackLandmark(zone) {
@@ -327,6 +414,21 @@ export class Zones {
     group.add(mesh);
     return mesh;
   }
+}
+
+function countTriangles(root) {
+  let total = 0;
+  root.traverse?.((object) => {
+    if (!object.isMesh || !object.geometry) return;
+    const geometry = object.geometry;
+    const base = geometry.index
+      ? geometry.index.count / 3
+      : geometry.attributes?.position
+        ? geometry.attributes.position.count / 3
+        : 0;
+    total += base * (object.isInstancedMesh ? object.count || 1 : 1);
+  });
+  return Math.round(total);
 }
 
 function landmarkCollider(shape) {
