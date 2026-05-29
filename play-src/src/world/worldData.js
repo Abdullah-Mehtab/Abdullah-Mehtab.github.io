@@ -591,6 +591,7 @@ export const achievementDefinitions = [
   ['cv_vault', 'Formal Mode', 'Open the CV Vault.'],
   ['todo_board', 'Still Building', 'Open the Todo Board.'],
   ['circuit_gate', 'Track Curious', 'Start the circuit gate.'],
+  ['circuit_finish', 'Clean Circuit', 'Finish the island checkpoint circuit.'],
   ['contact_port', 'Signal Sent', 'Open the Contact Port.'],
   ['behind_build', 'Look Under The Hood', 'Open Behind The Build.'],
   ['ramp_yard', 'Ramp Yard', 'Visit the driving yard.'],

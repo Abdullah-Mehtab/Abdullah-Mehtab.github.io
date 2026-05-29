@@ -52,6 +52,9 @@ export class World {
       active: false,
       startedAt: 0,
       checkpoint: 0,
+      checkpointEvents: 0,
+      finishedCount: 0,
+      lastLap: 0,
       best: Number(localStorage.getItem('portfolio-drive-best-lap') || 0)
     };
     this.securityScan = {
@@ -108,6 +111,7 @@ export class World {
     localStorage.setItem('portfolio-drive-landscape-quality', quality);
     this.water?.applyQuality?.();
     this.foliage?.applyQuality();
+    this.stuntPark?.applyQuality?.();
     this.setPieces?.applyQuality();
     this.atmosphere?.applyQuality?.();
     this.onQualityChange?.(quality);
@@ -333,6 +337,8 @@ export class World {
     this.circuit.active = true;
     this.circuit.startedAt = now;
     this.circuit.checkpoint = 0;
+    this.circuit.checkpointEvents = 0;
+    this.circuit.lastLap = 0;
   }
 
   startSecurityScan(now) {
@@ -353,10 +359,13 @@ export class World {
     if (!target || position.distanceTo(target) > 10) return null;
 
     this.circuit.checkpoint += 1;
+    this.circuit.checkpointEvents += 1;
     if (this.circuit.checkpoint >= this.checkpoints.length - 1) {
       const lap = now - this.circuit.startedAt;
       this.circuit.active = false;
       this.circuit.checkpoint = 0;
+      this.circuit.finishedCount += 1;
+      this.circuit.lastLap = lap;
       if (!this.circuit.best || lap < this.circuit.best) {
         this.circuit.best = lap;
         localStorage.setItem('portfolio-drive-best-lap', String(lap));
@@ -371,6 +380,7 @@ export class World {
     this.foliage.update(dt, elapsed, vehiclePosition);
     this.potatoFarm.update(dt);
     this.zonesSystem.update(vehiclePosition);
+    this.stuntPark.update(dt, elapsed);
     this.setPieces.update(dt, elapsed);
     this.atmosphere.update(dt, elapsed);
     this.updateCollectibles(dt, elapsed);

@@ -206,6 +206,8 @@ export class Game {
 
     const circuitEvent = this.world.updateCircuit(this.vehicle.position, elapsed);
     if (circuitEvent?.finished) {
+      this.achievements.unlock('circuit_finish');
+      this.audio.sweep?.(240, 1240, 0.36, 0.05);
       this.ui.notify(`Circuit finished: ${formatTime(circuitEvent.lap)}`);
     } else if (circuitEvent?.checkpoint) {
       this.audio.click(700);
@@ -401,6 +403,7 @@ export class Game {
   startCircuit() {
     this.world.startCircuit(this.ticker.elapsed);
     this.achievements.unlock('circuit_gate');
+    this.audio.sweep?.(160, 820, 0.24, 0.04);
     this.ui.notify('Circuit started');
   }
 

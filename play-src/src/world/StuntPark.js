@@ -1,7 +1,7 @@
 // ABOUTME: Builds the driveable stunt yard ramps, boost pads, and visual markers.
 // ABOUTME: Keeps only ramp surfaces physical so yard decoration does not block the car.
 import * as THREE from 'three';
-import { boostPads, worldZones } from './worldData.js';
+import { boostPads, circuitCheckpoints, worldZones } from './worldData.js';
 import { mergeStaticMeshesInGroup } from './StaticBatching.js';
 
 function stuntRampLayout(baseX, baseZ) {
@@ -16,6 +16,11 @@ export class StuntPark {
   constructor(world) {
     this.world = world;
     this.markerDummy = new THREE.Object3D();
+    this.circuitDummy = new THREE.Object3D();
+    this.circuitCheckpointTrailGroup = null;
+    this.circuitRingMesh = null;
+    this.circuitArrowMesh = null;
+    this.circuitMarkerColor = new THREE.Color();
     this.stats = this.createStats();
   }
 
@@ -24,6 +29,17 @@ export class StuntPark {
     this.createYardDressing();
     this.createRamps();
     this.createBoostPads();
+    this.createCircuitCheckpointTrail();
+  }
+
+  update(dt, elapsed) {
+    this.updateCircuitMarkers(elapsed);
+  }
+
+  applyQuality() {
+    if (this.circuitCheckpointTrailGroup) {
+      this.circuitCheckpointTrailGroup.visible = this.world.landscapeQuality !== 'low';
+    }
   }
 
   createStats() {
@@ -37,7 +53,12 @@ export class StuntPark {
       laneChevrons: 0,
       trackScuffs: 0,
       visualBarriers: 0,
-      gates: 0
+      gates: 0,
+      circuitCheckpointGates: 0,
+      circuitTargetRings: 0,
+      circuitTargetArrows: 0,
+      activeCircuitTarget: 0,
+      circuitMotionSamples: 0
     };
   }
 
@@ -301,6 +322,108 @@ export class StuntPark {
     }
   }
 
+  createCircuitCheckpointTrail() {
+    const group = new THREE.Group();
+    group.name = 'STUNT_Circuit_Checkpoint_Trail';
+    this.circuitCheckpointTrailGroup = group;
+    const gateTemplate = 'EnvPolishStuntCheckpoint';
+    const targetCount = circuitCheckpoints.length - 1;
+
+    for (let index = 1; index < circuitCheckpoints.length - 1; index += 1) {
+      const [x, , z] = circuitCheckpoints[index];
+      const rotation = circuitHeading(index);
+      if (this.addPolishAsset(group, gateTemplate, x, z, rotation, 0.46)) {
+        this.stats.circuitCheckpointGates += 1;
+      }
+    }
+
+    mergeStaticMeshesInGroup(group, { namePrefix: 'STUNT_circuit_checkpoint_trail' });
+    this.applyQuality();
+    this.world.scene.add(group);
+    this.createCircuitTargetMarkers(targetCount);
+  }
+
+  createCircuitTargetMarkers(targetCount) {
+    const ringGeometry = new THREE.RingGeometry(1.25, 1.72, 6);
+    const ringMaterial = new THREE.MeshBasicMaterial({
+      color: 0xffffff,
+      vertexColors: true,
+      transparent: true,
+      opacity: 0.72,
+      side: THREE.DoubleSide,
+      depthWrite: false
+    });
+    this.circuitRingMesh = new THREE.InstancedMesh(ringGeometry, ringMaterial, targetCount);
+    this.circuitRingMesh.name = 'STUNT_Circuit_Target_Rings';
+    this.circuitRingMesh.renderOrder = 37;
+    this.circuitRingMesh.frustumCulled = false;
+    this.world.scene.add(this.circuitRingMesh);
+
+    const arrowGeometry = createCircuitArrowGeometry();
+    const arrowMaterial = new THREE.MeshBasicMaterial({
+      color: 0xffffff,
+      vertexColors: true,
+      transparent: true,
+      opacity: 0.64,
+      depthWrite: false,
+      side: THREE.DoubleSide
+    });
+    this.circuitArrowMesh = new THREE.InstancedMesh(arrowGeometry, arrowMaterial, targetCount);
+    this.circuitArrowMesh.name = 'STUNT_Circuit_Target_Arrows';
+    this.circuitArrowMesh.renderOrder = 38;
+    this.circuitArrowMesh.frustumCulled = false;
+    this.world.scene.add(this.circuitArrowMesh);
+
+    this.stats.circuitTargetRings = targetCount;
+    this.stats.circuitTargetArrows = targetCount;
+    this.updateCircuitMarkers(0);
+  }
+
+  updateCircuitMarkers(elapsed = 0) {
+    if (!this.circuitRingMesh || !this.circuitArrowMesh) return;
+    const circuit = this.world.circuit || {};
+    const activeTarget = circuit.active ? circuit.checkpoint + 1 : 0;
+    const targetCount = circuitCheckpoints.length - 1;
+    this.stats.activeCircuitTarget = activeTarget;
+
+    for (let index = 0; index < targetCount; index += 1) {
+      const targetIndex = index + 1;
+      const [x, , z] = circuitCheckpoints[targetIndex];
+      const rotation = circuitHeading(targetIndex);
+      const isActive = circuit.active && targetIndex === activeTarget;
+      const passed = circuit.active && targetIndex <= circuit.checkpoint;
+      const pulse = Math.sin(elapsed * 4.6 + index * 0.5) * 0.5 + 0.5;
+      const ringScale = isActive ? 2.25 + pulse * 0.36 : passed ? 0.62 : 1.0;
+      const arrowScale = isActive ? 1.35 + pulse * 0.18 : passed ? 0.42 : 0.72;
+      const color = isActive ? 0xfff0a0 : passed ? 0x79ffc5 : 0xff9b6d;
+
+      this.circuitDummy.position.set(x, 0.36 + (isActive ? pulse * 0.14 : 0), z);
+      this.circuitDummy.rotation.set(-Math.PI / 2, 0, rotation);
+      this.circuitDummy.scale.setScalar(ringScale);
+      this.circuitDummy.updateMatrix();
+      this.circuitRingMesh.setMatrixAt(index, this.circuitDummy.matrix);
+      this.circuitRingMesh.setColorAt(index, this.circuitMarkerColor.setHex(color));
+
+      const arrowDistance = isActive ? 4.2 + pulse * 0.5 : 3.1;
+      this.circuitDummy.position.set(
+        x + Math.sin(rotation) * arrowDistance,
+        0.5 + (isActive ? pulse * 0.12 : 0),
+        z + Math.cos(rotation) * arrowDistance
+      );
+      this.circuitDummy.rotation.set(-Math.PI / 2, 0, rotation);
+      this.circuitDummy.scale.setScalar(arrowScale);
+      this.circuitDummy.updateMatrix();
+      this.circuitArrowMesh.setMatrixAt(index, this.circuitDummy.matrix);
+      this.circuitArrowMesh.setColorAt(index, this.circuitMarkerColor.setHex(color));
+    }
+
+    this.circuitRingMesh.instanceMatrix.needsUpdate = true;
+    this.circuitArrowMesh.instanceMatrix.needsUpdate = true;
+    if (this.circuitRingMesh.instanceColor) this.circuitRingMesh.instanceColor.needsUpdate = true;
+    if (this.circuitArrowMesh.instanceColor) this.circuitArrowMesh.instanceColor.needsUpdate = true;
+    this.stats.circuitMotionSamples += targetCount;
+  }
+
   addPolishAsset(group, assetName, x, z, rotation, scale) {
     const asset = this.world.cloneEnvironmentAsset(assetName);
     if (!asset) return false;
@@ -361,4 +484,35 @@ function createStuntChevronGeometry() {
   geometry.setIndex([0, 1, 2, 0, 2, 3]);
   geometry.computeVertexNormals();
   return geometry;
+}
+
+function createCircuitArrowGeometry() {
+  const vertices = new Float32Array([
+    0, 0, 2.1,
+    -1.2, 0, -0.8,
+    -0.34, 0, -0.34,
+    0.34, 0, -0.34,
+    1.2, 0, -0.8
+  ]);
+  const geometry = new THREE.BufferGeometry();
+  geometry.setAttribute('position', new THREE.BufferAttribute(vertices, 3));
+  geometry.setAttribute('color', new THREE.BufferAttribute(new Float32Array([
+    1, 1, 1,
+    1, 1, 1,
+    1, 1, 1,
+    1, 1, 1,
+    1, 1, 1
+  ]), 3));
+  geometry.setIndex([0, 1, 2, 0, 2, 3, 0, 3, 4]);
+  geometry.computeVertexNormals();
+  return geometry;
+}
+
+function circuitHeading(index) {
+  const current = circuitCheckpoints[index];
+  const next = circuitCheckpoints[Math.min(circuitCheckpoints.length - 1, index + 1)];
+  const previous = circuitCheckpoints[Math.max(0, index - 1)];
+  const from = index < circuitCheckpoints.length - 1 ? current : previous;
+  const to = index < circuitCheckpoints.length - 1 ? next : current;
+  return Math.atan2(to[0] - from[0], to[2] - from[2]);
 }
