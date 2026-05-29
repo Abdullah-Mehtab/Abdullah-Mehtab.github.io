@@ -333,6 +333,7 @@ export class SetPieces {
     this.addPolishAsset(group, 'EnvPolishBenchPlanter', zone.position[0] - 5.2, zone.position[2] + 10.8, 0.18, 0.8);
     this.addPlanterCluster(group, zone.position[0] - 15.2, zone.position[2] - 0.4, 0x7cffb2);
     this.addPlanterCluster(group, zone.position[0] + 16.2, zone.position[2] + 0.8, 0x68d8ff);
+    this.addPolishAsset(group, 'EnvPolishCircuitGate', zone.position[0] + 2, zone.position[2] - 14.2, -0.02, 0.64);
     this.checkerStripe(group, zone.position[0] + 2, zone.position[2] - 13.8, 24, 0);
     this.campusArch(group, zone.position[0] - 15.8, zone.position[2] - 12.8, -0.18);
 

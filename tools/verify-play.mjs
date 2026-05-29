@@ -1033,6 +1033,7 @@ async function collectRuntimeMetrics(page, loadMs, gameplay, water, surfaces, su
       roadSurfaceDetails: game.world.roads?.getDetailStats?.() || {},
       surfaceDetails: game.world.terrain?.surfaceDetailStats || {},
       meadowDetails: game.world.terrain?.getMeadowDetailStats?.() || {},
+      fieldMotifs: game.world.terrain?.getFieldMotifStats?.() || {},
       terrainRelief: game.world.terrain?.getReliefStats?.() || {},
       shoreline: game.world.terrain?.getShorelineStats?.() || {},
       setPieceQuality: game.world.setPieces?.getQualityStats?.() || {},
@@ -1270,6 +1271,7 @@ async function captureMobile(browser) {
       savedQuality: localStorage.getItem('portfolio-drive-landscape-quality'),
       lifeStats: game.world.setPieces?.getLifeStats?.() || { ...(game.world.setPieces?.lifeStats || {}) },
       setPieceQuality: game.world.setPieces?.getQualityStats?.() || {},
+      fieldMotifs: game.world.terrain?.getFieldMotifStats?.() || {},
       atmosphere: game.world.atmosphere?.getStats?.() || {},
       calls: render.calls,
       triangles: render.triangles
@@ -1486,6 +1488,10 @@ function assertVerification(result) {
   if ((result.surfaceDetails?.accents || 0) < 18) failures.push(`surface detail probe failed: accents=${result.surfaceDetails?.accents || 0}`);
   if ((result.meadowDetails?.patches || 0) < 28) failures.push(`meadow detail probe failed: patches=${result.meadowDetails?.patches || 0}`);
   if ((result.meadowDetails?.colorVariants || 0) < 12) failures.push(`meadow detail probe failed: colorVariants=${result.meadowDetails?.colorVariants || 0}`);
+  if ((result.fieldMotifs?.clusters || 0) < 12) failures.push(`field motif probe failed: clusters=${result.fieldMotifs?.clusters || 0}`);
+  if ((result.fieldMotifs?.berms || 0) < 24) failures.push(`field motif probe failed: berms=${result.fieldMotifs?.berms || 0}`);
+  if ((result.fieldMotifs?.ribbons || 0) < 54) failures.push(`field motif probe failed: ribbons=${result.fieldMotifs?.ribbons || 0}`);
+  if ((result.fieldMotifs?.visibleTotal || 0) < 78) failures.push(`field motif probe failed: visibleTotal=${result.fieldMotifs?.visibleTotal || 0}`);
   if ((result.terrainRelief?.mounds || 0) < 6) failures.push(`terrain relief probe failed: mounds=${result.terrainRelief?.mounds || 0}`);
   if ((result.terrainRelief?.cliffShelves || 0) < 6) failures.push(`terrain relief probe failed: cliffShelves=${result.terrainRelief?.cliffShelves || 0}`);
   if ((result.terrainRelief?.rockOutcrops || 0) < 12) failures.push(`terrain relief probe failed: rockOutcrops=${result.terrainRelief?.rockOutcrops || 0}`);
@@ -1598,6 +1604,9 @@ function assertVerification(result) {
   if ((result.mobile.setPieceQuality?.secondaryGroups || 0) < 2) failures.push(`mobile set-piece quality probe failed: secondaryGroups=${result.mobile.setPieceQuality?.secondaryGroups || 0}`);
   if ((result.mobile.setPieceQuality?.visibleSecondaryGroups || 0) !== 0) {
     failures.push(`mobile set-piece quality probe failed: visibleSecondaryGroups=${result.mobile.setPieceQuality?.visibleSecondaryGroups || 0}`);
+  }
+  if ((result.mobile.fieldMotifs?.visibleTotal || 0) !== 0) {
+    failures.push(`mobile field motif quality probe failed: visibleTotal=${result.mobile.fieldMotifs?.visibleTotal || 0}`);
   }
   if (result.mobile.calls > 235) failures.push(`mobile draw-call budget exceeded: ${result.mobile.calls}`);
   if ((result.mobile.atmosphere?.visibleClouds || 0) > 5) failures.push(`mobile atmosphere probe failed: visibleClouds=${result.mobile.atmosphere?.visibleClouds || 0}`);
