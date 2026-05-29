@@ -5,7 +5,7 @@ import { existsSync, readFile, statSync } from 'node:fs';
 import { mkdir, writeFile } from 'node:fs/promises';
 import { extname, join, resolve } from 'node:path';
 import puppeteer from 'puppeteer-core';
-import { ISLAND_RADIUS, roadPaths, worldZones } from '../play-src/src/world/worldData.js';
+import { circuitCheckpoints, districtFootprints, ISLAND_RADIUS, roadPaths, worldZones } from '../play-src/src/world/worldData.js';
 
 const repoRoot = resolve(import.meta.dirname, '..');
 const chromePath = findChrome();
@@ -842,6 +842,7 @@ async function collectRuntimeMetrics(page, loadMs, gameplay, water, surfaces, su
         reflectorStuds: game.scene.getObjectByName('ROAD_Reflector_Studs')?.count || 0,
         edgeFeathers: game.world.roads?.roadGroup?.userData?.edgeFeatherCount || 0
       },
+      mapStats: game.ui?.getMapStats?.() || {},
       roadJunctions: {
         blendPatches: game.world.roads?.roadGroup?.userData?.junctionPatchCount || 0,
         circularPointCaps: game.world.roads?.roadGroup?.userData?.circularPointCaps || 0
@@ -1136,6 +1137,13 @@ function assertVerification(result) {
   if ((result.roadGuidance?.chevrons || 0) < 40) failures.push(`road guidance probe failed: chevrons=${result.roadGuidance?.chevrons || 0}`);
   if ((result.roadGuidance?.reflectorStuds || 0) < 140) failures.push(`road guidance probe failed: reflectorStuds=${result.roadGuidance?.reflectorStuds || 0}`);
   if ((result.roadGuidance?.edgeFeathers || 0) < 24) failures.push(`road guidance probe failed: edgeFeathers=${result.roadGuidance?.edgeFeathers || 0}`);
+  if ((result.mapStats?.pins || 0) !== worldZones.length) failures.push(`map probe failed: pins=${result.mapStats?.pins || 0}/${worldZones.length}`);
+  if ((result.mapStats?.districtLabels || 0) !== districtFootprints.length) failures.push(`map probe failed: districtLabels=${result.mapStats?.districtLabels || 0}/${districtFootprints.length}`);
+  if ((result.mapStats?.routeLabels || 0) !== roadPaths.length) failures.push(`map probe failed: routeLabels=${result.mapStats?.routeLabels || 0}/${roadPaths.length}`);
+  if ((result.mapStats?.roadUnderlays || 0) !== roadPaths.length) failures.push(`map probe failed: roadUnderlays=${result.mapStats?.roadUnderlays || 0}/${roadPaths.length}`);
+  if ((result.mapStats?.roadLines || 0) !== roadPaths.length) failures.push(`map probe failed: roadLines=${result.mapStats?.roadLines || 0}/${roadPaths.length}`);
+  if ((result.mapStats?.circuitCheckpoints || 0) !== circuitCheckpoints.length) failures.push(`map probe failed: circuitCheckpoints=${result.mapStats?.circuitCheckpoints || 0}/${circuitCheckpoints.length}`);
+  if ((result.mapStats?.legendItems || 0) < 5) failures.push(`map probe failed: legendItems=${result.mapStats?.legendItems || 0}`);
   if ((result.roadJunctions?.blendPatches || 0) < 8) failures.push(`road junction probe failed: blendPatches=${result.roadJunctions?.blendPatches || 0}`);
   if ((result.roadJunctions?.circularPointCaps || 0) !== 0) failures.push(`road junction probe failed: circularPointCaps=${result.roadJunctions?.circularPointCaps || 0}`);
   if ((result.surfaceDetails?.districts || 0) < 10) failures.push(`surface detail probe failed: districts=${result.surfaceDetails?.districts || 0}`);
