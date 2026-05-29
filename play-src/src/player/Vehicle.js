@@ -10,6 +10,8 @@ import sabreTurboModelUrl from '../../assets/models/vehicles/sabre-turbo.glb?url
 const START = new THREE.Vector3(10, 1.08, 27);
 const VISUAL_Y_OFFSET = -0.88;
 const DEFAULT_SURFACE = { id: 'road', drag: 1, dustColor: 0x6f6250, skidColor: 0x161410, skidMarks: true };
+const SURFACE_IDS = ['road', 'grass', 'sand', 'shore', 'water'];
+const SOFT_SURFACES = new Set(['grass', 'sand', 'shore']);
 
 export class Vehicle {
   constructor({ scene, physics, achievements, audio }) {
@@ -38,10 +40,24 @@ export class Vehicle {
     this.landingEvents = 0;
     this.lastLandingAt = -Infinity;
     this.lastLandingIntensity = 0;
+    this.surfaceDustAccumulator = 0;
+    this.surfaceTrailDustCounter = makeSurfaceCounter();
     this.effectDummy = new THREE.Object3D();
     this.effectColor = new THREE.Color();
     this.effectPools = {};
-    this.effectTotals = { trail: 0, smoke: 0, boost: 0, skid: 0 };
+    this.effectTotals = {
+      trail: 0,
+      smoke: 0,
+      boost: 0,
+      skid: 0,
+      landingDust: 0,
+      burnoutSmoke: 0,
+      wheelieSmoke: 0,
+      surfaceDustSmoke: 0,
+      surfaceTrail: makeSurfaceCounter(),
+      surfaceSmoke: makeSurfaceCounter(),
+      surfaceSkid: makeSurfaceCounter()
+    };
     this.trailGeometry = new THREE.SphereGeometry(0.08, 8, 5);
     this.smokeGeometry = new THREE.SphereGeometry(0.16, 10, 6);
     this.skidGeometry = new THREE.BoxGeometry(0.26, 0.012, 2.2);
@@ -301,11 +317,12 @@ export class Vehicle {
     this.updateVisualRumble(dt);
     this.updateWheelVisuals(dt);
     this.updateTrails(dt);
-    if (state.burnout) this.spawnRearSmoke(true);
-    if (state.wheelie && this.controller.speed > 4) this.spawnRearSmoke(false);
+    if (state.burnout) this.spawnRearSmoke(true, surface);
+    if (state.wheelie && this.controller.speed > 4) this.spawnRearSmoke(false, surface);
     if (state.boost && this.controller.speed > 8) this.spawnBoostFlame();
-    if (state.handbrake && this.controller.speed > 6) this.spawnSkidMark();
+    if (state.handbrake && this.controller.speed > 6) this.spawnSkidMark(surface);
     if (this.controller.speed > 10 || (state.handbrake && this.controller.speed > 4)) this.spawnTrail(state.boost, state.handbrake, surface);
+    this.updateSurfaceDust(dt, surface);
   }
 
   postPhysics() {
@@ -334,6 +351,21 @@ export class Vehicle {
     const damp = Math.pow(surface.drag, Math.min(2, dt * 60));
     const velocity = this.body.linvel();
     this.body.setLinvel({ x: velocity.x * damp, y: velocity.y, z: velocity.z * damp }, true);
+  }
+
+  updateSurfaceDust(dt, surface) {
+    const minSpeed = surface?.id === 'shore' ? 5.5 : 8;
+    if (!surface || !SOFT_SURFACES.has(surface.id) || this.controller.groundedWheels < 1 || this.controller.speed < minSpeed) {
+      this.surfaceDustAccumulator = Math.min(this.surfaceDustAccumulator, 0.5);
+      return;
+    }
+
+    const surfaceRate = surface.id === 'shore' ? 1.45 : surface.id === 'sand' ? 1.15 : 1;
+    this.surfaceDustAccumulator += dt * THREE.MathUtils.clamp(this.controller.speed / 8, 0.85, 3.6) * surfaceRate;
+    while (this.surfaceDustAccumulator >= 1) {
+      this.surfaceDustAccumulator -= 1;
+      this.spawnRearSmoke(false, surface, 0.64, 'surface');
+    }
   }
 
   updateLandingFeedback(dt, surface) {
@@ -423,8 +455,9 @@ export class Vehicle {
   }
 
   spawnTrail(boosting, drifting = false, surface = this.surface) {
+    const currentSurface = normalizeSurface(surface);
     const rear = new THREE.Vector3(0, 0.2, -2.6).applyQuaternion(this.group.quaternion).add(this.group.position);
-    this.spawnEffect('trail', {
+    const spawned = this.spawnEffect('trail', {
       position: new THREE.Vector3(
         rear.x + (Math.random() - 0.5) * 0.7,
         Math.max(0.25, rear.y),
@@ -436,16 +469,33 @@ export class Vehicle {
       stretch: boosting ? [1.2, 1.2, 1.8] : [1, 1, 1],
       growth: boosting ? 1.2 : 0.9,
       life: boosting ? 0.46 : drifting ? 0.38 : 0.28,
-      color: boosting ? 0xff9a4c : drifting ? (surface?.skidColor ?? 0xcfd4cf) : (surface?.dustColor ?? 0x6f6250)
+      color: boosting ? 0xff9a4c : drifting ? (currentSurface.skidColor ?? 0xcfd4cf) : (currentSurface.dustColor ?? 0x6f6250)
     });
+    if (spawned) {
+      this.recordSurfaceEffect('surfaceTrail', currentSurface);
+      this.emitSurfaceTrailMist(currentSurface, boosting, drifting);
+    }
   }
 
-  spawnRearSmoke(burnout = false) {
+  emitSurfaceTrailMist(surface, boosting, drifting) {
+    if (boosting || drifting || !SOFT_SURFACES.has(surface.id)) return;
+    this.surfaceTrailDustCounter[surface.id] = (this.surfaceTrailDustCounter[surface.id] || 0) + 1;
+    const cadence = surface.id === 'shore' ? 6 : surface.id === 'sand' ? 10 : 14;
+    if (this.surfaceTrailDustCounter[surface.id] % cadence === 0) {
+      this.spawnRearSmoke(false, surface, surface.id === 'shore' ? 0.52 : 0.48, 'surface');
+    }
+  }
+
+  spawnRearSmoke(burnout = false, surface = this.surface, intensity = 1, source = burnout ? 'burnout' : 'wheelie') {
+    const currentSurface = normalizeSurface(surface);
+    const smokeColor = burnout
+      ? mixHex(currentSurface.dustColor ?? 0xded8cb, 0xded8cb, 0.58)
+      : mixHex(currentSurface.dustColor ?? 0xc9c2b5, 0xc9c2b5, 0.42);
     const rearOffsets = [-0.88, 0.88];
     for (const side of rearOffsets) {
       const local = new THREE.Vector3(side, -0.42, -1.78);
       const position = local.applyQuaternion(this.group.quaternion).add(this.group.position);
-      this.spawnEffect('smoke', {
+      const spawned = this.spawnEffect('smoke', {
         position: new THREE.Vector3(
           position.x + (Math.random() - 0.5) * 0.36,
           Math.max(0.2, position.y),
@@ -453,13 +503,23 @@ export class Vehicle {
         ),
         velocity: new THREE.Vector3((Math.random() - 0.5) * 0.38, 0.22 + Math.random() * 0.22, (Math.random() - 0.5) * 0.38),
         quaternion: this.group.quaternion,
-        scale: burnout ? 1.25 : 0.92,
+        scale: (burnout ? 1.25 : 0.92) * intensity,
         stretch: [1, 1, 1],
         growth: burnout ? 1.75 : 1.25,
         gravity: 0.18,
-        life: burnout ? 0.72 : 0.42,
-        color: burnout ? 0xded8cb : 0xc9c2b5
+        life: (burnout ? 0.72 : 0.42) * THREE.MathUtils.lerp(0.82, 1, intensity),
+        color: smokeColor
       });
+      if (spawned) {
+        this.recordSurfaceEffect('surfaceSmoke', currentSurface);
+        if (burnout || source === 'burnout') {
+          this.effectTotals.burnoutSmoke += 1;
+        } else if (source === 'surface') {
+          this.effectTotals.surfaceDustSmoke += 1;
+        } else {
+          this.effectTotals.wheelieSmoke += 1;
+        }
+      }
     }
   }
 
@@ -483,11 +543,12 @@ export class Vehicle {
   }
 
   spawnLandingDust(intensity, surface = this.surface) {
+    const currentSurface = normalizeSurface(surface);
     const count = Math.min(8, Math.max(3, Math.round(3 + intensity * 4)));
     for (let i = 0; i < count; i += 1) {
       const angle = (i / count) * Math.PI * 2 + Math.random() * 0.25;
       const radius = 0.55 + Math.random() * 1.2;
-      this.spawnEffect('smoke', {
+      const spawned = this.spawnEffect('smoke', {
         position: new THREE.Vector3(
           this.group.position.x + Math.cos(angle) * radius,
           Math.max(0.22, this.group.position.y - 0.72),
@@ -504,17 +565,22 @@ export class Vehicle {
         growth: 1.1,
         gravity: 0.12,
         life: 0.34 + intensity * 0.16,
-        color: surface?.dustColor ?? 0xd4c8b6
+        color: currentSurface.dustColor ?? 0xd4c8b6
       });
+      if (spawned) {
+        this.effectTotals.landingDust += 1;
+        this.recordSurfaceEffect('surfaceSmoke', currentSurface);
+      }
     }
   }
 
-  spawnSkidMark() {
-    if (this.surface?.skidMarks === false) return;
+  spawnSkidMark(surface = this.surface) {
+    const currentSurface = normalizeSurface(surface);
+    if (currentSurface.skidMarks === false) return;
     for (const side of [-0.82, 0.82]) {
       const local = new THREE.Vector3(side, -0.84, -1.56);
       const position = local.applyQuaternion(this.group.quaternion).add(this.group.position);
-      this.spawnEffect('skid', {
+      const spawned = this.spawnEffect('skid', {
         position: new THREE.Vector3(position.x, 0.17, position.z),
         velocity: new THREE.Vector3(),
         rotationY: this.heading,
@@ -522,9 +588,10 @@ export class Vehicle {
         stretch: [1, 1, 1],
         growth: 0,
         life: 4.5,
-        color: 0x161410,
+        color: currentSurface.skidColor ?? 0x161410,
         fadeScale: true
       });
+      if (spawned) this.recordSurfaceEffect('surfaceSkid', currentSurface);
     }
   }
 
@@ -534,7 +601,7 @@ export class Vehicle {
 
   spawnEffect(poolName, options) {
     const pool = this.effectPools[poolName];
-    if (!pool) return;
+    if (!pool) return false;
     const index = pool.cursor;
     pool.cursor = (pool.cursor + 1) % pool.items.length;
     const item = pool.items[index];
@@ -556,6 +623,7 @@ export class Vehicle {
     pool.mesh.setColorAt(index, this.effectColor.setHex(options.color || 0xffffff));
     if (pool.mesh.instanceColor) pool.mesh.instanceColor.needsUpdate = true;
     this.effectTotals[poolName] += 1;
+    return true;
   }
 
   updateEffectPools(dt) {
@@ -605,11 +673,23 @@ export class Vehicle {
       spawnedSmoke: this.effectTotals.smoke,
       spawnedBoost: this.effectTotals.boost,
       spawnedSkid: this.effectTotals.skid,
+      landingDust: this.effectTotals.landingDust,
+      burnoutSmoke: this.effectTotals.burnoutSmoke,
+      wheelieSmoke: this.effectTotals.wheelieSmoke,
+      surfaceDustSmoke: this.effectTotals.surfaceDustSmoke,
+      surfaceTrail: { ...this.effectTotals.surfaceTrail },
+      surfaceSmoke: { ...this.effectTotals.surfaceSmoke },
+      surfaceSkid: { ...this.effectTotals.surfaceSkid },
       activeTrail: this.effectPools.trail?.activeCount || 0,
       activeSmoke: this.effectPools.smoke?.activeCount || 0,
       activeBoost: this.effectPools.boost?.activeCount || 0,
       activeSkid: this.effectPools.skid?.activeCount || 0
     };
+  }
+
+  recordSurfaceEffect(counterName, surface) {
+    const id = normalizeSurface(surface).id;
+    this.effectTotals[counterName][id] = (this.effectTotals[counterName][id] || 0) + 1;
   }
 
   boostFromPad(pad) {
@@ -638,6 +718,8 @@ export class Vehicle {
     this.airborneTime = 0;
     this.wasAirborne = false;
     this.lastAirborneVerticalSpeed = 0;
+    this.surfaceDustAccumulator = 0;
+    this.surfaceTrailDustCounter = makeSurfaceCounter();
     this.lastLandingIntensity = 0;
     this.lastPosition.copy(position);
     this.syncModel();
@@ -654,6 +736,25 @@ export class Vehicle {
     const forward = new THREE.Vector3(0, 0, 1).applyQuaternion(quaternion);
     return Math.atan2(forward.x, forward.z);
   }
+}
+
+function makeSurfaceCounter() {
+  return Object.fromEntries(SURFACE_IDS.map((id) => [id, 0]));
+}
+
+function normalizeSurface(surface) {
+  return surface ? { ...DEFAULT_SURFACE, ...surface } : DEFAULT_SURFACE;
+}
+
+function mixHex(a, b, t) {
+  const ar = (a >> 16) & 255;
+  const ag = (a >> 8) & 255;
+  const ab = a & 255;
+  const br = (b >> 16) & 255;
+  const bg = (b >> 8) & 255;
+  const bb = b & 255;
+  const mix = (from, to) => Math.round(from + (to - from) * t);
+  return (mix(ar, br) << 16) | (mix(ag, bg) << 8) | mix(ab, bb);
 }
 
 function yawQuaternion(heading) {

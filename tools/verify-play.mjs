@@ -60,6 +60,8 @@ try {
   const water = await exerciseWater(page, ISLAND_RADIUS);
   await screenshot(page, '04-water-interaction.png');
   const surfaces = await sampleSurfaces(page, ISLAND_RADIUS);
+  const surfaceFeedback = await exerciseSurfaceFeedback(page, ISLAND_RADIUS);
+  await screenshot(page, '05-surface-feedback.png');
   const routeReplay = await exerciseRouteReplay(page, routeReplaySegments);
   const worldLife = await sampleWorldLife(page);
 
@@ -122,7 +124,7 @@ try {
   await delay(300);
   await screenshot(page, 'debug-colliders.png');
 
-  const metrics = await collectRuntimeMetrics(page, loadMs, gameplay, water, surfaces, routeReplay, worldLife);
+  const metrics = await collectRuntimeMetrics(page, loadMs, gameplay, water, surfaces, surfaceFeedback, routeReplay, worldLife);
   const mobile = await captureMobile(browser);
   const mobileSavedPreference = await captureMobileSavedPreference(browser);
   const result = {
@@ -386,6 +388,90 @@ async function sampleSurfaces(page, islandRadius) {
       sand: sample(radius * 0.91, 0),
       shore: sample(radius * 0.985, 0),
       water: sample(radius * 1.025, 0)
+    };
+  }, islandRadius);
+}
+
+async function exerciseSurfaceFeedback(page, islandRadius) {
+  return page.evaluate(async (radius) => {
+    const delay = (ms) => new Promise((resolveDelay) => setTimeout(resolveDelay, ms));
+    const game = window.__portfolioDrive.game;
+    const input = game.input;
+    const softTargets = ['grass', 'sand', 'shore'];
+    const clearInput = () => {
+      input.actions.forward = false;
+      input.actions.backward = false;
+      input.actions.left = false;
+      input.actions.right = false;
+      input.actions.boost = false;
+      input.actions.handbrake = false;
+      input.actions.brake = false;
+      input.actions.jump = false;
+    };
+    const waitForGrounded = async () => {
+      for (let i = 0; i < 42; i += 1) {
+        if ((game.vehicle.controller?.groundedWheels || 0) >= 2) return true;
+        await delay(35);
+      }
+      return false;
+    };
+    const stats = () => game.vehicle.getEffectStats?.() || {};
+    const before = stats();
+    const grassCandidates = [[32, 0], [-18, 112], [42, 8], [-22, -28], [106, 18]];
+    const grassPoint = grassCandidates.find(([x, z]) => game.world.getSurfaceInfo({ x, y: 1.08, z }).id === 'grass') || grassCandidates[0];
+    const targets = [
+      { id: 'grass', x: grassPoint[0], z: grassPoint[1], heading: 0.54 },
+      { id: 'sand', x: radius * 0.91, z: 0, heading: -Math.PI / 2 },
+      { id: 'shore', x: radius * 0.985, z: 0, heading: -Math.PI / 2 }
+    ];
+    const samples = [];
+
+    for (const target of targets) {
+      clearInput();
+      game.vehicle.respawn({ x: target.x, y: 1.08, z: target.z }, target.heading);
+      await delay(160);
+      const grounded = await waitForGrounded();
+      const start = game.vehicle.position.clone();
+      const startSurface = game.world.getSurfaceInfo(start).id;
+      const direction = { x: Math.sin(target.heading), z: Math.cos(target.heading) };
+      game.vehicle.body.setLinvel({ x: direction.x * 15, y: 0, z: direction.z * 15 }, true);
+      input.actions.forward = true;
+      let seenTargetSurface = startSurface === target.id;
+      const seenSurfaces = new Set([startSurface]);
+      let peakSpeed = 0;
+      for (let i = 0; i < 13; i += 1) {
+        await delay(70);
+        const surface = game.world.getSurfaceInfo(game.vehicle.position);
+        game.vehicle.setSurface(surface);
+        seenSurfaces.add(surface.id);
+        seenTargetSurface = seenTargetSurface || surface.id === target.id;
+        peakSpeed = Math.max(peakSpeed, game.vehicle.speed || 0);
+      }
+      const end = game.vehicle.position.clone();
+      samples.push({
+        target: target.id,
+        startSurface,
+        seenSurfaces: [...seenSurfaces],
+        seenTargetSurface,
+        grounded,
+        distance: Number(start.distanceTo(end).toFixed(2)),
+        peakSpeed: Number(peakSpeed.toFixed(2))
+      });
+    }
+
+    clearInput();
+    const after = stats();
+    const countDelta = (bucket, id) => (after[bucket]?.[id] || 0) - (before[bucket]?.[id] || 0);
+    const trailDeltas = Object.fromEntries(softTargets.map((id) => [id, countDelta('surfaceTrail', id)]));
+    const smokeDeltas = Object.fromEntries(softTargets.map((id) => [id, countDelta('surfaceSmoke', id)]));
+
+    return {
+      samples,
+      targets: Object.fromEntries(samples.map((sample) => [sample.target, sample.seenTargetSurface && sample.grounded && sample.distance > 2])),
+      trailDeltas,
+      smokeDeltas,
+      surfaceDustDelta: (after.surfaceDustSmoke || 0) - (before.surfaceDustSmoke || 0),
+      finalStats: after
     };
   }, islandRadius);
 }
@@ -664,7 +750,7 @@ async function exercisePanelUi(page) {
   return sample;
 }
 
-async function collectRuntimeMetrics(page, loadMs, gameplay, water, surfaces, routeReplay, worldLife) {
+async function collectRuntimeMetrics(page, loadMs, gameplay, water, surfaces, surfaceFeedback, routeReplay, worldLife) {
   const runtime = await page.evaluate(async (expectedAssets) => {
     const frameDeltas = [];
     await new Promise((resolveFrames) => {
@@ -854,6 +940,7 @@ async function collectRuntimeMetrics(page, loadMs, gameplay, water, surfaces, ro
     gameplay,
     water,
     surfaces,
+    surfaceFeedback,
     routeReplay,
     worldLife,
     ...runtime
@@ -960,6 +1047,13 @@ function assertVerification(result) {
   if ((vehicleFx.spawnedSmoke || 0) < 2) failures.push(`vehicle FX probe failed: smoke=${vehicleFx.spawnedSmoke || 0}`);
   if ((vehicleFx.spawnedBoost || 0) < 1) failures.push(`vehicle FX probe failed: boost=${vehicleFx.spawnedBoost || 0}`);
   if ((vehicleFx.spawnedSkid || 0) < 2) failures.push(`vehicle FX probe failed: skid=${vehicleFx.spawnedSkid || 0}`);
+  const surfaceFeedback = result.surfaceFeedback || {};
+  for (const id of ['grass', 'sand', 'shore']) {
+    if (!surfaceFeedback.targets?.[id]) failures.push(`surface feedback probe failed: target ${id}`);
+    if ((surfaceFeedback.trailDeltas?.[id] || 0) < 1) failures.push(`surface feedback probe failed: ${id} trail=${surfaceFeedback.trailDeltas?.[id] || 0}`);
+    if ((surfaceFeedback.smokeDeltas?.[id] || 0) < 1) failures.push(`surface feedback probe failed: ${id} smoke=${surfaceFeedback.smokeDeltas?.[id] || 0}`);
+  }
+  if ((surfaceFeedback.surfaceDustDelta || 0) < 6) failures.push(`surface feedback probe failed: surface dust=${surfaceFeedback.surfaceDustDelta || 0}`);
   if (!result.camera?.occlusion?.resolvedCloser) failures.push('camera occlusion probe failed');
   if ((result.camera?.stats?.tests || 0) < 1) failures.push('camera occlusion stats did not record tests');
   if ((result.audio?.zoneStingersPlayed || 0) < 1) failures.push('audio probe failed: zone stingers');
