@@ -38,8 +38,10 @@ export class Vehicle {
     this.landingEvents = 0;
     this.lastLandingAt = -Infinity;
     this.lastLandingIntensity = 0;
-    this.trails = [];
-    this.skidMarks = [];
+    this.effectDummy = new THREE.Object3D();
+    this.effectColor = new THREE.Color();
+    this.effectPools = {};
+    this.effectTotals = { trail: 0, smoke: 0, boost: 0, skid: 0 };
     this.trailGeometry = new THREE.SphereGeometry(0.08, 8, 5);
     this.smokeGeometry = new THREE.SphereGeometry(0.16, 10, 6);
     this.skidGeometry = new THREE.BoxGeometry(0.26, 0.012, 2.2);
@@ -47,6 +49,7 @@ export class Vehicle {
     this.createBody();
     this.createContactShadow();
     this.createLights();
+    this.createEffectPools();
     this.loadVehicleModel();
     this.scene.add(this.group);
     this.respawn();
@@ -130,6 +133,74 @@ export class Vehicle {
       this.boostLights.push(boost);
       this.group.add(brake, reverse, boost);
     }
+  }
+
+  createEffectPools() {
+    this.effectPools = {
+      trail: this.createEffectPool({
+        name: 'VehicleFX_TrailParticles',
+        geometry: this.trailGeometry,
+        capacity: 96,
+        opacity: 0.2,
+        depthWrite: false
+      }),
+      smoke: this.createEffectPool({
+        name: 'VehicleFX_SmokeParticles',
+        geometry: this.smokeGeometry,
+        capacity: 120,
+        opacity: 0.26,
+        depthWrite: false
+      }),
+      boost: this.createEffectPool({
+        name: 'VehicleFX_BoostFlames',
+        geometry: this.boostGeometry,
+        capacity: 48,
+        opacity: 0.52,
+        depthWrite: false
+      }),
+      skid: this.createEffectPool({
+        name: 'VehicleFX_SkidMarks',
+        geometry: this.skidGeometry,
+        capacity: 96,
+        opacity: 0.22,
+        depthWrite: false
+      })
+    };
+  }
+
+  createEffectPool({ name, geometry, capacity, opacity, depthWrite }) {
+    const material = new THREE.MeshBasicMaterial({
+      color: 0xffffff,
+      vertexColors: true,
+      transparent: true,
+      opacity,
+      depthWrite
+    });
+    const mesh = new THREE.InstancedMesh(geometry, material, capacity);
+    mesh.name = name;
+    mesh.frustumCulled = false;
+    mesh.renderOrder = 9;
+    const items = Array.from({ length: capacity }, () => ({
+      active: false,
+      life: 0,
+      maxLife: 1,
+      position: new THREE.Vector3(),
+      velocity: new THREE.Vector3(),
+      quaternion: new THREE.Quaternion(),
+      scale: 1,
+      stretch: new THREE.Vector3(1, 1, 1),
+      growth: 0,
+      gravity: 0,
+      fadeScale: true
+    }));
+    for (let index = 0; index < capacity; index += 1) {
+      this.hideEffectInstance(mesh, index);
+      mesh.setColorAt(index, this.effectColor.setHex(0xffffff));
+    }
+    mesh.instanceMatrix.needsUpdate = true;
+    if (mesh.instanceColor) mesh.instanceColor.needsUpdate = true;
+    this.scene.add(mesh);
+    return { mesh, items, cursor: 0, activeCount: 0 };
   }
 
   loadVehicleModel() {
@@ -352,166 +423,193 @@ export class Vehicle {
   }
 
   spawnTrail(boosting, drifting = false, surface = this.surface) {
-    if (this.trails.length > 45) return;
     const rear = new THREE.Vector3(0, 0.2, -2.6).applyQuaternion(this.group.quaternion).add(this.group.position);
-    const particle = new THREE.Mesh(
-      this.trailGeometry,
-      new THREE.MeshBasicMaterial({
-        color: boosting ? 0xff9a4c : drifting ? (surface?.skidColor ?? 0xcfd4cf) : (surface?.dustColor ?? 0x6f6250),
-        transparent: true,
-        opacity: boosting ? 0.18 : drifting ? 0.17 : ['sand', 'shore', 'grass'].includes(surface?.id) ? 0.14 : 0.09,
-        depthWrite: false
-      })
-    );
-    particle.position.set(rear.x + (Math.random() - 0.5) * 0.7, Math.max(0.25, rear.y), rear.z + (Math.random() - 0.5) * 0.7);
-    this.scene.add(particle);
-    this.trails.push({
-      mesh: particle,
+    this.spawnEffect('trail', {
+      position: new THREE.Vector3(
+        rear.x + (Math.random() - 0.5) * 0.7,
+        Math.max(0.25, rear.y),
+        rear.z + (Math.random() - 0.5) * 0.7
+      ),
+      velocity: new THREE.Vector3((Math.random() - 0.5) * 0.28, 0.16 + Math.random() * 0.18, (Math.random() - 0.5) * 0.28),
+      quaternion: this.group.quaternion,
+      scale: boosting ? 1.42 : drifting ? 1.18 : 0.94,
+      stretch: boosting ? [1.2, 1.2, 1.8] : [1, 1, 1],
+      growth: boosting ? 1.2 : 0.9,
       life: boosting ? 0.46 : drifting ? 0.38 : 0.28,
-      velocity: new THREE.Vector3((Math.random() - 0.5) * 0.28, 0.16 + Math.random() * 0.18, (Math.random() - 0.5) * 0.28)
+      color: boosting ? 0xff9a4c : drifting ? (surface?.skidColor ?? 0xcfd4cf) : (surface?.dustColor ?? 0x6f6250)
     });
   }
 
   spawnRearSmoke(burnout = false) {
-    if (this.trails.length > 82) return;
     const rearOffsets = [-0.88, 0.88];
     for (const side of rearOffsets) {
       const local = new THREE.Vector3(side, -0.42, -1.78);
       const position = local.applyQuaternion(this.group.quaternion).add(this.group.position);
-      const particle = new THREE.Mesh(
-        this.smokeGeometry,
-        new THREE.MeshBasicMaterial({
-          color: burnout ? 0xded8cb : 0xc9c2b5,
-          transparent: true,
-          opacity: burnout ? 0.28 : 0.16,
-          depthWrite: false
-        })
-      );
-      particle.position.set(
-        position.x + (Math.random() - 0.5) * 0.36,
-        Math.max(0.2, position.y),
-        position.z + (Math.random() - 0.5) * 0.36
-      );
-      this.scene.add(particle);
-      this.trails.push({
-        mesh: particle,
+      this.spawnEffect('smoke', {
+        position: new THREE.Vector3(
+          position.x + (Math.random() - 0.5) * 0.36,
+          Math.max(0.2, position.y),
+          position.z + (Math.random() - 0.5) * 0.36
+        ),
+        velocity: new THREE.Vector3((Math.random() - 0.5) * 0.38, 0.22 + Math.random() * 0.22, (Math.random() - 0.5) * 0.38),
+        quaternion: this.group.quaternion,
+        scale: burnout ? 1.25 : 0.92,
+        stretch: [1, 1, 1],
+        growth: burnout ? 1.75 : 1.25,
+        gravity: 0.18,
         life: burnout ? 0.72 : 0.42,
-        velocity: new THREE.Vector3((Math.random() - 0.5) * 0.38, 0.22 + Math.random() * 0.22, (Math.random() - 0.5) * 0.38)
+        color: burnout ? 0xded8cb : 0xc9c2b5
       });
     }
   }
 
   spawnBoostFlame() {
-    if (this.trails.length > 96) return;
     for (const side of [-0.48, 0.48]) {
       const local = new THREE.Vector3(side, -0.35, -2.74);
       const position = local.applyQuaternion(this.group.quaternion).add(this.group.position);
-      const flame = new THREE.Mesh(
-        this.boostGeometry,
-        new THREE.MeshBasicMaterial({
-          color: 0xff9a4c,
-          transparent: true,
-          opacity: 0.48,
-          depthWrite: false
-        })
-      );
-      flame.position.copy(position);
-      flame.quaternion.copy(this.group.quaternion);
-      flame.rotateX(Math.PI / 2);
-      this.scene.add(flame);
-      this.trails.push({
-        mesh: flame,
+      const quaternion = this.group.quaternion.clone();
+      quaternion.multiply(new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(1, 0, 0), Math.PI / 2));
+      this.spawnEffect('boost', {
+        position,
+        velocity: new THREE.Vector3((Math.random() - 0.5) * 0.12, 0.06, (Math.random() - 0.5) * 0.12),
+        quaternion,
+        scale: 1.0,
+        stretch: [1, 1.28, 1],
+        growth: 2.3,
         life: 0.18,
-        velocity: new THREE.Vector3((Math.random() - 0.5) * 0.12, 0.06, (Math.random() - 0.5) * 0.12)
+        color: 0xff9a4c
       });
     }
   }
 
   spawnLandingDust(intensity, surface = this.surface) {
-    if (this.trails.length > 90) return;
     const count = Math.min(8, Math.max(3, Math.round(3 + intensity * 4)));
     for (let i = 0; i < count; i += 1) {
       const angle = (i / count) * Math.PI * 2 + Math.random() * 0.25;
       const radius = 0.55 + Math.random() * 1.2;
-      const particle = new THREE.Mesh(
-        this.smokeGeometry,
-        new THREE.MeshBasicMaterial({
-          color: surface?.dustColor ?? 0xd4c8b6,
-          transparent: true,
-          opacity: 0.16 + intensity * 0.08,
-          depthWrite: false
-        })
-      );
-      particle.name = 'VehicleLandingDust';
-      particle.position.set(
-        this.group.position.x + Math.cos(angle) * radius,
-        Math.max(0.22, this.group.position.y - 0.72),
-        this.group.position.z + Math.sin(angle) * radius
-      );
-      particle.scale.setScalar(0.8 + intensity * 0.45 + Math.random() * 0.35);
-      this.scene.add(particle);
-      this.trails.push({
-        mesh: particle,
-        life: 0.34 + intensity * 0.16,
+      this.spawnEffect('smoke', {
+        position: new THREE.Vector3(
+          this.group.position.x + Math.cos(angle) * radius,
+          Math.max(0.22, this.group.position.y - 0.72),
+          this.group.position.z + Math.sin(angle) * radius
+        ),
         velocity: new THREE.Vector3(
           Math.cos(angle) * (0.34 + intensity * 0.24),
           0.18 + Math.random() * 0.22,
           Math.sin(angle) * (0.34 + intensity * 0.24)
-        )
+        ),
+        quaternion: this.group.quaternion,
+        scale: 0.8 + intensity * 0.45 + Math.random() * 0.35,
+        stretch: [1, 0.75, 1],
+        growth: 1.1,
+        gravity: 0.12,
+        life: 0.34 + intensity * 0.16,
+        color: surface?.dustColor ?? 0xd4c8b6
       });
     }
   }
 
   spawnSkidMark() {
     if (this.surface?.skidMarks === false) return;
-    if (this.skidMarks.length > 64) {
-      const old = this.skidMarks.shift();
-      this.scene.remove(old.mesh);
-      old.mesh.material.dispose();
-    }
     for (const side of [-0.82, 0.82]) {
       const local = new THREE.Vector3(side, -0.84, -1.56);
       const position = local.applyQuaternion(this.group.quaternion).add(this.group.position);
-      const mark = new THREE.Mesh(
-        this.skidGeometry,
-        new THREE.MeshBasicMaterial({
-          color: 0x161410,
-          transparent: true,
-          opacity: 0.22,
-          depthWrite: false
-        })
-      );
-      mark.name = 'VehicleSkidMark';
-      mark.position.set(position.x, 0.17, position.z);
-      mark.rotation.y = this.heading;
-      this.scene.add(mark);
-      this.skidMarks.push({ mesh: mark, life: 4.5 });
+      this.spawnEffect('skid', {
+        position: new THREE.Vector3(position.x, 0.17, position.z),
+        velocity: new THREE.Vector3(),
+        rotationY: this.heading,
+        scale: 1,
+        stretch: [1, 1, 1],
+        growth: 0,
+        life: 4.5,
+        color: 0x161410,
+        fadeScale: true
+      });
     }
   }
 
   updateTrails(dt) {
-    for (let i = this.trails.length - 1; i >= 0; i -= 1) {
-      const trail = this.trails[i];
-      trail.life -= dt;
-      trail.mesh.position.addScaledVector(trail.velocity, dt);
-      trail.mesh.scale.multiplyScalar(1 + dt * 0.9);
-      trail.mesh.material.opacity = Math.max(0, trail.life) * 0.42;
-      if (trail.life <= 0) {
-        this.scene.remove(trail.mesh);
-        trail.mesh.material.dispose();
-        this.trails.splice(i, 1);
-      }
+    this.updateEffectPools(dt);
+  }
+
+  spawnEffect(poolName, options) {
+    const pool = this.effectPools[poolName];
+    if (!pool) return;
+    const index = pool.cursor;
+    pool.cursor = (pool.cursor + 1) % pool.items.length;
+    const item = pool.items[index];
+    item.active = true;
+    item.life = options.life;
+    item.maxLife = options.life;
+    item.position.copy(options.position);
+    item.velocity.copy(options.velocity || new THREE.Vector3());
+    if (options.quaternion) {
+      item.quaternion.copy(options.quaternion);
+    } else {
+      item.quaternion.setFromAxisAngle(new THREE.Vector3(0, 1, 0), options.rotationY || 0);
     }
-    for (let i = this.skidMarks.length - 1; i >= 0; i -= 1) {
-      const mark = this.skidMarks[i];
-      mark.life -= dt;
-      mark.mesh.material.opacity = Math.max(0, mark.life / 4.5) * 0.22;
-      if (mark.life <= 0) {
-        this.scene.remove(mark.mesh);
-        mark.mesh.material.dispose();
-        this.skidMarks.splice(i, 1);
+    item.scale = options.scale ?? 1;
+    item.stretch.set(...(options.stretch || [1, 1, 1]));
+    item.growth = options.growth || 0;
+    item.gravity = options.gravity || 0;
+    item.fadeScale = options.fadeScale !== false;
+    pool.mesh.setColorAt(index, this.effectColor.setHex(options.color || 0xffffff));
+    if (pool.mesh.instanceColor) pool.mesh.instanceColor.needsUpdate = true;
+    this.effectTotals[poolName] += 1;
+  }
+
+  updateEffectPools(dt) {
+    for (const pool of Object.values(this.effectPools)) {
+      let activeCount = 0;
+      for (let index = 0; index < pool.items.length; index += 1) {
+        const item = pool.items[index];
+        if (!item.active) continue;
+        item.life -= dt;
+        if (item.life <= 0) {
+          item.active = false;
+          this.hideEffectInstance(pool.mesh, index);
+          continue;
+        }
+
+        item.position.addScaledVector(item.velocity, dt);
+        if (item.gravity) item.velocity.y -= item.gravity * dt;
+        item.scale *= 1 + item.growth * dt;
+        const fade = item.fadeScale ? THREE.MathUtils.clamp(item.life / item.maxLife, 0.04, 1) : 1;
+        this.effectDummy.position.copy(item.position);
+        this.effectDummy.quaternion.copy(item.quaternion);
+        this.effectDummy.scale.set(
+          item.stretch.x * item.scale * fade,
+          item.stretch.y * item.scale * fade,
+          item.stretch.z * item.scale * fade
+        );
+        this.effectDummy.updateMatrix();
+        pool.mesh.setMatrixAt(index, this.effectDummy.matrix);
+        activeCount += 1;
       }
+      pool.activeCount = activeCount;
+      pool.mesh.instanceMatrix.needsUpdate = true;
     }
+  }
+
+  hideEffectInstance(mesh, index) {
+    this.effectDummy.position.set(0, -1000, 0);
+    this.effectDummy.rotation.set(0, 0, 0);
+    this.effectDummy.scale.set(0, 0, 0);
+    this.effectDummy.updateMatrix();
+    mesh.setMatrixAt(index, this.effectDummy.matrix);
+  }
+
+  getEffectStats() {
+    return {
+      spawnedTrail: this.effectTotals.trail,
+      spawnedSmoke: this.effectTotals.smoke,
+      spawnedBoost: this.effectTotals.boost,
+      spawnedSkid: this.effectTotals.skid,
+      activeTrail: this.effectPools.trail?.activeCount || 0,
+      activeSmoke: this.effectPools.smoke?.activeCount || 0,
+      activeBoost: this.effectPools.boost?.activeCount || 0,
+      activeSkid: this.effectPools.skid?.activeCount || 0
+    };
   }
 
   boostFromPad(pad) {
