@@ -71,6 +71,7 @@ def main():
     create_route_splitter_island(mats)
     create_plaza_edge_kit(mats)
     create_chevron_bollard_run(mats)
+    create_route_story_marker(mats)
 
     output = Path(args.output)
     output.parent.mkdir(parents=True, exist_ok=True)
@@ -928,6 +929,33 @@ def create_chevron_bollard_run(mats):
     for index, x in enumerate([-1.62, -0.54, 0.54, 1.62]):
         cube(f"ChevronBollard_Arrow_{index}", group, (x, 0.27, -0.3), (0.72, 0.08, 0.08), mats["foam"], rot=(0, 0.46, 0), bevel=0.004)
         cube(f"ChevronBollard_ArrowGlow_{index}", group, (x + 0.22, 0.32, -0.36), (0.38, 0.055, 0.055), mats["screen"], rot=(0, 0.46, 0), bevel=0.004)
+
+
+def create_route_story_marker(mats):
+    group = root("EnvPolishRouteStoryMarker")
+    cube("RouteStoryMarker_BaseStone", group, (0, 0.13, 0), (3.25, 0.26, 1.45), mats["stone"], bevel=0.055)
+    cube("RouteStoryMarker_BaseShadow", group, (0, 0.31, 0.34), (2.9, 0.1, 0.16), mats["stone_shadow"], bevel=0.012)
+    for x in [-1.08, 1.08]:
+        cube("RouteStoryMarker_Post", group, (x, 1.75, 0), (0.22, 3.05, 0.22), mats["dark"], bevel=0.018)
+        cube("RouteStoryMarker_PostGlow", group, (x, 1.64, -0.16), (0.07, 2.1, 0.05), mats["screen"], bevel=0.004)
+    cube("RouteStoryMarker_Header", group, (0, 3.12, 0), (2.75, 0.26, 0.3), mats["wood"], bevel=0.026)
+    cube("RouteStoryMarker_HeaderGlow", group, (0, 2.93, -0.18), (2.08, 0.07, 0.055), mats["amber"], bevel=0.004)
+    cube("RouteStoryMarker_MainPanel", group, (0, 2.1, -0.12), (1.95, 0.98, 0.08), mats["dark"], bevel=0.018)
+    cube("RouteStoryMarker_MapScreen", group, (-0.34, 2.12, -0.18), (0.96, 0.64, 0.055), mats["screen"], bevel=0.008)
+    for index, y in enumerate([1.84, 2.08, 2.32]):
+        cube(f"RouteStoryMarker_ScreenLine_{index}", group, (-0.34, y, -0.225), (0.62 - index * 0.08, 0.04, 0.035), mats["mint"], bevel=0.003)
+    cube("RouteStoryMarker_ArrowPlate", group, (0.72, 2.12, -0.18), (0.58, 0.48, 0.055), mats["amber"], rot=(0, 0, -0.14), bevel=0.01)
+    cube("RouteStoryMarker_ArrowHead", group, (0.9, 2.12, -0.225), (0.22, 0.28, 0.04), mats["foam"], rot=(0, 0, -0.14), bevel=0.006)
+    cube("RouteStoryMarker_HangingTag", group, (0.42, 1.38, -0.16), (0.82, 0.34, 0.055), mats["paper"], rot=(0, 0, 0.08), bevel=0.006)
+    cube("RouteStoryMarker_TagPin", group, (0.04, 1.58, -0.2), (0.14, 0.1, 0.04), mats["pink"], bevel=0.004)
+    for x in [-1.42, -0.88, 0.88, 1.42]:
+        cube("RouteStoryMarker_FootReflector", group, (x, 0.52, -0.68), (0.26, 0.16, 0.08), mats["mint" if x < 0 else "amber"], bevel=0.008)
+    for x in [-1.42, 1.42]:
+        cube("RouteStoryMarker_SidePlanter", group, (x, 0.54, 0.46), (0.72, 0.38, 0.42), mats["wood"], bevel=0.026)
+        for blade in [-0.18, 0.0, 0.18]:
+            cone("RouteStoryMarker_PlanterBlade", group, (x + blade, 0.96, 0.48), 0.07, 0.58, mats["leaf"], vertices=5, rot=(0.12, blade * 1.8, 0.04))
+    rock_blob("RouteStoryMarker_LeftPebble", group, (-1.78, 0.16, -0.22), (0.25, 0.14, 0.18), mats["stone_shadow"], rot=(0.16, 0.3, -0.08))
+    rock_blob("RouteStoryMarker_RightPebble", group, (1.78, 0.15, 0.2), (0.3, 0.13, 0.18), mats["stone_shadow"], rot=(-0.12, -0.35, 0.06))
 
 
 if __name__ == "__main__":
