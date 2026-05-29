@@ -869,6 +869,7 @@ async function collectRuntimeMetrics(page, loadMs, gameplay, water, surfaces, su
       districtGateways: game.world.setPieces?.getGatewayStats?.() || {},
       districtStory: game.world.setPieces?.getDistrictStoryStats?.() || {},
       districtComposition: game.world.setPieces?.getDistrictCompositionStats?.() || {},
+      circuitStart: game.world.setPieces?.getCircuitStartStats?.() || {},
       props: game.world.props?.getStats?.() || {},
       stuntPark: game.world.stuntPark?.getStats?.() || {},
       waterStats: game.world.water?.getStats?.() || {},
@@ -1252,6 +1253,13 @@ function assertVerification(result) {
   if ((result.districtComposition?.edgeTrims || 0) < 36) failures.push(`district composition probe failed: edgeTrims=${result.districtComposition?.edgeTrims || 0}`);
   if ((result.districtComposition?.surfaceMarks || 0) < 10) failures.push(`district composition probe failed: surfaceMarks=${result.districtComposition?.surfaceMarks || 0}`);
   if ((result.districtComposition?.rails || 0) < 5) failures.push(`district composition probe failed: rails=${result.districtComposition?.rails || 0}`);
+  if ((result.circuitStart?.pads || 0) < 2) failures.push(`circuit start probe failed: pads=${result.circuitStart?.pads || 0}`);
+  if ((result.circuitStart?.gridMarks || 0) < 18) failures.push(`circuit start probe failed: gridMarks=${result.circuitStart?.gridMarks || 0}`);
+  if ((result.circuitStart?.authoredAssets || 0) < 10) failures.push(`circuit start probe failed: authoredAssets=${result.circuitStart?.authoredAssets || 0}`);
+  if ((result.circuitStart?.checkpointGates || 0) < 1) failures.push(`circuit start probe failed: checkpointGates=${result.circuitStart?.checkpointGates || 0}`);
+  if ((result.circuitStart?.scoreTowers || 0) < 2) failures.push(`circuit start probe failed: scoreTowers=${result.circuitStart?.scoreTowers || 0}`);
+  if ((result.circuitStart?.arrowFences || 0) < 2) failures.push(`circuit start probe failed: arrowFences=${result.circuitStart?.arrowFences || 0}`);
+  if ((result.circuitStart?.laneLights || 0) < 6) failures.push(`circuit start probe failed: laneLights=${result.circuitStart?.laneLights || 0}`);
   if ((result.props?.roadLanterns || 0) < 8) failures.push(`props probe failed: roadLanterns=${result.props?.roadLanterns || 0}`);
   if ((result.props?.authoredLanterns || 0) !== (result.props?.roadLanterns || 0)) failures.push(`props probe failed: authoredLanterns=${result.props?.authoredLanterns || 0}/${result.props?.roadLanterns || 0}`);
   if ((result.props?.fallbackLanterns || 0) !== 0) failures.push(`props probe failed: fallbackLanterns=${result.props?.fallbackLanterns || 0}`);
