@@ -21,6 +21,7 @@ export class AudioSystem {
     this.muted = localStorage.getItem('portfolio-drive-muted') === '1';
     this.impactsPlayed = 0;
     this.zoneStingersPlayed = 0;
+    this.dataShardsPlayed = 0;
   }
 
   async init() {
@@ -172,6 +173,28 @@ export class AudioSystem {
     gain.connect(this.master);
     osc.start();
     osc.stop(this.context.currentTime + 0.22);
+  }
+
+  dataShard(index = 0, count = 0, total = 1) {
+    this.dataShardsPlayed += 1;
+    if (!this.context || this.muted) return;
+
+    const progress = total > 0 ? count / total : 0;
+    const base = 540 + (index % 5) * 42 + progress * 180;
+    this.sweep(base * 0.58, base * 1.32, 0.18, 0.026);
+
+    const osc = this.context.createOscillator();
+    const gain = this.context.createGain();
+    osc.type = 'triangle';
+    osc.frequency.setValueAtTime(base * 1.5, this.context.currentTime);
+    osc.frequency.exponentialRampToValueAtTime(base * 2.1, this.context.currentTime + 0.12);
+    gain.gain.setValueAtTime(0.001, this.context.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.042, this.context.currentTime + 0.015);
+    gain.gain.exponentialRampToValueAtTime(0.001, this.context.currentTime + 0.16);
+    osc.connect(gain);
+    gain.connect(this.master);
+    osc.start();
+    osc.stop(this.context.currentTime + 0.18);
   }
 
   sweep(start = 220, end = 880, duration = 0.32, gainValue = 0.06) {

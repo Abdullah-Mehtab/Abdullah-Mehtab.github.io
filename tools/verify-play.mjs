@@ -69,6 +69,36 @@ try {
     await screenshot(page, `zone-${slug(zone.id)}.png`);
   }
 
+  await page.evaluate(() => {
+    const game = window.__portfolioDrive.game;
+    const shard = game.world.collectibles[0];
+    localStorage.removeItem(`portfolio-drive-shard-${shard.index}`);
+    shard.collected = false;
+    shard.mesh.visible = true;
+    game.world.refreshCollectibleVisuals?.(game.ticker.elapsed || 0);
+    const target = shard.mesh.position.clone();
+    const cameraPosition = target.clone();
+    cameraPosition.x += 4.4;
+    cameraPosition.y += 3.4;
+    cameraPosition.z += 5.4;
+    const lookAt = target.clone();
+    lookAt.y += 1.2;
+    game.vehicle.respawn({ x: shard.mesh.position.x - 4, y: 1.08, z: shard.mesh.position.z - 3 }, 0.78);
+    game.cameraRig.setCinematic(cameraPosition, lookAt);
+    game.cameraRig.smoothedTarget.copy(lookAt);
+    game.camera.position.copy(cameraPosition);
+    game.camera.fov = 38;
+    game.camera.updateProjectionMatrix();
+    game.camera.lookAt(lookAt);
+  });
+  await delay(350);
+  await screenshot(page, 'collectible-data-shard.png');
+  await page.evaluate(() => {
+    const game = window.__portfolioDrive.game;
+    game.camera.fov = game.cameraRig.baseFov;
+    game.camera.updateProjectionMatrix();
+    game.clearFocus();
+  });
   const panelUi = await exercisePanelUi(page);
 
   await page.click('#map-button');
@@ -80,6 +110,13 @@ try {
   await delay(350);
   await screenshot(page, 'menu.png');
   await page.click('#menu-close');
+
+  const collectibles = await exerciseCollectibles(page);
+  await page.evaluate(() => {
+    document.getElementById('notifications')?.replaceChildren();
+    window.__portfolioDrive.respawn('landing');
+  });
+  await delay(150);
 
   await page.evaluate(() => window.__portfolioDrive.showColliders());
   await delay(300);
@@ -97,6 +134,7 @@ try {
     mobile,
     mobileSavedPreference,
     panelUi,
+    collectibles,
     ...metrics
   };
 
@@ -557,6 +595,43 @@ async function sampleWorldLife(page) {
   });
 }
 
+async function exerciseCollectibles(page) {
+  return page.evaluate(async () => {
+    const delay = (ms) => new Promise((resolveDelay) => setTimeout(resolveDelay, ms));
+    const game = window.__portfolioDrive.game;
+
+    game.achievements.unlocked.delete('data_shards');
+    game.achievements.save?.();
+    for (const item of game.world.collectibles) {
+      localStorage.removeItem(`portfolio-drive-shard-${item.index}`);
+      item.collected = false;
+      item.mesh.visible = true;
+    }
+    game.world.refreshCollectibleVisuals?.();
+
+    const audioBefore = game.audio?.dataShardsPlayed || 0;
+    const collectedPerShard = [];
+    for (const item of game.world.collectibles) {
+      const before = game.world.getCollectedCount();
+      game.vehicle.respawn({ x: item.mesh.position.x, y: 1.08, z: item.mesh.position.z }, 0);
+      await delay(90);
+      game.collectNearbyDataShards(game.vehicle.position);
+      await delay(25);
+      collectedPerShard.push(game.world.getCollectedCount() - before);
+    }
+
+    const stats = game.world.getCollectibleStats?.() || {};
+    return {
+      total: game.world.collectibles.length,
+      collected: game.world.getCollectedCount(),
+      collectedPerShard,
+      achievementUnlocked: game.achievements.unlocked.has('data_shards'),
+      audioEvents: (game.audio?.dataShardsPlayed || 0) - audioBefore,
+      stats
+    };
+  });
+}
+
 async function exercisePanelUi(page) {
   await page.evaluate(() => {
     const game = window.__portfolioDrive.game;
@@ -564,6 +639,7 @@ async function exercisePanelUi(page) {
     game.ui.openZone(zone, { skipScan: true });
   });
   await delay(350);
+  await page.evaluate(() => document.getElementById('notifications')?.replaceChildren());
   await screenshot(page, 'panel-security.png');
   const sample = await page.evaluate(() => {
     const panel = document.getElementById('panel');
@@ -636,6 +712,7 @@ async function collectRuntimeMetrics(page, loadMs, gameplay, water, surfaces, ro
       zoneCount: game.world.zones.length,
       audio: {
         zoneStingersPlayed: game.audio?.zoneStingersPlayed || 0,
+        dataShardsPlayed: game.audio?.dataShardsPlayed || 0,
         impactsPlayed: game.audio?.impactsPlayed || 0,
         landingEvents: game.vehicle?.landingEvents || 0
       }
@@ -850,6 +927,14 @@ function assertVerification(result) {
   if ((result.camera?.stats?.tests || 0) < 1) failures.push('camera occlusion stats did not record tests');
   if ((result.audio?.zoneStingersPlayed || 0) < 1) failures.push('audio probe failed: zone stingers');
   if ((result.audio?.landingEvents || 0) < 1) failures.push('audio probe failed: landing event counter');
+  if (result.collectibles?.total !== 7) failures.push(`collectible probe failed: total=${result.collectibles?.total}`);
+  if (result.collectibles?.collected !== result.collectibles?.total) failures.push(`collectible probe failed: collected=${result.collectibles?.collected}/${result.collectibles?.total}`);
+  if (result.collectibles?.collectedPerShard?.some((value) => value < 1)) failures.push(`collectible probe failed: per-shard deltas=${result.collectibles.collectedPerShard.join(',')}`);
+  if (!result.collectibles?.achievementUnlocked) failures.push('collectible probe failed: data_shards achievement');
+  if ((result.collectibles?.audioEvents || 0) < result.collectibles?.total) failures.push(`collectible probe failed: audio events=${result.collectibles?.audioEvents || 0}`);
+  if ((result.collectibles?.stats?.visibleShards || 0) !== 0) failures.push(`collectible probe failed: visible shards=${result.collectibles?.stats?.visibleShards || 0}`);
+  if ((result.collectibles?.stats?.ringInstances || 0) !== result.collectibles?.total) failures.push(`collectible probe failed: ring instances=${result.collectibles?.stats?.ringInstances || 0}`);
+  if ((result.collectibles?.stats?.beamInstances || 0) !== result.collectibles?.total) failures.push(`collectible probe failed: beam instances=${result.collectibles?.stats?.beamInstances || 0}`);
   if (!result.panelUi?.visible || result.panelUi.zoneId !== 'security') failures.push('panel UI probe failed: security terminal did not open');
   if (result.panelUi?.mode !== 'terminal') failures.push(`panel UI probe failed: mode=${result.panelUi?.mode}`);
   if ((result.panelUi?.metaItems || 0) < 4) failures.push(`panel UI probe failed: meta items=${result.panelUi?.metaItems || 0}`);

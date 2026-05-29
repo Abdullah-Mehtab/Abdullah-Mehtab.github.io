@@ -185,14 +185,7 @@ export class Game {
         if (pad && this.vehicle.boostFromPad(pad)) {
           this.ui?.notify?.('Boost pad launched');
         }
-        const collected = this.world.checkCollectibles(this.vehicle.position);
-        if (collected.length) {
-          const count = this.world.getCollectedCount();
-          this.ui?.notify?.(`Data shard ${count}/${this.world.collectibles.length}`);
-          if (count === this.world.collectibles.length) {
-            this.achievements.unlock('data_shards');
-          }
-        }
+        this.collectNearbyDataShards();
       }
     });
     this.vehicle.postPhysics();
@@ -296,6 +289,21 @@ export class Game {
     if (zone.id === this.lastAudioZoneId) return;
     this.lastAudioZoneId = zone.id;
     this.audio?.zoneStinger?.(zone);
+  }
+
+  collectNearbyDataShards(position = this.vehicle.position) {
+    const collected = this.world.checkCollectibles(position);
+    if (!collected.length) return collected;
+    const count = this.world.getCollectedCount();
+    const total = this.world.collectibles.length;
+    for (const item of collected) {
+      this.audio?.dataShard?.(item.index, count, total);
+    }
+    this.ui?.notify?.(`Data shard ${count}/${total}`);
+    if (count === total) {
+      this.achievements.unlock('data_shards');
+    }
+    return collected;
   }
 
   updateDebugReadout(dt) {
