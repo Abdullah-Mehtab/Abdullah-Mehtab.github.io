@@ -592,6 +592,10 @@ async function collectRuntimeMetrics(page, loadMs, gameplay, water, surfaces, ro
         template: game.environmentAssets?.has?.(name) === true,
         placed: Boolean(game.scene.getObjectByName(`SetPiece_${name}`))
       })),
+      roadGuidance: {
+        chevrons: game.scene.getObjectByName('ROAD_Guidance_Chevrons')?.count || 0,
+        reflectorStuds: game.scene.getObjectByName('ROAD_Reflector_Studs')?.count || 0
+      },
       colliderCount: window.__portfolioDrive.colliders().length,
       debugOverlayObjects: game.debugColliderOverlay?.children?.length || 0,
       colliderAudit: auditColliders(window.__portfolioDrive.colliders(), game.scene),
@@ -805,6 +809,8 @@ function assertVerification(result) {
   if (result.surfaces?.sand !== 'sand') failures.push(`surface probe failed: sand=${result.surfaces?.sand}`);
   if (result.surfaces?.shore !== 'shore') failures.push(`surface probe failed: shore=${result.surfaces?.shore}`);
   if (result.surfaces?.water !== 'water') failures.push(`surface probe failed: water=${result.surfaces?.water}`);
+  if ((result.roadGuidance?.chevrons || 0) < 40) failures.push(`road guidance probe failed: chevrons=${result.roadGuidance?.chevrons || 0}`);
+  if ((result.roadGuidance?.reflectorStuds || 0) < 140) failures.push(`road guidance probe failed: reflectorStuds=${result.roadGuidance?.reflectorStuds || 0}`);
   const missingAuthored = (result.authoredDistrictAssets || []).filter((asset) => !asset.template || !asset.placed);
   if (missingAuthored.length) failures.push(`authored district assets missing: ${missingAuthored.map((asset) => asset.name).join(', ')}`);
   if (!result.mobile.ready || result.mobile.canvasSample <= 0) failures.push('mobile canvas did not render');
