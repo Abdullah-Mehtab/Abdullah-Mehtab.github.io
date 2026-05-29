@@ -114,6 +114,8 @@ export class Terrain {
     const { vertices, indices } = makeIslandColliderMesh(ISLAND_RADIUS, 1.01, 112, 0.04, -0.95);
 
     this.world.physics.createFixedTrimesh([0, 0, 0], vertices, indices, {
+      debugName: 'ToyIslandTerrainCollider',
+      visualName: 'ToyIslandGrassPlateau',
       friction: 1.08,
       restitution: 0.01
     });

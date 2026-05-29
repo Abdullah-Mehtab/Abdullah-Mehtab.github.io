@@ -26,6 +26,7 @@ export class PhysicsWorld {
     this.world.createCollider(collider, body);
     this.recordStaticCollider('box', position, {
       name: options.debugName || 'FixedBox',
+      visualName: options.visualName || null,
       size,
       rotation: options.rotation || [0, 0, 0],
       sensor: Boolean(options.sensor)
@@ -47,6 +48,7 @@ export class PhysicsWorld {
     this.world.createCollider(collider, body);
     this.recordStaticCollider('cylinder', position, {
       name: options.debugName || 'FixedCylinder',
+      visualName: options.visualName || null,
       halfHeight,
       radius,
       rotation: options.rotation || [0, 0, 0],
@@ -66,6 +68,7 @@ export class PhysicsWorld {
     this.world.createCollider(collider, body);
     this.recordStaticCollider('ball', position, {
       name: options.debugName || 'FixedBall',
+      visualName: options.visualName || null,
       radius,
       sensor: Boolean(options.sensor)
     });
@@ -86,6 +89,7 @@ export class PhysicsWorld {
     this.world.createCollider(collider, body);
     this.recordStaticCollider('trimesh', position, {
       name: options.debugName || 'FixedTrimesh',
+      visualName: options.visualName || null,
       vertices: Float32Array.from(vertices),
       indices: Uint32Array.from(indices),
       rotation: options.rotation || [0, 0, 0],
