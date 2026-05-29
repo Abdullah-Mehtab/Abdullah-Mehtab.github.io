@@ -14,6 +14,18 @@ let serverInstance = null;
 const baseUrl = process.env.BASE_URL || await startStaticServer();
 const consoleMessages = [];
 const pageErrors = [];
+const authoredDistrictAssets = [
+  'EnvPolishProjectForge',
+  'EnvPolishCvVault',
+  'EnvPolishSkillsArray',
+  'EnvPolishCareerOffice',
+  'EnvPolishAwardsMonument',
+  'EnvPolishTodoBoard',
+  'EnvPolishCircuitGate',
+  'EnvPolishBuildWorkbench',
+  'EnvPolishFarmIrrigator',
+  'EnvPolishHarborSignal'
+];
 
 await mkdir(outputDir, { recursive: true });
 
@@ -321,7 +333,7 @@ async function sampleSurfaces(page, islandRadius) {
 }
 
 async function collectRuntimeMetrics(page, loadMs, gameplay, water, surfaces) {
-  const runtime = await page.evaluate(async () => {
+  const runtime = await page.evaluate(async (expectedAssets) => {
     const frameDeltas = [];
     await new Promise((resolveFrames) => {
       let previous = performance.now();
@@ -352,6 +364,11 @@ async function collectRuntimeMetrics(page, loadMs, gameplay, water, surfaces) {
       calls: info.calls,
       triangles: info.triangles,
       sceneObjects: countSceneObjects(game.scene),
+      authoredDistrictAssets: expectedAssets.map((name) => ({
+        name,
+        template: game.environmentAssets?.has?.(name) === true,
+        placed: Boolean(game.scene.getObjectByName(`SetPiece_${name}`))
+      })),
       colliderCount: window.__portfolioDrive.colliders().length,
       debugOverlayObjects: game.debugColliderOverlay?.children?.length || 0,
       zoneCount: game.world.zones.length
@@ -368,7 +385,7 @@ async function collectRuntimeMetrics(page, loadMs, gameplay, water, surfaces) {
       });
       return { objects, meshes, lights };
     }
-  });
+  }, authoredDistrictAssets);
   return {
     loadMs,
     gameplay,
@@ -431,6 +448,8 @@ function assertVerification(result) {
   if (result.surfaces?.sand !== 'sand') failures.push(`surface probe failed: sand=${result.surfaces?.sand}`);
   if (result.surfaces?.shore !== 'shore') failures.push(`surface probe failed: shore=${result.surfaces?.shore}`);
   if (result.surfaces?.water !== 'water') failures.push(`surface probe failed: water=${result.surfaces?.water}`);
+  const missingAuthored = (result.authoredDistrictAssets || []).filter((asset) => !asset.template || !asset.placed);
+  if (missingAuthored.length) failures.push(`authored district assets missing: ${missingAuthored.map((asset) => asset.name).join(', ')}`);
   if (!result.mobile.ready || result.mobile.canvasSample <= 0) failures.push('mobile canvas did not render');
   if (failures.length) {
     throw new Error(`Play verification failed: ${failures.join('; ')}`);
