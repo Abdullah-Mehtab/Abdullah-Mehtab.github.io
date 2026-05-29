@@ -13,26 +13,33 @@ export class CameraRig {
     this.mode = 'follow';
     this.cinematicTarget = null;
     this.cinematicPosition = null;
+    this.cinematicFov = null;
     this.baseFov = camera.fov;
     this.occlusionStats = { tests: 0, hits: 0, lastHitDistance: 0, lastResolvedDistance: 0 };
   }
 
-  setCinematic(position, target) {
+  setCinematic(position, target, fov = null) {
     this.mode = 'cinematic';
     this.cinematicPosition = position.clone();
     this.cinematicTarget = target.clone();
+    this.cinematicFov = Number.isFinite(fov) ? fov : null;
   }
 
   clearCinematic() {
     this.mode = 'follow';
     this.cinematicPosition = null;
     this.cinematicTarget = null;
+    this.cinematicFov = null;
   }
 
   update(dt) {
     if (this.mode === 'cinematic' && this.cinematicPosition && this.cinematicTarget) {
       this.camera.position.lerp(this.cinematicPosition, 1 - Math.pow(0.002, dt));
       this.smoothedTarget.lerp(this.cinematicTarget, 1 - Math.pow(0.004, dt));
+      if (this.cinematicFov) {
+        this.camera.fov += (this.cinematicFov - this.camera.fov) * Math.min(1, dt * 4.5);
+        this.camera.updateProjectionMatrix();
+      }
       this.camera.lookAt(this.smoothedTarget);
       return;
     }

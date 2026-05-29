@@ -5,6 +5,7 @@ import {
   ISLAND_RADIUS,
   circuitCheckpoints,
   roadSegments,
+  zonePresentation,
   worldZones
 } from './worldData.js';
 import { Atmosphere } from './Atmosphere.js';
@@ -250,6 +251,19 @@ export class World {
     if (!zone) {
       return { position: new THREE.Vector3(4, 1.45, 26), heading: 0 };
     }
+    const authored = zonePresentation[zone.id]?.respawn;
+    if (authored?.position) {
+      return {
+        position: vectorFromArray(authored.position),
+        heading: authored.heading ?? zone.rotation ?? 0
+      };
+    }
+    if (authored?.offset) {
+      return {
+        position: zone.position.clone().add(vectorFromArray(authored.offset)),
+        heading: authored.heading ?? zone.rotation ?? 0
+      };
+    }
     if (zone.id === 'landing') {
       return { position: zone.position.clone().add(new THREE.Vector3(4, 1.08, -16)), heading: 0.15 };
     }
@@ -261,6 +275,29 @@ export class World {
     return {
       position: zone.position.clone().add(offset),
       heading: zone.rotation || 0
+    };
+  }
+
+  getPresentationPose(zoneId = 'landing') {
+    const zone = this.zones.find((item) => item.id === zoneId) || this.zones.find((item) => item.id === 'landing');
+    if (!zone) {
+      return {
+        position: new THREE.Vector3(7.5, 7.2, 9.5),
+        target: new THREE.Vector3(0, 2.4, 0),
+        fov: 42
+      };
+    }
+    const authored = zonePresentation[zone.id] || {};
+    const position = authored.camera
+      ? vectorFromArray(authored.camera)
+      : zone.position.clone().add(new THREE.Vector3(7.5, 7.2, 9.5));
+    const target = authored.target
+      ? vectorFromArray(authored.target)
+      : zone.position.clone().add(new THREE.Vector3(0, 2.4, 0));
+    return {
+      position,
+      target,
+      fov: authored.fov ?? 42
     };
   }
 
@@ -384,4 +421,8 @@ function prefersLightLandscape() {
   const coarsePointer = window.matchMedia?.('(pointer: coarse)')?.matches === true;
   const touch = navigator.maxTouchPoints > 1;
   return narrow || coarsePointer || touch;
+}
+
+function vectorFromArray(values) {
+  return new THREE.Vector3(values[0], values[1], values[2]);
 }

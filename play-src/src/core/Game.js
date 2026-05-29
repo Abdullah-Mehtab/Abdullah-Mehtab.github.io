@@ -380,9 +380,8 @@ export class Game {
   }
 
   focusZone(zone) {
-    const position = zone.position.clone().add(new THREE.Vector3(7.5, 7.2, 9.5));
-    const target = zone.position.clone().add(new THREE.Vector3(0, 2.4, 0));
-    this.cameraRig.setCinematic(position, target);
+    const pose = this.world.getPresentationPose(zone.id);
+    this.cameraRig.setCinematic(pose.position, pose.target, pose.fov);
   }
 
   clearFocus() {
