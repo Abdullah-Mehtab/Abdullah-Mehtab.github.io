@@ -1,3 +1,5 @@
+// ABOUTME: Wraps the Three.js renderer, quality tiers, shadows, and postprocessing for /play.
+// ABOUTME: Keeps expensive high-tier rendering bounded for static GitHub Pages visitors.
 import * as THREE from 'three';
 import { EffectComposer } from 'three/examples/jsm/postprocessing/EffectComposer.js';
 import { RenderPass } from 'three/examples/jsm/postprocessing/RenderPass.js';
@@ -41,7 +43,7 @@ export class GameRenderer {
     const profile = {
       low: { pixelRatio: 1, shadows: false, post: false, bloom: 0.04 },
       medium: { pixelRatio: 1.15, shadows: false, post: false, bloom: 0.08 },
-      high: { pixelRatio: 1.35, shadows: true, post: true, bloom: 0.18 }
+      high: { pixelRatio: 1.2, shadows: true, post: true, bloom: 0.16 }
     }[quality] || { pixelRatio: 1.15, shadows: false, post: false, bloom: 0.08 };
     this.maxPixelRatio = profile.pixelRatio;
     this.renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, this.maxPixelRatio));
