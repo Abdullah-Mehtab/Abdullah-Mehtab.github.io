@@ -803,13 +803,12 @@ def create_todo_card_stack(mats):
 
 def create_yard_edge_trim(mats):
     group = root("EnvPolishYardEdgeTrim")
-    cube("YardEdgeTrim_Curb", group, (0, 0.14, 0), (5.6, 0.28, 0.42), mats["stone"], bevel=0.03)
-    cube("YardEdgeTrim_ShadowLip", group, (0, 0.32, 0.24), (5.35, 0.12, 0.12), mats["stone_shadow"], bevel=0.012)
-    for index, x in enumerate([-2.18, -1.1, 0, 1.1, 2.18]):
-        cube(f"YardEdgeTrim_GlowChip_{index}", group, (x, 0.41, -0.24), (0.36, 0.08, 0.07), mats["mint" if index % 2 else "amber"], bevel=0.004)
+    cube("YardEdgeTrim_Curb", group, (0, 0.14, 0), (5.6, 0.28, 0.42), mats["stone"], bevel=0.026)
+    cube("YardEdgeTrim_ShadowLip", group, (0, 0.32, 0.24), (5.35, 0.12, 0.12), mats["stone_shadow"])
+    cube("YardEdgeTrim_GlowLeft", group, (-1.35, 0.41, -0.24), (1.45, 0.08, 0.07), mats["mint"])
+    cube("YardEdgeTrim_GlowRight", group, (1.35, 0.41, -0.24), (1.45, 0.08, 0.07), mats["amber"])
     for x in [-2.82, 2.82]:
-        cube("YardEdgeTrim_EndPost", group, (x, 0.62, 0), (0.18, 0.82, 0.18), mats["dark"], bevel=0.014)
-        cube("YardEdgeTrim_EndLamp", group, (x, 1.1, -0.02), (0.3, 0.18, 0.3), mats["screen"], bevel=0.018)
+        cube("YardEdgeTrim_EndCap", group, (x, 0.45, 0), (0.16, 0.54, 0.2), mats["dark"], bevel=0.01)
 
 
 def create_yard_surface_marks(mats):
