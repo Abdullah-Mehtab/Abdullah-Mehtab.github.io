@@ -1407,6 +1407,7 @@ function assertVerification(result) {
   if ((result.atmosphere?.visibleSunGlows || 0) < 3) failures.push(`atmosphere probe failed: visibleSunGlows=${result.atmosphere?.visibleSunGlows || 0}`);
   if ((result.atmosphere?.horizonRibbons || 0) < 3) failures.push(`atmosphere probe failed: horizonRibbons=${result.atmosphere?.horizonRibbons || 0}`);
   if ((result.atmosphere?.visibleHorizonRibbons || 0) < 3) failures.push(`atmosphere probe failed: visibleHorizonRibbons=${result.atmosphere?.visibleHorizonRibbons || 0}`);
+  if ((result.atmosphere?.visibleSkyWisps || 0) < 8) failures.push(`atmosphere probe failed: visibleSkyWisps=${result.atmosphere?.visibleSkyWisps || 0}`);
   if (!result.atmosphere?.distantIsletTemplate) failures.push('atmosphere probe failed: distant islet template');
   if ((result.atmosphere?.distantIslets || 0) < 20) failures.push(`atmosphere probe failed: distantIslets=${result.atmosphere?.distantIslets || 0}`);
   if ((result.atmosphere?.visibleDistantIslets || 0) < 14) failures.push(`atmosphere probe failed: visibleDistantIslets=${result.atmosphere?.visibleDistantIslets || 0}`);
@@ -1535,6 +1536,7 @@ function assertVerification(result) {
   if ((result.mobile.atmosphere?.visibleClouds || 0) > 5) failures.push(`mobile atmosphere probe failed: visibleClouds=${result.mobile.atmosphere?.visibleClouds || 0}`);
   if ((result.mobile.atmosphere?.visibleSunGlows || 0) > 1) failures.push(`mobile atmosphere probe failed: visibleSunGlows=${result.mobile.atmosphere?.visibleSunGlows || 0}`);
   if ((result.mobile.atmosphere?.visibleHorizonRibbons || 0) > 1) failures.push(`mobile atmosphere probe failed: visibleHorizonRibbons=${result.mobile.atmosphere?.visibleHorizonRibbons || 0}`);
+  if ((result.mobile.atmosphere?.visibleSkyWisps || 0) > 4) failures.push(`mobile atmosphere probe failed: visibleSkyWisps=${result.mobile.atmosphere?.visibleSkyWisps || 0}`);
   if ((result.mobile.atmosphere?.visibleDistantIslets || 0) > 8) failures.push(`mobile atmosphere probe failed: visibleDistantIslets=${result.mobile.atmosphere?.visibleDistantIslets || 0}`);
   if ((result.mobile.lifeStats?.visibleTotal || 0) >= (result.worldLife?.quality?.medium?.visibleTotal || Infinity)) {
     failures.push('mobile quality probe failed: visible life signals were not reduced');
