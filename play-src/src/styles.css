@@ -324,6 +324,43 @@ body:not(.is-driving) .hud {
   color: var(--muted);
 }
 
+.whisper-feed {
+  position: fixed;
+  left: 228px;
+  bottom: 24px;
+  z-index: 20;
+  width: min(88vw, 360px);
+  border: 1px solid color-mix(in srgb, var(--zone-color), transparent 50%);
+  border-radius: 8px;
+  padding: 12px 14px;
+  background:
+    linear-gradient(90deg, color-mix(in srgb, var(--zone-color), transparent 82%), transparent 58%),
+    rgba(4, 10, 17, 0.72);
+  box-shadow:
+    0 18px 42px rgba(0, 0, 0, 0.24),
+    0 0 24px color-mix(in srgb, var(--zone-color), transparent 84%);
+  pointer-events: none;
+  backdrop-filter: blur(12px);
+  animation: whisper-in 180ms ease both;
+}
+
+.whisper-feed span {
+  display: block;
+  color: var(--zone-color);
+  font-size: 0.66rem;
+  font-weight: 900;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.whisper-feed strong {
+  display: block;
+  margin-top: 5px;
+  color: var(--text);
+  font-size: clamp(0.92rem, 1.7vw, 1rem);
+  line-height: 1.35;
+}
+
 .circuit-status {
   position: fixed;
   top: 84px;
@@ -409,6 +446,13 @@ body:not(.is-driving) .minimap {
 }
 
 body:not(.is-driving) .interaction-prompt {
+  display: none;
+}
+
+body:not(.is-driving) .whisper-feed,
+body:has(.panel:not([hidden])) .whisper-feed,
+body:has(.menu:not([hidden])) .whisper-feed,
+body:has(.map-modal:not([hidden])) .whisper-feed {
   display: none;
 }
 
@@ -1289,6 +1333,17 @@ body:has(.map-modal:not([hidden])) .debug-readout {
   }
 }
 
+@keyframes whisper-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
 @media (hover: none), (pointer: coarse) {
   .touch-controls {
     display: block;
@@ -1438,6 +1493,13 @@ body:has(.map-modal:not([hidden])) .debug-readout {
   .interaction-prompt {
     bottom: 150px;
     width: min(84vw, 360px);
+  }
+
+  .whisper-feed {
+    left: auto;
+    right: 14px;
+    bottom: 268px;
+    width: min(86vw, 330px);
   }
 }
 

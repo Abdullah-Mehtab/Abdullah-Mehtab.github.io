@@ -177,6 +177,7 @@ export class Game {
     const nearest = this.world.nearestZone(vehiclePosition);
     this.activeZone = nearest?.zone || null;
     this.updateZoneStinger(this.activeZone);
+    this.ui.updateWhisper(this.started && !this.ui.isPanelOpen() ? this.world.nearestWhisper(vehiclePosition) : null);
     this.vehicle.setSurface(this.world.getSurfaceInfo(vehiclePosition));
 
     const canDrive = this.started && !this.ui.isPanelOpen();

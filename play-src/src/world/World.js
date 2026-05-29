@@ -255,6 +255,10 @@ export class World {
     return best;
   }
 
+  nearestWhisper(position) {
+    return this.setPieces?.getNearestWhisper?.(position) || null;
+  }
+
   getRespawnPose(zoneId = 'landing') {
     const zone = this.zones.find((item) => item.id === zoneId) || this.zones.find((item) => item.id === 'landing');
     if (!zone) {
