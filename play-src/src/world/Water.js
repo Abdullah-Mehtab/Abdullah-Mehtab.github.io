@@ -185,10 +185,12 @@ export class Water {
     const speed = Math.abs(vehicle.speed || 0);
     const nearShore = distance > SHORE_WAKE_RADIUS;
     const inWater = distance > WATER_DRAG_RADIUS || vehiclePosition.y < WATER_Y + 0.24;
+    const currentSurface = this.world.surfaceState || {};
     this.world.surfaceState = {
-      label: inWater ? 'water' : nearShore ? 'shore' : 'land',
+      label: inWater ? 'water' : nearShore && currentSurface.label !== 'road' ? 'shore' : currentSurface.label || 'land',
       inWater,
-      nearShore
+      nearShore: nearShore || currentSurface.nearShore || false,
+      onRoad: currentSurface.onRoad || false
     };
 
     if ((nearShore || inWater) && speed > 7 && elapsed - this.lastSplashAt > 0.08) {

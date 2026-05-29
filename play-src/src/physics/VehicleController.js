@@ -1,3 +1,5 @@
+// ABOUTME: Tunes Rapier vehicle forces for the Sabre Turbo-style /play car.
+// ABOUTME: Preserves muscle-car tricks while letting road, grass, sand, shore, and water feel distinct.
 import * as THREE from 'three';
 
 const WHEEL_OFFSETS = [
@@ -9,6 +11,7 @@ const WHEEL_OFFSETS = [
 
 const WHEEL_RADIUS = 0.43;
 const BURNOUT_START_SPEED = 2.6;
+const DEFAULT_SURFACE = { id: 'road', forwardGrip: 1, sideGrip: 1, engineFactor: 1, topSpeedFactor: 1 };
 
 export class VehicleController {
   constructor({ physics, body }) {
@@ -30,8 +33,13 @@ export class VehicleController {
     this.wheelieCooldown = 0;
     this.stuckTimer = 0;
     this.lastCollisionSpeed = 0;
-    this.driveState = { boost: false, handbrake: false, throttle: 0, slip: 0, burnout: false, wheelie: false };
+    this.surface = DEFAULT_SURFACE;
+    this.driveState = { boost: false, handbrake: false, throttle: 0, slip: 0, burnout: false, wheelie: false, surface: 'road' };
     this.setupWheels();
+  }
+
+  setSurface(surface) {
+    this.surface = surface ? { ...DEFAULT_SURFACE, ...surface } : DEFAULT_SURFACE;
   }
 
   setupWheels() {
@@ -64,6 +72,7 @@ export class VehicleController {
     const right = input.actions.right || joy.x > 0.22;
     const handbrake = input.actions.handbrake;
     const brakeInput = input.actions.brake;
+    const surface = this.surface || DEFAULT_SURFACE;
     const velocity = this.body.linvel();
     const localVelocity = this.getLocalVelocity(velocity);
     this.speed = Math.hypot(velocity.x, velocity.y * 0.12, velocity.z);
@@ -95,13 +104,14 @@ export class VehicleController {
     const throttleRate = throttleTarget === 0 ? 4.4 : 6.6;
     this.throttle += (throttleTarget - this.throttle) * Math.min(1, dt * throttleRate);
 
-    const topSpeed = boost ? 102 : 68;
+    const topSpeed = (boost ? 102 : 68) * (surface.topSpeedFactor ?? 1);
     const reverseTopSpeed = 18;
     const top = this.throttle >= 0 ? topSpeed : reverseTopSpeed;
     const overflow = Math.max(0, Math.abs(this.localSpeed) - top);
     const speedRatio = THREE.MathUtils.clamp(Math.abs(this.localSpeed) / top, 0, 1.25);
     const launchBonus = this.throttle > 0 && this.localSpeed < 8 ? 1.62 : 1;
-    const engineBase = this.throttle >= 0 ? (burnout ? 920 : boost ? 1080 : 650) : 178;
+    let engineBase = this.throttle >= 0 ? (burnout ? 920 : boost ? 1080 : 650) : 178;
+    engineBase *= surface.engineFactor ?? 1;
     let engine = this.throttle * engineBase * launchBonus * (1 - Math.min(0.82, speedRatio * 0.72));
     engine /= 1 + overflow * 0.36;
     if (boost && forward && horizontalSpeed > 3 && this.groundedWheels > 1) {
@@ -144,8 +154,8 @@ export class VehicleController {
       this.controller.setWheelSteering(i, isFront ? this.steering : 0);
       this.controller.setWheelBrake(i, isRear ? rearBrake : frontBrake);
       this.controller.setWheelEngineForce(i, isRear ? engine : 0);
-      this.controller.setWheelFrictionSlip(i, this.getWheelSlip(isFront, handbrake, boost, burnout));
-      this.controller.setWheelSideFrictionStiffness(i, this.getWheelSideFriction(isFront, handbrake, burnout));
+      this.controller.setWheelFrictionSlip(i, this.getWheelSlip(isFront, handbrake, boost, burnout, surface));
+      this.controller.setWheelSideFrictionStiffness(i, this.getWheelSideFriction(isFront, handbrake, burnout, surface));
     }
     this.controller.updateVehicle(Math.min(dt, 1 / 45));
     this.updateContactState();
@@ -169,6 +179,7 @@ export class VehicleController {
       wheelie: this.wheelieTimer > 0,
       wheelieLaunch,
       burnoutCharge: this.burnoutCharge,
+      surface: surface.id || 'road',
       slip: burnout ? 1 : handbrake && this.speed > 5 ? THREE.MathUtils.clamp(this.speed / 24, 0, 1) : 0
     };
     this.wasBurnout = burnout;
@@ -247,16 +258,18 @@ export class VehicleController {
     this.body.applyImpulse({ x: 0, y: -downforce * Math.min(1, dt * 60) * 0.022, z: 0 }, true);
   }
 
-  getWheelSlip(isFront, handbrake, boost, burnout) {
-    if (burnout) return isFront ? 1.55 : 0.58;
-    if (handbrake) return isFront ? 1.7 : 0.86;
-    return boost ? 2.18 : 1.94;
+  getWheelSlip(isFront, handbrake, boost, burnout, surface = DEFAULT_SURFACE) {
+    const grip = surface.forwardGrip ?? 1;
+    if (burnout) return (isFront ? 1.55 : 0.58) * grip;
+    if (handbrake) return (isFront ? 1.7 : 0.86) * grip;
+    return (boost ? 2.18 : 1.94) * grip;
   }
 
-  getWheelSideFriction(isFront, handbrake, burnout) {
-    if (burnout) return isFront ? 11.2 : 1.45;
-    if (handbrake) return isFront ? 8.4 : 2.35;
-    return isFront ? 10.2 : 9.4;
+  getWheelSideFriction(isFront, handbrake, burnout, surface = DEFAULT_SURFACE) {
+    const grip = surface.sideGrip ?? 1;
+    if (burnout) return (isFront ? 11.2 : 1.45) * grip;
+    if (handbrake) return (isFront ? 8.4 : 2.35) * grip;
+    return (isFront ? 10.2 : 9.4) * grip;
   }
 
   getLocalVelocity(velocity) {
@@ -361,6 +374,6 @@ export class VehicleController {
     this.stuckTimer = 0;
     this.boostCooldown = 0;
     this.forwardHoldTime = 0;
-    this.driveState = { boost: false, handbrake: false, throttle: this.throttle, slip: 0, burnout: false, wheelie: false };
+    this.driveState = { boost: false, handbrake: false, throttle: this.throttle, slip: 0, burnout: false, wheelie: false, surface: this.surface?.id || 'road' };
   }
 }
