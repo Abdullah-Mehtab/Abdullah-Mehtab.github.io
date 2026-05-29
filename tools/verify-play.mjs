@@ -1210,6 +1210,8 @@ function assertVerification(result) {
   if ((result.water?.activeWakes || 0) < 1) failures.push(`water probe failed: active wakes=${result.water?.activeWakes || 0}`);
   if (!result.water?.dragReduced) failures.push('water probe failed: drag');
   if (!result.water?.submergeRespawned) failures.push('water probe failed: submerge respawn');
+  if ((result.waterStats?.surfaceGlints || 0) < 30) failures.push(`water detail probe failed: surfaceGlints=${result.waterStats?.surfaceGlints || 0}`);
+  if ((result.waterStats?.visibleSurfaceGlints || 0) < 20) failures.push(`water detail probe failed: visibleSurfaceGlints=${result.waterStats?.visibleSurfaceGlints || 0}`);
   if (result.surfaces?.road !== 'road') failures.push(`surface probe failed: road=${result.surfaces?.road}`);
   if (result.surfaces?.grass !== 'grass') failures.push(`surface probe failed: grass=${result.surfaces?.grass}`);
   if (result.surfaces?.sand !== 'sand') failures.push(`surface probe failed: sand=${result.surfaces?.sand}`);
