@@ -113,14 +113,14 @@ export class Atmosphere {
 
   createHorizonRibbons() {
     const specs = [
-      { inner: WORLD_HALF_SIZE * 1.02, outer: WORLD_HALF_SIZE * 1.035, color: 0xffd39a, opacity: 0.13 },
-      { inner: WORLD_HALF_SIZE * 1.105, outer: WORLD_HALF_SIZE * 1.118, color: 0x9be7ff, opacity: 0.09 },
-      { inner: WORLD_HALF_SIZE * 1.19, outer: WORLD_HALF_SIZE * 1.202, color: 0xffffff, opacity: 0.055 }
+      { radius: WORLD_HALF_SIZE * 1.22, height: 8.5, y: 1.8, color: 0xffd39a, opacity: 0.058 },
+      { radius: WORLD_HALF_SIZE * 1.36, height: 13.5, y: 3.3, color: 0x9be7ff, opacity: 0.042 },
+      { radius: WORLD_HALF_SIZE * 1.55, height: 19.0, y: 5.7, color: 0xffffff, opacity: 0.026 }
     ];
     for (let i = 0; i < specs.length; i += 1) {
       const spec = specs[i];
       const ribbon = new THREE.Mesh(
-        new THREE.RingGeometry(spec.inner, spec.outer, 160),
+        new THREE.CylinderGeometry(spec.radius, spec.radius, spec.height, 160, 1, true),
         new THREE.MeshBasicMaterial({
           color: spec.color,
           transparent: true,
@@ -130,8 +130,8 @@ export class Atmosphere {
         })
       );
       ribbon.name = `Atmosphere_Horizon_Ribbon_${i}`;
-      ribbon.rotation.x = -Math.PI / 2;
-      ribbon.position.y = -0.48 + i * 0.018;
+      ribbon.position.y = spec.y;
+      ribbon.userData.baseOpacity = spec.opacity;
       this.world.scene.add(ribbon);
       this.horizonRibbons.push(ribbon);
     }
@@ -286,8 +286,8 @@ export class Atmosphere {
     }
     for (let i = 0; i < this.horizonRibbons.length; i += 1) {
       const ribbon = this.horizonRibbons[i];
-      ribbon.material.opacity = (i === 0 ? 0.13 : i === 1 ? 0.09 : 0.055) + Math.sin(elapsed * 0.22 + i * 0.7) * 0.016;
-      ribbon.rotation.z += dt * (0.002 + i * 0.0012);
+      ribbon.material.opacity = ribbon.userData.baseOpacity + Math.sin(elapsed * 0.18 + i * 0.7) * 0.007;
+      ribbon.rotation.y += dt * (0.0015 + i * 0.0008);
     }
     for (let i = 0; i < this.clouds.length; i += 1) {
       const cloud = this.clouds[i];

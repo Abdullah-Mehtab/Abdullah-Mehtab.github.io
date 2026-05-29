@@ -2,12 +2,13 @@
 // ABOUTME: Uses the same irregular island outline as the terrain so water no longer reads as a circle.
 import * as THREE from 'three';
 import { ISLAND_RADIUS, WORLD_HALF_SIZE } from './worldData.js';
-import { getIslandCoastPoints, makeIslandBandGeometry, WATER_Y } from './WorldMaterials.js';
+import { getIslandCoastPoints, makeIslandBandGeometry, pseudoRandom, WATER_Y } from './WorldMaterials.js';
 
 const SPLASH_LIMITS = { low: 12, medium: 24, high: 40 };
 const BOBBING_LIMITS = { low: 5, medium: 10, high: 16 };
 const WAKE_LIMITS = { low: 10, medium: 26, high: 42 };
 const GLINT_LIMITS = { low: 8, medium: 20, high: 34 };
+const WAVE_LANE_LIMITS = { low: 16, medium: 32, high: 52 };
 const SHORE_WAKE_RADIUS = ISLAND_RADIUS * 0.94;
 const WATER_DRAG_RADIUS = ISLAND_RADIUS * 1.012;
 const WATER_RESPAWN_RADIUS = ISLAND_RADIUS * 1.04;
@@ -19,12 +20,14 @@ export class Water {
     this.foamMeshes = [];
     this.bobbingProps = [];
     this.surfaceGlints = [];
+    this.waveLanes = [];
     this.splashes = [];
     this.wakes = [];
     this.maxSplashes = SPLASH_LIMITS.medium;
     this.maxBobbingProps = BOBBING_LIMITS.medium;
     this.maxWakes = WAKE_LIMITS.medium;
     this.maxGlints = GLINT_LIMITS.medium;
+    this.maxWaveLanes = WAVE_LANE_LIMITS.medium;
     this.lastSplashAt = -Infinity;
     this.lastSplashAudioAt = -Infinity;
     this.lastWakeAt = -Infinity;
@@ -33,6 +36,7 @@ export class Water {
     this.wakeCursor = 0;
     this.wakeDummy = new THREE.Object3D();
     this.glintDummy = new THREE.Object3D();
+    this.waveLaneDummy = new THREE.Object3D();
     this.splashGeometry = new THREE.SphereGeometry(0.18, 8, 5);
     this.splashMaterial = new THREE.MeshBasicMaterial({
       color: 0xeafff7,
@@ -64,6 +68,7 @@ export class Water {
     this.createShallowShelf();
     this.createShoreFoam();
     this.createSurfaceGlints();
+    this.createWaveLanes();
     this.createBobbingProps();
     this.createWakePool();
     this.applyQuality();
@@ -138,6 +143,41 @@ export class Water {
       });
     }
     this.writeSurfaceGlints(0);
+  }
+
+  createWaveLanes() {
+    const capacity = WAVE_LANE_LIMITS.high;
+    const geometry = new THREE.PlaneGeometry(1, 1);
+    geometry.rotateX(-Math.PI / 2);
+    const material = new THREE.MeshBasicMaterial({
+      color: 0xe8fff7,
+      transparent: true,
+      opacity: 0.105,
+      depthWrite: false,
+      blending: THREE.AdditiveBlending,
+      side: THREE.DoubleSide
+    });
+    this.waveLaneMesh = new THREE.InstancedMesh(geometry, material, capacity);
+    this.waveLaneMesh.name = 'ToyIslandOcean_Wave_Lanes';
+    this.waveLaneMesh.frustumCulled = false;
+    this.waveLaneMesh.renderOrder = -2;
+    this.world.scene.add(this.waveLaneMesh);
+
+    for (let i = 0; i < capacity; i += 1) {
+      const angle = (i / capacity) * Math.PI * 2 + (pseudoRandom(i * 2.13) - 0.5) * 0.22;
+      const radius = ISLAND_RADIUS * (1.1 + pseudoRandom(i * 3.79) * 1.12);
+      this.waveLanes.push({
+        angle,
+        radius,
+        rotation: angle + Math.PI * 0.5 + (pseudoRandom(i * 5.11) - 0.5) * 0.34,
+        width: 18 + pseudoRandom(i * 7.71) * 46,
+        depth: 0.1 + pseudoRandom(i * 11.17) * 0.22,
+        phase: i * 0.47,
+        speed: 0.18 + pseudoRandom(i * 13.37) * 0.16,
+        drift: 0.9 + pseudoRandom(i * 17.23) * 2.1
+      });
+    }
+    this.writeWaveLanes(0);
   }
 
   createBobbingProps() {
@@ -218,6 +258,7 @@ export class Water {
     this.maxBobbingProps = BOBBING_LIMITS[waterQuality] || BOBBING_LIMITS.medium;
     this.maxWakes = WAKE_LIMITS[waterQuality] || WAKE_LIMITS.medium;
     this.maxGlints = GLINT_LIMITS[waterQuality] || GLINT_LIMITS.medium;
+    this.maxWaveLanes = WAVE_LANE_LIMITS[waterQuality] || WAVE_LANE_LIMITS.medium;
     this.foamMeshes.forEach((mesh, index) => {
       mesh.visible = waterQuality === 'high' || (waterQuality === 'medium' && index < 2) || index === 0;
     });
@@ -225,6 +266,11 @@ export class Water {
       this.glintMesh.count = this.maxGlints;
       this.glintMesh.visible = this.maxGlints > 0;
       this.glintMesh.instanceMatrix.needsUpdate = true;
+    }
+    if (this.waveLaneMesh) {
+      this.waveLaneMesh.count = this.maxWaveLanes;
+      this.waveLaneMesh.visible = this.maxWaveLanes > 0;
+      this.waveLaneMesh.instanceMatrix.needsUpdate = true;
     }
     this.bobbingProps.forEach((item, index) => {
       item.group.visible = index < this.maxBobbingProps;
@@ -250,6 +296,7 @@ export class Water {
       }
     }
     this.updateSurfaceGlints(elapsed);
+    this.updateWaveLanes(elapsed);
     this.updateBobbingProps(elapsed);
     this.updateVehicleWaterInteraction(dt, elapsed, vehiclePosition, vehicle);
     this.updateSplashes(dt);
@@ -273,6 +320,12 @@ export class Water {
     this.glintMesh.material.opacity = 0.13 + Math.sin(elapsed * 0.34) * 0.035;
   }
 
+  updateWaveLanes(elapsed) {
+    if (!this.waveLaneMesh) return;
+    this.writeWaveLanes(elapsed);
+    this.waveLaneMesh.material.opacity = 0.085 + Math.sin(elapsed * 0.22) * 0.018;
+  }
+
   writeSurfaceGlints(elapsed) {
     if (!this.glintMesh) return;
     const visible = Math.min(this.maxGlints, this.surfaceGlints.length);
@@ -293,6 +346,30 @@ export class Water {
     }
     this.glintMesh.count = visible;
     this.glintMesh.instanceMatrix.needsUpdate = true;
+  }
+
+  writeWaveLanes(elapsed) {
+    if (!this.waveLaneMesh) return;
+    const visible = Math.min(this.maxWaveLanes, this.waveLanes.length);
+    for (let i = 0; i < visible; i += 1) {
+      const lane = this.waveLanes[i];
+      const pulse = Math.sin(elapsed * lane.speed + lane.phase);
+      const sweep = Math.cos(elapsed * lane.speed * 0.72 + lane.phase);
+      const radius = lane.radius + pulse * lane.drift;
+      this.waveLaneDummy.position.set(Math.cos(lane.angle) * radius, WATER_Y + 0.052 + i * 0.00015, Math.sin(lane.angle) * radius);
+      this.waveLaneDummy.rotation.set(0, lane.rotation + sweep * 0.018, 0);
+      this.waveLaneDummy.scale.set(lane.width * (0.86 + pulse * 0.07), 1, lane.depth * (0.9 + sweep * 0.08));
+      this.waveLaneDummy.updateMatrix();
+      this.waveLaneMesh.setMatrixAt(i, this.waveLaneDummy.matrix);
+    }
+    for (let i = visible; i < this.waveLanes.length; i += 1) {
+      this.waveLaneDummy.position.set(0, -1000, 0);
+      this.waveLaneDummy.scale.set(0, 0, 0);
+      this.waveLaneDummy.updateMatrix();
+      this.waveLaneMesh.setMatrixAt(i, this.waveLaneDummy.matrix);
+    }
+    this.waveLaneMesh.count = visible;
+    this.waveLaneMesh.instanceMatrix.needsUpdate = true;
   }
 
   updateVehicleWaterInteraction(dt, elapsed, vehiclePosition, vehicle) {
@@ -532,6 +609,8 @@ export class Water {
       visibleFoamRings: this.foamMeshes.filter((mesh) => mesh.visible).length,
       surfaceGlints: this.surfaceGlints.length,
       visibleSurfaceGlints: this.glintMesh?.count || 0,
+      waveLanes: this.waveLanes.length,
+      visibleWaveLanes: this.waveLaneMesh?.count || 0,
       bobbingProps: this.bobbingProps.length,
       visibleBobbingProps: this.bobbingProps.filter((item) => item.group.visible).length
     };

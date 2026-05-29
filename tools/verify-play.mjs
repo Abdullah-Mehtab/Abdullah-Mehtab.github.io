@@ -1374,6 +1374,7 @@ function assertVerification(result) {
   if (!result.water?.submergeRespawned) failures.push('water probe failed: submerge respawn');
   if ((result.waterStats?.surfaceGlints || 0) < 30) failures.push(`water detail probe failed: surfaceGlints=${result.waterStats?.surfaceGlints || 0}`);
   if ((result.waterStats?.visibleSurfaceGlints || 0) < 20) failures.push(`water detail probe failed: visibleSurfaceGlints=${result.waterStats?.visibleSurfaceGlints || 0}`);
+  if ((result.waterStats?.visibleWaveLanes || 0) < 32) failures.push(`water detail probe failed: visibleWaveLanes=${result.waterStats?.visibleWaveLanes || 0}`);
   if (result.surfaces?.road !== 'road') failures.push(`surface probe failed: road=${result.surfaces?.road}`);
   if (result.surfaces?.grass !== 'grass') failures.push(`surface probe failed: grass=${result.surfaces?.grass}`);
   if (result.surfaces?.sand !== 'sand') failures.push(`surface probe failed: sand=${result.surfaces?.sand}`);
