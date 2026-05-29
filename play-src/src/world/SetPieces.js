@@ -1718,13 +1718,13 @@ export class SetPieces {
   arrowMarker(group, x, z, rotation, color, name) {
     const marker = new THREE.Group();
     marker.name = name;
-    const mat = new THREE.MeshBasicMaterial({ color, transparent: true, opacity: 0.66, depthWrite: false });
-    const stem = new THREE.Mesh(new THREE.BoxGeometry(0.34, 0.035, 2.6), mat);
-    const head = new THREE.Mesh(new THREE.ConeGeometry(0.72, 1.32, 3), mat);
-    stem.position.z = -0.34;
-    head.position.z = 1.08;
-    head.rotation.x = Math.PI / 2;
-    marker.add(stem, head);
+    const mat = new THREE.MeshBasicMaterial({ color, transparent: true, opacity: 0.46, depthWrite: false });
+    for (const side of [-1, 1]) {
+      const stripe = new THREE.Mesh(new THREE.BoxGeometry(0.18, 0.035, 1.46), mat);
+      stripe.position.set(side * 0.3, 0, 0.1);
+      stripe.rotation.y = side * -0.48;
+      marker.add(stripe);
+    }
     marker.position.set(x, 0.22, z);
     marker.rotation.y = rotation;
     group.add(marker);
