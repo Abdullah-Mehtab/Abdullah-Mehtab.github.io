@@ -4,10 +4,19 @@ import * as THREE from 'three';
 import { mergeGeometries } from 'three/examples/jsm/utils/BufferGeometryUtils.js';
 import { worldZones } from './worldData.js';
 
+const SETPIECE_COMPOSED_ZONE_IDS = new Set(worldZones
+  .filter((zone) => zone.id !== 'education')
+  .map((zone) => zone.id));
+
 export class Zones {
   constructor(world) {
     this.world = world;
     this.protectedLandmarks = [];
+    this.landmarkStats = {
+      protected: 0,
+      composedExternally: 0,
+      fallback: 0
+    };
   }
 
   build() {
@@ -53,10 +62,15 @@ export class Zones {
 
   addLandmark(group, zone) {
     const protectedAsset = zone.id === 'education' ? this.world.cloneEnvironmentAsset(`EnvLandmark_${zone.shape}`) : null;
+    if (!protectedAsset && SETPIECE_COMPOSED_ZONE_IDS.has(zone.id)) {
+      this.landmarkStats.composedExternally += 1;
+      return;
+    }
     const rawAsset = protectedAsset || this.createFallbackLandmark(zone);
     let asset = this.mergeStaticMeshes(rawAsset, zone.id);
     if (protectedAsset) asset = this.createProtectedLandmarkDisplay(asset, zone);
     asset.name = `VIS_Landmark_${zone.id}`;
+    asset.userData.landmarkSource = protectedAsset ? 'protected' : 'fallback';
     asset.traverse?.((object) => {
       if (object.isMesh) {
         object.castShadow = false;
@@ -64,6 +78,8 @@ export class Zones {
       }
     });
     group.add(asset);
+    if (protectedAsset) this.landmarkStats.protected += 1;
+    else this.landmarkStats.fallback += 1;
 
     const collider = zone.id === 'education' ? landmarkCollider(zone.shape) : null;
     if (!collider) return;
@@ -125,6 +141,10 @@ export class Zones {
         hideDistance: entry.hideDistance
       }
     ]));
+  }
+
+  getLandmarkStats() {
+    return { ...this.landmarkStats };
   }
 
   mergeStaticMeshes(asset, zoneId) {

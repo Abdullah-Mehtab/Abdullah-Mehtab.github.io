@@ -982,6 +982,7 @@ async function collectRuntimeMetrics(page, loadMs, gameplay, water, surfaces, su
       props: game.world.props?.getStats?.() || {},
       stuntPark: game.world.stuntPark?.getStats?.() || {},
       waterStats: game.world.water?.getStats?.() || {},
+      zoneLandmarks: game.world.zonesSystem?.getLandmarkStats?.() || {},
       protectedLandmarks,
       vehicleFx: game.vehicle.getEffectStats?.() || {},
       zonePresentation: sampleZonePresentation(game),
@@ -1492,6 +1493,11 @@ function assertVerification(result) {
   }
   if ((fccNear?.exactTriangles || 0) < 100000) failures.push(`protected FCC exact model not preserved: triangles=${fccNear?.exactTriangles || 0}`);
   if ((fccFar?.silhouetteTriangles || Infinity) > 2000) failures.push(`protected FCC silhouette too heavy: triangles=${fccFar?.silhouetteTriangles}`);
+  if ((result.zoneLandmarks?.protected || 0) !== 1) failures.push(`zone landmark probe failed: protected=${result.zoneLandmarks?.protected || 0}`);
+  if ((result.zoneLandmarks?.composedExternally || 0) < worldZones.length - 1) {
+    failures.push(`zone landmark probe failed: composedExternally=${result.zoneLandmarks?.composedExternally || 0}`);
+  }
+  if ((result.zoneLandmarks?.fallback || 0) !== 0) failures.push(`zone landmark probe failed: fallback=${result.zoneLandmarks?.fallback || 0}`);
   const missingAuthored = (result.authoredDistrictAssets || []).filter((asset) => !asset.template || !asset.placed);
   if (missingAuthored.length) failures.push(`authored district assets missing: ${missingAuthored.map((asset) => asset.name).join(', ')}`);
   const missingStunt = (result.authoredStuntAssets || []).filter((asset) => !asset.template || !asset.placed);
