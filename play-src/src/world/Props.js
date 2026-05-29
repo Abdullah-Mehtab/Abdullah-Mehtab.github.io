@@ -19,7 +19,12 @@ export class Props {
       authoredProps: 0,
       fallbackProps: 0,
       benchPads: 0,
-      shoreRocks: 0
+      shoreRocks: 0,
+      authoredShoreRocks: 0,
+      fallbackShoreRocks: 0,
+      beachGrass: 0,
+      authoredBeachGrass: 0,
+      fallbackBeachGrass: 0
     };
   }
 
@@ -119,14 +124,24 @@ export class Props {
       const x = Math.cos(angle) * radius;
       const z = Math.sin(angle) * radius;
       if (this.world.roads.isNear(x, z, 6.5)) continue;
-      const rock = this.createRock();
+      const isGrass = i % 4 === 1;
+      const assetName = isGrass ? 'EnvPolishBeachGrassClump' : 'EnvPolishCoastRockCluster';
+      const rock = this.createShoreProp(assetName);
       rock.position.set(x, 0, z);
       rock.rotation.y = pseudoRandom(i * 3.7) * Math.PI * 2;
-      rock.scale.setScalar(0.72 + pseudoRandom(i * 7.3) * 1.25);
+      rock.scale.setScalar((isGrass ? 0.66 : 0.72) + pseudoRandom(i * 7.3) * (isGrass ? 0.48 : 1.25));
       this.group.add(rock);
-      this.groundObject(rock, -0.045);
+      this.groundObject(rock, isGrass ? 0.015 : -0.045);
       this.items.push(rock);
-      this.stats.shoreRocks += 1;
+      if (isGrass) {
+        this.stats.beachGrass += 1;
+        if (rock.userData.authoredAsset) this.stats.authoredBeachGrass += 1;
+        else this.stats.fallbackBeachGrass += 1;
+      } else {
+        this.stats.shoreRocks += 1;
+        if (rock.userData.authoredAsset) this.stats.authoredShoreRocks += 1;
+        else this.stats.fallbackShoreRocks += 1;
+      }
     }
   }
 
@@ -195,6 +210,15 @@ export class Props {
     prop.name = `PROP_${name}`;
     prop.userData.authoredAsset = name;
     return prop;
+  }
+
+  createShoreProp(name) {
+    const prop = this.createAuthoredProp(name);
+    if (prop) return prop;
+    const fallback = this.createRock();
+    fallback.name = `PROP_${name}_Fallback`;
+    fallback.userData.fallbackAsset = true;
+    return fallback;
   }
 
   createFallbackProp(name) {

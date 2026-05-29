@@ -39,6 +39,8 @@ def main():
     create_harbor_signal(mats)
     create_district_gateway(mats)
     create_route_lantern(mats)
+    create_coast_rock_cluster(mats)
+    create_beach_grass_clump(mats)
 
     output = Path(args.output)
     output.parent.mkdir(parents=True, exist_ok=True)
@@ -117,6 +119,27 @@ def cube(name, parent, loc, scale, material, rot=(0, 0, 0), bevel=0.0):
         modifier.width = bevel
         modifier.segments = 2
         obj.modifiers.new("weighted_normals", "WEIGHTED_NORMAL")
+    return obj
+
+
+def rock_blob(name, parent, loc, scale, material, rot=(0, 0, 0)):
+    bpy.ops.mesh.primitive_ico_sphere_add(subdivisions=1, radius=1, location=loc, rotation=rot)
+    obj = bpy.context.object
+    obj.name = name
+    obj.scale = scale
+    bpy.ops.object.transform_apply(location=False, rotation=False, scale=True)
+    obj.data.materials.append(material)
+    obj.parent = parent
+    obj.modifiers.new("weighted_normals", "WEIGHTED_NORMAL")
+    return obj
+
+
+def cone(name, parent, loc, radius, depth, material, vertices=5, rot=(0, 0, 0)):
+    bpy.ops.mesh.primitive_cone_add(vertices=vertices, radius1=radius, radius2=0.0, depth=depth, location=loc, rotation=rot)
+    obj = bpy.context.object
+    obj.name = name
+    obj.data.materials.append(material)
+    obj.parent = parent
     return obj
 
 
@@ -403,6 +426,31 @@ def create_route_lantern(mats):
     cube("RouteLantern_Halo", group, (0, 2.72, -0.02), (0.76, 0.08, 0.76), mats["mint"], bevel=0.035)
     for y in [0.78, 1.16, 1.54]:
         cube("RouteLantern_CableRing", group, (0, y, 0), (0.38, 0.055, 0.38), mats["rope"], bevel=0.012)
+
+
+def create_coast_rock_cluster(mats):
+    group = root("EnvPolishCoastRockCluster")
+    rock_specs = [
+        ("CoastRock_Main", (-0.38, 0.34, 0.0), (0.92, 0.46, 0.62), (0.1, 0.35, -0.08), mats["stone_shadow"]),
+        ("CoastRock_Left", (-1.08, 0.26, 0.32), (0.54, 0.34, 0.44), (-0.16, -0.22, 0.14), mats["stone"]),
+        ("CoastRock_Right", (0.54, 0.24, -0.42), (0.62, 0.3, 0.42), (0.08, 0.72, 0.2), mats["stone_shadow"]),
+        ("CoastRock_Front", (0.86, 0.18, 0.3), (0.42, 0.22, 0.32), (-0.12, -0.4, 0.06), mats["stone"]),
+        ("CoastRock_Pebble", (-0.18, 0.13, -0.72), (0.3, 0.16, 0.22), (0.22, 0.2, -0.18), mats["stone"]),
+    ]
+    for name, loc, scale, rot, material in rock_specs:
+        rock_blob(name, group, loc, scale, material, rot)
+    cube("CoastRock_FoamLine", group, (0.12, 0.08, -0.98), (2.1, 0.055, 0.14), mats["foam"], rot=(0, 0.1, 0), bevel=0.012)
+    for x in [-0.72, -0.28, 0.28, 0.72]:
+        cone("CoastRock_GrassBlade", group, (x, 0.36, 0.82), 0.09, 0.72, mats["leaf"], vertices=5, rot=(0.16, x * 0.24, 0.05))
+
+
+def create_beach_grass_clump(mats):
+    group = root("EnvPolishBeachGrassClump")
+    cube("BeachGrass_SandBase", group, (0, 0.06, 0), (1.8, 0.12, 0.82), mats["stone"], bevel=0.035)
+    for index, x in enumerate([-0.72, -0.42, -0.16, 0.12, 0.38, 0.68]):
+        cone("BeachGrass_Blade", group, (x, 0.42 + index * 0.015, 0.02 + math.sin(index) * 0.16), 0.095, 0.74 + index * 0.035, mats["leaf"], vertices=5, rot=(0.2, x * 0.35, -0.06 + index * 0.02))
+    for x in [-0.5, 0.05, 0.54]:
+        cube("BeachGrass_Flower", group, (x, 0.82, -0.18), (0.14, 0.12, 0.14), mats["flower"], bevel=0.018)
 
 
 if __name__ == "__main__":
