@@ -4,6 +4,7 @@ import * as THREE from 'three';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 import { VehicleController } from '../physics/VehicleController.js';
 import { ISLAND_RADIUS, WORLD_HALF_SIZE } from '../world/worldData.js';
+import { mergeStaticMeshesInGroup } from '../world/StaticBatching.js';
 import sabreTurboModelUrl from '../../assets/models/vehicles/sabre-turbo.glb?url';
 
 const START = new THREE.Vector3(10, 1.08, 27);
@@ -154,6 +155,16 @@ export class Vehicle {
         object.receiveShadow = false;
         object.material = prepareVehicleMaterial(object.material, materialCache, object.name);
         if (object.material?.transparent) object.renderOrder = 7;
+      }
+    });
+    mergeStaticMeshesInGroup(model, {
+      namePrefix: 'VehicleBody_batch',
+      shouldSkip: shouldKeepVehicleMeshSeparate
+    });
+    model.traverse((object) => {
+      if (object.isMesh && object.name.startsWith('VehicleBody_batch')) {
+        object.castShadow = true;
+        object.receiveShadow = false;
       }
     });
     this.modelRoot.add(model);
@@ -550,6 +561,24 @@ export class Vehicle {
 function yawQuaternion(heading) {
   const quaternion = new THREE.Quaternion().setFromEuler(new THREE.Euler(0, heading, 0));
   return { x: quaternion.x, y: quaternion.y, z: quaternion.z, w: quaternion.w };
+}
+
+function shouldKeepVehicleMeshSeparate(object) {
+  if (objectHasAncestorPrefix(object, 'WheelSpin') || objectHasAncestorPrefix(object, 'WheelFront')) return true;
+  const materialName = Array.isArray(object.material)
+    ? object.material.map((material) => material?.name || '').join(' ')
+    : object.material?.name || '';
+  const meshName = object.name || '';
+  return object.material?.transparent || /glass|windshield|window|wiper/i.test(`${meshName} ${materialName}`);
+}
+
+function objectHasAncestorPrefix(object, prefix) {
+  let current = object;
+  while (current) {
+    if ((current.name || '').startsWith(prefix)) return true;
+    current = current.parent;
+  }
+  return false;
 }
 
 function prepareVehicleMaterial(material, cache, objectName = '') {
