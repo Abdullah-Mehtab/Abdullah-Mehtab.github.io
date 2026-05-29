@@ -269,17 +269,17 @@ async function exerciseGameplay(page) {
     }
     clearInput();
 
-    window.__portfolioDrive.respawn('drift');
-    await delay(450);
+    game.vehicle.respawn({ x: 0, y: 1.08, z: 24 }, 1.72);
+    await delay(250);
     await waitForGrounded();
-    input.actions.forward = true;
-    await delay(800);
-    input.actions.left = true;
+    samples.handbrakeSurface = game.world.getSurfaceInfo(game.vehicle.position).id;
+    game.vehicle.body.setLinvel({ x: 12, y: 0, z: -2 }, true);
     input.actions.handbrake = true;
-    await delay(650);
+    await delay(320);
     samples.handbrakeSeen = Boolean(game.vehicle.controller.driveState.handbrake);
     samples.handbrakeSlip = Number(game.vehicle.controller.driveState.slip || 0);
     clearInput();
+    samples.vehicleFx = game.vehicle.getEffectStats?.() || {};
 
     const end = game.vehicle.position.clone();
     return {
@@ -596,6 +596,7 @@ async function collectRuntimeMetrics(page, loadMs, gameplay, water, surfaces, ro
         chevrons: game.scene.getObjectByName('ROAD_Guidance_Chevrons')?.count || 0,
         reflectorStuds: game.scene.getObjectByName('ROAD_Reflector_Studs')?.count || 0
       },
+      vehicleFx: game.vehicle.getEffectStats?.() || {},
       colliderCount: window.__portfolioDrive.colliders().length,
       debugOverlayObjects: game.debugColliderOverlay?.children?.length || 0,
       colliderAudit: auditColliders(window.__portfolioDrive.colliders(), game.scene),
@@ -798,6 +799,11 @@ function assertVerification(result) {
   for (const key of ['keyboardHandbrake', 'boostSeen', 'jumpSeen', 'landingSeen', 'impactAudioSeen', 'burnoutSeen', 'wheelieSeen', 'handbrakeSeen']) {
     if (!result.gameplay[key]) failures.push(`gameplay probe failed: ${key}`);
   }
+  const vehicleFx = result.gameplay.vehicleFx || {};
+  if ((vehicleFx.spawnedTrail || 0) < 1) failures.push(`vehicle FX probe failed: trail=${vehicleFx.spawnedTrail || 0}`);
+  if ((vehicleFx.spawnedSmoke || 0) < 2) failures.push(`vehicle FX probe failed: smoke=${vehicleFx.spawnedSmoke || 0}`);
+  if ((vehicleFx.spawnedBoost || 0) < 1) failures.push(`vehicle FX probe failed: boost=${vehicleFx.spawnedBoost || 0}`);
+  if ((vehicleFx.spawnedSkid || 0) < 2) failures.push(`vehicle FX probe failed: skid=${vehicleFx.spawnedSkid || 0}`);
   if ((result.audio?.zoneStingersPlayed || 0) < 1) failures.push('audio probe failed: zone stingers');
   if ((result.audio?.landingEvents || 0) < 1) failures.push('audio probe failed: landing event counter');
   if (!result.water?.surfaceSeen) failures.push('water probe failed: surface state');
