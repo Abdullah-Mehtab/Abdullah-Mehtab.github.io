@@ -90,6 +90,7 @@ body:not(.is-driving) .hud {
 .hud-core,
 .hud-readouts,
 .interaction-prompt,
+.circuit-status,
 .panel-card,
 .menu-card,
 .map-card,
@@ -321,6 +322,69 @@ body:not(.is-driving) .hud {
 .interaction-prompt p {
   margin: 6px 0 0;
   color: var(--muted);
+}
+
+.circuit-status {
+  position: fixed;
+  top: 84px;
+  left: 50%;
+  z-index: 19;
+  width: min(calc(100vw - 36px), 380px);
+  border-radius: 10px;
+  padding: 11px 14px 12px;
+  pointer-events: none;
+  transform: translateX(-50%);
+  transition: border-color 140ms ease, box-shadow 140ms ease, transform 140ms ease;
+}
+
+.debug-drive .circuit-status {
+  top: 138px;
+}
+
+body:not(.is-driving) .circuit-status,
+body:has(.panel:not([hidden])) .circuit-status,
+body:has(.menu:not([hidden])) .circuit-status,
+body:has(.map-modal:not([hidden])) .circuit-status {
+  display: none;
+}
+
+.circuit-status.is-pulsing {
+  border-color: rgba(124, 255, 178, 0.72);
+  box-shadow:
+    0 18px 48px rgba(0, 0, 0, 0.3),
+    0 0 28px rgba(124, 255, 178, 0.22),
+    inset 0 1px 0 rgba(255, 255, 255, 0.1);
+  transform: translateX(-50%) translateY(-2px);
+}
+
+.circuit-status span {
+  display: block;
+  color: var(--gold);
+  font-size: 0.68rem;
+  font-weight: 900;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+}
+
+.circuit-status strong {
+  display: block;
+  margin-top: 4px;
+  color: var(--accent-2);
+  font-size: 1rem;
+  line-height: 1.15;
+}
+
+.circuit-status div {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  margin-top: 7px;
+}
+
+.circuit-status small {
+  color: var(--muted);
+  font-weight: 800;
+  white-space: nowrap;
 }
 
 .minimap {
@@ -1262,6 +1326,24 @@ body:has(.map-modal:not([hidden])) .debug-readout {
     min-height: 38px;
     padding: 8px 10px;
     font-size: 0.86rem;
+  }
+
+  .circuit-status {
+    top: 72px;
+    width: min(calc(100vw - 24px), 340px);
+    padding: 9px 11px 10px;
+  }
+
+  .debug-drive .circuit-status {
+    top: 126px;
+  }
+
+  .circuit-status strong {
+    font-size: 0.92rem;
+  }
+
+  .circuit-status small {
+    font-size: 0.72rem;
   }
 
   .title-card h1 {

@@ -58,7 +58,9 @@ export class StuntPark {
       circuitTargetRings: 0,
       circuitTargetArrows: 0,
       activeCircuitTarget: 0,
-      circuitMotionSamples: 0
+      circuitMotionSamples: 0,
+      checkpointPulseSamples: 0,
+      maxCheckpointPulse: 0
     };
   }
 
@@ -392,22 +394,27 @@ export class StuntPark {
       const rotation = circuitHeading(targetIndex);
       const isActive = circuit.active && targetIndex === activeTarget;
       const passed = circuit.active && targetIndex <= circuit.checkpoint;
+      const checkpointPulse = circuit.lastCheckpointIndex === targetIndex ? circuit.checkpointPulse || 0 : 0;
       const pulse = Math.sin(elapsed * 4.6 + index * 0.5) * 0.5 + 0.5;
-      const ringScale = isActive ? 2.25 + pulse * 0.36 : passed ? 0.62 : 1.0;
-      const arrowScale = isActive ? 1.35 + pulse * 0.18 : passed ? 0.42 : 0.72;
-      const color = isActive ? 0xfff0a0 : passed ? 0x79ffc5 : 0xff9b6d;
+      const ringScale = isActive ? 2.25 + pulse * 0.36 : passed ? 0.62 + checkpointPulse * 1.18 : 1.0 + checkpointPulse * 1.1;
+      const arrowScale = isActive ? 1.35 + pulse * 0.18 : passed ? 0.42 + checkpointPulse * 0.72 : 0.72 + checkpointPulse * 0.62;
+      const color = isActive ? 0xfff0a0 : (passed || checkpointPulse > 0.01) ? 0x79ffc5 : 0xff9b6d;
+      if (checkpointPulse > 0.01) {
+        this.stats.checkpointPulseSamples += 1;
+        this.stats.maxCheckpointPulse = Math.max(this.stats.maxCheckpointPulse, checkpointPulse);
+      }
 
-      this.circuitDummy.position.set(x, 0.36 + (isActive ? pulse * 0.14 : 0), z);
+      this.circuitDummy.position.set(x, 0.36 + (isActive ? pulse * 0.14 : 0) + checkpointPulse * 0.22, z);
       this.circuitDummy.rotation.set(-Math.PI / 2, 0, rotation);
       this.circuitDummy.scale.setScalar(ringScale);
       this.circuitDummy.updateMatrix();
       this.circuitRingMesh.setMatrixAt(index, this.circuitDummy.matrix);
       this.circuitRingMesh.setColorAt(index, this.circuitMarkerColor.setHex(color));
 
-      const arrowDistance = isActive ? 4.2 + pulse * 0.5 : 3.1;
+      const arrowDistance = isActive ? 4.2 + pulse * 0.5 : 3.1 + checkpointPulse * 0.45;
       this.circuitDummy.position.set(
         x + Math.sin(rotation) * arrowDistance,
-        0.5 + (isActive ? pulse * 0.12 : 0),
+        0.5 + (isActive ? pulse * 0.12 : 0) + checkpointPulse * 0.24,
         z + Math.cos(rotation) * arrowDistance
       );
       this.circuitDummy.rotation.set(-Math.PI / 2, 0, rotation);
