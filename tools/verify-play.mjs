@@ -859,6 +859,7 @@ async function collectRuntimeMetrics(page, loadMs, gameplay, water, surfaces, su
       approachDressing: game.world.setPieces?.getApproachStats?.() || {},
       districtGateways: game.world.setPieces?.getGatewayStats?.() || {},
       districtStory: game.world.setPieces?.getDistrictStoryStats?.() || {},
+      districtComposition: game.world.setPieces?.getDistrictCompositionStats?.() || {},
       props: game.world.props?.getStats?.() || {},
       stuntPark: game.world.stuntPark?.getStats?.() || {},
       waterStats: game.world.water?.getStats?.() || {},
@@ -1190,6 +1191,11 @@ function assertVerification(result) {
   if ((result.districtStory?.terminalBanks || 0) < 2) failures.push(`district story probe failed: terminalBanks=${result.districtStory?.terminalBanks || 0}`);
   if ((result.districtStory?.archiveSteps || 0) < 1) failures.push(`district story probe failed: archiveSteps=${result.districtStory?.archiveSteps || 0}`);
   if ((result.districtStory?.todoStacks || 0) < 1) failures.push(`district story probe failed: todoStacks=${result.districtStory?.todoStacks || 0}`);
+  if ((result.districtComposition?.pads || 0) < 4) failures.push(`district composition probe failed: pads=${result.districtComposition?.pads || 0}`);
+  if ((result.districtComposition?.pathMarks || 0) < 15) failures.push(`district composition probe failed: pathMarks=${result.districtComposition?.pathMarks || 0}`);
+  if ((result.districtComposition?.lamps || 0) < 4) failures.push(`district composition probe failed: lamps=${result.districtComposition?.lamps || 0}`);
+  if ((result.districtComposition?.planters || 0) < 2) failures.push(`district composition probe failed: planters=${result.districtComposition?.planters || 0}`);
+  if ((result.districtComposition?.authoredAssets || 0) < 6) failures.push(`district composition probe failed: authoredAssets=${result.districtComposition?.authoredAssets || 0}`);
   if ((result.props?.roadLanterns || 0) < 8) failures.push(`props probe failed: roadLanterns=${result.props?.roadLanterns || 0}`);
   if ((result.props?.authoredLanterns || 0) !== (result.props?.roadLanterns || 0)) failures.push(`props probe failed: authoredLanterns=${result.props?.authoredLanterns || 0}/${result.props?.roadLanterns || 0}`);
   if ((result.props?.fallbackLanterns || 0) !== 0) failures.push(`props probe failed: fallbackLanterns=${result.props?.fallbackLanterns || 0}`);
