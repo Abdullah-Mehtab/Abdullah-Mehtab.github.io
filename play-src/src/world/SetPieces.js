@@ -34,6 +34,13 @@ export class SetPieces {
       visibleTotal: 0,
       motionSamples: 0
     };
+    this.approachStats = {
+      clusters: 0,
+      signs: 0,
+      lamps: 0,
+      authoredAssets: 0,
+      roadMarks: 0
+    };
   }
 
   build() {
@@ -41,6 +48,7 @@ export class SetPieces {
     this.createEducationPlaza();
     this.createSecurityLab();
     this.createDistrictDressing();
+    this.createApproachDressing();
     this.createRouteGuidance();
     this.createLivingSignals();
     this.applyQuality();
@@ -131,6 +139,10 @@ export class SetPieces {
 
   getLifeStats() {
     return { ...this.lifeStats };
+  }
+
+  getApproachStats() {
+    return { ...this.approachStats };
   }
 
   createStartDiorama() {
@@ -398,6 +410,62 @@ export class SetPieces {
 
     mergeStaticMeshesInGroup(group, { namePrefix: 'SETPIECE_district' });
     this.world.scene.add(group);
+  }
+
+  createApproachDressing() {
+    const group = new THREE.Group();
+    group.name = 'SETPIECE_Approach_Dressing';
+    const clusters = [
+      { title: 'FCCU', subtitle: 'Campus Route', x: -47, z: 51, rotation: -0.54, color: 0x9ccfff, side: -1, asset: 'EnvPolishBenchPlanter' },
+      { title: 'S BLOCK', subtitle: 'Education Grove', x: -60, z: 74, rotation: -0.42, color: 0x9ccfff, side: 1, asset: 'EnvPolishInfoKiosk' },
+      { title: 'SECURITY', subtitle: 'Scan Run', x: -28, z: 5, rotation: -0.95, color: 0x68d8ff, side: 1, asset: 'EnvPolishSignalTotem' },
+      { title: 'FIREWALL', subtitle: 'Gate Ahead', x: -74, z: -22, rotation: -0.72, color: 0x68d8ff, side: -1, asset: 'EnvPolishRoadBarrier' },
+      { title: 'CV', subtitle: 'Document Run', x: 20, z: -10, rotation: 2.7, color: 0xe6f3ff, side: -1, asset: 'EnvPolishTerminalPillar' },
+      { title: 'STUNT', subtitle: 'Boost Yard', x: 62, z: -78, rotation: 2.46, color: 0xff9b6d, side: 1, asset: 'EnvPolishRoadBarrier' },
+      { title: 'PROJECTS', subtitle: 'Build Yard', x: 44, z: 37, rotation: 1.84, color: 0xffcc66, side: -1, asset: 'EnvPolishInfoKiosk' },
+      { title: 'HARBOR', subtitle: 'Signal Pier', x: 94, z: 51, rotation: 1.02, color: 0x78b7ff, side: 1, asset: 'EnvPolishPalm' },
+      { title: 'DATA', subtitle: 'Visitor Trail', x: -122, z: 47, rotation: -1.1, color: 0x79ffc5, side: -1, asset: 'EnvPolishInfoKiosk' },
+      { title: 'RIDGE', subtitle: 'Sentinel Climb', x: -17, z: 64, rotation: 0.65, color: 0xff6d8d, side: 1, asset: 'EnvPolishSignalTotem' },
+      { title: 'STACK', subtitle: 'Skills Trail', x: -82, z: -74, rotation: -2.2, color: 0x92ffea, side: -1, asset: 'EnvPolishTerminalPillar' },
+      { title: 'FARM', subtitle: 'Potato Track', x: -28, z: -126, rotation: -1.82, color: 0xc79b56, side: 1, asset: 'EnvPolishBenchPlanter' }
+    ];
+    clusters.forEach((cluster, index) => this.addApproachCluster(group, cluster, index));
+    mergeStaticMeshesInGroup(group, {
+      namePrefix: 'SETPIECE_approach',
+      shouldSkip: (object) => object.name.startsWith('ApproachBeaconGlow')
+    });
+    group.userData.approachStats = { ...this.approachStats };
+    this.world.scene.add(group);
+  }
+
+  addApproachCluster(group, spec, index) {
+    const side = spec.side || 1;
+    const forwardX = Math.sin(spec.rotation);
+    const forwardZ = Math.cos(spec.rotation);
+    const rightX = Math.cos(spec.rotation);
+    const rightZ = -Math.sin(spec.rotation);
+    const lateral = (spec.lateral || 5.6) * side;
+    const baseX = spec.x + rightX * lateral;
+    const baseZ = spec.z + rightZ * lateral;
+    const faceRoad = spec.rotation + (side > 0 ? -0.42 : 0.42);
+
+    this.addSign(group, spec.title, spec.subtitle, baseX + forwardX * 1.4, baseZ + forwardZ * 1.4, faceRoad, spec.color, 1.8, `ApproachSign_${index}`);
+    this.approachStats.signs += 1;
+    this.addLamp(group, baseX - forwardX * 2.4, baseZ - forwardZ * 2.4, spec.color, 2.45, `ApproachLamp_${index}`);
+    this.approachStats.lamps += 1;
+    if (this.addPolishAsset(group, spec.asset, baseX - forwardX * 0.6 - rightX * side * 1.2, baseZ - forwardZ * 0.6 - rightZ * side * 1.2, faceRoad, 0.64)) {
+      this.approachStats.authoredAssets += 1;
+    }
+    if (this.addPolishAsset(group, 'EnvPolishRoadBarrier', spec.x + rightX * side * 3.6, spec.z + rightZ * side * 3.6, spec.rotation + Math.PI * 0.5, 0.52)) {
+      this.approachStats.authoredAssets += 1;
+    }
+    for (let i = -1; i <= 1; i += 1) {
+      const markX = spec.x + forwardX * i * 3.2 + rightX * side * 2.6;
+      const markZ = spec.z + forwardZ * i * 3.2 + rightZ * side * 2.6;
+      this.box(group, markX, 0.205, markZ, 0.26, 0.035, 1.9, this.world.materials.paleStone, spec.rotation, 'ApproachRoadTick');
+      this.approachStats.roadMarks += 1;
+    }
+    this.approachStats.clusters += 1;
   }
 
   createRouteGuidance() {
