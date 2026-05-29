@@ -1,3 +1,5 @@
+// ABOUTME: Controls the /play follow and cinematic cameras around the driving car.
+// ABOUTME: Adds speed, drift, boost, wheelie, and landing response to game feel.
 import * as THREE from 'three';
 
 export class CameraRig {
@@ -57,9 +59,18 @@ export class CameraRig {
       .addScaledVector(cameraForward, (-13.5 - speedPull) * zoom)
       .addScaledVector(right, -lateralPull * (driveState.handbrake ? 1.05 : 0.58))
       .add(new THREE.Vector3(0, 7.2 + speedPull * 0.18 + pitch * 4.5, 0));
-    const shake = (driveState.boost ? 0.18 : 0) + (driveState.handbrake ? 0.08 : 0) + (driveState.burnout ? 0.14 : 0) + (driveState.wheelie ? 0.1 : 0);
+    const now = performance.now() * 0.001;
+    const landingAge = now - (this.vehicle.lastLandingAt ?? -Infinity);
+    const landingShake = landingAge < 0.34
+      ? (1 - landingAge / 0.34) * (this.vehicle.lastLandingIntensity || 0) * 0.34
+      : 0;
+    const shake = (driveState.boost ? 0.18 : 0)
+      + (driveState.handbrake ? 0.08 : 0)
+      + (driveState.burnout ? 0.14 : 0)
+      + (driveState.wheelie ? 0.1 : 0)
+      + landingShake;
     if (shake > 0) {
-      const t = performance.now() * 0.001;
+      const t = now;
       desired.add(new THREE.Vector3(
         Math.sin(t * 31) * shake,
         Math.sin(t * 43) * shake * 0.42,
@@ -71,7 +82,11 @@ export class CameraRig {
     const targetEase = 1 - Math.pow(0.0005, dt);
     this.camera.position.lerp(desired, cameraEase * 0.62);
     this.smoothedTarget.lerp(target, targetEase * 0.7);
-    const fovTarget = this.baseFov + Math.min(6.5, Math.abs(this.vehicle.speed) * 0.12) + (driveState.boost ? 2.4 : 0) + (driveState.handbrake ? 1.2 : 0);
+    const fovTarget = this.baseFov
+      + Math.min(6.5, Math.abs(this.vehicle.speed) * 0.12)
+      + (driveState.boost ? 2.4 : 0)
+      + (driveState.handbrake ? 1.2 : 0)
+      + landingShake * 1.4;
     this.camera.fov += (fovTarget - this.camera.fov) * Math.min(1, dt * 4.2);
     this.camera.updateProjectionMatrix();
     this.camera.lookAt(this.smoothedTarget);

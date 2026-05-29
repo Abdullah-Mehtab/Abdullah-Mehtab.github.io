@@ -33,6 +33,7 @@ export class Game {
     this.debugEnabled = false;
     this.debugFrame = 0;
     this.debugColliderOverlay = null;
+    this.lastAudioZoneId = null;
   }
 
   async init() {
@@ -173,6 +174,7 @@ export class Game {
     const vehiclePosition = this.vehicle.position;
     const nearest = this.world.nearestZone(vehiclePosition);
     this.activeZone = nearest?.zone || null;
+    this.updateZoneStinger(this.activeZone);
     this.vehicle.setSurface(this.world.getSurfaceInfo(vehiclePosition));
 
     const canDrive = this.started && !this.ui.isPanelOpen();
@@ -287,6 +289,13 @@ export class Game {
     this.lights.sun.intensity = 3.05 + cycle * 0.72;
     this.lights.rim.intensity = 1.18 + (1 - cycle) * 0.5;
     this.scene.fog.color.lerpColors(this.fogDay, this.fogWarm, cycle * 0.38);
+  }
+
+  updateZoneStinger(zone) {
+    if (!this.started || !zone || this.ui?.isPanelOpen?.()) return;
+    if (zone.id === this.lastAudioZoneId) return;
+    this.lastAudioZoneId = zone.id;
+    this.audio?.zoneStinger?.(zone);
   }
 
   updateDebugReadout(dt) {

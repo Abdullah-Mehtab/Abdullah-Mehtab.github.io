@@ -31,6 +31,12 @@ export class Vehicle {
     this.lastPosition = START.clone();
     this.visualRumbleTime = 0;
     this.surface = DEFAULT_SURFACE;
+    this.airborneTime = 0;
+    this.wasAirborne = false;
+    this.lastAirborneVerticalSpeed = 0;
+    this.landingEvents = 0;
+    this.lastLandingAt = -Infinity;
+    this.lastLandingIntensity = 0;
     this.trails = [];
     this.skidMarks = [];
     this.trailGeometry = new THREE.SphereGeometry(0.08, 8, 5);
@@ -190,6 +196,7 @@ export class Vehicle {
     const state = this.controller.update(input, dt);
     const surface = this.surface || DEFAULT_SURFACE;
     this.speed = this.controller.speed;
+    this.updateLandingFeedback(dt, surface);
     if (state.boost && this.controller.speed > 3) this.achievements.unlock('boost');
     if (input.consume('jump')) {
       if (this.controller.jump()) {
@@ -247,6 +254,31 @@ export class Vehicle {
     this.body.setLinvel({ x: velocity.x * damp, y: velocity.y, z: velocity.z * damp }, true);
   }
 
+  updateLandingFeedback(dt, surface) {
+    const grounded = this.controller.groundedWheels >= 2;
+    const velocity = this.body.linvel();
+    if (!grounded) {
+      this.airborneTime += dt;
+      this.wasAirborne = true;
+      this.lastAirborneVerticalSpeed = velocity.y;
+      return;
+    }
+
+    if (this.wasAirborne && this.airborneTime > 0.08) {
+      const dropSpeed = Math.abs(Math.min(0, this.lastAirborneVerticalSpeed));
+      const intensity = THREE.MathUtils.clamp(this.airborneTime * 1.7 + dropSpeed * 0.14 + this.speed * 0.004, 0.22, 1.35);
+      this.landingEvents += 1;
+      this.lastLandingAt = performance.now() * 0.001;
+      this.lastLandingIntensity = intensity;
+      this.spawnLandingDust(intensity, surface);
+      this.audio?.impact?.(intensity);
+    }
+
+    this.airborneTime = 0;
+    this.wasAirborne = false;
+    this.lastAirborneVerticalSpeed = velocity.y;
+  }
+
   syncModel() {
     const translation = this.body.translation();
     const rotation = this.body.rotation();
@@ -267,15 +299,20 @@ export class Vehicle {
         : Math.min(0.008, this.speed * 0.00012);
     const idle = this.speed < 1 ? 0.003 : 0;
     const amount = rumble + idle + surfaceRumble;
+    const landingAge = performance.now() * 0.001 - this.lastLandingAt;
+    const landingRumble = landingAge < 0.28
+      ? (1 - landingAge / 0.28) * this.lastLandingIntensity * 0.012
+      : 0;
+    const totalAmount = amount + landingRumble;
     this.modelRoot.position.set(
       0,
-      VISUAL_Y_OFFSET + Math.sin(this.visualRumbleTime * 35) * amount,
+      VISUAL_Y_OFFSET + Math.sin(this.visualRumbleTime * 35) * totalAmount,
       0
     );
     this.modelRoot.rotation.set(
-      Math.sin(this.visualRumbleTime * 22) * amount * 0.18,
+      Math.sin(this.visualRumbleTime * 22) * totalAmount * 0.18,
       0,
-      Math.sin(this.visualRumbleTime * 29) * amount * 0.12
+      Math.sin(this.visualRumbleTime * 29) * totalAmount * 0.12
     );
   }
 
@@ -379,6 +416,41 @@ export class Vehicle {
     }
   }
 
+  spawnLandingDust(intensity, surface = this.surface) {
+    if (this.trails.length > 90) return;
+    const count = Math.min(8, Math.max(3, Math.round(3 + intensity * 4)));
+    for (let i = 0; i < count; i += 1) {
+      const angle = (i / count) * Math.PI * 2 + Math.random() * 0.25;
+      const radius = 0.55 + Math.random() * 1.2;
+      const particle = new THREE.Mesh(
+        this.smokeGeometry,
+        new THREE.MeshBasicMaterial({
+          color: surface?.dustColor ?? 0xd4c8b6,
+          transparent: true,
+          opacity: 0.16 + intensity * 0.08,
+          depthWrite: false
+        })
+      );
+      particle.name = 'VehicleLandingDust';
+      particle.position.set(
+        this.group.position.x + Math.cos(angle) * radius,
+        Math.max(0.22, this.group.position.y - 0.72),
+        this.group.position.z + Math.sin(angle) * radius
+      );
+      particle.scale.setScalar(0.8 + intensity * 0.45 + Math.random() * 0.35);
+      this.scene.add(particle);
+      this.trails.push({
+        mesh: particle,
+        life: 0.34 + intensity * 0.16,
+        velocity: new THREE.Vector3(
+          Math.cos(angle) * (0.34 + intensity * 0.24),
+          0.18 + Math.random() * 0.22,
+          Math.sin(angle) * (0.34 + intensity * 0.24)
+        )
+      });
+    }
+  }
+
   spawnSkidMark() {
     if (this.surface?.skidMarks === false) return;
     if (this.skidMarks.length > 64) {
@@ -454,6 +526,10 @@ export class Vehicle {
     this.body.setAngvel({ x: 0, y: 0, z: 0 }, true);
     this.controller?.resetTransientState();
     this.speed = 0;
+    this.airborneTime = 0;
+    this.wasAirborne = false;
+    this.lastAirborneVerticalSpeed = 0;
+    this.lastLandingIntensity = 0;
     this.lastPosition.copy(position);
     this.syncModel();
   }

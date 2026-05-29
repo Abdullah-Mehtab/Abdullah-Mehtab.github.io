@@ -1,3 +1,5 @@
+// ABOUTME: Provides procedural engine, impact, UI, and world stinger audio for /play.
+// ABOUTME: Keeps mute state respected while exposing counters for browser verification.
 import { Howler } from 'howler';
 
 export class AudioSystem {
@@ -17,6 +19,8 @@ export class AudioSystem {
     this.windOsc = null;
     this.windGain = null;
     this.muted = localStorage.getItem('portfolio-drive-muted') === '1';
+    this.impactsPlayed = 0;
+    this.zoneStingersPlayed = 0;
   }
 
   async init() {
@@ -131,6 +135,7 @@ export class AudioSystem {
   }
 
   impact(intensity = 1) {
+    this.impactsPlayed += 1;
     if (!this.context || this.muted) return;
     const osc = this.context.createOscillator();
     const gain = this.context.createGain();
@@ -142,6 +147,31 @@ export class AudioSystem {
     gain.gain.exponentialRampToValueAtTime(0.001, this.context.currentTime + 0.12);
     osc.start();
     osc.stop(this.context.currentTime + 0.14);
+  }
+
+  zoneStinger(zone = {}) {
+    this.zoneStingersPlayed += 1;
+    if (!this.context || this.muted) return;
+
+    const base = frequencyForZone(zone.id || zone.name || 'zone');
+    this.sweep(base * 0.62, base * 1.34, 0.26, 0.032);
+
+    const osc = this.context.createOscillator();
+    const gain = this.context.createGain();
+    const filter = this.context.createBiquadFilter();
+    osc.type = 'triangle';
+    filter.type = 'lowpass';
+    filter.frequency.value = base * 2.4;
+    osc.frequency.setValueAtTime(base * 1.5, this.context.currentTime);
+    osc.frequency.exponentialRampToValueAtTime(base * 0.92, this.context.currentTime + 0.18);
+    gain.gain.setValueAtTime(0.001, this.context.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.048, this.context.currentTime + 0.025);
+    gain.gain.exponentialRampToValueAtTime(0.001, this.context.currentTime + 0.2);
+    osc.connect(filter);
+    filter.connect(gain);
+    gain.connect(this.master);
+    osc.start();
+    osc.stop(this.context.currentTime + 0.22);
   }
 
   sweep(start = 220, end = 880, duration = 0.32, gainValue = 0.06) {
@@ -173,6 +203,9 @@ export class AudioSystem {
     const burnout = driveState.burnout ? 1 : 0;
     const wheelie = driveState.wheelie ? 1 : 0;
     const slip = driveState.slip ?? 0;
+    const surface = driveState.surface || 'road';
+    const softSurface = ['grass', 'sand', 'shore'].includes(surface) ? 1 : 0;
+    const water = surface === 'water' ? 1 : 0;
     const wobble = Math.sin(this.context.currentTime * (18 + normalized * 28)) * (2 + normalized * 5);
     this.engineOsc.frequency.setTargetAtTime(38 + normalized * 176 + throttle * 56 + boost * 38 + burnout * 58 + wheelie * 18 + wobble, this.context.currentTime, 0.055);
     this.engineGain.gain.setTargetAtTime(this.muted ? 0 : 0.04 + normalized * 0.095 + throttle * 0.034 + boost * 0.026 + burnout * 0.04, this.context.currentTime, 0.075);
@@ -186,12 +219,24 @@ export class AudioSystem {
       this.enginePulseGain.gain.setTargetAtTime(this.muted ? 0 : 0.013 + normalized * 0.028 + boost * 0.018 + burnout * 0.018, this.context.currentTime, 0.1);
     }
     if (this.engineNoiseGain) {
-    this.engineNoiseGain.gain.setTargetAtTime(this.muted ? 0 : 0.006 + normalized * 0.019 + slip * 0.09 + boost * 0.026 + burnout * 0.07, this.context.currentTime, 0.08);
+      this.engineNoiseGain.gain.setTargetAtTime(
+        this.muted ? 0 : 0.006 + normalized * 0.019 + slip * 0.09 + boost * 0.026 + burnout * 0.07 + softSurface * normalized * 0.026 + water * 0.035,
+        this.context.currentTime,
+        0.08
+      );
     }
     if (this.windGain) {
       this.windGain.gain.setTargetAtTime(this.muted ? 0 : 0.008 + normalized * 0.025, this.context.currentTime, 0.2);
     }
   }
+}
+
+function frequencyForZone(value) {
+  let hash = 0;
+  for (let i = 0; i < value.length; i += 1) {
+    hash = (hash * 31 + value.charCodeAt(i)) % 997;
+  }
+  return 260 + (hash % 8) * 48;
 }
 
 function makeDistortionCurve(amount) {
