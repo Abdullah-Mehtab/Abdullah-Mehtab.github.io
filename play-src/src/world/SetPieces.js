@@ -62,6 +62,13 @@ export class SetPieces {
       archiveSteps: 0,
       todoStacks: 0
     };
+    this.districtCompositionStats = {
+      pads: 0,
+      pathMarks: 0,
+      lamps: 0,
+      planters: 0,
+      authoredAssets: 0
+    };
   }
 
   build() {
@@ -177,6 +184,10 @@ export class SetPieces {
 
   getDistrictStoryStats() {
     return { ...this.districtStoryStats };
+  }
+
+  getDistrictCompositionStats() {
+    return { ...this.districtCompositionStats };
   }
 
   createStartDiorama() {
@@ -408,10 +419,30 @@ export class SetPieces {
     this.addDistrictStoryAsset(group, 'EnvPolishArchiveStepCluster', awards.position[0] - 1.2, awards.position[2] - 3.1, 0.02, 0.9, 'archiveSteps');
 
     const todo = findZone('todo');
+    this.addCompositionPad(group, todo.position[0] - 1.2, todo.position[2] + 1.4, 22, 15, this.world.materials.plazaRoad, 0.121, 'TodoBuildYardPad');
+    this.addCompositionPad(group, todo.position[0] - 7.8, todo.position[2] + 1.2, 5.8, 12.4, this.world.materials.paleStone, 0.126, 'TodoQueueWalk');
+    for (let i = 0; i < 7; i += 1) {
+      this.addCompositionPathMark(
+        group,
+        todo.position[0] - 11.2 + i * 2.6,
+        todo.position[2] - 6.0 + i * 1.2,
+        1.45,
+        0.12,
+        i % 2 ? this.world.materials.glowPink : this.world.materials.glowBlue,
+        0.36,
+        'TodoQueueGuideMark'
+      );
+    }
     this.addSign(group, 'TODO', 'Build Queue', todo.position[0] - 8, todo.position[2] - 7, 0.68, 0xb6a0ff, 2.2, 'TodoSign');
     this.addPolishAsset(group, 'EnvPolishTodoBoard', todo.position[0] + 0.6, todo.position[2] + 1.0, 0.34, 1.02);
     this.addPolishAsset(group, 'EnvPolishInfoKiosk', todo.position[0] + 6.8, todo.position[2] - 5.2, -0.24, 0.72);
     this.addDistrictStoryAsset(group, 'EnvPolishTodoCardStack', todo.position[0] - 1.4, todo.position[2] + 6.2, 0.1, 0.86, 'todoStacks');
+    this.addCompositionLamp(group, todo.position[0] - 11.6, todo.position[2] + 7.0, 0xb6a0ff, 2.6, 'TodoLampA');
+    this.addCompositionLamp(group, todo.position[0] + 9.8, todo.position[2] - 6.2, 0x68d8ff, 2.5, 'TodoLampB');
+    this.addCompositionAsset(group, 'EnvPolishBenchPlanter', todo.position[0] - 9.8, todo.position[2] + 7.2, -0.28, 0.72);
+    this.addCompositionAsset(group, 'EnvPolishRoadBarrier', todo.position[0] + 10.8, todo.position[2] + 4.8, 0.18, 0.64);
+    this.addCompositionAsset(group, 'EnvPolishRouteLantern', todo.position[0] - 12.8, todo.position[2] - 2.8, 0.42, 0.66);
+    this.addCompositionPlanter(group, todo.position[0] + 8.6, todo.position[2] + 7.6, 0xb6a0ff);
 
     const career = findZone('career');
     this.addSign(group, 'CAREER', 'Signal Office', career.position[0] - 10, career.position[2] + 9, -0.35, 0xb6a0ff, 2.4, 'CareerSign');
@@ -427,12 +458,32 @@ export class SetPieces {
     this.addPolishAsset(group, 'EnvPolishRoadBarrier', circuit.position[0] - 7.8, circuit.position[2] + 3.6, 0.44, 0.84);
 
     const behind = findZone('behind');
+    this.addCompositionPad(group, behind.position[0] - 0.4, behind.position[2] - 1.2, 23, 15, this.world.materials.plazaRoad, 0.121, 'BehindWorkshopPad');
+    this.addCompositionPad(group, behind.position[0] - 8.2, behind.position[2] + 3.6, 6.4, 12.5, this.world.materials.paleStone, 0.126, 'BehindProcessWalk');
+    for (let i = 0; i < 8; i += 1) {
+      this.addCompositionPathMark(
+        group,
+        behind.position[0] - 11.8 + i * 2.65,
+        behind.position[2] + 7.4 - i * 1.25,
+        1.3,
+        0.12,
+        i % 2 ? this.world.materials.glowBlue : this.world.materials.glow,
+        -0.34,
+        'BehindProcessGuideMark'
+      );
+    }
     this.addSign(group, 'BEHIND', 'Process Yard', behind.position[0] - 10, behind.position[2] + 8, -0.2, 0x8fd3ff, 2.3, 'BehindSign');
     this.addPolishAsset(group, 'EnvPolishBuildWorkbench', behind.position[0] + 0.6, behind.position[2] - 1.2, 0.08, 1.08);
     this.addPolishAsset(group, 'EnvPolishTerminalPillar', behind.position[0] + 8.4, behind.position[2] + 3.6, 0.3, 0.82);
     for (const [dx, dz, rotation, scale] of [[-6, -5, 0.22, 0.86], [1, -7, -0.12, 0.72], [7, -3, 0.42, 0.76]]) {
       this.addDistrictStoryAsset(group, 'EnvPolishBuildCrateStack', behind.position[0] + dx, behind.position[2] + dz, rotation, scale, 'crateStacks');
     }
+    this.addCompositionLamp(group, behind.position[0] - 11.2, behind.position[2] - 6.6, 0x8fd3ff, 2.6, 'BehindLampA');
+    this.addCompositionLamp(group, behind.position[0] + 10.8, behind.position[2] + 7.2, 0x7cffb2, 2.5, 'BehindLampB');
+    this.addCompositionAsset(group, 'EnvPolishBenchPlanter', behind.position[0] - 10.4, behind.position[2] + 1.8, 0.28, 0.7);
+    this.addCompositionAsset(group, 'EnvPolishRoadBarrier', behind.position[0] + 11.2, behind.position[2] - 7.2, -0.18, 0.62);
+    this.addCompositionAsset(group, 'EnvPolishRouteLantern', behind.position[0] - 12.4, behind.position[2] - 2.6, -0.34, 0.66);
+    this.addCompositionPlanter(group, behind.position[0] + 8.8, behind.position[2] - 8.0, 0x8fd3ff);
 
     const potato = findZone('potato');
     this.addSign(group, 'FARM', 'Potato Counter', potato.position[0] - 11, potato.position[2] + 9, 0.32, 0xc79b56, 2.3, 'PotatoFarmSign');
@@ -996,6 +1047,32 @@ export class SetPieces {
     this.districtStoryStats.authoredAssets += 1;
     this.districtStoryStats[statName] = (this.districtStoryStats[statName] || 0) + 1;
     return true;
+  }
+
+  addCompositionPad(group, x, z, width, depth, material, y, name) {
+    this.groundRect(group, x, z, width, depth, material, y, name);
+    this.districtCompositionStats.pads += 1;
+  }
+
+  addCompositionPathMark(group, x, z, width, depth, material, rotation, name) {
+    this.box(group, x, 0.205, z, width, 0.035, depth, material, rotation, name);
+    this.districtCompositionStats.pathMarks += 1;
+  }
+
+  addCompositionLamp(group, x, z, color, height, name) {
+    this.addLamp(group, x, z, color, height, name);
+    this.districtCompositionStats.lamps += 1;
+  }
+
+  addCompositionAsset(group, assetName, x, z, rotation, scale) {
+    const placed = this.addPolishAsset(group, assetName, x, z, rotation, scale);
+    if (placed) this.districtCompositionStats.authoredAssets += 1;
+    return placed;
+  }
+
+  addCompositionPlanter(group, x, z, color) {
+    this.addPlanterCluster(group, x, z, color);
+    this.districtCompositionStats.planters += 1;
   }
 
   checkerStripe(group, x, z, width, rotation) {
