@@ -699,7 +699,8 @@ async function collectRuntimeMetrics(page, loadMs, gameplay, water, surfaces, ro
       })),
       roadGuidance: {
         chevrons: game.scene.getObjectByName('ROAD_Guidance_Chevrons')?.count || 0,
-        reflectorStuds: game.scene.getObjectByName('ROAD_Reflector_Studs')?.count || 0
+        reflectorStuds: game.scene.getObjectByName('ROAD_Reflector_Studs')?.count || 0,
+        edgeFeathers: game.world.roads?.roadGroup?.userData?.edgeFeatherCount || 0
       },
       roadJunctions: {
         blendPatches: game.world.roads?.roadGroup?.userData?.junctionPatchCount || 0,
@@ -955,6 +956,7 @@ function assertVerification(result) {
   if (result.surfaces?.water !== 'water') failures.push(`surface probe failed: water=${result.surfaces?.water}`);
   if ((result.roadGuidance?.chevrons || 0) < 40) failures.push(`road guidance probe failed: chevrons=${result.roadGuidance?.chevrons || 0}`);
   if ((result.roadGuidance?.reflectorStuds || 0) < 140) failures.push(`road guidance probe failed: reflectorStuds=${result.roadGuidance?.reflectorStuds || 0}`);
+  if ((result.roadGuidance?.edgeFeathers || 0) < 24) failures.push(`road guidance probe failed: edgeFeathers=${result.roadGuidance?.edgeFeathers || 0}`);
   if ((result.roadJunctions?.blendPatches || 0) < 8) failures.push(`road junction probe failed: blendPatches=${result.roadJunctions?.blendPatches || 0}`);
   if ((result.roadJunctions?.circularPointCaps || 0) !== 0) failures.push(`road junction probe failed: circularPointCaps=${result.roadJunctions?.circularPointCaps || 0}`);
   if ((result.surfaceDetails?.districts || 0) < 10) failures.push(`surface detail probe failed: districts=${result.surfaceDetails?.districts || 0}`);
