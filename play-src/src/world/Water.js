@@ -6,6 +6,7 @@ import { getIslandCoastPoints, makeIslandBandGeometry, WATER_Y } from './WorldMa
 
 const SPLASH_LIMITS = { low: 12, medium: 24, high: 40 };
 const BOBBING_LIMITS = { low: 5, medium: 10, high: 16 };
+const WAKE_LIMITS = { low: 10, medium: 26, high: 42 };
 const SHORE_WAKE_RADIUS = ISLAND_RADIUS * 0.94;
 const WATER_DRAG_RADIUS = ISLAND_RADIUS * 1.012;
 const WATER_RESPAWN_RADIUS = ISLAND_RADIUS * 1.04;
@@ -17,17 +18,33 @@ export class Water {
     this.foamMeshes = [];
     this.bobbingProps = [];
     this.splashes = [];
+    this.wakes = [];
     this.maxSplashes = SPLASH_LIMITS.medium;
     this.maxBobbingProps = BOBBING_LIMITS.medium;
+    this.maxWakes = WAKE_LIMITS.medium;
     this.lastSplashAt = -Infinity;
     this.lastSplashAudioAt = -Infinity;
+    this.lastWakeAt = -Infinity;
+    this.wakesSpawned = 0;
     this.submergeTime = 0;
+    this.wakeCursor = 0;
+    this.wakeDummy = new THREE.Object3D();
     this.splashGeometry = new THREE.SphereGeometry(0.18, 8, 5);
     this.splashMaterial = new THREE.MeshBasicMaterial({
       color: 0xeafff7,
       transparent: true,
       opacity: 0.42,
       depthWrite: false
+    });
+    this.wakeGeometry = new THREE.RingGeometry(0.58, 1.0, 28);
+    this.wakeGeometry.rotateX(-Math.PI / 2);
+    this.wakeMaterial = new THREE.MeshBasicMaterial({
+      color: 0xeafff7,
+      transparent: true,
+      opacity: 0.38,
+      depthWrite: false,
+      blending: THREE.AdditiveBlending,
+      side: THREE.DoubleSide
     });
   }
 
@@ -43,6 +60,7 @@ export class Water {
     this.createShallowShelf();
     this.createShoreFoam();
     this.createBobbingProps();
+    this.createWakePool();
     this.applyQuality();
   }
 
@@ -132,11 +150,34 @@ export class Water {
     }
   }
 
+  createWakePool() {
+    const capacity = WAKE_LIMITS.high;
+    this.wakeMesh = new THREE.InstancedMesh(this.wakeGeometry, this.wakeMaterial, capacity);
+    this.wakeMesh.name = 'WaterWheelWake_Rings';
+    this.wakeMesh.frustumCulled = false;
+    this.wakeMesh.renderOrder = -1;
+    this.wakes = Array.from({ length: capacity }, () => ({
+      active: false,
+      life: 0,
+      maxLife: 1,
+      position: new THREE.Vector3(),
+      rotationY: 0,
+      baseScale: 1,
+      stretch: 1
+    }));
+    for (let index = 0; index < capacity; index += 1) {
+      this.hideWakeInstance(index);
+    }
+    this.wakeMesh.instanceMatrix.needsUpdate = true;
+    this.world.scene.add(this.wakeMesh);
+  }
+
   applyQuality() {
     const profile = this.world.getQualityProfile();
     const waterQuality = profile.water || 'medium';
     this.maxSplashes = SPLASH_LIMITS[waterQuality] || SPLASH_LIMITS.medium;
     this.maxBobbingProps = BOBBING_LIMITS[waterQuality] || BOBBING_LIMITS.medium;
+    this.maxWakes = WAKE_LIMITS[waterQuality] || WAKE_LIMITS.medium;
     this.foamMeshes.forEach((mesh, index) => {
       mesh.visible = waterQuality === 'high' || (waterQuality === 'medium' && index < 2) || index === 0;
     });
@@ -146,6 +187,7 @@ export class Water {
     while (this.splashes.length > this.maxSplashes) {
       this.removeSplash(0);
     }
+    this.trimWakePool();
   }
 
   update(dt, elapsed, vehiclePosition, vehicle) {
@@ -165,6 +207,7 @@ export class Water {
     this.updateBobbingProps(elapsed);
     this.updateVehicleWaterInteraction(dt, elapsed, vehiclePosition, vehicle);
     this.updateSplashes(dt);
+    this.updateWakes(dt);
   }
 
   updateBobbingProps(elapsed) {
@@ -195,6 +238,9 @@ export class Water {
 
     if ((nearShore || inWater) && speed > 7 && elapsed - this.lastSplashAt > 0.08) {
       this.spawnSplashBurst(vehicle, inWater, elapsed);
+    }
+    if ((nearShore || inWater) && speed > 4.5 && elapsed - this.lastWakeAt > 0.12) {
+      this.spawnWheelWake(vehicle, inWater, elapsed);
     }
 
     if (inWater) {
@@ -261,6 +307,123 @@ export class Water {
     }
   }
 
+  spawnWheelWake(vehicle, inWater, elapsed) {
+    this.lastWakeAt = elapsed;
+    const velocity = vehicle.body.linvel();
+    const speed = Math.hypot(velocity.x, velocity.z);
+    const heading = speed > 0.4 ? Math.atan2(velocity.x, velocity.z) : vehicle.heading;
+    const offsets = [-0.82, 0.82];
+    for (const side of offsets) {
+      const local = new THREE.Vector3(side, -0.42, -1.15);
+      const position = local.applyQuaternion(vehicle.group.quaternion).add(vehicle.group.position);
+      if (!inWater) {
+        const radial = Math.hypot(position.x, position.z) || 1;
+        const waterline = ISLAND_RADIUS * 1.002;
+        const scale = waterline / radial;
+        position.x *= scale;
+        position.z *= scale;
+      }
+      position.y = WATER_Y + 0.16;
+      this.writeWake({
+        position,
+        rotationY: heading,
+        baseScale: inWater ? 0.9 : 0.7,
+        stretch: THREE.MathUtils.clamp(1.1 + speed * 0.025, 1.1, 2.4),
+        life: inWater ? 1.12 : 0.86
+      });
+    }
+  }
+
+  writeWake({ position, rotationY, baseScale, stretch, life }) {
+    const activeCount = this.wakes.filter((item) => item.active).length;
+    if (activeCount >= this.maxWakes) {
+      this.hideOldestWake();
+    }
+    const index = this.wakeCursor;
+    this.wakeCursor = (this.wakeCursor + 1) % this.wakes.length;
+    const item = this.wakes[index];
+    item.active = true;
+    item.life = life;
+    item.maxLife = life;
+    item.position.copy(position);
+    item.rotationY = rotationY;
+    item.baseScale = baseScale;
+    item.stretch = stretch;
+    this.wakesSpawned += 1;
+    this.writeWakeMatrix(index, item);
+    this.wakeMesh.instanceMatrix.needsUpdate = true;
+  }
+
+  updateWakes(dt) {
+    if (!this.wakeMesh) return;
+    let activeCount = 0;
+    for (let index = 0; index < this.wakes.length; index += 1) {
+      const item = this.wakes[index];
+      if (!item.active) continue;
+      item.life -= dt;
+      if (item.life <= 0 || activeCount >= this.maxWakes) {
+        this.hideWakeInstance(index);
+        item.active = false;
+        continue;
+      }
+      item.position.y = WATER_Y + 0.15 + Math.sin(item.life * 9.0 + index) * 0.006;
+      this.writeWakeMatrix(index, item);
+      activeCount += 1;
+    }
+    this.wakeMesh.instanceMatrix.needsUpdate = true;
+  }
+
+  writeWakeMatrix(index, item) {
+    const progress = 1 - item.life / item.maxLife;
+    const scale = item.baseScale * (1 + progress * 2.2);
+    const flatten = Math.max(0.001, 1 - progress * 0.5);
+    this.wakeDummy.position.copy(item.position);
+    this.wakeDummy.rotation.set(0, item.rotationY, 0);
+    this.wakeDummy.scale.set(scale * item.stretch, flatten, scale);
+    this.wakeDummy.updateMatrix();
+    this.wakeMesh.setMatrixAt(index, this.wakeDummy.matrix);
+  }
+
+  hideOldestWake() {
+    let oldest = -1;
+    let lowestLife = Infinity;
+    for (let index = 0; index < this.wakes.length; index += 1) {
+      const item = this.wakes[index];
+      if (item.active && item.life < lowestLife) {
+        oldest = index;
+        lowestLife = item.life;
+      }
+    }
+    if (oldest >= 0) {
+      this.wakes[oldest].active = false;
+      this.hideWakeInstance(oldest);
+    }
+  }
+
+  trimWakePool() {
+    let activeCount = 0;
+    for (let index = 0; index < this.wakes.length; index += 1) {
+      const item = this.wakes[index];
+      if (!item.active) continue;
+      if (activeCount >= this.maxWakes) {
+        item.active = false;
+        this.hideWakeInstance(index);
+      } else {
+        activeCount += 1;
+      }
+    }
+    if (this.wakeMesh) this.wakeMesh.instanceMatrix.needsUpdate = true;
+  }
+
+  hideWakeInstance(index) {
+    if (!this.wakeMesh) return;
+    this.wakeDummy.position.set(0, -1000, 0);
+    this.wakeDummy.rotation.set(0, 0, 0);
+    this.wakeDummy.scale.set(0, 0, 0);
+    this.wakeDummy.updateMatrix();
+    this.wakeMesh.setMatrixAt(index, this.wakeDummy.matrix);
+  }
+
   updateSplashes(dt) {
     for (let i = this.splashes.length - 1; i >= 0; i -= 1) {
       const splash = this.splashes[i];
@@ -280,6 +443,22 @@ export class Water {
     if (!splash) return;
     this.world.scene.remove(splash.mesh);
     splash.mesh.material.dispose();
+  }
+
+  getStats() {
+    return {
+      splashes: this.splashes.length,
+      maxSplashes: this.maxSplashes,
+      wakesSpawned: this.wakesSpawned,
+      activeWakes: this.wakes.filter((item) => item.active).length,
+      maxWakes: this.maxWakes,
+      wakeCapacity: this.wakes.length,
+      wakeMesh: Boolean(this.wakeMesh),
+      foamRings: this.foamMeshes.length,
+      visibleFoamRings: this.foamMeshes.filter((mesh) => mesh.visible).length,
+      bobbingProps: this.bobbingProps.length,
+      visibleBobbingProps: this.bobbingProps.filter((item) => item.group.visible).length
+    };
   }
 }
 

@@ -59,6 +59,12 @@ try {
   await screenshot(page, '03-driving-stress.png');
   const water = await exerciseWater(page, ISLAND_RADIUS);
   await screenshot(page, '04-water-interaction.png');
+  await page.evaluate(() => {
+    const game = window.__portfolioDrive.game;
+    game.camera.fov = game.cameraRig.baseFov;
+    game.camera.updateProjectionMatrix();
+    game.clearFocus();
+  });
   const surfaces = await sampleSurfaces(page, ISLAND_RADIUS);
   const surfaceFeedback = await exerciseSurfaceFeedback(page, ISLAND_RADIUS);
   await screenshot(page, '05-surface-feedback.png');
@@ -342,6 +348,8 @@ async function exerciseWater(page, islandRadius) {
       const velocity = game.vehicle.body.linvel();
       return Math.hypot(velocity.x, velocity.z);
     };
+    const waterStats = () => game.world.water?.getStats?.() || {};
+    const wakeBefore = waterStats();
 
     game.vehicle.respawn({ x: radius * 1.022, y: 1.08, z: 0 }, Math.PI * 0.5);
     game.vehicle.body.setLinvel({ x: 18, y: 0, z: 0 }, true);
@@ -349,10 +357,13 @@ async function exerciseWater(page, islandRadius) {
     const beforeSpeed = horizontalSpeed();
     let surfaceSeen = false;
     let splashSeen = false;
+    let wakeSeen = false;
     for (let i = 0; i < 14; i += 1) {
       await delay(80);
       surfaceSeen = surfaceSeen || game.world.surfaceState?.inWater === true;
       splashSeen = splashSeen || (game.world.water?.splashes?.length || 0) > 0;
+      const stats = waterStats();
+      wakeSeen = wakeSeen || stats.activeWakes > 0 || stats.wakesSpawned > (wakeBefore.wakesSpawned || 0);
     }
     const afterSpeed = horizontalSpeed();
 
@@ -362,16 +373,43 @@ async function exerciseWater(page, islandRadius) {
     }
     const afterRespawn = game.vehicle.position;
     const respawnDistance = Math.hypot(afterRespawn.x, afterRespawn.z);
+    const submergedRespawned = respawnDistance < radius * 0.55;
+
+    game.vehicle.respawn({ x: radius * 0.972, y: 1.08, z: 0 }, 0);
+    game.vehicle.body.setLinvel({ x: 0, y: 0, z: 12 }, true);
+    for (let i = 0; i < 8; i += 1) {
+      await delay(80);
+      const stats = waterStats();
+      wakeSeen = wakeSeen || stats.activeWakes > 0 || stats.wakesSpawned > (wakeBefore.wakesSpawned || 0);
+    }
+    const wakeAfter = waterStats();
+    const target = game.vehicle.position.clone();
+    const lookAt = target.clone();
+    lookAt.y += 0.7;
+    const cameraPosition = target.clone();
+    cameraPosition.x -= 7.8;
+    cameraPosition.y += 4.6;
+    cameraPosition.z -= 8.2;
+    game.cameraRig.setCinematic(cameraPosition, lookAt);
+    game.cameraRig.smoothedTarget.copy(lookAt);
+    game.camera.position.copy(cameraPosition);
+    game.camera.fov = 42;
+    game.camera.updateProjectionMatrix();
+    game.camera.lookAt(lookAt);
 
     return {
       surfaceSeen,
       splashSeen,
+      wakeSeen,
       beforeSpeed: Number(beforeSpeed.toFixed(2)),
       afterSpeed: Number(afterSpeed.toFixed(2)),
       dragReduced: afterSpeed < beforeSpeed * 0.82,
-      submergeRespawned: respawnDistance < radius * 0.55,
+      submergeRespawned: submergedRespawned,
       finalDistance: Number(respawnDistance.toFixed(2)),
-      splashCount: game.world.water?.splashes?.length || 0
+      splashCount: game.world.water?.splashes?.length || 0,
+      wakeSpawnedDelta: (wakeAfter.wakesSpawned || 0) - (wakeBefore.wakesSpawned || 0),
+      activeWakes: wakeAfter.activeWakes || 0,
+      stats: wakeAfter
     };
   }, islandRadius);
 }
@@ -800,6 +838,7 @@ async function collectRuntimeMetrics(page, loadMs, gameplay, water, surfaces, su
       },
       surfaceDetails: game.world.terrain?.surfaceDetailStats || {},
       approachDressing: game.world.setPieces?.getApproachStats?.() || {},
+      waterStats: game.world.water?.getStats?.() || {},
       protectedLandmarks,
       vehicleFx: game.vehicle.getEffectStats?.() || {},
       camera: {
@@ -1072,6 +1111,9 @@ function assertVerification(result) {
   if ((result.panelUi?.cardWidth || 0) > 620) failures.push(`panel UI probe failed: card too wide=${result.panelUi?.cardWidth || 0}`);
   if (!result.water?.surfaceSeen) failures.push('water probe failed: surface state');
   if (!result.water?.splashSeen) failures.push('water probe failed: splash particles');
+  if (!result.water?.wakeSeen) failures.push('water probe failed: wake rings');
+  if ((result.water?.wakeSpawnedDelta || 0) < 2) failures.push(`water probe failed: wake delta=${result.water?.wakeSpawnedDelta || 0}`);
+  if ((result.water?.activeWakes || 0) < 1) failures.push(`water probe failed: active wakes=${result.water?.activeWakes || 0}`);
   if (!result.water?.dragReduced) failures.push('water probe failed: drag');
   if (!result.water?.submergeRespawned) failures.push('water probe failed: submerge respawn');
   if (result.surfaces?.road !== 'road') failures.push(`surface probe failed: road=${result.surfaces?.road}`);
