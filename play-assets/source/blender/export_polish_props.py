@@ -24,6 +24,7 @@ def main():
     create_shore_buoy(mats)
     create_dock_float(mats)
     create_wave_marker(mats)
+    create_distant_islet(mats)
     create_project_forge(mats)
     create_cv_vault(mats)
     create_skills_array(mats)
@@ -96,6 +97,8 @@ def materials():
         "purple": mat("polish_soft_purple_light", (0.48, 0.36, 0.95, 1), 0.38, emission=(0.28, 0.16, 0.72, 1)),
         "gold": mat("polish_award_gold", (0.95, 0.68, 0.22, 1), 0.44, metallic=0.36, emission=(0.18, 0.1, 0.02, 1)),
         "crop": mat("polish_crop_green", (0.32, 0.68, 0.22, 1), 0.9),
+        "islet_sand": mat("polish_distant_islet_sand", (0.78, 0.50, 0.24, 1), 0.94),
+        "islet_meadow": mat("polish_distant_islet_meadow", (0.22, 0.48, 0.25, 1), 0.92),
     }
 
 
@@ -267,6 +270,18 @@ def create_wave_marker(mats):
     cube("WaveMarker_Top", group, (0, 0.62, 0), (1.06, 0.36, 0.36), mats["foam"], bevel=0.045)
     cube("WaveMarker_Amber", group, (-0.42, 0.86, -0.02), (0.22, 0.18, 0.3), mats["amber"], bevel=0.012)
     cube("WaveMarker_Mint", group, (0.42, 0.86, -0.02), (0.22, 0.18, 0.3), mats["mint"], bevel=0.012)
+
+
+def create_distant_islet(mats):
+    group = root("EnvPolishDistantIslet")
+    rock_blob("DistantIslet_SandBase", group, (0, 0.18, 0), (3.9, 0.34, 1.2), mats["islet_sand"], rot=(0.0, 0.12, -0.03))
+    rock_blob("DistantIslet_MeadowCap", group, (-0.18, 0.42, -0.03), (2.35, 0.22, 0.72), mats["islet_meadow"], rot=(0.0, -0.18, 0.02))
+    cone("DistantIslet_LeftHill", group, (-0.72, 0.93, -0.04), 0.54, 1.05, mats["islet_meadow"], vertices=6, rot=(0.0, 0.18, 0.0))
+    cone("DistantIslet_RightHill", group, (0.44, 0.78, 0.08), 0.42, 0.76, mats["leaf"], vertices=5, rot=(0.0, -0.28, 0.0))
+    rock_blob("DistantIslet_RockA", group, (1.46, 0.36, -0.12), (0.34, 0.22, 0.18), mats["stone_shadow"], rot=(0.2, 0.0, -0.16))
+    rock_blob("DistantIslet_RockB", group, (-1.48, 0.33, 0.2), (0.42, 0.18, 0.2), mats["stone"], rot=(-0.12, 0.35, 0.08))
+    cube("DistantIslet_TinyMarker", group, (1.08, 0.68, 0.0), (0.08, 0.72, 0.08), mats["dark"], bevel=0.004)
+    cube("DistantIslet_TinyFlag", group, (1.22, 0.98, -0.03), (0.32, 0.16, 0.04), mats["amber"], bevel=0.004)
 
 
 def create_project_forge(mats):

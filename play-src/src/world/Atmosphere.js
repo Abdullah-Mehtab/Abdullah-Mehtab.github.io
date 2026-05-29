@@ -4,6 +4,7 @@ import * as THREE from 'three';
 import { mergeGeometries } from 'three/examples/jsm/utils/BufferGeometryUtils.js';
 import { WORLD_HALF_SIZE } from './worldData.js';
 import { QUALITY_PROFILES, WATER_Y, pseudoRandom } from './WorldMaterials.js';
+import { mergeStaticMeshesInGroup } from './StaticBatching.js';
 
 const DISTANT_ISLET_LIMITS = { low: 8, medium: 14, high: 20 };
 
@@ -16,10 +17,9 @@ export class Atmosphere {
     this.sunGlows = [];
     this.horizonRibbons = [];
     this.distantIslets = [];
+    this.distantIsletGroups = [];
     this.distantIsletLimit = DISTANT_ISLET_LIMITS.medium;
-    this.isletBaseMesh = null;
-    this.isletHillMesh = null;
-    this.isletDummy = new THREE.Object3D();
+    this.distantIsletTemplateAvailable = false;
     this.cloudShadowMesh = null;
     this.shadowDummy = new THREE.Object3D();
     this.motionSamples = 0;
@@ -195,32 +195,27 @@ export class Atmosphere {
   }
 
   createDistantIslets() {
+    const assetName = 'EnvPolishDistantIslet';
+    this.distantIsletTemplateAvailable = this.world.environmentAssets?.has?.(assetName) === true;
+    if (!this.distantIsletTemplateAvailable) return;
+
+    const layers = [
+      { name: 'low', count: DISTANT_ISLET_LIMITS.low, start: 0, visibleOn: ['low', 'medium', 'high'], phase: 0.1 },
+      { name: 'medium', count: DISTANT_ISLET_LIMITS.medium - DISTANT_ISLET_LIMITS.low, start: DISTANT_ISLET_LIMITS.low, visibleOn: ['medium', 'high'], phase: 1.8 },
+      { name: 'high', count: DISTANT_ISLET_LIMITS.high - DISTANT_ISLET_LIMITS.medium, start: DISTANT_ISLET_LIMITS.medium, visibleOn: ['high'], phase: 3.1 }
+    ];
+
+    for (const layer of layers) {
+      const group = new THREE.Group();
+      group.name = `Atmosphere_Distant_Islets_${layer.name}`;
+      group.userData.visibleOn = layer.visibleOn;
+      group.userData.isletCount = 0;
+      group.userData.phase = layer.phase;
+      this.distantIsletGroups.push({ group, count: 0, visibleOn: layer.visibleOn, phase: layer.phase });
+      this.world.scene.add(group);
+    }
+
     const capacity = DISTANT_ISLET_LIMITS.high;
-    const baseGeometry = new THREE.IcosahedronGeometry(1, 0);
-    const hillGeometry = new THREE.ConeGeometry(1, 1, 7);
-    const baseMaterial = new THREE.MeshStandardMaterial({
-      color: 0xc9985f,
-      roughness: 0.96,
-      metalness: 0.0,
-      flatShading: true
-    });
-    const hillMaterial = new THREE.MeshStandardMaterial({
-      color: 0x315f3b,
-      roughness: 0.94,
-      metalness: 0.0,
-      flatShading: true
-    });
-
-    this.isletBaseMesh = new THREE.InstancedMesh(baseGeometry, baseMaterial, capacity);
-    this.isletBaseMesh.name = 'Atmosphere_Distant_Islet_Bases';
-    this.isletBaseMesh.frustumCulled = false;
-    this.world.scene.add(this.isletBaseMesh);
-
-    this.isletHillMesh = new THREE.InstancedMesh(hillGeometry, hillMaterial, capacity);
-    this.isletHillMesh.name = 'Atmosphere_Distant_Islet_Hills';
-    this.isletHillMesh.frustumCulled = false;
-    this.world.scene.add(this.isletHillMesh);
-
     for (let i = 0; i < capacity; i += 1) {
       const angle = -Math.PI * 0.08 + (i / capacity) * Math.PI * 2 + (pseudoRandom(i * 4.7) - 0.5) * 0.12;
       const radius = WORLD_HALF_SIZE * (1.16 + pseudoRandom(i * 6.3) * 0.54);
@@ -236,9 +231,27 @@ export class Atmosphere {
         hillHeight: 2.2 + pseudoRandom(i * 23.5) * 4.4,
         phase: i * 0.83
       });
+      const layer = this.distantIsletGroups.find((entry, index) => {
+        const spec = layers[index];
+        return i >= spec.start && i < spec.start + spec.count;
+      });
+      if (!layer) continue;
+      const clone = this.world.cloneEnvironmentAsset(assetName);
+      if (!clone) continue;
+      clone.name = `Atmosphere_Distant_Islet_${i}`;
+      clone.position.set(Math.cos(angle) * radius, WATER_Y + 0.06, Math.sin(angle) * radius);
+      clone.rotation.y = angle + Math.PI * 0.5 + (pseudoRandom(i * 11.3) - 0.5) * 0.42;
+      clone.rotation.z = (pseudoRandom(i * 12.8) - 0.5) * 0.04;
+      clone.scale.set(scale * (2.6 + pseudoRandom(i * 13.7) * 1.4), scale * (0.78 + pseudoRandom(i * 23.5) * 0.45), scale * (1.4 + pseudoRandom(i * 17.1) * 0.8));
+      layer.group.add(clone);
+      layer.count += 1;
+      layer.group.userData.isletCount = layer.count;
     }
 
-    this.writeDistantIslets(0);
+    for (const layer of this.distantIsletGroups) {
+      mergeStaticMeshesInGroup(layer.group, { namePrefix: `ATMOS_islet_${layer.group.name}` });
+    }
+    this.applyQuality();
   }
 
   applyQuality() {
@@ -257,15 +270,9 @@ export class Atmosphere {
       this.cloudShadowMesh.visible = profile.clouds > 0;
     }
     this.distantIsletLimit = DISTANT_ISLET_LIMITS[this.world.landscapeQuality] || DISTANT_ISLET_LIMITS.medium;
-    if (this.isletBaseMesh) {
-      this.isletBaseMesh.count = this.distantIsletLimit;
-      this.isletBaseMesh.visible = this.distantIsletLimit > 0;
+    for (const layer of this.distantIsletGroups) {
+      layer.group.visible = layer.visibleOn.includes(this.world.landscapeQuality);
     }
-    if (this.isletHillMesh) {
-      this.isletHillMesh.count = this.distantIsletLimit;
-      this.isletHillMesh.visible = this.distantIsletLimit > 0;
-    }
-    this.writeDistantIslets(0);
   }
 
   update(dt, elapsed) {
@@ -289,7 +296,7 @@ export class Atmosphere {
       cloud.position.z += Math.cos(elapsed * 0.025 + i * 0.7) * dt * 0.06;
     }
     this.writeCloudShadows(elapsed);
-    this.writeDistantIslets(elapsed);
+    this.updateDistantIslets(elapsed);
     this.motionSamples += 1;
   }
 
@@ -308,38 +315,11 @@ export class Atmosphere {
     this.cloudShadowMesh.instanceMatrix.needsUpdate = true;
   }
 
-  writeDistantIslets(elapsed) {
-    if (!this.isletBaseMesh || !this.isletHillMesh) return;
-    const visible = Math.min(this.distantIsletLimit, this.distantIslets.length);
-    for (let i = 0; i < visible; i += 1) {
-      const islet = this.distantIslets[i];
-      const bob = Math.sin(elapsed * 0.18 + islet.phase) * 0.035;
-
-      this.isletDummy.position.set(islet.x, WATER_Y + 0.11 + bob, islet.z);
-      this.isletDummy.rotation.set(0.03, islet.rotation, -0.04);
-      this.isletDummy.scale.set(islet.width * islet.baseScale, 0.36 * islet.baseScale, islet.depth * islet.baseScale);
-      this.isletDummy.updateMatrix();
-      this.isletBaseMesh.setMatrixAt(i, this.isletDummy.matrix);
-
-      this.isletDummy.position.set(
-        islet.x + Math.cos(islet.rotation) * islet.hillOffset,
-        WATER_Y + 0.52 + bob,
-        islet.z - Math.sin(islet.rotation) * islet.hillOffset
-      );
-      this.isletDummy.rotation.set(0, islet.rotation + 0.18, 0);
-      this.isletDummy.scale.set(islet.width * 0.18 * islet.baseScale, islet.hillHeight * islet.baseScale, islet.depth * 0.22 * islet.baseScale);
-      this.isletDummy.updateMatrix();
-      this.isletHillMesh.setMatrixAt(i, this.isletDummy.matrix);
+  updateDistantIslets(elapsed) {
+    for (const layer of this.distantIsletGroups) {
+      if (!layer.group.visible) continue;
+      layer.group.position.y = Math.sin(elapsed * 0.16 + layer.phase) * 0.028;
     }
-    for (let i = visible; i < this.distantIslets.length; i += 1) {
-      this.isletDummy.position.set(0, -1000, 0);
-      this.isletDummy.scale.set(0, 0, 0);
-      this.isletDummy.updateMatrix();
-      this.isletBaseMesh.setMatrixAt(i, this.isletDummy.matrix);
-      this.isletHillMesh.setMatrixAt(i, this.isletDummy.matrix);
-    }
-    this.isletBaseMesh.instanceMatrix.needsUpdate = true;
-    this.isletHillMesh.instanceMatrix.needsUpdate = true;
   }
 
   getStats() {
@@ -350,8 +330,11 @@ export class Atmosphere {
       visibleSunGlows: this.sunGlows.filter((glow) => glow.visible).length,
       horizonRibbons: this.horizonRibbons.length,
       visibleHorizonRibbons: this.horizonRibbons.filter((ribbon) => ribbon.visible).length,
+      distantIsletTemplate: this.distantIsletTemplateAvailable,
       distantIslets: this.distantIslets.length,
-      visibleDistantIslets: this.isletBaseMesh?.count || 0,
+      visibleDistantIslets: this.distantIsletGroups
+        .filter((layer) => layer.group.visible)
+        .reduce((sum, layer) => sum + layer.count, 0),
       clouds: this.clouds.length,
       visibleClouds: this.clouds.filter((cloud) => cloud.visible).length,
       cloudShadowInstances: this.cloudShadowMesh?.count || 0,

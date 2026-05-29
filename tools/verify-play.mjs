@@ -1391,6 +1391,7 @@ function assertVerification(result) {
   if ((result.atmosphere?.visibleSunGlows || 0) < 3) failures.push(`atmosphere probe failed: visibleSunGlows=${result.atmosphere?.visibleSunGlows || 0}`);
   if ((result.atmosphere?.horizonRibbons || 0) < 3) failures.push(`atmosphere probe failed: horizonRibbons=${result.atmosphere?.horizonRibbons || 0}`);
   if ((result.atmosphere?.visibleHorizonRibbons || 0) < 3) failures.push(`atmosphere probe failed: visibleHorizonRibbons=${result.atmosphere?.visibleHorizonRibbons || 0}`);
+  if (!result.atmosphere?.distantIsletTemplate) failures.push('atmosphere probe failed: distant islet template');
   if ((result.atmosphere?.distantIslets || 0) < 20) failures.push(`atmosphere probe failed: distantIslets=${result.atmosphere?.distantIslets || 0}`);
   if ((result.atmosphere?.visibleDistantIslets || 0) < 14) failures.push(`atmosphere probe failed: visibleDistantIslets=${result.atmosphere?.visibleDistantIslets || 0}`);
   if ((result.atmosphere?.visibleClouds || 0) < 9) failures.push(`atmosphere probe failed: visibleClouds=${result.atmosphere?.visibleClouds || 0}`);
