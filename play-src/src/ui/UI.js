@@ -1,6 +1,6 @@
 // ABOUTME: Renders the /play HUD, map, menu, panels, prompts, and notifications.
 // ABOUTME: Keeps portfolio interactions available while the world stays drive-first.
-import { canalSegments, districtFootprints, ISLAND_RADIUS, MAP_PADDING, roadPaths, WORLD_HALF_SIZE, worldZones } from '../world/worldData.js';
+import { canalSegments, circuitCheckpoints, districtFootprints, ISLAND_RADIUS, MAP_PADDING, roadPaths, WORLD_HALF_SIZE, worldZones } from '../world/worldData.js';
 
 export class UI {
   constructor({ game, achievements, audio }) {
@@ -10,6 +10,7 @@ export class UI {
     this.projectIndex = 0;
     this.activeTab = 'options';
     this.mapState = { scale: 1, x: 0, y: 0, dragging: false, lastX: 0, lastY: 0 };
+    this.mapStats = {};
     this.lastNotification = { message: '', time: 0 };
     this.refs = {
       loading: document.getElementById('loading'),
@@ -425,7 +426,7 @@ export class UI {
 
   renderMap() {
     clear(this.refs.worldMapLayer);
-    this.renderMapBase(this.refs.worldMapLayer, 'map');
+    const baseStats = this.renderMapBase(this.refs.worldMapLayer, 'map');
     for (const zone of worldZones) {
       const pin = document.createElement('button');
       pin.type = 'button';
@@ -442,9 +443,15 @@ export class UI {
       });
       this.refs.worldMapLayer.append(pin);
     }
+    this.refs.worldMapLayer.append(createMapLegend());
     this.mapPlayer = document.createElement('span');
     this.mapPlayer.className = 'map-player';
     this.refs.worldMapLayer.append(this.mapPlayer);
+    this.mapStats = {
+      ...baseStats,
+      pins: worldZones.length,
+      legendItems: 5
+    };
     this.applyMapTransform();
   }
 
@@ -466,6 +473,15 @@ export class UI {
   }
 
   renderMapBase(container, mode) {
+    const stats = {
+      districts: districtFootprints.length,
+      districtLabels: 0,
+      routeLabels: 0,
+      circuitCheckpoints: 0,
+      roadUnderlays: roadPaths.length,
+      roadLines: roadPaths.length,
+      circuitLines: 1
+    };
     const island = document.createElement('div');
     island.className = `${mode}-island`;
     const span = WORLD_HALF_SIZE * 2 + MAP_PADDING * 2;
@@ -481,6 +497,16 @@ export class UI {
       patch.style.height = `${(district.size[1] / (WORLD_HALF_SIZE * 2 + MAP_PADDING * 2)) * 100}%`;
       patch.style.setProperty('--district-color', district.color);
       container.append(patch);
+      if (mode === 'map') {
+        const label = document.createElement('span');
+        label.className = 'map-district-label';
+        label.textContent = district.label;
+        label.style.left = `${coords.x}%`;
+        label.style.top = `${coords.y}%`;
+        label.style.setProperty('--district-color', district.color);
+        container.append(label);
+        stats.districtLabels += 1;
+      }
     }
     for (const canal of canalSegments) {
       for (const [x, z, width, depth, rotation = 0] of pathToSegments(canal.points, false, canal.width)) {
@@ -496,6 +522,10 @@ export class UI {
       }
     }
     container.append(createRoadSvg(mode));
+    container.append(createCircuitSvg(mode));
+    stats.circuitCheckpoints = appendCircuitCheckpoints(container, mode);
+    if (mode === 'map') stats.routeLabels = appendRouteLabels(container);
+    return stats;
   }
 
   update({ speed, activeZone, circuit }) {
@@ -546,6 +576,10 @@ export class UI {
   setPotatoCount(count) {
     this.game.world?.setPotatoCount?.(count);
   }
+
+  getMapStats() {
+    return { ...this.mapStats };
+  }
 }
 
 function worldToMap(x, z) {
@@ -564,6 +598,15 @@ function createRoadSvg(mode) {
   svg.setAttribute('aria-hidden', 'true');
   for (const path of roadPaths) {
     const points = path.closed ? [...path.points, path.points[0]] : path.points;
+    const underlay = document.createElementNS('http://www.w3.org/2000/svg', 'polyline');
+    underlay.setAttribute('class', `${mode}-road-underlay ${mode}-road-${path.hierarchy}`);
+    underlay.setAttribute('points', points.map(([x, z]) => {
+      const coords = worldToMap(x, z);
+      return `${coords.x.toFixed(2)},${coords.y.toFixed(2)}`;
+    }).join(' '));
+    underlay.setAttribute('stroke-width', `${((path.width + 8.6) / span) * 100}`);
+    svg.append(underlay);
+
     const polyline = document.createElementNS('http://www.w3.org/2000/svg', 'polyline');
     polyline.setAttribute('class', `${mode}-road-line ${mode}-road-${path.hierarchy}`);
     polyline.setAttribute('points', points.map(([x, z]) => {
@@ -574,6 +617,71 @@ function createRoadSvg(mode) {
     svg.append(polyline);
   }
   return svg;
+}
+
+function createCircuitSvg(mode) {
+  const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+  svg.setAttribute('class', `${mode}-circuit-svg`);
+  svg.setAttribute('viewBox', '0 0 100 100');
+  svg.setAttribute('aria-hidden', 'true');
+  const polyline = document.createElementNS('http://www.w3.org/2000/svg', 'polyline');
+  polyline.setAttribute('class', `${mode}-circuit-line`);
+  polyline.setAttribute('points', circuitCheckpoints.map(([x, , z]) => {
+    const coords = worldToMap(x, z);
+    return `${coords.x.toFixed(2)},${coords.y.toFixed(2)}`;
+  }).join(' '));
+  svg.append(polyline);
+  return svg;
+}
+
+function appendCircuitCheckpoints(container, mode) {
+  for (let index = 0; index < circuitCheckpoints.length; index += 1) {
+    const [x, , z] = circuitCheckpoints[index];
+    const point = document.createElement('span');
+    point.className = `${mode}-circuit-checkpoint`;
+    const coords = worldToMap(x, z);
+    point.style.left = `${coords.x}%`;
+    point.style.top = `${coords.y}%`;
+    if (mode === 'map' && index === 0) point.dataset.label = 'Start';
+    container.append(point);
+  }
+  return circuitCheckpoints.length;
+}
+
+function appendRouteLabels(container) {
+  let count = 0;
+  for (const path of roadPaths) {
+    const anchor = path.points[Math.floor((path.points.length - 1) / 2)];
+    const next = path.points[Math.min(path.points.length - 1, Math.floor((path.points.length - 1) / 2) + 1)] || anchor;
+    const coords = worldToMap((anchor[0] + next[0]) / 2, (anchor[1] + next[1]) / 2);
+    const label = document.createElement('span');
+    label.className = `map-route-label map-route-${path.hierarchy}`;
+    label.textContent = path.name;
+    label.style.left = `${coords.x}%`;
+    label.style.top = `${coords.y}%`;
+    container.append(label);
+    count += 1;
+  }
+  return count;
+}
+
+function createMapLegend() {
+  const legend = document.createElement('div');
+  legend.className = 'map-legend';
+  const items = [
+    ['Avenue', '#ffdf8a'],
+    ['Campus', '#9ccfff'],
+    ['Security', '#68d8ff'],
+    ['Stunt', '#ff9b6d'],
+    ['Circuit', '#ffffff']
+  ];
+  for (const [label, color] of items) {
+    const item = document.createElement('span');
+    item.style.setProperty('--legend-color', color);
+    item.textContent = label;
+    legend.append(item);
+  }
+  return legend;
 }
 
 function pathToSegments(points, closed, width) {
