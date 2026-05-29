@@ -982,6 +982,7 @@ async function collectRuntimeMetrics(page, loadMs, gameplay, water, surfaces, su
       },
       roadSurfaceDetails: game.world.roads?.getDetailStats?.() || {},
       surfaceDetails: game.world.terrain?.surfaceDetailStats || {},
+      meadowDetails: game.world.terrain?.getMeadowDetailStats?.() || {},
       terrainRelief: game.world.terrain?.getReliefStats?.() || {},
       shoreline: game.world.terrain?.getShorelineStats?.() || {},
       setPieceQuality: game.world.setPieces?.getQualityStats?.() || {},
@@ -1417,6 +1418,8 @@ function assertVerification(result) {
   if ((result.surfaceDetails?.seams || 0) < 40) failures.push(`surface detail probe failed: seams=${result.surfaceDetails?.seams || 0}`);
   if ((result.surfaceDetails?.pavers || 0) < 24) failures.push(`surface detail probe failed: pavers=${result.surfaceDetails?.pavers || 0}`);
   if ((result.surfaceDetails?.accents || 0) < 18) failures.push(`surface detail probe failed: accents=${result.surfaceDetails?.accents || 0}`);
+  if ((result.meadowDetails?.patches || 0) < 28) failures.push(`meadow detail probe failed: patches=${result.meadowDetails?.patches || 0}`);
+  if ((result.meadowDetails?.colorVariants || 0) < 12) failures.push(`meadow detail probe failed: colorVariants=${result.meadowDetails?.colorVariants || 0}`);
   if ((result.terrainRelief?.mounds || 0) < 6) failures.push(`terrain relief probe failed: mounds=${result.terrainRelief?.mounds || 0}`);
   if ((result.terrainRelief?.cliffShelves || 0) < 6) failures.push(`terrain relief probe failed: cliffShelves=${result.terrainRelief?.cliffShelves || 0}`);
   if ((result.terrainRelief?.rockOutcrops || 0) < 12) failures.push(`terrain relief probe failed: rockOutcrops=${result.terrainRelief?.rockOutcrops || 0}`);

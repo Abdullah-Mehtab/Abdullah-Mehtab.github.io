@@ -139,6 +139,17 @@ export function createWorldMaterials() {
       polygonOffsetFactor: -30,
       polygonOffsetUnits: -30
     }),
+    meadowDetail: new THREE.MeshBasicMaterial({
+      color: 0xffffff,
+      transparent: true,
+      opacity: 0.13,
+      depthWrite: false,
+      side: THREE.DoubleSide,
+      vertexColors: true,
+      polygonOffset: true,
+      polygonOffsetFactor: -24,
+      polygonOffsetUnits: -24
+    }),
     stuntRamp: new THREE.MeshStandardMaterial({ color: 0x8e654a, roughness: 0.86, metalness: 0.02 }),
     dirtRoad: new THREE.MeshStandardMaterial({ color: 0x9b6f3d, roughness: 0.98, metalness: 0.0 }),
     sand: new THREE.MeshStandardMaterial({ color: 0xf2bc82, map: sandTexture, roughness: 0.98, metalness: 0.0 }),

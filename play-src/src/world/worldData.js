@@ -49,6 +49,37 @@ export const terrainBrushes = [
   { id: 'west-data-beach', center: [-132, 60], size: [36, 32], rotation: 0.42, material: 'sand' }
 ];
 
+export const meadowDetailPatches = [
+  { id: 'start-left-petal-lawn', center: [-34, 18], size: [28, 9], rotation: -0.26, color: '#f0aeb6' },
+  { id: 'start-right-warm-lawn', center: [38, 18], size: [24, 8], rotation: 0.22, color: '#d7c36a' },
+  { id: 'start-north-cool-lawn', center: [8, 62], size: [34, 10], rotation: 0.12, color: '#84d7bd' },
+  { id: 'fcc-west-flower-lawn', center: [-116, 90], size: [30, 8], rotation: -0.34, color: '#f0aeb6' },
+  { id: 'fcc-east-study-lawn', center: [-42, 94], size: [24, 7], rotation: 0.36, color: '#9ccfff' },
+  { id: 'archive-garden-sweep', center: [-38, 50], size: [22, 7], rotation: -0.42, color: '#ffdf8a' },
+  { id: 'cv-north-document-lawn', center: [2, -34], size: [32, 9], rotation: -0.16, color: '#e6f3ff' },
+  { id: 'cv-west-shadow-lawn', center: [-20, -62], size: [28, 9], rotation: 0.24, color: '#7aa064' },
+  { id: 'cv-south-petal-lawn', center: [20, -82], size: [26, 8], rotation: -0.32, color: '#d8b6ff' },
+  { id: 'skills-east-terminal-lawn', center: [-36, -82], size: [26, 8], rotation: 0.28, color: '#92ffea' },
+  { id: 'skills-west-shadow-lawn', center: [-98, -78], size: [28, 8], rotation: -0.24, color: '#426c4a' },
+  { id: 'behind-south-work-lawn', center: [-12, -126], size: [30, 8], rotation: 0.18, color: '#a8a6ff' },
+  { id: 'todo-north-queue-lawn', center: [-88, 36], size: [28, 8], rotation: -0.12, color: '#d8ff92' },
+  { id: 'todo-west-shadow-lawn', center: [-120, 16], size: [26, 8], rotation: 0.34, color: '#6d8f4d' },
+  { id: 'security-pine-lawn', center: [-132, -46], size: [26, 8], rotation: 0.46, color: '#68d8ff' },
+  { id: 'security-return-lawn', center: [-78, -18], size: [30, 8], rotation: -0.3, color: '#394f4b' },
+  { id: 'career-signal-lawn', center: [88, -8], size: [28, 8], rotation: -0.42, color: '#b6a0ff' },
+  { id: 'career-south-warm-lawn', center: [102, -70], size: [34, 9], rotation: 0.24, color: '#ffb074' },
+  { id: 'project-north-garden-lawn', center: [64, 86], size: [28, 8], rotation: -0.18, color: '#ffcc66' },
+  { id: 'project-east-meadow-lawn', center: [104, 58], size: [24, 7], rotation: 0.4, color: '#8bd36b' },
+  { id: 'harbor-inner-lawn', center: [112, 28], size: [24, 7], rotation: -0.32, color: '#78b7ff' },
+  { id: 'harbor-ridge-lawn', center: [138, 72], size: [20, 6], rotation: 0.42, color: '#f3d19c' },
+  { id: 'farm-upper-lawn', center: [-42, -104], size: [28, 8], rotation: -0.28, color: '#c79b56' },
+  { id: 'farm-west-flower-lawn', center: [-90, -126], size: [26, 7], rotation: 0.36, color: '#f0aeb6' },
+  { id: 'data-pier-grove-lawn', center: [-126, 36], size: [22, 7], rotation: -0.48, color: '#79ffc5' },
+  { id: 'sentinel-ridge-petal-lawn', center: [26, 134], size: [28, 8], rotation: 0.18, color: '#ff6d8d' },
+  { id: 'stunt-west-tire-lawn', center: [66, -110], size: [30, 8], rotation: -0.18, color: '#7a5b46' },
+  { id: 'stunt-east-warm-lawn', center: [128, -86], size: [26, 7], rotation: 0.34, color: '#ff9b6d' }
+];
+
 export const roadPaths = [
   {
     id: 'gallery-spine',
