@@ -25,6 +25,7 @@ export class Terrain {
     this.reliefDummy = new THREE.Object3D();
     this.surfaceDetailStats = { districts: 0, seams: 0, pavers: 0, accents: 0 };
     this.reliefStats = { mounds: 0, cliffShelves: 0, rockOutcrops: 0, duneRidges: 0, contourBands: 0, beachRipples: 0 };
+    this.shorelineStats = { edgeBands: 0, foamBreaks: 0 };
   }
 
   build() {
@@ -373,13 +374,42 @@ export class Terrain {
 
   addCoastalEdges() {
     const cliff = new THREE.Mesh(
-      makeIslandBandGeometry(ISLAND_RADIUS, 1.025, 1.075, 156),
-      this.world.materials.cliff
+      makeIslandBandGeometry(ISLAND_RADIUS, 1.025, 1.052, 156),
+      this.world.materials.shoreCliff
     );
     cliff.name = 'ToyIslandLowCliffEdge';
-    cliff.position.y = WATER_Y + 0.42;
+    cliff.position.y = WATER_Y + 0.33;
     cliff.receiveShadow = true;
     this.world.scene.add(cliff);
+    this.addShorelineFoamBreaks();
+    this.shorelineStats.edgeBands = 1;
+  }
+
+  addShorelineFoamBreaks() {
+    const coastPoints = getIslandCoastPoints(ISLAND_RADIUS, 1.012, 156);
+    const specs = [];
+    for (let i = 0; i < 72; i += 1) {
+      const angle = (i / 72) * Math.PI * 2;
+      const pointIndex = Math.round((angle / (Math.PI * 2)) * coastPoints.length) % coastPoints.length;
+      const [x, z] = coastPoints[pointIndex];
+      if (isNearRoad(x, z, 3.8) && i % 3 !== 0) continue;
+      const jitter = pseudoRandom(i * 9.73) - 0.5;
+      specs.push({
+        x,
+        z,
+        rotation: angle + Math.PI * 0.5 + jitter * 0.42,
+        width: 0.08 + pseudoRandom(i * 13.1) * 0.08,
+        length: 1.8 + pseudoRandom(i * 17.7) * 2.2
+      });
+    }
+    const material = this.world.materials.foam.clone();
+    material.opacity = 0.22;
+    material.polygonOffset = true;
+    material.polygonOffsetFactor = -42;
+    material.polygonOffsetUnits = -42;
+    const mesh = this.addFlatDetailInstances('ToyIslandShorelineFoamBreaks', specs, material, 0.118);
+    this.world.scene.add(mesh);
+    this.shorelineStats.foamBreaks = specs.length;
   }
 
   addPhysicsFloor() {
@@ -399,6 +429,10 @@ export class Terrain {
 
   getReliefStats() {
     return { ...this.reliefStats };
+  }
+
+  getShorelineStats() {
+    return { ...this.shorelineStats };
   }
 }
 

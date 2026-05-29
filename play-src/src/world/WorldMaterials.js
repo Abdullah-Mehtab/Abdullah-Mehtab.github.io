@@ -151,20 +151,21 @@ export function createWorldMaterials() {
       inner: 151,
       outer: 166,
       colorA: 0xd1ad6e,
-      colorB: 0x6fcdd0,
-      opacity: 0.48,
-      noise: 0.2
+      colorB: 0xa5e6dc,
+      opacity: 0.34,
+      noise: 0.24
     }),
     shoreWash: makeRadialBlendMaterial({
       inner: 158,
       outer: 190,
-      colorA: 0x8de0dd,
-      colorB: 0x0a6894,
-      opacity: 0.36,
-      noise: 0.32,
+      colorA: 0xc5fff0,
+      colorB: 0x2bb6c3,
+      opacity: 0.28,
+      noise: 0.38,
       animated: true
     }),
     cliff: new THREE.MeshStandardMaterial({ color: 0x5c5146, roughness: 0.92, metalness: 0.01 }),
+    shoreCliff: new THREE.MeshStandardMaterial({ color: 0x9b7650, roughness: 0.96, metalness: 0.0 }),
     shallow: new THREE.MeshBasicMaterial({ color: 0x79d6d0, transparent: true, opacity: 0.16, depthWrite: false }),
     foam: new THREE.MeshBasicMaterial({ color: 0xf1fff6, transparent: true, opacity: 0.26, depthWrite: false }),
     wood: new THREE.MeshStandardMaterial({ color: 0x8a542c, roughness: 0.86, metalness: 0.02 }),
