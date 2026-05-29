@@ -7,6 +7,7 @@ import { QUALITY_PROFILES, WATER_Y, pseudoRandom } from './WorldMaterials.js';
 import { mergeStaticMeshesInGroup } from './StaticBatching.js';
 
 const DISTANT_ISLET_LIMITS = { low: 8, medium: 14, high: 20 };
+const SKY_WISP_LIMITS = { low: 4, medium: 8, high: 12 };
 
 export class Atmosphere {
   constructor(world) {
@@ -16,12 +17,15 @@ export class Atmosphere {
     this.sunDisk = null;
     this.sunGlows = [];
     this.horizonRibbons = [];
+    this.skyWisps = [];
     this.distantIslets = [];
     this.distantIsletGroups = [];
     this.distantIsletLimit = DISTANT_ISLET_LIMITS.medium;
+    this.skyWispLimit = SKY_WISP_LIMITS.medium;
     this.distantIsletTemplateAvailable = false;
     this.cloudShadowMesh = null;
     this.shadowDummy = new THREE.Object3D();
+    this.wispDummy = new THREE.Object3D();
     this.motionSamples = 0;
   }
 
@@ -29,6 +33,7 @@ export class Atmosphere {
     this.createSkyDome();
     this.createHorizonRibbons();
     this.createClouds();
+    this.createSkyWisps();
     this.createDistantIslets();
     this.createCloudShadows();
   }
@@ -176,6 +181,65 @@ export class Atmosphere {
     this.applyQuality();
   }
 
+  createSkyWisps() {
+    const capacity = SKY_WISP_LIMITS.high;
+    const geometry = new THREE.PlaneGeometry(1, 1);
+    const material = new THREE.MeshBasicMaterial({
+      color: 0xf2ffff,
+      transparent: true,
+      opacity: 0.18,
+      depthWrite: false,
+      side: THREE.DoubleSide
+    });
+    this.skyWispMesh = new THREE.InstancedMesh(geometry, material, capacity);
+    this.skyWispMesh.name = 'Atmosphere_Horizon_Wisps';
+    this.skyWispMesh.frustumCulled = false;
+    this.world.scene.add(this.skyWispMesh);
+
+    for (let i = 0; i < capacity; i += 1) {
+      const angle = -Math.PI * 0.12 + (i / capacity) * Math.PI * 2 + (pseudoRandom(i * 2.31) - 0.5) * 0.18;
+      const radius = WORLD_HALF_SIZE * (1.1 + pseudoRandom(i * 3.67) * 0.55);
+      this.skyWisps.push({
+        angle,
+        radius,
+        y: 34 + pseudoRandom(i * 5.19) * 18,
+        width: 22 + pseudoRandom(i * 7.71) * 46,
+        height: 1.4 + pseudoRandom(i * 11.43) * 2.8,
+        phase: i * 0.71,
+        speed: 0.08 + pseudoRandom(i * 13.91) * 0.08,
+        drift: 1.2 + pseudoRandom(i * 17.17) * 2.8
+      });
+    }
+    this.writeSkyWisps(0);
+  }
+
+  writeSkyWisps(elapsed) {
+    if (!this.skyWispMesh) return;
+    const visible = Math.min(this.skyWispLimit, this.skyWisps.length);
+    for (let i = 0; i < visible; i += 1) {
+      const wisp = this.skyWisps[i];
+      const sway = Math.sin(elapsed * wisp.speed + wisp.phase);
+      const angle = wisp.angle + sway * 0.006;
+      this.wispDummy.position.set(
+        Math.cos(angle) * (wisp.radius + sway * wisp.drift),
+        wisp.y + Math.cos(elapsed * wisp.speed * 0.7 + wisp.phase) * 0.22,
+        Math.sin(angle) * (wisp.radius + sway * wisp.drift)
+      );
+      this.wispDummy.rotation.set(0, angle + Math.PI * 0.5, 0);
+      this.wispDummy.scale.set(wisp.width * (0.92 + sway * 0.035), wisp.height, 1);
+      this.wispDummy.updateMatrix();
+      this.skyWispMesh.setMatrixAt(i, this.wispDummy.matrix);
+    }
+    for (let i = visible; i < this.skyWisps.length; i += 1) {
+      this.wispDummy.position.set(0, -1000, 0);
+      this.wispDummy.scale.set(0, 0, 0);
+      this.wispDummy.updateMatrix();
+      this.skyWispMesh.setMatrixAt(i, this.wispDummy.matrix);
+    }
+    this.skyWispMesh.count = visible;
+    this.skyWispMesh.instanceMatrix.needsUpdate = true;
+  }
+
   createCloudShadows() {
     const maxClouds = QUALITY_PROFILES.high.clouds;
     const geometry = new THREE.CircleGeometry(1, 24);
@@ -269,6 +333,12 @@ export class Atmosphere {
       this.cloudShadowMesh.count = profile.clouds;
       this.cloudShadowMesh.visible = profile.clouds > 0;
     }
+    this.skyWispLimit = SKY_WISP_LIMITS[this.world.landscapeQuality] || SKY_WISP_LIMITS.medium;
+    if (this.skyWispMesh) {
+      this.skyWispMesh.count = this.skyWispLimit;
+      this.skyWispMesh.visible = this.skyWispLimit > 0;
+      this.skyWispMesh.instanceMatrix.needsUpdate = true;
+    }
     this.distantIsletLimit = DISTANT_ISLET_LIMITS[this.world.landscapeQuality] || DISTANT_ISLET_LIMITS.medium;
     for (const layer of this.distantIsletGroups) {
       layer.group.visible = layer.visibleOn.includes(this.world.landscapeQuality);
@@ -296,6 +366,10 @@ export class Atmosphere {
       cloud.position.z += Math.cos(elapsed * 0.025 + i * 0.7) * dt * 0.06;
     }
     this.writeCloudShadows(elapsed);
+    this.writeSkyWisps(elapsed);
+    if (this.skyWispMesh) {
+      this.skyWispMesh.material.opacity = 0.15 + Math.sin(elapsed * 0.12) * 0.018;
+    }
     this.updateDistantIslets(elapsed);
     this.motionSamples += 1;
   }
@@ -330,6 +404,8 @@ export class Atmosphere {
       visibleSunGlows: this.sunGlows.filter((glow) => glow.visible).length,
       horizonRibbons: this.horizonRibbons.length,
       visibleHorizonRibbons: this.horizonRibbons.filter((ribbon) => ribbon.visible).length,
+      skyWisps: this.skyWisps.length,
+      visibleSkyWisps: this.skyWispMesh?.count || 0,
       distantIsletTemplate: this.distantIsletTemplateAvailable,
       distantIslets: this.distantIslets.length,
       visibleDistantIslets: this.distantIsletGroups
