@@ -31,6 +31,7 @@ export class Roads {
     this.world = world;
     this.segments = roadSegments;
     this.materialCache = new Map();
+    this.markerDummy = new THREE.Object3D();
     this.roadGroup = new THREE.Group();
     this.roadGroup.name = 'ROAD_Network';
   }
@@ -41,6 +42,7 @@ export class Roads {
       this.addPath(path);
     }
     mergeStaticMeshesInGroup(this.roadGroup, { namePrefix: 'ROAD_batch' });
+    this.createGuidanceMarkers();
   }
 
   addPath(path) {
@@ -188,6 +190,115 @@ export class Roads {
     return material;
   }
 
+  createGuidanceMarkers() {
+    const chevrons = [];
+    const studs = [];
+
+    for (const path of roadPaths) {
+      const curve = makePathCurve(path.points, path.closed);
+      const totalLength = curve.getLength();
+      const style = ROAD_STYLE[path.hierarchy] || ROAD_STYLE.street;
+      const layer = ROAD_LAYER[path.hierarchy] ?? 1;
+      const surfaceY = 0.104 + layer * 0.006;
+      const color = roadMarkerColor(path);
+      const chevronSpacing = roadMarkerSpacing(path);
+      const studSpacing = Math.max(6, chevronSpacing * 0.5);
+      const inset = path.width * 0.5 + Math.min(1.15, style.shoulder * 0.62);
+
+      for (let distance = chevronSpacing * 0.85; distance < totalLength - chevronSpacing * 0.75; distance += chevronSpacing) {
+        const t = distance / totalLength;
+        const point = curve.getPointAt(t);
+        const tangent = curve.getTangentAt(t).normalize();
+        const side = distanceToBendSide(curve, t) || (chevrons.length % 2 === 0 ? 1 : -1);
+        const rightX = tangent.z;
+        const rightZ = -tangent.x;
+        chevrons.push({
+          x: point.x + rightX * inset * side,
+          y: surfaceY + 0.074,
+          z: point.z + rightZ * inset * side,
+          rotation: Math.atan2(tangent.x, tangent.z),
+          scale: path.hierarchy === 'stunt' ? 1.08 : path.hierarchy === 'bridge' ? 0.86 : 0.94,
+          color
+        });
+      }
+
+      for (let distance = studSpacing; distance < totalLength - studSpacing; distance += studSpacing) {
+        const t = distance / totalLength;
+        const point = curve.getPointAt(t);
+        const tangent = curve.getTangentAt(t).normalize();
+        const rightX = tangent.z;
+        const rightZ = -tangent.x;
+        for (const side of [-1, 1]) {
+          studs.push({
+            x: point.x + rightX * (path.width * 0.5 + style.shoulder * 0.38) * side,
+            y: surfaceY + 0.09,
+            z: point.z + rightZ * (path.width * 0.5 + style.shoulder * 0.38) * side,
+            rotation: Math.atan2(tangent.x, tangent.z),
+            scale: path.hierarchy === 'dirt' ? 0.78 : 1,
+            color
+          });
+        }
+      }
+    }
+
+    this.addMarkerInstances({
+      name: 'ROAD_Guidance_Chevrons',
+      geometry: createChevronGeometry(),
+      material: this.createMarkerMaterial(),
+      specs: chevrons,
+      defaultScale: [1, 1, 1]
+    });
+    this.addMarkerInstances({
+      name: 'ROAD_Reflector_Studs',
+      geometry: new THREE.BoxGeometry(0.34, 0.07, 0.9),
+      material: this.createMarkerMaterial(),
+      specs: studs,
+      defaultScale: [1, 1, 1]
+    });
+  }
+
+  addMarkerInstances({ name, geometry, material, specs, defaultScale }) {
+    if (!specs.length) return;
+    const markerGeometry = geometry.clone();
+    applyWhiteVertexColors(markerGeometry);
+    const mesh = new THREE.InstancedMesh(markerGeometry, material, specs.length);
+    mesh.name = name;
+    mesh.renderOrder = 30;
+    mesh.frustumCulled = false;
+    const color = new THREE.Color();
+    for (let index = 0; index < specs.length; index += 1) {
+      const spec = specs[index];
+      this.markerDummy.position.set(spec.x, spec.y, spec.z);
+      this.markerDummy.rotation.set(0, spec.rotation, 0);
+      this.markerDummy.scale.set(
+        defaultScale[0] * spec.scale,
+        defaultScale[1],
+        defaultScale[2] * spec.scale
+      );
+      this.markerDummy.updateMatrix();
+      mesh.setMatrixAt(index, this.markerDummy.matrix);
+      mesh.setColorAt(index, color.setHex(spec.color));
+    }
+    mesh.instanceMatrix.needsUpdate = true;
+    if (mesh.instanceColor) mesh.instanceColor.needsUpdate = true;
+    this.roadGroup.add(mesh);
+  }
+
+  createMarkerMaterial() {
+    const key = 'road-marker-instanced';
+    if (this.materialCache.has(key)) return this.materialCache.get(key);
+    const material = new THREE.MeshBasicMaterial({
+      color: 0xffffff,
+      side: THREE.DoubleSide,
+      vertexColors: true,
+      polygonOffset: true,
+      polygonOffsetFactor: -24,
+      polygonOffsetUnits: -24
+    });
+    this.materialCache.set(key, material);
+    return material;
+  }
+
   isNear(x, z, margin = 0) {
     return roadSegments.some(([cx, cz, width, length, rotation]) => {
       const dx = x - cx;
@@ -197,6 +308,61 @@ export class Roads {
       return Math.abs(localX) <= width / 2 + margin && Math.abs(localZ) <= length / 2 + margin;
     });
   }
+}
+
+function roadMarkerColor(path) {
+  if (path.hierarchy === 'security') return 0x68d8ff;
+  if (path.hierarchy === 'stunt') return 0xff9b6d;
+  if (path.hierarchy === 'dirt') return 0xc79b56;
+  if (path.hierarchy === 'bridge') return 0x79ffc5;
+  if (path.hierarchy === 'plaza') return 0xf3e7bd;
+  return (ROAD_STYLE[path.hierarchy] || ROAD_STYLE.street).line;
+}
+
+function roadMarkerSpacing(path) {
+  if (path.hierarchy === 'security' || path.hierarchy === 'stunt') return 11;
+  if (path.hierarchy === 'bridge') return 8.5;
+  if (path.hierarchy === 'plaza') return 12.5;
+  if (path.hierarchy === 'dirt') return 16;
+  if (path.hierarchy === 'avenue') return 15;
+  return 13.5;
+}
+
+function distanceToBendSide(curve, t) {
+  const previous = curve.getTangentAt(Math.max(0, t - 0.026)).normalize();
+  const next = curve.getTangentAt(Math.min(1, t + 0.026)).normalize();
+  const cross = previous.x * next.z - previous.z * next.x;
+  if (Math.abs(cross) < 0.045) return 0;
+  return cross > 0 ? -1 : 1;
+}
+
+function createChevronGeometry() {
+  const vertices = new Float32Array([
+    0, 0, 1.1,
+    -0.82, 0, -0.86,
+    0.82, 0, -0.86
+  ]);
+  const uvs = new Float32Array([
+    0.5, 1,
+    0, 0,
+    1, 0
+  ]);
+  const geometry = new THREE.BufferGeometry();
+  geometry.setAttribute('position', new THREE.BufferAttribute(vertices, 3));
+  geometry.setAttribute('uv', new THREE.BufferAttribute(uvs, 2));
+  geometry.setIndex([0, 1, 2]);
+  applyWhiteVertexColors(geometry);
+  geometry.computeVertexNormals();
+  return geometry;
+}
+
+function applyWhiteVertexColors(geometry) {
+  if (geometry.getAttribute('color')) return;
+  const position = geometry.getAttribute('position');
+  if (!position) return;
+  const colors = new Float32Array(position.count * 3);
+  colors.fill(1);
+  geometry.setAttribute('color', new THREE.BufferAttribute(colors, 3));
 }
 
 function createOrientedPlaneGeometry(width, length, rotation) {
