@@ -49,7 +49,10 @@ const authoredDistrictAssets = [
   'EnvPolishWorkshopProcessRail',
   'EnvPolishSignalSpire',
   'EnvPolishWorkshopCanopy',
-  'EnvPolishGardenArch'
+  'EnvPolishGardenArch',
+  'EnvPolishRouteSplitterIsland',
+  'EnvPolishPlazaEdgeKit',
+  'EnvPolishChevronBollardRun'
 ];
 const authoredStuntAssets = [
   'EnvPolishStuntCheckpoint',
@@ -989,6 +992,7 @@ async function collectRuntimeMetrics(page, loadMs, gameplay, water, surfaces, su
       setPieceQuality: game.world.setPieces?.getQualityStats?.() || {},
       approachDressing: game.world.setPieces?.getApproachStats?.() || {},
       districtGateways: game.world.setPieces?.getGatewayStats?.() || {},
+      routeComposition: game.world.setPieces?.getRouteCompositionStats?.() || {},
       districtStory: game.world.setPieces?.getDistrictStoryStats?.() || {},
       districtComposition: game.world.setPieces?.getDistrictCompositionStats?.() || {},
       circuitStart: game.world.setPieces?.getCircuitStartStats?.() || {},
@@ -1447,6 +1451,11 @@ function assertVerification(result) {
   if ((result.districtGateways?.lanterns || 0) < 24) failures.push(`district gateway probe failed: lanterns=${result.districtGateways?.lanterns || 0}`);
   if ((result.districtGateways?.authoredAssets || 0) < 36) failures.push(`district gateway probe failed: authoredAssets=${result.districtGateways?.authoredAssets || 0}`);
   if ((result.districtGateways?.guideStrips || 0) < 60) failures.push(`district gateway probe failed: guideStrips=${result.districtGateways?.guideStrips || 0}`);
+  if ((result.routeComposition?.splitterIslands || 0) < 8) failures.push(`route composition probe failed: splitterIslands=${result.routeComposition?.splitterIslands || 0}`);
+  if ((result.routeComposition?.plazaEdgeKits || 0) < 12) failures.push(`route composition probe failed: plazaEdgeKits=${result.routeComposition?.plazaEdgeKits || 0}`);
+  if ((result.routeComposition?.bollardRuns || 0) < 12) failures.push(`route composition probe failed: bollardRuns=${result.routeComposition?.bollardRuns || 0}`);
+  if ((result.routeComposition?.authoredAssets || 0) < 32) failures.push(`route composition probe failed: authoredAssets=${result.routeComposition?.authoredAssets || 0}`);
+  if ((result.routeComposition?.guideTiles || 0) < 40) failures.push(`route composition probe failed: guideTiles=${result.routeComposition?.guideTiles || 0}`);
   if ((result.districtStory?.authoredAssets || 0) < 10) failures.push(`district story probe failed: authoredAssets=${result.districtStory?.authoredAssets || 0}`);
   if ((result.districtStory?.crateStacks || 0) < 6) failures.push(`district story probe failed: crateStacks=${result.districtStory?.crateStacks || 0}`);
   if ((result.districtStory?.terminalBanks || 0) < 2) failures.push(`district story probe failed: terminalBanks=${result.districtStory?.terminalBanks || 0}`);

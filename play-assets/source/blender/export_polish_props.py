@@ -68,6 +68,9 @@ def main():
     create_signal_spire(mats)
     create_workshop_canopy(mats)
     create_garden_arch(mats)
+    create_route_splitter_island(mats)
+    create_plaza_edge_kit(mats)
+    create_chevron_bollard_run(mats)
 
     output = Path(args.output)
     output.parent.mkdir(parents=True, exist_ok=True)
@@ -887,6 +890,44 @@ def create_garden_arch(mats):
         cube("GardenArch_LampStem", group, (x, 2.35, -0.34), (0.08, 0.7, 0.08), mats["dark"], bevel=0.006)
         cube("GardenArch_Lamp", group, (x, 1.92, -0.34), (0.34, 0.24, 0.34), mats["amber"], bevel=0.025)
     cube("GardenArch_PathStone", group, (0, 0.08, -0.85), (4.55, 0.12, 0.72), mats["paper"], bevel=0.025)
+
+
+def create_route_splitter_island(mats):
+    group = root("EnvPolishRouteSplitterIsland")
+    cube("RouteSplitter_Base", group, (0, 0.12, 0), (5.2, 0.24, 1.42), mats["stone"], bevel=0.08)
+    cube("RouteSplitter_ShadowLip", group, (0, 0.28, 0.36), (4.75, 0.1, 0.14), mats["stone_shadow"], bevel=0.015)
+    cube("RouteSplitter_FrontGlow", group, (0, 0.34, -0.78), (4.45, 0.08, 0.08), mats["mint"], bevel=0.006)
+    for index, x in enumerate([-1.86, -0.93, 0, 0.93, 1.86]):
+        cube(f"RouteSplitter_Reflector_{index}", group, (x, 0.44, -0.28), (0.34, 0.12, 0.12), mats["amber" if index % 2 else "foam"], bevel=0.012)
+    for x in [-2.32, 2.32]:
+        cube("RouteSplitter_EndBollard", group, (x, 0.72, 0), (0.28, 0.92, 0.28), mats["dark"], bevel=0.035)
+        cube("RouteSplitter_EndLamp", group, (x, 1.28, -0.04), (0.42, 0.22, 0.42), mats["screen"], bevel=0.025)
+    cube("RouteSplitter_CenterPlanter", group, (0, 0.54, 0.25), (1.36, 0.34, 0.46), mats["wood"], bevel=0.035)
+    for x in [-0.44, 0, 0.44]:
+        cube("RouteSplitter_GrassTuft", group, (x, 0.88, 0.25), (0.16, 0.58, 0.16), mats["leaf"], rot=(0.12, x * 0.45, 0.08), bevel=0.01)
+
+
+def create_plaza_edge_kit(mats):
+    group = root("EnvPolishPlazaEdgeKit")
+    cube("PlazaEdge_Curb", group, (0, 0.13, 0), (6.4, 0.26, 0.46), mats["stone"], bevel=0.035)
+    cube("PlazaEdge_AsphaltLip", group, (0, 0.23, -0.34), (6.08, 0.08, 0.12), mats["stone_shadow"], bevel=0.012)
+    cube("PlazaEdge_GardenLip", group, (0, 0.28, 0.33), (5.72, 0.12, 0.18), mats["wood"], bevel=0.012)
+    for index, x in enumerate([-2.55, -1.28, 0, 1.28, 2.55]):
+        cube(f"PlazaEdge_GlowChip_{index}", group, (x, 0.4, -0.32), (0.42, 0.08, 0.07), mats["mint" if index % 2 else "amber"], bevel=0.004)
+    for x in [-2.9, 2.9]:
+        cube("PlazaEdge_EndPost", group, (x, 0.68, 0.08), (0.18, 0.92, 0.18), mats["dark"], bevel=0.014)
+        cube("PlazaEdge_EndLamp", group, (x, 1.18, -0.04), (0.32, 0.18, 0.32), mats["screen"], bevel=0.018)
+
+
+def create_chevron_bollard_run(mats):
+    group = root("EnvPolishChevronBollardRun")
+    cube("ChevronBollard_BaseStrip", group, (0, 0.08, 0), (5.4, 0.16, 0.38), mats["stone_shadow"], bevel=0.03)
+    for index, x in enumerate([-2.16, -1.08, 0, 1.08, 2.16]):
+        cube(f"ChevronBollard_Post_{index}", group, (x, 0.58, 0.02), (0.18, 0.92, 0.18), mats["dark"], bevel=0.018)
+        cube(f"ChevronBollard_Light_{index}", group, (x, 1.12, -0.06), (0.32, 0.18, 0.1), mats["amber" if index % 2 else "mint"], bevel=0.012)
+    for index, x in enumerate([-1.62, -0.54, 0.54, 1.62]):
+        cube(f"ChevronBollard_Arrow_{index}", group, (x, 0.27, -0.3), (0.72, 0.08, 0.08), mats["foam"], rot=(0, 0.46, 0), bevel=0.004)
+        cube(f"ChevronBollard_ArrowGlow_{index}", group, (x + 0.22, 0.32, -0.36), (0.38, 0.055, 0.055), mats["screen"], rot=(0, 0.46, 0), bevel=0.004)
 
 
 if __name__ == "__main__":
