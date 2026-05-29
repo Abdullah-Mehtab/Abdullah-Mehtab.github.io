@@ -1,3 +1,5 @@
+// ABOUTME: Renders the /play HUD, map, menu, panels, prompts, and notifications.
+// ABOUTME: Keeps portfolio interactions available while the world stays drive-first.
 import { canalSegments, districtFootprints, ISLAND_RADIUS, MAP_PADDING, roadPaths, WORLD_HALF_SIZE, worldZones } from '../world/worldData.js';
 
 export class UI {
@@ -321,7 +323,7 @@ export class UI {
         this.refs.soundButton.textContent = muted ? 'Muted' : 'Sound';
         this.renderMenu();
       }),
-      optionButton('Landscape Quality', `Currently ${capitalize(this.game.world.landscapeQuality)}. Controls sakura petals and grass density.`, () => {
+      optionButton('Landscape Quality', `Currently ${capitalize(this.game.world.landscapeQuality)}. Controls foliage, particles, animated signals, water detail, and render cost.`, () => {
         const quality = this.game.world.cycleLandscapeQuality();
         this.renderMenu();
         this.notify(`Landscape quality: ${capitalize(quality)}`);
