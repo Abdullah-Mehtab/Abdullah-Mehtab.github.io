@@ -67,7 +67,10 @@ export class SetPieces {
       pathMarks: 0,
       lamps: 0,
       planters: 0,
-      authoredAssets: 0
+      authoredAssets: 0,
+      edgeTrims: 0,
+      surfaceMarks: 0,
+      rails: 0
     };
   }
 
@@ -443,6 +446,15 @@ export class SetPieces {
     this.addCompositionAsset(group, 'EnvPolishRoadBarrier', todo.position[0] + 10.8, todo.position[2] + 4.8, 0.18, 0.64);
     this.addCompositionAsset(group, 'EnvPolishRouteLantern', todo.position[0] - 12.8, todo.position[2] - 2.8, 0.42, 0.66);
     this.addCompositionPlanter(group, todo.position[0] + 8.6, todo.position[2] + 7.6, 0xb6a0ff);
+    this.addYardEdgeDetails(group, todo.position[0] - 1.2, todo.position[2] + 1.4, 22, 15);
+    for (const [dx, dz, rotation, scale] of [
+      [-6.8, -3.6, 0.2, 0.72],
+      [1.6, -1.7, -0.08, 0.68],
+      [5.6, 4.4, 0.34, 0.7]
+    ]) {
+      this.addCompositionDetailAsset(group, 'EnvPolishYardSurfaceMarks', todo.position[0] + dx, todo.position[2] + dz, rotation, scale, 'surfaceMarks');
+    }
+    this.addCompositionDetailAsset(group, 'EnvPolishWorkshopProcessRail', todo.position[0] - 5.4, todo.position[2] - 5.4, 0.38, 0.72, 'rails');
 
     const career = findZone('career');
     this.addSign(group, 'CAREER', 'Signal Office', career.position[0] - 10, career.position[2] + 9, -0.35, 0xb6a0ff, 2.4, 'CareerSign');
@@ -484,6 +496,16 @@ export class SetPieces {
     this.addCompositionAsset(group, 'EnvPolishRoadBarrier', behind.position[0] + 11.2, behind.position[2] - 7.2, -0.18, 0.62);
     this.addCompositionAsset(group, 'EnvPolishRouteLantern', behind.position[0] - 12.4, behind.position[2] - 2.6, -0.34, 0.66);
     this.addCompositionPlanter(group, behind.position[0] + 8.8, behind.position[2] - 8.0, 0x8fd3ff);
+    this.addYardEdgeDetails(group, behind.position[0] - 0.4, behind.position[2] - 1.2, 23, 15);
+    for (const [dx, dz, rotation, scale] of [
+      [-6.2, 3.4, -0.28, 0.72],
+      [2.4, 1.6, 0.1, 0.7],
+      [6.5, -5.1, 0.32, 0.72]
+    ]) {
+      this.addCompositionDetailAsset(group, 'EnvPolishYardSurfaceMarks', behind.position[0] + dx, behind.position[2] + dz, rotation, scale, 'surfaceMarks');
+    }
+    this.addCompositionDetailAsset(group, 'EnvPolishWorkshopProcessRail', behind.position[0] - 5.8, behind.position[2] + 5.8, -0.18, 0.76, 'rails');
+    this.addCompositionDetailAsset(group, 'EnvPolishWorkshopProcessRail', behind.position[0] + 5.8, behind.position[2] - 6.2, 0.32, 0.72, 'rails');
 
     const potato = findZone('potato');
     this.addSign(group, 'FARM', 'Potato Counter', potato.position[0] - 11, potato.position[2] + 9, 0.32, 0xc79b56, 2.3, 'PotatoFarmSign');
@@ -1068,6 +1090,30 @@ export class SetPieces {
     const placed = this.addPolishAsset(group, assetName, x, z, rotation, scale);
     if (placed) this.districtCompositionStats.authoredAssets += 1;
     return placed;
+  }
+
+  addCompositionDetailAsset(group, assetName, x, z, rotation, scale, statName) {
+    const placed = this.addCompositionAsset(group, assetName, x, z, rotation, scale);
+    if (placed) this.districtCompositionStats[statName] = (this.districtCompositionStats[statName] || 0) + 1;
+    return placed;
+  }
+
+  addYardEdgeDetails(group, centerX, centerZ, width, depth) {
+    const segmentSpacing = 6.2;
+    const edgeZ = depth / 2 + 0.24;
+    const edgeX = width / 2 + 0.24;
+    const longCount = Math.max(2, Math.floor(width / segmentSpacing));
+    const shortCount = Math.max(2, Math.floor(depth / segmentSpacing));
+    for (let i = 0; i < longCount; i += 1) {
+      const offset = -((longCount - 1) * segmentSpacing) / 2 + i * segmentSpacing;
+      this.addCompositionDetailAsset(group, 'EnvPolishYardEdgeTrim', centerX + offset, centerZ - edgeZ, 0, 0.78, 'edgeTrims');
+      this.addCompositionDetailAsset(group, 'EnvPolishYardEdgeTrim', centerX + offset, centerZ + edgeZ, Math.PI, 0.78, 'edgeTrims');
+    }
+    for (let i = 0; i < shortCount; i += 1) {
+      const offset = -((shortCount - 1) * segmentSpacing) / 2 + i * segmentSpacing;
+      this.addCompositionDetailAsset(group, 'EnvPolishYardEdgeTrim', centerX - edgeX, centerZ + offset, Math.PI * 0.5, 0.78, 'edgeTrims');
+      this.addCompositionDetailAsset(group, 'EnvPolishYardEdgeTrim', centerX + edgeX, centerZ + offset, -Math.PI * 0.5, 0.78, 'edgeTrims');
+    }
   }
 
   addCompositionPlanter(group, x, z, color) {

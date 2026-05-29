@@ -31,7 +31,10 @@ const authoredDistrictAssets = [
   'EnvPolishBuildCrateStack',
   'EnvPolishTerminalBank',
   'EnvPolishArchiveStepCluster',
-  'EnvPolishTodoCardStack'
+  'EnvPolishTodoCardStack',
+  'EnvPolishYardEdgeTrim',
+  'EnvPolishYardSurfaceMarks',
+  'EnvPolishWorkshopProcessRail'
 ];
 const authoredStuntAssets = [
   'EnvPolishStuntCheckpoint',
@@ -1195,7 +1198,10 @@ function assertVerification(result) {
   if ((result.districtComposition?.pathMarks || 0) < 15) failures.push(`district composition probe failed: pathMarks=${result.districtComposition?.pathMarks || 0}`);
   if ((result.districtComposition?.lamps || 0) < 4) failures.push(`district composition probe failed: lamps=${result.districtComposition?.lamps || 0}`);
   if ((result.districtComposition?.planters || 0) < 2) failures.push(`district composition probe failed: planters=${result.districtComposition?.planters || 0}`);
-  if ((result.districtComposition?.authoredAssets || 0) < 6) failures.push(`district composition probe failed: authoredAssets=${result.districtComposition?.authoredAssets || 0}`);
+  if ((result.districtComposition?.authoredAssets || 0) < 35) failures.push(`district composition probe failed: authoredAssets=${result.districtComposition?.authoredAssets || 0}`);
+  if ((result.districtComposition?.edgeTrims || 0) < 20) failures.push(`district composition probe failed: edgeTrims=${result.districtComposition?.edgeTrims || 0}`);
+  if ((result.districtComposition?.surfaceMarks || 0) < 6) failures.push(`district composition probe failed: surfaceMarks=${result.districtComposition?.surfaceMarks || 0}`);
+  if ((result.districtComposition?.rails || 0) < 3) failures.push(`district composition probe failed: rails=${result.districtComposition?.rails || 0}`);
   if ((result.props?.roadLanterns || 0) < 8) failures.push(`props probe failed: roadLanterns=${result.props?.roadLanterns || 0}`);
   if ((result.props?.authoredLanterns || 0) !== (result.props?.roadLanterns || 0)) failures.push(`props probe failed: authoredLanterns=${result.props?.authoredLanterns || 0}/${result.props?.roadLanterns || 0}`);
   if ((result.props?.fallbackLanterns || 0) !== 0) failures.push(`props probe failed: fallbackLanterns=${result.props?.fallbackLanterns || 0}`);
