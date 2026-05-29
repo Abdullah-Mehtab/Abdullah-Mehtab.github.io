@@ -82,6 +82,16 @@ export class SetPieces {
       laneLights: 0,
       pitDetails: 0
     };
+    this.harborStats = {
+      pads: 0,
+      pathMarks: 0,
+      authoredAssets: 0,
+      piers: 0,
+      cargoStacks: 0,
+      shadeStructures: 0,
+      lamps: 0,
+      beacons: 0
+    };
   }
 
   build() {
@@ -205,6 +215,10 @@ export class SetPieces {
 
   getCircuitStartStats() {
     return { ...this.circuitStartStats };
+  }
+
+  getHarborStats() {
+    return { ...this.harborStats };
   }
 
   createStartDiorama() {
@@ -390,17 +404,7 @@ export class SetPieces {
     this.addCompositionDetailAsset(group, 'EnvPolishWorkshopProcessRail', cv.position[0] - 4.4, cv.position[2] - 4.1, 0.08, 0.62, 'rails');
 
     const contact = findZone('contact');
-    this.addSign(group, 'CONTACT', 'Harbor Signal', contact.position[0] - 8, contact.position[2] + 15, -0.65, 0x78b7ff, 2.5, 'HarborSign');
-    this.addPolishAsset(group, 'EnvPolishHarborSignal', contact.position[0] + 1.6, contact.position[2] + 3.8, -0.32, 1.18);
-    this.addPolishAsset(group, 'EnvPolishPalm', contact.position[0] - 13.2, contact.position[2] + 5.8, 0.28, 1.08);
-    this.addPolishAsset(group, 'EnvPolishPalm', contact.position[0] + 13.4, contact.position[2] + 2.2, -0.18, 0.98);
-    for (const [x, z] of [
-      [contact.position[0], contact.position[2] + 2],
-      [contact.position[0] + 7, contact.position[2] + 11],
-      [contact.position[0] - 9, contact.position[2] + 8]
-    ]) {
-      this.beacon(group, x, z, 0x78b7ff);
-    }
+    this.createHarborComposition(group, contact);
 
     const stunt = findZone('drift');
     this.addSign(group, 'STUNT', 'Boost Yard', stunt.position[0] - 9, stunt.position[2] + 16, -0.55, 0xff9b6d, 2.6, 'StuntSign');
@@ -1146,6 +1150,92 @@ export class SetPieces {
   addCompositionPlanter(group, x, z, color) {
     this.addPlanterCluster(group, x, z, color);
     this.districtCompositionStats.planters += 1;
+  }
+
+  createHarborComposition(group, contact) {
+    const x = contact.position[0];
+    const z = contact.position[2];
+    const rotation = contact.rotation || -0.34;
+    this.addHarborPad(group, x + 1.2, z + 4.8, 28, 18, this.world.materials.paleStone, rotation, 'HarborSignalDeck');
+    this.addHarborPad(group, x + 8.8, z + 13.2, 11, 9, this.world.materials.sand, rotation - 0.18, 'HarborPierApron');
+
+    this.addSign(group, 'CONTACT', 'Harbor Signal', ...this.harborPoint(contact, -10.4, 14.3, rotation), rotation - 0.34, 0x78b7ff, 2.5, 'HarborSign');
+    this.addHarborAsset(group, 'EnvPolishHarborSignal', contact, 1.6, 3.8, rotation + 0.02, 1.18, null);
+    this.addHarborAsset(group, 'EnvPolishHarborPier', contact, 8.4, 16.6, rotation - 0.08, 1.1, 'piers');
+    this.addHarborAsset(group, 'EnvPolishHarborPier', contact, 15.2, 10.2, rotation + 0.88, 0.78, 'piers');
+    this.addHarborAsset(group, 'EnvPolishHarborAntenna', contact, -7.8, 2.6, rotation + 0.22, 0.92, null);
+    this.addHarborAsset(group, 'EnvPolishHarborShade', contact, -8.8, 8.2, rotation + 0.18, 0.92, 'shadeStructures');
+    this.addHarborAsset(group, 'EnvPolishDockFloat', contact, 14.8, 19.3, rotation - 0.12, 0.92, 'piers');
+    this.addHarborAsset(group, 'EnvPolishWaveMarker', contact, 2.8, 18.4, rotation + 0.34, 0.86, null);
+    this.addHarborAsset(group, 'EnvPolishPalm', contact, -13.2, 5.8, rotation + 0.62, 1.08, null);
+    this.addHarborAsset(group, 'EnvPolishPalm', contact, 13.4, 2.2, rotation + 0.16, 0.98, null);
+    for (const [right, forward, assetRotation, scale] of [
+      [-2.8, 10.6, rotation - 0.28, 0.76],
+      [5.4, 6.2, rotation + 0.18, 0.72],
+      [11.6, 3.6, rotation - 0.52, 0.68]
+    ]) {
+      this.addHarborAsset(group, 'EnvPolishHarborCargoStack', contact, right, forward, assetRotation, scale, 'cargoStacks');
+    }
+    for (const [right, forward, color] of [
+      [-12.8, -2.2, 0x78b7ff],
+      [-4.2, 13.8, 0x78b7ff],
+      [5.8, -1.4, 0x9ccfff],
+      [12.6, 8.8, 0x78b7ff]
+    ]) {
+      const [lampX, lampZ] = this.harborPoint(contact, right, forward, rotation);
+      this.addHarborLamp(group, lampX, lampZ, color, 2.8, 'HarborLamp');
+    }
+    for (const [right, forward] of [
+      [0, 1.2],
+      [6.8, 12.6],
+      [-8.8, 8.2]
+    ]) {
+      const [beaconX, beaconZ] = this.harborPoint(contact, right, forward, rotation);
+      this.beacon(group, beaconX, beaconZ, 0x78b7ff);
+      this.harborStats.beacons += 1;
+    }
+    for (let i = 0; i < 9; i += 1) {
+      const [markX, markZ] = this.harborPoint(contact, -7.6 + i * 2.0, -3.6 + Math.sin(i * 0.8) * 0.8, rotation);
+      this.addHarborPathMark(group, markX, markZ, 1.2, 0.16, rotation + 0.08, i % 2 ? this.world.materials.glowBlue : this.world.materials.paleStone, 'HarborRoadGuideMark');
+    }
+    for (let i = 0; i < 7; i += 1) {
+      const [markX, markZ] = this.harborPoint(contact, 4.8 + Math.sin(i * 0.7) * 1.2, 4.2 + i * 1.9, rotation);
+      this.addHarborPathMark(group, markX, markZ, 0.28, 1.2, rotation - 0.14, this.world.materials.glowBlue, 'HarborPierGuideMark');
+    }
+    this.addYardEdgeDetails(group, x + 1.2, z + 4.8, 28, 18);
+  }
+
+  harborPoint(contact, right, forward, rotation) {
+    const x = contact.position[0] + Math.cos(rotation) * right + Math.sin(rotation) * forward;
+    const z = contact.position[2] - Math.sin(rotation) * right + Math.cos(rotation) * forward;
+    return [x, z];
+  }
+
+  addHarborPad(group, x, z, width, depth, material, rotation, name) {
+    this.groundRect(group, x, z, width, depth, material, 0.124, name);
+    group.children[group.children.length - 1].rotation.y = rotation;
+    this.districtCompositionStats.pads += 1;
+    this.harborStats.pads += 1;
+  }
+
+  addHarborPathMark(group, x, z, width, depth, rotation, material, name) {
+    this.box(group, x, 0.212, z, width, 0.035, depth, material, rotation, name);
+    this.districtCompositionStats.pathMarks += 1;
+    this.harborStats.pathMarks += 1;
+  }
+
+  addHarborLamp(group, x, z, color, height, name) {
+    this.addCompositionLamp(group, x, z, color, height, name);
+    this.harborStats.lamps += 1;
+  }
+
+  addHarborAsset(group, assetName, contact, right, forward, rotation, scale, statName) {
+    const [x, z] = this.harborPoint(contact, right, forward, contact.rotation || -0.34);
+    const placed = this.addCompositionAsset(group, assetName, x, z, rotation, scale);
+    if (!placed) return false;
+    this.harborStats.authoredAssets += 1;
+    if (statName) this.harborStats[statName] = (this.harborStats[statName] || 0) + 1;
+    return true;
   }
 
   createCircuitStartComposition(group, circuit) {

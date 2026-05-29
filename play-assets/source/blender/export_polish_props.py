@@ -37,6 +37,10 @@ def main():
     create_build_workbench(mats)
     create_farm_irrigator(mats)
     create_harbor_signal(mats)
+    create_harbor_pier(mats)
+    create_harbor_antenna(mats)
+    create_harbor_cargo_stack(mats)
+    create_harbor_shade(mats)
     create_district_gateway(mats)
     create_route_lantern(mats)
     create_coast_rock_cluster(mats)
@@ -423,6 +427,66 @@ def create_harbor_signal(mats):
     cube("HarborSignal_Lantern", group, (0, 2.88, -0.08), (1.08, 0.62, 0.82), mats["glass"], bevel=0.035)
     cube("HarborSignal_Roof", group, (0, 3.32, 0), (1.42, 0.26, 1.12), mats["wood"], bevel=0.03)
     cube("HarborSignal_Beam", group, (0, 2.88, -0.58), (2.5, 0.08, 0.08), mats["mint"], bevel=0.006)
+
+
+def create_harbor_pier(mats):
+    group = root("EnvPolishHarborPier")
+    cube("HarborPier_Spine", group, (0, 0.34, 0), (2.2, 0.26, 8.4), mats["wood"], bevel=0.035)
+    for index, z in enumerate([-3.45, -2.3, -1.15, 0.0, 1.15, 2.3, 3.45]):
+        cube(f"HarborPier_Plank_{index}", group, (0, 0.54, z), (3.3, 0.16, 0.42), mats["wood"], bevel=0.025)
+    for x in [-1.82, 1.82]:
+        cube("HarborPier_Pontoon", group, (x, 0.2, 0), (0.46, 0.4, 7.8), mats["foam"], bevel=0.08)
+        for z in [-3.2, -1.05, 1.05, 3.2]:
+            cube("HarborPier_RopePost", group, (x, 1.03, z), (0.16, 0.9, 0.16), mats["rope"], bevel=0.014)
+            cube("HarborPier_RopeLight", group, (x, 1.52, z), (0.34, 0.18, 0.34), mats["screen"], bevel=0.018)
+    for z in [-2.3, 0.0, 2.3]:
+        cube("HarborPier_LeftRope", group, (-1.82, 1.18, z), (0.12, 0.1, 1.55), mats["rope"], bevel=0.01)
+        cube("HarborPier_RightRope", group, (1.82, 1.18, z), (0.12, 0.1, 1.55), mats["rope"], bevel=0.01)
+    cube("HarborPier_EndGlow", group, (0, 0.72, -4.35), (2.55, 0.08, 0.08), mats["mint"], bevel=0.006)
+    cube("HarborPier_DockSign", group, (0, 1.25, 3.72), (2.65, 0.62, 0.12), mats["dark"], bevel=0.018)
+    cube("HarborPier_DockSignLine", group, (0, 1.25, 3.63), (1.72, 0.08, 0.06), mats["amber"], bevel=0.004)
+
+
+def create_harbor_antenna(mats):
+    group = root("EnvPolishHarborAntenna")
+    cube("HarborAntenna_Base", group, (0, 0.18, 0), (1.8, 0.36, 1.8), mats["stone_shadow"], bevel=0.04)
+    cube("HarborAntenna_Mast", group, (0, 2.15, 0), (0.22, 3.85, 0.22), mats["dark"], bevel=0.018)
+    cube("HarborAntenna_Crossbar", group, (0, 3.45, 0), (2.5, 0.12, 0.12), mats["dark"], bevel=0.008)
+    cube("HarborAntenna_SignalPanel", group, (-0.72, 2.4, -0.18), (0.9, 1.0, 0.08), mats["screen"], rot=(0, 0.22, 0), bevel=0.012)
+    cone("HarborAntenna_Dish", group, (0.94, 2.62, -0.16), 0.78, 0.3, mats["foam"], vertices=16, rot=(math.pi / 2, 0.0, -0.35))
+    cube("HarborAntenna_DishCore", group, (0.94, 2.62, -0.42), (0.22, 0.22, 0.2), mats["mint"], bevel=0.02)
+    for index, y in enumerate([1.1, 1.7, 2.3, 2.9, 3.5]):
+        cube(f"HarborAntenna_Ladder_{index}", group, (0, y, 0.18), (0.76, 0.08, 0.08), mats["rope"], bevel=0.004)
+    cube("HarborAntenna_TopBeacon", group, (0, 4.22, 0), (0.46, 0.28, 0.46), mats["amber"], bevel=0.04)
+
+
+def create_harbor_cargo_stack(mats):
+    group = root("EnvPolishHarborCargoStack")
+    cube("HarborCargo_Pallet", group, (0, 0.12, 0), (3.6, 0.24, 2.0), mats["wood"], bevel=0.028)
+    cargo = [
+        (-0.95, 0.56, -0.32, 1.1, 0.88, 0.92, "aqua", -0.08),
+        (0.18, 0.5, 0.2, 1.24, 0.74, 0.9, "stone", 0.14),
+        (1.08, 0.76, -0.2, 1.0, 1.12, 0.86, "screen", -0.12),
+        (-0.1, 1.18, -0.32, 0.82, 0.6, 0.76, "dark", 0.06),
+    ]
+    for index, (x, y, z, sx, sy, sz, material, rot_y) in enumerate(cargo):
+        cube(f"HarborCargo_Crate_{index}", group, (x, y, z), (sx, sy, sz), mats[material], rot=(0, rot_y, 0), bevel=0.035)
+    cube("HarborCargo_RopeCoilA", group, (-1.42, 0.52, 0.78), (0.74, 0.16, 0.74), mats["rope"], bevel=0.08)
+    cube("HarborCargo_RopeCoilB", group, (-1.42, 0.72, 0.78), (0.5, 0.12, 0.5), mats["rope"], bevel=0.06)
+    cube("HarborCargo_Buoy", group, (1.42, 0.62, 0.72), (0.54, 0.74, 0.54), mats["foam"], bevel=0.08)
+    cube("HarborCargo_BuoyBand", group, (1.42, 0.62, 0.72), (0.62, 0.16, 0.62), mats["pink"], bevel=0.025)
+
+
+def create_harbor_shade(mats):
+    group = root("EnvPolishHarborShade")
+    cube("HarborShade_Deck", group, (0, 0.14, 0), (4.6, 0.28, 2.7), mats["stone"], bevel=0.04)
+    for x in [-1.82, 1.82]:
+        for z in [-0.92, 0.92]:
+            cube("HarborShade_Post", group, (x, 1.35, z), (0.18, 2.35, 0.18), mats["wood"], bevel=0.014)
+    cube("HarborShade_Roof", group, (0, 2.62, 0), (5.05, 0.26, 3.05), mats["wood"], bevel=0.035)
+    cube("HarborShade_Terminal", group, (-0.92, 1.05, -0.72), (1.25, 1.35, 0.1), mats["screen"], rot=(0, -0.12, 0), bevel=0.012)
+    cube("HarborShade_Bench", group, (1.05, 0.68, 0.62), (2.05, 0.22, 0.52), mats["wood"], bevel=0.025)
+    cube("HarborShade_GlowStrip", group, (0, 2.42, -1.58), (3.8, 0.08, 0.08), mats["mint"], bevel=0.006)
 
 
 def create_district_gateway(mats):
