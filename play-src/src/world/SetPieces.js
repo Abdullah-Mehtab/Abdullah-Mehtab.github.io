@@ -364,8 +364,16 @@ export class SetPieces {
     this.addLamp(group, cv.position[0] + 8, cv.position[2] + 9, 0xe6f3ff, 2.8, 'CvLamp');
     this.addPolishAsset(group, 'EnvPolishCvVault', cv.position[0] - 0.4, cv.position[2] + 1.2, 0.12, 1.05);
     this.addPolishAsset(group, 'EnvPolishTerminalPillar', cv.position[0] + 8.8, cv.position[2] - 3.6, -0.22, 0.88);
-    this.groundRect(group, cv.position[0], cv.position[2], 13, 9, this.world.materials.plazaRoad, 0.13, 'CvVaultDocumentPad');
+    this.addCompositionPad(group, cv.position[0], cv.position[2], 13, 9, this.world.materials.plazaRoad, 0.13, 'CvVaultDocumentPad');
     this.box(group, cv.position[0], 0.19, cv.position[2] - 4.8, 10.6, 0.04, 0.28, this.world.materials.glowBlue, 0, 'CvVaultFrontTrace');
+    this.addYardEdgeDetails(group, cv.position[0], cv.position[2], 13, 9);
+    for (const [dx, dz, rotation, scale] of [
+      [-3.9, 1.9, 0.22, 0.62],
+      [3.6, -1.8, -0.12, 0.58]
+    ]) {
+      this.addCompositionDetailAsset(group, 'EnvPolishYardSurfaceMarks', cv.position[0] + dx, cv.position[2] + dz, rotation, scale, 'surfaceMarks');
+    }
+    this.addCompositionDetailAsset(group, 'EnvPolishWorkshopProcessRail', cv.position[0] - 4.4, cv.position[2] - 4.1, 0.08, 0.62, 'rails');
 
     const contact = findZone('contact');
     this.addSign(group, 'CONTACT', 'Harbor Signal', contact.position[0] - 8, contact.position[2] + 15, -0.65, 0x78b7ff, 2.5, 'HarborSign');
@@ -459,9 +467,17 @@ export class SetPieces {
     const career = findZone('career');
     this.addSign(group, 'CAREER', 'Signal Office', career.position[0] - 10, career.position[2] + 9, -0.35, 0xb6a0ff, 2.4, 'CareerSign');
     this.addPolishAsset(group, 'EnvPolishCareerOffice', career.position[0] + 1.2, career.position[2] + 0.8, -0.24, 1.08);
-    this.box(group, career.position[0] + 7, 0.22, career.position[2] - 6, 9, 0.16, 5.5, this.world.materials.plazaRoad, 0.12, 'CareerOfficeDeck');
+    this.addCompositionPad(group, career.position[0] + 7, career.position[2] - 6, 9, 5.5, this.world.materials.plazaRoad, 0.16, 'CareerOfficeDeck');
     this.flagPole(group, career.position[0] + 13, career.position[2] - 6, 0xb6a0ff);
     this.addPolishAsset(group, 'EnvPolishSignalTotem', career.position[0] + 1.4, career.position[2] - 10.8, -0.18, 0.88);
+    this.addYardEdgeDetails(group, career.position[0] + 7, career.position[2] - 6, 9, 5.5);
+    for (const [dx, dz, rotation, scale] of [
+      [4.1, -6.2, 0.12, 0.58],
+      [9.5, -5.0, -0.28, 0.56]
+    ]) {
+      this.addCompositionDetailAsset(group, 'EnvPolishYardSurfaceMarks', career.position[0] + dx, career.position[2] + dz, rotation, scale, 'surfaceMarks');
+    }
+    this.addCompositionDetailAsset(group, 'EnvPolishWorkshopProcessRail', career.position[0] + 7.4, career.position[2] - 8.6, -0.08, 0.6, 'rails');
 
     const circuit = findZone('circuit');
     this.addSign(group, 'CIRCUIT', 'Checkpoint Run', circuit.position[0] - 10, circuit.position[2] - 10, 0.4, 0xff9b6d, 2.4, 'CircuitSign');
