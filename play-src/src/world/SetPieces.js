@@ -76,7 +76,10 @@ export class SetPieces {
       edgeTrims: 0,
       surfaceMarks: 0,
       rails: 0,
-      silhouetteAnchors: 0
+      silhouetteAnchors: 0,
+      careerConnectors: 0,
+      farmRows: 0,
+      farmFences: 0
     };
     this.circuitStartStats = {
       pads: 0,
@@ -521,10 +524,26 @@ export class SetPieces {
     this.addSign(group, 'CAREER', 'Signal Office', career.position[0] - 10, career.position[2] + 9, -0.35, 0xb6a0ff, 2.4, 'CareerSign');
     this.addPolishAsset(group, 'EnvPolishCareerOffice', career.position[0] + 1.2, career.position[2] + 0.8, -0.24, 1.08);
     this.addCompositionPad(group, career.position[0] + 7, career.position[2] - 6, 9, 5.5, this.world.materials.plazaRoad, 0.16, 'CareerOfficeDeck');
+    this.addCompositionPad(group, career.position[0] + 4.2, career.position[2] + 2.2, 18, 10, this.world.materials.paleStone, 0.122, 'CareerSignalPlaza');
     this.flagPole(group, career.position[0] + 13, career.position[2] - 6, 0xb6a0ff);
     this.addPolishAsset(group, 'EnvPolishSignalTotem', career.position[0] + 1.4, career.position[2] - 10.8, -0.18, 0.88);
     this.addSilhouetteAnchor(group, 'EnvPolishSignalSpire', career.position[0] + 10.6, career.position[2] + 2.2, -0.34, 0.86);
+    this.addCompositionAsset(group, 'EnvPolishTerminalBank', career.position[0] + 6.6, career.position[2] + 5.4, -0.38, 0.68);
+    this.addCompositionAsset(group, 'EnvPolishBenchPlanter', career.position[0] - 3.6, career.position[2] + 5.4, 0.42, 0.74);
+    for (let i = 0; i < 7; i += 1) {
+      this.addCareerConnectorMark(
+        group,
+        career.position[0] - 2.8 + i * 2.65,
+        career.position[2] - 1.2 + i * 0.82,
+        1.35,
+        0.14,
+        i % 2 ? this.world.materials.glowPink : this.world.materials.glowBlue,
+        -0.34,
+        'CareerSignalGuideMark'
+      );
+    }
     this.addYardEdgeDetails(group, career.position[0] + 7, career.position[2] - 6, 9, 5.5);
+    this.addYardEdgeDetails(group, career.position[0] + 4.2, career.position[2] + 2.2, 18, 10);
     for (const [dx, dz, rotation, scale] of [
       [4.1, -6.2, 0.12, 0.58],
       [9.5, -5.0, -0.28, 0.56]
@@ -580,6 +599,7 @@ export class SetPieces {
     this.addPolishAsset(group, 'EnvPolishFarmIrrigator', potato.position[0] + 4.4, potato.position[2] - 1.8, 0.18, 1.04);
     this.addPolishAsset(group, 'EnvPolishBenchPlanter', potato.position[0] - 8.6, potato.position[2] + 1.4, 0.22, 0.78);
     this.addSilhouetteAnchor(group, 'EnvPolishGardenArch', potato.position[0] - 5.4, potato.position[2] + 7.0, 0.28, 0.78);
+    this.createFarmFieldComposition(group, potato);
 
     mergeStaticMeshesInGroup(group, { namePrefix: 'SETPIECE_district' });
     this.world.scene.add(group);
@@ -1152,6 +1172,11 @@ export class SetPieces {
     this.districtCompositionStats.pathMarks += 1;
   }
 
+  addCareerConnectorMark(group, x, z, width, depth, material, rotation, name) {
+    this.addCompositionPathMark(group, x, z, width, depth, material, rotation, name);
+    this.districtCompositionStats.careerConnectors += 1;
+  }
+
   addCompositionLamp(group, x, z, color, height, name) {
     this.addLamp(group, x, z, color, height, name);
     this.districtCompositionStats.lamps += 1;
@@ -1196,6 +1221,56 @@ export class SetPieces {
   addCompositionPlanter(group, x, z, color) {
     this.addPlanterCluster(group, x, z, color);
     this.districtCompositionStats.planters += 1;
+  }
+
+  createFarmFieldComposition(group, farm) {
+    const x = farm.position[0];
+    const z = farm.position[2];
+    const rotation = -0.16;
+    this.addCompositionPad(group, x - 2.4, z + 0.4, 30, 18, this.world.materials.warmStone, 0.119, 'FarmFieldTerrace');
+    this.addCompositionPad(group, x + 10.8, z + 2.2, 7.5, 13, this.world.materials.sand, 0.122, 'FarmIrrigationWalk');
+    for (let i = 0; i < 8; i += 1) {
+      const rowX = x - 13.0 + i * 3.05;
+      const rowZ = z - 1.4 + Math.sin(i * 0.8) * 0.35;
+      this.box(group, rowX, 0.21, rowZ, 1.05, 0.08, 13.4, this.world.materials.crop, rotation, 'FarmCropRow');
+      this.box(group, rowX, 0.185, rowZ + 0.24, 1.28, 0.04, 12.8, this.world.materials.dirtRoad, rotation, 'FarmSoilRow');
+      this.districtCompositionStats.farmRows += 1;
+    }
+    for (let i = 0; i < 6; i += 1) {
+      const railX = x - 16.0 + i * 5.4;
+      this.addFarmFenceSegment(group, railX, z - 9.6, rotation, 'FarmFenceBack');
+      this.addFarmFenceSegment(group, railX, z + 9.8, rotation, 'FarmFenceFront');
+    }
+    this.addCompositionAsset(group, 'EnvPolishFarmIrrigator', x + 11.8, z + 5.6, 0.05, 0.74);
+    this.addCompositionAsset(group, 'EnvPolishRouteLantern', x - 15.8, z - 8.2, -0.44, 0.62);
+    this.addCompositionAsset(group, 'EnvPolishBenchPlanter', x + 12.8, z - 5.8, 0.18, 0.68);
+    for (const [dx, dz, color] of [
+      [-16.4, -8.6, 0xc79b56],
+      [14.8, 8.4, 0x7cffb2],
+      [2.2, 10.6, 0xffc36a]
+    ]) {
+      this.addCompositionLamp(group, x + dx, z + dz, color, 2.35, 'FarmFieldLamp');
+    }
+    for (let i = 0; i < 6; i += 1) {
+      this.addCompositionPathMark(
+        group,
+        x - 11.0 + i * 4.2,
+        z + 11.6 + Math.sin(i) * 0.35,
+        1.4,
+        0.14,
+        i % 2 ? this.world.materials.paleStone : this.world.materials.glow,
+        rotation,
+        'FarmTrackGuideMark'
+      );
+    }
+  }
+
+  addFarmFenceSegment(group, x, z, rotation, name) {
+    this.box(group, x - 1.7, 0.72, z, 0.16, 1.08, 0.16, this.world.materials.darkWood, rotation, `${name}PostA`);
+    this.box(group, x + 1.7, 0.72, z, 0.16, 1.08, 0.16, this.world.materials.darkWood, rotation, `${name}PostB`);
+    this.box(group, x, 1.02, z, 3.7, 0.12, 0.12, this.world.materials.wood, rotation, `${name}RailTop`);
+    this.box(group, x, 0.58, z, 3.5, 0.1, 0.1, this.world.materials.wood, rotation, `${name}RailLow`);
+    this.districtCompositionStats.farmFences += 1;
   }
 
   createHarborComposition(group, contact) {
