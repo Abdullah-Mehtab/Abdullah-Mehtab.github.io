@@ -77,7 +77,15 @@ export const meadowDetailPatches = [
   { id: 'data-pier-grove-lawn', center: [-126, 36], size: [22, 7], rotation: -0.48, color: '#79ffc5' },
   { id: 'sentinel-ridge-petal-lawn', center: [26, 134], size: [28, 8], rotation: 0.18, color: '#ff6d8d' },
   { id: 'stunt-west-tire-lawn', center: [66, -110], size: [30, 8], rotation: -0.18, color: '#7a5b46' },
-  { id: 'stunt-east-warm-lawn', center: [128, -86], size: [26, 7], rotation: 0.34, color: '#ff9b6d' }
+  { id: 'stunt-east-warm-lawn', center: [128, -86], size: [26, 7], rotation: 0.34, color: '#ff9b6d' },
+  { id: 'central-cv-flower-lawn', center: [-16, -24], size: [28, 7], rotation: 0.16, color: '#d8b6ff' },
+  { id: 'gallery-inner-cool-lawn', center: [38, -6], size: [30, 7], rotation: -0.32, color: '#84d7bd' },
+  { id: 'career-approach-warm-lawn', center: [74, -36], size: [28, 8], rotation: 0.18, color: '#ffb074' },
+  { id: 'sentinel-approach-lawn', center: [0, 76], size: [30, 7], rotation: 0.38, color: '#ff6d8d' },
+  { id: 'harbor-north-salt-lawn', center: [116, 96], size: [26, 7], rotation: 0.24, color: '#78b7ff' },
+  { id: 'south-loop-inner-lawn', center: [44, -126], size: [34, 8], rotation: -0.42, color: '#ff9b6d' },
+  { id: 'west-campus-shadow-lawn', center: [-118, 104], size: [24, 7], rotation: 0.28, color: '#9ccfff' },
+  { id: 'data-ridge-wild-lawn', center: [-146, 84], size: [20, 6], rotation: -0.36, color: '#79ffc5' }
 ];
 
 export const fieldMotifClusters = [
@@ -94,7 +102,13 @@ export const fieldMotifClusters = [
   { id: 'west-skills-field', center: [-92, -86], size: [44, 28], rotation: -0.3, palette: ['#92ffea', '#7aa064', '#c79b56'], berms: 4, ribbons: 7, seed: 59 },
   { id: 'south-stunt-field', center: [112, -118], size: [52, 26], rotation: -0.32, palette: ['#ff9b6d', '#c79b56', '#f3e7bd'], berms: 4, ribbons: 7, seed: 61 },
   { id: 'behind-farm-field', center: [-22, -122], size: [46, 24], rotation: 0.22, palette: ['#a8a6ff', '#c79b56', '#77b85a'], berms: 3, ribbons: 6, seed: 67 },
-  { id: 'data-pier-grove-fill', center: [-128, 32], size: [34, 24], rotation: -0.5, palette: ['#79ffc5', '#9ccfff', '#f0aeb6'], berms: 3, ribbons: 6, seed: 71 }
+  { id: 'data-pier-grove-fill', center: [-128, 32], size: [34, 24], rotation: -0.5, palette: ['#79ffc5', '#9ccfff', '#f0aeb6'], berms: 3, ribbons: 6, seed: 71 },
+  { id: 'central-gallery-meadow', center: [38, -4], size: [44, 28], rotation: -0.35, palette: ['#84d7bd', '#e6f3ff', '#d8b6ff'], berms: 4, ribbons: 8, seed: 73 },
+  { id: 'sentinel-inner-meadow', center: [-2, 76], size: [42, 24], rotation: 0.42, palette: ['#ff6d8d', '#ffdf8a', '#9ccfff'], berms: 3, ribbons: 7, seed: 79 },
+  { id: 'east-harbor-meadow', center: [116, 98], size: [32, 22], rotation: 0.2, palette: ['#78b7ff', '#f3d19c', '#84d7bd'], berms: 3, ribbons: 7, seed: 83 },
+  { id: 'cv-west-meadow', center: [-18, -24], size: [38, 26], rotation: 0.18, palette: ['#e6f3ff', '#d8b6ff', '#9fc77a'], berms: 3, ribbons: 7, seed: 89 },
+  { id: 'south-loop-inner-meadow', center: [44, -126], size: [40, 24], rotation: -0.44, palette: ['#ff9b6d', '#c79b56', '#f3e7bd'], berms: 4, ribbons: 7, seed: 97 },
+  { id: 'fcc-north-grove-meadow', center: [-106, 112], size: [34, 22], rotation: 0.24, palette: ['#9ccfff', '#f0aeb6', '#f2dfb2'], berms: 3, ribbons: 6, seed: 101 }
 ];
 
 export const roadPaths = [
