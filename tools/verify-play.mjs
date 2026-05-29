@@ -1187,6 +1187,10 @@ function assertVerification(result) {
   if ((surfaceFeedback.surfaceDustDelta || 0) < 6) failures.push(`surface feedback probe failed: surface dust=${surfaceFeedback.surfaceDustDelta || 0}`);
   if (!result.camera?.occlusion?.resolvedCloser) failures.push('camera occlusion probe failed');
   if ((result.camera?.stats?.tests || 0) < 1) failures.push('camera occlusion stats did not record tests');
+  const cameraFeel = result.camera?.stats?.feel || {};
+  if ((cameraFeel.maxFov || 0) < 60.5) failures.push(`camera feel probe failed: maxFov=${cameraFeel.maxFov || 0}`);
+  if ((cameraFeel.maxShake || 0) < 0.18) failures.push(`camera feel probe failed: maxShake=${cameraFeel.maxShake || 0}`);
+  if ((cameraFeel.maxSpeedPull || 0) < 1.4) failures.push(`camera feel probe failed: maxSpeedPull=${cameraFeel.maxSpeedPull || 0}`);
   if ((result.audio?.zoneStingersPlayed || 0) < 1) failures.push('audio probe failed: zone stingers');
   if ((result.audio?.landingEvents || 0) < 1) failures.push('audio probe failed: landing event counter');
   if (result.collectibles?.total !== 7) failures.push(`collectible probe failed: total=${result.collectibles?.total}`);

@@ -16,6 +16,7 @@ export class CameraRig {
     this.cinematicFov = null;
     this.baseFov = camera.fov;
     this.occlusionStats = { tests: 0, hits: 0, lastHitDistance: 0, lastResolvedDistance: 0 };
+    this.feelStats = { maxFov: camera.fov, maxShake: 0, maxSpeedPull: 0, maxLateralPull: 0 };
   }
 
   setCinematic(position, target, fov = null) {
@@ -56,27 +57,28 @@ export class CameraRig {
     const orbit = this.input.pointer.orbitX;
     const orbitQuaternion = new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 1, 0), orbit);
     const cameraForward = forward.clone().applyQuaternion(orbitQuaternion);
-    const speedPull = THREE.MathUtils.clamp(Math.abs(this.vehicle.speed) * 0.16, 0, 4);
+    const speedAmount = THREE.MathUtils.clamp(Math.abs(this.vehicle.speed) / 42, 0, 1);
+    const speedPull = THREE.MathUtils.clamp(Math.abs(this.vehicle.speed) * 0.19, 0, 5.8);
     const zoom = this.input.pointer.zoom;
     const pitch = this.input.pointer.orbitY;
 
     const target = vehiclePosition.clone()
-      .add(new THREE.Vector3(0, 1.35, 0))
-      .addScaledVector(cameraForward, 4.2)
-      .addScaledVector(right, lateralPull * 0.22);
+      .add(new THREE.Vector3(0, 1.28 + speedAmount * 0.28, 0))
+      .addScaledVector(cameraForward, 4.6 + speedAmount * 1.25)
+      .addScaledVector(right, lateralPull * (driveState.handbrake ? 0.34 : 0.24));
     const desired = vehiclePosition.clone()
-      .addScaledVector(cameraForward, (-13.5 - speedPull) * zoom)
-      .addScaledVector(right, -lateralPull * (driveState.handbrake ? 1.05 : 0.58))
-      .add(new THREE.Vector3(0, 7.2 + speedPull * 0.18 + pitch * 4.5, 0));
+      .addScaledVector(cameraForward, (-12.8 - speedPull) * zoom)
+      .addScaledVector(right, -lateralPull * (driveState.handbrake ? 1.22 : 0.66))
+      .add(new THREE.Vector3(0, 6.65 + speedPull * 0.32 + (driveState.wheelie ? 0.55 : 0) + pitch * 4.5, 0));
     const now = performance.now() * 0.001;
     const landingAge = now - (this.vehicle.lastLandingAt ?? -Infinity);
     const landingShake = landingAge < 0.34
       ? (1 - landingAge / 0.34) * (this.vehicle.lastLandingIntensity || 0) * 0.34
       : 0;
-    const shake = (driveState.boost ? 0.18 : 0)
-      + (driveState.handbrake ? 0.08 : 0)
-      + (driveState.burnout ? 0.14 : 0)
-      + (driveState.wheelie ? 0.1 : 0)
+    const shake = (driveState.boost ? 0.24 : 0)
+      + (driveState.handbrake ? 0.1 : 0)
+      + (driveState.burnout ? 0.18 : 0)
+      + (driveState.wheelie ? 0.14 : 0)
       + landingShake;
     if (shake > 0) {
       const t = now;
@@ -93,11 +95,16 @@ export class CameraRig {
     this.camera.position.lerp(resolvedDesired, cameraEase * 0.62);
     this.smoothedTarget.lerp(target, targetEase * 0.7);
     const fovTarget = this.baseFov
-      + Math.min(6.5, Math.abs(this.vehicle.speed) * 0.12)
-      + (driveState.boost ? 2.4 : 0)
-      + (driveState.handbrake ? 1.2 : 0)
-      + landingShake * 1.4;
-    this.camera.fov += (fovTarget - this.camera.fov) * Math.min(1, dt * 4.2);
+      + Math.min(8.2, Math.abs(this.vehicle.speed) * 0.15)
+      + (driveState.boost ? 3.2 : 0)
+      + (driveState.handbrake ? 1.45 : 0)
+      + (driveState.wheelie ? 1.15 : 0)
+      + landingShake * 1.6;
+    this.camera.fov += (fovTarget - this.camera.fov) * Math.min(1, dt * 4.8);
+    this.feelStats.maxFov = Math.max(this.feelStats.maxFov, this.camera.fov);
+    this.feelStats.maxShake = Math.max(this.feelStats.maxShake, shake);
+    this.feelStats.maxSpeedPull = Math.max(this.feelStats.maxSpeedPull, speedPull);
+    this.feelStats.maxLateralPull = Math.max(this.feelStats.maxLateralPull, Math.abs(lateralPull));
     this.camera.updateProjectionMatrix();
     this.camera.lookAt(this.smoothedTarget);
   }
@@ -149,6 +156,14 @@ export class CameraRig {
   }
 
   getDebugStats() {
-    return { ...this.occlusionStats };
+    return {
+      ...this.occlusionStats,
+      feel: {
+        maxFov: Number(this.feelStats.maxFov.toFixed(2)),
+        maxShake: Number(this.feelStats.maxShake.toFixed(2)),
+        maxSpeedPull: Number(this.feelStats.maxSpeedPull.toFixed(2)),
+        maxLateralPull: Number(this.feelStats.maxLateralPull.toFixed(2))
+      }
+    };
   }
 }
