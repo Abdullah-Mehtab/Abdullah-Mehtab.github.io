@@ -41,6 +41,7 @@ export class Roads {
   build() {
     this.world.scene.add(this.roadGroup);
     this.roadGroup.userData.edgeFeatherCount = 0;
+    this.roadGroup.userData.laneEdgeLineCount = 0;
     for (const path of roadPaths) {
       this.addPath(path);
     }
@@ -100,6 +101,9 @@ export class Roads {
       }
     }
     this.addEdgeFeathers(path, style, width, layer);
+    if (path.hierarchy !== 'dirt') {
+      this.addLaneEdgeLines(path, width, layer, surfaceY);
+    }
 
     const lineMaterial = this.cachedLineMaterial(style.line);
     const curve = makePathCurve(path.points, path.closed);
@@ -116,6 +120,22 @@ export class Roads {
     }
 
     // Roads stay visual so the car always drives on one continuous terrain collider.
+  }
+
+  addLaneEdgeLines(path, width, layer, surfaceY) {
+    const inset = path.hierarchy === 'bridge' ? width * 0.36 : width * 0.34;
+    const lineWidth = path.hierarchy === 'avenue' ? 0.15 : path.hierarchy === 'plaza' ? 0.14 : 0.12;
+    const material = this.offsetMaterial(this.cachedLineMaterial(roadLaneEdgeColor(path)), 10 + layer);
+    for (const side of [-1, 1]) {
+      const line = new THREE.Mesh(
+        createPathRibbonGeometry(path.points, lineWidth, path.closed, surfaceY + 0.041, 9, inset * side),
+        material
+      );
+      line.name = `ROAD_${path.id}_lane_edge_${side > 0 ? 'right' : 'left'}`;
+      line.renderOrder = 9 + layer;
+      this.roadGroup.add(line);
+      this.roadGroup.userData.laneEdgeLineCount += 1;
+    }
   }
 
   addEdgeFeathers(path, style, width, layer) {
@@ -485,6 +505,15 @@ function roadMarkerColor(path) {
   if (path.hierarchy === 'bridge') return 0x79ffc5;
   if (path.hierarchy === 'plaza') return 0xf3e7bd;
   return (ROAD_STYLE[path.hierarchy] || ROAD_STYLE.street).line;
+}
+
+function roadLaneEdgeColor(path) {
+  if (path.hierarchy === 'security') return 0x68d8ff;
+  if (path.hierarchy === 'stunt') return 0xffc0a5;
+  if (path.hierarchy === 'bridge') return 0x9df7ff;
+  if (path.hierarchy === 'plaza') return 0xfff3cf;
+  if (path.hierarchy === 'avenue') return 0xf4ddb1;
+  return 0xe8d3a0;
 }
 
 function roadVergeColor(path) {
