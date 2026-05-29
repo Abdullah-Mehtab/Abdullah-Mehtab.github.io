@@ -15,6 +15,7 @@ export class SetPieces {
     this.lifeDummy = new THREE.Object3D();
     this.lifeInstanceMeshes = [];
     this.lifeInstanceDirty = new Set();
+    this.signAtlas = null;
     this.lifeItems = {
       zonePulses: [],
       windBanners: [],
@@ -694,14 +695,13 @@ export class SetPieces {
     sign.name = name;
     this.cylinder(sign, -1.12 * scale, 1.0, 0, 0.06, 2.0, this.world.materials.darkWood, 8, `${name}_PostLeft`);
     this.cylinder(sign, 1.12 * scale, 1.0, 0, 0.06, 2.0, this.world.materials.darkWood, 8, `${name}_PostRight`);
-    const texture = makeSignTexture(title, subtitle, color);
-    const geometry = new THREE.PlaneGeometry(2.65 * scale, 1.1 * scale);
-    const material = new THREE.MeshBasicMaterial({ map: texture, transparent: true, depthWrite: false, side: THREE.FrontSide });
+    const { material, rect } = this.allocateSignPanel(title, subtitle, color);
+    const geometry = createSignBoardGeometry(2.65 * scale, 1.1 * scale, rect);
     const front = new THREE.Mesh(geometry, material);
     front.name = `${name}_BoardFront`;
     front.position.y = 1.9;
     front.position.z = 0.025;
-    const back = new THREE.Mesh(geometry, material.clone());
+    const back = new THREE.Mesh(geometry, material);
     back.name = `${name}_BoardBack`;
     back.position.y = 1.9;
     back.position.z = -0.025;
@@ -710,6 +710,31 @@ export class SetPieces {
     sign.position.set(x, 0.16, z);
     sign.rotation.y = rotation;
     group.add(sign);
+  }
+
+  allocateSignPanel(title, subtitle, color) {
+    if (!this.signAtlas) this.signAtlas = createSignAtlas();
+    const atlas = this.signAtlas;
+    const index = atlas.cursor;
+    atlas.cursor += 1;
+    const column = index % atlas.columns;
+    const row = Math.floor(index / atlas.columns);
+    if (row >= atlas.rows) {
+      throw new Error('Sign atlas capacity exceeded');
+    }
+    const x = column * atlas.tileWidth;
+    const y = row * atlas.tileHeight;
+    drawSignPanel(atlas.context, x, y + 18, title, subtitle, color);
+    atlas.texture.needsUpdate = true;
+    return {
+      material: atlas.material,
+      rect: {
+        u0: x / atlas.canvas.width,
+        u1: (x + atlas.tileWidth) / atlas.canvas.width,
+        v0: 1 - (y + atlas.tileHeight) / atlas.canvas.height,
+        v1: 1 - y / atlas.canvas.height
+      }
+    };
   }
 
   addBench(group, x, z, rotation, scale) {
@@ -906,14 +931,35 @@ function findZone(id) {
   return zone || { position: [0, 0, 0], radius: 10 };
 }
 
-function makeSignTexture(title, subtitle, color) {
+function createSignAtlas() {
   const canvas = document.createElement('canvas');
-  canvas.width = 512;
-  canvas.height = 220;
-  const ctx = canvas.getContext('2d');
-  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  canvas.width = 2048;
+  canvas.height = 2048;
+  const texture = new THREE.CanvasTexture(canvas);
+  texture.colorSpace = THREE.SRGBColorSpace;
+  texture.needsUpdate = true;
+  return {
+    canvas,
+    context: canvas.getContext('2d'),
+    texture,
+    material: new THREE.MeshBasicMaterial({
+      map: texture,
+      transparent: true,
+      depthWrite: false,
+      side: THREE.FrontSide
+    }),
+    tileWidth: 512,
+    tileHeight: 256,
+    columns: 4,
+    rows: 8,
+    cursor: 0
+  };
+}
+
+function drawSignPanel(ctx, x, y, title, subtitle, color) {
+  ctx.clearRect(x, y - 18, 512, 256);
   ctx.fillStyle = 'rgba(4, 11, 18, 0.86)';
-  roundRect(ctx, 18, 18, 476, 184, 18);
+  roundRect(ctx, x + 18, y + 18, 476, 184, 18);
   ctx.fill();
   ctx.strokeStyle = new THREE.Color(color).getStyle();
   ctx.lineWidth = 6;
@@ -921,20 +967,32 @@ function makeSignTexture(title, subtitle, color) {
   ctx.fillStyle = '#f4fbff';
   ctx.font = '900 44px Arial';
   ctx.textAlign = 'center';
-  ctx.fillText(title, 256, 94);
+  ctx.fillText(title, x + 256, y + 94);
   ctx.fillStyle = new THREE.Color(color).getStyle();
   ctx.font = '700 24px Arial';
-  ctx.fillText(subtitle, 256, 142);
+  ctx.fillText(subtitle, x + 256, y + 142);
   ctx.beginPath();
-  ctx.moveTo(224, 166);
-  ctx.lineTo(288, 166);
-  ctx.lineTo(256, 190);
+  ctx.moveTo(x + 224, y + 166);
+  ctx.lineTo(x + 288, y + 166);
+  ctx.lineTo(x + 256, y + 190);
   ctx.closePath();
   ctx.fill();
-  const texture = new THREE.CanvasTexture(canvas);
-  texture.colorSpace = THREE.SRGBColorSpace;
-  texture.needsUpdate = true;
-  return texture;
+}
+
+function createSignBoardGeometry(width, height, rect) {
+  const geometry = new THREE.PlaneGeometry(width, height);
+  const uv = geometry.attributes.uv;
+  for (let i = 0; i < uv.count; i += 1) {
+    const u = uv.getX(i);
+    const v = uv.getY(i);
+    uv.setXY(
+      i,
+      rect.u0 + (rect.u1 - rect.u0) * u,
+      rect.v0 + (rect.v1 - rect.v0) * v
+    );
+  }
+  uv.needsUpdate = true;
+  return geometry;
 }
 
 function roundRect(ctx, x, y, width, height, radius) {
