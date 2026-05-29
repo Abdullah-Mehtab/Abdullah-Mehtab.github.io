@@ -103,6 +103,7 @@ export class World {
     localStorage.setItem('portfolio-drive-landscape-quality', quality);
     this.water?.applyQuality?.();
     this.foliage?.applyQuality();
+    this.setPieces?.applyQuality();
     this.atmosphere?.applyQuality?.();
     this.onQualityChange?.(quality);
     return this.landscapeQuality;
