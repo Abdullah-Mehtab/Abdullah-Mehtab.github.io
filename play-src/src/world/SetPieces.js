@@ -12,6 +12,7 @@ export class SetPieces {
     this.animated = [];
     this.securityScanObjects = [];
     this.securityScanMaterials = [];
+    this.whisperEntries = [];
     this.lifeDummy = new THREE.Object3D();
     this.ambienceDummy = new THREE.Object3D();
     this.lifeInstanceMeshes = [];
@@ -264,6 +265,35 @@ export class SetPieces {
 
   getHarborStats() {
     return { ...this.harborStats };
+  }
+
+  getWhisperEntries() {
+    return this.whisperEntries.map((entry) => ({
+      index: entry.index,
+      message: entry.message,
+      color: entry.color,
+      active: entry.active !== false,
+      position: entry.position.clone()
+    }));
+  }
+
+  getNearestWhisper(position, maxDistance = 9.5) {
+    if (!position) return null;
+    let best = null;
+    for (const entry of this.whisperEntries) {
+      if (entry.active === false) continue;
+      const distance = Math.hypot(position.x - entry.position.x, position.z - entry.position.z);
+      if (distance > maxDistance || (best && distance >= best.distance)) continue;
+      best = {
+        key: `whisper-${entry.index}`,
+        index: entry.index,
+        message: entry.message,
+        color: entry.color,
+        distance,
+        position: entry.position
+      };
+    }
+    return best;
   }
 
   createStartDiorama() {
@@ -900,16 +930,16 @@ export class SetPieces {
     bannerSpecs.forEach(([x, z, rotation, color], index) => this.addWindBanner(group, x, z, rotation, color, index));
 
     const whisperSpecs = [
-      [-40, 42, 0x9ccfff],
-      [-68, 78, 0x9ccfff],
-      [-36, 2, 0x68d8ff],
-      [-92, -42, 0x68d8ff],
-      [22, -34, 0xe6f3ff],
-      [78, -92, 0xff9b6d],
-      [84, 48, 0xffcc66],
-      [116, 60, 0x78b7ff],
-      [-126, 58, 0x79ffc5],
-      [-28, -94, 0xa8a6ff]
+      [-40, 42, 0x9ccfff, 'Campus lamps are pulling you toward FCC Grove.'],
+      [-68, 78, 0x9ccfff, 'The S-block facade stays exact; the plaza does the staging.'],
+      [-36, 2, 0x68d8ff, 'Scanner road ahead. Keep the car straight through the blue gate.'],
+      [-92, -42, 0x68d8ff, 'Security packets orbit the lab when the scan wakes up.'],
+      [22, -34, 0xe6f3ff, 'The document run bends toward the CV vault.'],
+      [78, -92, 0xff9b6d, 'Rubber marks mean the stunt loop is live.'],
+      [84, 48, 0xffcc66, 'Workshop lights mark the project yard entrance.'],
+      [116, 60, 0x78b7ff, 'Harbor signals point back to contact links.'],
+      [-126, 58, 0x79ffc5, 'Data shards hum along the pier route.'],
+      [-28, -94, 0xa8a6ff, 'Behind the build sits under the south work lights.']
     ];
     this.createWhisperBeaconInstances(group, whisperSpecs);
 
@@ -1058,13 +1088,15 @@ export class SetPieces {
     group.add(mesh);
     this.lifeInstanceMeshes.push(mesh);
 
-    specs.forEach(([x, z, color], index) => {
+    specs.forEach(([x, z, color, message], index) => {
       mesh.setColorAt(index, new THREE.Color(color));
       const proxy = new THREE.Object3D();
       proxy.name = `Life_WhisperBeacon_${index}`;
       proxy.position.set(x, 1.45 + (index % 3) * 0.12, z);
+      proxy.userData.whisper = message;
       group.add(proxy);
       const entry = {
+        index,
         kind: 'beacon',
         instanceKind: 'beacon',
         instanceMesh: mesh,
@@ -1076,11 +1108,15 @@ export class SetPieces {
         range: 0.34,
         speed: 1.2 + index * 0.05,
         phase: index * 0.7,
-        rotationSpeed: 0.7 + index * 0.03
+        rotationSpeed: 0.7 + index * 0.03,
+        message,
+        color,
+        active: true
       };
       this.writeLifeInstance(entry, 0);
       this.animated.push(entry);
       this.lifeItems.whisperBeacons.push({ root: proxy, entry });
+      this.whisperEntries.push(entry);
       this.lifeStats.whisperBeacons += 1;
     });
     if (mesh.instanceColor) mesh.instanceColor.needsUpdate = true;

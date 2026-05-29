@@ -11,6 +11,7 @@ export class UI {
     this.activeTab = 'options';
     this.mapState = { scale: 1, x: 0, y: 0, dragging: false, lastX: 0, lastY: 0 };
     this.mapStats = {};
+    this.activeWhisperKey = null;
     this.lastNotification = { message: '', time: 0 };
     this.refs = {
       loading: document.getElementById('loading'),
@@ -22,6 +23,8 @@ export class UI {
       promptKind: document.getElementById('prompt-kind'),
       promptTitle: document.getElementById('prompt-title'),
       promptAction: document.getElementById('prompt-action'),
+      whisper: document.getElementById('whisper-feed'),
+      whisperText: document.getElementById('whisper-text'),
       circuitStatus: document.getElementById('circuit-status'),
       circuitProgress: document.getElementById('circuit-progress'),
       circuitTime: document.getElementById('circuit-time'),
@@ -112,6 +115,21 @@ export class UI {
 
   hidePrompt() {
     this.refs.prompt.hidden = true;
+  }
+
+  updateWhisper(whisper) {
+    if (!this.refs.whisper || !this.refs.whisperText) return;
+    if (!whisper || this.isPanelOpen()) {
+      this.refs.whisper.hidden = true;
+      this.activeWhisperKey = null;
+      return;
+    }
+    if (this.activeWhisperKey !== whisper.key) {
+      this.refs.whisperText.textContent = whisper.message;
+      this.activeWhisperKey = whisper.key;
+    }
+    this.refs.whisper.style.setProperty('--zone-color', colorValue(whisper.color));
+    this.refs.whisper.hidden = false;
   }
 
   openZone(zone, options = {}) {
@@ -635,6 +653,17 @@ export class UI {
     };
   }
 
+  getWhisperStats() {
+    const box = this.refs.whisper?.getBoundingClientRect?.();
+    return {
+      visible: Boolean(this.refs.whisper && !this.refs.whisper.hidden),
+      text: this.refs.whisperText?.textContent || '',
+      key: this.activeWhisperKey,
+      width: Math.round(box?.width || 0),
+      height: Math.round(box?.height || 0)
+    };
+  }
+
   getCircuitStats() {
     const box = this.refs.circuitStatus?.getBoundingClientRect?.();
     return {
@@ -799,6 +828,11 @@ function optionButton(title, description, onClick) {
 
 function capitalize(value) {
   return `${value.charAt(0).toUpperCase()}${value.slice(1)}`;
+}
+
+function colorValue(value) {
+  if (typeof value === 'number') return `#${value.toString(16).padStart(6, '0')}`;
+  return value || '#68d8ff';
 }
 
 function formatTime(seconds) {

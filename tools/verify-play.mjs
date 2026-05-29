@@ -105,6 +105,9 @@ try {
   await screenshot(page, '06-circuit-target.png');
   const circuit = await finishCircuit(page, circuitPreview);
   const worldLife = await sampleWorldLife(page);
+  await showWhisperForScreenshot(page);
+  await screenshot(page, '07-world-whisper.png');
+  await page.evaluate(() => window.__portfolioDrive.game.ui.updateWhisper(null));
 
   for (const zone of worldZones) {
     await page.evaluate((zoneId) => {
@@ -739,6 +742,23 @@ async function finishCircuit(page, preview) {
   }, preview);
 }
 
+async function showWhisperForScreenshot(page) {
+  await page.evaluate(() => {
+    const game = window.__portfolioDrive.game;
+    document.getElementById('notifications')?.replaceChildren();
+    if (game.world.circuit) game.world.circuit.summaryUntil = 0;
+    const whispers = game.world.setPieces?.getWhisperEntries?.() || [];
+    const sample = whispers.find((item) => item.active) || whispers[0];
+    if (!sample) return;
+    game.vehicle.respawn({
+      x: sample.position.x,
+      y: 1.08,
+      z: sample.position.z
+    }, 0);
+  });
+  await delay(180);
+}
+
 async function sampleWorldLife(page) {
   return page.evaluate(async () => {
     const delay = (ms) => new Promise((resolveDelay) => setTimeout(resolveDelay, ms));
@@ -778,10 +798,36 @@ async function sampleWorldLife(page) {
     await delay(360);
     const restoredStats = lifeStats();
     const restoredWind = { ...(game.world.foliage?.windSamples || {}) };
+    const whispers = game.world.setPieces?.getWhisperEntries?.() || [];
+    const whisperSample = whispers.find((item) => item.active) || whispers[0] || null;
+    let whisperUi = {
+      total: whispers.length,
+      visible: false,
+      text: '',
+      key: null,
+      width: 0,
+      height: 0,
+      nearestMatched: false
+    };
+    if (whisperSample) {
+      game.vehicle.respawn({
+        x: whisperSample.position.x,
+        y: 1.08,
+        z: whisperSample.position.z
+      }, 0);
+      await delay(220);
+      const nearest = game.world.nearestWhisper(game.vehicle.position);
+      whisperUi = {
+        total: whispers.length,
+        nearestMatched: nearest?.message === whisperSample.message,
+        ...(game.ui.getWhisperStats?.() || {})
+      };
+    }
 
     return {
       counts: mediumStats,
       foliageWind: restoredWind,
+      whisperUi,
       quality: {
         medium: mediumStats,
         low: lowStats,
@@ -1241,7 +1287,7 @@ async function captureMobileSavedPreference(browser) {
     localStorage.setItem('portfolio-drive-landscape-quality', 'high');
     localStorage.setItem('portfolio-drive-muted', '1');
   });
-  await page.goto(`${baseUrl}/play/`, { waitUntil: 'networkidle0', timeout: 60000 });
+  await page.goto(`${baseUrl}/play/`, { waitUntil: 'domcontentloaded', timeout: 60000 });
   await waitForReady(page);
   const sample = await page.evaluate(() => ({
     ready: window.__portfolioDrive.ready(),
@@ -1311,6 +1357,11 @@ function assertVerification(result) {
   if (result.worldLife?.counts?.zonePulses !== worldZones.length) failures.push(`world life probe failed: zone pulses ${result.worldLife?.counts?.zonePulses}/${worldZones.length}`);
   if ((result.worldLife?.counts?.windBanners || 0) < 8) failures.push('world life probe failed: wind banners');
   if ((result.worldLife?.counts?.whisperBeacons || 0) < 8) failures.push('world life probe failed: whisper beacons');
+  if ((result.worldLife?.whisperUi?.total || 0) < 8) failures.push(`whisper UI probe failed: total=${result.worldLife?.whisperUi?.total || 0}`);
+  if (!result.worldLife?.whisperUi?.nearestMatched) failures.push('whisper UI probe failed: nearest beacon message mismatch');
+  if (!result.worldLife?.whisperUi?.visible) failures.push('whisper UI probe failed: overlay did not show');
+  if ((result.worldLife?.whisperUi?.text || '').length < 20) failures.push(`whisper UI probe failed: text=${result.worldLife?.whisperUi?.text || ''}`);
+  if ((result.worldLife?.whisperUi?.width || 0) > 420) failures.push(`whisper UI probe failed: width=${result.worldLife?.whisperUi?.width || 0}`);
   if ((result.worldLife?.counts?.terminalPulses || 0) < 5) failures.push('world life probe failed: terminal pulses');
   if ((result.worldLife?.counts?.districtMotes || 0) < 64) failures.push(`world life probe failed: district motes ${result.worldLife?.counts?.districtMotes || 0}`);
   if ((result.worldLife?.counts?.visibleDistrictMotes || 0) < 48) failures.push(`world life probe failed: visible district motes ${result.worldLife?.counts?.visibleDistrictMotes || 0}`);
