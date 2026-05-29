@@ -65,6 +65,7 @@ export class SetPieces {
       splitterIslands: 0,
       plazaEdgeKits: 0,
       bollardRuns: 0,
+      routeStoryMarkers: 0,
       authoredAssets: 0,
       guideTiles: 0
     };
@@ -889,6 +890,32 @@ export class SetPieces {
     ];
     for (const [x, z, rotation, scale] of bollardRuns) {
       this.addRouteCompositionAsset(group, 'EnvPolishChevronBollardRun', x, z, rotation, scale, 'bollardRuns');
+    }
+
+    const routeStoryMarkers = [
+      [-8, 37, 0.18, 0.78, 1, 6.2],
+      [-48, 53, -0.5, 0.76, -1, 6.1],
+      [-83, -28, -0.72, 0.76, 1, 6.4],
+      [29, -26, 2.68, 0.74, -1, 6.2],
+      [73, -86, 2.46, 0.78, 1, 6.0],
+      [51, 45, 1.84, 0.76, -1, 6.2],
+      [98, 57, 1.02, 0.74, 1, 5.8],
+      [-124, 52, -1.05, 0.72, -1, 5.8],
+      [-88, -80, -2.2, 0.74, 1, 6.0],
+      [25, 70, 0.65, 0.74, -1, 6.1]
+    ];
+    for (const [x, z, rotation, scale, side, lateral] of routeStoryMarkers) {
+      const rightX = Math.cos(rotation);
+      const rightZ = -Math.sin(rotation);
+      this.addRouteCompositionAsset(
+        group,
+        'EnvPolishRouteStoryMarker',
+        x + rightX * side * lateral,
+        z + rightZ * side * lateral,
+        rotation - side * 0.28,
+        scale,
+        'routeStoryMarkers'
+      );
     }
 
     const guideRuns = [
