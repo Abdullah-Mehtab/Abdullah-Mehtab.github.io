@@ -488,11 +488,13 @@ async function sampleWorldLife(page) {
     const scene = game.scene;
     const lifeStats = () => game.world.setPieces?.getLifeStats?.() || { ...(game.world.setPieces?.lifeStats || {}) };
     const grass = scene.getObjectByName('FOLIAGE_grass_instances');
+    const districtMotes = scene.getObjectByName('Life_DistrictAmbience_Motes');
     const banners = findVisibleObjects(/^Life_WindBanner_\d+$/);
     const pulse = scene.getObjectByName('Life_ZonePulse_landing');
     const beacon = scene.getObjectByName('Life_WhisperBeacon_0');
     const before = {
       grass: matrixSlice(grass),
+      districtMote: matrixSlice(districtMotes),
       bannerRotations: banners.map((banner) => banner.rotation.z),
       pulseRotation: pulse?.rotation?.z ?? null,
       beaconY: beacon?.position?.y ?? null,
@@ -501,6 +503,7 @@ async function sampleWorldLife(page) {
     await delay(720);
     const after = {
       grass: matrixSlice(grass),
+      districtMote: matrixSlice(districtMotes),
       bannerRotations: banners.map((banner) => banner.rotation.z),
       pulseRotation: pulse?.rotation?.z ?? null,
       beaconY: beacon?.position?.y ?? null,
@@ -538,6 +541,7 @@ async function sampleWorldLife(page) {
         beacon: numericDelta(before.beaconY, after.beaconY)
       },
       grassAnimated: matrixDelta(before.grass, after.grass) > 0.0001,
+      districtMoteAnimated: matrixDelta(before.districtMote, after.districtMote) > 0.0001,
       bannerAnimated: arrayMaxDelta(before.bannerRotations, after.bannerRotations) > 0.005,
       pulseAnimated: numericDelta(before.pulseRotation, after.pulseRotation) > 0.005,
       beaconAnimated: numericDelta(before.beaconY, after.beaconY) > 0.005,
@@ -575,7 +579,8 @@ async function sampleWorldLife(page) {
         (stats.visibleZonePulses || 0) +
         (stats.visibleWindBanners || 0) +
         (stats.visibleWhisperBeacons || 0) +
-        (stats.visibleTerminalPulses || 0)
+        (stats.visibleTerminalPulses || 0) +
+        (stats.visibleDistrictMotes || 0)
       );
     }
 
@@ -932,13 +937,16 @@ function assertVerification(result) {
   if ((result.worldLife?.counts?.windBanners || 0) < 8) failures.push('world life probe failed: wind banners');
   if ((result.worldLife?.counts?.whisperBeacons || 0) < 8) failures.push('world life probe failed: whisper beacons');
   if ((result.worldLife?.counts?.terminalPulses || 0) < 5) failures.push('world life probe failed: terminal pulses');
+  if ((result.worldLife?.counts?.districtMotes || 0) < 64) failures.push(`world life probe failed: district motes ${result.worldLife?.counts?.districtMotes || 0}`);
+  if ((result.worldLife?.counts?.visibleDistrictMotes || 0) < 48) failures.push(`world life probe failed: visible district motes ${result.worldLife?.counts?.visibleDistrictMotes || 0}`);
   if (!result.worldLife?.quality?.lowReduced) failures.push('quality probe failed: low world-life tier did not reduce visible signals');
   if (!result.worldLife?.quality?.restoredMatchesMedium) failures.push('quality probe failed: medium world-life tier did not restore');
   if (!result.worldLife?.quality?.lowWindReduced) failures.push('quality probe failed: low foliage wind cadence did not reduce work');
   if ((result.worldLife?.quality?.low?.visibleWindBanners || 0) > 4) failures.push('quality probe failed: low wind banners exceeded budget');
   if ((result.worldLife?.quality?.low?.visibleWhisperBeacons || 0) > 4) failures.push('quality probe failed: low whisper beacons exceeded budget');
   if ((result.worldLife?.quality?.low?.visibleTerminalPulses || 0) > 2) failures.push('quality probe failed: low terminal pulses exceeded budget');
-  for (const key of ['grassAnimated', 'bannerAnimated', 'pulseAnimated', 'beaconAnimated', 'motionAdvanced']) {
+  if ((result.worldLife?.quality?.low?.visibleDistrictMotes || 0) > 16) failures.push('quality probe failed: low district motes exceeded budget');
+  for (const key of ['grassAnimated', 'districtMoteAnimated', 'bannerAnimated', 'pulseAnimated', 'beaconAnimated', 'motionAdvanced']) {
     if (!result.worldLife?.[key]) failures.push(`world life probe failed: ${key}`);
   }
   if (result.calls > 560) failures.push(`desktop draw-call budget exceeded: ${result.calls}`);

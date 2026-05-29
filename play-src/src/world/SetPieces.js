@@ -13,9 +13,15 @@ export class SetPieces {
     this.securityScanObjects = [];
     this.securityScanMaterials = [];
     this.lifeDummy = new THREE.Object3D();
+    this.ambienceDummy = new THREE.Object3D();
     this.lifeInstanceMeshes = [];
     this.lifeInstanceDirty = new Set();
     this.signAtlas = null;
+    this.districtAmbience = {
+      mesh: null,
+      entries: [],
+      visible: 0
+    };
     this.lifeItems = {
       zonePulses: [],
       windBanners: [],
@@ -27,10 +33,12 @@ export class SetPieces {
       windBanners: 0,
       whisperBeacons: 0,
       terminalPulses: 0,
+      districtMotes: 0,
       visibleZonePulses: 0,
       visibleWindBanners: 0,
       visibleWhisperBeacons: 0,
       visibleTerminalPulses: 0,
+      visibleDistrictMotes: 0,
       visibleTotal: 0,
       motionSamples: 0
     };
@@ -51,6 +59,7 @@ export class SetPieces {
     this.createApproachDressing();
     this.createRouteGuidance();
     this.createLivingSignals();
+    this.createDistrictAmbience();
     this.applyQuality();
   }
 
@@ -89,6 +98,7 @@ export class SetPieces {
     }
     for (const mesh of this.lifeInstanceDirty) mesh.instanceMatrix.needsUpdate = true;
     this.lifeInstanceDirty.clear();
+    this.updateDistrictAmbience(elapsed);
 
     const scan = this.world.securityScan;
     const activePulse = scan.active ? 1 : scan.complete ? 0.55 : 0;
@@ -111,11 +121,13 @@ export class SetPieces {
     this.applyLifeLimit('windBanners', limits.windBanners);
     this.applyLifeLimit('whisperBeacons', limits.whisperBeacons);
     this.applyLifeLimit('terminalPulses', limits.terminalPulses);
+    this.applyDistrictAmbienceLimit(limits.districtMotes);
     this.lifeStats.visibleTotal =
       this.lifeStats.visibleZonePulses +
       this.lifeStats.visibleWindBanners +
       this.lifeStats.visibleWhisperBeacons +
-      this.lifeStats.visibleTerminalPulses;
+      this.lifeStats.visibleTerminalPulses +
+      this.lifeStats.visibleDistrictMotes;
   }
 
   applyLifeLimit(category, limit) {
@@ -538,6 +550,74 @@ export class SetPieces {
     this.world.scene.add(group);
   }
 
+  createDistrictAmbience() {
+    const zones = worldZones;
+    const mesh = new THREE.InstancedMesh(
+      new THREE.OctahedronGeometry(0.34, 0),
+      new THREE.MeshBasicMaterial({
+        color: 0xffffff,
+        vertexColors: true,
+        transparent: true,
+        opacity: 0.74,
+        depthWrite: false,
+        blending: THREE.AdditiveBlending
+      }),
+      zones.length * 4
+    );
+    mesh.name = 'Life_DistrictAmbience_Motes';
+    mesh.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
+    this.districtAmbience.mesh = mesh;
+    this.lifeInstanceMeshes.push(mesh);
+
+    for (let layer = 0; layer < 4; layer += 1) {
+      zones.forEach((zone, zoneIndex) => {
+        const index = this.districtAmbience.entries.length;
+        const radius = zone.radius * (0.62 + layer * 0.19);
+        const phase = zoneIndex * 0.73 + layer * 1.37;
+        const baseAngle = phase + layer * 0.48;
+        const entry = {
+          index,
+          centerX: zone.position[0],
+          centerZ: zone.position[2],
+          radius,
+          baseAngle,
+          baseY: 1.05 + layer * 0.28 + (zoneIndex % 3) * 0.08,
+          speed: 0.22 + layer * 0.045 + (zoneIndex % 4) * 0.012,
+          bob: 0.18 + layer * 0.035,
+          phase,
+          scale: 0.72 + layer * 0.11
+        };
+        mesh.setColorAt(index, new THREE.Color(zone.color));
+        this.districtAmbience.entries.push(entry);
+        this.writeDistrictAmbience(entry, 0);
+      });
+    }
+    this.lifeStats.districtMotes = this.districtAmbience.entries.length;
+    if (mesh.instanceColor) mesh.instanceColor.needsUpdate = true;
+    mesh.instanceMatrix.needsUpdate = true;
+    this.world.scene.add(mesh);
+  }
+
+  applyDistrictAmbienceLimit(limit) {
+    const mesh = this.districtAmbience.mesh;
+    if (!mesh) return;
+    const visible = Math.min(this.districtAmbience.entries.length, Number.isFinite(limit) ? limit : this.districtAmbience.entries.length);
+    this.districtAmbience.visible = visible;
+    mesh.count = visible;
+    this.lifeStats.visibleDistrictMotes = visible;
+    this.updateDistrictAmbience(0);
+  }
+
+  updateDistrictAmbience(elapsed) {
+    const mesh = this.districtAmbience.mesh;
+    if (!mesh) return;
+    for (let index = 0; index < this.districtAmbience.visible; index += 1) {
+      this.writeDistrictAmbience(this.districtAmbience.entries[index], elapsed);
+    }
+    mesh.instanceMatrix.needsUpdate = true;
+    this.lifeStats.motionSamples += this.districtAmbience.visible;
+  }
+
   createZonePulseInstances(group, zones) {
     const geometry = new THREE.RingGeometry(0.965, 1, 4);
     const material = new THREE.MeshBasicMaterial({
@@ -712,6 +792,20 @@ export class SetPieces {
     }
     this.lifeDummy.updateMatrix();
     entry.instanceMesh.setMatrixAt(entry.instanceIndex, this.lifeDummy.matrix);
+  }
+
+  writeDistrictAmbience(entry, elapsed) {
+    const angle = entry.baseAngle + elapsed * entry.speed;
+    const drift = Math.sin(elapsed * (entry.speed * 1.8) + entry.phase) * 0.34;
+    const x = entry.centerX + Math.cos(angle) * entry.radius + Math.cos(angle * 1.7) * drift;
+    const z = entry.centerZ + Math.sin(angle) * entry.radius + Math.sin(angle * 1.3) * drift;
+    const y = entry.baseY + Math.sin(elapsed * 1.05 + entry.phase) * entry.bob;
+    const pulse = entry.scale * (0.86 + Math.sin(elapsed * 1.45 + entry.phase) * 0.14);
+    this.ambienceDummy.position.set(x, y, z);
+    this.ambienceDummy.rotation.set(elapsed * 0.42 + entry.phase, elapsed * 0.68 + entry.phase, elapsed * 0.31);
+    this.ambienceDummy.scale.setScalar(pulse);
+    this.ambienceDummy.updateMatrix();
+    this.districtAmbience.mesh.setMatrixAt(entry.index, this.ambienceDummy.matrix);
   }
 
   groundRect(group, x, z, width, depth, material, y, name) {
