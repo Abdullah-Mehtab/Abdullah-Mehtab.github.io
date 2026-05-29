@@ -41,6 +41,15 @@ export class Vehicle {
     this.lastLandingAt = -Infinity;
     this.lastLandingIntensity = 0;
     this.surfaceDustAccumulator = 0;
+    this.handbrakeAudioCooldown = 0;
+    this.surfaceAudioCooldown = 0;
+    this.lastAudioState = {
+      boost: false,
+      burnout: false,
+      wheelie: false,
+      handbrake: false,
+      surface: DEFAULT_SURFACE.id
+    };
     this.surfaceTrailDustCounter = makeSurfaceCounter();
     this.effectDummy = new THREE.Object3D();
     this.effectColor = new THREE.Color();
@@ -295,6 +304,7 @@ export class Vehicle {
     const surface = this.surface || DEFAULT_SURFACE;
     this.speed = this.controller.speed;
     this.updateLandingFeedback(dt, surface);
+    this.updateDrivingAudio(state, surface, dt);
     if (state.boost && this.controller.speed > 3) this.achievements.unlock('boost');
     if (input.consume('jump')) {
       if (this.controller.jump()) {
@@ -366,6 +376,49 @@ export class Vehicle {
       this.surfaceDustAccumulator -= 1;
       this.spawnRearSmoke(false, surface, 0.64, 'surface');
     }
+  }
+
+  updateDrivingAudio(state, surface, dt) {
+    if (!this.audio) return;
+
+    this.handbrakeAudioCooldown = Math.max(0, this.handbrakeAudioCooldown - dt);
+    this.surfaceAudioCooldown = Math.max(0, this.surfaceAudioCooldown - dt);
+    const currentSurface = normalizeSurface(surface);
+    const speed = this.controller.speed || 0;
+    const slip = state.slip || 0;
+
+    if (state.boost && !this.lastAudioState.boost && speed > 3) {
+      this.audio.boostBurst?.(THREE.MathUtils.clamp(speed / 42, 0.55, 1.35));
+    }
+
+    if (state.burnout && !this.lastAudioState.burnout) {
+      this.audio.burnout?.(THREE.MathUtils.clamp(0.75 + (state.burnoutCharge || 0) * 0.5, 0.75, 1.4));
+    }
+
+    if ((state.wheelieLaunch || state.wheelie) && !this.lastAudioState.wheelie) {
+      this.audio.wheelie?.(THREE.MathUtils.clamp(0.85 + speed / 58, 0.85, 1.35));
+    }
+
+    if (state.handbrake && speed > 6 && (!this.lastAudioState.handbrake || this.handbrakeAudioCooldown <= 0)) {
+      this.audio.tireSqueal?.(THREE.MathUtils.clamp(Math.max(slip, speed / 26), 0.45, 1.25));
+      this.handbrakeAudioCooldown = 0.38;
+    }
+
+    if (
+      currentSurface.id !== this.lastAudioState.surface &&
+      speed > 4.5 &&
+      this.controller.groundedWheels > 0 &&
+      this.surfaceAudioCooldown <= 0
+    ) {
+      this.audio.surfaceRumble?.(currentSurface.id, speed);
+      this.surfaceAudioCooldown = currentSurface.id === 'water' || currentSurface.id === 'shore' ? 0.34 : 0.24;
+    }
+
+    this.lastAudioState.boost = Boolean(state.boost);
+    this.lastAudioState.burnout = Boolean(state.burnout);
+    this.lastAudioState.wheelie = Boolean(state.wheelieLaunch || state.wheelie);
+    this.lastAudioState.handbrake = Boolean(state.handbrake);
+    this.lastAudioState.surface = currentSurface.id;
   }
 
   updateLandingFeedback(dt, surface) {
@@ -719,6 +772,15 @@ export class Vehicle {
     this.wasAirborne = false;
     this.lastAirborneVerticalSpeed = 0;
     this.surfaceDustAccumulator = 0;
+    this.handbrakeAudioCooldown = 0;
+    this.surfaceAudioCooldown = 0;
+    this.lastAudioState = {
+      boost: false,
+      burnout: false,
+      wheelie: false,
+      handbrake: false,
+      surface: DEFAULT_SURFACE.id
+    };
     this.surfaceTrailDustCounter = makeSurfaceCounter();
     this.lastLandingIntensity = 0;
     this.lastPosition.copy(position);

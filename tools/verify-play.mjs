@@ -900,9 +900,7 @@ async function collectRuntimeMetrics(page, loadMs, gameplay, water, surfaces, su
       colliderAudit: auditColliders(window.__portfolioDrive.colliders(), game.scene),
       zoneCount: game.world.zones.length,
       audio: {
-        zoneStingersPlayed: game.audio?.zoneStingersPlayed || 0,
-        dataShardsPlayed: game.audio?.dataShardsPlayed || 0,
-        impactsPlayed: game.audio?.impactsPlayed || 0,
+        ...(game.audio?.getStats?.() || {}),
         landingEvents: game.vehicle?.landingEvents || 0
       }
     };
@@ -1196,6 +1194,11 @@ function assertVerification(result) {
   if ((cameraFeel.maxSpeedPull || 0) < 1.4) failures.push(`camera feel probe failed: maxSpeedPull=${cameraFeel.maxSpeedPull || 0}`);
   if ((result.audio?.zoneStingersPlayed || 0) < 1) failures.push('audio probe failed: zone stingers');
   if ((result.audio?.landingEvents || 0) < 1) failures.push('audio probe failed: landing event counter');
+  if ((result.audio?.boostBurstsPlayed || 0) < 1) failures.push(`audio probe failed: boost bursts=${result.audio?.boostBurstsPlayed || 0}`);
+  if ((result.audio?.burnoutsPlayed || 0) < 1) failures.push(`audio probe failed: burnouts=${result.audio?.burnoutsPlayed || 0}`);
+  if ((result.audio?.wheeliesPlayed || 0) < 1) failures.push(`audio probe failed: wheelies=${result.audio?.wheeliesPlayed || 0}`);
+  if ((result.audio?.tireSquealsPlayed || 0) < 1) failures.push(`audio probe failed: tire squeals=${result.audio?.tireSquealsPlayed || 0}`);
+  if ((result.audio?.surfaceRumblesPlayed || 0) < 1) failures.push(`audio probe failed: surface rumbles=${result.audio?.surfaceRumblesPlayed || 0}`);
   if (result.collectibles?.total !== 7) failures.push(`collectible probe failed: total=${result.collectibles?.total}`);
   if (result.collectibles?.collected !== result.collectibles?.total) failures.push(`collectible probe failed: collected=${result.collectibles?.collected}/${result.collectibles?.total}`);
   if (result.collectibles?.collectedPerShard?.some((value) => value < 1)) failures.push(`collectible probe failed: per-shard deltas=${result.collectibles.collectedPerShard.join(',')}`);

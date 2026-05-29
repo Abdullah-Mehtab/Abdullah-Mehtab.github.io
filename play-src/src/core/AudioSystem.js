@@ -22,6 +22,11 @@ export class AudioSystem {
     this.impactsPlayed = 0;
     this.zoneStingersPlayed = 0;
     this.dataShardsPlayed = 0;
+    this.boostBurstsPlayed = 0;
+    this.burnoutsPlayed = 0;
+    this.wheeliesPlayed = 0;
+    this.tireSquealsPlayed = 0;
+    this.surfaceRumblesPlayed = 0;
   }
 
   async init() {
@@ -150,6 +155,84 @@ export class AudioSystem {
     osc.stop(this.context.currentTime + 0.14);
   }
 
+  boostBurst(intensity = 1) {
+    this.boostBurstsPlayed += 1;
+    if (!this.context || this.muted) return;
+    const amount = Math.min(1.4, Math.max(0.45, intensity));
+    this.sweep(180, 1160 + amount * 140, 0.22, 0.032 + amount * 0.018);
+    this.playNoiseBurst({
+      duration: 0.18,
+      gainValue: 0.032 + amount * 0.018,
+      filterType: 'highpass',
+      filterFrequency: 420
+    });
+  }
+
+  burnout(intensity = 1) {
+    this.burnoutsPlayed += 1;
+    if (!this.context || this.muted) return;
+    const amount = Math.min(1.5, Math.max(0.45, intensity));
+    this.sweep(70, 210 + amount * 90, 0.28, 0.028 + amount * 0.02);
+    this.playNoiseBurst({
+      duration: 0.34,
+      gainValue: 0.036 + amount * 0.03,
+      filterType: 'bandpass',
+      filterFrequency: 170 + amount * 90,
+      q: 0.8
+    });
+  }
+
+  wheelie(intensity = 1) {
+    this.wheeliesPlayed += 1;
+    if (!this.context || this.muted) return;
+    const amount = Math.min(1.4, Math.max(0.45, intensity));
+    this.sweep(260, 680 + amount * 160, 0.24, 0.026 + amount * 0.015);
+  }
+
+  tireSqueal(intensity = 1) {
+    this.tireSquealsPlayed += 1;
+    if (!this.context || this.muted) return;
+    const amount = Math.min(1.25, Math.max(0.35, intensity));
+    const osc = this.context.createOscillator();
+    const gain = this.context.createGain();
+    const filter = this.context.createBiquadFilter();
+    osc.type = 'sawtooth';
+    filter.type = 'bandpass';
+    filter.frequency.value = 1240 + amount * 520;
+    filter.Q.value = 4.5;
+    osc.frequency.setValueAtTime(760 + amount * 180, this.context.currentTime);
+    osc.frequency.exponentialRampToValueAtTime(1120 + amount * 320, this.context.currentTime + 0.06);
+    osc.frequency.exponentialRampToValueAtTime(640 + amount * 160, this.context.currentTime + 0.24);
+    gain.gain.setValueAtTime(0.001, this.context.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.026 + amount * 0.026, this.context.currentTime + 0.018);
+    gain.gain.exponentialRampToValueAtTime(0.001, this.context.currentTime + 0.28);
+    osc.connect(filter);
+    filter.connect(gain);
+    gain.connect(this.master);
+    osc.start();
+    osc.stop(this.context.currentTime + 0.3);
+  }
+
+  surfaceRumble(surface = 'road', speed = 0) {
+    this.surfaceRumblesPlayed += 1;
+    if (!this.context || this.muted) return;
+    const normalized = Math.min(1, Math.abs(speed) / 32);
+    const config = {
+      grass: { frequency: 180, gain: 0.026, duration: 0.2 },
+      sand: { frequency: 130, gain: 0.032, duration: 0.26 },
+      shore: { frequency: 240, gain: 0.034, duration: 0.22 },
+      water: { frequency: 300, gain: 0.04, duration: 0.28 },
+      road: { frequency: 210, gain: 0.018, duration: 0.14 }
+    }[surface] || { frequency: 190, gain: 0.02, duration: 0.16 };
+    this.playNoiseBurst({
+      duration: config.duration,
+      gainValue: config.gain * (0.6 + normalized * 0.8),
+      filterType: surface === 'water' || surface === 'shore' ? 'lowpass' : 'bandpass',
+      filterFrequency: config.frequency + normalized * 120,
+      q: surface === 'sand' ? 0.65 : 1.1
+    });
+  }
+
   zoneStinger(zone = {}) {
     this.zoneStingersPlayed += 1;
     if (!this.context || this.muted) return;
@@ -218,6 +301,25 @@ export class AudioSystem {
     osc.stop(this.context.currentTime + duration + 0.02);
   }
 
+  playNoiseBurst({ duration = 0.2, gainValue = 0.04, filterType = 'bandpass', filterFrequency = 260, q = 1.2 } = {}) {
+    if (!this.context || this.muted) return;
+    const source = this.context.createBufferSource();
+    const filter = this.context.createBiquadFilter();
+    const gain = this.context.createGain();
+    source.buffer = makeNoiseBuffer(this.context, Math.max(0.08, duration));
+    filter.type = filterType;
+    filter.frequency.value = filterFrequency;
+    filter.Q.value = q;
+    gain.gain.setValueAtTime(0.001, this.context.currentTime);
+    gain.gain.exponentialRampToValueAtTime(gainValue, this.context.currentTime + 0.018);
+    gain.gain.exponentialRampToValueAtTime(0.001, this.context.currentTime + duration);
+    source.connect(filter);
+    filter.connect(gain);
+    gain.connect(this.master);
+    source.start();
+    source.stop(this.context.currentTime + duration + 0.02);
+  }
+
   update(speed, driveState = {}) {
     if (!this.context || !this.engineOsc || !this.engineGain) return;
     const normalized = Math.min(1, Math.abs(speed) / 70);
@@ -252,6 +354,19 @@ export class AudioSystem {
       this.windGain.gain.setTargetAtTime(this.muted ? 0 : 0.008 + normalized * 0.025, this.context.currentTime, 0.2);
     }
   }
+
+  getStats() {
+    return {
+      impactsPlayed: this.impactsPlayed,
+      zoneStingersPlayed: this.zoneStingersPlayed,
+      dataShardsPlayed: this.dataShardsPlayed,
+      boostBurstsPlayed: this.boostBurstsPlayed,
+      burnoutsPlayed: this.burnoutsPlayed,
+      wheeliesPlayed: this.wheeliesPlayed,
+      tireSquealsPlayed: this.tireSquealsPlayed,
+      surfaceRumblesPlayed: this.surfaceRumblesPlayed
+    };
+  }
 }
 
 function frequencyForZone(value) {
@@ -273,8 +388,8 @@ function makeDistortionCurve(amount) {
   return curve;
 }
 
-function makeNoiseBuffer(context) {
-  const length = context.sampleRate * 2;
+function makeNoiseBuffer(context, duration = 2) {
+  const length = Math.max(1, Math.floor(context.sampleRate * duration));
   const buffer = context.createBuffer(1, length, context.sampleRate);
   const data = buffer.getChannelData(0);
   let last = 0;
