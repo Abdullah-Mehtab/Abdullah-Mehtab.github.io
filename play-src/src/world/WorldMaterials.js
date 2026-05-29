@@ -50,7 +50,7 @@ export const QUALITY_PROFILES = {
     shadows: true,
     water: 'high',
     post: true,
-    pixelRatio: 1.35
+    pixelRatio: 1.2
   }
 };
 export const QUALITY_ORDER = ['low', 'medium', 'high'];

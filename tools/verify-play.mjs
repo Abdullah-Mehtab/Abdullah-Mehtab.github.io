@@ -1243,7 +1243,9 @@ async function captureMobileSavedPreference(browser) {
     ready: window.__portfolioDrive.ready(),
     canvasSample: window.__portfolioDrive.sampleCanvas(),
     quality: window.__portfolioDrive.game.world.landscapeQuality,
-    savedQuality: localStorage.getItem('portfolio-drive-landscape-quality')
+    savedQuality: localStorage.getItem('portfolio-drive-landscape-quality'),
+    pixelRatio: window.__portfolioDrive.game.renderer.getPixelRatio(),
+    maxPixelRatio: window.__portfolioDrive.game.rendererSystem.maxPixelRatio
   }));
   await page.close();
   return sample;
@@ -1547,6 +1549,9 @@ function assertVerification(result) {
   }
   if (result.mobileSavedPreference.savedQuality !== 'high') {
     failures.push(`mobile saved-preference storage mismatch: ${result.mobileSavedPreference.savedQuality}`);
+  }
+  if ((result.mobileSavedPreference.maxPixelRatio || 0) > 1.2) {
+    failures.push(`mobile saved-preference high pixel ratio too high: ${result.mobileSavedPreference.maxPixelRatio}`);
   }
   if (failures.length) {
     throw new Error(`Play verification failed: ${failures.join('; ')}`);
