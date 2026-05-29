@@ -205,7 +205,9 @@ async function exerciseGameplay(page) {
       wheelieSeen: false,
       handbrakeSeen: false,
       groundedBeforeJump: false,
-      groundedBeforeBurnout: false
+      groundedBeforeBurnout: false,
+      landingSeen: false,
+      impactAudioSeen: false
     };
 
     input.actions.forward = true;
@@ -219,6 +221,8 @@ async function exerciseGameplay(page) {
     window.__portfolioDrive.respawn('landing');
     await delay(350);
     samples.groundedBeforeJump = await waitForGrounded();
+    const landingEventsBefore = game.vehicle.landingEvents || 0;
+    const impactAudioBefore = game.audio?.impactsPlayed || 0;
     const beforeJumpY = game.vehicle.position.y;
     let maxJumpY = beforeJumpY;
     for (let i = 0; i < 6; i += 1) {
@@ -232,8 +236,16 @@ async function exerciseGameplay(page) {
       await delay(70);
       maxJumpY = Math.max(maxJumpY, game.vehicle.position.y);
     }
+    for (let i = 0; i < 45; i += 1) {
+      await delay(80);
+      maxJumpY = Math.max(maxJumpY, game.vehicle.position.y);
+      samples.landingSeen = (game.vehicle.landingEvents || 0) > landingEventsBefore;
+      if (samples.landingSeen) break;
+    }
     samples.jumpSeen = maxJumpY > beforeJumpY + 0.12;
     samples.jumpDelta = Number((maxJumpY - beforeJumpY).toFixed(2));
+    samples.landingIntensity = Number((game.vehicle.lastLandingIntensity || 0).toFixed(2));
+    samples.impactAudioSeen = (game.audio?.impactsPlayed || 0) > impactAudioBefore;
 
     clearInput();
     window.__portfolioDrive.respawn('landing');
@@ -371,7 +383,12 @@ async function collectRuntimeMetrics(page, loadMs, gameplay, water, surfaces) {
       })),
       colliderCount: window.__portfolioDrive.colliders().length,
       debugOverlayObjects: game.debugColliderOverlay?.children?.length || 0,
-      zoneCount: game.world.zones.length
+      zoneCount: game.world.zones.length,
+      audio: {
+        zoneStingersPlayed: game.audio?.zoneStingersPlayed || 0,
+        impactsPlayed: game.audio?.impactsPlayed || 0,
+        landingEvents: game.vehicle?.landingEvents || 0
+      }
     };
 
     function countSceneObjects(root) {
@@ -436,9 +453,11 @@ function assertVerification(result) {
   if (result.colliderCount <= 0 || result.debugOverlayObjects <= 0) failures.push('collider debug overlay did not render');
   if (result.p95FrameMs > 20) failures.push(`p95 frame time too high: ${result.p95FrameMs}ms`);
   if (result.gameplay.movementMeters < 5) failures.push(`drive movement too small: ${result.gameplay.movementMeters}m`);
-  for (const key of ['keyboardHandbrake', 'boostSeen', 'jumpSeen', 'burnoutSeen', 'wheelieSeen', 'handbrakeSeen']) {
+  for (const key of ['keyboardHandbrake', 'boostSeen', 'jumpSeen', 'landingSeen', 'impactAudioSeen', 'burnoutSeen', 'wheelieSeen', 'handbrakeSeen']) {
     if (!result.gameplay[key]) failures.push(`gameplay probe failed: ${key}`);
   }
+  if ((result.audio?.zoneStingersPlayed || 0) < 1) failures.push('audio probe failed: zone stingers');
+  if ((result.audio?.landingEvents || 0) < 1) failures.push('audio probe failed: landing event counter');
   if (!result.water?.surfaceSeen) failures.push('water probe failed: surface state');
   if (!result.water?.splashSeen) failures.push('water probe failed: splash particles');
   if (!result.water?.dragReduced) failures.push('water probe failed: drag');
