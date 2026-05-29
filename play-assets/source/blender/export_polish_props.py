@@ -45,6 +45,9 @@ def main():
     create_terminal_bank(mats)
     create_archive_step_cluster(mats)
     create_todo_card_stack(mats)
+    create_yard_edge_trim(mats)
+    create_yard_surface_marks(mats)
+    create_workshop_process_rail(mats)
 
     output = Path(args.output)
     output.parent.mkdir(parents=True, exist_ok=True)
@@ -521,6 +524,43 @@ def create_todo_card_stack(mats):
         cube(f"TodoCardStack_Pin_{index}", group, (x, y + sy * 0.32, z - 0.055), (0.18, 0.12, 0.04), mats["pink" if index % 2 else "aqua"], rot=(0, rot, 0), bevel=0.006)
     cube("TodoCardStack_HeaderGlow", group, (0, 1.84, -0.12), (3.5, 0.08, 0.06), mats["purple"], bevel=0.004)
     cube("TodoCardStack_Cable", group, (0, 0.38, 0.58), (3.65, 0.08, 0.1), mats["rope"], bevel=0.012)
+
+
+def create_yard_edge_trim(mats):
+    group = root("EnvPolishYardEdgeTrim")
+    cube("YardEdgeTrim_Curb", group, (0, 0.14, 0), (5.6, 0.28, 0.42), mats["stone"], bevel=0.03)
+    cube("YardEdgeTrim_ShadowLip", group, (0, 0.32, 0.24), (5.35, 0.12, 0.12), mats["stone_shadow"], bevel=0.012)
+    for index, x in enumerate([-2.18, -1.1, 0, 1.1, 2.18]):
+        cube(f"YardEdgeTrim_GlowChip_{index}", group, (x, 0.41, -0.24), (0.36, 0.08, 0.07), mats["mint" if index % 2 else "amber"], bevel=0.004)
+    for x in [-2.82, 2.82]:
+        cube("YardEdgeTrim_EndPost", group, (x, 0.62, 0), (0.18, 0.82, 0.18), mats["dark"], bevel=0.014)
+        cube("YardEdgeTrim_EndLamp", group, (x, 1.1, -0.02), (0.3, 0.18, 0.3), mats["screen"], bevel=0.018)
+
+
+def create_yard_surface_marks(mats):
+    group = root("EnvPolishYardSurfaceMarks")
+    cube("YardSurfaceMarks_BaseShadow", group, (0, 0.025, 0), (4.4, 0.05, 2.2), mats["stone_shadow"], bevel=0.01)
+    mark_specs = [
+        (-1.45, 0.06, -0.62, 1.2, 0.06, 0.08, -0.18, "mint"),
+        (-0.3, 0.07, -0.18, 1.6, 0.06, 0.08, 0.12, "paper"),
+        (1.1, 0.08, 0.32, 1.34, 0.06, 0.08, -0.1, "aqua"),
+        (0.05, 0.09, 0.78, 2.8, 0.06, 0.08, 0.04, "amber"),
+    ]
+    for index, (x, y, z, sx, sy, sz, rot, material) in enumerate(mark_specs):
+        cube(f"YardSurfaceMarks_Paint_{index}", group, (x, y, z), (sx, sy, sz), mats[material], rot=(0, rot, 0), bevel=0.004)
+    for x in [-1.8, 1.8]:
+        cube("YardSurfaceMarks_CornerTick", group, (x, 0.1, -0.96), (0.6, 0.065, 0.1), mats["pink"], rot=(0, -0.3 if x < 0 else 0.3, 0), bevel=0.004)
+
+
+def create_workshop_process_rail(mats):
+    group = root("EnvPolishWorkshopProcessRail")
+    cube("WorkshopProcessRail_Base", group, (0, 0.12, 0), (4.8, 0.24, 0.72), mats["stone_shadow"], bevel=0.03)
+    for x in [-2.1, -0.7, 0.7, 2.1]:
+        cube("WorkshopProcessRail_Post", group, (x, 0.86, 0), (0.16, 1.42, 0.16), mats["dark"], bevel=0.012)
+    cube("WorkshopProcessRail_TopCable", group, (0, 1.52, -0.08), (4.75, 0.09, 0.09), mats["rope"], bevel=0.01)
+    cube("WorkshopProcessRail_LowerCable", group, (0, 0.94, -0.08), (4.55, 0.08, 0.08), mats["rope"], bevel=0.01)
+    for index, x in enumerate([-1.38, 0, 1.38]):
+        cube(f"WorkshopProcessRail_Tag_{index}", group, (x, 1.22, -0.15), (0.58, 0.34, 0.06), [mats["mint"], mats["amber"], mats["screen"]][index], bevel=0.006)
 
 
 if __name__ == "__main__":
