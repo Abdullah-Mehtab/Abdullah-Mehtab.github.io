@@ -80,6 +80,23 @@ export const meadowDetailPatches = [
   { id: 'stunt-east-warm-lawn', center: [128, -86], size: [26, 7], rotation: 0.34, color: '#ff9b6d' }
 ];
 
+export const fieldMotifClusters = [
+  { id: 'launch-west-lawn', center: [-38, 8], size: [42, 24], rotation: -0.22, palette: ['#7cffb2', '#f0aeb6', '#d7c36a'], berms: 3, ribbons: 7, seed: 11 },
+  { id: 'launch-east-lawn', center: [42, 16], size: [38, 22], rotation: 0.28, palette: ['#68d8ff', '#7cffb2', '#d7c36a'], berms: 3, ribbons: 6, seed: 17 },
+  { id: 'fcc-arrival-lawn', center: [-104, 58], size: [42, 26], rotation: -0.36, palette: ['#9ccfff', '#f2dfb2', '#f0aeb6'], berms: 4, ribbons: 7, seed: 23 },
+  { id: 'archive-campus-fill', center: [-30, 48], size: [40, 24], rotation: 0.18, palette: ['#ffdf8a', '#9ccfff', '#d8ff92'], berms: 3, ribbons: 6, seed: 29 },
+  { id: 'security-pine-floor', center: [-126, -42], size: [40, 26], rotation: 0.48, palette: ['#68d8ff', '#84d7bd', '#92ffea'], berms: 3, ribbons: 7, seed: 31 },
+  { id: 'security-return-field', center: [-74, -26], size: [36, 24], rotation: -0.24, palette: ['#68d8ff', '#7aa064', '#ff9db0'], berms: 3, ribbons: 6, seed: 37 },
+  { id: 'project-north-field', center: [78, 92], size: [46, 24], rotation: -0.12, palette: ['#ffcc66', '#8bd36b', '#f0aeb6'], berms: 4, ribbons: 7, seed: 41 },
+  { id: 'project-harbor-shoulder', center: [112, 24], size: [42, 24], rotation: 0.38, palette: ['#78b7ff', '#ffcc66', '#84d7bd'], berms: 3, ribbons: 6, seed: 43 },
+  { id: 'career-meadow-fill', center: [88, -8], size: [46, 28], rotation: -0.4, palette: ['#b6a0ff', '#ffb074', '#8bd36b'], berms: 4, ribbons: 7, seed: 47 },
+  { id: 'cv-document-lawn', center: [4, -42], size: [42, 26], rotation: -0.16, palette: ['#e6f3ff', '#d8b6ff', '#9fc77a'], berms: 3, ribbons: 6, seed: 53 },
+  { id: 'west-skills-field', center: [-92, -86], size: [44, 28], rotation: -0.3, palette: ['#92ffea', '#7aa064', '#c79b56'], berms: 4, ribbons: 7, seed: 59 },
+  { id: 'south-stunt-field', center: [112, -118], size: [52, 26], rotation: -0.32, palette: ['#ff9b6d', '#c79b56', '#f3e7bd'], berms: 4, ribbons: 7, seed: 61 },
+  { id: 'behind-farm-field', center: [-22, -122], size: [46, 24], rotation: 0.22, palette: ['#a8a6ff', '#c79b56', '#77b85a'], berms: 3, ribbons: 6, seed: 67 },
+  { id: 'data-pier-grove-fill', center: [-128, 32], size: [34, 24], rotation: -0.5, palette: ['#79ffc5', '#9ccfff', '#f0aeb6'], berms: 3, ribbons: 6, seed: 71 }
+];
+
 export const roadPaths = [
   {
     id: 'gallery-spine',

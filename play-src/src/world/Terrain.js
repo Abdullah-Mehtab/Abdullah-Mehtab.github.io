@@ -1,7 +1,7 @@
 // ABOUTME: Builds the procedural toy-island terrain used by /play.
 // ABOUTME: Replaces the old authored island GLB while keeping a stable visible driving floor.
 import * as THREE from 'three';
-import { districtFootprints, ISLAND_RADIUS, meadowDetailPatches, roadSegments, terrainBrushes } from './worldData.js';
+import { districtFootprints, fieldMotifClusters, ISLAND_RADIUS, meadowDetailPatches, roadSegments, terrainBrushes } from './worldData.js';
 import { getIslandCoastPoints, makeIslandBandGeometry, makeIslandGeometry, makePatchGeometry, pseudoRandom, WATER_Y } from './WorldMaterials.js';
 
 const DISTRICT_DETAIL_STYLES = {
@@ -25,6 +25,8 @@ export class Terrain {
     this.reliefDummy = new THREE.Object3D();
     this.surfaceDetailStats = { districts: 0, seams: 0, pavers: 0, accents: 0 };
     this.meadowDetailStats = { patches: 0, colorVariants: 0 };
+    this.fieldMotifEntries = [];
+    this.fieldMotifStats = { clusters: 0, berms: 0, ribbons: 0, visibleBerms: 0, visibleRibbons: 0, visibleTotal: 0 };
     this.reliefStats = { mounds: 0, cliffShelves: 0, rockOutcrops: 0, duneRidges: 0, contourBands: 0, beachRipples: 0 };
     this.shorelineStats = { edgeBands: 0, foamBreaks: 0 };
   }
@@ -34,11 +36,27 @@ export class Terrain {
     this.addGrassPlateau();
     this.addTerrainBrushes();
     this.addMeadowDetailPatches();
+    this.addFieldMotifs();
     this.addDistrictGrounding();
     this.addDistrictSurfaceDetails();
     this.addScenicRelief();
     this.addCoastalEdges();
     this.addPhysicsFloor();
+  }
+
+  applyQuality() {
+    const visible = this.world.landscapeQuality !== 'low';
+    let visibleBerms = 0;
+    let visibleRibbons = 0;
+    for (const entry of this.fieldMotifEntries) {
+      entry.mesh.visible = visible;
+      if (!visible) continue;
+      if (entry.kind === 'berm') visibleBerms += entry.count;
+      if (entry.kind === 'ribbon') visibleRibbons += entry.count;
+    }
+    this.fieldMotifStats.visibleBerms = visibleBerms;
+    this.fieldMotifStats.visibleRibbons = visibleRibbons;
+    this.fieldMotifStats.visibleTotal = visibleBerms + visibleRibbons;
   }
 
   addBeachBase() {
@@ -156,6 +174,96 @@ export class Terrain {
     mesh.instanceMatrix.needsUpdate = true;
     if (mesh.instanceColor) mesh.instanceColor.needsUpdate = true;
     this.world.scene.add(mesh);
+  }
+
+  addFieldMotifs() {
+    const group = new THREE.Group();
+    group.name = 'ToyIslandFieldMotifs';
+    const berms = [];
+    const ribbons = [];
+
+    fieldMotifClusters.forEach((cluster, clusterIndex) => {
+      for (let i = 0; i < (cluster.berms || 0); i += 1) {
+        const point = sampleFieldCluster(cluster, i, 13.7);
+        if (!this.isClearFieldMotifPoint(point.x, point.z, 3.2)) continue;
+        berms.push({
+          ...point,
+          width: 3.8 + pseudoRandom(cluster.seed * 31 + i * 4.7) * 3.2,
+          depth: 0.85 + pseudoRandom(cluster.seed * 37 + i * 5.1) * 0.85,
+          height: 0.12 + pseudoRandom(cluster.seed * 41 + i * 6.3) * 0.12,
+          color: colorFromCluster(cluster, clusterIndex + i)
+        });
+      }
+
+      for (let i = 0; i < (cluster.ribbons || 0); i += 1) {
+        const point = sampleFieldCluster(cluster, i, 29.3);
+        if (!this.isClearFieldMotifPoint(point.x, point.z, 1.4)) continue;
+        ribbons.push({
+          ...point,
+          width: 4.8 + pseudoRandom(cluster.seed * 43 + i * 4.9) * 7.5,
+          depth: 0.22 + pseudoRandom(cluster.seed * 47 + i * 5.3) * 0.28,
+          color: colorFromCluster(cluster, clusterIndex + i + 2)
+        });
+      }
+    });
+
+    this.addFieldBermInstances(group, berms);
+    this.addFieldRibbonInstances(group, ribbons);
+    this.world.scene.add(group);
+    this.fieldMotifStats = {
+      clusters: fieldMotifClusters.length,
+      berms: berms.length,
+      ribbons: ribbons.length,
+      visibleBerms: berms.length,
+      visibleRibbons: ribbons.length,
+      visibleTotal: berms.length + ribbons.length
+    };
+    this.applyQuality();
+  }
+
+  addFieldBermInstances(group, specs) {
+    if (!specs.length) return;
+    const mesh = new THREE.InstancedMesh(createMoundGeometry(1, 1, 1, 157), this.world.materials.fieldBerm, specs.length);
+    mesh.name = 'ToyIslandFieldMotif_Berms';
+    mesh.receiveShadow = true;
+    const color = new THREE.Color();
+    specs.forEach((spec, index) => {
+      this.surfaceDetailDummy.position.set(spec.x, 0.13 + index * 0.0002, spec.z);
+      this.surfaceDetailDummy.rotation.set(0, spec.rotation, 0);
+      this.surfaceDetailDummy.scale.set(spec.width, spec.height, spec.depth);
+      this.surfaceDetailDummy.updateMatrix();
+      mesh.setMatrixAt(index, this.surfaceDetailDummy.matrix);
+      mesh.setColorAt(index, color.setHex(spec.color));
+    });
+    mesh.instanceMatrix.needsUpdate = true;
+    if (mesh.instanceColor) mesh.instanceColor.needsUpdate = true;
+    group.add(mesh);
+    this.fieldMotifEntries.push({ mesh, kind: 'berm', count: specs.length });
+  }
+
+  addFieldRibbonInstances(group, specs) {
+    if (!specs.length) return;
+    const mesh = new THREE.InstancedMesh(createHorizontalPlaneGeometry(), this.world.materials.fieldRibbon, specs.length);
+    mesh.name = 'ToyIslandFieldMotif_Ribbons';
+    mesh.renderOrder = 39;
+    mesh.frustumCulled = false;
+    const color = new THREE.Color();
+    specs.forEach((spec, index) => {
+      this.surfaceDetailDummy.position.set(spec.x, 0.188 + index * 0.00002, spec.z);
+      this.surfaceDetailDummy.rotation.set(0, spec.rotation, 0);
+      this.surfaceDetailDummy.scale.set(spec.width, 1, spec.depth);
+      this.surfaceDetailDummy.updateMatrix();
+      mesh.setMatrixAt(index, this.surfaceDetailDummy.matrix);
+      mesh.setColorAt(index, color.setHex(spec.color));
+    });
+    mesh.instanceMatrix.needsUpdate = true;
+    if (mesh.instanceColor) mesh.instanceColor.needsUpdate = true;
+    group.add(mesh);
+    this.fieldMotifEntries.push({ mesh, kind: 'ribbon', count: specs.length });
+  }
+
+  isClearFieldMotifPoint(x, z, roadMargin) {
+    return this.containsPoint(x, z, 9) && Math.hypot(x, z) < ISLAND_RADIUS * 0.93 && !isNearRoad(x, z, roadMargin);
   }
 
   addDistrictSurfaceDetails() {
@@ -474,6 +582,10 @@ export class Terrain {
     return { ...this.meadowDetailStats };
   }
 
+  getFieldMotifStats() {
+    return { ...this.fieldMotifStats };
+  }
+
   getShorelineStats() {
     return { ...this.shorelineStats };
   }
@@ -538,6 +650,25 @@ function createSurfaceDetail(district, localX, localZ, width, depth, rotation, c
     rotation,
     color
   };
+}
+
+function sampleFieldCluster(cluster, index, channel) {
+  const seed = (cluster.seed || 1) * channel + index * 17.31;
+  const localX = (pseudoRandom(seed) - 0.5) * cluster.size[0];
+  const localZ = (pseudoRandom(seed * 1.73) - 0.5) * cluster.size[1];
+  const rotation = cluster.rotation || 0;
+  const cos = Math.cos(rotation);
+  const sin = Math.sin(rotation);
+  return {
+    x: cluster.center[0] + localX * cos + localZ * sin,
+    z: cluster.center[1] - localX * sin + localZ * cos,
+    rotation: rotation + (pseudoRandom(seed * 2.17) - 0.5) * 0.8
+  };
+}
+
+function colorFromCluster(cluster, index) {
+  const palette = cluster.palette?.length ? cluster.palette : ['#7cffb2'];
+  return Number.parseInt(palette[index % palette.length].slice(1), 16);
 }
 
 function createHorizontalPlaneGeometry() {
