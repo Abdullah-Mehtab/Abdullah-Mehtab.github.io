@@ -17,6 +17,8 @@ export class Foliage {
     this.leafCloud = null;
     this.fireflies = null;
     this.dummy = new THREE.Object3D();
+    this.windFrame = 0;
+    this.windSamples = { grassUpdates: 0, treeUpdates: 0 };
   }
 
   build() {
@@ -136,13 +138,13 @@ export class Foliage {
     }
   }
 
-  writeTreeInstances(limit) {
+  writeTreeInstances(limit, elapsed = 0) {
     const counts = { trunk: 0, oak: 0, blossom: 0, cypress: 0 };
     const visible = Math.min(limit, this.treeEntries.length);
     for (let i = 0; i < visible; i += 1) {
       const entry = this.treeEntries[i];
-      this.writeTrunk(entry, counts.trunk++);
-      this.writeCrown(entry, counts[entry.variant]++, entry.variant);
+      this.writeTrunk(entry, counts.trunk++, elapsed);
+      this.writeCrown(entry, counts[entry.variant]++, entry.variant, elapsed);
     }
     for (const name of ['trunk', ...TREE_VARIANTS]) {
       this.treeMeshes[name].count = counts[name];
@@ -150,17 +152,19 @@ export class Foliage {
     }
   }
 
-  writeTrunk(entry, index) {
+  writeTrunk(entry, index, elapsed = 0) {
+    const sway = Math.sin(elapsed * 0.9 + entry.x * 0.035 + entry.z * 0.02) * 0.018;
     this.dummy.position.set(entry.x, 1.32 * entry.scale, entry.z);
-    this.dummy.rotation.set(0, entry.rotation, 0);
+    this.dummy.rotation.set(sway, entry.rotation, sway * 0.65);
     this.dummy.scale.set(entry.scale * 0.78, entry.scale * 0.96, entry.scale * 0.78);
     this.dummy.updateMatrix();
     this.treeMeshes.trunk.setMatrixAt(index, this.dummy.matrix);
   }
 
-  writeCrown(entry, index, variant) {
+  writeCrown(entry, index, variant, elapsed = 0) {
+    const sway = Math.sin(elapsed * 1.1 + entry.x * 0.04 + entry.z * 0.03) * 0.05;
     this.dummy.position.set(entry.x, variant === 'cypress' ? 3.0 * entry.scale : 3.08 * entry.scale, entry.z);
-    this.dummy.rotation.set(0, entry.rotation, 0);
+    this.dummy.rotation.set(sway * 0.42, entry.rotation + sway * 0.18, sway);
     if (variant === 'cypress') {
       this.dummy.scale.set(entry.scale * 0.95, entry.scale * 1.05, entry.scale * 0.95);
     } else {
@@ -170,12 +174,13 @@ export class Foliage {
     this.treeMeshes[variant].setMatrixAt(index, this.dummy.matrix);
   }
 
-  writeGrassInstances(limit) {
+  writeGrassInstances(limit, elapsed = 0) {
     const visible = Math.min(limit, this.grassEntries.length);
     for (let i = 0; i < visible; i += 1) {
       const entry = this.grassEntries[i];
+      const sway = Math.sin(elapsed * 1.7 + entry.x * 0.11 + entry.z * 0.07) * 0.16;
       this.dummy.position.set(entry.x, 0.34 * entry.scale, entry.z);
-      this.dummy.rotation.set(0, entry.rotation, 0);
+      this.dummy.rotation.set(sway * 0.32, entry.rotation, sway);
       this.dummy.scale.set(entry.scale, entry.scale, entry.scale);
       this.dummy.updateMatrix();
       this.grassMesh.setMatrixAt(i, this.dummy.matrix);
@@ -254,6 +259,7 @@ export class Foliage {
   }
 
   update(dt, elapsed) {
+    this.updateWind(elapsed);
     this.updateLeaves(dt);
     if (this.fireflies) {
       const pos = this.fireflies.geometry.attributes.position;
@@ -266,6 +272,16 @@ export class Foliage {
       pos.needsUpdate = true;
       this.fireflies.mesh.material.opacity = 0.5 + Math.sin(elapsed * 1.6) * 0.18;
     }
+  }
+
+  updateWind(elapsed) {
+    this.windFrame = (this.windFrame + 1) % 2;
+    if (this.windFrame !== 0) return;
+    const profile = this.world.getQualityProfile();
+    this.writeTreeInstances(profile.trees, elapsed);
+    this.writeGrassInstances(profile.grassTufts, elapsed);
+    this.windSamples.treeUpdates += 1;
+    this.windSamples.grassUpdates += 1;
   }
 
   updateLeaves(dt) {
