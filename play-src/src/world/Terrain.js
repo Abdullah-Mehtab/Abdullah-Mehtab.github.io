@@ -1,7 +1,7 @@
 // ABOUTME: Builds the procedural toy-island terrain used by /play.
 // ABOUTME: Replaces the old authored island GLB while keeping a stable visible driving floor.
 import * as THREE from 'three';
-import { districtFootprints, ISLAND_RADIUS, roadSegments, terrainBrushes } from './worldData.js';
+import { districtFootprints, ISLAND_RADIUS, meadowDetailPatches, roadSegments, terrainBrushes } from './worldData.js';
 import { getIslandCoastPoints, makeIslandBandGeometry, makeIslandGeometry, makePatchGeometry, pseudoRandom, WATER_Y } from './WorldMaterials.js';
 
 const DISTRICT_DETAIL_STYLES = {
@@ -24,6 +24,7 @@ export class Terrain {
     this.surfaceDetailDummy = new THREE.Object3D();
     this.reliefDummy = new THREE.Object3D();
     this.surfaceDetailStats = { districts: 0, seams: 0, pavers: 0, accents: 0 };
+    this.meadowDetailStats = { patches: 0, colorVariants: 0 };
     this.reliefStats = { mounds: 0, cliffShelves: 0, rockOutcrops: 0, duneRidges: 0, contourBands: 0, beachRipples: 0 };
     this.shorelineStats = { edgeBands: 0, foamBreaks: 0 };
   }
@@ -32,6 +33,7 @@ export class Terrain {
     this.addBeachBase();
     this.addGrassPlateau();
     this.addTerrainBrushes();
+    this.addMeadowDetailPatches();
     this.addDistrictGrounding();
     this.addDistrictSurfaceDetails();
     this.addScenicRelief();
@@ -117,6 +119,43 @@ export class Terrain {
       patch.renderOrder = 4 + index;
       this.world.scene.add(patch);
     });
+  }
+
+  addMeadowDetailPatches() {
+    const specs = meadowDetailPatches.map((patch, index) => ({
+      x: patch.center[0],
+      y: 0.168 + index * 0.0002,
+      z: patch.center[1],
+      width: patch.size[0],
+      depth: patch.size[1],
+      rotation: patch.rotation || 0,
+      color: Number.parseInt(patch.color.slice(1), 16)
+    }));
+    this.addMeadowDetailInstances(specs);
+    this.meadowDetailStats = {
+      patches: specs.length,
+      colorVariants: new Set(meadowDetailPatches.map((patch) => patch.color)).size
+    };
+  }
+
+  addMeadowDetailInstances(specs) {
+    if (!specs.length) return;
+    const mesh = new THREE.InstancedMesh(makePatchGeometry(1, 1, 91), this.world.materials.meadowDetail, specs.length);
+    mesh.name = 'ToyIslandMeadowDetailPatches';
+    mesh.renderOrder = 33;
+    mesh.frustumCulled = false;
+    const color = new THREE.Color();
+    specs.forEach((spec, index) => {
+      this.surfaceDetailDummy.position.set(spec.x, spec.y, spec.z);
+      this.surfaceDetailDummy.rotation.set(0, spec.rotation, 0);
+      this.surfaceDetailDummy.scale.set(spec.width, 1, spec.depth);
+      this.surfaceDetailDummy.updateMatrix();
+      mesh.setMatrixAt(index, this.surfaceDetailDummy.matrix);
+      mesh.setColorAt(index, color.setHex(spec.color));
+    });
+    mesh.instanceMatrix.needsUpdate = true;
+    if (mesh.instanceColor) mesh.instanceColor.needsUpdate = true;
+    this.world.scene.add(mesh);
   }
 
   addDistrictSurfaceDetails() {
@@ -429,6 +468,10 @@ export class Terrain {
 
   getReliefStats() {
     return { ...this.reliefStats };
+  }
+
+  getMeadowDetailStats() {
+    return { ...this.meadowDetailStats };
   }
 
   getShorelineStats() {
