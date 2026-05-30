@@ -1,7 +1,7 @@
 // ABOUTME: Builds the procedural toy-island terrain used by /play.
 // ABOUTME: Replaces the old authored island GLB while keeping a stable visible driving floor.
 import * as THREE from 'three';
-import { districtFootprints, fieldMotifClusters, ISLAND_RADIUS, meadowDetailPatches, roadSegments, terrainBrushes } from './worldData.js';
+import { districtFootprints, districtSurfaceBreakups, fieldMotifClusters, ISLAND_RADIUS, meadowDetailPatches, roadSegments, terrainBrushes } from './worldData.js';
 import { getIslandCoastPoints, makeIslandBandGeometry, makeIslandGeometry, makePatchGeometry, pseudoRandom, WATER_Y } from './WorldMaterials.js';
 
 const DISTRICT_DETAIL_STYLES = {
@@ -23,7 +23,7 @@ export class Terrain {
     this.authoredIslandLoaded = false;
     this.surfaceDetailDummy = new THREE.Object3D();
     this.reliefDummy = new THREE.Object3D();
-    this.surfaceDetailStats = { districts: 0, seams: 0, pavers: 0, accents: 0 };
+    this.surfaceDetailStats = { districts: 0, seams: 0, pavers: 0, accents: 0, breakups: 0 };
     this.meadowDetailStats = { patches: 0, colorVariants: 0 };
     this.fieldMotifEntries = [];
     this.fieldMotifStats = { clusters: 0, berms: 0, ribbons: 0, visibleBerms: 0, visibleRibbons: 0, visibleTotal: 0 };
@@ -270,6 +270,15 @@ export class Terrain {
     const seams = [];
     const pavers = [];
     const accents = [];
+    const breakups = districtSurfaceBreakups.map((patch, index) => ({
+      x: patch.center[0],
+      y: 0.176 + index * 0.00004,
+      z: patch.center[1],
+      width: patch.size[0],
+      depth: patch.size[1],
+      rotation: patch.rotation || 0,
+      color: Number.parseInt(patch.color.slice(1), 16)
+    }));
 
     districtFootprints.forEach((district, index) => {
       const rotation = (index % 3 - 1) * 0.08;
@@ -311,13 +320,14 @@ export class Terrain {
     });
 
     this.addSurfaceDetailInstances('ToyIslandSurface_Seams', seams, this.world.materials.surfaceSeam, 36);
-    this.addSurfaceDetailInstances('ToyIslandSurface_Pavers', pavers, this.world.materials.surfacePaver, 35);
+    this.addSurfaceDetailInstances('ToyIslandSurface_Pavers', [...pavers, ...breakups], this.world.materials.surfacePaver, 35);
     this.addSurfaceDetailInstances('ToyIslandSurface_Accents', accents, this.world.materials.surfaceAccent, 37);
     this.surfaceDetailStats = {
       districts: districtFootprints.length,
       seams: seams.length,
       pavers: pavers.length,
-      accents: accents.length
+      accents: accents.length,
+      breakups: breakups.length
     };
   }
 

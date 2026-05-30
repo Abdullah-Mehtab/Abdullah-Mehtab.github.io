@@ -88,6 +88,40 @@ export const meadowDetailPatches = [
   { id: 'data-ridge-wild-lawn', center: [-146, 84], size: [20, 6], rotation: -0.36, color: '#79ffc5' }
 ];
 
+export const districtSurfaceBreakups = [
+  { id: 'launch-left-inset', center: [-12, 22], size: [22, 5.2], rotation: -0.18, color: '#3e6f45' },
+  { id: 'launch-right-inset', center: [24, 34], size: [18, 4.6], rotation: 0.34, color: '#8fc674' },
+  { id: 'launch-paver-shadow', center: [7, 13], size: [15, 3.8], rotation: 0.04, color: '#6a5d43' },
+  { id: 'fcc-arrival-worn-lawn', center: [-82, 60], size: [30, 5.2], rotation: -0.1, color: '#7fb869' },
+  { id: 'fcc-east-court-inset', center: [-52, 82], size: [18, 4.2], rotation: 0.38, color: '#9ccfff' },
+  { id: 'security-court-shadow', center: [-105, -62], size: [30, 5.6], rotation: -0.18, color: '#071923' },
+  { id: 'security-scanner-wash', center: [-86, -47], size: [22, 4.4], rotation: 0.42, color: '#68d8ff' },
+  { id: 'security-return-inset', center: [-118, -76], size: [17, 3.8], rotation: -0.46, color: '#2d5f67' },
+  { id: 'projects-factory-wear', center: [66, 48], size: [24, 5.4], rotation: -0.4, color: '#735b3f' },
+  { id: 'projects-cargo-inset', center: [78, 66], size: [18, 4.2], rotation: 0.18, color: '#ffcc66' },
+  { id: 'projects-road-side-fill', center: [44, 56], size: [14, 3.6], rotation: 0.55, color: '#8bd36b' },
+  { id: 'sentinel-ridge-shadow', center: [20, 110], size: [24, 4.6], rotation: 0.26, color: '#5a4150' },
+  { id: 'archive-stair-glow', center: [-42, 62], size: [18, 3.8], rotation: -0.12, color: '#ffdf8a' },
+  { id: 'cv-document-court-left', center: [-4, -56], size: [22, 4.8], rotation: -0.24, color: '#64756b' },
+  { id: 'cv-document-court-right', center: [24, -50], size: [18, 4.4], rotation: 0.32, color: '#d8b6ff' },
+  { id: 'cv-south-worn-edge', center: [22, -78], size: [19, 3.6], rotation: -0.42, color: '#6b5948' },
+  { id: 'career-office-apron-break', center: [92, -38], size: [24, 4.8], rotation: -0.28, color: '#715b78' },
+  { id: 'career-link-lawn-cut', center: [82, -16], size: [17, 3.8], rotation: 0.5, color: '#8bd36b' },
+  { id: 'stunt-yard-rubber-island', center: [88, -82], size: [28, 5.6], rotation: 0.12, color: '#3a211c' },
+  { id: 'stunt-yard-safety-wash', center: [112, -96], size: [24, 4.8], rotation: -0.3, color: '#ff9b6d' },
+  { id: 'stunt-yard-grass-cut', center: [72, -112], size: [22, 4.4], rotation: 0.46, color: '#5e7c42' },
+  { id: 'circuit-grid-rubber-one', center: [50, 106], size: [22, 4.8], rotation: -0.2, color: '#3a211c' },
+  { id: 'circuit-grid-rubber-two', center: [72, 96], size: [18, 4.2], rotation: 0.28, color: '#6d4a38' },
+  { id: 'circuit-outer-lawn-cut', center: [42, 120], size: [16, 3.8], rotation: 0.12, color: '#6fa856' },
+  { id: 'farm-track-worn-row', center: [-54, -132], size: [26, 4.4], rotation: -0.18, color: '#6b4828' },
+  { id: 'farm-green-row', center: [-74, -118], size: [18, 3.8], rotation: 0.42, color: '#77b85a' },
+  { id: 'behind-workbench-wear', center: [-14, -98], size: [22, 4.4], rotation: 0.18, color: '#5f584d' },
+  { id: 'behind-process-inset', center: [2, -84], size: [17, 3.8], rotation: -0.36, color: '#a8a6ff' },
+  { id: 'harbor-salt-wash', center: [124, 54], size: [21, 4.6], rotation: -0.2, color: '#78b7ff' },
+  { id: 'harbor-sand-cut', center: [136, 74], size: [17, 3.8], rotation: 0.4, color: '#f3d19c' },
+  { id: 'data-pier-tide-inset', center: [-130, 62], size: [17, 3.8], rotation: 0.65, color: '#79ffc5' }
+];
+
 export const fieldMotifClusters = [
   { id: 'launch-west-lawn', center: [-38, 8], size: [42, 24], rotation: -0.22, palette: ['#7cffb2', '#f0aeb6', '#d7c36a'], berms: 3, ribbons: 7, seed: 11 },
   { id: 'launch-east-lawn', center: [42, 16], size: [38, 22], rotation: 0.28, palette: ['#68d8ff', '#7cffb2', '#d7c36a'], berms: 3, ribbons: 6, seed: 17 },

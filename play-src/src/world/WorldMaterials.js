@@ -129,7 +129,7 @@ export function createWorldMaterials() {
     surfacePaver: new THREE.MeshBasicMaterial({
       color: 0xffffff,
       transparent: true,
-      opacity: 0.11,
+      opacity: 0.13,
       depthWrite: false,
       side: THREE.DoubleSide,
       vertexColors: true,
