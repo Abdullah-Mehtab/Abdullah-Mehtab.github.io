@@ -2,6 +2,7 @@
 // ABOUTME: Uses the same irregular island outline as the terrain so water no longer reads as a circle.
 import * as THREE from 'three';
 import { ISLAND_RADIUS, WORLD_HALF_SIZE } from './worldData.js';
+import { mergeStaticMeshesInGroup } from './StaticBatching.js';
 import { getIslandCoastPoints, makeIslandBandGeometry, pseudoRandom, WATER_Y } from './WorldMaterials.js';
 
 const SPLASH_LIMITS = { low: 12, medium: 24, high: 40 };
@@ -10,6 +11,7 @@ const WAKE_LIMITS = { low: 10, medium: 26, high: 42 };
 const GLINT_LIMITS = { low: 0, medium: 20, high: 34 };
 const WAVE_LANE_LIMITS = { low: 16, medium: 32, high: 52 };
 const SHORE_FLECK_LIMITS = { low: 24, medium: 72, high: 112 };
+const TIDE_GLIMMER_LIMITS = { low: 4, medium: 12, high: 18 };
 const SHORE_WAKE_RADIUS = ISLAND_RADIUS * 0.94;
 const WATER_DRAG_RADIUS = ISLAND_RADIUS * 1.012;
 const WATER_RESPAWN_RADIUS = ISLAND_RADIUS * 1.04;
@@ -23,6 +25,8 @@ export class Water {
     this.surfaceGlints = [];
     this.waveLanes = [];
     this.shoreFlecks = [];
+    this.shorelineLifeGroups = [];
+    this.tideGlimmers = [];
     this.splashes = [];
     this.wakes = [];
     this.maxSplashes = SPLASH_LIMITS.medium;
@@ -31,6 +35,16 @@ export class Water {
     this.maxGlints = GLINT_LIMITS.medium;
     this.maxWaveLanes = WAVE_LANE_LIMITS.medium;
     this.maxShoreFlecks = SHORE_FLECK_LIMITS.medium;
+    this.maxTideGlimmers = TIDE_GLIMMER_LIMITS.medium;
+    this.shorelineLifeStats = {
+      kits: 0,
+      tidePools: 0,
+      breakwaters: 0,
+      visibleKits: 0,
+      visibleTidePools: 0,
+      visibleBreakwaters: 0,
+      batches: 0
+    };
     this.lastSplashAt = -Infinity;
     this.lastSplashAudioAt = -Infinity;
     this.lastWakeAt = -Infinity;
@@ -44,6 +58,7 @@ export class Water {
     this.glintDummy = new THREE.Object3D();
     this.waveLaneDummy = new THREE.Object3D();
     this.shoreFleckDummy = new THREE.Object3D();
+    this.tideGlimmerDummy = new THREE.Object3D();
     this.splashGeometry = new THREE.SphereGeometry(0.18, 8, 5);
     this.splashMaterial = new THREE.MeshBasicMaterial({
       color: 0xeafff7,
@@ -75,6 +90,8 @@ export class Water {
     this.createShallowShelf();
     this.createShoreFoam();
     this.createShoreFlecks();
+    this.createShorelineLifeKits();
+    this.createTideGlimmers();
     this.createSurfaceGlints();
     this.createWaveLanes();
     this.createBobbingProps();
@@ -154,6 +171,115 @@ export class Water {
       });
     }
     this.writeShoreFlecks(0);
+  }
+
+  createShorelineLifeKits() {
+    const coastPoints = getIslandCoastPoints(ISLAND_RADIUS, 0.972, 180);
+    const layerSpecs = [
+      { name: 'low', visibleOn: ['low', 'medium', 'high'] },
+      { name: 'medium', visibleOn: ['medium', 'high'] },
+      { name: 'high', visibleOn: ['high'] }
+    ];
+    const layers = new Map();
+    for (const layerSpec of layerSpecs) {
+      const group = new THREE.Group();
+      group.name = `Water_Shoreline_Life_${layerSpec.name}`;
+      group.userData.visibleOn = layerSpec.visibleOn;
+      group.userData.tidePools = 0;
+      group.userData.breakwaters = 0;
+      group.userData.kits = 0;
+      this.world.scene.add(group);
+      layers.set(layerSpec.name, group);
+      this.shorelineLifeGroups.push({ group, visibleOn: layerSpec.visibleOn });
+    }
+
+    const placements = [
+      { layer: 'low', template: 'EnvPolishShorelineTidePool', angle: -2.92, offset: 0.965, scale: 1.05, rotation: -0.18 },
+      { layer: 'low', template: 'EnvPolishShorelineBreakwater', angle: -2.48, offset: 0.976, scale: 0.86, rotation: 0.08 },
+      { layer: 'low', template: 'EnvPolishShorelineTidePool', angle: -1.86, offset: 0.962, scale: 0.96, rotation: 0.22 },
+      { layer: 'low', template: 'EnvPolishShorelineBreakwater', angle: -0.34, offset: 0.974, scale: 0.92, rotation: -0.12 },
+      { layer: 'medium', template: 'EnvPolishShorelineTidePool', angle: -0.04, offset: 0.948, scale: 1.28, rotation: 0.08 },
+      { layer: 'medium', template: 'EnvPolishShorelineTidePool', angle: -1.18, offset: 0.964, scale: 1.0, rotation: -0.2 },
+      { layer: 'medium', template: 'EnvPolishShorelineBreakwater', angle: -0.74, offset: 0.978, scale: 0.82, rotation: 0.18 },
+      { layer: 'medium', template: 'EnvPolishShorelineTidePool', angle: 0.14, offset: 0.963, scale: 0.92, rotation: 0.28 },
+      { layer: 'medium', template: 'EnvPolishShorelineBreakwater', angle: 0.62, offset: 0.974, scale: 0.84, rotation: -0.24 },
+      { layer: 'medium', template: 'EnvPolishShorelineTidePool', angle: 1.04, offset: 0.965, scale: 0.98, rotation: -0.08 },
+      { layer: 'medium', template: 'EnvPolishShorelineBreakwater', angle: 1.52, offset: 0.977, scale: 0.88, rotation: 0.14 },
+      { layer: 'high', template: 'EnvPolishShorelineTidePool', angle: 1.92, offset: 0.964, scale: 0.94, rotation: 0.2 },
+      { layer: 'high', template: 'EnvPolishShorelineBreakwater', angle: 2.32, offset: 0.976, scale: 0.82, rotation: -0.18 },
+      { layer: 'high', template: 'EnvPolishShorelineTidePool', angle: 2.74, offset: 0.962, scale: 1.02, rotation: -0.28 },
+      { layer: 'high', template: 'EnvPolishShorelineBreakwater', angle: 3.1, offset: 0.974, scale: 0.86, rotation: 0.12 }
+    ];
+
+    placements.forEach((spec, index) => {
+      const group = layers.get(spec.layer);
+      const prop = this.world.cloneEnvironmentAsset(spec.template);
+      if (!group || !prop) return;
+      const [x, z] = pointOnCoast(coastPoints, spec.angle, spec.offset);
+      if (this.world.roads?.isNear(x, z, 5.8)) return;
+      prop.name = `ShorelineLife_${spec.template}_${index}`;
+      prop.position.set(x, 0.11, z);
+      prop.rotation.y = -spec.angle + Math.PI * 0.5 + spec.rotation;
+      prop.rotation.z = (pseudoRandom(index * 2.71) - 0.5) * 0.035;
+      prop.scale.setScalar(spec.scale);
+      prop.traverse((object) => {
+        if (object.isMesh) {
+          object.castShadow = false;
+          object.receiveShadow = true;
+        }
+      });
+      group.add(prop);
+      group.userData.kits += 1;
+      this.shorelineLifeStats.kits += 1;
+      if (spec.template.includes('TidePool')) {
+        group.userData.tidePools += 1;
+        this.shorelineLifeStats.tidePools += 1;
+      } else {
+        group.userData.breakwaters += 1;
+        this.shorelineLifeStats.breakwaters += 1;
+      }
+    });
+
+    for (const { group } of this.shorelineLifeGroups) {
+      this.shorelineLifeStats.batches += mergeStaticMeshesInGroup(group, {
+        namePrefix: `WATER_shorelife_${group.name}`
+      });
+    }
+  }
+
+  createTideGlimmers() {
+    const capacity = TIDE_GLIMMER_LIMITS.high;
+    const coastPoints = getIslandCoastPoints(ISLAND_RADIUS, 0.982, 180);
+    const geometry = new THREE.PlaneGeometry(1, 1);
+    geometry.rotateX(-Math.PI / 2);
+    const material = new THREE.MeshBasicMaterial({
+      color: 0xcffff3,
+      transparent: true,
+      opacity: 0.24,
+      depthWrite: false,
+      blending: THREE.AdditiveBlending,
+      side: THREE.DoubleSide
+    });
+    this.tideGlimmerMesh = new THREE.InstancedMesh(geometry, material, capacity);
+    this.tideGlimmerMesh.name = 'Water_TidePool_Glimmer_Strips';
+    this.tideGlimmerMesh.frustumCulled = false;
+    this.tideGlimmerMesh.renderOrder = 0;
+    this.world.scene.add(this.tideGlimmerMesh);
+
+    for (let i = 0; i < capacity; i += 1) {
+      const angle = -2.95 + i * 0.36 + (pseudoRandom(i * 3.21) - 0.5) * 0.12;
+      const [x, z] = pointOnCoast(coastPoints, angle, 0.982 + pseudoRandom(i * 5.43) * 0.014);
+      this.tideGlimmers.push({
+        x,
+        z,
+        rotation: angle + Math.PI * 0.5 + (pseudoRandom(i * 7.77) - 0.5) * 0.4,
+        width: 4.1 + pseudoRandom(i * 11.13) * 5.2,
+        depth: 0.16 + pseudoRandom(i * 13.37) * 0.2,
+        phase: i * 0.57,
+        speed: 0.62 + pseudoRandom(i * 17.19) * 0.34
+      });
+    }
+    this.writeTideGlimmers(0);
   }
 
   createSurfaceGlints() {
@@ -329,9 +455,11 @@ export class Water {
     this.maxGlints = GLINT_LIMITS[waterQuality] ?? GLINT_LIMITS.medium;
     this.maxWaveLanes = WAVE_LANE_LIMITS[waterQuality] ?? WAVE_LANE_LIMITS.medium;
     this.maxShoreFlecks = SHORE_FLECK_LIMITS[waterQuality] ?? SHORE_FLECK_LIMITS.medium;
+    this.maxTideGlimmers = TIDE_GLIMMER_LIMITS[waterQuality] ?? TIDE_GLIMMER_LIMITS.medium;
     this.foamMeshes.forEach((mesh, index) => {
       mesh.visible = waterQuality === 'high' || (waterQuality === 'medium' && index < 2) || index === 0;
     });
+    this.applyShorelineLifeQuality();
     if (this.glintMesh) {
       this.glintMesh.count = this.maxGlints;
       this.glintMesh.visible = this.maxGlints > 0;
@@ -347,11 +475,33 @@ export class Water {
       this.shoreFleckMesh.visible = this.maxShoreFlecks > 0;
       this.shoreFleckMesh.instanceMatrix.needsUpdate = true;
     }
+    if (this.tideGlimmerMesh) {
+      this.tideGlimmerMesh.count = this.maxTideGlimmers;
+      this.tideGlimmerMesh.visible = this.maxTideGlimmers > 0;
+      this.tideGlimmerMesh.instanceMatrix.needsUpdate = true;
+    }
     this.bobbingProps.forEach((item, index) => {
       item.group.visible = index < this.maxBobbingProps;
     });
     this.trimSplashPool();
     this.trimWakePool();
+  }
+
+  applyShorelineLifeQuality() {
+    let visibleKits = 0;
+    let visibleTidePools = 0;
+    let visibleBreakwaters = 0;
+    for (const entry of this.shorelineLifeGroups) {
+      const visible = entry.visibleOn.includes(this.world.landscapeQuality);
+      entry.group.visible = visible;
+      if (!visible) continue;
+      visibleKits += entry.group.userData.kits || 0;
+      visibleTidePools += entry.group.userData.tidePools || 0;
+      visibleBreakwaters += entry.group.userData.breakwaters || 0;
+    }
+    this.shorelineLifeStats.visibleKits = visibleKits;
+    this.shorelineLifeStats.visibleTidePools = visibleTidePools;
+    this.shorelineLifeStats.visibleBreakwaters = visibleBreakwaters;
   }
 
   update(dt, elapsed, vehiclePosition, vehicle) {
@@ -371,6 +521,7 @@ export class Water {
     this.updateSurfaceGlints(elapsed);
     this.updateWaveLanes(elapsed);
     this.updateShoreFlecks(elapsed);
+    this.updateTideGlimmers(elapsed);
     this.updateBobbingProps(elapsed);
     this.updateVehicleWaterInteraction(dt, elapsed, vehiclePosition, vehicle);
     this.updateSplashes(dt);
@@ -404,6 +555,12 @@ export class Water {
     if (!this.shoreFleckMesh) return;
     this.writeShoreFlecks(elapsed);
     this.shoreFleckMesh.material.opacity = 0.14 + Math.sin(elapsed * 0.58) * 0.035;
+  }
+
+  updateTideGlimmers(elapsed) {
+    if (!this.tideGlimmerMesh || this.maxTideGlimmers <= 0) return;
+    this.writeTideGlimmers(elapsed);
+    this.tideGlimmerMesh.material.opacity = 0.14 + Math.sin(elapsed * 0.72) * 0.035;
   }
 
   writeSurfaceGlints(elapsed) {
@@ -477,6 +634,32 @@ export class Water {
     }
     this.shoreFleckMesh.count = visible;
     this.shoreFleckMesh.instanceMatrix.needsUpdate = true;
+  }
+
+  writeTideGlimmers(elapsed) {
+    if (!this.tideGlimmerMesh) return;
+    const visible = Math.min(this.maxTideGlimmers, this.tideGlimmers.length);
+    for (let i = 0; i < visible; i += 1) {
+      const glimmer = this.tideGlimmers[i];
+      const pulse = Math.sin(elapsed * glimmer.speed + glimmer.phase);
+      this.tideGlimmerDummy.position.set(
+        glimmer.x + Math.cos(glimmer.rotation) * pulse * 0.14,
+        0.18 + i * 0.00008,
+        glimmer.z - Math.sin(glimmer.rotation) * pulse * 0.14
+      );
+      this.tideGlimmerDummy.rotation.set(0, glimmer.rotation + pulse * 0.035, 0);
+      this.tideGlimmerDummy.scale.set(glimmer.width * (0.86 + pulse * 0.12), 1, glimmer.depth * (0.9 + pulse * 0.16));
+      this.tideGlimmerDummy.updateMatrix();
+      this.tideGlimmerMesh.setMatrixAt(i, this.tideGlimmerDummy.matrix);
+    }
+    for (let i = visible; i < this.tideGlimmers.length; i += 1) {
+      this.tideGlimmerDummy.position.set(0, -1000, 0);
+      this.tideGlimmerDummy.scale.set(0, 0, 0);
+      this.tideGlimmerDummy.updateMatrix();
+      this.tideGlimmerMesh.setMatrixAt(i, this.tideGlimmerDummy.matrix);
+    }
+    this.tideGlimmerMesh.count = visible;
+    this.tideGlimmerMesh.instanceMatrix.needsUpdate = true;
   }
 
   updateVehicleWaterInteraction(dt, elapsed, vehiclePosition, vehicle) {
@@ -803,6 +986,15 @@ export class Water {
       visibleWaveLanes: this.waveLaneMesh?.count || 0,
       shoreFlecks: this.shoreFlecks.length,
       visibleShoreFlecks: this.shoreFleckMesh?.count || 0,
+      tideGlimmers: this.tideGlimmers.length,
+      visibleTideGlimmers: this.tideGlimmerMesh?.count || 0,
+      shorelineLifeKits: this.shorelineLifeStats.kits,
+      visibleShorelineLifeKits: this.shorelineLifeStats.visibleKits,
+      shorelineTidePools: this.shorelineLifeStats.tidePools,
+      visibleShorelineTidePools: this.shorelineLifeStats.visibleTidePools,
+      shorelineBreakwaters: this.shorelineLifeStats.breakwaters,
+      visibleShorelineBreakwaters: this.shorelineLifeStats.visibleBreakwaters,
+      shorelineLifeBatches: this.shorelineLifeStats.batches,
       bobbingProps: this.bobbingProps.length,
       visibleBobbingProps: this.bobbingProps.filter((item) => item.group.visible).length
     };

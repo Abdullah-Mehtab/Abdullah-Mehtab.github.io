@@ -1624,6 +1624,11 @@ function assertVerification(result) {
   if ((result.waterStats?.visibleWaveLanes || 0) < 32) failures.push(`water detail probe failed: visibleWaveLanes=${result.waterStats?.visibleWaveLanes || 0}`);
   if ((result.waterStats?.shoreFlecks || 0) < 112) failures.push(`water shoreline fleck probe failed: shoreFlecks=${result.waterStats?.shoreFlecks || 0}`);
   if ((result.waterStats?.visibleShoreFlecks || 0) < 72) failures.push(`water shoreline fleck probe failed: visibleShoreFlecks=${result.waterStats?.visibleShoreFlecks || 0}`);
+  if ((result.waterStats?.shorelineLifeKits || 0) < 10) failures.push(`water authored shoreline probe failed: shorelineLifeKits=${result.waterStats?.shorelineLifeKits || 0}`);
+  if ((result.waterStats?.visibleShorelineLifeKits || 0) < 8) failures.push(`water authored shoreline probe failed: visibleShorelineLifeKits=${result.waterStats?.visibleShorelineLifeKits || 0}`);
+  if ((result.waterStats?.shorelineTidePools || 0) < 5) failures.push(`water authored shoreline probe failed: shorelineTidePools=${result.waterStats?.shorelineTidePools || 0}`);
+  if ((result.waterStats?.shorelineBreakwaters || 0) < 5) failures.push(`water authored shoreline probe failed: shorelineBreakwaters=${result.waterStats?.shorelineBreakwaters || 0}`);
+  if ((result.waterStats?.visibleTideGlimmers || 0) < 12) failures.push(`water tide glimmer probe failed: visibleTideGlimmers=${result.waterStats?.visibleTideGlimmers || 0}`);
   if (result.surfaces?.road !== 'road') failures.push(`surface probe failed: road=${result.surfaces?.road}`);
   if (result.surfaces?.grass !== 'grass') failures.push(`surface probe failed: grass=${result.surfaces?.grass}`);
   if (result.surfaces?.sand !== 'sand') failures.push(`surface probe failed: sand=${result.surfaces?.sand}`);
@@ -1818,6 +1823,12 @@ function assertVerification(result) {
   }
   if ((result.mobile.waterStats?.visibleShoreFlecks || 0) > 24) {
     failures.push(`mobile water quality probe failed: visibleShoreFlecks=${result.mobile.waterStats?.visibleShoreFlecks || 0}`);
+  }
+  if ((result.mobile.waterStats?.visibleShorelineLifeKits || 0) > 4) {
+    failures.push(`mobile water quality probe failed: visibleShorelineLifeKits=${result.mobile.waterStats?.visibleShorelineLifeKits || 0}`);
+  }
+  if ((result.mobile.waterStats?.visibleTideGlimmers || 0) > 4) {
+    failures.push(`mobile water quality probe failed: visibleTideGlimmers=${result.mobile.waterStats?.visibleTideGlimmers || 0}`);
   }
   if ((result.mobile.waterStats?.visibleSurfaceGlints || 0) !== 0) {
     failures.push(`mobile water quality probe failed: visibleSurfaceGlints=${result.mobile.waterStats?.visibleSurfaceGlints || 0}`);

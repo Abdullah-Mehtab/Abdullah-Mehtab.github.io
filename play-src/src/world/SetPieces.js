@@ -1780,6 +1780,9 @@ export class SetPieces {
     this.addHarborAsset(group, 'EnvPolishHarborShade', contact, -8.8, 8.2, rotation + 0.18, 0.92, 'shadeStructures');
     this.addHarborAsset(group, 'EnvPolishDockFloat', contact, 14.8, 19.3, rotation - 0.12, 0.92, 'piers');
     this.addHarborAsset(group, 'EnvPolishWaveMarker', contact, 2.8, 18.4, rotation + 0.34, 0.86, null);
+    this.addHarborAsset(group, 'EnvPolishShorelineTidePool', contact, -4.8, 18.8, rotation + 0.16, 1.06, null);
+    this.addHarborAsset(group, 'EnvPolishShorelineTidePool', contact, 10.8, 19.4, rotation - 0.22, 0.92, null);
+    this.addHarborAsset(group, 'EnvPolishShorelineBreakwater', contact, 5.8, 22.2, rotation + 0.05, 0.88, null);
     this.addHarborAsset(group, 'EnvPolishPalm', contact, -13.2, 5.8, rotation + 0.62, 1.08, null);
     this.addHarborAsset(group, 'EnvPolishPalm', contact, 13.4, 2.2, rotation + 0.16, 0.98, null);
     for (const [right, forward, assetRotation, scale] of [
