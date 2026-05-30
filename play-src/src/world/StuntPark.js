@@ -396,8 +396,8 @@ export class StuntPark {
       const passed = circuit.active && targetIndex <= circuit.checkpoint;
       const checkpointPulse = circuit.lastCheckpointIndex === targetIndex ? circuit.checkpointPulse || 0 : 0;
       const pulse = Math.sin(elapsed * 4.6 + index * 0.5) * 0.5 + 0.5;
-      const ringScale = isActive ? 2.25 + pulse * 0.36 : passed ? 0.62 + checkpointPulse * 1.18 : 1.0 + checkpointPulse * 1.1;
-      const arrowScale = isActive ? 1.35 + pulse * 0.18 : passed ? 0.42 + checkpointPulse * 0.72 : 0.72 + checkpointPulse * 0.62;
+      const ringScale = isActive ? 2.25 + pulse * 0.36 : passed ? 0.48 + checkpointPulse * 1.18 : 0.42 + checkpointPulse * 1.1;
+      const arrowScale = isActive ? 1.35 + pulse * 0.18 : passed ? 0.3 + checkpointPulse * 0.72 : 0.22 + checkpointPulse * 0.62;
       const color = isActive ? 0xfff0a0 : (passed || checkpointPulse > 0.01) ? 0x79ffc5 : 0xff9b6d;
       if (checkpointPulse > 0.01) {
         this.stats.checkpointPulseSamples += 1;
