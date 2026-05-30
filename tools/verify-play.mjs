@@ -1785,6 +1785,8 @@ function assertVerification(result) {
   if ((result.stuntPark?.tireStacks || 0) < 5) failures.push(`stunt park probe failed: tireStacks=${result.stuntPark?.tireStacks || 0}`);
   if ((result.stuntPark?.landingMarkers || 0) < 6) failures.push(`stunt park probe failed: landingMarkers=${result.stuntPark?.landingMarkers || 0}`);
   if ((result.stuntPark?.authoredAssets || 0) < 7) failures.push(`stunt park probe failed: authoredAssets=${result.stuntPark?.authoredAssets || 0}`);
+  if ((result.stuntPark?.infieldIslands || 0) < 4) failures.push(`stunt park probe failed: infieldIslands=${result.stuntPark?.infieldIslands || 0}`);
+  if ((result.stuntPark?.runoffShoulders || 0) < 4) failures.push(`stunt park probe failed: runoffShoulders=${result.stuntPark?.runoffShoulders || 0}`);
   if ((result.stuntPark?.laneChevrons || 0) < 18) failures.push(`stunt park probe failed: laneChevrons=${result.stuntPark?.laneChevrons || 0}`);
   if ((result.stuntPark?.trackScuffs || 0) < 30) failures.push(`stunt park probe failed: trackScuffs=${result.stuntPark?.trackScuffs || 0}`);
   if ((result.stuntPark?.gates || 0) < 2) failures.push(`stunt park probe failed: gates=${result.stuntPark?.gates || 0}`);
