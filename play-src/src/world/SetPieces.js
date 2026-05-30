@@ -1082,7 +1082,7 @@ export class SetPieces {
     ];
     for (const run of guideRuns) this.addRouteGuideTiles(group, run);
 
-    mergeStaticMeshesInGroup(group, { namePrefix: 'SETPIECE_route_composition', cellSize: 56 });
+    mergeStaticMeshesInGroup(group, { namePrefix: 'SETPIECE_route_composition', cellSize: 84 });
     group.userData.routeCompositionStats = { ...this.routeCompositionStats };
     this.registerQualityGroup(group, 'secondary');
     this.registerBroadSetPieceBatches('routeComposition', group, 'SETPIECE_route_composition', 'routeCompositionRadius');
