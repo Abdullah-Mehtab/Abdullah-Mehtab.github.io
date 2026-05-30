@@ -26,6 +26,7 @@ const authoredDistrictAssets = [
   'EnvPolishCampusWalkwayPavilion',
   'EnvPolishCampusStudyBench',
   'EnvPolishCvVault',
+  'EnvPolishCvArchiveSpine',
   'EnvPolishSkillsArray',
   'EnvPolishCareerOffice',
   'EnvPolishAwardsMonument',

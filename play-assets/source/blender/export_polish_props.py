@@ -35,6 +35,7 @@ def main():
     create_campus_walkway_pavilion(mats)
     create_campus_study_bench(mats)
     create_cv_vault(mats)
+    create_cv_archive_spine(mats)
     create_skills_array(mats)
     create_career_office(mats)
     create_awards_monument(mats)
@@ -437,6 +438,42 @@ def create_cv_vault(mats):
     for i, x in enumerate([-1.38, -0.46, 0.46, 1.38]):
         cube(f"CvVault_File_{i}", group, (x, 1.82, 0.92), (0.54, 0.72, 0.08), mats["paper"], rot=(0, 0, 0.08 - i * 0.04), bevel=0.008)
     cube("CvVault_HeaderGlow", group, (0, 2.64, 0.98), (3.2, 0.1, 0.08), mats["mint"], bevel=0.006)
+
+
+def create_cv_archive_spine(mats):
+    group = root("EnvPolishCvArchiveSpine")
+    cube("CvArchiveSpine_Floor", group, (0, 0.12, 0), (10.8, 0.24, 5.4), mats["stone"], bevel=0.05)
+    cube("CvArchiveSpine_BackShelf", group, (0, 1.58, 2.24), (10.2, 2.6, 0.34), mats["stone_shadow"], bevel=0.045)
+    cube("CvArchiveSpine_Roof", group, (0, 3.08, 0.36), (11.4, 0.34, 5.9), mats["wood"], bevel=0.055)
+    cube("CvArchiveSpine_HeaderGlow", group, (0, 2.82, -2.66), (8.7, 0.09, 0.08), mats["screen"], bevel=0.006)
+    for x in [-4.72, 4.72]:
+        cube("CvArchiveSpine_EndPier", group, (x, 1.68, 0.08), (0.42, 2.9, 4.7), mats["stone_shadow"], bevel=0.035)
+        cube("CvArchiveSpine_PierGlow", group, (x, 1.86, -2.12), (0.1, 2.18, 0.07), mats["mint"], bevel=0.004)
+    for x in [-3.4, -1.7, 0, 1.7, 3.4]:
+        cube("CvArchiveSpine_ShelfDivider", group, (x, 1.42, 2.0), (0.18, 2.0, 0.22), mats["dark"], bevel=0.012)
+    for index, (x, y, material, tilt) in enumerate([
+        (-3.85, 1.02, "paper", -0.08),
+        (-2.72, 1.36, "foam", 0.04),
+        (-1.52, 1.12, "paper", 0.09),
+        (-0.34, 1.58, "amber", -0.05),
+        (0.86, 1.28, "paper", 0.02),
+        (2.08, 1.62, "mint", 0.06),
+        (3.34, 1.18, "paper", -0.1),
+    ]):
+        cube(f"CvArchiveSpine_File_{index}", group, (x, y, 1.78), (0.66, 0.82, 0.08), mats[material], rot=(0, 0, tilt), bevel=0.008)
+    for side in [-1, 1]:
+        cube("CvArchiveSpine_EndDisplay", group, (side * 4.94, 1.7, -0.48), (0.07, 1.12, 2.15), mats["dark"], bevel=0.012)
+        cube("CvArchiveSpine_EndDisplayGlow", group, (side * 4.98, 1.92, -0.62), (0.055, 0.78, 1.42), mats["screen"], bevel=0.004)
+        cube("CvArchiveSpine_EndFileCard", group, (side * 4.99, 1.18, 0.68), (0.055, 0.46, 0.86), mats["paper"], bevel=0.004)
+    for x in [-3.55, -1.18, 1.18, 3.55]:
+        cube("CvArchiveSpine_FrontColumn", group, (x, 1.55, -2.04), (0.32, 2.72, 0.32), mats["dark"], bevel=0.022)
+        cube("CvArchiveSpine_ColumnLamp", group, (x, 2.5, -2.26), (0.34, 0.24, 0.08), mats["screen"], bevel=0.014)
+    cube("CvArchiveSpine_ServiceDesk", group, (0, 0.76, -0.88), (4.3, 0.5, 1.12), mats["wood"], bevel=0.035)
+    cube("CvArchiveSpine_DeskScreen", group, (-1.28, 1.28, -1.48), (1.15, 0.76, 0.08), mats["screen"], rot=(0, 0.12, 0), bevel=0.012)
+    cube("CvArchiveSpine_DeskLamp", group, (1.48, 1.36, -1.36), (0.46, 0.34, 0.46), mats["amber"], bevel=0.035)
+    for x in [-4.1, 4.1]:
+        cube("CvArchiveSpine_SideBench", group, (x, 0.68, -0.72), (1.72, 0.22, 0.58), mats["wood"], bevel=0.025)
+    cube("CvArchiveSpine_FloorTrace", group, (0, 0.31, -2.48), (8.4, 0.06, 0.08), mats["screen"], bevel=0.004)
 
 
 def create_skills_array(mats):
