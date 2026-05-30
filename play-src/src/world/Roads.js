@@ -26,6 +26,21 @@ const ROAD_LAYER = {
   bridge: 4
 };
 
+const ROAD_DETAIL_OPACITY = {
+  wear: 0.2,
+  seam: 0.16,
+  transitionApron: 0.1,
+  transitionEdge: 0.18,
+  transitionGuide: 0.26,
+  marker: 0.42
+};
+
+const ROAD_VERGE_OPACITY = {
+  security: 0.15,
+  dirt: 0.1,
+  default: 0.11
+};
+
 export class Roads {
   constructor(world) {
     this.world = world;
@@ -261,7 +276,7 @@ export class Roads {
 
   vergeMaterial(path) {
     const color = roadVergeColor(path);
-    const opacity = path.hierarchy === 'security' ? 0.2 : path.hierarchy === 'dirt' ? 0.15 : 0.16;
+    const opacity = ROAD_VERGE_OPACITY[path.hierarchy] ?? ROAD_VERGE_OPACITY.default;
     const key = `verge:${color}:${opacity}`;
     if (this.materialCache.has(key)) return this.materialCache.get(key);
     const material = this.world.materials.roadVerge.clone();
@@ -336,8 +351,8 @@ export class Roads {
       }
     }
 
-    this.addRoadDetailInstances('ROAD_Surface_Wear_Strips', wearStrips, this.createRoadDetailMaterial('wear', 0.28), 28);
-    this.addRoadDetailInstances('ROAD_Lane_Seams', laneSeams, this.createRoadDetailMaterial('seam', 0.24), 29);
+    this.addRoadDetailInstances('ROAD_Surface_Wear_Strips', wearStrips, this.createRoadDetailMaterial('wear', ROAD_DETAIL_OPACITY.wear), 28);
+    this.addRoadDetailInstances('ROAD_Lane_Seams', laneSeams, this.createRoadDetailMaterial('seam', ROAD_DETAIL_OPACITY.seam), 29);
     this.detailStats = { wearStrips: wearStrips.length, laneSeams: laneSeams.length };
     this.roadGroup.userData.surfaceWearStrips = wearStrips.length;
     this.roadGroup.userData.surfaceLaneSeams = laneSeams.length;
@@ -389,9 +404,9 @@ export class Roads {
       }
     }
 
-    this.addRoadDetailInstances('ROAD_Transition_Aprons', aprons, this.createRoadDetailMaterial('transition-apron', 0.18), 31);
-    this.addRoadDetailInstances('ROAD_Transition_Edge_Bands', edgeBands, this.createRoadDetailMaterial('transition-edge', 0.28), 32);
-    this.addRoadDetailInstances('ROAD_Transition_Guide_Bars', guideBars, this.createRoadDetailMaterial('transition-guide', 0.38), 33);
+    this.addRoadDetailInstances('ROAD_Transition_Aprons', aprons, this.createRoadDetailMaterial('transition-apron', ROAD_DETAIL_OPACITY.transitionApron), 31);
+    this.addRoadDetailInstances('ROAD_Transition_Edge_Bands', edgeBands, this.createRoadDetailMaterial('transition-edge', ROAD_DETAIL_OPACITY.transitionEdge), 32);
+    this.addRoadDetailInstances('ROAD_Transition_Guide_Bars', guideBars, this.createRoadDetailMaterial('transition-guide', ROAD_DETAIL_OPACITY.transitionGuide), 33);
     this.detailStats.transitionAprons = aprons.length;
     this.detailStats.transitionGuideBars = guideBars.length;
     this.roadGroup.userData.transitionAprons = aprons.length;
@@ -444,12 +459,23 @@ export class Roads {
   getDetailStats() {
     const wearMesh = this.roadGroup.getObjectByName('ROAD_Surface_Wear_Strips');
     const seamMesh = this.roadGroup.getObjectByName('ROAD_Lane_Seams');
+    const apronMesh = this.roadGroup.getObjectByName('ROAD_Transition_Aprons');
+    const edgeMesh = this.roadGroup.getObjectByName('ROAD_Transition_Edge_Bands');
+    const guideMesh = this.roadGroup.getObjectByName('ROAD_Transition_Guide_Bars');
+    const opacityOf = (mesh) => Number((mesh?.material?.opacity ?? 0).toFixed(3));
     return {
       ...this.detailStats,
       visibleWearStrips: wearMesh?.visible ? wearMesh.count || 0 : 0,
       visibleLaneSeams: seamMesh?.visible ? seamMesh.count || 0 : 0,
       visibleTransitionMeshes: this.detailMeshes.filter((mesh) => mesh.visible && mesh.name.startsWith('ROAD_Transition_')).length,
-      visibleDetailMeshes: this.detailMeshes.filter((mesh) => mesh.visible).length
+      visibleDetailMeshes: this.detailMeshes.filter((mesh) => mesh.visible).length,
+      opacities: {
+        wear: opacityOf(wearMesh),
+        seam: opacityOf(seamMesh),
+        transitionApron: opacityOf(apronMesh),
+        transitionEdge: opacityOf(edgeMesh),
+        transitionGuide: opacityOf(guideMesh)
+      }
     };
   }
 
@@ -555,7 +581,7 @@ export class Roads {
       side: THREE.DoubleSide,
       vertexColors: true,
       transparent: true,
-      opacity: 0.5,
+      opacity: ROAD_DETAIL_OPACITY.marker,
       depthWrite: false,
       polygonOffset: true,
       polygonOffsetFactor: -24,
