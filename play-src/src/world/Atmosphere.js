@@ -331,7 +331,7 @@ export class Atmosphere {
     }
     if (this.cloudShadowMesh) {
       this.cloudShadowMesh.count = profile.clouds;
-      this.cloudShadowMesh.visible = profile.clouds > 0;
+      this.cloudShadowMesh.visible = this.world.landscapeQuality !== 'low' && profile.clouds > 0;
     }
     this.skyWispLimit = SKY_WISP_LIMITS[this.world.landscapeQuality] || SKY_WISP_LIMITS.medium;
     if (this.skyWispMesh) {

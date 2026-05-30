@@ -558,17 +558,17 @@ body:has(.map-modal:not([hidden])) .whisper-feed {
 .map-circuit-line,
 .minimap-circuit-line {
   fill: none;
-  stroke: rgba(255, 255, 255, 0.62);
-  stroke-width: 0.46;
-  stroke-dasharray: 1.25 1.15;
+  stroke: rgba(255, 155, 109, 0.34);
+  stroke-width: 0.28;
+  stroke-dasharray: 0.9 1.7;
   stroke-linecap: round;
   stroke-linejoin: round;
-  filter: drop-shadow(0 0 4px rgba(255, 155, 109, 0.72));
+  opacity: 0.74;
 }
 
 .minimap-circuit-line {
-  stroke-width: 0.58;
-  opacity: 0.52;
+  stroke-width: 0.34;
+  opacity: 0.34;
 }
 
 .map-district-label,
@@ -634,22 +634,22 @@ body:has(.map-modal:not([hidden])) .whisper-feed {
 .minimap-circuit-checkpoint {
   position: absolute;
   z-index: 4;
-  width: 9px;
-  height: 9px;
-  border: 2px solid rgba(255, 255, 255, 0.82);
+  width: 6px;
+  height: 6px;
+  border: 1px solid rgba(255, 235, 196, 0.82);
   border-radius: 50%;
-  background: #ff9b6d;
+  background: rgba(255, 155, 109, 0.58);
   transform: translate(-50%, -50%);
   box-shadow:
-    0 0 0 3px rgba(255, 155, 109, 0.17),
-    0 0 12px rgba(255, 155, 109, 0.8);
+    0 0 0 2px rgba(255, 155, 109, 0.12),
+    0 0 8px rgba(255, 155, 109, 0.45);
 }
 
 .minimap-circuit-checkpoint {
-  width: 4px;
-  height: 4px;
+  width: 3px;
+  height: 3px;
   border-width: 1px;
-  box-shadow: 0 0 7px rgba(255, 155, 109, 0.76);
+  box-shadow: 0 0 5px rgba(255, 155, 109, 0.44);
 }
 
 .map-circuit-checkpoint[data-label]::after {

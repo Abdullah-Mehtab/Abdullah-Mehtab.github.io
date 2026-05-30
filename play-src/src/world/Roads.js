@@ -118,13 +118,13 @@ export class Roads {
     const lineMaterial = this.cachedLineMaterial(style.line);
     const curve = makePathCurve(path.points, path.closed);
     const totalLength = curve.getLength();
-    const dashSpacing = path.hierarchy === 'stunt' ? 8.5 : 12;
+    const dashSpacing = path.hierarchy === 'stunt' ? 9.5 : 13.5;
     for (let distance = width * 1.35; distance < totalLength - width * 1.35; distance += dashSpacing) {
       const t = distance / totalLength;
       const point = curve.getPointAt(t);
       const tangent = curve.getTangentAt(t);
       const rotation = Math.atan2(tangent.x, tangent.z);
-      const dash = this.createRoadPlane(0.38, 3.2, lineMaterial, 8 + layer, rotation);
+      const dash = this.createRoadPlane(0.28, path.hierarchy === 'stunt' ? 2.65 : 2.35, lineMaterial, 8 + layer, rotation);
       dash.position.set(point.x, surfaceY + 0.034, point.z);
       this.roadGroup.add(dash);
     }
@@ -423,7 +423,7 @@ export class Roads {
           y: surfaceY + 0.074,
           z: point.z + rightZ * inset * side,
           rotation: Math.atan2(tangent.x, tangent.z),
-          scale: path.hierarchy === 'stunt' ? 0.82 : path.hierarchy === 'bridge' ? 0.62 : 0.68,
+          scale: path.hierarchy === 'stunt' ? 0.68 : path.hierarchy === 'bridge' ? 0.5 : 0.54,
           color
         });
       }
@@ -456,7 +456,7 @@ export class Roads {
     });
     this.addMarkerInstances({
       name: 'ROAD_Reflector_Studs',
-      geometry: new THREE.BoxGeometry(0.34, 0.07, 0.9),
+      geometry: new THREE.BoxGeometry(0.24, 0.05, 0.58),
       material: this.createMarkerMaterial(),
       specs: studs,
       defaultScale: [1, 1, 1]
@@ -498,7 +498,7 @@ export class Roads {
       side: THREE.DoubleSide,
       vertexColors: true,
       transparent: true,
-      opacity: 0.78,
+      opacity: 0.5,
       depthWrite: false,
       polygonOffset: true,
       polygonOffsetFactor: -24,
@@ -681,7 +681,7 @@ function createChevronGeometry() {
     [[0, 0.88], [-0.78, -0.5]],
     [[0, 0.88], [0.78, -0.5]]
   ];
-  const halfWidth = 0.105;
+  const halfWidth = 0.075;
   const vertices = [];
   const uvs = [];
   const indices = [];
