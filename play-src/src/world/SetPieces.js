@@ -138,6 +138,7 @@ export class SetPieces {
     this.createEducationPlaza();
     this.createSecurityLab();
     this.createDistrictDressing();
+    this.createDistrictHeroDressing();
     this.createApproachDressing();
     this.createDistrictGateways();
     this.createRouteGuidance();
@@ -746,6 +747,16 @@ export class SetPieces {
 
     mergeStaticMeshesInGroup(group, { namePrefix: 'SETPIECE_district', cellSize: 128 });
     this.registerDistrictDressingBatches(group);
+    this.world.scene.add(group);
+  }
+
+  createDistrictHeroDressing() {
+    const group = this.registerQualityGroup(new THREE.Group(), 'secondary');
+    group.name = 'SETPIECE_District_Hero_Dressing';
+    const cv = findZone('cv');
+    this.addSilhouetteAnchor(group, 'EnvPolishCvArchiveSpine', cv.position[0] - 4.8, cv.position[2] + 5.6, Math.PI + 0.14, 0.94);
+    mergeStaticMeshesInGroup(group, { namePrefix: 'SETPIECE_district_hero' });
+    this.registerBroadSetPieceBatches('districtHero', group, 'SETPIECE_district_hero', 'districtDressingRadius');
     this.world.scene.add(group);
   }
 
