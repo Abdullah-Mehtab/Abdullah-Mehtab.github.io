@@ -1025,7 +1025,8 @@ async function sampleRenderSnapshot(page) {
       roadSurfaceDetails: game.world.roads?.getDetailStats?.() || {},
       setPieceVisibility: game.world.setPieces?.getDistrictVisibilityStats?.() || {},
       broadSetPieceVisibility: game.world.setPieces?.getBroadVisibilityStats?.() || {},
-      meadowComposition: game.world.setPieces?.getMeadowCompositionStats?.() || {}
+      meadowComposition: game.world.setPieces?.getMeadowCompositionStats?.() || {},
+      fieldBackdrops: game.world.setPieces?.getFieldBackdropStats?.() || {}
     };
 
     function countVisibleScene(root) {
@@ -1165,6 +1166,7 @@ async function collectRuntimeMetrics(page, loadMs, gameplay, water, surfaces, su
       districtGateways: game.world.setPieces?.getGatewayStats?.() || {},
       routeComposition: game.world.setPieces?.getRouteCompositionStats?.() || {},
       meadowComposition: game.world.setPieces?.getMeadowCompositionStats?.() || {},
+      fieldBackdrops: game.world.setPieces?.getFieldBackdropStats?.() || {},
       districtStory: game.world.setPieces?.getDistrictStoryStats?.() || {},
       districtComposition: game.world.setPieces?.getDistrictCompositionStats?.() || {},
       surfacePanels: game.world.setPieces?.getSurfacePanelStats?.() || {},
@@ -1470,6 +1472,7 @@ async function captureMobile(browser) {
       districtVisibility: game.world.setPieces?.getDistrictVisibilityStats?.() || {},
       broadSetPieceVisibility: game.world.setPieces?.getBroadVisibilityStats?.() || {},
       meadowComposition: game.world.setPieces?.getMeadowCompositionStats?.() || {},
+      fieldBackdrops: game.world.setPieces?.getFieldBackdropStats?.() || {},
       fieldMotifs: game.world.terrain?.getFieldMotifStats?.() || {},
       roadSurfaceDetails: game.world.roads?.getDetailStats?.() || {},
       waterStats: game.world.water?.getStats?.() || {},
@@ -1844,6 +1847,12 @@ function assertVerification(result) {
   if ((result.meadowComposition?.guideTiles || 0) < 25) failures.push(`meadow composition probe failed: guideTiles=${result.meadowComposition?.guideTiles || 0}`);
   if ((result.meadowComposition?.lamps || 0) < 10) failures.push(`meadow composition probe failed: lamps=${result.meadowComposition?.lamps || 0}`);
   if ((result.meadowComposition?.stoneRuns || 0) < 20) failures.push(`meadow composition probe failed: stoneRuns=${result.meadowComposition?.stoneRuns || 0}`);
+  if ((result.fieldBackdrops?.clusters || 0) < 8) failures.push(`field backdrop probe failed: clusters=${result.fieldBackdrops?.clusters || 0}`);
+  if ((result.fieldBackdrops?.patches || 0) < 16) failures.push(`field backdrop probe failed: patches=${result.fieldBackdrops?.patches || 0}`);
+  if ((result.fieldBackdrops?.authoredAssets || 0) < 32) failures.push(`field backdrop probe failed: authoredAssets=${result.fieldBackdrops?.authoredAssets || 0}`);
+  if ((result.fieldBackdrops?.guideTiles || 0) < 48) failures.push(`field backdrop probe failed: guideTiles=${result.fieldBackdrops?.guideTiles || 0}`);
+  if ((result.fieldBackdrops?.lamps || 0) < 16) failures.push(`field backdrop probe failed: lamps=${result.fieldBackdrops?.lamps || 0}`);
+  if ((result.fieldBackdrops?.frameRuns || 0) < 80) failures.push(`field backdrop probe failed: frameRuns=${result.fieldBackdrops?.frameRuns || 0}`);
   if ((result.districtStory?.authoredAssets || 0) < 10) failures.push(`district story probe failed: authoredAssets=${result.districtStory?.authoredAssets || 0}`);
   if ((result.districtStory?.crateStacks || 0) < 6) failures.push(`district story probe failed: crateStacks=${result.districtStory?.crateStacks || 0}`);
   if ((result.districtStory?.terminalBanks || 0) < 2) failures.push(`district story probe failed: terminalBanks=${result.districtStory?.terminalBanks || 0}`);
@@ -1943,6 +1952,9 @@ function assertVerification(result) {
   }
   if ((result.mobile.fieldMotifs?.visibleTotal || 0) !== 0) {
     failures.push(`mobile field motif quality probe failed: visibleTotal=${result.mobile.fieldMotifs?.visibleTotal || 0}`);
+  }
+  if ((result.mobile.broadSetPieceVisibility?.groups?.fieldBackdrops?.visibleBatches || 0) !== 0) {
+    failures.push(`mobile field backdrop quality probe failed: visibleBatches=${result.mobile.broadSetPieceVisibility?.groups?.fieldBackdrops?.visibleBatches || 0}`);
   }
   if ((result.mobile.waterStats?.visibleShoreFlecks || 0) > 24) {
     failures.push(`mobile water quality probe failed: visibleShoreFlecks=${result.mobile.waterStats?.visibleShoreFlecks || 0}`);
