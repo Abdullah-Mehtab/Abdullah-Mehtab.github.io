@@ -183,6 +183,7 @@ try {
 
   const activeSnapshots = { driving: drivingStressMetrics, surfaceFeedback: surfaceStressMetrics };
   const metrics = await collectRuntimeMetrics(page, loadMs, gameplay, water, surfaces, surfaceFeedback, routeReplay, circuit, worldLife, activeSnapshots);
+  const highQuality = await captureHighQuality(browser);
   const mobile = await captureMobile(browser);
   const mobileSavedPreference = await captureMobileSavedPreference(browser);
   const result = {
@@ -191,6 +192,7 @@ try {
     consoleMessages,
     pageErrors,
     glbAssets: getGlbAssetSizes(),
+    highQuality,
     mobile,
     mobileSavedPreference,
     panelUi,
@@ -1370,6 +1372,75 @@ async function collectRuntimeMetrics(page, loadMs, gameplay, water, surfaces, su
   };
 }
 
+async function captureHighQuality(browser) {
+  const page = await browser.newPage();
+  wirePageDiagnostics(page);
+  await page.setViewport({ width: 1440, height: 900, deviceScaleFactor: 1 });
+  await page.evaluateOnNewDocument(() => {
+    localStorage.setItem('portfolio-drive-landscape-quality', 'high');
+    localStorage.setItem('portfolio-drive-muted', '1');
+  });
+  await page.goto(`${baseUrl}/play/?debugDrive=1`, { waitUntil: 'domcontentloaded', timeout: 60000 });
+  await waitForReady(page);
+  await page.evaluate(() => window.__portfolioDrive.start());
+  await delay(700);
+  await page.screenshot({ path: join(outputDir, 'high-quality-start.png'), fullPage: true });
+  const sample = await page.evaluate(async () => {
+    const frameDeltas = [];
+    await new Promise((resolveFrames) => {
+      let previous = performance.now();
+      let count = 0;
+      function frame(now) {
+        frameDeltas.push(now - previous);
+        previous = now;
+        count += 1;
+        if (count >= 180) {
+          resolveFrames();
+        } else {
+          requestAnimationFrame(frame);
+        }
+      }
+      requestAnimationFrame(frame);
+    });
+    const sorted = [...frameDeltas].sort((a, b) => a - b);
+    const avgMs = frameDeltas.reduce((sum, value) => sum + value, 0) / frameDeltas.length;
+    const p95Ms = sorted[Math.floor(sorted.length * 0.95)] || 0;
+    const game = window.__portfolioDrive.game;
+    const postRender = {
+      calls: game.renderer.info.render.calls,
+      triangles: game.renderer.info.render.triangles
+    };
+    const postprocessingEnabled = game.rendererSystem.postprocessingEnabled;
+    game.rendererSystem.postprocessingEnabled = false;
+    game.renderer.info.reset();
+    game.renderer.render(game.scene, game.camera);
+    const sceneRender = {
+      calls: game.renderer.info.render.calls,
+      triangles: game.renderer.info.render.triangles
+    };
+    game.rendererSystem.postprocessingEnabled = postprocessingEnabled;
+    return {
+      ready: window.__portfolioDrive.ready(),
+      canvasSample: window.__portfolioDrive.sampleCanvas(),
+      quality: game.world.landscapeQuality,
+      savedQuality: localStorage.getItem('portfolio-drive-landscape-quality'),
+      pixelRatio: game.renderer.getPixelRatio(),
+      maxPixelRatio: game.rendererSystem.maxPixelRatio,
+      postprocessing: game.rendererSystem.postprocessingEnabled,
+      shadows: game.renderer.shadowMap.enabled,
+      avgFrameMs: Number(avgMs.toFixed(2)),
+      p95FrameMs: Number(p95Ms.toFixed(2)),
+      fps: Number((1000 / avgMs).toFixed(2)),
+      calls: sceneRender.calls,
+      triangles: sceneRender.triangles,
+      postRenderCalls: postRender.calls,
+      postRenderTriangles: postRender.triangles
+    };
+  });
+  await page.close();
+  return sample;
+}
+
 async function captureMobile(browser) {
   const page = await browser.newPage();
   wirePageDiagnostics(page);
@@ -1550,6 +1621,14 @@ function assertVerification(result) {
   if (result.loadMs > 15000) failures.push(`app-ready load time too high: ${result.loadMs}ms`);
   if (result.p95FrameMs > 20) failures.push(`p95 frame time too high: ${result.p95FrameMs}ms`);
   if (result.fps < 60) failures.push(`desktop FPS too low: ${result.fps}`);
+  if (!result.highQuality?.ready || (result.highQuality?.canvasSample || 0) <= 0) failures.push('high quality probe failed: canvas did not render');
+  if (result.highQuality?.quality !== 'high') failures.push(`high quality probe failed: quality=${result.highQuality?.quality || 'none'}`);
+  if (result.highQuality?.savedQuality !== 'high') failures.push(`high quality probe failed: savedQuality=${result.highQuality?.savedQuality || 'none'}`);
+  if (!result.highQuality?.postprocessing || !result.highQuality?.shadows) failures.push('high quality probe failed: post/shadow tier inactive');
+  if ((result.highQuality?.p95FrameMs || Infinity) > 24) failures.push(`high quality p95 frame time too high: ${result.highQuality?.p95FrameMs}ms`);
+  if ((result.highQuality?.fps || 0) < 50) failures.push(`high quality FPS too low: ${result.highQuality?.fps}`);
+  if ((result.highQuality?.calls || 0) > 700) failures.push(`high quality draw-call budget exceeded: ${result.highQuality?.calls}`);
+  if ((result.highQuality?.triangles || 0) > 330000) failures.push(`high quality triangle budget exceeded: ${result.highQuality?.triangles}`);
   if (!result.lighting?.sun) failures.push('lighting probe failed: missing sun stats');
   if ((result.lighting?.sun?.position?.[1] || 0) < 30 || (result.lighting?.sun?.position?.[1] || 0) > 45) {
     failures.push(`lighting probe failed: sun height=${result.lighting?.sun?.position?.[1]}`);
