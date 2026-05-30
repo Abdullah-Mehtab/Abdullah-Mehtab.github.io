@@ -1694,6 +1694,9 @@ function assertVerification(result) {
   if ((result.roadSurfaceDetails?.laneSeams || 0) < 36) failures.push(`road surface detail probe failed: laneSeams=${result.roadSurfaceDetails?.laneSeams || 0}`);
   if ((result.roadSurfaceDetails?.visibleWearStrips || 0) < 90) failures.push(`road surface detail probe failed: visibleWearStrips=${result.roadSurfaceDetails?.visibleWearStrips || 0}`);
   if ((result.roadSurfaceDetails?.visibleLaneSeams || 0) < 36) failures.push(`road surface detail probe failed: visibleLaneSeams=${result.roadSurfaceDetails?.visibleLaneSeams || 0}`);
+  if ((result.roadSurfaceDetails?.transitionAprons || 0) < 16) failures.push(`road transition probe failed: transitionAprons=${result.roadSurfaceDetails?.transitionAprons || 0}`);
+  if ((result.roadSurfaceDetails?.transitionGuideBars || 0) < 56) failures.push(`road transition probe failed: transitionGuideBars=${result.roadSurfaceDetails?.transitionGuideBars || 0}`);
+  if ((result.roadSurfaceDetails?.visibleTransitionMeshes || 0) < 3) failures.push(`road transition probe failed: visibleTransitionMeshes=${result.roadSurfaceDetails?.visibleTransitionMeshes || 0}`);
   if ((result.surfaceDetails?.districts || 0) < 10) failures.push(`surface detail probe failed: districts=${result.surfaceDetails?.districts || 0}`);
   if ((result.surfaceDetails?.seams || 0) < 40) failures.push(`surface detail probe failed: seams=${result.surfaceDetails?.seams || 0}`);
   if ((result.surfaceDetails?.pavers || 0) < 24) failures.push(`surface detail probe failed: pavers=${result.surfaceDetails?.pavers || 0}`);

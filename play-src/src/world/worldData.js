@@ -273,6 +273,26 @@ export const roadPaths = [
   }
 ];
 
+export const routeThresholds = [
+  { id: 'launch-plaza-rollout', center: [4, 31], rotation: 0.14, width: 20, depth: 7.5, color: '#7cffb2', bars: 4 },
+  { id: 'gallery-data-join', center: [-116, 42], rotation: 1.5, width: 17, depth: 7, color: '#79ffc5', bars: 3 },
+  { id: 'gallery-harbor-join', center: [116, 40], rotation: -1.06, width: 18, depth: 7, color: '#78b7ff', bars: 3 },
+  { id: 'fcc-arrival-threshold', center: [-57, 63], rotation: -0.62, width: 18, depth: 8, color: '#9ccfff', bars: 4 },
+  { id: 'fcc-courtyard-threshold', center: [-57, 91], rotation: 0.48, width: 18, depth: 7, color: '#f2dfb2', bars: 3 },
+  { id: 'scanner-gate-threshold', center: [-90, -31], rotation: -2.2, width: 19, depth: 8, color: '#68d8ff', bars: 4 },
+  { id: 'security-return-threshold', center: [-119, -57], rotation: -2.36, width: 17, depth: 7, color: '#68d8ff', bars: 3 },
+  { id: 'document-run-threshold', center: [28, -29], rotation: 2.64, width: 18, depth: 8, color: '#e6f3ff', bars: 4 },
+  { id: 'cv-vault-threshold', center: [36, -53], rotation: 2.62, width: 18, depth: 7.5, color: '#d8b6ff', bars: 4 },
+  { id: 'stunt-yard-threshold', center: [86, -96], rotation: 1.48, width: 18, depth: 6.5, color: '#ff9b6d', bars: 5 },
+  { id: 'farm-track-threshold', center: [-52, -121], rotation: -1.32, width: 18, depth: 8, color: '#c79b56', bars: 4 },
+  { id: 'behind-build-threshold', center: [5, -92], rotation: -2.72, width: 17, depth: 7, color: '#a8a6ff', bars: 3 },
+  { id: 'sentinel-ridge-threshold', center: [18, 99], rotation: 0.82, width: 18, depth: 7, color: '#ff6d8d', bars: 4 },
+  { id: 'career-office-threshold', center: [94, -22], rotation: -2.42, width: 18, depth: 7, color: '#b6a0ff', bars: 3 },
+  { id: 'harbor-link-threshold', center: [124, 70], rotation: 1.08, width: 17, depth: 7, color: '#78b7ff', bars: 3 },
+  { id: 'data-pier-threshold', center: [-135, 58], rotation: -0.62, width: 16, depth: 7, color: '#79ffc5', bars: 3 },
+  { id: 'archive-steps-threshold', center: [-27, 64], rotation: 0.1, width: 16, depth: 7, color: '#ffdf8a', bars: 3 }
+];
+
 export const roadSegments = roadPaths.flatMap((path) => pathToSegments(path));
 
 export const boostPads = [
