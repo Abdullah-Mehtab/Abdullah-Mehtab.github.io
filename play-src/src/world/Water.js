@@ -11,7 +11,7 @@ const WAKE_LIMITS = { low: 10, medium: 26, high: 42 };
 const GLINT_LIMITS = { low: 0, medium: 20, high: 34 };
 const WAVE_LANE_LIMITS = { low: 16, medium: 32, high: 52 };
 const SHORE_FLECK_LIMITS = { low: 24, medium: 72, high: 112 };
-const TIDE_GLIMMER_LIMITS = { low: 4, medium: 12, high: 18 };
+const TIDE_GLIMMER_LIMITS = { low: 0, medium: 12, high: 18 };
 const SHORE_WAKE_RADIUS = ISLAND_RADIUS * 0.94;
 const WATER_DRAG_RADIUS = ISLAND_RADIUS * 1.012;
 const WATER_RESPAWN_RADIUS = ISLAND_RADIUS * 1.04;
@@ -176,7 +176,7 @@ export class Water {
   createShorelineLifeKits() {
     const coastPoints = getIslandCoastPoints(ISLAND_RADIUS, 0.972, 180);
     const layerSpecs = [
-      { name: 'low', visibleOn: ['low', 'medium', 'high'] },
+      { name: 'low', visibleOn: ['medium', 'high'] },
       { name: 'medium', visibleOn: ['medium', 'high'] },
       { name: 'high', visibleOn: ['high'] }
     ];
