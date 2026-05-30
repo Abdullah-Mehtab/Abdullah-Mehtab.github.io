@@ -556,7 +556,7 @@ export class SetPieces {
     this.addCompositionDetailAsset(group, 'EnvPolishWorkshopProcessRail', projects.position[0] - 12.4, projects.position[2] - 8.2, 0.36, 0.74, 'rails');
 
     const cv = findZone('cv');
-    this.addSign(group, 'CV VAULT', 'Documents', cv.position[0] - 10, cv.position[2] - 12, 0.25, 0xe6f3ff, 2.5, 'CvVaultSign');
+    this.addSign(group, 'CV VAULT', 'Documents', cv.position[0] - 12.4, cv.position[2] - 11.6, 0.25, 0xe6f3ff, 1.9, 'CvVaultSign');
     this.addLamp(group, cv.position[0] + 8, cv.position[2] + 9, 0xe6f3ff, 2.8, 'CvLamp');
     this.addPolishAsset(group, 'EnvPolishCvVault', cv.position[0] - 0.4, cv.position[2] + 1.2, Math.PI + 0.12, 1.05);
     this.addPolishAsset(group, 'EnvPolishTerminalPillar', cv.position[0] + 8.8, cv.position[2] - 3.6, -0.22, 0.88);
@@ -755,6 +755,9 @@ export class SetPieces {
     group.name = 'SETPIECE_District_Hero_Dressing';
     const cv = findZone('cv');
     this.addSilhouetteAnchor(group, 'EnvPolishCvArchiveSpine', cv.position[0] - 4.8, cv.position[2] + 5.6, Math.PI + 0.14, 0.94);
+    this.addSilhouetteAnchor(group, 'EnvPolishRouteStoryMarker', cv.position[0] - 12.4, cv.position[2] - 8.5, 0.24, 0.78);
+    this.addSilhouetteAnchor(group, 'EnvPolishPlazaEdgeKit', cv.position[0] - 6.8, cv.position[2] - 7.8, 0.24, 0.92);
+    this.addSilhouetteAnchor(group, 'EnvPolishChevronBollardRun', cv.position[0] - 3.0, cv.position[2] - 6.0, 0.24, 0.74);
     mergeStaticMeshesInGroup(group, { namePrefix: 'SETPIECE_district_hero' });
     this.registerBroadSetPieceBatches('districtHero', group, 'SETPIECE_district_hero', 'districtDressingRadius');
     this.world.scene.add(group);
