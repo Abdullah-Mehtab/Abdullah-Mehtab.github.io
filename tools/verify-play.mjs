@@ -771,12 +771,14 @@ async function sampleWorldLife(page) {
     const lifeStats = () => game.world.setPieces?.getLifeStats?.() || { ...(game.world.setPieces?.lifeStats || {}) };
     const grass = scene.getObjectByName('FOLIAGE_grass_instances');
     const districtMotes = scene.getObjectByName('Life_DistrictAmbience_Motes');
+    const districtSignals = scene.getObjectByName('Life_DistrictSignal_instances');
     const banners = findVisibleObjects(/^Life_WindBanner_\d+$/);
     const beacons = findVisibleObjects(/^Life_WhisperBeacon_\d+$/);
     const pulse = scene.getObjectByName('Life_ZonePulse_landing');
     const before = {
       grass: matrixSlice(grass),
       districtMote: matrixSlice(districtMotes),
+      districtSignal: matrixSlice(districtSignals),
       bannerRotations: banners.map((banner) => banner.rotation.z),
       pulseRotation: pulse?.rotation?.z ?? null,
       beaconYs: beacons.map((beacon) => beacon.position.y),
@@ -786,6 +788,7 @@ async function sampleWorldLife(page) {
     const after = {
       grass: matrixSlice(grass),
       districtMote: matrixSlice(districtMotes),
+      districtSignal: matrixSlice(districtSignals),
       bannerRotations: banners.map((banner) => banner.rotation.z),
       pulseRotation: pulse?.rotation?.z ?? null,
       beaconYs: beacons.map((beacon) => beacon.position.y),
@@ -852,6 +855,7 @@ async function sampleWorldLife(page) {
       },
       grassAnimated: matrixDelta(before.grass, after.grass) > 0.0001,
       districtMoteAnimated: matrixDelta(before.districtMote, after.districtMote) > 0.0001,
+      districtSignalAnimated: matrixDelta(before.districtSignal, after.districtSignal) > 0.0001,
       bannerAnimated: arrayMaxDelta(before.bannerRotations, after.bannerRotations) > 0.005,
       pulseAnimated: numericDelta(before.pulseRotation, after.pulseRotation) > 0.005,
       beaconAnimated: arrayMaxDelta(before.beaconYs, after.beaconYs) > 0.005,
@@ -890,7 +894,8 @@ async function sampleWorldLife(page) {
         (stats.visibleWindBanners || 0) +
         (stats.visibleWhisperBeacons || 0) +
         (stats.visibleTerminalPulses || 0) +
-        (stats.visibleDistrictMotes || 0)
+        (stats.visibleDistrictMotes || 0) +
+        (stats.visibleDistrictSignals || 0)
       );
     }
 
@@ -1462,6 +1467,8 @@ function assertVerification(result) {
   if ((result.worldLife?.counts?.terminalPulses || 0) < 5) failures.push('world life probe failed: terminal pulses');
   if ((result.worldLife?.counts?.districtMotes || 0) < 64) failures.push(`world life probe failed: district motes ${result.worldLife?.counts?.districtMotes || 0}`);
   if ((result.worldLife?.counts?.visibleDistrictMotes || 0) < 48) failures.push(`world life probe failed: visible district motes ${result.worldLife?.counts?.visibleDistrictMotes || 0}`);
+  if ((result.worldLife?.counts?.districtSignals || 0) !== worldZones.length) failures.push(`world life probe failed: district signals ${result.worldLife?.counts?.districtSignals || 0}/${worldZones.length}`);
+  if ((result.worldLife?.counts?.visibleDistrictSignals || 0) < 12) failures.push(`world life probe failed: visible district signals ${result.worldLife?.counts?.visibleDistrictSignals || 0}`);
   if (!result.worldLife?.quality?.lowReduced) failures.push('quality probe failed: low world-life tier did not reduce visible signals');
   if (!result.worldLife?.quality?.restoredMatchesMedium) failures.push('quality probe failed: medium world-life tier did not restore');
   if (!result.worldLife?.quality?.lowWindReduced) failures.push('quality probe failed: low foliage wind cadence did not reduce work');
@@ -1469,7 +1476,8 @@ function assertVerification(result) {
   if ((result.worldLife?.quality?.low?.visibleWhisperBeacons || 0) > 4) failures.push('quality probe failed: low whisper beacons exceeded budget');
   if ((result.worldLife?.quality?.low?.visibleTerminalPulses || 0) > 2) failures.push('quality probe failed: low terminal pulses exceeded budget');
   if ((result.worldLife?.quality?.low?.visibleDistrictMotes || 0) > 16) failures.push('quality probe failed: low district motes exceeded budget');
-  for (const key of ['grassAnimated', 'districtMoteAnimated', 'bannerAnimated', 'pulseAnimated', 'beaconAnimated', 'motionAdvanced']) {
+  if ((result.worldLife?.quality?.low?.visibleDistrictSignals || 0) > 6) failures.push('quality probe failed: low district signals exceeded budget');
+  for (const key of ['grassAnimated', 'districtMoteAnimated', 'districtSignalAnimated', 'bannerAnimated', 'pulseAnimated', 'beaconAnimated', 'motionAdvanced']) {
     if (!result.worldLife?.[key]) failures.push(`world life probe failed: ${key}`);
   }
   if (result.calls > 560) failures.push(`desktop draw-call budget exceeded: ${result.calls}`);
