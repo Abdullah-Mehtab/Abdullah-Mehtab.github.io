@@ -90,6 +90,7 @@ try {
 
   const gameplay = await exerciseGameplay(page);
   await screenshot(page, '03-driving-stress.png');
+  const drivingStressMetrics = await sampleRenderSnapshot(page);
   const water = await exerciseWater(page, ISLAND_RADIUS);
   await screenshot(page, '04-water-interaction.png');
   await page.evaluate(() => {
@@ -101,6 +102,7 @@ try {
   const surfaces = await sampleSurfaces(page, ISLAND_RADIUS);
   const surfaceFeedback = await exerciseSurfaceFeedback(page, ISLAND_RADIUS);
   await screenshot(page, '05-surface-feedback.png');
+  const surfaceStressMetrics = await sampleRenderSnapshot(page);
   const routeReplay = await exerciseRouteReplay(page, routeReplaySegments);
   const circuitPreview = await previewCircuit(page);
   await screenshot(page, '06-circuit-target.png');
@@ -177,7 +179,8 @@ try {
   await delay(300);
   await screenshot(page, 'debug-colliders.png');
 
-  const metrics = await collectRuntimeMetrics(page, loadMs, gameplay, water, surfaces, surfaceFeedback, routeReplay, circuit, worldLife);
+  const activeSnapshots = { driving: drivingStressMetrics, surfaceFeedback: surfaceStressMetrics };
+  const metrics = await collectRuntimeMetrics(page, loadMs, gameplay, water, surfaces, surfaceFeedback, routeReplay, circuit, worldLife, activeSnapshots);
   const mobile = await captureMobile(browser);
   const mobileSavedPreference = await captureMobileSavedPreference(browser);
   const result = {
@@ -409,8 +412,8 @@ async function exerciseWater(page, islandRadius) {
     for (let i = 0; i < 14; i += 1) {
       await delay(80);
       surfaceSeen = surfaceSeen || game.world.surfaceState?.inWater === true;
-      splashSeen = splashSeen || (game.world.water?.splashes?.length || 0) > 0;
       const stats = waterStats();
+      splashSeen = splashSeen || (stats.activeSplashes || stats.splashes || 0) > 0;
       wakeSeen = wakeSeen || stats.activeWakes > 0 || stats.wakesSpawned > (wakeBefore.wakesSpawned || 0);
     }
     const afterSpeed = horizontalSpeed();
@@ -454,7 +457,7 @@ async function exerciseWater(page, islandRadius) {
       dragReduced: afterSpeed < beforeSpeed * 0.82,
       submergeRespawned: submergedRespawned,
       finalDistance: Number(respawnDistance.toFixed(2)),
-      splashCount: game.world.water?.splashes?.length || 0,
+      splashCount: wakeAfter.activeSplashes || wakeAfter.splashes || 0,
       wakeSpawnedDelta: (wakeAfter.wakesSpawned || 0) - (wakeBefore.wakesSpawned || 0),
       activeWakes: wakeAfter.activeWakes || 0,
       stats: wakeAfter
@@ -973,7 +976,85 @@ async function sampleOverlayUi(page) {
   return page.evaluate(() => window.__portfolioDrive.game.ui?.getOverlayStats?.() || {});
 }
 
-async function collectRuntimeMetrics(page, loadMs, gameplay, water, surfaces, surfaceFeedback, routeReplay, circuit, worldLife) {
+async function sampleRenderSnapshot(page) {
+  return page.evaluate(() => {
+    const game = window.__portfolioDrive.game;
+    const render = game.renderer.info.render;
+    return {
+      calls: render.calls,
+      triangles: render.triangles,
+      sceneObjects: countVisibleScene(game.scene),
+      renderProfile: profileVisibleScene(game.scene),
+      vehicleFx: game.vehicle.getEffectStats?.() || {},
+      waterStats: game.world.water?.getStats?.() || {},
+      roadSurfaceDetails: game.world.roads?.getDetailStats?.() || {}
+    };
+
+    function countVisibleScene(root) {
+      const counts = {
+        meshes: 0,
+        instancedMeshes: 0,
+        lights: 0,
+        visibleObjects: 0
+      };
+      root.traverse((object) => {
+        if (!isEffectivelyVisible(object)) return;
+        counts.visibleObjects += 1;
+        if (object.isMesh) counts.meshes += 1;
+        if (object.isInstancedMesh) counts.instancedMeshes += 1;
+        if (object.isLight) counts.lights += 1;
+      });
+      return counts;
+    }
+
+    function profileVisibleScene(root) {
+      const buckets = new Map();
+      root.traverse((object) => {
+        if (!object.isMesh || !isEffectivelyVisible(object)) return;
+        const bucketName = getRenderBucketName(object, root);
+        if (!buckets.has(bucketName)) {
+          buckets.set(bucketName, { name: bucketName, meshes: 0, materials: 0, triangles: 0 });
+        }
+        const bucket = buckets.get(bucketName);
+        bucket.meshes += 1;
+        bucket.materials += Array.isArray(object.material) ? object.material.length : 1;
+        bucket.triangles += estimateTriangles(object);
+      });
+      return [...buckets.values()]
+        .map((bucket) => ({ ...bucket, triangles: Math.round(bucket.triangles) }))
+        .sort((a, b) => b.materials - a.materials)
+        .slice(0, 10);
+    }
+
+    function isEffectivelyVisible(object) {
+      let current = object;
+      while (current) {
+        if (current.visible === false) return false;
+        current = current.parent;
+      }
+      return true;
+    }
+
+    function getRenderBucketName(object, root) {
+      let current = object;
+      while (current.parent && current.parent !== root) current = current.parent;
+      return current.name || object.name || 'unnamed-root';
+    }
+
+    function estimateTriangles(object) {
+      const geometry = object.geometry;
+      const instanceCount = object.isInstancedMesh ? object.count || 1 : 1;
+      const base = geometry?.index
+        ? geometry.index.count / 3
+        : geometry?.attributes?.position
+          ? geometry.attributes.position.count / 3
+          : 0;
+      return base * instanceCount;
+    }
+  });
+}
+
+async function collectRuntimeMetrics(page, loadMs, gameplay, water, surfaces, surfaceFeedback, routeReplay, circuit, worldLife, activeSnapshots) {
   const runtime = await page.evaluate(async (expectedAssets) => {
     const frameDeltas = [];
     await new Promise((resolveFrames) => {
@@ -1247,6 +1328,7 @@ async function collectRuntimeMetrics(page, loadMs, gameplay, water, surfaces, su
     routeReplay,
     circuit,
     worldLife,
+    activeSnapshots,
     ...runtime
   };
 }
@@ -1384,6 +1466,15 @@ function assertVerification(result) {
   }
   if (result.calls > 560) failures.push(`desktop draw-call budget exceeded: ${result.calls}`);
   if (result.triangles > 280000) failures.push(`desktop triangle budget exceeded: ${result.triangles}`);
+  for (const name of ['driving', 'surfaceFeedback']) {
+    const snapshot = result.activeSnapshots?.[name];
+    if (!snapshot?.calls) {
+      failures.push(`active render snapshot missing: ${name}`);
+      continue;
+    }
+    if (snapshot.calls > 760) failures.push(`active render snapshot draw-call budget exceeded: ${name}=${snapshot.calls}`);
+    if (snapshot.triangles > 340000) failures.push(`active render snapshot triangle budget exceeded: ${name}=${snapshot.triangles}`);
+  }
   if (result.loadMs > 15000) failures.push(`app-ready load time too high: ${result.loadMs}ms`);
   if (result.p95FrameMs > 20) failures.push(`p95 frame time too high: ${result.p95FrameMs}ms`);
   if (result.fps < 60) failures.push(`desktop FPS too low: ${result.fps}`);
@@ -1452,6 +1543,11 @@ function assertVerification(result) {
   if ((result.water?.activeWakes || 0) < 1) failures.push(`water probe failed: active wakes=${result.water?.activeWakes || 0}`);
   if (!result.water?.dragReduced) failures.push('water probe failed: drag');
   if (!result.water?.submergeRespawned) failures.push('water probe failed: submerge respawn');
+  if (!result.waterStats?.splashMesh) failures.push('water splash probe failed: instanced splash mesh missing');
+  if ((result.waterStats?.splashCapacity || 0) < (result.waterStats?.maxSplashes || 0)) {
+    failures.push(`water splash probe failed: capacity=${result.waterStats?.splashCapacity || 0}, max=${result.waterStats?.maxSplashes || 0}`);
+  }
+  if ((result.waterStats?.splashesSpawned || 0) < 2) failures.push(`water splash probe failed: spawned=${result.waterStats?.splashesSpawned || 0}`);
   if ((result.waterStats?.surfaceGlints || 0) < 30) failures.push(`water detail probe failed: surfaceGlints=${result.waterStats?.surfaceGlints || 0}`);
   if ((result.waterStats?.visibleSurfaceGlints || 0) < 20) failures.push(`water detail probe failed: visibleSurfaceGlints=${result.waterStats?.visibleSurfaceGlints || 0}`);
   if ((result.waterStats?.visibleWaveLanes || 0) < 32) failures.push(`water detail probe failed: visibleWaveLanes=${result.waterStats?.visibleWaveLanes || 0}`);

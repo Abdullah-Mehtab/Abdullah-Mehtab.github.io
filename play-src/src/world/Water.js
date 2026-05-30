@@ -34,9 +34,12 @@ export class Water {
     this.lastSplashAt = -Infinity;
     this.lastSplashAudioAt = -Infinity;
     this.lastWakeAt = -Infinity;
+    this.splashesSpawned = 0;
     this.wakesSpawned = 0;
+    this.splashCursor = 0;
     this.submergeTime = 0;
     this.wakeCursor = 0;
+    this.splashDummy = new THREE.Object3D();
     this.wakeDummy = new THREE.Object3D();
     this.glintDummy = new THREE.Object3D();
     this.waveLaneDummy = new THREE.Object3D();
@@ -75,6 +78,7 @@ export class Water {
     this.createSurfaceGlints();
     this.createWaveLanes();
     this.createBobbingProps();
+    this.createSplashPool();
     this.createWakePool();
     this.applyQuality();
   }
@@ -292,6 +296,30 @@ export class Water {
     this.world.scene.add(this.wakeMesh);
   }
 
+  createSplashPool() {
+    const capacity = SPLASH_LIMITS.high;
+    this.splashMesh = new THREE.InstancedMesh(this.splashGeometry, this.splashMaterial, capacity);
+    this.splashMesh.name = 'WaterWheelSplash_Instanced';
+    this.splashMesh.frustumCulled = false;
+    this.splashMesh.renderOrder = 2;
+    this.splashMesh.visible = false;
+    this.splashMesh.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
+    this.splashes = Array.from({ length: capacity }, () => ({
+      active: false,
+      life: 0,
+      maxLife: 1,
+      position: new THREE.Vector3(),
+      velocity: new THREE.Vector3(),
+      baseScale: 1,
+      rotationY: 0
+    }));
+    for (let index = 0; index < capacity; index += 1) {
+      this.hideSplashInstance(index);
+    }
+    this.splashMesh.instanceMatrix.needsUpdate = true;
+    this.world.scene.add(this.splashMesh);
+  }
+
   applyQuality() {
     const profile = this.world.getQualityProfile();
     const waterQuality = profile.water || 'medium';
@@ -322,9 +350,7 @@ export class Water {
     this.bobbingProps.forEach((item, index) => {
       item.group.visible = index < this.maxBobbingProps;
     });
-    while (this.splashes.length > this.maxSplashes) {
-      this.removeSplash(0);
-    }
+    this.trimSplashPool();
     this.trimWakePool();
   }
 
@@ -514,24 +540,17 @@ export class Water {
       const local = new THREE.Vector3(side, -0.35, 1.25);
       const position = local.applyQuaternion(vehicle.group.quaternion).add(vehicle.group.position);
       position.y = WATER_Y + 0.25 + Math.random() * 0.14;
-      const particle = new THREE.Mesh(this.splashGeometry, this.splashMaterial.clone());
-      particle.name = 'WaterWheelSplash';
-      particle.position.copy(position);
-      particle.scale.setScalar(0.7 + Math.random() * 0.55 * intensity);
-      this.world.scene.add(particle);
-      this.splashes.push({
-        mesh: particle,
+      this.writeSplash({
+        position,
+        baseScale: 0.7 + Math.random() * 0.55 * intensity,
+        rotationY: Math.random() * Math.PI * 2,
         life: 0.48 + Math.random() * 0.2,
-        maxLife: 0.62,
         velocity: new THREE.Vector3(
           (Math.random() - 0.5) * 1.7,
           0.8 + Math.random() * 1.25,
           (Math.random() - 0.5) * 1.7
         )
       });
-    }
-    while (this.splashes.length > this.maxSplashes) {
-      this.removeSplash(0);
     }
     if (elapsed - this.lastSplashAudioAt > 0.36) {
       vehicle.audio?.sweep?.(180, 430, 0.12, 0.018);
@@ -566,6 +585,27 @@ export class Water {
     }
   }
 
+  writeSplash({ position, baseScale, rotationY, life, velocity }) {
+    if (!this.splashMesh || !this.splashes.length) return;
+    if (this.getActiveSplashCount() >= this.maxSplashes) {
+      this.hideOldestSplash();
+    }
+    const index = this.splashCursor;
+    this.splashCursor = (this.splashCursor + 1) % this.splashes.length;
+    const item = this.splashes[index];
+    this.splashMesh.visible = true;
+    item.active = true;
+    item.life = life;
+    item.maxLife = life;
+    item.position.copy(position);
+    item.velocity.copy(velocity);
+    item.baseScale = baseScale;
+    item.rotationY = rotationY;
+    this.splashesSpawned += 1;
+    this.writeSplashMatrix(index, item);
+    this.splashMesh.instanceMatrix.needsUpdate = true;
+  }
+
   writeWake({ position, rotationY, baseScale, stretch, life }) {
     const activeCount = this.wakes.filter((item) => item.active).length;
     if (activeCount >= this.maxWakes) {
@@ -584,6 +624,17 @@ export class Water {
     this.wakesSpawned += 1;
     this.writeWakeMatrix(index, item);
     this.wakeMesh.instanceMatrix.needsUpdate = true;
+  }
+
+  writeSplashMatrix(index, item) {
+    const progress = 1 - item.life / item.maxLife;
+    const fade = THREE.MathUtils.clamp(item.life / item.maxLife, 0.001, 1);
+    const scale = item.baseScale * (0.78 + progress * 1.35) * Math.sqrt(fade);
+    this.splashDummy.position.copy(item.position);
+    this.splashDummy.rotation.set(0, item.rotationY + progress * 0.3, 0);
+    this.splashDummy.scale.set(scale, scale * (0.7 + progress * 0.45), scale);
+    this.splashDummy.updateMatrix();
+    this.splashMesh.setMatrixAt(index, this.splashDummy.matrix);
   }
 
   updateWakes(dt) {
@@ -632,6 +683,49 @@ export class Water {
     }
   }
 
+  hideOldestSplash() {
+    let oldest = -1;
+    let lowestLife = Infinity;
+    for (let index = 0; index < this.splashes.length; index += 1) {
+      const item = this.splashes[index];
+      if (item.active && item.life < lowestLife) {
+        oldest = index;
+        lowestLife = item.life;
+      }
+    }
+    if (oldest >= 0) {
+      this.splashes[oldest].active = false;
+      this.hideSplashInstance(oldest);
+    }
+  }
+
+  trimSplashPool() {
+    let activeCount = 0;
+    for (let index = 0; index < this.splashes.length; index += 1) {
+      const item = this.splashes[index];
+      if (!item.active) continue;
+      if (activeCount >= this.maxSplashes) {
+        item.active = false;
+        this.hideSplashInstance(index);
+      } else {
+        activeCount += 1;
+      }
+    }
+    if (this.splashMesh) {
+      this.splashMesh.visible = activeCount > 0;
+      this.splashMesh.instanceMatrix.needsUpdate = true;
+    }
+  }
+
+  hideSplashInstance(index) {
+    if (!this.splashMesh) return;
+    this.splashDummy.position.set(0, -1000, 0);
+    this.splashDummy.rotation.set(0, 0, 0);
+    this.splashDummy.scale.set(0, 0, 0);
+    this.splashDummy.updateMatrix();
+    this.splashMesh.setMatrixAt(index, this.splashDummy.matrix);
+  }
+
   trimWakePool() {
     let activeCount = 0;
     for (let index = 0; index < this.wakes.length; index += 1) {
@@ -657,30 +751,45 @@ export class Water {
   }
 
   updateSplashes(dt) {
-    for (let i = this.splashes.length - 1; i >= 0; i -= 1) {
+    if (!this.splashMesh) return;
+    let activeCount = 0;
+    for (let i = 0; i < this.splashes.length; i += 1) {
       const splash = this.splashes[i];
+      if (!splash.active) continue;
       splash.life -= dt;
-      splash.velocity.y -= dt * 2.1;
-      splash.mesh.position.addScaledVector(splash.velocity, dt);
-      splash.mesh.scale.multiplyScalar(1 + dt * 1.35);
-      splash.mesh.material.opacity = Math.max(0, splash.life / splash.maxLife) * 0.42;
-      if (splash.life <= 0) {
+      if (splash.life <= 0 || activeCount >= this.maxSplashes) {
         this.removeSplash(i);
+        continue;
       }
+      splash.velocity.y -= dt * 2.1;
+      splash.position.addScaledVector(splash.velocity, dt);
+      this.writeSplashMatrix(i, splash);
+      activeCount += 1;
     }
+    this.splashMesh.visible = activeCount > 0;
+    this.splashMesh.instanceMatrix.needsUpdate = true;
   }
 
   removeSplash(index) {
-    const [splash] = this.splashes.splice(index, 1);
+    const splash = this.splashes[index];
     if (!splash) return;
-    this.world.scene.remove(splash.mesh);
-    splash.mesh.material.dispose();
+    splash.active = false;
+    this.hideSplashInstance(index);
+  }
+
+  getActiveSplashCount() {
+    return this.splashes.filter((item) => item.active).length;
   }
 
   getStats() {
+    const activeSplashes = this.getActiveSplashCount();
     return {
-      splashes: this.splashes.length,
+      splashes: activeSplashes,
+      activeSplashes,
       maxSplashes: this.maxSplashes,
+      splashesSpawned: this.splashesSpawned,
+      splashCapacity: this.splashes.length,
+      splashMesh: Boolean(this.splashMesh),
       wakesSpawned: this.wakesSpawned,
       activeWakes: this.wakes.filter((item) => item.active).length,
       maxWakes: this.maxWakes,
