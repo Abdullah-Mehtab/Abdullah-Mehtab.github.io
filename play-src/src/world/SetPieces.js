@@ -105,6 +105,14 @@ export class SetPieces {
       lamps: 0,
       stoneRuns: 0
     };
+    this.fieldBackdropStats = {
+      clusters: 0,
+      patches: 0,
+      authoredAssets: 0,
+      guideTiles: 0,
+      lamps: 0,
+      frameRuns: 0
+    };
     this.districtStoryStats = {
       authoredAssets: 0,
       crateStacks: 0,
@@ -159,6 +167,7 @@ export class SetPieces {
     this.createRouteGuidance();
     this.createRouteComposition();
     this.createMeadowComposition();
+    this.createFieldBackdrops();
     this.createLivingSignals();
     this.createDistrictAmbience();
     this.applyQuality();
@@ -313,6 +322,10 @@ export class SetPieces {
 
   getMeadowCompositionStats() {
     return { ...this.meadowCompositionStats };
+  }
+
+  getFieldBackdropStats() {
+    return { ...this.fieldBackdropStats };
   }
 
   getDistrictStoryStats() {
@@ -1321,6 +1334,224 @@ export class SetPieces {
     return [
       pocket.x + Math.cos(pocket.rotation) * right + Math.sin(pocket.rotation) * forward,
       pocket.z - Math.sin(pocket.rotation) * right + Math.cos(pocket.rotation) * forward
+    ];
+  }
+
+  createFieldBackdrops() {
+    const group = new THREE.Group();
+    group.name = 'SETPIECE_Field_Backdrops';
+    const clusters = [
+      {
+        x: 28,
+        z: 82,
+        rotation: 0.2,
+        width: 34,
+        depth: 18,
+        material: this.world.materials.meadowLight,
+        accent: this.world.materials.warmGlow,
+        paver: this.world.materials.paleStone,
+        seed: 911,
+        assets: [
+          ['EnvPolishGardenArch', -10.4, 2.8, 0.18, 0.7],
+          ['EnvPolishRouteVistaKit', 8.8, -2.2, -0.16, 0.7],
+          ['EnvPolishBenchPlanter', -3.8, -6.4, 0.14, 0.66],
+          ['EnvPolishRouteLantern', 10.6, 5.6, -0.18, 0.64]
+        ]
+      },
+      {
+        x: 110,
+        z: 80,
+        rotation: -0.28,
+        width: 31,
+        depth: 17,
+        material: this.world.materials.meadowDark,
+        accent: this.world.materials.glowBlue,
+        paver: this.world.materials.warmStone,
+        seed: 929,
+        assets: [
+          ['EnvPolishRouteStoryMarker', -9.2, 4.6, 0.16, 0.66],
+          ['EnvPolishPlazaEdgeKit', 8.8, -3.8, -0.12, 0.68],
+          ['EnvPolishBenchPlanter', -2.4, -6.2, 0.22, 0.64],
+          ['EnvPolishRouteVistaKit', 8.4, 5.4, -0.18, 0.68]
+        ]
+      },
+      {
+        x: -128,
+        z: 104,
+        rotation: 0.34,
+        width: 28,
+        depth: 16,
+        material: this.world.materials.meadowLight,
+        accent: this.world.materials.glowBlue,
+        paver: this.world.materials.paleStone,
+        seed: 947,
+        assets: [
+          ['EnvPolishRouteVistaKit', -7.8, 4.4, 0.12, 0.66],
+          ['EnvPolishGardenArch', 7.8, -2.8, -0.16, 0.68],
+          ['EnvPolishBenchPlanter', -1.8, -6.0, 0.2, 0.64],
+          ['EnvPolishRouteStoryMarker', 9.2, 4.8, -0.18, 0.64]
+        ]
+      },
+      {
+        x: -136,
+        z: -18,
+        rotation: -0.7,
+        width: 30,
+        depth: 17,
+        material: this.world.materials.meadowDark,
+        accent: this.world.materials.glowBlue,
+        paver: this.world.materials.securityRoad,
+        seed: 967,
+        assets: [
+          ['EnvPolishChevronBollardRun', -9.2, 2.4, -0.14, 0.66],
+          ['EnvPolishRouteVistaKit', 8.4, 4.6, 0.18, 0.66],
+          ['EnvPolishRouteStoryMarker', -5.4, -6.0, 0.22, 0.64],
+          ['EnvPolishRouteLantern', 9.6, -5.2, -0.2, 0.64]
+        ]
+      },
+      {
+        x: 36,
+        z: -132,
+        rotation: -0.46,
+        width: 36,
+        depth: 18,
+        material: this.world.materials.meadowLight,
+        accent: this.world.materials.warmGlow,
+        paver: this.world.materials.stuntRamp,
+        seed: 983,
+        assets: [
+          ['EnvPolishRouteVistaKit', -10.4, 3.2, 0.16, 0.7],
+          ['EnvPolishChevronBollardRun', 10.2, -1.8, -0.18, 0.7],
+          ['EnvPolishBenchPlanter', -3.8, -6.2, 0.18, 0.64],
+          ['EnvPolishRouteStoryMarker', 9.6, 6.0, -0.2, 0.66]
+        ]
+      },
+      {
+        x: -118,
+        z: -112,
+        rotation: 0.28,
+        width: 30,
+        depth: 17,
+        material: this.world.materials.meadowDark,
+        accent: this.world.materials.glow,
+        paver: this.world.materials.wood,
+        seed: 997,
+        assets: [
+          ['EnvPolishGardenArch', -8.6, 2.8, 0.18, 0.68],
+          ['EnvPolishRouteVistaKit', 7.8, -3.2, -0.16, 0.66],
+          ['EnvPolishBenchPlanter', -2.2, -6.0, 0.2, 0.64],
+          ['EnvPolishRouteLantern', 9.2, 5.4, -0.18, 0.62]
+        ]
+      },
+      {
+        x: 94,
+        z: -44,
+        rotation: 0.52,
+        width: 30,
+        depth: 17,
+        material: this.world.materials.meadowLight,
+        accent: this.world.materials.glowPink,
+        paver: this.world.materials.paleStone,
+        seed: 1013,
+        assets: [
+          ['EnvPolishRouteStoryMarker', -9.2, 4.4, 0.16, 0.66],
+          ['EnvPolishRouteVistaKit', 8.4, -3.4, -0.18, 0.68],
+          ['EnvPolishPlazaEdgeKit', -2.8, -6.2, 0.14, 0.68],
+          ['EnvPolishBenchPlanter', 9.0, 5.8, -0.2, 0.64]
+        ]
+      },
+      {
+        x: 132,
+        z: 114,
+        rotation: 0.14,
+        width: 29,
+        depth: 16,
+        material: this.world.materials.meadowDark,
+        accent: this.world.materials.glowBlue,
+        paver: this.world.materials.sand,
+        seed: 1031,
+        assets: [
+          ['EnvPolishRouteVistaKit', -8.4, 3.8, 0.14, 0.66],
+          ['EnvPolishBenchPlanter', 7.6, -3.6, -0.16, 0.64],
+          ['EnvPolishRouteLantern', -2.6, -6.0, 0.16, 0.62],
+          ['EnvPolishRouteStoryMarker', 8.8, 5.4, -0.22, 0.64]
+        ]
+      }
+    ];
+
+    clusters.forEach((cluster, index) => this.addFieldBackdropCluster(group, cluster, index));
+    mergeStaticMeshesInGroup(group, { namePrefix: 'SETPIECE_field_backdrops', cellSize: 84 });
+    group.userData.fieldBackdropStats = { ...this.fieldBackdropStats };
+    this.registerQualityGroup(group, 'secondary');
+    this.registerBroadSetPieceBatches('fieldBackdrops', group, 'SETPIECE_field_backdrops', 'meadowCompositionRadius');
+    this.world.scene.add(group);
+  }
+
+  addFieldBackdropCluster(group, cluster, index) {
+    this.groundPatch(group, cluster.x, cluster.z, cluster.width, cluster.depth, cluster.material, 0.12, cluster.rotation, 'FieldBackdropLawn', cluster.seed);
+    this.groundPatch(
+      group,
+      cluster.x + Math.sin(cluster.rotation) * 3.1,
+      cluster.z + Math.cos(cluster.rotation) * 3.1,
+      cluster.width * 0.62,
+      cluster.depth * 0.48,
+      this.world.materials.grassSandBlend,
+      0.123,
+      cluster.rotation - 0.1,
+      'FieldBackdropFeather',
+      cluster.seed + 5
+    );
+    this.fieldBackdropStats.patches += 2;
+    this.addFieldBackdropFrame(group, cluster);
+    this.addFieldBackdropGuideTiles(group, cluster);
+    for (const asset of cluster.assets) this.addFieldBackdropAsset(group, cluster, ...asset);
+    for (const [right, forward, color] of [
+      [-cluster.width * 0.38, -cluster.depth * 0.34, cluster.accent.color?.getHex?.() || 0x7cffb2],
+      [cluster.width * 0.36, cluster.depth * 0.32, 0xffc36a]
+    ]) {
+      const [x, z] = this.fieldBackdropPoint(cluster, right, forward);
+      this.addFieldBackdropLamp(group, x, z, color, 2.25, `FieldBackdropLamp_${index}`);
+    }
+    this.fieldBackdropStats.clusters += 1;
+  }
+
+  addFieldBackdropFrame(group, cluster) {
+    const frameDepth = cluster.depth * 0.39;
+    for (let i = 0; i < 5; i += 1) {
+      const offset = -cluster.width * 0.32 + i * (cluster.width * 0.16);
+      for (const side of [-1, 1]) {
+        const [x, z] = this.fieldBackdropPoint(cluster, offset, side * frameDepth);
+        this.box(group, x, 0.205, z, 1.85, 0.035, 0.2, cluster.paver, cluster.rotation + side * 0.08, 'FieldBackdropFrameRun');
+        this.fieldBackdropStats.frameRuns += 1;
+      }
+    }
+  }
+
+  addFieldBackdropGuideTiles(group, cluster) {
+    for (let i = 0; i < 6; i += 1) {
+      const side = i % 2 === 0 ? -1 : 1;
+      const [x, z] = this.fieldBackdropPoint(cluster, side * cluster.width * 0.24, -5.6 + i * 2.25);
+      this.box(group, x, 0.213, z, 0.24, 0.035, 1.05, cluster.accent, cluster.rotation + side * 0.06, 'FieldBackdropGuideTile');
+      this.fieldBackdropStats.guideTiles += 1;
+    }
+  }
+
+  addFieldBackdropAsset(group, cluster, assetName, right, forward, rotationOffset, scale) {
+    const [x, z] = this.fieldBackdropPoint(cluster, right, forward);
+    const placed = this.addPolishAsset(group, assetName, x, z, cluster.rotation + rotationOffset, scale);
+    if (placed) this.fieldBackdropStats.authoredAssets += 1;
+    return placed;
+  }
+
+  addFieldBackdropLamp(group, x, z, color, height, name) {
+    this.addLamp(group, x, z, color, height, name);
+    this.fieldBackdropStats.lamps += 1;
+  }
+
+  fieldBackdropPoint(cluster, right, forward) {
+    return [
+      cluster.x + Math.cos(cluster.rotation) * right + Math.sin(cluster.rotation) * forward,
+      cluster.z - Math.sin(cluster.rotation) * right + Math.cos(cluster.rotation) * forward
     ];
   }
 
