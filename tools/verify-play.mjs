@@ -53,7 +53,8 @@ const authoredDistrictAssets = [
   'EnvPolishRouteSplitterIsland',
   'EnvPolishPlazaEdgeKit',
   'EnvPolishChevronBollardRun',
-  'EnvPolishRouteStoryMarker'
+  'EnvPolishRouteStoryMarker',
+  'EnvPolishRouteVistaKit'
 ];
 const authoredStuntAssets = [
   'EnvPolishStuntCheckpoint',
@@ -1678,6 +1679,7 @@ function assertVerification(result) {
   if ((result.routeComposition?.plazaEdgeKits || 0) < 12) failures.push(`route composition probe failed: plazaEdgeKits=${result.routeComposition?.plazaEdgeKits || 0}`);
   if ((result.routeComposition?.bollardRuns || 0) < 12) failures.push(`route composition probe failed: bollardRuns=${result.routeComposition?.bollardRuns || 0}`);
   if ((result.routeComposition?.routeStoryMarkers || 0) < 10) failures.push(`route composition probe failed: routeStoryMarkers=${result.routeComposition?.routeStoryMarkers || 0}`);
+  if ((result.routeComposition?.vistaKits || 0) < 6) failures.push(`route composition probe failed: vistaKits=${result.routeComposition?.vistaKits || 0}`);
   if ((result.routeComposition?.authoredAssets || 0) < 32) failures.push(`route composition probe failed: authoredAssets=${result.routeComposition?.authoredAssets || 0}`);
   if ((result.routeComposition?.guideTiles || 0) < 40) failures.push(`route composition probe failed: guideTiles=${result.routeComposition?.guideTiles || 0}`);
   if ((result.districtStory?.authoredAssets || 0) < 10) failures.push(`district story probe failed: authoredAssets=${result.districtStory?.authoredAssets || 0}`);
