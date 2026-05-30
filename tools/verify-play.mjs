@@ -469,15 +469,39 @@ async function exerciseWater(page, islandRadius) {
 async function sampleSurfaces(page, islandRadius) {
   return page.evaluate((radius) => {
     const game = window.__portfolioDrive.game;
-    const sample = (x, z) => game.world.getSurfaceInfo({ x, y: 1.08, z }).id;
+    const sampleSurface = (x, z) => {
+      const surface = game.world.getSurfaceInfo({ x, y: 1.08, z });
+      return {
+        id: surface.id,
+        label: surface.label,
+        roadId: surface.roadId || null,
+        roadHierarchy: surface.roadHierarchy || null,
+        audioId: surface.audioId || surface.id,
+        effectId: surface.effectId || surface.id,
+        forwardGrip: Number((surface.forwardGrip ?? 0).toFixed(2)),
+        sideGrip: Number((surface.sideGrip ?? 0).toFixed(2)),
+        topSpeedFactor: Number((surface.topSpeedFactor ?? 0).toFixed(2)),
+        drag: Number((surface.drag ?? 1).toFixed(3)),
+        skidMarks: surface.skidMarks !== false
+      };
+    };
+    const sample = (x, z) => sampleSurface(x, z).id;
     const grassCandidates = [[32, 0], [-18, 112], [42, 8], [-22, -28], [106, 18]];
     const grass = grassCandidates.map(([x, z]) => sample(x, z)).find((id) => id === 'grass') || null;
     return {
-      road: sample(0, 24),
+      road: sample(60, 40),
       grass,
       sand: sample(radius * 0.91, 0),
       shore: sample(radius * 0.985, 0),
-      water: sample(radius * 1.025, 0)
+      water: sample(radius * 1.025, 0),
+      roadProfiles: {
+        avenue: sampleSurface(60, 40),
+        plaza: sampleSurface(-52, 52),
+        security: sampleSurface(-64, -12),
+        stunt: sampleSurface(104, -94),
+        dirt: sampleSurface(-62, -118),
+        bridge: sampleSurface(-132, 50)
+      }
     };
   }, islandRadius);
 }
@@ -1605,6 +1629,26 @@ function assertVerification(result) {
   if (result.surfaces?.sand !== 'sand') failures.push(`surface probe failed: sand=${result.surfaces?.sand}`);
   if (result.surfaces?.shore !== 'shore') failures.push(`surface probe failed: shore=${result.surfaces?.shore}`);
   if (result.surfaces?.water !== 'water') failures.push(`surface probe failed: water=${result.surfaces?.water}`);
+  const roadProfiles = result.surfaces?.roadProfiles || {};
+  for (const hierarchy of ['avenue', 'plaza', 'security', 'stunt', 'dirt', 'bridge']) {
+    const profile = roadProfiles[hierarchy];
+    if (profile?.id !== 'road') failures.push(`road surface metadata failed: ${hierarchy} id=${profile?.id}`);
+    if (profile?.roadHierarchy !== hierarchy) failures.push(`road surface metadata failed: ${hierarchy} hierarchy=${profile?.roadHierarchy}`);
+    if (!profile?.audioId || profile.audioId === 'road' && hierarchy !== 'avenue') {
+      failures.push(`road surface metadata failed: ${hierarchy} audioId=${profile?.audioId}`);
+    }
+  }
+  if ((roadProfiles.dirt?.forwardGrip || 1) >= (roadProfiles.avenue?.forwardGrip || 0)) {
+    failures.push(`road surface metadata failed: dirt grip ${roadProfiles.dirt?.forwardGrip} >= avenue ${roadProfiles.avenue?.forwardGrip}`);
+  }
+  if ((roadProfiles.dirt?.drag || 1) >= 1) failures.push(`road surface metadata failed: dirt drag=${roadProfiles.dirt?.drag}`);
+  if (roadProfiles.dirt?.skidMarks !== false) failures.push('road surface metadata failed: dirt skid marks should be disabled');
+  if ((roadProfiles.stunt?.topSpeedFactor || 0) <= (roadProfiles.plaza?.topSpeedFactor || 0)) {
+    failures.push(`road surface metadata failed: stunt speed ${roadProfiles.stunt?.topSpeedFactor} <= plaza ${roadProfiles.plaza?.topSpeedFactor}`);
+  }
+  if (new Set(Object.values(roadProfiles).map((profile) => profile?.audioId).filter(Boolean)).size < 5) {
+    failures.push('road surface metadata failed: road audio ids are not distinct enough');
+  }
   if ((result.roadGuidance?.chevrons || 0) < 40) failures.push(`road guidance probe failed: chevrons=${result.roadGuidance?.chevrons || 0}`);
   if ((result.roadGuidance?.reflectorStuds || 0) < 140) failures.push(`road guidance probe failed: reflectorStuds=${result.roadGuidance?.reflectorStuds || 0}`);
   if ((result.roadGuidance?.edgeFeathers || 0) < 24) failures.push(`road guidance probe failed: edgeFeathers=${result.roadGuidance?.edgeFeathers || 0}`);

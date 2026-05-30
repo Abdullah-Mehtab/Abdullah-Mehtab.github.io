@@ -35,6 +35,7 @@ export class Roads {
     this.detailDummy = new THREE.Object3D();
     this.detailMeshes = [];
     this.detailStats = { wearStrips: 0, laneSeams: 0 };
+    this.surfaceSegments = createRoadSurfaceSegments(roadPaths);
     this.roadGroup = new THREE.Group();
     this.roadGroup.name = 'ROAD_Network';
   }
@@ -508,13 +509,27 @@ export class Roads {
   }
 
   isNear(x, z, margin = 0) {
-    return roadSegments.some(([cx, cz, width, length, rotation]) => {
-      const dx = x - cx;
-      const dz = z - cz;
-      const localX = Math.cos(rotation) * dx - Math.sin(rotation) * dz;
-      const localZ = Math.sin(rotation) * dx + Math.cos(rotation) * dz;
-      return Math.abs(localX) <= width / 2 + margin && Math.abs(localZ) <= length / 2 + margin;
-    });
+    return Boolean(this.getSurfaceAt(x, z, margin));
+  }
+
+  getSurfaceAt(x, z, margin = 0.9) {
+    let best = null;
+    for (const segment of this.surfaceSegments) {
+      const dx = x - segment.cx;
+      const dz = z - segment.cz;
+      const localX = Math.cos(segment.rotation) * dx - Math.sin(segment.rotation) * dz;
+      const localZ = Math.sin(segment.rotation) * dx + Math.cos(segment.rotation) * dz;
+      const halfWidth = segment.width / 2 + margin;
+      const halfLength = segment.length / 2 + margin;
+      if (Math.abs(localX) > halfWidth || Math.abs(localZ) > halfLength) continue;
+      const lateral = Math.abs(localX) / Math.max(0.001, halfWidth);
+      const longitudinal = Math.abs(localZ) / Math.max(0.001, halfLength);
+      const score = segment.priority - lateral * 0.18 - longitudinal * 0.04;
+      if (!best || score > best.score) {
+        best = { score, path: segment.path };
+      }
+    }
+    return best?.path || null;
   }
 }
 
@@ -743,6 +758,30 @@ function makePathCurve(points, closed) {
   curve.arcLengthDivisions = Math.max(64, points.length * 18);
   curve.updateArcLengths();
   return curve;
+}
+
+function createRoadSurfaceSegments(paths) {
+  return paths.flatMap((path) => {
+    const segments = [];
+    const limit = path.closed ? path.points.length : path.points.length - 1;
+    for (let index = 0; index < limit; index += 1) {
+      const a = path.points[index];
+      const b = path.points[(index + 1) % path.points.length];
+      const dx = b[0] - a[0];
+      const dz = b[1] - a[1];
+      const length = Math.hypot(dx, dz);
+      segments.push({
+        path,
+        cx: (a[0] + b[0]) / 2,
+        cz: (a[1] + b[1]) / 2,
+        width: path.width,
+        length: length + path.width * 0.64,
+        rotation: Math.atan2(dx, dz),
+        priority: ROAD_LAYER[path.hierarchy] ?? 1
+      });
+    }
+    return segments;
+  });
 }
 
 function createPathRibbonGeometry(points, width, closed, y, samplesPerSegment = 8, offset = 0) {

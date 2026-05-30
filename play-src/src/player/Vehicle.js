@@ -9,9 +9,9 @@ import sabreTurboModelUrl from '../../assets/models/vehicles/sabre-turbo.glb?url
 
 const START = new THREE.Vector3(10, 1.08, 27);
 const VISUAL_Y_OFFSET = -0.88;
-const DEFAULT_SURFACE = { id: 'road', drag: 1, dustColor: 0x6f6250, skidColor: 0x161410, skidMarks: true };
-const SURFACE_IDS = ['road', 'grass', 'sand', 'shore', 'water'];
-const SOFT_SURFACES = new Set(['grass', 'sand', 'shore']);
+const DEFAULT_SURFACE = { id: 'road', drag: 1, dustColor: 0x6f6250, skidColor: 0x161410, skidMarks: true, roughnessFeedback: 0 };
+const SURFACE_IDS = ['road', 'avenue-road', 'plaza-road', 'security-road', 'stunt-road', 'dirt-road', 'bridge-road', 'grass', 'sand', 'shore', 'water'];
+const SOFT_SURFACES = new Set(['grass', 'sand', 'shore', 'dirt-road']);
 
 export class Vehicle {
   constructor({ scene, physics, achievements, audio }) {
@@ -364,13 +364,14 @@ export class Vehicle {
   }
 
   updateSurfaceDust(dt, surface) {
-    const minSpeed = surface?.id === 'shore' ? 5.5 : 8;
-    if (!surface || !SOFT_SURFACES.has(surface.id) || this.controller.groundedWheels < 1 || this.controller.speed < minSpeed) {
+    const surfaceId = getSurfaceEffectId(surface);
+    const minSpeed = surfaceId === 'shore' ? 5.5 : surfaceId === 'dirt-road' ? 6.4 : 8;
+    if (!surface || !SOFT_SURFACES.has(surfaceId) || this.controller.groundedWheels < 1 || this.controller.speed < minSpeed) {
       this.surfaceDustAccumulator = Math.min(this.surfaceDustAccumulator, 0.5);
       return;
     }
 
-    const surfaceRate = surface.id === 'shore' ? 1.45 : surface.id === 'sand' ? 1.15 : 1;
+    const surfaceRate = surfaceId === 'shore' ? 1.45 : surfaceId === 'sand' ? 1.15 : surfaceId === 'dirt-road' ? 1.25 : 1;
     this.surfaceDustAccumulator += dt * THREE.MathUtils.clamp(this.controller.speed / 8, 0.85, 3.6) * surfaceRate;
     while (this.surfaceDustAccumulator >= 1) {
       this.surfaceDustAccumulator -= 1;
@@ -384,6 +385,7 @@ export class Vehicle {
     this.handbrakeAudioCooldown = Math.max(0, this.handbrakeAudioCooldown - dt);
     this.surfaceAudioCooldown = Math.max(0, this.surfaceAudioCooldown - dt);
     const currentSurface = normalizeSurface(surface);
+    const audioSurface = getSurfaceAudioId(currentSurface);
     const speed = this.controller.speed || 0;
     const slip = state.slip || 0;
 
@@ -405,20 +407,20 @@ export class Vehicle {
     }
 
     if (
-      currentSurface.id !== this.lastAudioState.surface &&
+      audioSurface !== this.lastAudioState.surface &&
       speed > 4.5 &&
       this.controller.groundedWheels > 0 &&
       this.surfaceAudioCooldown <= 0
     ) {
-      this.audio.surfaceRumble?.(currentSurface.id, speed);
-      this.surfaceAudioCooldown = currentSurface.id === 'water' || currentSurface.id === 'shore' ? 0.34 : 0.24;
+      this.audio.surfaceRumble?.(audioSurface, speed);
+      this.surfaceAudioCooldown = audioSurface === 'water' || audioSurface === 'shore' ? 0.34 : 0.24;
     }
 
     this.lastAudioState.boost = Boolean(state.boost);
     this.lastAudioState.burnout = Boolean(state.burnout);
     this.lastAudioState.wheelie = Boolean(state.wheelieLaunch || state.wheelie);
     this.lastAudioState.handbrake = Boolean(state.handbrake);
-    this.lastAudioState.surface = currentSurface.id;
+    this.lastAudioState.surface = audioSurface;
   }
 
   updateLandingFeedback(dt, surface) {
@@ -456,8 +458,10 @@ export class Vehicle {
   updateVisualRumble(dt) {
     this.visualRumbleTime += dt * (1 + Math.min(3.2, this.speed * 0.035));
     const state = this.controller?.driveState || {};
-    const surfaceRumble = ['grass', 'sand', 'shore'].includes(this.surface?.id) && this.controller.groundedWheels > 1
-      ? Math.min(0.006, this.speed * 0.00018)
+    const surfaceId = getSurfaceEffectId(this.surface);
+    const roughness = this.surface?.roughnessFeedback || 0;
+    const surfaceRumble = (SOFT_SURFACES.has(surfaceId) || roughness > 0) && this.controller.groundedWheels > 1
+      ? Math.min(0.009, this.speed * (0.00012 + roughness * 0.00016))
       : 0;
     const rumble = state.burnout
       ? 0.022
@@ -531,11 +535,12 @@ export class Vehicle {
   }
 
   emitSurfaceTrailMist(surface, boosting, drifting) {
-    if (boosting || drifting || !SOFT_SURFACES.has(surface.id)) return;
-    this.surfaceTrailDustCounter[surface.id] = (this.surfaceTrailDustCounter[surface.id] || 0) + 1;
-    const cadence = surface.id === 'shore' ? 6 : surface.id === 'sand' ? 10 : 14;
-    if (this.surfaceTrailDustCounter[surface.id] % cadence === 0) {
-      this.spawnRearSmoke(false, surface, surface.id === 'shore' ? 0.52 : 0.48, 'surface');
+    const surfaceId = getSurfaceEffectId(surface);
+    if (boosting || drifting || !SOFT_SURFACES.has(surfaceId)) return;
+    this.surfaceTrailDustCounter[surfaceId] = (this.surfaceTrailDustCounter[surfaceId] || 0) + 1;
+    const cadence = surfaceId === 'shore' ? 6 : surfaceId === 'sand' ? 10 : surfaceId === 'dirt-road' ? 8 : 14;
+    if (this.surfaceTrailDustCounter[surfaceId] % cadence === 0) {
+      this.spawnRearSmoke(false, surface, surfaceId === 'shore' ? 0.52 : 0.48, 'surface');
     }
   }
 
@@ -741,7 +746,7 @@ export class Vehicle {
   }
 
   recordSurfaceEffect(counterName, surface) {
-    const id = normalizeSurface(surface).id;
+    const id = getSurfaceEffectId(surface);
     this.effectTotals[counterName][id] = (this.effectTotals[counterName][id] || 0) + 1;
   }
 
@@ -806,6 +811,16 @@ function makeSurfaceCounter() {
 
 function normalizeSurface(surface) {
   return surface ? { ...DEFAULT_SURFACE, ...surface } : DEFAULT_SURFACE;
+}
+
+function getSurfaceAudioId(surface) {
+  if (!surface) return 'road';
+  return surface.audioId || surface.id || 'road';
+}
+
+function getSurfaceEffectId(surface) {
+  if (!surface) return 'road';
+  return surface.effectId || surface.audioId || surface.id || 'road';
 }
 
 function mixHex(a, b, t) {

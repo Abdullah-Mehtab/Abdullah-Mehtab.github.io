@@ -11,7 +11,7 @@ const WHEEL_OFFSETS = [
 
 const WHEEL_RADIUS = 0.43;
 const BURNOUT_START_SPEED = 2.6;
-const DEFAULT_SURFACE = { id: 'road', forwardGrip: 1, sideGrip: 1, engineFactor: 1, topSpeedFactor: 1 };
+const DEFAULT_SURFACE = { id: 'road', audioId: 'road', forwardGrip: 1, sideGrip: 1, engineFactor: 1, topSpeedFactor: 1 };
 
 export class VehicleController {
   constructor({ physics, body }) {
@@ -171,6 +171,7 @@ export class VehicleController {
     this.wheelieCooldown = Math.max(0, this.wheelieCooldown - dt);
     this.wheelieTimer = Math.max(0, this.wheelieTimer - dt);
     if (!burnout && !wheelieLaunch) this.burnoutCharge = Math.max(0, this.burnoutCharge - dt * 1.6);
+    const surfaceId = surface.audioId || surface.id || 'road';
     this.driveState = {
       boost,
       handbrake,
@@ -179,7 +180,8 @@ export class VehicleController {
       wheelie: this.wheelieTimer > 0,
       wheelieLaunch,
       burnoutCharge: this.burnoutCharge,
-      surface: surface.id || 'road',
+      surface: surfaceId,
+      roadHierarchy: surface.roadHierarchy || null,
       slip: burnout ? 1 : handbrake && this.speed > 5 ? THREE.MathUtils.clamp(this.speed / 24, 0, 1) : 0
     };
     this.wasBurnout = burnout;
@@ -374,6 +376,6 @@ export class VehicleController {
     this.stuckTimer = 0;
     this.boostCooldown = 0;
     this.forwardHoldTime = 0;
-    this.driveState = { boost: false, handbrake: false, throttle: this.throttle, slip: 0, burnout: false, wheelie: false, surface: this.surface?.id || 'road' };
+    this.driveState = { boost: false, handbrake: false, throttle: this.throttle, slip: 0, burnout: false, wheelie: false, surface: this.surface?.audioId || this.surface?.id || 'road' };
   }
 }
