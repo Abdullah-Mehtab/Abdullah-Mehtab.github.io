@@ -13,7 +13,7 @@ export const QUALITY_PROFILES = {
     props: 18,
     fireflies: 14,
     lifeSignals: { zonePulses: 8, windBanners: 4, whisperBeacons: 4, terminalPulses: 2, districtMotes: 16, districtSignals: 6 },
-    districtDressingRadius: 92,
+    districtDressingRadius: 76,
     broadSetPieceRadius: 118,
     routeCompositionRadius: 72,
     meadowCompositionRadius: 36,

@@ -1478,9 +1478,73 @@ async function captureMobile(browser) {
       waterStats: game.world.water?.getStats?.() || {},
       atmosphere: game.world.atmosphere?.getStats?.() || {},
       lighting: game.getLightingStats?.() || {},
+      sceneObjects: countVisibleScene(game.scene),
+      renderProfile: profileVisibleScene(game.scene),
       calls: render.calls,
       triangles: render.triangles
     };
+
+    function countVisibleScene(root) {
+      const counts = {
+        meshes: 0,
+        instancedMeshes: 0,
+        lights: 0,
+        visibleObjects: 0
+      };
+      root.traverse((object) => {
+        if (!isEffectivelyVisible(object)) return;
+        counts.visibleObjects += 1;
+        if (object.isMesh) counts.meshes += 1;
+        if (object.isInstancedMesh) counts.instancedMeshes += 1;
+        if (object.isLight) counts.lights += 1;
+      });
+      return counts;
+    }
+
+    function profileVisibleScene(root) {
+      const buckets = new Map();
+      root.traverse((object) => {
+        if (!object.isMesh || !isEffectivelyVisible(object)) return;
+        const bucketName = getRenderBucketName(object, root);
+        if (!buckets.has(bucketName)) {
+          buckets.set(bucketName, { name: bucketName, meshes: 0, materials: 0, triangles: 0 });
+        }
+        const bucket = buckets.get(bucketName);
+        bucket.meshes += 1;
+        bucket.materials += Array.isArray(object.material) ? object.material.length : 1;
+        bucket.triangles += estimateTriangles(object);
+      });
+      return [...buckets.values()]
+        .map((bucket) => ({ ...bucket, triangles: Math.round(bucket.triangles) }))
+        .sort((a, b) => b.materials - a.materials)
+        .slice(0, 10);
+    }
+
+    function isEffectivelyVisible(object) {
+      let current = object;
+      while (current) {
+        if (current.visible === false) return false;
+        current = current.parent;
+      }
+      return true;
+    }
+
+    function getRenderBucketName(object, root) {
+      let current = object;
+      while (current.parent && current.parent !== root) current = current.parent;
+      return current.name || object.name || 'unnamed-root';
+    }
+
+    function estimateTriangles(object) {
+      const geometry = object.geometry;
+      const instanceCount = object.isInstancedMesh ? object.count || 1 : 1;
+      const base = geometry?.index
+        ? geometry.index.count / 3
+        : geometry?.attributes?.position
+          ? geometry.attributes.position.count / 3
+          : 0;
+      return base * instanceCount;
+    }
   });
   await page.close();
   return { ready: true, ...sample };
@@ -1620,7 +1684,10 @@ function assertVerification(result) {
   if ((routeSurfaceVisibility?.hiddenBatches || 0) < 40) {
     failures.push(`route composition surface cull probe failed: hiddenBatches=${routeSurfaceVisibility?.hiddenBatches || 0}`);
   }
-  if ((result.mobile.districtVisibility?.hiddenBatches || 0) < 40) {
+  if ((result.mobile.districtVisibility?.visibleBatches || 0) > 90) {
+    failures.push(`mobile district dressing visibility probe failed: visibleBatches=${result.mobile.districtVisibility?.visibleBatches || 0}`);
+  }
+  if ((result.mobile.districtVisibility?.hiddenBatches || 0) < 90) {
     failures.push(`mobile district dressing visibility probe failed: hiddenBatches=${result.mobile.districtVisibility?.hiddenBatches || 0}`);
   }
   if ((result.mobile.broadSetPieceVisibility?.hiddenBatches || 0) < 1) {
@@ -1955,6 +2022,9 @@ function assertVerification(result) {
   }
   if ((result.mobile.broadSetPieceVisibility?.groups?.fieldBackdrops?.visibleBatches || 0) !== 0) {
     failures.push(`mobile field backdrop quality probe failed: visibleBatches=${result.mobile.broadSetPieceVisibility?.groups?.fieldBackdrops?.visibleBatches || 0}`);
+  }
+  if (!Array.isArray(result.mobile.renderProfile) || result.mobile.renderProfile.length < 5) {
+    failures.push('mobile render profile missing');
   }
   if ((result.mobile.waterStats?.visibleShoreFlecks || 0) > 24) {
     failures.push(`mobile water quality probe failed: visibleShoreFlecks=${result.mobile.waterStats?.visibleShoreFlecks || 0}`);
