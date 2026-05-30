@@ -1787,6 +1787,17 @@ function assertVerification(result) {
   if ((result.roadSurfaceDetails?.opacities?.seam || 1) > 0.18) failures.push(`road readability probe failed: seam opacity=${result.roadSurfaceDetails?.opacities?.seam}`);
   if ((result.roadSurfaceDetails?.opacities?.transitionApron || 1) > 0.12) failures.push(`road readability probe failed: transitionApron opacity=${result.roadSurfaceDetails?.opacities?.transitionApron}`);
   if ((result.roadSurfaceDetails?.opacities?.transitionGuide || 1) > 0.28) failures.push(`road readability probe failed: transitionGuide opacity=${result.roadSurfaceDetails?.opacities?.transitionGuide}`);
+  if (result.roadSurfaceDetails?.transitionApronPattern !== 'broken-threshold') {
+    failures.push(`road readability probe failed: transition apron pattern=${result.roadSurfaceDetails?.transitionApronPattern}`);
+  }
+  if (!result.roadSurfaceDetails?.transitionApronAlphaMapped) failures.push('road readability probe failed: transition apron alpha map missing');
+  if (result.roadSurfaceDetails?.edgeFeatherPattern !== 'broken-verge') {
+    failures.push(`road readability probe failed: edge feather pattern=${result.roadSurfaceDetails?.edgeFeatherPattern}`);
+  }
+  if (!result.roadSurfaceDetails?.edgeFeatherAlphaMapped) failures.push('road readability probe failed: edge feather alpha map missing');
+  if ((result.roadSurfaceDetails?.edgeFeatherOpacity || 1) > 0.12) {
+    failures.push(`road readability probe failed: edgeFeather opacity=${result.roadSurfaceDetails?.edgeFeatherOpacity}`);
+  }
   if ((result.surfaceDetails?.districts || 0) < 10) failures.push(`surface detail probe failed: districts=${result.surfaceDetails?.districts || 0}`);
   if ((result.surfaceDetails?.seams || 0) < 40) failures.push(`surface detail probe failed: seams=${result.surfaceDetails?.seams || 0}`);
   if ((result.surfaceDetails?.pavers || 0) < 24) failures.push(`surface detail probe failed: pavers=${result.surfaceDetails?.pavers || 0}`);
