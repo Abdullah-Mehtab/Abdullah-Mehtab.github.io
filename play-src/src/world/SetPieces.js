@@ -788,7 +788,7 @@ export class SetPieces {
     };
   }
 
-  registerBroadSetPieceBatches(key, group, namePrefix) {
+  registerBroadSetPieceBatches(key, group, namePrefix, radiusKey = 'broadSetPieceRadius') {
     const scale = new THREE.Vector3();
     group.updateMatrixWorld(true);
     group.traverse((object) => {
@@ -800,6 +800,7 @@ export class SetPieces {
       object.getWorldScale(scale);
       this.broadSetPieceEntries.push({
         key,
+        radiusKey,
         root: group,
         object,
         x: center.x,
@@ -811,7 +812,8 @@ export class SetPieces {
   }
 
   updateBroadSetPieceVisibility(origin) {
-    const radius = this.world.getQualityProfile().broadSetPieceRadius || 0;
+    const profile = this.world.getQualityProfile();
+    const radius = profile.broadSetPieceRadius || 0;
     if (origin && Number.isFinite(origin.x) && Number.isFinite(origin.z)) {
       this.broadVisibilityOrigin = { x: origin.x, z: origin.z };
     }
@@ -820,15 +822,16 @@ export class SetPieces {
     let visibleBatches = 0;
 
     for (const entry of this.broadSetPieceEntries) {
+      const entryRadius = profile[entry.radiusKey] || radius;
       if (!groups[entry.key]) {
-        groups[entry.key] = { batches: 0, visibleBatches: 0, hiddenBatches: 0 };
+        groups[entry.key] = { batches: 0, visibleBatches: 0, hiddenBatches: 0, radius: entryRadius };
       }
       groups[entry.key].batches += 1;
 
       let visible = true;
-      if (activeOrigin && radius > 0) {
+      if (activeOrigin && entryRadius > 0) {
         const edgeDistance = Math.hypot(entry.x - activeOrigin.x, entry.z - activeOrigin.z) - entry.radius;
-        const threshold = entry.object.visible ? radius + 18 : radius;
+        const threshold = entry.object.visible ? entryRadius + 18 : entryRadius;
         visible = edgeDistance <= threshold;
       }
       entry.object.visible = visible;
@@ -1079,10 +1082,10 @@ export class SetPieces {
     ];
     for (const run of guideRuns) this.addRouteGuideTiles(group, run);
 
-    mergeStaticMeshesInGroup(group, { namePrefix: 'SETPIECE_route_composition' });
+    mergeStaticMeshesInGroup(group, { namePrefix: 'SETPIECE_route_composition', cellSize: 56 });
     group.userData.routeCompositionStats = { ...this.routeCompositionStats };
     this.registerQualityGroup(group, 'secondary');
-    this.registerBroadSetPieceBatches('routeComposition', group, 'SETPIECE_route_composition');
+    this.registerBroadSetPieceBatches('routeComposition', group, 'SETPIECE_route_composition', 'routeCompositionRadius');
     this.world.scene.add(group);
   }
 
