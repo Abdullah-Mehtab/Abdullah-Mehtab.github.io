@@ -42,6 +42,15 @@ export class SetPieces {
       hiddenBatches: 0,
       radius: 0
     };
+    this.broadSetPieceEntries = [];
+    this.broadVisibilityOrigin = null;
+    this.broadVisibilityStats = {
+      batches: 0,
+      visibleBatches: 0,
+      hiddenBatches: 0,
+      radius: 0,
+      groups: {}
+    };
     this.lifeStats = {
       zonePulses: 0,
       windBanners: 0,
@@ -136,6 +145,7 @@ export class SetPieces {
 
   update(dt, elapsed, vehiclePosition) {
     this.updateDistrictDressingVisibility(vehiclePosition);
+    this.updateBroadSetPieceVisibility(vehiclePosition);
     for (const item of this.animated) {
       if (item.instanceMesh) {
         this.writeLifeInstance(item, elapsed);
@@ -196,6 +206,7 @@ export class SetPieces {
     this.applyDistrictAmbienceLimit(limits.districtMotes);
     this.applyQualityGroups();
     this.updateDistrictDressingVisibility();
+    this.updateBroadSetPieceVisibility();
     this.lifeStats.visibleTotal =
       this.lifeStats.visibleZonePulses +
       this.lifeStats.visibleWindBanners +
@@ -252,6 +263,13 @@ export class SetPieces {
 
   getDistrictVisibilityStats() {
     return { ...this.districtVisibilityStats };
+  }
+
+  getBroadVisibilityStats() {
+    return {
+      ...this.broadVisibilityStats,
+      groups: { ...this.broadVisibilityStats.groups }
+    };
   }
 
   getApproachStats() {
@@ -770,6 +788,71 @@ export class SetPieces {
     };
   }
 
+  registerBroadSetPieceBatches(key, group, namePrefix) {
+    const scale = new THREE.Vector3();
+    group.updateMatrixWorld(true);
+    group.traverse((object) => {
+      if (!object.isMesh || !object.geometry || !object.name.startsWith(namePrefix)) return;
+      object.geometry.computeBoundingSphere();
+      const sphere = object.geometry.boundingSphere;
+      if (!sphere) return;
+      const center = sphere.center.clone().applyMatrix4(object.matrixWorld);
+      object.getWorldScale(scale);
+      this.broadSetPieceEntries.push({
+        key,
+        root: group,
+        object,
+        x: center.x,
+        z: center.z,
+        radius: sphere.radius * Math.max(scale.x, scale.y, scale.z)
+      });
+    });
+    this.updateBroadSetPieceVisibility();
+  }
+
+  updateBroadSetPieceVisibility(origin) {
+    const radius = this.world.getQualityProfile().broadSetPieceRadius || 0;
+    if (origin && Number.isFinite(origin.x) && Number.isFinite(origin.z)) {
+      this.broadVisibilityOrigin = { x: origin.x, z: origin.z };
+    }
+    const activeOrigin = this.broadVisibilityOrigin;
+    const groups = {};
+    let visibleBatches = 0;
+
+    for (const entry of this.broadSetPieceEntries) {
+      if (!groups[entry.key]) {
+        groups[entry.key] = { batches: 0, visibleBatches: 0, hiddenBatches: 0 };
+      }
+      groups[entry.key].batches += 1;
+
+      let visible = true;
+      if (activeOrigin && radius > 0) {
+        const edgeDistance = Math.hypot(entry.x - activeOrigin.x, entry.z - activeOrigin.z) - entry.radius;
+        const threshold = entry.object.visible ? radius + 18 : radius;
+        visible = edgeDistance <= threshold;
+      }
+      entry.object.visible = visible;
+      const effectivelyVisible = visible && entry.root.visible !== false;
+      if (effectivelyVisible) {
+        visibleBatches += 1;
+        groups[entry.key].visibleBatches += 1;
+      }
+    }
+
+    for (const groupStats of Object.values(groups)) {
+      groupStats.hiddenBatches = groupStats.batches - groupStats.visibleBatches;
+    }
+
+    const batches = this.broadSetPieceEntries.length;
+    this.broadVisibilityStats = {
+      batches,
+      visibleBatches,
+      hiddenBatches: batches - visibleBatches,
+      radius,
+      groups
+    };
+  }
+
   createApproachDressing() {
     const group = new THREE.Group();
     group.name = 'SETPIECE_Approach_Dressing';
@@ -794,6 +877,7 @@ export class SetPieces {
     });
     group.userData.approachStats = { ...this.approachStats };
     this.registerQualityGroup(group, 'secondary');
+    this.registerBroadSetPieceBatches('approach', group, 'SETPIECE_approach');
     this.world.scene.add(group);
   }
 
@@ -819,6 +903,7 @@ export class SetPieces {
     mergeStaticMeshesInGroup(group, { namePrefix: 'SETPIECE_gateway' });
     group.userData.gatewayStats = { ...this.gatewayStats };
     this.registerQualityGroup(group, 'secondary');
+    this.registerBroadSetPieceBatches('gateways', group, 'SETPIECE_gateway');
     this.world.scene.add(group);
   }
 
@@ -997,6 +1082,7 @@ export class SetPieces {
     mergeStaticMeshesInGroup(group, { namePrefix: 'SETPIECE_route_composition' });
     group.userData.routeCompositionStats = { ...this.routeCompositionStats };
     this.registerQualityGroup(group, 'secondary');
+    this.registerBroadSetPieceBatches('routeComposition', group, 'SETPIECE_route_composition');
     this.world.scene.add(group);
   }
 
