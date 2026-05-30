@@ -91,6 +91,14 @@ export class SetPieces {
       authoredAssets: 0,
       guideTiles: 0
     };
+    this.meadowCompositionStats = {
+      pockets: 0,
+      patches: 0,
+      authoredAssets: 0,
+      guideTiles: 0,
+      lamps: 0,
+      stoneRuns: 0
+    };
     this.districtStoryStats = {
       authoredAssets: 0,
       crateStacks: 0,
@@ -144,6 +152,7 @@ export class SetPieces {
     this.createDistrictGateways();
     this.createRouteGuidance();
     this.createRouteComposition();
+    this.createMeadowComposition();
     this.createLivingSignals();
     this.createDistrictAmbience();
     this.applyQuality();
@@ -294,6 +303,10 @@ export class SetPieces {
 
   getRouteCompositionStats() {
     return { ...this.routeCompositionStats };
+  }
+
+  getMeadowCompositionStats() {
+    return { ...this.meadowCompositionStats };
   }
 
   getDistrictStoryStats() {
@@ -1134,6 +1147,171 @@ export class SetPieces {
     this.registerQualityGroup(group, 'secondary');
     this.registerBroadSetPieceBatches('routeComposition', group, 'SETPIECE_route_composition', 'routeCompositionRadius');
     this.world.scene.add(group);
+  }
+
+  createMeadowComposition() {
+    const group = new THREE.Group();
+    group.name = 'SETPIECE_Meadow_Composition';
+    const pockets = [
+      {
+        x: 38,
+        z: -4,
+        rotation: -0.34,
+        width: 28,
+        depth: 18,
+        material: this.world.materials.meadowLight,
+        accent: this.world.materials.glowBlue,
+        paver: this.world.materials.paleStone,
+        seed: 811,
+        assets: [
+          ['EnvPolishRouteVistaKit', -8.2, 2.4, -0.18, 0.7],
+          ['EnvPolishGardenArch', 8.8, -1.8, 0.28, 0.72],
+          ['EnvPolishBenchPlanter', -4.4, -6.4, 0.18, 0.66],
+          ['EnvPolishRouteStoryMarker', 6.8, 6.0, -0.24, 0.64]
+        ]
+      },
+      {
+        x: -18,
+        z: -24,
+        rotation: 0.18,
+        width: 27,
+        depth: 17,
+        material: this.world.materials.meadowDark,
+        accent: this.world.materials.glow,
+        paver: this.world.materials.warmStone,
+        seed: 827,
+        assets: [
+          ['EnvPolishRouteVistaKit', -8.4, -1.6, 0.18, 0.68],
+          ['EnvPolishPlazaEdgeKit', 7.2, -5.8, -0.12, 0.72],
+          ['EnvPolishBenchPlanter', -2.8, 6.2, -0.2, 0.66],
+          ['EnvPolishRouteLantern', 8.8, 4.2, 0.24, 0.66]
+        ]
+      },
+      {
+        x: 78,
+        z: -108,
+        rotation: -0.28,
+        width: 32,
+        depth: 18,
+        material: this.world.materials.meadowLight,
+        accent: this.world.materials.warmGlow,
+        paver: this.world.materials.stuntRamp,
+        seed: 839,
+        assets: [
+          ['EnvPolishChevronBollardRun', -10.2, 1.2, -0.14, 0.7],
+          ['EnvPolishRouteVistaKit', 8.6, 4.0, 0.22, 0.72],
+          ['EnvPolishBenchPlanter', -4.8, -6.4, 0.2, 0.68],
+          ['EnvPolishRouteStoryMarker', 10.4, -4.6, -0.26, 0.66]
+        ]
+      },
+      {
+        x: -18,
+        z: -118,
+        rotation: 0.22,
+        width: 30,
+        depth: 17,
+        material: this.world.materials.meadowDark,
+        accent: this.world.materials.glowBlue,
+        paver: this.world.materials.wood,
+        seed: 853,
+        assets: [
+          ['EnvPolishGardenArch', -8.0, 3.8, 0.2, 0.7],
+          ['EnvPolishBenchPlanter', 7.0, 5.4, -0.18, 0.66],
+          ['EnvPolishRouteVistaKit', 3.8, -6.0, 0.18, 0.68],
+          ['EnvPolishRouteLantern', -10.2, -5.0, -0.24, 0.64]
+        ]
+      },
+      {
+        x: 88,
+        z: -8,
+        rotation: -0.42,
+        width: 29,
+        depth: 18,
+        material: this.world.materials.meadowLight,
+        accent: this.world.materials.glowPink,
+        paver: this.world.materials.paleStone,
+        seed: 867,
+        assets: [
+          ['EnvPolishRouteStoryMarker', -8.6, 4.8, 0.2, 0.66],
+          ['EnvPolishPlazaEdgeKit', 8.0, -4.2, -0.14, 0.72],
+          ['EnvPolishBenchPlanter', -2.4, -6.6, 0.18, 0.66],
+          ['EnvPolishRouteVistaKit', 7.4, 5.8, -0.22, 0.68]
+        ]
+      }
+    ];
+
+    pockets.forEach((pocket, index) => this.addMeadowPocket(group, pocket, index));
+    mergeStaticMeshesInGroup(group, { namePrefix: 'SETPIECE_meadow_composition', cellSize: 42 });
+    group.userData.meadowCompositionStats = { ...this.meadowCompositionStats };
+    this.registerQualityGroup(group, 'secondary');
+    this.registerBroadSetPieceBatches('meadowComposition', group, 'SETPIECE_meadow_composition', 'meadowCompositionRadius');
+    this.world.scene.add(group);
+  }
+
+  addMeadowPocket(group, pocket, index) {
+    this.groundPatch(group, pocket.x, pocket.z, pocket.width, pocket.depth, pocket.material, 0.121, pocket.rotation, 'MeadowPocketLawn', pocket.seed);
+    this.groundPatch(
+      group,
+      pocket.x + Math.sin(pocket.rotation) * 3.2,
+      pocket.z + Math.cos(pocket.rotation) * 3.2,
+      pocket.width * 0.55,
+      pocket.depth * 0.38,
+      this.world.materials.grassSandBlend,
+      0.124,
+      pocket.rotation + 0.12,
+      'MeadowPocketFeather',
+      pocket.seed + 7
+    );
+    this.meadowCompositionStats.patches += 2;
+    this.addMeadowStoneRun(group, pocket);
+    this.addMeadowGuideTiles(group, pocket);
+    for (const asset of pocket.assets) {
+      this.addMeadowAsset(group, pocket, ...asset);
+    }
+    for (const [right, forward, color] of [
+      [-pocket.width * 0.38, -pocket.depth * 0.34, pocket.accent.color?.getHex?.() || 0x7cffb2],
+      [pocket.width * 0.38, pocket.depth * 0.34, 0xffc36a]
+    ]) {
+      const [x, z] = this.meadowPoint(pocket, right, forward);
+      this.addMeadowLamp(group, x, z, color, 2.35, `MeadowPocketLamp_${index}`);
+    }
+    this.meadowCompositionStats.pockets += 1;
+  }
+
+  addMeadowStoneRun(group, pocket) {
+    for (let i = 0; i < 4; i += 1) {
+      const [x, z] = this.meadowPoint(pocket, -6.3 + i * 4.2, -pocket.depth * 0.21 + Math.sin(i * 0.9) * 0.55);
+      this.box(group, x, 0.208, z, 2.25, 0.035, 0.34, pocket.paver, pocket.rotation + (i % 2 ? 0.08 : -0.08), 'MeadowPocketStoneRun');
+      this.meadowCompositionStats.stoneRuns += 1;
+    }
+  }
+
+  addMeadowGuideTiles(group, pocket) {
+    for (let i = 0; i < 5; i += 1) {
+      const side = i % 2 === 0 ? -1 : 1;
+      const [x, z] = this.meadowPoint(pocket, side * (pocket.width * 0.24), -5.0 + i * 2.45);
+      this.box(group, x, 0.216, z, 0.28, 0.035, 1.18, pocket.accent, pocket.rotation + side * 0.05, 'MeadowPocketGuideTile');
+      this.meadowCompositionStats.guideTiles += 1;
+    }
+  }
+
+  addMeadowAsset(group, pocket, assetName, right, forward, rotationOffset, scale) {
+    const [x, z] = this.meadowPoint(pocket, right, forward);
+    const placed = this.addPolishAsset(group, assetName, x, z, pocket.rotation + rotationOffset, scale);
+    if (placed) this.meadowCompositionStats.authoredAssets += 1;
+    return placed;
+  }
+
+  addMeadowLamp(group, x, z, color, height, name) {
+    this.addLamp(group, x, z, color, height, name);
+    this.meadowCompositionStats.lamps += 1;
+  }
+
+  meadowPoint(pocket, right, forward) {
+    return [
+      pocket.x + Math.cos(pocket.rotation) * right + Math.sin(pocket.rotation) * forward,
+      pocket.z - Math.sin(pocket.rotation) * right + Math.cos(pocket.rotation) * forward
+    ];
   }
 
   createLivingSignals() {
