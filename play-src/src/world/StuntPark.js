@@ -18,6 +18,8 @@ export class StuntPark {
     this.world = world;
     this.markerDummy = new THREE.Object3D();
     this.circuitDummy = new THREE.Object3D();
+    this.circuitTrackGroup = null;
+    this.circuitTrackDecorGroup = null;
     this.circuitCheckpointTrailGroup = null;
     this.circuitRingMesh = null;
     this.circuitArrowMesh = null;
@@ -28,6 +30,7 @@ export class StuntPark {
   build() {
     this.stats = this.createStats();
     this.createYardDressing();
+    this.createCircuitTrackLayout();
     this.createRamps();
     this.createBoostPads();
     this.createCircuitCheckpointTrail();
@@ -40,6 +43,9 @@ export class StuntPark {
   applyQuality() {
     if (this.circuitCheckpointTrailGroup) {
       this.circuitCheckpointTrailGroup.visible = this.world.landscapeQuality !== 'low';
+    }
+    if (this.circuitTrackDecorGroup) {
+      this.circuitTrackDecorGroup.visible = this.world.landscapeQuality !== 'low';
     }
   }
 
@@ -60,6 +66,9 @@ export class StuntPark {
       circuitCheckpointGates: 0,
       circuitTargetRings: 0,
       circuitTargetArrows: 0,
+      circuitTrackSegments: 0,
+      circuitTrackCurbs: 0,
+      circuitApexMarkers: 0,
       activeCircuitTarget: 0,
       circuitMotionSamples: 0,
       checkpointPulseSamples: 0,
@@ -137,6 +146,145 @@ export class StuntPark {
 
     mergeStaticMeshesInGroup(group, { namePrefix: 'STUNT_yard' });
     this.world.scene.add(group);
+  }
+
+  createCircuitTrackLayout() {
+    const points = circuitCheckpoints.map(([x, , z]) => ({ x, z }));
+    if (points.length < 2) return;
+
+    const group = new THREE.Group();
+    group.name = 'STUNT_Circuit_Track_Layout';
+    this.circuitTrackGroup = group;
+
+    const trackMaterial = new THREE.MeshBasicMaterial({
+      color: 0x8a6350,
+      transparent: true,
+      opacity: 0.2,
+      depthWrite: false,
+      polygonOffset: true,
+      polygonOffsetFactor: -32,
+      polygonOffsetUnits: -32
+    });
+    const track = new THREE.Mesh(createCircuitRibbonGeometry(points, 2.8), trackMaterial);
+    track.name = 'STUNT_Circuit_Racing_Line';
+    track.position.y = 0.214;
+    track.renderOrder = 32;
+    track.frustumCulled = false;
+    group.add(track);
+
+    const decor = new THREE.Group();
+    decor.name = 'STUNT_Circuit_Track_Detail';
+    this.circuitTrackDecorGroup = decor;
+    this.addCircuitCurbEdges(decor, points);
+    this.addCircuitApexMarkers(decor, points);
+    group.add(decor);
+
+    this.stats.circuitTrackSegments = points.length - 1;
+    this.applyQuality();
+    this.world.scene.add(group);
+  }
+
+  addCircuitCurbEdges(group, points) {
+    const specs = [];
+    for (let index = 0; index < points.length - 1; index += 1) {
+      const current = points[index];
+      const next = points[index + 1];
+      const dx = next.x - current.x;
+      const dz = next.z - current.z;
+      const length = Math.hypot(dx, dz);
+      if (length <= 0.001) continue;
+      const heading = Math.atan2(dx, dz);
+      const rightX = Math.cos(heading);
+      const rightZ = -Math.sin(heading);
+      for (const side of [-1, 1]) {
+        specs.push({
+          x: (current.x + next.x) / 2 + rightX * side * 2.05,
+          z: (current.z + next.z) / 2 + rightZ * side * 2.05,
+          rotation: heading,
+          width: 0.32,
+          length: Math.max(3.2, length * 0.52),
+          color: index % 2 ? 0xfff0a0 : 0x68d8ff
+        });
+      }
+    }
+
+    const material = new THREE.MeshBasicMaterial({
+      color: 0xffffff,
+      vertexColors: true,
+      transparent: true,
+      opacity: 0.58,
+      depthWrite: false,
+      polygonOffset: true,
+      polygonOffsetFactor: -34,
+      polygonOffsetUnits: -34
+    });
+    const mesh = new THREE.InstancedMesh(new THREE.BoxGeometry(1, 0.035, 1), material, specs.length);
+    mesh.name = 'STUNT_Circuit_Curb_Edges';
+    mesh.renderOrder = 34;
+    mesh.frustumCulled = false;
+    const color = new THREE.Color();
+    specs.forEach((spec, index) => {
+      this.circuitDummy.position.set(spec.x, 0.244, spec.z);
+      this.circuitDummy.rotation.set(0, spec.rotation, 0);
+      this.circuitDummy.scale.set(spec.width, 1, spec.length);
+      this.circuitDummy.updateMatrix();
+      mesh.setMatrixAt(index, this.circuitDummy.matrix);
+      mesh.setColorAt(index, color.setHex(spec.color));
+    });
+    mesh.instanceMatrix.needsUpdate = true;
+    if (mesh.instanceColor) mesh.instanceColor.needsUpdate = true;
+    group.add(mesh);
+    this.stats.circuitTrackCurbs = specs.length;
+  }
+
+  addCircuitApexMarkers(group, points) {
+    const specs = [];
+    for (let index = 1; index < points.length - 1; index += 1) {
+      const previous = points[index - 1];
+      const current = points[index];
+      const next = points[index + 1];
+      const incoming = Math.atan2(current.x - previous.x, current.z - previous.z);
+      const outgoing = Math.atan2(next.x - current.x, next.z - current.z);
+      const turn = normalizeAngle(outgoing - incoming);
+      const side = turn >= 0 ? 1 : -1;
+      const heading = incoming + turn * 0.5;
+      specs.push({
+        x: current.x + Math.cos(heading) * side * 3.2,
+        z: current.z - Math.sin(heading) * side * 3.2,
+        rotation: heading,
+        scale: 0.72 + Math.min(0.36, Math.abs(turn) * 0.18),
+        color: Math.abs(turn) > 0.9 ? 0xff9b6d : 0xfff0a0
+      });
+    }
+
+    const material = new THREE.MeshBasicMaterial({
+      color: 0xffffff,
+      vertexColors: true,
+      transparent: true,
+      opacity: 0.6,
+      depthWrite: false,
+      side: THREE.DoubleSide,
+      polygonOffset: true,
+      polygonOffsetFactor: -36,
+      polygonOffsetUnits: -36
+    });
+    const mesh = new THREE.InstancedMesh(createStuntChevronGeometry(), material, specs.length);
+    mesh.name = 'STUNT_Circuit_Apex_Markers';
+    mesh.renderOrder = 35;
+    mesh.frustumCulled = false;
+    const color = new THREE.Color();
+    specs.forEach((spec, index) => {
+      this.circuitDummy.position.set(spec.x, 0.268, spec.z);
+      this.circuitDummy.rotation.set(0, spec.rotation, 0);
+      this.circuitDummy.scale.setScalar(spec.scale);
+      this.circuitDummy.updateMatrix();
+      mesh.setMatrixAt(index, this.circuitDummy.matrix);
+      mesh.setColorAt(index, color.setHex(spec.color));
+    });
+    mesh.instanceMatrix.needsUpdate = true;
+    if (mesh.instanceColor) mesh.instanceColor.needsUpdate = true;
+    group.add(mesh);
+    this.stats.circuitApexMarkers = specs.length;
   }
 
   addRunwayStripe(group, x, z, length, rotation, color) {
@@ -552,6 +700,38 @@ function createCircuitArrowGeometry() {
   return geometry;
 }
 
+function createCircuitRibbonGeometry(points, width) {
+  const halfWidth = width / 2;
+  const vertices = [];
+  const uvs = [];
+  const indices = [];
+  for (let index = 0; index < points.length - 1; index += 1) {
+    const current = points[index];
+    const next = points[index + 1];
+    const dx = next.x - current.x;
+    const dz = next.z - current.z;
+    const length = Math.hypot(dx, dz);
+    if (length <= 0.001) continue;
+    const rightX = dz / length;
+    const rightZ = -dx / length;
+    const base = vertices.length / 3;
+    vertices.push(
+      current.x + rightX * halfWidth, 0, current.z + rightZ * halfWidth,
+      next.x + rightX * halfWidth, 0, next.z + rightZ * halfWidth,
+      next.x - rightX * halfWidth, 0, next.z - rightZ * halfWidth,
+      current.x - rightX * halfWidth, 0, current.z - rightZ * halfWidth
+    );
+    uvs.push(0, 0, length / 18, 0, length / 18, 1, 0, 1);
+    indices.push(base, base + 1, base + 2, base, base + 2, base + 3);
+  }
+  const geometry = new THREE.BufferGeometry();
+  geometry.setAttribute('position', new THREE.BufferAttribute(new Float32Array(vertices), 3));
+  geometry.setAttribute('uv', new THREE.BufferAttribute(new Float32Array(uvs), 2));
+  geometry.setIndex(indices);
+  geometry.computeVertexNormals();
+  return geometry;
+}
+
 function circuitHeading(index) {
   const current = circuitCheckpoints[index];
   const next = circuitCheckpoints[Math.min(circuitCheckpoints.length - 1, index + 1)];
@@ -559,4 +739,11 @@ function circuitHeading(index) {
   const from = index < circuitCheckpoints.length - 1 ? current : previous;
   const to = index < circuitCheckpoints.length - 1 ? next : current;
   return Math.atan2(to[0] - from[0], to[2] - from[2]);
+}
+
+function normalizeAngle(angle) {
+  let result = angle;
+  while (result > Math.PI) result -= Math.PI * 2;
+  while (result < -Math.PI) result += Math.PI * 2;
+  return result;
 }

@@ -1789,6 +1789,9 @@ function assertVerification(result) {
   if ((result.stuntPark?.runoffShoulders || 0) < 4) failures.push(`stunt park probe failed: runoffShoulders=${result.stuntPark?.runoffShoulders || 0}`);
   if ((result.stuntPark?.laneChevrons || 0) < 18) failures.push(`stunt park probe failed: laneChevrons=${result.stuntPark?.laneChevrons || 0}`);
   if ((result.stuntPark?.trackScuffs || 0) < 30) failures.push(`stunt park probe failed: trackScuffs=${result.stuntPark?.trackScuffs || 0}`);
+  if ((result.stuntPark?.circuitTrackSegments || 0) !== circuitCheckpoints.length - 1) failures.push(`stunt park probe failed: circuitTrackSegments=${result.stuntPark?.circuitTrackSegments || 0}`);
+  if ((result.stuntPark?.circuitTrackCurbs || 0) < (circuitCheckpoints.length - 1) * 2) failures.push(`stunt park probe failed: circuitTrackCurbs=${result.stuntPark?.circuitTrackCurbs || 0}`);
+  if ((result.stuntPark?.circuitApexMarkers || 0) < circuitCheckpoints.length - 2) failures.push(`stunt park probe failed: circuitApexMarkers=${result.stuntPark?.circuitApexMarkers || 0}`);
   if ((result.stuntPark?.gates || 0) < 2) failures.push(`stunt park probe failed: gates=${result.stuntPark?.gates || 0}`);
   if ((result.stuntPark?.circuitCheckpointGates || 0) < circuitCheckpoints.length - 2) failures.push(`stunt park probe failed: circuitCheckpointGates=${result.stuntPark?.circuitCheckpointGates || 0}`);
   if ((result.stuntPark?.circuitTargetRings || 0) !== circuitCheckpoints.length - 1) failures.push(`stunt park probe failed: circuitTargetRings=${result.stuntPark?.circuitTargetRings || 0}`);
