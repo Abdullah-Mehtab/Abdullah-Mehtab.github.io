@@ -8,6 +8,8 @@ import { mergeStaticMeshesInGroup } from './StaticBatching.js';
 
 const DISTANT_ISLET_LIMITS = { low: 8, medium: 14, high: 20 };
 const SKY_WISP_LIMITS = { low: 4, medium: 8, high: 12 };
+const CLOUD_BANK_LIMITS = { low: 0, medium: 8, high: 12 };
+const CLOUD_BANK_LOBES = 5;
 
 export class Atmosphere {
   constructor(world) {
@@ -18,6 +20,9 @@ export class Atmosphere {
     this.sunGlows = [];
     this.horizonRibbons = [];
     this.skyWisps = [];
+    this.cloudBanks = [];
+    this.cloudBankMesh = null;
+    this.cloudBankLimit = CLOUD_BANK_LIMITS.medium;
     this.distantIslets = [];
     this.distantIsletGroups = [];
     this.distantIsletLimit = DISTANT_ISLET_LIMITS.medium;
@@ -33,6 +38,7 @@ export class Atmosphere {
     this.createSkyDome();
     this.createHorizonRibbons();
     this.createClouds();
+    this.createCloudBanks();
     this.createSkyWisps();
     this.createDistantIslets();
     this.createCloudShadows();
@@ -179,6 +185,79 @@ export class Atmosphere {
       this.clouds.push(group);
     }
     this.applyQuality();
+  }
+
+  createCloudBanks() {
+    const capacity = CLOUD_BANK_LIMITS.high * CLOUD_BANK_LOBES;
+    const geometry = new THREE.IcosahedronGeometry(1, 1);
+    const material = new THREE.MeshBasicMaterial({
+      color: 0xf8ffff,
+      transparent: true,
+      opacity: 0.34,
+      depthWrite: false,
+      side: THREE.DoubleSide
+    });
+    this.cloudBankMesh = new THREE.InstancedMesh(geometry, material, capacity);
+    this.cloudBankMesh.name = 'Atmosphere_Horizon_Cloud_Banks';
+    this.cloudBankMesh.frustumCulled = false;
+    this.cloudBankMesh.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
+    this.world.scene.add(this.cloudBankMesh);
+
+    for (let i = 0; i < CLOUD_BANK_LIMITS.high; i += 1) {
+      const angle = -Math.PI * 0.18 + (i / CLOUD_BANK_LIMITS.high) * Math.PI * 2 + (pseudoRandom(i * 4.11) - 0.5) * 0.18;
+      this.cloudBanks.push({
+        angle,
+        radius: WORLD_HALF_SIZE * (1.02 + pseudoRandom(i * 7.23) * 0.32),
+        y: 14 + pseudoRandom(i * 9.41) * 12,
+        width: 22 + pseudoRandom(i * 11.17) * 24,
+        height: 2.2 + pseudoRandom(i * 13.61) * 3.1,
+        phase: i * 0.83,
+        speed: 0.055 + pseudoRandom(i * 17.29) * 0.055,
+        drift: 3.8 + pseudoRandom(i * 19.73) * 5.5
+      });
+    }
+    this.writeCloudBanks(0);
+  }
+
+  writeCloudBanks(elapsed) {
+    if (!this.cloudBankMesh) return;
+    const visibleBanks = Math.min(this.cloudBankLimit, this.cloudBanks.length);
+    let index = 0;
+    for (let i = 0; i < visibleBanks; i += 1) {
+      const bank = this.cloudBanks[i];
+      const sway = Math.sin(elapsed * bank.speed + bank.phase);
+      const angle = bank.angle + sway * 0.01;
+      const baseX = Math.cos(angle) * (bank.radius + sway * bank.drift);
+      const baseZ = Math.sin(angle) * (bank.radius + sway * bank.drift);
+      const yaw = -angle - Math.PI * 0.5;
+      for (let lobe = 0; lobe < CLOUD_BANK_LOBES; lobe += 1) {
+        const centered = lobe - (CLOUD_BANK_LOBES - 1) * 0.5;
+        const lobePhase = bank.phase + lobe * 0.67;
+        const lateral = centered * bank.width * 0.32;
+        const lift = Math.sin(elapsed * bank.speed * 1.3 + lobePhase) * 0.42 + (lobe % 2) * 0.65;
+        this.wispDummy.position.set(
+          baseX + Math.cos(angle + Math.PI * 0.5) * lateral,
+          bank.y + lift,
+          baseZ + Math.sin(angle + Math.PI * 0.5) * lateral
+        );
+        this.wispDummy.rotation.set(0, yaw, Math.sin(lobePhase) * 0.04);
+        this.wispDummy.scale.set(
+          bank.width * (0.24 + (lobe % 3) * 0.05),
+          bank.height * (0.72 + pseudoRandom((i + 1) * (lobe + 3.7)) * 0.42),
+          bank.width * (0.09 + (lobe % 2) * 0.035)
+        );
+        this.wispDummy.updateMatrix();
+        this.cloudBankMesh.setMatrixAt(index++, this.wispDummy.matrix);
+      }
+    }
+    for (; index < this.cloudBankMesh.instanceMatrix.count; index += 1) {
+      this.wispDummy.position.set(0, -1000, 0);
+      this.wispDummy.scale.set(0, 0, 0);
+      this.wispDummy.updateMatrix();
+      this.cloudBankMesh.setMatrixAt(index, this.wispDummy.matrix);
+    }
+    this.cloudBankMesh.count = visibleBanks * CLOUD_BANK_LOBES;
+    this.cloudBankMesh.instanceMatrix.needsUpdate = true;
   }
 
   createSkyWisps() {
@@ -339,6 +418,12 @@ export class Atmosphere {
       this.skyWispMesh.visible = this.skyWispLimit > 0;
       this.skyWispMesh.instanceMatrix.needsUpdate = true;
     }
+    const cloudBankLimit = CLOUD_BANK_LIMITS[this.world.landscapeQuality];
+    this.cloudBankLimit = cloudBankLimit === undefined ? CLOUD_BANK_LIMITS.medium : cloudBankLimit;
+    if (this.cloudBankMesh) {
+      this.cloudBankMesh.visible = this.cloudBankLimit > 0;
+      this.writeCloudBanks(0);
+    }
     this.distantIsletLimit = DISTANT_ISLET_LIMITS[this.world.landscapeQuality] || DISTANT_ISLET_LIMITS.medium;
     for (const layer of this.distantIsletGroups) {
       layer.group.visible = layer.visibleOn.includes(this.world.landscapeQuality);
@@ -366,6 +451,7 @@ export class Atmosphere {
       cloud.position.z += Math.cos(elapsed * 0.025 + i * 0.7) * dt * 0.06;
     }
     this.writeCloudShadows(elapsed);
+    this.writeCloudBanks(elapsed);
     this.writeSkyWisps(elapsed);
     if (this.skyWispMesh) {
       this.skyWispMesh.material.opacity = 0.15 + Math.sin(elapsed * 0.12) * 0.018;
@@ -407,6 +493,8 @@ export class Atmosphere {
       visibleSunGlows: this.sunGlows.filter((glow) => glow.visible).length,
       horizonRibbons: this.horizonRibbons.length,
       visibleHorizonRibbons: this.horizonRibbons.filter((ribbon) => ribbon.visible).length,
+      cloudBanks: this.cloudBanks.length,
+      visibleCloudBanks: this.cloudBankMesh ? Math.floor(this.cloudBankMesh.count / CLOUD_BANK_LOBES) : 0,
       skyWisps: this.skyWisps.length,
       visibleSkyWisps: this.skyWispMesh?.count || 0,
       distantIsletTemplate: this.distantIsletTemplateAvailable,
