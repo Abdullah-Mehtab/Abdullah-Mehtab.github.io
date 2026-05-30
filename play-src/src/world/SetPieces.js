@@ -27,7 +27,8 @@ export class SetPieces {
       zonePulses: [],
       windBanners: [],
       whisperBeacons: [],
-      terminalPulses: []
+      terminalPulses: [],
+      districtSignals: []
     };
     this.qualityGroups = [];
     this.qualityStats = {
@@ -57,11 +58,13 @@ export class SetPieces {
       whisperBeacons: 0,
       terminalPulses: 0,
       districtMotes: 0,
+      districtSignals: 0,
       visibleZonePulses: 0,
       visibleWindBanners: 0,
       visibleWhisperBeacons: 0,
       visibleTerminalPulses: 0,
       visibleDistrictMotes: 0,
+      visibleDistrictSignals: 0,
       visibleTotal: 0,
       motionSamples: 0
     };
@@ -203,6 +206,7 @@ export class SetPieces {
     this.applyLifeLimit('windBanners', limits.windBanners);
     this.applyLifeLimit('whisperBeacons', limits.whisperBeacons);
     this.applyLifeLimit('terminalPulses', limits.terminalPulses);
+    this.applyLifeLimit('districtSignals', limits.districtSignals);
     this.applyDistrictAmbienceLimit(limits.districtMotes);
     this.applyQualityGroups();
     this.updateDistrictDressingVisibility();
@@ -212,7 +216,8 @@ export class SetPieces {
       this.lifeStats.visibleWindBanners +
       this.lifeStats.visibleWhisperBeacons +
       this.lifeStats.visibleTerminalPulses +
-      this.lifeStats.visibleDistrictMotes;
+      this.lifeStats.visibleDistrictMotes +
+      this.lifeStats.visibleDistrictSignals;
   }
 
   applyQualityGroups() {
@@ -237,6 +242,10 @@ export class SetPieces {
   applyLifeLimit(category, limit) {
     const items = this.lifeItems[category];
     const visibleLimit = Math.min(items.length, Number.isFinite(limit) ? limit : items.length);
+    const sharedInstanceMesh = items[0]?.entry?.instanceMesh;
+    if (sharedInstanceMesh && items.every((item) => item.entry.instanceMesh === sharedInstanceMesh)) {
+      sharedInstanceMesh.count = visibleLimit;
+    }
     let visible = 0;
     for (let index = 0; index < items.length; index += 1) {
       const item = items[index];
@@ -1133,6 +1142,7 @@ export class SetPieces {
       [128, 56, 0x78b7ff]
     ];
     this.createTerminalPulseInstances(group, terminalSpecs);
+    this.createDistrictSignalInstances(group, zones);
 
     this.world.scene.add(group);
   }
@@ -1351,6 +1361,60 @@ export class SetPieces {
     mesh.instanceMatrix.needsUpdate = true;
   }
 
+  createDistrictSignalInstances(group, zones) {
+    const geometry = new THREE.ConeGeometry(0.48, 1.7, 5, 1);
+    const material = new THREE.MeshBasicMaterial({
+      color: 0xffffff,
+      vertexColors: true,
+      transparent: true,
+      opacity: 0.58,
+      depthWrite: false,
+      blending: THREE.AdditiveBlending
+    });
+    const mesh = new THREE.InstancedMesh(geometry, material, zones.length);
+    mesh.name = 'Life_DistrictSignal_instances';
+    mesh.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
+    group.add(mesh);
+    this.lifeInstanceMeshes.push(mesh);
+
+    zones.forEach((zone, index) => {
+      const angle = index * 2.399;
+      const radius = Math.min(8.2, zone.radius * 0.44);
+      const position = new THREE.Vector3(
+        zone.position[0] + Math.cos(angle) * radius,
+        2.15 + (index % 4) * 0.18,
+        zone.position[2] + Math.sin(angle) * radius
+      );
+      mesh.setColorAt(index, new THREE.Color(zone.color));
+      const proxy = new THREE.Object3D();
+      proxy.name = `Life_DistrictSignal_${zone.id}`;
+      proxy.position.copy(position);
+      group.add(proxy);
+      const entry = {
+        kind: 'pulse',
+        instanceKind: 'districtSignal',
+        instanceMesh: mesh,
+        instanceIndex: index,
+        proxy,
+        position,
+        baseY: position.y,
+        scale: 1.55 + (index % 3) * 0.12,
+        range: 0.1,
+        bob: 0.18,
+        speed: 0.95 + (index % 5) * 0.06,
+        phase: index * 0.59,
+        rotationSpeed: 0.22 + (index % 4) * 0.03,
+        active: true
+      };
+      this.writeLifeInstance(entry, 0);
+      this.animated.push(entry);
+      this.lifeItems.districtSignals.push({ root: proxy, entry });
+      this.lifeStats.districtSignals += 1;
+    });
+    if (mesh.instanceColor) mesh.instanceColor.needsUpdate = true;
+    mesh.instanceMatrix.needsUpdate = true;
+  }
+
   writeLifeInstance(entry, elapsed) {
     if (entry.active === false) {
       this.lifeDummy.position.set(0, -1000, 0);
@@ -1362,6 +1426,20 @@ export class SetPieces {
       this.lifeDummy.position.set(entry.position.x, y, entry.position.z);
       this.lifeDummy.rotation.set(0, elapsed * entry.rotationSpeed + entry.phase, 0);
       this.lifeDummy.scale.setScalar(entry.scale);
+      if (entry.proxy) {
+        entry.proxy.visible = true;
+        entry.proxy.position.copy(this.lifeDummy.position);
+        entry.proxy.rotation.copy(this.lifeDummy.rotation);
+      }
+      this.lifeStats.motionSamples += 1;
+    } else if (entry.instanceKind === 'districtSignal') {
+      const phase = elapsed * entry.speed + entry.phase;
+      const y = entry.baseY + Math.sin(phase) * entry.bob;
+      const widthPulse = 0.9 + Math.sin(phase * 1.2) * entry.range;
+      const heightPulse = 1.08 + Math.cos(phase) * entry.range;
+      this.lifeDummy.position.set(entry.position.x, y, entry.position.z);
+      this.lifeDummy.rotation.set(0, elapsed * entry.rotationSpeed + entry.phase, 0);
+      this.lifeDummy.scale.set(entry.scale * widthPulse, entry.scale * heightPulse, entry.scale * widthPulse);
       if (entry.proxy) {
         entry.proxy.visible = true;
         entry.proxy.position.copy(this.lifeDummy.position);
