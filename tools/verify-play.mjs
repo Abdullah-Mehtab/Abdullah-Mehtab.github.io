@@ -819,8 +819,10 @@ async function sampleWorldLife(page) {
         y: 1.08,
         z: whisperSample.position.z
       }, 0);
-      await delay(220);
+      await delay(120);
       const nearest = game.world.nearestWhisper(game.vehicle.position);
+      game.ui.updateWhisper(nearest);
+      await delay(60);
       whisperUi = {
         total: whispers.length,
         nearestMatched: nearest?.message === whisperSample.message,
@@ -988,7 +990,8 @@ async function sampleRenderSnapshot(page) {
       vehicleFx: game.vehicle.getEffectStats?.() || {},
       waterStats: game.world.water?.getStats?.() || {},
       roadSurfaceDetails: game.world.roads?.getDetailStats?.() || {},
-      setPieceVisibility: game.world.setPieces?.getDistrictVisibilityStats?.() || {}
+      setPieceVisibility: game.world.setPieces?.getDistrictVisibilityStats?.() || {},
+      broadSetPieceVisibility: game.world.setPieces?.getBroadVisibilityStats?.() || {}
     };
 
     function countVisibleScene(root) {
@@ -1122,6 +1125,7 @@ async function collectRuntimeMetrics(page, loadMs, gameplay, water, surfaces, su
       shoreline: game.world.terrain?.getShorelineStats?.() || {},
       setPieceQuality: game.world.setPieces?.getQualityStats?.() || {},
       districtVisibility: game.world.setPieces?.getDistrictVisibilityStats?.() || {},
+      broadSetPieceVisibility: game.world.setPieces?.getBroadVisibilityStats?.() || {},
       approachDressing: game.world.setPieces?.getApproachStats?.() || {},
       districtGateways: game.world.setPieces?.getGatewayStats?.() || {},
       routeComposition: game.world.setPieces?.getRouteCompositionStats?.() || {},
@@ -1358,6 +1362,7 @@ async function captureMobile(browser) {
       lifeStats: game.world.setPieces?.getLifeStats?.() || { ...(game.world.setPieces?.lifeStats || {}) },
       setPieceQuality: game.world.setPieces?.getQualityStats?.() || {},
       districtVisibility: game.world.setPieces?.getDistrictVisibilityStats?.() || {},
+      broadSetPieceVisibility: game.world.setPieces?.getBroadVisibilityStats?.() || {},
       fieldMotifs: game.world.terrain?.getFieldMotifStats?.() || {},
       roadSurfaceDetails: game.world.roads?.getDetailStats?.() || {},
       waterStats: game.world.water?.getStats?.() || {},
@@ -1475,14 +1480,20 @@ function assertVerification(result) {
       failures.push(`active render snapshot missing: ${name}`);
       continue;
     }
-    if (snapshot.calls > 700) failures.push(`active render snapshot draw-call budget exceeded: ${name}=${snapshot.calls}`);
-    if (snapshot.triangles > 330000) failures.push(`active render snapshot triangle budget exceeded: ${name}=${snapshot.triangles}`);
+    if (snapshot.calls > 660) failures.push(`active render snapshot draw-call budget exceeded: ${name}=${snapshot.calls}`);
+    if (snapshot.triangles > 320000) failures.push(`active render snapshot triangle budget exceeded: ${name}=${snapshot.triangles}`);
   }
   const surfaceVisibility = result.activeSnapshots?.surfaceFeedback?.setPieceVisibility;
   if ((surfaceVisibility?.batches || 0) < 80) failures.push(`district dressing visibility probe failed: batches=${surfaceVisibility?.batches || 0}`);
   if ((surfaceVisibility?.hiddenBatches || 0) < 1) failures.push(`district dressing visibility probe failed: surface hiddenBatches=${surfaceVisibility?.hiddenBatches || 0}`);
+  const broadSurfaceVisibility = result.activeSnapshots?.surfaceFeedback?.broadSetPieceVisibility;
+  if ((broadSurfaceVisibility?.batches || 0) < 30) failures.push(`broad set-piece visibility probe failed: batches=${broadSurfaceVisibility?.batches || 0}`);
+  if ((broadSurfaceVisibility?.hiddenBatches || 0) < 1) failures.push(`broad set-piece visibility probe failed: surface hiddenBatches=${broadSurfaceVisibility?.hiddenBatches || 0}`);
   if ((result.mobile.districtVisibility?.hiddenBatches || 0) < 1) {
     failures.push(`mobile district dressing visibility probe failed: hiddenBatches=${result.mobile.districtVisibility?.hiddenBatches || 0}`);
+  }
+  if ((result.mobile.broadSetPieceVisibility?.hiddenBatches || 0) < 1) {
+    failures.push(`mobile broad set-piece visibility probe failed: hiddenBatches=${result.mobile.broadSetPieceVisibility?.hiddenBatches || 0}`);
   }
   if (result.loadMs > 15000) failures.push(`app-ready load time too high: ${result.loadMs}ms`);
   if (result.p95FrameMs > 20) failures.push(`p95 frame time too high: ${result.p95FrameMs}ms`);
