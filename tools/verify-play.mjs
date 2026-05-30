@@ -1480,12 +1480,19 @@ function assertVerification(result) {
       failures.push(`active render snapshot missing: ${name}`);
       continue;
     }
+    const triangleBudget = name === 'surfaceFeedback' ? 290000 : 300000;
     if (snapshot.calls > 660) failures.push(`active render snapshot draw-call budget exceeded: ${name}=${snapshot.calls}`);
-    if (snapshot.triangles > 300000) failures.push(`active render snapshot triangle budget exceeded: ${name}=${snapshot.triangles}`);
+    if (snapshot.triangles > triangleBudget) failures.push(`active render snapshot triangle budget exceeded: ${name}=${snapshot.triangles}`);
   }
+  const drivingVisibility = result.activeSnapshots?.driving?.setPieceVisibility;
   const surfaceVisibility = result.activeSnapshots?.surfaceFeedback?.setPieceVisibility;
   if ((surfaceVisibility?.batches || 0) < 80) failures.push(`district dressing visibility probe failed: batches=${surfaceVisibility?.batches || 0}`);
-  if ((surfaceVisibility?.hiddenBatches || 0) < 1) failures.push(`district dressing visibility probe failed: surface hiddenBatches=${surfaceVisibility?.hiddenBatches || 0}`);
+  if ((drivingVisibility?.hiddenBatches || 0) < 15) {
+    failures.push(`district dressing driving cull probe failed: hiddenBatches=${drivingVisibility?.hiddenBatches || 0}`);
+  }
+  if ((surfaceVisibility?.hiddenBatches || 0) < 60) {
+    failures.push(`district dressing surface cull probe failed: hiddenBatches=${surfaceVisibility?.hiddenBatches || 0}`);
+  }
   const broadSurfaceVisibility = result.activeSnapshots?.surfaceFeedback?.broadSetPieceVisibility;
   if ((broadSurfaceVisibility?.batches || 0) < 30) failures.push(`broad set-piece visibility probe failed: batches=${broadSurfaceVisibility?.batches || 0}`);
   if ((broadSurfaceVisibility?.hiddenBatches || 0) < 1) failures.push(`broad set-piece visibility probe failed: surface hiddenBatches=${broadSurfaceVisibility?.hiddenBatches || 0}`);
@@ -1500,7 +1507,7 @@ function assertVerification(result) {
   if ((routeSurfaceVisibility?.hiddenBatches || 0) < 40) {
     failures.push(`route composition surface cull probe failed: hiddenBatches=${routeSurfaceVisibility?.hiddenBatches || 0}`);
   }
-  if ((result.mobile.districtVisibility?.hiddenBatches || 0) < 1) {
+  if ((result.mobile.districtVisibility?.hiddenBatches || 0) < 40) {
     failures.push(`mobile district dressing visibility probe failed: hiddenBatches=${result.mobile.districtVisibility?.hiddenBatches || 0}`);
   }
   if ((result.mobile.broadSetPieceVisibility?.hiddenBatches || 0) < 1) {
