@@ -1,7 +1,7 @@
 // ABOUTME: Builds the visible driving routes and junction markings for /play.
 // ABOUTME: Keeps roads visual-only so decorative route geometry cannot block the car.
 import * as THREE from 'three';
-import { roadPaths, roadSegments } from './worldData.js';
+import { roadPaths, roadSegments, routeThresholds } from './worldData.js';
 import { mergeStaticMeshesInGroup } from './StaticBatching.js';
 
 const ROAD_STYLE = {
@@ -34,7 +34,7 @@ export class Roads {
     this.markerDummy = new THREE.Object3D();
     this.detailDummy = new THREE.Object3D();
     this.detailMeshes = [];
-    this.detailStats = { wearStrips: 0, laneSeams: 0 };
+    this.detailStats = { wearStrips: 0, laneSeams: 0, transitionAprons: 0, transitionGuideBars: 0 };
     this.surfaceSegments = createRoadSurfaceSegments(roadPaths);
     this.roadGroup = new THREE.Group();
     this.roadGroup.name = 'ROAD_Network';
@@ -50,6 +50,7 @@ export class Roads {
     this.addJunctionPatches();
     mergeStaticMeshesInGroup(this.roadGroup, { namePrefix: 'ROAD_batch' });
     this.createRoadSurfaceDetails();
+    this.createRouteThresholds();
     this.createGuidanceMarkers();
     this.applyQuality();
   }
@@ -342,6 +343,61 @@ export class Roads {
     this.roadGroup.userData.surfaceLaneSeams = laneSeams.length;
   }
 
+  createRouteThresholds() {
+    const aprons = [];
+    const edgeBands = [];
+    const guideBars = [];
+
+    for (const threshold of routeThresholds) {
+      aprons.push({
+        x: threshold.center[0],
+        y: 0.194,
+        z: threshold.center[1],
+        rotation: threshold.rotation,
+        width: threshold.width,
+        length: threshold.depth,
+        color: Number.parseInt(threshold.color.slice(1), 16)
+      });
+
+      const sideInset = threshold.width * 0.43;
+      for (const side of [-1, 1]) {
+        const edge = offsetThresholdPoint(threshold, sideInset * side, 0);
+        edgeBands.push({
+          x: edge.x,
+          y: 0.202,
+          z: edge.z,
+          rotation: threshold.rotation,
+          width: 0.28,
+          length: threshold.depth * 0.92,
+          color: Number.parseInt(threshold.color.slice(1), 16)
+        });
+      }
+
+      const bars = Math.max(2, threshold.bars || 3);
+      for (let index = 0; index < bars; index += 1) {
+        const forward = -threshold.depth * 0.34 + (index / Math.max(1, bars - 1)) * threshold.depth * 0.68;
+        const bar = offsetThresholdPoint(threshold, 0, forward);
+        guideBars.push({
+          x: bar.x,
+          y: 0.208 + index * 0.00004,
+          z: bar.z,
+          rotation: threshold.rotation + Math.PI / 2,
+          width: 0.16,
+          length: threshold.width * (0.44 + (index % 2) * 0.12),
+          color: Number.parseInt(threshold.color.slice(1), 16)
+        });
+      }
+    }
+
+    this.addRoadDetailInstances('ROAD_Transition_Aprons', aprons, this.createRoadDetailMaterial('transition-apron', 0.18), 31);
+    this.addRoadDetailInstances('ROAD_Transition_Edge_Bands', edgeBands, this.createRoadDetailMaterial('transition-edge', 0.28), 32);
+    this.addRoadDetailInstances('ROAD_Transition_Guide_Bars', guideBars, this.createRoadDetailMaterial('transition-guide', 0.38), 33);
+    this.detailStats.transitionAprons = aprons.length;
+    this.detailStats.transitionGuideBars = guideBars.length;
+    this.roadGroup.userData.transitionAprons = aprons.length;
+    this.roadGroup.userData.transitionGuideBars = guideBars.length;
+  }
+
   addRoadDetailInstances(name, specs, material, renderOrder) {
     if (!specs.length) return;
     const geometry = new THREE.PlaneGeometry(1, 1);
@@ -392,6 +448,7 @@ export class Roads {
       ...this.detailStats,
       visibleWearStrips: wearMesh?.visible ? wearMesh.count || 0 : 0,
       visibleLaneSeams: seamMesh?.visible ? seamMesh.count || 0 : 0,
+      visibleTransitionMeshes: this.detailMeshes.filter((mesh) => mesh.visible && mesh.name.startsWith('ROAD_Transition_')).length,
       visibleDetailMeshes: this.detailMeshes.filter((mesh) => mesh.visible).length
     };
   }
@@ -589,6 +646,15 @@ function roadSeamColor(path) {
 function pseudoRoad(seed) {
   const value = Math.sin(seed * 999.91) * 43758.5453;
   return value - Math.floor(value);
+}
+
+function offsetThresholdPoint(threshold, localX, localZ) {
+  const cos = Math.cos(threshold.rotation);
+  const sin = Math.sin(threshold.rotation);
+  return {
+    x: threshold.center[0] + localX * cos + localZ * sin,
+    z: threshold.center[1] - localX * sin + localZ * cos
+  };
 }
 
 function pointKey(point) {
