@@ -1024,7 +1024,8 @@ async function sampleRenderSnapshot(page) {
       waterStats: game.world.water?.getStats?.() || {},
       roadSurfaceDetails: game.world.roads?.getDetailStats?.() || {},
       setPieceVisibility: game.world.setPieces?.getDistrictVisibilityStats?.() || {},
-      broadSetPieceVisibility: game.world.setPieces?.getBroadVisibilityStats?.() || {}
+      broadSetPieceVisibility: game.world.setPieces?.getBroadVisibilityStats?.() || {},
+      meadowComposition: game.world.setPieces?.getMeadowCompositionStats?.() || {}
     };
 
     function countVisibleScene(root) {
@@ -1162,6 +1163,7 @@ async function collectRuntimeMetrics(page, loadMs, gameplay, water, surfaces, su
       approachDressing: game.world.setPieces?.getApproachStats?.() || {},
       districtGateways: game.world.setPieces?.getGatewayStats?.() || {},
       routeComposition: game.world.setPieces?.getRouteCompositionStats?.() || {},
+      meadowComposition: game.world.setPieces?.getMeadowCompositionStats?.() || {},
       districtStory: game.world.setPieces?.getDistrictStoryStats?.() || {},
       districtComposition: game.world.setPieces?.getDistrictCompositionStats?.() || {},
       circuitStart: game.world.setPieces?.getCircuitStartStats?.() || {},
@@ -1465,6 +1467,7 @@ async function captureMobile(browser) {
       setPieceQuality: game.world.setPieces?.getQualityStats?.() || {},
       districtVisibility: game.world.setPieces?.getDistrictVisibilityStats?.() || {},
       broadSetPieceVisibility: game.world.setPieces?.getBroadVisibilityStats?.() || {},
+      meadowComposition: game.world.setPieces?.getMeadowCompositionStats?.() || {},
       fieldMotifs: game.world.terrain?.getFieldMotifStats?.() || {},
       roadSurfaceDetails: game.world.roads?.getDetailStats?.() || {},
       waterStats: game.world.water?.getStats?.() || {},
@@ -1815,6 +1818,12 @@ function assertVerification(result) {
   if ((result.routeComposition?.vistaKits || 0) < 6) failures.push(`route composition probe failed: vistaKits=${result.routeComposition?.vistaKits || 0}`);
   if ((result.routeComposition?.authoredAssets || 0) < 32) failures.push(`route composition probe failed: authoredAssets=${result.routeComposition?.authoredAssets || 0}`);
   if ((result.routeComposition?.guideTiles || 0) < 40) failures.push(`route composition probe failed: guideTiles=${result.routeComposition?.guideTiles || 0}`);
+  if ((result.meadowComposition?.pockets || 0) < 5) failures.push(`meadow composition probe failed: pockets=${result.meadowComposition?.pockets || 0}`);
+  if ((result.meadowComposition?.patches || 0) < 10) failures.push(`meadow composition probe failed: patches=${result.meadowComposition?.patches || 0}`);
+  if ((result.meadowComposition?.authoredAssets || 0) < 18) failures.push(`meadow composition probe failed: authoredAssets=${result.meadowComposition?.authoredAssets || 0}`);
+  if ((result.meadowComposition?.guideTiles || 0) < 25) failures.push(`meadow composition probe failed: guideTiles=${result.meadowComposition?.guideTiles || 0}`);
+  if ((result.meadowComposition?.lamps || 0) < 10) failures.push(`meadow composition probe failed: lamps=${result.meadowComposition?.lamps || 0}`);
+  if ((result.meadowComposition?.stoneRuns || 0) < 20) failures.push(`meadow composition probe failed: stoneRuns=${result.meadowComposition?.stoneRuns || 0}`);
   if ((result.districtStory?.authoredAssets || 0) < 10) failures.push(`district story probe failed: authoredAssets=${result.districtStory?.authoredAssets || 0}`);
   if ((result.districtStory?.crateStacks || 0) < 6) failures.push(`district story probe failed: crateStacks=${result.districtStory?.crateStacks || 0}`);
   if ((result.districtStory?.terminalBanks || 0) < 2) failures.push(`district story probe failed: terminalBanks=${result.districtStory?.terminalBanks || 0}`);
