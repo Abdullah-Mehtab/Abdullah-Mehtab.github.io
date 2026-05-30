@@ -28,6 +28,16 @@ const SURFACES = {
   water: { id: 'water', label: 'water', forwardGrip: 0.38, sideGrip: 0.28, engineFactor: 0.42, topSpeedFactor: 0.36, drag: 1, dustColor: 0xb8fff0, skidColor: 0x7edbd4, skidMarks: false }
 };
 
+const ROAD_SURFACES = {
+  avenue: { label: 'avenue asphalt', forwardGrip: 1.03, sideGrip: 1.02, engineFactor: 1.02, topSpeedFactor: 1.03, dustColor: 0x756b5a, skidColor: 0x14120f, audioId: 'avenue-road' },
+  street: { label: 'street asphalt', forwardGrip: 1, sideGrip: 0.98, engineFactor: 1, topSpeedFactor: 1, dustColor: 0x6f6250, skidColor: 0x161410, audioId: 'road' },
+  plaza: { label: 'plaza stone', forwardGrip: 0.94, sideGrip: 1.06, engineFactor: 0.96, topSpeedFactor: 0.9, dustColor: 0xb9a57a, skidColor: 0x5f584d, audioId: 'plaza-road', roughnessFeedback: 0.26 },
+  security: { label: 'scanner asphalt', forwardGrip: 1.02, sideGrip: 0.92, engineFactor: 1.03, topSpeedFactor: 1.02, dustColor: 0x3a6b77, skidColor: 0x081014, audioId: 'security-road', roughnessFeedback: 0.18 },
+  stunt: { label: 'stunt asphalt', forwardGrip: 1.08, sideGrip: 0.9, engineFactor: 1.05, topSpeedFactor: 1.08, dustColor: 0xb87955, skidColor: 0x2a1712, audioId: 'stunt-road', roughnessFeedback: 0.16 },
+  dirt: { label: 'farm dirt track', forwardGrip: 0.78, sideGrip: 0.58, engineFactor: 0.82, topSpeedFactor: 0.72, drag: 0.975, dustColor: 0xb2763c, skidColor: 0x6b4828, skidMarks: false, audioId: 'dirt-road', effectId: 'dirt-road', roughnessFeedback: 0.62 },
+  bridge: { label: 'pier deck', forwardGrip: 0.96, sideGrip: 0.93, engineFactor: 0.96, topSpeedFactor: 0.88, dustColor: 0x7aa9a7, skidColor: 0x2e4d4b, audioId: 'bridge-road', roughnessFeedback: 0.34 }
+};
+
 export class World {
   constructor({ scene, physics, resumeData, environmentAssets }) {
     this.scene = scene;
@@ -324,12 +334,12 @@ export class World {
     if (!position) return SURFACES.road;
     const distance = Math.hypot(position.x, position.z);
     const inWater = distance > ISLAND_RADIUS * 1.012 || position.y < WATER_Y + 0.24;
-    const onRoad = this.roads?.isNear(position.x, position.z, 0.9);
+    const roadPath = this.roads?.getSurfaceAt(position.x, position.z, 0.9);
     let surface = SURFACES.grass;
     if (inWater) {
       surface = SURFACES.water;
-    } else if (onRoad) {
-      surface = SURFACES.road;
+    } else if (roadPath) {
+      surface = roadSurfaceForPath(roadPath);
     } else if (distance > ISLAND_RADIUS * 0.965) {
       surface = SURFACES.shore;
     } else if (distance > ISLAND_RADIUS * 0.88) {
@@ -339,7 +349,11 @@ export class World {
       label: surface.label,
       inWater: surface.id === 'water',
       nearShore: surface.id === 'shore' || surface.id === 'sand',
-      onRoad
+      onRoad: Boolean(roadPath),
+      roadId: roadPath?.id || null,
+      roadHierarchy: roadPath?.hierarchy || null,
+      audioId: surface.audioId || surface.id,
+      effectId: surface.effectId || surface.id
     };
     return surface;
   }
@@ -459,6 +473,20 @@ function prefersLightLandscape() {
   const coarsePointer = window.matchMedia?.('(pointer: coarse)')?.matches === true;
   const touch = navigator.maxTouchPoints > 1;
   return narrow || coarsePointer || touch;
+}
+
+function roadSurfaceForPath(path) {
+  const profile = ROAD_SURFACES[path.hierarchy] || ROAD_SURFACES.street;
+  return {
+    ...SURFACES.road,
+    ...profile,
+    id: 'road',
+    roadId: path.id,
+    roadName: path.name,
+    roadHierarchy: path.hierarchy,
+    audioId: profile.audioId || 'road',
+    effectId: profile.effectId || profile.audioId || 'road'
+  };
 }
 
 function vectorFromArray(values) {

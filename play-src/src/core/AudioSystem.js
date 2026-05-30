@@ -218,6 +218,12 @@ export class AudioSystem {
     if (!this.context || this.muted) return;
     const normalized = Math.min(1, Math.abs(speed) / 32);
     const config = {
+      'avenue-road': { frequency: 230, gain: 0.016, duration: 0.13 },
+      'plaza-road': { frequency: 260, gain: 0.022, duration: 0.16 },
+      'security-road': { frequency: 320, gain: 0.02, duration: 0.15 },
+      'stunt-road': { frequency: 190, gain: 0.024, duration: 0.17 },
+      'dirt-road': { frequency: 145, gain: 0.034, duration: 0.24 },
+      'bridge-road': { frequency: 290, gain: 0.024, duration: 0.18 },
       grass: { frequency: 180, gain: 0.026, duration: 0.2 },
       sand: { frequency: 130, gain: 0.032, duration: 0.26 },
       shore: { frequency: 240, gain: 0.034, duration: 0.22 },
@@ -329,7 +335,8 @@ export class AudioSystem {
     const wheelie = driveState.wheelie ? 1 : 0;
     const slip = driveState.slip ?? 0;
     const surface = driveState.surface || 'road';
-    const softSurface = ['grass', 'sand', 'shore'].includes(surface) ? 1 : 0;
+    const softSurface = ['grass', 'sand', 'shore', 'dirt-road'].includes(surface) ? 1 : 0;
+    const tunedRoad = ['avenue-road', 'plaza-road', 'security-road', 'stunt-road', 'bridge-road'].includes(surface) ? 1 : 0;
     const water = surface === 'water' ? 1 : 0;
     const wobble = Math.sin(this.context.currentTime * (18 + normalized * 28)) * (2 + normalized * 5);
     this.engineOsc.frequency.setTargetAtTime(38 + normalized * 176 + throttle * 56 + boost * 38 + burnout * 58 + wheelie * 18 + wobble, this.context.currentTime, 0.055);
@@ -345,7 +352,7 @@ export class AudioSystem {
     }
     if (this.engineNoiseGain) {
       this.engineNoiseGain.gain.setTargetAtTime(
-        this.muted ? 0 : 0.006 + normalized * 0.019 + slip * 0.09 + boost * 0.026 + burnout * 0.07 + softSurface * normalized * 0.026 + water * 0.035,
+        this.muted ? 0 : 0.006 + normalized * 0.019 + slip * 0.09 + boost * 0.026 + burnout * 0.07 + softSurface * normalized * 0.026 + tunedRoad * normalized * 0.011 + water * 0.035,
         this.context.currentTime,
         0.08
       );
