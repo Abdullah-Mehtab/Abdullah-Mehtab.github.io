@@ -1139,6 +1139,7 @@ async function collectRuntimeMetrics(page, loadMs, gameplay, water, surfaces, su
       roadGuidance: {
         chevrons: game.scene.getObjectByName('ROAD_Guidance_Chevrons')?.count || 0,
         reflectorStuds: game.scene.getObjectByName('ROAD_Reflector_Studs')?.count || 0,
+        markerOpacity: Number((game.scene.getObjectByName('ROAD_Guidance_Chevrons')?.material?.opacity || 0).toFixed(3)),
         edgeFeathers: game.world.roads?.roadGroup?.userData?.edgeFeatherCount || 0,
         laneEdges: game.world.roads?.roadGroup?.userData?.laneEdgeLineCount || 0
       },
@@ -1739,6 +1740,7 @@ function assertVerification(result) {
   }
   if ((result.roadGuidance?.chevrons || 0) < 40) failures.push(`road guidance probe failed: chevrons=${result.roadGuidance?.chevrons || 0}`);
   if ((result.roadGuidance?.reflectorStuds || 0) < 140) failures.push(`road guidance probe failed: reflectorStuds=${result.roadGuidance?.reflectorStuds || 0}`);
+  if ((result.roadGuidance?.markerOpacity || 1) > 0.43) failures.push(`road guidance readability probe failed: markerOpacity=${result.roadGuidance?.markerOpacity}`);
   if ((result.roadGuidance?.edgeFeathers || 0) < 24) failures.push(`road guidance probe failed: edgeFeathers=${result.roadGuidance?.edgeFeathers || 0}`);
   if ((result.roadGuidance?.laneEdges || 0) < 20) failures.push(`road guidance probe failed: laneEdges=${result.roadGuidance?.laneEdges || 0}`);
   if ((result.staticBatching?.groups || 0) < 8) failures.push(`static batching probe failed: groups=${result.staticBatching?.groups || 0}`);
@@ -1781,6 +1783,10 @@ function assertVerification(result) {
   if ((result.roadSurfaceDetails?.transitionAprons || 0) < 16) failures.push(`road transition probe failed: transitionAprons=${result.roadSurfaceDetails?.transitionAprons || 0}`);
   if ((result.roadSurfaceDetails?.transitionGuideBars || 0) < 56) failures.push(`road transition probe failed: transitionGuideBars=${result.roadSurfaceDetails?.transitionGuideBars || 0}`);
   if ((result.roadSurfaceDetails?.visibleTransitionMeshes || 0) < 3) failures.push(`road transition probe failed: visibleTransitionMeshes=${result.roadSurfaceDetails?.visibleTransitionMeshes || 0}`);
+  if ((result.roadSurfaceDetails?.opacities?.wear || 1) > 0.22) failures.push(`road readability probe failed: wear opacity=${result.roadSurfaceDetails?.opacities?.wear}`);
+  if ((result.roadSurfaceDetails?.opacities?.seam || 1) > 0.18) failures.push(`road readability probe failed: seam opacity=${result.roadSurfaceDetails?.opacities?.seam}`);
+  if ((result.roadSurfaceDetails?.opacities?.transitionApron || 1) > 0.12) failures.push(`road readability probe failed: transitionApron opacity=${result.roadSurfaceDetails?.opacities?.transitionApron}`);
+  if ((result.roadSurfaceDetails?.opacities?.transitionGuide || 1) > 0.28) failures.push(`road readability probe failed: transitionGuide opacity=${result.roadSurfaceDetails?.opacities?.transitionGuide}`);
   if ((result.surfaceDetails?.districts || 0) < 10) failures.push(`surface detail probe failed: districts=${result.surfaceDetails?.districts || 0}`);
   if ((result.surfaceDetails?.seams || 0) < 40) failures.push(`surface detail probe failed: seams=${result.surfaceDetails?.seams || 0}`);
   if ((result.surfaceDetails?.pavers || 0) < 24) failures.push(`surface detail probe failed: pavers=${result.surfaceDetails?.pavers || 0}`);
