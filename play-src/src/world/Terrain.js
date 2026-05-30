@@ -109,16 +109,19 @@ export class Terrain {
     };
 
     districtFootprints.forEach((district, index) => {
-      const patch = new THREE.Mesh(
-        makePatchGeometry(district.size[0], district.size[1], index + 4),
-        materials[district.kind] || this.world.materials.plazaRoad
-      );
-      patch.name = `ToyIslandDistrictPatch_${district.id}`;
-      patch.position.set(district.center[0], 0.075 + index * 0.0008, district.center[1]);
-      patch.rotation.y = (index % 3 - 1) * 0.08;
-      patch.receiveShadow = true;
-      patch.renderOrder = 4 + index;
-      this.world.scene.add(patch);
+      const pads = getDistrictVisualPads(district, index);
+      pads.forEach((pad, padIndex) => {
+        const patch = new THREE.Mesh(
+          makePatchGeometry(pad.size[0], pad.size[1], index * 11 + padIndex + 4),
+          materials[pad.kind] || materials[district.kind] || this.world.materials.plazaRoad
+        );
+        patch.name = `ToyIslandDistrictPatch_${district.id}_${pad.id}`;
+        patch.position.set(pad.center[0], 0.075 + index * 0.0008 + padIndex * 0.00018, pad.center[1]);
+        patch.rotation.y = pad.rotation;
+        patch.receiveShadow = true;
+        patch.renderOrder = 4 + index;
+        this.world.scene.add(patch);
+      });
     });
   }
 
@@ -281,42 +284,46 @@ export class Terrain {
     }));
 
     districtFootprints.forEach((district, index) => {
-      const rotation = (index % 3 - 1) * 0.08;
-      const style = DISTRICT_DETAIL_STYLES[district.kind] || DISTRICT_DETAIL_STYLES.plaza;
-      const width = district.size[0];
-      const depth = district.size[1];
-      const seamColumns = Math.max(2, Math.floor(width / 18));
-      const seamRows = Math.max(1, Math.floor(depth / 16));
-      const seed = index + 11;
+      const pads = getDistrictVisualPads(district, index);
 
-      for (let i = 1; i <= seamColumns; i += 1) {
-        const localX = -width * 0.38 + (i / (seamColumns + 1)) * width * 0.76;
-        seams.push(createSurfaceDetail(district, localX, 0, 0.22, depth * 0.72, rotation, style.seam));
-      }
-      for (let i = 1; i <= seamRows; i += 1) {
-        const localZ = -depth * 0.36 + (i / (seamRows + 1)) * depth * 0.72;
-        seams.push(createSurfaceDetail(district, 0, localZ, width * 0.7, 0.2, rotation, style.seam));
-      }
+      pads.forEach((pad, padIndex) => {
+        const rotation = pad.rotation;
+        const style = DISTRICT_DETAIL_STYLES[pad.kind] || DISTRICT_DETAIL_STYLES[district.kind] || DISTRICT_DETAIL_STYLES.plaza;
+        const width = pad.size[0];
+        const depth = pad.size[1];
+        const seamColumns = Math.max(2, Math.floor(width / 18));
+        const seamRows = Math.max(1, Math.floor(depth / 16));
+        const seed = index * 17 + padIndex + 11;
 
-      const paverColumns = Math.max(3, Math.floor(width / 18));
-      for (let i = 0; i < paverColumns; i += 1) {
-        const side = i % 2 === 0 ? -1 : 1;
-        const localX = -width * 0.28 + (i / Math.max(1, paverColumns - 1)) * width * 0.56;
-        const localZ = side * depth * (0.18 + pseudoRandom(seed * 17 + i) * 0.14);
-        pavers.push(createSurfaceDetail(
-          district,
-          localX,
-          localZ,
-          4.6 + pseudoRandom(seed * 23 + i) * 3.2,
-          2.1 + pseudoRandom(seed * 29 + i) * 1.6,
-          rotation + (pseudoRandom(seed * 31 + i) - 0.5) * 0.28,
-          style.paver
-        ));
-      }
+        for (let i = 1; i <= seamColumns; i += 1) {
+          const localX = -width * 0.38 + (i / (seamColumns + 1)) * width * 0.76;
+          seams.push(createSurfaceDetail(pad, localX, 0, 0.22, depth * 0.72, rotation, style.seam));
+        }
+        for (let i = 1; i <= seamRows; i += 1) {
+          const localZ = -depth * 0.36 + (i / (seamRows + 1)) * depth * 0.72;
+          seams.push(createSurfaceDetail(pad, 0, localZ, width * 0.7, 0.2, rotation, style.seam));
+        }
 
-      const accentLength = Math.min(18, Math.max(10, width * 0.24));
-      accents.push(createSurfaceDetail(district, -width * 0.32, depth * 0.26, accentLength, 0.34, rotation + 0.42, style.accent));
-      accents.push(createSurfaceDetail(district, width * 0.3, -depth * 0.22, accentLength * 0.72, 0.34, rotation - 0.38, style.accent));
+        const paverColumns = Math.max(3, Math.floor(width / 18));
+        for (let i = 0; i < paverColumns; i += 1) {
+          const side = i % 2 === 0 ? -1 : 1;
+          const localX = -width * 0.28 + (i / Math.max(1, paverColumns - 1)) * width * 0.56;
+          const localZ = side * depth * (0.18 + pseudoRandom(seed * 17 + i) * 0.14);
+          pavers.push(createSurfaceDetail(
+            pad,
+            localX,
+            localZ,
+            4.6 + pseudoRandom(seed * 23 + i) * 3.2,
+            2.1 + pseudoRandom(seed * 29 + i) * 1.6,
+            rotation + (pseudoRandom(seed * 31 + i) - 0.5) * 0.28,
+            style.paver
+          ));
+        }
+
+        const accentLength = Math.min(18, Math.max(10, width * 0.24));
+        accents.push(createSurfaceDetail(pad, -width * 0.32, depth * 0.26, accentLength, 0.34, rotation + 0.42, style.accent));
+        accents.push(createSurfaceDetail(pad, width * 0.3, -depth * 0.22, accentLength * 0.72, 0.34, rotation - 0.38, style.accent));
+      });
     });
 
     this.addSurfaceDetailInstances('ToyIslandSurface_Seams', seams, this.world.materials.surfaceSeam, 36);
@@ -646,6 +653,18 @@ function writeVertex(vertices, index, x, y, z) {
   vertices[cursor] = x;
   vertices[cursor + 1] = y;
   vertices[cursor + 2] = z;
+}
+
+function getDistrictVisualPads(district, index) {
+  const defaultRotation = district.rotation ?? ((index % 3 - 1) * 0.08);
+  const pads = district.visualPads?.length ? district.visualPads : [{ id: 'main', center: district.center, size: district.size }];
+  return pads.map((pad) => ({
+    id: pad.id,
+    center: pad.center || district.center,
+    size: pad.size || district.size,
+    kind: pad.kind || district.kind,
+    rotation: pad.rotation ?? defaultRotation
+  }));
 }
 
 function createSurfaceDetail(district, localX, localZ, width, depth, rotation, color) {

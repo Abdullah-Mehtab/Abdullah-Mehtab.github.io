@@ -3,6 +3,7 @@
 import * as THREE from 'three';
 import { worldZones } from './worldData.js';
 import { mergeStaticMeshesInGroup } from './StaticBatching.js';
+import { makePatchGeometry } from './WorldMaterials.js';
 
 const Y = 0.16;
 
@@ -581,7 +582,7 @@ export class SetPieces {
     const stunt = findZone('drift');
     this.addSign(group, 'STUNT', 'Boost Yard', stunt.position[0] - 9, stunt.position[2] + 16, -0.55, 0xff9b6d, 2.6, 'StuntSign');
     this.addPolishAsset(group, 'EnvPolishCircuitGate', stunt.position[0] + 5.2, stunt.position[2] + 8.8, -0.18, 0.86);
-    this.groundRect(group, stunt.position[0], stunt.position[2], 25, 17, this.world.materials.stuntRamp, 0.12, 'StuntYardRunoffPad');
+    this.groundPatch(group, stunt.position[0], stunt.position[2], 25, 17, this.world.materials.stuntRamp, 0.12, -0.08, 'StuntYardRunoffPad', 421);
     this.box(group, stunt.position[0], 0.18, stunt.position[2] + 9.2, 20, 0.04, 0.28, this.world.materials.warmGlow, 0, 'StuntYardStartTrace');
     this.addPolishAsset(group, 'EnvPolishRoadBarrier', stunt.position[0] - 12.6, stunt.position[2] - 6.2, 0.42, 0.9);
     this.addPolishAsset(group, 'EnvPolishRoadBarrier', stunt.position[0] + 12.2, stunt.position[2] - 5.8, -0.36, 0.9);
@@ -1524,6 +1525,15 @@ export class SetPieces {
     group.add(mesh);
   }
 
+  groundPatch(group, x, z, width, depth, material, y, rotation, name, seed) {
+    const mesh = new THREE.Mesh(makePatchGeometry(width, depth, seed), material);
+    mesh.name = name;
+    mesh.position.set(x, y, z);
+    mesh.rotation.y = rotation;
+    mesh.receiveShadow = true;
+    group.add(mesh);
+  }
+
   box(group, x, y, z, sx, sy, sz, material, rotation = 0, name = 'SetPieceBox') {
     const mesh = new THREE.Mesh(new THREE.BoxGeometry(sx, sy, sz), material);
     mesh.name = name;
@@ -1872,8 +1882,8 @@ export class SetPieces {
     const x = circuit.position[0];
     const z = circuit.position[2];
     const rotation = -0.22;
-    this.addCircuitPad(group, x + 2, z + 6.4, 28, 18, this.world.materials.stuntRamp, rotation, 'CircuitStartGridPad');
-    this.addCircuitPad(group, x - 10.8, z + 1.6, 6.4, 15, this.world.materials.paleStone, rotation, 'CircuitPitLanePad');
+    this.addCircuitPad(group, x + 2, z + 6.4, 24, 14, this.world.materials.stuntRamp, rotation, 'CircuitStartGridPad');
+    this.addCircuitPad(group, x - 9.6, z + 1.2, 5.2, 12, this.world.materials.paleStone, rotation, 'CircuitPitLanePad');
 
     this.addSign(group, 'CIRCUIT', 'Checkpoint Run', ...this.circuitPoint(circuit, -12.4, -8.8, rotation), rotation + 0.62, 0xff9b6d, 2.4, 'CircuitSign');
     this.addCircuitAsset(group, 'EnvPolishCircuitGate', circuit, 0.6, 7.4, rotation, 1.04, null);
@@ -1896,7 +1906,7 @@ export class SetPieces {
     }
     for (const side of [-1, 1]) {
       for (let i = 0; i < 5; i += 1) {
-        const [railX, railZ] = this.circuitPoint(circuit, side * 14.8, -3.6 + i * 3.4, rotation);
+        const [railX, railZ] = this.circuitPoint(circuit, side * 13.0, -3.6 + i * 3.0, rotation);
         this.addCircuitGridMark(group, railX, railZ, 0.34, 1.7, rotation, this.world.materials.paleStone, 'CircuitOuterCurbMarker');
       }
     }
@@ -1905,7 +1915,7 @@ export class SetPieces {
       this.box(group, lightX, 0.28, lightZ, 0.56, 0.12, 0.56, i < 2 ? this.world.materials.glow : this.world.materials.glowPink, rotation, 'CircuitStartLightTile');
       this.circuitStartStats.laneLights += 1;
     }
-    this.addYardEdgeDetails(group, x + 2, z + 6.4, 28, 18);
+    this.addYardEdgeDetails(group, x + 2, z + 6.4, 24, 14);
   }
 
   circuitPoint(circuit, right, forward, rotation) {
@@ -1915,8 +1925,7 @@ export class SetPieces {
   }
 
   addCircuitPad(group, x, z, width, depth, material, rotation, name) {
-    this.groundRect(group, x, z, width, depth, material, 0.122, name);
-    group.children[group.children.length - 1].rotation.y = rotation;
+    this.groundPatch(group, x, z, width, depth, material, 0.122, rotation, name, 701 + this.circuitStartStats.pads);
     this.districtCompositionStats.pads += 1;
     this.circuitStartStats.pads += 1;
   }

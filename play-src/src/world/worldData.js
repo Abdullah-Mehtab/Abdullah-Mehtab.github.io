@@ -14,7 +14,20 @@ export const districtFootprints = [
   { id: 'project-yard', label: 'Projects Yard', center: [62, 56], size: [44, 36], color: '#ffcc66', kind: 'workshop' },
   { id: 'ridge', label: 'Sentinel Ridge', center: [16, 112], size: [46, 34], color: '#ff6d8d', kind: 'tower' },
   { id: 'archive', label: 'Archive Steps', center: [-44, 72], size: [36, 30], color: '#ffdf8a', kind: 'archive' },
-  { id: 'south-loop', label: 'Stunt And CV Run', center: [58, -82], size: [82, 46], color: '#ff9b6d', kind: 'driving' },
+  {
+    id: 'south-loop',
+    label: 'Stunt And CV Run',
+    center: [58, -82],
+    size: [82, 46],
+    color: '#ff9b6d',
+    kind: 'driving',
+    visualPads: [
+      { id: 'cv-approach-deck', center: [26, -60], size: [38, 24], rotation: -0.18, kind: 'archive' },
+      { id: 'stunt-runway-apron', center: [86, -92], size: [52, 22], rotation: 0.08, kind: 'driving' },
+      { id: 'stunt-pit-yard', center: [114, -72], size: [31, 22], rotation: -0.34, kind: 'driving' },
+      { id: 'south-return-ribbon', center: [58, -116], size: [44, 15], rotation: -0.28, kind: 'trail' }
+    ]
+  },
   { id: 'west-trail', label: 'Skills And Farm Trail', center: [-58, -104], size: [62, 46], color: '#92ffea', kind: 'trail' },
   { id: 'harbor', label: 'Signal Harbor', center: [126, 46], size: [36, 38], color: '#78b7ff', kind: 'harbor' },
   { id: 'data-pier', label: 'Data Pier', center: [-126, 66], size: [32, 34], color: '#79ffc5', kind: 'pier' }
@@ -43,7 +56,9 @@ export const terrainBrushes = [
   { id: 'security-blue-grit', center: [-112, -34], size: [30, 18], rotation: 0.48, material: 'wildflowerBlue' },
   { id: 'project-yard-dust', center: [62, 48], size: [52, 34], rotation: -0.36, material: 'warmStone' },
   { id: 'sentinel-ridge-grass', center: [18, 108], size: [54, 22], rotation: 0.24, material: 'meadowLight' },
-  { id: 'south-stunt-rubber', center: [86, -86], size: [78, 36], rotation: 0.08, material: 'meadowDark' },
+  { id: 'south-stunt-rubber-runway', center: [88, -92], size: [54, 22], rotation: 0.08, material: 'meadowDark' },
+  { id: 'stunt-pit-warm-apron', center: [116, -74], size: [32, 18], rotation: -0.34, material: 'warmStone' },
+  { id: 'south-loop-grass-infield', center: [56, -118], size: [46, 18], rotation: -0.36, material: 'meadowLight' },
   { id: 'farm-gold-field', center: [-50, -126], size: [54, 30], rotation: -0.16, material: 'warmStone' },
   { id: 'harbor-sand-apron', center: [126, 52], size: [42, 34], rotation: -0.18, material: 'sand' },
   { id: 'west-data-beach', center: [-132, 60], size: [36, 32], rotation: 0.42, material: 'sand' }

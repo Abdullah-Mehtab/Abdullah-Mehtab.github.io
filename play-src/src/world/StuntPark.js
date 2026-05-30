@@ -3,6 +3,7 @@
 import * as THREE from 'three';
 import { boostPads, circuitCheckpoints, worldZones } from './worldData.js';
 import { mergeStaticMeshesInGroup } from './StaticBatching.js';
+import { makePatchGeometry } from './WorldMaterials.js';
 
 function stuntRampLayout(baseX, baseZ) {
   return [
@@ -50,6 +51,8 @@ export class StuntPark {
       tireStacks: 0,
       landingMarkers: 0,
       authoredAssets: 0,
+      infieldIslands: 0,
+      runoffShoulders: 0,
       laneChevrons: 0,
       trackScuffs: 0,
       visualBarriers: 0,
@@ -77,6 +80,7 @@ export class StuntPark {
     const baseZ = zone.position[2];
     const ramps = stuntRampLayout(baseX, baseZ);
 
+    this.addPaintedInfieldIslands(group, baseX, baseZ);
     this.addRunwayStripe(group, baseX - 10, baseZ - 18, 24, Math.PI / 2, 0xff9b6d);
     this.addRunwayStripe(group, baseX + 9, baseZ - 2, 18, -Math.PI / 2.6, 0xffc36a);
     this.addRunwayStripe(group, baseX - 2, baseZ + 16, 14, 0.1, 0x68d8ff);
@@ -142,6 +146,39 @@ export class StuntPark {
     stripe.position.set(x, 0.22, z);
     stripe.rotation.y = rotation;
     group.add(stripe);
+  }
+
+  addPaintedInfieldIslands(group, baseX, baseZ) {
+    const islands = [
+      { x: baseX - 9, z: baseZ + 1, width: 16, depth: 5.8, rotation: -0.2, material: this.world.materials.meadowDark, seed: 211 },
+      { x: baseX + 14, z: baseZ - 15, width: 19, depth: 5.2, rotation: 0.38, material: this.world.materials.warmStone, seed: 223 },
+      { x: baseX + 4, z: baseZ + 18, width: 22, depth: 4.4, rotation: 0.08, material: this.world.materials.paleStone, seed: 229 },
+      { x: baseX - 25, z: baseZ - 17, width: 13, depth: 4.2, rotation: 0.54, material: this.world.materials.meadowDark, seed: 233 }
+    ];
+
+    for (const island of islands) {
+      const mesh = new THREE.Mesh(makePatchGeometry(island.width, island.depth, island.seed), island.material);
+      mesh.name = 'STUNT_painted_infield_island';
+      mesh.position.set(island.x, 0.236, island.z);
+      mesh.rotation.y = island.rotation;
+      mesh.receiveShadow = true;
+      group.add(mesh);
+      this.stats.infieldIslands += 1;
+    }
+
+    for (const spec of [
+      { x: baseX - 16, z: baseZ - 3, width: 0.42, depth: 17, rotation: -0.16, material: this.world.materials.paleStone },
+      { x: baseX + 20, z: baseZ - 8, width: 0.42, depth: 18, rotation: 0.34, material: this.world.materials.warmGlow },
+      { x: baseX - 1, z: baseZ + 22, width: 22, depth: 0.38, rotation: 0.08, material: this.world.materials.glowBlue },
+      { x: baseX + 2, z: baseZ - 24, width: 26, depth: 0.38, rotation: 0.08, material: this.world.materials.warmGlow }
+    ]) {
+      const shoulder = new THREE.Mesh(new THREE.BoxGeometry(spec.width, 0.035, spec.depth), spec.material);
+      shoulder.name = 'STUNT_runoff_shoulder_marker';
+      shoulder.position.set(spec.x, 0.254, spec.z);
+      shoulder.rotation.y = spec.rotation;
+      group.add(shoulder);
+      this.stats.runoffShoulders += 1;
+    }
   }
 
   addRubberScuffs(group, baseX, baseZ) {
