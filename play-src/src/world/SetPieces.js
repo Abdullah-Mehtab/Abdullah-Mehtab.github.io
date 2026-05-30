@@ -19,6 +19,12 @@ export class SetPieces {
     this.lifeInstanceMeshes = [];
     this.lifeInstanceDirty = new Set();
     this.signAtlas = null;
+    this.panelSeamMaterials = new Map();
+    this.surfacePanelStats = {
+      hardscapePanels: 0,
+      chippedPanels: 0,
+      seamStrips: 0
+    };
     this.districtAmbience = {
       mesh: null,
       entries: [],
@@ -315,6 +321,10 @@ export class SetPieces {
 
   getDistrictCompositionStats() {
     return { ...this.districtCompositionStats };
+  }
+
+  getSurfacePanelStats() {
+    return { ...this.surfacePanelStats };
   }
 
   getCircuitStartStats() {
@@ -1696,11 +1706,15 @@ export class SetPieces {
   }
 
   groundRect(group, x, z, width, depth, material, y, name) {
-    const mesh = new THREE.Mesh(new THREE.BoxGeometry(width, 0.05, depth), material);
+    const mesh = new THREE.Mesh(makeHardscapePanelGeometry(width, depth, panelSeed(name, x, z)), material);
     mesh.name = name;
-    mesh.position.set(x, y, z);
+    mesh.position.set(x, y + 0.026, z);
     mesh.receiveShadow = true;
+    mesh.userData.surfacePanel = 'chipped-hardscape';
     group.add(mesh);
+    this.addGroundPanelSeams(group, x, z, width, depth, material, y + 0.058, name);
+    this.surfacePanelStats.hardscapePanels += 1;
+    this.surfacePanelStats.chippedPanels += 1;
   }
 
   groundPatch(group, x, z, width, depth, material, y, rotation, name, seed) {
@@ -1721,6 +1735,56 @@ export class SetPieces {
     mesh.receiveShadow = true;
     group.add(mesh);
     return mesh;
+  }
+
+  addGroundPanelSeams(group, x, z, width, depth, material, y, name) {
+    const seamMaterial = this.panelSeamMaterial(material);
+    const long = Math.max(width, depth);
+    const short = Math.min(width, depth);
+    const edgeInset = Math.max(0.9, short * 0.08);
+    const strips = [
+      [0, -depth * 0.5 + edgeInset, width * 0.68, 0.1, 0],
+      [0, depth * 0.5 - edgeInset, width * 0.58, 0.1, 0],
+      [-width * 0.5 + edgeInset, 0, 0.1, depth * 0.62, 0],
+      [width * 0.5 - edgeInset, 0, 0.1, depth * 0.54, 0]
+    ];
+    if (long > 13) {
+      strips.push([0, 0, width * 0.46, 0.08, 0]);
+    }
+    for (let index = 0; index < strips.length; index += 1) {
+      const [dx, dz, sx, sz, rotation] = strips[index];
+      const seam = new THREE.Mesh(new THREE.BoxGeometry(sx, 0.018, sz), seamMaterial);
+      seam.name = `${name}_PanelSeam_${index}`;
+      seam.position.set(x + dx, y + index * 0.0006, z + dz);
+      seam.rotation.y = rotation;
+      seam.receiveShadow = false;
+      seam.renderOrder = 42;
+      group.add(seam);
+      this.surfacePanelStats.seamStrips += 1;
+    }
+  }
+
+  panelSeamMaterial(baseMaterial) {
+    const key = baseMaterial.uuid;
+    if (this.panelSeamMaterials.has(key)) return this.panelSeamMaterials.get(key);
+    const color = baseMaterial.color?.clone?.() || new THREE.Color(0x3b463f);
+    const brightness = (color.r + color.g + color.b) / 3;
+    if (brightness < 0.35) {
+      color.lerp(new THREE.Color(0x68d8ff), 0.58);
+    } else {
+      color.multiplyScalar(0.42);
+    }
+    const material = new THREE.MeshBasicMaterial({
+      color,
+      transparent: true,
+      opacity: brightness < 0.35 ? 0.18 : 0.16,
+      depthWrite: false,
+      polygonOffset: true,
+      polygonOffsetFactor: -46,
+      polygonOffsetUnits: -46
+    });
+    this.panelSeamMaterials.set(key, material);
+    return material;
   }
 
   cylinder(group, x, y, z, radius, height, material, sides = 16, name = 'SetPieceCylinder') {
@@ -2359,6 +2423,56 @@ function createSignBoardGeometry(width, height, rect) {
   }
   uv.needsUpdate = true;
   return geometry;
+}
+
+function makeHardscapePanelGeometry(width, depth, seed) {
+  const halfWidth = width * 0.5;
+  const halfDepth = depth * 0.5;
+  const cutBase = Math.max(0.36, Math.min(width, depth) * 0.075);
+  const cut = (offset) => cutBase * (0.72 + panelNoise(seed + offset) * 0.58);
+  const points = [
+    [-halfWidth + cut(1), -halfDepth],
+    [halfWidth - cut(2), -halfDepth],
+    [halfWidth, -halfDepth + cut(3)],
+    [halfWidth, -halfDepth * 0.12],
+    [halfWidth - cutBase * 0.34, 0],
+    [halfWidth, halfDepth - cut(4)],
+    [halfWidth - cut(5), halfDepth],
+    [halfWidth * 0.18, halfDepth],
+    [0, halfDepth - cutBase * 0.26],
+    [-halfWidth + cut(6), halfDepth],
+    [-halfWidth, halfDepth - cut(7)],
+    [-halfWidth, halfDepth * 0.1],
+    [-halfWidth + cutBase * 0.28, 0],
+    [-halfWidth, -halfDepth + cut(8)]
+  ];
+  const shape = new THREE.Shape();
+  points.forEach(([x, z], index) => {
+    if (index === 0) shape.moveTo(x, z);
+    else shape.lineTo(x, z);
+  });
+  shape.closePath();
+  const geometry = new THREE.ShapeGeometry(shape);
+  geometry.rotateX(-Math.PI / 2);
+  geometry.computeVertexNormals();
+  return geometry;
+}
+
+function panelSeed(name, x, z) {
+  let hash = 2166136261;
+  const value = `${name}:${Math.round(x * 10)}:${Math.round(z * 10)}`;
+  for (let index = 0; index < value.length; index += 1) {
+    hash ^= value.charCodeAt(index);
+    hash = Math.imul(hash, 16777619);
+  }
+  return hash >>> 0;
+}
+
+function panelNoise(seed) {
+  let value = seed >>> 0;
+  value = Math.imul(value ^ (value >>> 15), value | 1);
+  value ^= value + Math.imul(value ^ (value >>> 7), value | 61);
+  return ((value ^ (value >>> 14)) >>> 0) / 4294967296;
 }
 
 function roundRect(ctx, x, y, width, height, radius) {

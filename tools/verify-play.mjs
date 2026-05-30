@@ -1167,6 +1167,7 @@ async function collectRuntimeMetrics(page, loadMs, gameplay, water, surfaces, su
       meadowComposition: game.world.setPieces?.getMeadowCompositionStats?.() || {},
       districtStory: game.world.setPieces?.getDistrictStoryStats?.() || {},
       districtComposition: game.world.setPieces?.getDistrictCompositionStats?.() || {},
+      surfacePanels: game.world.setPieces?.getSurfacePanelStats?.() || {},
       circuitStart: game.world.setPieces?.getCircuitStartStats?.() || {},
       harbor: game.world.setPieces?.getHarborStats?.() || {},
       props: game.world.props?.getStats?.() || {},
@@ -1860,6 +1861,11 @@ function assertVerification(result) {
   if ((result.districtComposition?.careerConnectors || 0) < 7) failures.push(`district composition probe failed: careerConnectors=${result.districtComposition?.careerConnectors || 0}`);
   if ((result.districtComposition?.farmRows || 0) < 8) failures.push(`district composition probe failed: farmRows=${result.districtComposition?.farmRows || 0}`);
   if ((result.districtComposition?.farmFences || 0) < 12) failures.push(`district composition probe failed: farmFences=${result.districtComposition?.farmFences || 0}`);
+  if ((result.surfacePanels?.hardscapePanels || 0) < 20) failures.push(`surface panel probe failed: hardscapePanels=${result.surfacePanels?.hardscapePanels || 0}`);
+  if ((result.surfacePanels?.chippedPanels || 0) !== (result.surfacePanels?.hardscapePanels || 0)) {
+    failures.push(`surface panel probe failed: chippedPanels=${result.surfacePanels?.chippedPanels || 0}/${result.surfacePanels?.hardscapePanels || 0}`);
+  }
+  if ((result.surfacePanels?.seamStrips || 0) < 96) failures.push(`surface panel probe failed: seamStrips=${result.surfacePanels?.seamStrips || 0}`);
   if ((result.circuitStart?.pads || 0) < 2) failures.push(`circuit start probe failed: pads=${result.circuitStart?.pads || 0}`);
   if ((result.circuitStart?.gridMarks || 0) < 18) failures.push(`circuit start probe failed: gridMarks=${result.circuitStart?.gridMarks || 0}`);
   if ((result.circuitStart?.authoredAssets || 0) < 10) failures.push(`circuit start probe failed: authoredAssets=${result.circuitStart?.authoredAssets || 0}`);
