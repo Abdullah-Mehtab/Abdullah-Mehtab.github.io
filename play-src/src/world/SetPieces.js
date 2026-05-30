@@ -34,6 +34,14 @@ export class SetPieces {
       secondaryGroups: 0,
       visibleSecondaryGroups: 0
     };
+    this.districtDressingEntries = [];
+    this.districtVisibilityOrigin = null;
+    this.districtVisibilityStats = {
+      batches: 0,
+      visibleBatches: 0,
+      hiddenBatches: 0,
+      radius: 0
+    };
     this.lifeStats = {
       zonePulses: 0,
       windBanners: 0,
@@ -126,7 +134,8 @@ export class SetPieces {
     this.applyQuality();
   }
 
-  update(dt, elapsed) {
+  update(dt, elapsed, vehiclePosition) {
+    this.updateDistrictDressingVisibility(vehiclePosition);
     for (const item of this.animated) {
       if (item.instanceMesh) {
         this.writeLifeInstance(item, elapsed);
@@ -186,6 +195,7 @@ export class SetPieces {
     this.applyLifeLimit('terminalPulses', limits.terminalPulses);
     this.applyDistrictAmbienceLimit(limits.districtMotes);
     this.applyQualityGroups();
+    this.updateDistrictDressingVisibility();
     this.lifeStats.visibleTotal =
       this.lifeStats.visibleZonePulses +
       this.lifeStats.visibleWindBanners +
@@ -238,6 +248,10 @@ export class SetPieces {
 
   getQualityStats() {
     return { ...this.qualityStats };
+  }
+
+  getDistrictVisibilityStats() {
+    return { ...this.districtVisibilityStats };
   }
 
   getApproachStats() {
@@ -703,7 +717,57 @@ export class SetPieces {
     this.createFarmFieldComposition(group, potato);
 
     mergeStaticMeshesInGroup(group, { namePrefix: 'SETPIECE_district', cellSize: 128 });
+    this.registerDistrictDressingBatches(group);
     this.world.scene.add(group);
+  }
+
+  registerDistrictDressingBatches(group) {
+    this.districtDressingEntries = [];
+    const scale = new THREE.Vector3();
+    group.updateMatrixWorld(true);
+    group.traverse((object) => {
+      if (!object.isMesh || !object.geometry || !object.name.startsWith('SETPIECE_district')) return;
+      object.geometry.computeBoundingSphere();
+      const sphere = object.geometry.boundingSphere;
+      if (!sphere) return;
+      const center = sphere.center.clone().applyMatrix4(object.matrixWorld);
+      object.getWorldScale(scale);
+      this.districtDressingEntries.push({
+        object,
+        x: center.x,
+        z: center.z,
+        radius: sphere.radius * Math.max(scale.x, scale.y, scale.z)
+      });
+    });
+    this.updateDistrictDressingVisibility();
+  }
+
+  updateDistrictDressingVisibility(origin) {
+    const radius = this.world.getQualityProfile().districtDressingRadius || 0;
+    if (origin && Number.isFinite(origin.x) && Number.isFinite(origin.z)) {
+      this.districtVisibilityOrigin = { x: origin.x, z: origin.z };
+    }
+    const activeOrigin = this.districtVisibilityOrigin;
+    let visibleBatches = 0;
+
+    for (const entry of this.districtDressingEntries) {
+      let visible = true;
+      if (activeOrigin && radius > 0) {
+        const edgeDistance = Math.hypot(entry.x - activeOrigin.x, entry.z - activeOrigin.z) - entry.radius;
+        const threshold = entry.object.visible ? radius + 18 : radius;
+        visible = edgeDistance <= threshold;
+      }
+      entry.object.visible = visible;
+      if (visible) visibleBatches += 1;
+    }
+
+    const batches = this.districtDressingEntries.length;
+    this.districtVisibilityStats = {
+      batches,
+      visibleBatches,
+      hiddenBatches: batches - visibleBatches,
+      radius
+    };
   }
 
   createApproachDressing() {

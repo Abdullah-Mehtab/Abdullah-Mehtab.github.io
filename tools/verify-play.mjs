@@ -772,14 +772,14 @@ async function sampleWorldLife(page) {
     const grass = scene.getObjectByName('FOLIAGE_grass_instances');
     const districtMotes = scene.getObjectByName('Life_DistrictAmbience_Motes');
     const banners = findVisibleObjects(/^Life_WindBanner_\d+$/);
+    const beacons = findVisibleObjects(/^Life_WhisperBeacon_\d+$/);
     const pulse = scene.getObjectByName('Life_ZonePulse_landing');
-    const beacon = scene.getObjectByName('Life_WhisperBeacon_0');
     const before = {
       grass: matrixSlice(grass),
       districtMote: matrixSlice(districtMotes),
       bannerRotations: banners.map((banner) => banner.rotation.z),
       pulseRotation: pulse?.rotation?.z ?? null,
-      beaconY: beacon?.position?.y ?? null,
+      beaconYs: beacons.map((beacon) => beacon.position.y),
       motionSamples: lifeStats().motionSamples || 0
     };
     await delay(720);
@@ -788,7 +788,7 @@ async function sampleWorldLife(page) {
       districtMote: matrixSlice(districtMotes),
       bannerRotations: banners.map((banner) => banner.rotation.z),
       pulseRotation: pulse?.rotation?.z ?? null,
-      beaconY: beacon?.position?.y ?? null,
+      beaconYs: beacons.map((beacon) => beacon.position.y),
       motionSamples: lifeStats().motionSamples || 0
     };
 
@@ -846,13 +846,13 @@ async function sampleWorldLife(page) {
       deltas: {
         banner: arrayMaxDelta(before.bannerRotations, after.bannerRotations),
         pulse: numericDelta(before.pulseRotation, after.pulseRotation),
-        beacon: numericDelta(before.beaconY, after.beaconY)
+        beacon: arrayMaxDelta(before.beaconYs, after.beaconYs)
       },
       grassAnimated: matrixDelta(before.grass, after.grass) > 0.0001,
       districtMoteAnimated: matrixDelta(before.districtMote, after.districtMote) > 0.0001,
       bannerAnimated: arrayMaxDelta(before.bannerRotations, after.bannerRotations) > 0.005,
       pulseAnimated: numericDelta(before.pulseRotation, after.pulseRotation) > 0.005,
-      beaconAnimated: numericDelta(before.beaconY, after.beaconY) > 0.005,
+      beaconAnimated: arrayMaxDelta(before.beaconYs, after.beaconYs) > 0.005,
       motionAdvanced: after.motionSamples > before.motionSamples
     };
 
@@ -987,7 +987,8 @@ async function sampleRenderSnapshot(page) {
       renderProfile: profileVisibleScene(game.scene),
       vehicleFx: game.vehicle.getEffectStats?.() || {},
       waterStats: game.world.water?.getStats?.() || {},
-      roadSurfaceDetails: game.world.roads?.getDetailStats?.() || {}
+      roadSurfaceDetails: game.world.roads?.getDetailStats?.() || {},
+      setPieceVisibility: game.world.setPieces?.getDistrictVisibilityStats?.() || {}
     };
 
     function countVisibleScene(root) {
@@ -1120,6 +1121,7 @@ async function collectRuntimeMetrics(page, loadMs, gameplay, water, surfaces, su
       terrainRelief: game.world.terrain?.getReliefStats?.() || {},
       shoreline: game.world.terrain?.getShorelineStats?.() || {},
       setPieceQuality: game.world.setPieces?.getQualityStats?.() || {},
+      districtVisibility: game.world.setPieces?.getDistrictVisibilityStats?.() || {},
       approachDressing: game.world.setPieces?.getApproachStats?.() || {},
       districtGateways: game.world.setPieces?.getGatewayStats?.() || {},
       routeComposition: game.world.setPieces?.getRouteCompositionStats?.() || {},
@@ -1355,6 +1357,7 @@ async function captureMobile(browser) {
       savedQuality: localStorage.getItem('portfolio-drive-landscape-quality'),
       lifeStats: game.world.setPieces?.getLifeStats?.() || { ...(game.world.setPieces?.lifeStats || {}) },
       setPieceQuality: game.world.setPieces?.getQualityStats?.() || {},
+      districtVisibility: game.world.setPieces?.getDistrictVisibilityStats?.() || {},
       fieldMotifs: game.world.terrain?.getFieldMotifStats?.() || {},
       roadSurfaceDetails: game.world.roads?.getDetailStats?.() || {},
       waterStats: game.world.water?.getStats?.() || {},
@@ -1472,8 +1475,14 @@ function assertVerification(result) {
       failures.push(`active render snapshot missing: ${name}`);
       continue;
     }
-    if (snapshot.calls > 760) failures.push(`active render snapshot draw-call budget exceeded: ${name}=${snapshot.calls}`);
-    if (snapshot.triangles > 340000) failures.push(`active render snapshot triangle budget exceeded: ${name}=${snapshot.triangles}`);
+    if (snapshot.calls > 700) failures.push(`active render snapshot draw-call budget exceeded: ${name}=${snapshot.calls}`);
+    if (snapshot.triangles > 330000) failures.push(`active render snapshot triangle budget exceeded: ${name}=${snapshot.triangles}`);
+  }
+  const surfaceVisibility = result.activeSnapshots?.surfaceFeedback?.setPieceVisibility;
+  if ((surfaceVisibility?.batches || 0) < 80) failures.push(`district dressing visibility probe failed: batches=${surfaceVisibility?.batches || 0}`);
+  if ((surfaceVisibility?.hiddenBatches || 0) < 1) failures.push(`district dressing visibility probe failed: surface hiddenBatches=${surfaceVisibility?.hiddenBatches || 0}`);
+  if ((result.mobile.districtVisibility?.hiddenBatches || 0) < 1) {
+    failures.push(`mobile district dressing visibility probe failed: hiddenBatches=${result.mobile.districtVisibility?.hiddenBatches || 0}`);
   }
   if (result.loadMs > 15000) failures.push(`app-ready load time too high: ${result.loadMs}ms`);
   if (result.p95FrameMs > 20) failures.push(`p95 frame time too high: ${result.p95FrameMs}ms`);
