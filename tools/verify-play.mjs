@@ -1274,6 +1274,7 @@ async function captureMobile(browser) {
       lifeStats: game.world.setPieces?.getLifeStats?.() || { ...(game.world.setPieces?.lifeStats || {}) },
       setPieceQuality: game.world.setPieces?.getQualityStats?.() || {},
       fieldMotifs: game.world.terrain?.getFieldMotifStats?.() || {},
+      roadSurfaceDetails: game.world.roads?.getDetailStats?.() || {},
       waterStats: game.world.water?.getStats?.() || {},
       atmosphere: game.world.atmosphere?.getStats?.() || {},
       lighting: game.getLightingStats?.() || {},
@@ -1498,6 +1499,8 @@ function assertVerification(result) {
   if ((result.roadJunctions?.circularPointCaps || 0) !== 0) failures.push(`road junction probe failed: circularPointCaps=${result.roadJunctions?.circularPointCaps || 0}`);
   if ((result.roadSurfaceDetails?.wearStrips || 0) < 90) failures.push(`road surface detail probe failed: wearStrips=${result.roadSurfaceDetails?.wearStrips || 0}`);
   if ((result.roadSurfaceDetails?.laneSeams || 0) < 36) failures.push(`road surface detail probe failed: laneSeams=${result.roadSurfaceDetails?.laneSeams || 0}`);
+  if ((result.roadSurfaceDetails?.visibleWearStrips || 0) < 90) failures.push(`road surface detail probe failed: visibleWearStrips=${result.roadSurfaceDetails?.visibleWearStrips || 0}`);
+  if ((result.roadSurfaceDetails?.visibleLaneSeams || 0) < 36) failures.push(`road surface detail probe failed: visibleLaneSeams=${result.roadSurfaceDetails?.visibleLaneSeams || 0}`);
   if ((result.surfaceDetails?.districts || 0) < 10) failures.push(`surface detail probe failed: districts=${result.surfaceDetails?.districts || 0}`);
   if ((result.surfaceDetails?.seams || 0) < 40) failures.push(`surface detail probe failed: seams=${result.surfaceDetails?.seams || 0}`);
   if ((result.surfaceDetails?.pavers || 0) < 24) failures.push(`surface detail probe failed: pavers=${result.surfaceDetails?.pavers || 0}`);
@@ -1630,6 +1633,9 @@ function assertVerification(result) {
   }
   if ((result.mobile.waterStats?.visibleSurfaceGlints || 0) !== 0) {
     failures.push(`mobile water quality probe failed: visibleSurfaceGlints=${result.mobile.waterStats?.visibleSurfaceGlints || 0}`);
+  }
+  if ((result.mobile.roadSurfaceDetails?.visibleDetailMeshes || 0) !== 0) {
+    failures.push(`mobile road detail quality probe failed: visibleDetailMeshes=${result.mobile.roadSurfaceDetails?.visibleDetailMeshes || 0}`);
   }
   if (result.mobile.calls > 235) failures.push(`mobile draw-call budget exceeded: ${result.mobile.calls}`);
   if ((result.mobile.lighting?.sun?.position?.[1] || 0) < 30 || (result.mobile.lighting?.sun?.position?.[1] || 0) > 45) {

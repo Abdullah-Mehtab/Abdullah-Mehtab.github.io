@@ -33,6 +33,7 @@ export class Roads {
     this.materialCache = new Map();
     this.markerDummy = new THREE.Object3D();
     this.detailDummy = new THREE.Object3D();
+    this.detailMeshes = [];
     this.detailStats = { wearStrips: 0, laneSeams: 0 };
     this.roadGroup = new THREE.Group();
     this.roadGroup.name = 'ROAD_Network';
@@ -49,6 +50,14 @@ export class Roads {
     mergeStaticMeshesInGroup(this.roadGroup, { namePrefix: 'ROAD_batch' });
     this.createRoadSurfaceDetails();
     this.createGuidanceMarkers();
+    this.applyQuality();
+  }
+
+  applyQuality() {
+    const showSurfaceDetails = this.world.landscapeQuality !== 'low';
+    for (const mesh of this.detailMeshes) {
+      mesh.visible = showSurfaceDetails;
+    }
   }
 
   addPath(path) {
@@ -354,6 +363,7 @@ export class Roads {
     mesh.instanceMatrix.needsUpdate = true;
     if (mesh.instanceColor) mesh.instanceColor.needsUpdate = true;
     this.roadGroup.add(mesh);
+    this.detailMeshes.push(mesh);
   }
 
   createRoadDetailMaterial(key, opacity) {
@@ -375,7 +385,14 @@ export class Roads {
   }
 
   getDetailStats() {
-    return { ...this.detailStats };
+    const wearMesh = this.roadGroup.getObjectByName('ROAD_Surface_Wear_Strips');
+    const seamMesh = this.roadGroup.getObjectByName('ROAD_Lane_Seams');
+    return {
+      ...this.detailStats,
+      visibleWearStrips: wearMesh?.visible ? wearMesh.count || 0 : 0,
+      visibleLaneSeams: seamMesh?.visible ? seamMesh.count || 0 : 0,
+      visibleDetailMeshes: this.detailMeshes.filter((mesh) => mesh.visible).length
+    };
   }
 
   createGuidanceMarkers() {
