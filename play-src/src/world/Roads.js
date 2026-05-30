@@ -36,9 +36,9 @@ const ROAD_DETAIL_OPACITY = {
 };
 
 const ROAD_VERGE_OPACITY = {
-  security: 0.15,
-  dirt: 0.1,
-  default: 0.11
+  security: 0.11,
+  dirt: 0.07,
+  default: 0.08
 };
 
 export class Roads {
@@ -165,9 +165,12 @@ export class Roads {
   }
 
   addEdgeFeathers(path, style, width, layer) {
-    const featherWidth = path.hierarchy === 'bridge' ? 0.82 : path.hierarchy === 'dirt' ? 1.72 : 1.18;
+    const featherWidth = path.hierarchy === 'bridge' ? 0.62 : path.hierarchy === 'dirt' ? 1.08 : 0.74;
     const y = 0.098 + layer * 0.006;
     const material = this.vergeMaterial(path);
+    this.roadGroup.userData.edgeFeatherPattern = material.userData.pattern;
+    this.roadGroup.userData.edgeFeatherAlphaMapped = Boolean(material.alphaMap);
+    this.roadGroup.userData.edgeFeatherOpacity = material.opacity;
     for (const side of [-1, 1]) {
       const offset = (width / 2 + style.shoulder + featherWidth * 0.18) * side;
       const feather = new THREE.Mesh(
@@ -282,6 +285,9 @@ export class Roads {
     const material = this.world.materials.roadVerge.clone();
     material.color.setHex(color);
     material.opacity = opacity;
+    material.alphaMap = makeRoadVergeAlphaMap();
+    material.alphaTest = 0.018;
+    material.userData.pattern = 'broken-verge';
     this.materialCache.set(key, material);
     return material;
   }
@@ -441,10 +447,13 @@ export class Roads {
   createRoadDetailMaterial(key, opacity) {
     const cacheKey = `road-detail:${key}:${opacity}`;
     if (this.materialCache.has(cacheKey)) return this.materialCache.get(cacheKey);
+    const isThresholdApron = key === 'transition-apron';
     const material = new THREE.MeshBasicMaterial({
       color: 0xffffff,
       transparent: true,
       opacity,
+      alphaMap: isThresholdApron ? makeThresholdApronAlphaMap() : null,
+      alphaTest: isThresholdApron ? 0.025 : 0,
       depthWrite: false,
       side: THREE.DoubleSide,
       vertexColors: true,
@@ -452,6 +461,7 @@ export class Roads {
       polygonOffsetFactor: -30,
       polygonOffsetUnits: -30
     });
+    material.userData.pattern = isThresholdApron ? 'broken-threshold' : 'flat';
     this.materialCache.set(cacheKey, material);
     return material;
   }
@@ -475,7 +485,12 @@ export class Roads {
         transitionApron: opacityOf(apronMesh),
         transitionEdge: opacityOf(edgeMesh),
         transitionGuide: opacityOf(guideMesh)
-      }
+      },
+      transitionApronPattern: apronMesh?.material?.userData?.pattern || 'missing',
+      transitionApronAlphaMapped: Boolean(apronMesh?.material?.alphaMap),
+      edgeFeatherPattern: this.roadGroup.userData.edgeFeatherPattern || 'missing',
+      edgeFeatherAlphaMapped: Boolean(this.roadGroup.userData.edgeFeatherAlphaMapped),
+      edgeFeatherOpacity: Number((this.roadGroup.userData.edgeFeatherOpacity ?? 0).toFixed(3))
     };
   }
 
@@ -927,4 +942,87 @@ function writeRibbonVertex(vertices, index, x, y, z) {
   vertices[cursor] = x;
   vertices[cursor + 1] = y;
   vertices[cursor + 2] = z;
+}
+
+function makeThresholdApronAlphaMap(size = 96) {
+  const data = new Uint8Array(size * size * 4);
+  for (let y = 0; y < size; y += 1) {
+    for (let x = 0; x < size; x += 1) {
+      const u = (x + 0.5) / size;
+      const v = (y + 0.5) / size;
+      const edgeFade = smoothstep(0.02, 0.16, u)
+        * smoothstep(0.02, 0.16, v)
+        * smoothstep(0.02, 0.16, 1 - u)
+        * smoothstep(0.02, 0.16, 1 - v);
+      const sideWear = Math.max(
+        stripe(u, 0.15, 0.035),
+        stripe(u, 0.85, 0.035)
+      ) * (0.45 + 0.35 * stripe(v, 0.5, 0.34));
+      const crossBars = Math.max(
+        stripe(v, 0.24, 0.035),
+        stripe(v, 0.5, 0.028),
+        stripe(v, 0.76, 0.035)
+      ) * smoothstep(0.12, 0.24, u) * smoothstep(0.12, 0.24, 1 - u);
+      const scuff = (pseudoRoad(x * 17.91 + y * 9.37) > 0.55 ? 0.24 : 0)
+        * stripe(v, 0.5 + (pseudoRoad(x * 2.7) - 0.5) * 0.16, 0.32)
+        * smoothstep(0.18, 0.45, u)
+        * smoothstep(0.18, 0.45, 1 - u);
+      const broken = pseudoRoad(x * 5.19 + y * 13.31) > 0.1 ? 1 : 0.32;
+      const alpha = Math.min(1, (sideWear + crossBars * 0.92 + scuff) * edgeFade * broken);
+      const value = Math.round(alpha * 255);
+      const index = (y * size + x) * 4;
+      data[index] = value;
+      data[index + 1] = value;
+      data[index + 2] = value;
+      data[index + 3] = value;
+    }
+  }
+  const texture = new THREE.DataTexture(data, size, size, THREE.RGBAFormat, THREE.UnsignedByteType);
+  texture.name = 'RoadThresholdApronAlpha';
+  texture.wrapS = THREE.ClampToEdgeWrapping;
+  texture.wrapT = THREE.ClampToEdgeWrapping;
+  texture.minFilter = THREE.LinearFilter;
+  texture.magFilter = THREE.LinearFilter;
+  texture.generateMipmaps = false;
+  texture.needsUpdate = true;
+  return texture;
+}
+
+function makeRoadVergeAlphaMap(width = 96, height = 24) {
+  const data = new Uint8Array(width * height * 4);
+  for (let y = 0; y < height; y += 1) {
+    for (let x = 0; x < width; x += 1) {
+      const u = (x + 0.5) / width;
+      const v = (y + 0.5) / height;
+      const widthFade = smoothstep(0.04, 0.34, v) * smoothstep(0.04, 0.34, 1 - v);
+      const longBreak = 0.48 + 0.52 * stripe((u + pseudoRoad(x * 1.73) * 0.08) % 1, 0.5, 0.36);
+      const grain = pseudoRoad(x * 12.7 + y * 21.9) > 0.18 ? 1 : 0.24;
+      const chip = pseudoRoad(x * 4.1 + y * 8.3) > 0.74 ? 0.48 : 1;
+      const alpha = Math.min(1, widthFade * longBreak * grain * chip);
+      const value = Math.round(alpha * 255);
+      const index = (y * width + x) * 4;
+      data[index] = value;
+      data[index + 1] = value;
+      data[index + 2] = value;
+      data[index + 3] = value;
+    }
+  }
+  const texture = new THREE.DataTexture(data, width, height, THREE.RGBAFormat, THREE.UnsignedByteType);
+  texture.name = 'RoadVergeAlpha';
+  texture.wrapS = THREE.RepeatWrapping;
+  texture.wrapT = THREE.ClampToEdgeWrapping;
+  texture.minFilter = THREE.LinearFilter;
+  texture.magFilter = THREE.LinearFilter;
+  texture.generateMipmaps = false;
+  texture.needsUpdate = true;
+  return texture;
+}
+
+function stripe(value, center, halfWidth) {
+  return 1 - smoothstep(halfWidth * 0.45, halfWidth, Math.abs(value - center));
+}
+
+function smoothstep(edge0, edge1, value) {
+  const t = Math.max(0, Math.min(1, (value - edge0) / (edge1 - edge0)));
+  return t * t * (3 - 2 * t);
 }
