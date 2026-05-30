@@ -1701,6 +1701,7 @@ function assertVerification(result) {
   if ((result.surfaceDetails?.seams || 0) < 40) failures.push(`surface detail probe failed: seams=${result.surfaceDetails?.seams || 0}`);
   if ((result.surfaceDetails?.pavers || 0) < 24) failures.push(`surface detail probe failed: pavers=${result.surfaceDetails?.pavers || 0}`);
   if ((result.surfaceDetails?.accents || 0) < 18) failures.push(`surface detail probe failed: accents=${result.surfaceDetails?.accents || 0}`);
+  if ((result.surfaceDetails?.breakups || 0) < 28) failures.push(`surface breakup probe failed: breakups=${result.surfaceDetails?.breakups || 0}`);
   if ((result.meadowDetails?.patches || 0) < 36) failures.push(`meadow detail probe failed: patches=${result.meadowDetails?.patches || 0}`);
   if ((result.meadowDetails?.colorVariants || 0) < 20) failures.push(`meadow detail probe failed: colorVariants=${result.meadowDetails?.colorVariants || 0}`);
   if ((result.fieldMotifs?.clusters || 0) < 20) failures.push(`field motif probe failed: clusters=${result.fieldMotifs?.clusters || 0}`);
