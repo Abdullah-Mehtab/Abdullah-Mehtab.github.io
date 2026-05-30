@@ -73,6 +73,8 @@ def main():
     create_chevron_bollard_run(mats)
     create_route_story_marker(mats)
     create_route_vista_kit(mats)
+    create_shoreline_tide_pool(mats)
+    create_shoreline_breakwater(mats)
 
     output = Path(args.output)
     output.parent.mkdir(parents=True, exist_ok=True)
@@ -976,6 +978,43 @@ def create_route_vista_kit(mats):
         cube("RouteVista_BollardLamp", group, (x, 1.28, -0.12), (0.34, 0.2, 0.24), mats["amber" if x < 0 else "mint"], bevel=0.018)
     rock_blob("RouteVista_LeftPebble", group, (-0.25, 0.16, 0.36), (0.26, 0.13, 0.18), mats["stone_shadow"], rot=(0.16, 0.2, -0.08))
     rock_blob("RouteVista_RightPebble", group, (2.02, 0.15, 0.26), (0.3, 0.13, 0.2), mats["stone_shadow"], rot=(-0.12, -0.35, 0.06))
+
+
+def create_shoreline_tide_pool(mats):
+    group = root("EnvPolishShorelineTidePool")
+    rock_blob("TidePool_SandShelf", group, (0, 0.08, 0), (2.7, 0.16, 1.35), mats["islet_sand"], rot=(0.0, 0.12, -0.02))
+    cube("TidePool_AquaWater", group, (0.08, 0.19, -0.06), (2.22, 0.055, 0.86), mats["aqua"], rot=(0, -0.08, 0), bevel=0.055)
+    cube("TidePool_FoamLipFront", group, (0.0, 0.25, -0.55), (2.2, 0.055, 0.12), mats["foam"], rot=(0, -0.08, 0), bevel=0.008)
+    cube("TidePool_FoamLipBack", group, (0.18, 0.24, 0.48), (1.7, 0.05, 0.1), mats["foam"], rot=(0, 0.18, 0), bevel=0.008)
+    for index, (x, z, sx, sz, material) in enumerate([
+        (-1.18, -0.18, 0.46, 0.26, "stone_shadow"),
+        (-0.76, 0.52, 0.38, 0.22, "stone"),
+        (1.04, 0.34, 0.5, 0.24, "stone_shadow"),
+        (1.28, -0.42, 0.34, 0.18, "stone"),
+    ]):
+        rock_blob(f"TidePool_EdgeRock_{index}", group, (x, 0.2 + index * 0.01, z), (sx, 0.16, sz), mats[material], rot=(0.1, index * 0.42, -0.06))
+    for index, x in enumerate([-0.92, -0.56, 0.52, 0.88]):
+        cone("TidePool_Reed", group, (x, 0.55 + index * 0.02, 0.72), 0.08, 0.72 + index * 0.05, mats["leaf"], vertices=5, rot=(0.16, x * 0.34, 0.08))
+    for index, x in enumerate([-0.42, 0.24, 0.72]):
+        cube(f"TidePool_Shell_{index}", group, (x, 0.31, -0.36 + index * 0.18), (0.22, 0.08, 0.12), mats["paper" if index % 2 else "foam"], rot=(0, index * 0.4, 0.08), bevel=0.012)
+    cube("TidePool_MintGlint", group, (0.34, 0.31, -0.1), (0.66, 0.035, 0.055), mats["mint"], rot=(0, -0.34, 0), bevel=0.004)
+
+
+def create_shoreline_breakwater(mats):
+    group = root("EnvPolishShorelineBreakwater")
+    cube("Breakwater_SandPad", group, (0, 0.07, 0), (4.6, 0.14, 0.92), mats["islet_sand"], bevel=0.035)
+    cube("Breakwater_FoamRun", group, (0, 0.19, -0.48), (4.35, 0.055, 0.12), mats["foam"], bevel=0.008)
+    cube("Breakwater_BackWetLine", group, (0.12, 0.18, 0.38), (3.6, 0.045, 0.1), mats["aqua"], rot=(0, 0.04, 0), bevel=0.008)
+    for index, x in enumerate([-1.95, -1.15, -0.36, 0.45, 1.28, 2.02]):
+        cube(f"Breakwater_Post_{index}", group, (x, 0.62 + (index % 2) * 0.08, -0.04), (0.18, 1.08 + (index % 3) * 0.12, 0.18), mats["dark"], rot=(0, 0.04 * index, 0), bevel=0.018)
+        cube(f"Breakwater_PostCap_{index}", group, (x, 1.22 + (index % 2) * 0.08, -0.04), (0.32, 0.18, 0.32), mats["wood"], bevel=0.025)
+    cube("Breakwater_RopeTop", group, (0.02, 1.1, -0.12), (4.1, 0.08, 0.08), mats["rope"], rot=(0, -0.03, 0), bevel=0.012)
+    cube("Breakwater_RopeLow", group, (-0.02, 0.76, -0.1), (4.0, 0.07, 0.07), mats["rope"], rot=(0, 0.04, 0), bevel=0.01)
+    for index, x in enumerate([-1.55, -0.72, 0.18, 0.92, 1.68]):
+        cone("Breakwater_Reed", group, (x, 0.48 + index * 0.015, 0.42), 0.07, 0.62 + index * 0.035, mats["leaf"], vertices=5, rot=(0.12, x * 0.28, 0.06))
+    for index, x in enumerate([-1.72, 1.54]):
+        rock_blob(f"Breakwater_Rock_{index}", group, (x, 0.18, -0.62), (0.34, 0.15, 0.2), mats["stone_shadow"], rot=(0.16, x * 0.2, -0.08))
+    cube("Breakwater_WarningTag", group, (-0.14, 1.34, -0.16), (0.62, 0.22, 0.055), mats["amber"], rot=(0, -0.08, 0.04), bevel=0.006)
 
 
 if __name__ == "__main__":
