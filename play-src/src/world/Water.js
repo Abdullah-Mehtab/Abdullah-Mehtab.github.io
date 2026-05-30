@@ -9,6 +9,7 @@ const BOBBING_LIMITS = { low: 5, medium: 10, high: 16 };
 const WAKE_LIMITS = { low: 10, medium: 26, high: 42 };
 const GLINT_LIMITS = { low: 8, medium: 20, high: 34 };
 const WAVE_LANE_LIMITS = { low: 16, medium: 32, high: 52 };
+const SHORE_FLECK_LIMITS = { low: 24, medium: 72, high: 112 };
 const SHORE_WAKE_RADIUS = ISLAND_RADIUS * 0.94;
 const WATER_DRAG_RADIUS = ISLAND_RADIUS * 1.012;
 const WATER_RESPAWN_RADIUS = ISLAND_RADIUS * 1.04;
@@ -21,6 +22,7 @@ export class Water {
     this.bobbingProps = [];
     this.surfaceGlints = [];
     this.waveLanes = [];
+    this.shoreFlecks = [];
     this.splashes = [];
     this.wakes = [];
     this.maxSplashes = SPLASH_LIMITS.medium;
@@ -28,6 +30,7 @@ export class Water {
     this.maxWakes = WAKE_LIMITS.medium;
     this.maxGlints = GLINT_LIMITS.medium;
     this.maxWaveLanes = WAVE_LANE_LIMITS.medium;
+    this.maxShoreFlecks = SHORE_FLECK_LIMITS.medium;
     this.lastSplashAt = -Infinity;
     this.lastSplashAudioAt = -Infinity;
     this.lastWakeAt = -Infinity;
@@ -37,6 +40,7 @@ export class Water {
     this.wakeDummy = new THREE.Object3D();
     this.glintDummy = new THREE.Object3D();
     this.waveLaneDummy = new THREE.Object3D();
+    this.shoreFleckDummy = new THREE.Object3D();
     this.splashGeometry = new THREE.SphereGeometry(0.18, 8, 5);
     this.splashMaterial = new THREE.MeshBasicMaterial({
       color: 0xeafff7,
@@ -67,6 +71,7 @@ export class Water {
 
     this.createShallowShelf();
     this.createShoreFoam();
+    this.createShoreFlecks();
     this.createSurfaceGlints();
     this.createWaveLanes();
     this.createBobbingProps();
@@ -109,6 +114,42 @@ export class Water {
       this.waterMeshes.push(mesh);
       this.foamMeshes.push(mesh);
     }
+  }
+
+  createShoreFlecks() {
+    const capacity = SHORE_FLECK_LIMITS.high;
+    const coastPoints = getIslandCoastPoints(ISLAND_RADIUS, 1.014, 180);
+    const geometry = new THREE.PlaneGeometry(1, 1);
+    geometry.rotateX(-Math.PI / 2);
+    const material = new THREE.MeshBasicMaterial({
+      color: 0xf4fff8,
+      transparent: true,
+      opacity: 0.18,
+      depthWrite: false,
+      blending: THREE.AdditiveBlending,
+      side: THREE.DoubleSide
+    });
+    this.shoreFleckMesh = new THREE.InstancedMesh(geometry, material, capacity);
+    this.shoreFleckMesh.name = 'ToyIslandShoreline_Foam_Flecks';
+    this.shoreFleckMesh.frustumCulled = false;
+    this.shoreFleckMesh.renderOrder = -1;
+    this.world.scene.add(this.shoreFleckMesh);
+
+    for (let i = 0; i < capacity; i += 1) {
+      const angle = (i / capacity) * Math.PI * 2 + (pseudoRandom(i * 2.41) - 0.5) * 0.06;
+      const [x, z] = pointOnCoast(coastPoints, angle, 1.0 + pseudoRandom(i * 3.17) * 0.026);
+      this.shoreFlecks.push({
+        x,
+        z,
+        rotation: angle + Math.PI * 0.5 + (pseudoRandom(i * 5.43) - 0.5) * 0.48,
+        width: 1.8 + pseudoRandom(i * 7.77) * 4.2,
+        depth: 0.08 + pseudoRandom(i * 9.19) * 0.18,
+        phase: i * 0.39,
+        speed: 0.46 + pseudoRandom(i * 11.61) * 0.32,
+        drift: 0.24 + pseudoRandom(i * 13.83) * 0.44
+      });
+    }
+    this.writeShoreFlecks(0);
   }
 
   createSurfaceGlints() {
@@ -259,6 +300,7 @@ export class Water {
     this.maxWakes = WAKE_LIMITS[waterQuality] || WAKE_LIMITS.medium;
     this.maxGlints = GLINT_LIMITS[waterQuality] || GLINT_LIMITS.medium;
     this.maxWaveLanes = WAVE_LANE_LIMITS[waterQuality] || WAVE_LANE_LIMITS.medium;
+    this.maxShoreFlecks = SHORE_FLECK_LIMITS[waterQuality] || SHORE_FLECK_LIMITS.medium;
     this.foamMeshes.forEach((mesh, index) => {
       mesh.visible = waterQuality === 'high' || (waterQuality === 'medium' && index < 2) || index === 0;
     });
@@ -271,6 +313,11 @@ export class Water {
       this.waveLaneMesh.count = this.maxWaveLanes;
       this.waveLaneMesh.visible = this.maxWaveLanes > 0;
       this.waveLaneMesh.instanceMatrix.needsUpdate = true;
+    }
+    if (this.shoreFleckMesh) {
+      this.shoreFleckMesh.count = this.maxShoreFlecks;
+      this.shoreFleckMesh.visible = this.maxShoreFlecks > 0;
+      this.shoreFleckMesh.instanceMatrix.needsUpdate = true;
     }
     this.bobbingProps.forEach((item, index) => {
       item.group.visible = index < this.maxBobbingProps;
@@ -297,6 +344,7 @@ export class Water {
     }
     this.updateSurfaceGlints(elapsed);
     this.updateWaveLanes(elapsed);
+    this.updateShoreFlecks(elapsed);
     this.updateBobbingProps(elapsed);
     this.updateVehicleWaterInteraction(dt, elapsed, vehiclePosition, vehicle);
     this.updateSplashes(dt);
@@ -324,6 +372,12 @@ export class Water {
     if (!this.waveLaneMesh) return;
     this.writeWaveLanes(elapsed);
     this.waveLaneMesh.material.opacity = 0.085 + Math.sin(elapsed * 0.22) * 0.018;
+  }
+
+  updateShoreFlecks(elapsed) {
+    if (!this.shoreFleckMesh) return;
+    this.writeShoreFlecks(elapsed);
+    this.shoreFleckMesh.material.opacity = 0.14 + Math.sin(elapsed * 0.58) * 0.035;
   }
 
   writeSurfaceGlints(elapsed) {
@@ -370,6 +424,33 @@ export class Water {
     }
     this.waveLaneMesh.count = visible;
     this.waveLaneMesh.instanceMatrix.needsUpdate = true;
+  }
+
+  writeShoreFlecks(elapsed) {
+    if (!this.shoreFleckMesh) return;
+    const visible = Math.min(this.maxShoreFlecks, this.shoreFlecks.length);
+    for (let i = 0; i < visible; i += 1) {
+      const fleck = this.shoreFlecks[i];
+      const pulse = Math.sin(elapsed * fleck.speed + fleck.phase);
+      const slide = Math.cos(elapsed * fleck.speed * 0.7 + fleck.phase) * fleck.drift;
+      this.shoreFleckDummy.position.set(
+        fleck.x + Math.cos(fleck.rotation) * slide,
+        WATER_Y + 0.082 + i * 0.00004,
+        fleck.z - Math.sin(fleck.rotation) * slide
+      );
+      this.shoreFleckDummy.rotation.set(0, fleck.rotation + pulse * 0.025, 0);
+      this.shoreFleckDummy.scale.set(fleck.width * (0.82 + pulse * 0.12), 1, fleck.depth * (0.9 + pulse * 0.1));
+      this.shoreFleckDummy.updateMatrix();
+      this.shoreFleckMesh.setMatrixAt(i, this.shoreFleckDummy.matrix);
+    }
+    for (let i = visible; i < this.shoreFlecks.length; i += 1) {
+      this.shoreFleckDummy.position.set(0, -1000, 0);
+      this.shoreFleckDummy.scale.set(0, 0, 0);
+      this.shoreFleckDummy.updateMatrix();
+      this.shoreFleckMesh.setMatrixAt(i, this.shoreFleckDummy.matrix);
+    }
+    this.shoreFleckMesh.count = visible;
+    this.shoreFleckMesh.instanceMatrix.needsUpdate = true;
   }
 
   updateVehicleWaterInteraction(dt, elapsed, vehiclePosition, vehicle) {
@@ -611,6 +692,8 @@ export class Water {
       visibleSurfaceGlints: this.glintMesh?.count || 0,
       waveLanes: this.waveLanes.length,
       visibleWaveLanes: this.waveLaneMesh?.count || 0,
+      shoreFlecks: this.shoreFlecks.length,
+      visibleShoreFlecks: this.shoreFleckMesh?.count || 0,
       bobbingProps: this.bobbingProps.length,
       visibleBobbingProps: this.bobbingProps.filter((item) => item.group.visible).length
     };

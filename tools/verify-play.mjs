@@ -1274,6 +1274,7 @@ async function captureMobile(browser) {
       lifeStats: game.world.setPieces?.getLifeStats?.() || { ...(game.world.setPieces?.lifeStats || {}) },
       setPieceQuality: game.world.setPieces?.getQualityStats?.() || {},
       fieldMotifs: game.world.terrain?.getFieldMotifStats?.() || {},
+      waterStats: game.world.water?.getStats?.() || {},
       atmosphere: game.world.atmosphere?.getStats?.() || {},
       lighting: game.getLightingStats?.() || {},
       calls: render.calls,
@@ -1453,6 +1454,8 @@ function assertVerification(result) {
   if ((result.waterStats?.surfaceGlints || 0) < 30) failures.push(`water detail probe failed: surfaceGlints=${result.waterStats?.surfaceGlints || 0}`);
   if ((result.waterStats?.visibleSurfaceGlints || 0) < 20) failures.push(`water detail probe failed: visibleSurfaceGlints=${result.waterStats?.visibleSurfaceGlints || 0}`);
   if ((result.waterStats?.visibleWaveLanes || 0) < 32) failures.push(`water detail probe failed: visibleWaveLanes=${result.waterStats?.visibleWaveLanes || 0}`);
+  if ((result.waterStats?.shoreFlecks || 0) < 112) failures.push(`water shoreline fleck probe failed: shoreFlecks=${result.waterStats?.shoreFlecks || 0}`);
+  if ((result.waterStats?.visibleShoreFlecks || 0) < 72) failures.push(`water shoreline fleck probe failed: visibleShoreFlecks=${result.waterStats?.visibleShoreFlecks || 0}`);
   if (result.surfaces?.road !== 'road') failures.push(`surface probe failed: road=${result.surfaces?.road}`);
   if (result.surfaces?.grass !== 'grass') failures.push(`surface probe failed: grass=${result.surfaces?.grass}`);
   if (result.surfaces?.sand !== 'sand') failures.push(`surface probe failed: sand=${result.surfaces?.sand}`);
@@ -1621,6 +1624,9 @@ function assertVerification(result) {
   }
   if ((result.mobile.fieldMotifs?.visibleTotal || 0) !== 0) {
     failures.push(`mobile field motif quality probe failed: visibleTotal=${result.mobile.fieldMotifs?.visibleTotal || 0}`);
+  }
+  if ((result.mobile.waterStats?.visibleShoreFlecks || 0) > 24) {
+    failures.push(`mobile water quality probe failed: visibleShoreFlecks=${result.mobile.waterStats?.visibleShoreFlecks || 0}`);
   }
   if (result.mobile.calls > 235) failures.push(`mobile draw-call budget exceeded: ${result.mobile.calls}`);
   if ((result.mobile.lighting?.sun?.position?.[1] || 0) < 30 || (result.mobile.lighting?.sun?.position?.[1] || 0) > 45) {
