@@ -1628,6 +1628,9 @@ function assertVerification(result) {
   if ((result.mobile.waterStats?.visibleShoreFlecks || 0) > 24) {
     failures.push(`mobile water quality probe failed: visibleShoreFlecks=${result.mobile.waterStats?.visibleShoreFlecks || 0}`);
   }
+  if ((result.mobile.waterStats?.visibleSurfaceGlints || 0) !== 0) {
+    failures.push(`mobile water quality probe failed: visibleSurfaceGlints=${result.mobile.waterStats?.visibleSurfaceGlints || 0}`);
+  }
   if (result.mobile.calls > 235) failures.push(`mobile draw-call budget exceeded: ${result.mobile.calls}`);
   if ((result.mobile.lighting?.sun?.position?.[1] || 0) < 30 || (result.mobile.lighting?.sun?.position?.[1] || 0) > 45) {
     failures.push(`mobile lighting probe failed: sun height=${result.mobile.lighting?.sun?.position?.[1]}`);

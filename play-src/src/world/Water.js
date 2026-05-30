@@ -7,7 +7,7 @@ import { getIslandCoastPoints, makeIslandBandGeometry, pseudoRandom, WATER_Y } f
 const SPLASH_LIMITS = { low: 12, medium: 24, high: 40 };
 const BOBBING_LIMITS = { low: 5, medium: 10, high: 16 };
 const WAKE_LIMITS = { low: 10, medium: 26, high: 42 };
-const GLINT_LIMITS = { low: 8, medium: 20, high: 34 };
+const GLINT_LIMITS = { low: 0, medium: 20, high: 34 };
 const WAVE_LANE_LIMITS = { low: 16, medium: 32, high: 52 };
 const SHORE_FLECK_LIMITS = { low: 24, medium: 72, high: 112 };
 const SHORE_WAKE_RADIUS = ISLAND_RADIUS * 0.94;
@@ -295,12 +295,12 @@ export class Water {
   applyQuality() {
     const profile = this.world.getQualityProfile();
     const waterQuality = profile.water || 'medium';
-    this.maxSplashes = SPLASH_LIMITS[waterQuality] || SPLASH_LIMITS.medium;
-    this.maxBobbingProps = BOBBING_LIMITS[waterQuality] || BOBBING_LIMITS.medium;
-    this.maxWakes = WAKE_LIMITS[waterQuality] || WAKE_LIMITS.medium;
-    this.maxGlints = GLINT_LIMITS[waterQuality] || GLINT_LIMITS.medium;
-    this.maxWaveLanes = WAVE_LANE_LIMITS[waterQuality] || WAVE_LANE_LIMITS.medium;
-    this.maxShoreFlecks = SHORE_FLECK_LIMITS[waterQuality] || SHORE_FLECK_LIMITS.medium;
+    this.maxSplashes = SPLASH_LIMITS[waterQuality] ?? SPLASH_LIMITS.medium;
+    this.maxBobbingProps = BOBBING_LIMITS[waterQuality] ?? BOBBING_LIMITS.medium;
+    this.maxWakes = WAKE_LIMITS[waterQuality] ?? WAKE_LIMITS.medium;
+    this.maxGlints = GLINT_LIMITS[waterQuality] ?? GLINT_LIMITS.medium;
+    this.maxWaveLanes = WAVE_LANE_LIMITS[waterQuality] ?? WAVE_LANE_LIMITS.medium;
+    this.maxShoreFlecks = SHORE_FLECK_LIMITS[waterQuality] ?? SHORE_FLECK_LIMITS.medium;
     this.foamMeshes.forEach((mesh, index) => {
       mesh.visible = waterQuality === 'high' || (waterQuality === 'medium' && index < 2) || index === 0;
     });
@@ -363,7 +363,7 @@ export class Water {
   }
 
   updateSurfaceGlints(elapsed) {
-    if (!this.glintMesh) return;
+    if (!this.glintMesh || this.maxGlints <= 0) return;
     this.writeSurfaceGlints(elapsed);
     this.glintMesh.material.opacity = 0.13 + Math.sin(elapsed * 0.34) * 0.035;
   }
