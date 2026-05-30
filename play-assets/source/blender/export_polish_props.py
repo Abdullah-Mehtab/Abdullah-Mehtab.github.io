@@ -72,6 +72,7 @@ def main():
     create_plaza_edge_kit(mats)
     create_chevron_bollard_run(mats)
     create_route_story_marker(mats)
+    create_route_vista_kit(mats)
 
     output = Path(args.output)
     output.parent.mkdir(parents=True, exist_ok=True)
@@ -955,6 +956,26 @@ def create_route_story_marker(mats):
             cone("RouteStoryMarker_PlanterBlade", group, (x + blade, 0.96, 0.48), 0.07, 0.58, mats["leaf"], vertices=5, rot=(0.12, blade * 1.8, 0.04))
     rock_blob("RouteStoryMarker_LeftPebble", group, (-1.78, 0.16, -0.22), (0.25, 0.14, 0.18), mats["stone_shadow"], rot=(0.16, 0.3, -0.08))
     rock_blob("RouteStoryMarker_RightPebble", group, (1.78, 0.15, 0.2), (0.3, 0.13, 0.18), mats["stone_shadow"], rot=(-0.12, -0.35, 0.06))
+
+
+def create_route_vista_kit(mats):
+    group = root("EnvPolishRouteVistaKit")
+    cube("RouteVista_BaseStone", group, (0, 0.11, 0), (4.8, 0.22, 1.2), mats["stone"], bevel=0.055)
+    cube("RouteVista_AsphaltLip", group, (0, 0.28, -0.52), (4.42, 0.12, 0.14), mats["stone_shadow"], bevel=0.012)
+    cube("RouteVista_GardenLip", group, (0, 0.32, 0.48), (4.08, 0.12, 0.16), mats["wood"], bevel=0.012)
+    for index, x in enumerate([-1.8, -0.9, 0, 0.9, 1.8]):
+        cube(f"RouteVista_GlowChip_{index}", group, (x, 0.43, -0.57), (0.34, 0.075, 0.07), [mats["mint"], mats["amber"], mats["screen"], mats["amber"], mats["mint"]][index], bevel=0.004)
+    cube("RouteVista_SignPost", group, (-1.72, 1.22, 0.16), (0.16, 2.12, 0.16), mats["dark"], bevel=0.012)
+    cube("RouteVista_SignPanel", group, (-1.2, 2.08, -0.02), (1.16, 0.52, 0.07), mats["screen"], rot=(0, -0.14, 0), bevel=0.012)
+    cube("RouteVista_SignArrow", group, (-0.83, 2.08, -0.08), (0.34, 0.28, 0.055), mats["foam"], rot=(0, -0.14, -0.16), bevel=0.005)
+    for x in [0.25, 0.95, 1.65]:
+        cone("RouteVista_Reed", group, (x, 0.72 + x * 0.04, 0.38), 0.09, 0.84 + x * 0.08, mats["leaf"], vertices=5, rot=(0.16, x * 0.34, 0.06))
+        cube("RouteVista_Blossom", group, (x + 0.04, 1.14 + x * 0.04, 0.34), (0.14, 0.12, 0.12), [mats["flower"], mats["amber"], mats["purple"]][int(x * 10) % 3], bevel=0.014)
+    for x in [-2.26, 2.26]:
+        cube("RouteVista_EndBollard", group, (x, 0.72, -0.1), (0.22, 0.94, 0.22), mats["dark"], bevel=0.026)
+        cube("RouteVista_BollardLamp", group, (x, 1.28, -0.12), (0.34, 0.2, 0.24), mats["amber" if x < 0 else "mint"], bevel=0.018)
+    rock_blob("RouteVista_LeftPebble", group, (-0.25, 0.16, 0.36), (0.26, 0.13, 0.18), mats["stone_shadow"], rot=(0.16, 0.2, -0.08))
+    rock_blob("RouteVista_RightPebble", group, (2.02, 0.15, 0.26), (0.3, 0.13, 0.2), mats["stone_shadow"], rot=(-0.12, -0.35, 0.06))
 
 
 if __name__ == "__main__":

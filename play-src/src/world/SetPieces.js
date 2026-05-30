@@ -86,6 +86,7 @@ export class SetPieces {
       plazaEdgeKits: 0,
       bollardRuns: 0,
       routeStoryMarkers: 0,
+      vistaKits: 0,
       authoredAssets: 0,
       guideTiles: 0
     };
@@ -1076,6 +1077,28 @@ export class SetPieces {
         rotation - side * 0.28,
         scale,
         'routeStoryMarkers'
+      );
+    }
+
+    const vistaKits = [
+      [-22, 44, 0.12, 0.76, -1, 4.8],
+      [-59, 67, -0.48, 0.72, 1, 5.2],
+      [-78, -25, -0.7, 0.72, -1, 5.0],
+      [58, 43, 1.86, 0.72, 1, 5.0],
+      [90, -92, 1.48, 0.74, -1, 5.1],
+      [-118, 54, -1.04, 0.68, 1, 4.6]
+    ];
+    for (const [x, z, rotation, scale, side, lateral] of vistaKits) {
+      const rightX = Math.cos(rotation);
+      const rightZ = -Math.sin(rotation);
+      this.addRouteCompositionAsset(
+        group,
+        'EnvPolishRouteVistaKit',
+        x + rightX * side * lateral,
+        z + rightZ * side * lateral,
+        rotation - side * 0.18,
+        scale,
+        'vistaKits'
       );
     }
 
