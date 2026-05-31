@@ -224,10 +224,11 @@ body:not(.is-driving) .hud {
 
 .title-screen {
   z-index: 55;
-  place-items: end end;
+  place-items: end center;
+  padding: 0 18px 20px;
   background:
-    radial-gradient(circle at 32% 48%, transparent 0 42%, rgba(3, 8, 13, 0.16) 78%),
-    linear-gradient(90deg, rgba(3, 8, 13, 0.08), rgba(3, 8, 13, 0.28));
+    radial-gradient(circle at 36% 48%, transparent 0 46%, rgba(3, 8, 13, 0.1) 82%),
+    linear-gradient(0deg, rgba(3, 8, 13, 0.42), rgba(3, 8, 13, 0.04) 42%, transparent 72%);
 }
 
 .title-back {
@@ -237,30 +238,34 @@ body:not(.is-driving) .hud {
 }
 
 .title-card {
-  width: min(88vw, 360px);
+  width: min(760px, calc(100vw - 36px));
   border-radius: 8px;
-  padding: clamp(16px, 3vw, 22px);
-  margin: 0 20px 20px 0;
+  padding: clamp(12px, 2vw, 16px);
+  margin: 0;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: end;
+  gap: 14px;
   animation: title-rise 700ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
   background:
-    linear-gradient(135deg, rgba(124, 255, 178, 0.1), transparent 46%),
-    rgba(4, 10, 17, 0.74);
+    linear-gradient(90deg, rgba(124, 255, 178, 0.13), transparent 34%),
+    rgba(4, 10, 17, 0.68);
 }
 
 .title-card h1 {
-  max-width: 12ch;
-  margin: 8px 0 0;
-  font-size: clamp(1.9rem, 4.4vw, 2.65rem);
+  max-width: none;
+  margin: 5px 0 0;
+  font-size: clamp(1.7rem, 3.2vw, 2.25rem);
   line-height: 1;
   letter-spacing: 0;
 }
 
 .title-card p {
-  max-width: 36ch;
-  margin: 10px 0 0;
+  max-width: 48ch;
+  margin: 6px 0 0;
   color: var(--muted);
-  font-size: clamp(0.92rem, 1.5vw, 1rem);
-  line-height: 1.48;
+  font-size: clamp(0.86rem, 1.25vw, 0.96rem);
+  line-height: 1.38;
 }
 
 .title-actions,
@@ -268,6 +273,14 @@ body:not(.is-driving) .hud {
   display: flex;
   flex-wrap: wrap;
   gap: 10px;
+}
+
+.title-actions {
+  justify-content: flex-end;
+  margin-top: 0;
+}
+
+.panel-actions {
   margin-top: 18px;
 }
 
@@ -1406,11 +1419,14 @@ body:has(.map-modal:not([hidden])) .debug-readout {
     width: min(92vw, 360px);
     margin: 0;
     padding: 16px;
+    grid-template-columns: 1fr;
+    align-items: start;
   }
 
   .title-actions {
     gap: 8px;
     margin-top: 14px;
+    justify-content: flex-start;
   }
 
   .title-actions a,
