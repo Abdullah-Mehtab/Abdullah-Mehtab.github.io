@@ -1460,10 +1460,13 @@ async function captureMobile(browser) {
   await page.evaluate(() => window.__portfolioDrive.start());
   await delay(700);
   await page.screenshot({ path: join(outputDir, 'mobile-start.png'), fullPage: true });
-  const sample = await page.evaluate(() => {
+  const sample = await page.evaluate(async () => {
     const game = window.__portfolioDrive.game;
+    game.renderer.info.reset();
+    await new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve)));
     const render = game.renderer.info.render;
     return {
+      freshRenderSample: true,
       canvasSample: window.__portfolioDrive.sampleCanvas(),
       quality: game.world.landscapeQuality,
       savedQuality: localStorage.getItem('portfolio-drive-landscape-quality'),
@@ -2011,6 +2014,7 @@ function assertVerification(result) {
   const missingStunt = (result.authoredStuntAssets || []).filter((asset) => !asset.template || !asset.placed);
   if (missingStunt.length) failures.push(`authored stunt assets missing: ${missingStunt.map((asset) => asset.name).join(', ')}`);
   if (!result.mobile.ready || result.mobile.canvasSample <= 0) failures.push('mobile canvas did not render');
+  if (result.mobile.freshRenderSample !== true) failures.push('mobile fresh render sample missing');
   if (result.mobile.quality !== 'low') failures.push(`mobile quality tier mismatch: ${result.mobile.quality}`);
   if (result.mobile.savedQuality !== null) failures.push(`mobile default quality should not write saved preference: ${result.mobile.savedQuality}`);
   if (result.mobile.triangles > 180000) failures.push(`mobile triangle budget exceeded: ${result.mobile.triangles}`);
