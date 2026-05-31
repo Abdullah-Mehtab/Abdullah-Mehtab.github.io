@@ -398,6 +398,7 @@ export class SetPieces {
     for (const [dx, dz, sx, sz, rot] of pavers) {
       this.box(group, zone.position[0] + dx, 0.13, zone.position[2] + dz, sx, 0.08, sz, this.world.materials.paleStone, rot, 'StartPaver');
     }
+    this.startLaunchCueAssets(group, zone);
 
     this.addLamp(group, zone.position[0] - 11.4, zone.position[2] - 10.5, 0xffc36a, 3.1, 'StartLampLeft');
     this.addLamp(group, zone.position[0] + 14.2, zone.position[2] - 9.4, 0x7cffb2, 3.0, 'StartLampRight');
@@ -426,6 +427,14 @@ export class SetPieces {
 
     mergeStaticMeshesInGroup(group, { namePrefix: 'SETPIECE_start' });
     this.world.scene.add(group);
+  }
+
+  startLaunchCueAssets(group, zone) {
+    const centerX = zone.position[0] + 2;
+    const centerZ = zone.position[2] - 10.2;
+    this.addPolishAsset(group, 'EnvPolishChevronBollardRun', centerX - 5.7, centerZ - 1.8, Math.PI * 0.5, 0.92);
+    this.addPolishAsset(group, 'EnvPolishChevronBollardRun', centerX + 5.7, centerZ - 1.8, Math.PI * 0.5, 0.92);
+    this.arrowMarker(group, centerX, zone.position[2] - 11.2, 0, 0xffc36a, 'StartDriveGroundCue');
   }
 
   createEducationPlaza() {
