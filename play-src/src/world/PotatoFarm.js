@@ -10,6 +10,13 @@ export class PotatoFarm {
     this.counterTexture = null;
     this.counterMaterial = null;
     this.count = 0;
+    this.center = new THREE.Vector3();
+    this.dressingRadius = 0;
+    this.stats = {
+      visible: true,
+      dressingRadius: 0,
+      cullRadius: 0
+    };
   }
 
   build() {
@@ -20,11 +27,15 @@ export class PotatoFarm {
     this.group.name = 'ZONE_potato_voxel_farm';
     this.group.position.copy(zone.position);
     this.group.rotation.y = zone.rotation || 0;
+    this.center.copy(zone.position);
+    this.dressingRadius = zone.radius + 14;
+    this.stats.dressingRadius = this.dressingRadius;
     this.world.scene.add(this.group);
 
     this.addField();
     this.addCounter();
     this.addSummonPad();
+    this.updateVisibility();
   }
 
   addField() {
@@ -151,7 +162,8 @@ export class PotatoFarm {
     return potato;
   }
 
-  update(dt) {
+  update(dt, vehiclePosition) {
+    this.updateVisibility(vehiclePosition);
     for (let i = this.world.potatoes.length - 1; i >= 0; i -= 1) {
       const potato = this.world.potatoes[i];
       potato.life -= dt;
@@ -162,6 +174,25 @@ export class PotatoFarm {
         this.world.potatoes.splice(i, 1);
       }
     }
+  }
+
+  updateVisibility(origin) {
+    if (!this.group) return;
+    const profile = this.world.getQualityProfile();
+    const radius = profile.farmDressingRadius || profile.districtDressingRadius || 0;
+    let visible = true;
+    if (origin && Number.isFinite(origin.x) && Number.isFinite(origin.z) && radius > 0) {
+      const edgeDistance = Math.hypot(origin.x - this.center.x, origin.z - this.center.z) - this.dressingRadius;
+      const threshold = this.group.visible ? radius + 18 : radius;
+      visible = edgeDistance <= threshold;
+    }
+    this.group.visible = visible;
+    this.stats.visible = visible;
+    this.stats.cullRadius = radius;
+  }
+
+  getStats() {
+    return { ...this.stats };
   }
 }
 

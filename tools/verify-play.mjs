@@ -1481,6 +1481,7 @@ async function captureMobile(browser) {
       waterStats: game.world.water?.getStats?.() || {},
       atmosphere: game.world.atmosphere?.getStats?.() || {},
       stuntPark: game.world.stuntPark?.getStats?.() || {},
+      potatoFarm: game.world.potatoFarm?.getStats?.() || {},
       lighting: game.getLightingStats?.() || {},
       sceneObjects: countVisibleScene(game.scene),
       renderProfile: profileVisibleScene(game.scene),
@@ -2036,6 +2037,12 @@ function assertVerification(result) {
   }
   if (result.mobile.renderProfile?.some((bucket) => bucket.name === 'STUNT_Yard_Dressing')) {
     failures.push('mobile stunt yard cull probe failed: STUNT_Yard_Dressing remained in render profile');
+  }
+  if (result.mobile.potatoFarm?.visible !== false) {
+    failures.push(`mobile potato farm cull probe failed: visible=${result.mobile.potatoFarm?.visible}`);
+  }
+  if (result.mobile.renderProfile?.some((bucket) => bucket.name === 'ZONE_potato_voxel_farm')) {
+    failures.push('mobile potato farm cull probe failed: ZONE_potato_voxel_farm remained in render profile');
   }
   if ((result.mobile.waterStats?.visibleShoreFlecks || 0) > 24) {
     failures.push(`mobile water quality probe failed: visibleShoreFlecks=${result.mobile.waterStats?.visibleShoreFlecks || 0}`);
