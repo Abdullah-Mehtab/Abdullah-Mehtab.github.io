@@ -413,7 +413,7 @@ export class World {
   update(dt, elapsed, vehiclePosition, vehicle) {
     this.water.update(dt, elapsed, vehiclePosition, vehicle);
     this.foliage.update(dt, elapsed, vehiclePosition);
-    this.potatoFarm.update(dt);
+    this.potatoFarm.update(dt, vehiclePosition);
     this.zonesSystem.update(vehiclePosition);
     this.updateCircuitFeedback(dt);
     this.stuntPark.update(dt, elapsed, vehiclePosition);
