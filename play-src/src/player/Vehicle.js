@@ -257,6 +257,7 @@ export class Vehicle {
       namePrefix: 'VehicleBody_batch',
       shouldSkip: shouldKeepVehicleMeshSeparate
     });
+    mergeVehicleWheelAssemblies(model);
     model.traverse((object) => {
       if (object.isMesh && object.name.startsWith('VehicleBody_batch')) {
         object.castShadow = true;
@@ -855,6 +856,19 @@ function objectHasAncestorPrefix(object, prefix) {
     current = current.parent;
   }
   return false;
+}
+
+function mergeVehicleWheelAssemblies(model) {
+  const wheelRoots = [];
+  model.traverse((object) => {
+    if ((object.name || '').startsWith('WheelSpin')) wheelRoots.push(object);
+  });
+  for (const wheelRoot of wheelRoots) {
+    mergeStaticMeshesInGroup(wheelRoot, {
+      namePrefix: `${wheelRoot.name}_batch`,
+      shouldSkip: (object) => object.material?.transparent === true
+    });
+  }
 }
 
 function prepareVehicleMaterial(material, cache, objectName = '') {

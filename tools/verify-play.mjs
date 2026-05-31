@@ -1485,6 +1485,10 @@ async function captureMobile(browser) {
       lighting: game.getLightingStats?.() || {},
       sceneObjects: countVisibleScene(game.scene),
       renderProfile: profileVisibleScene(game.scene),
+      frustumSceneObjects: countCameraScene(game.scene, game.camera),
+      frustumRenderProfile: profileCameraScene(game.scene, game.camera),
+      roadFrustumProfile: profileCameraScene(game.world.roads?.roadGroup, game.camera),
+      vehicleFrustumProfile: profileCameraScene(game.scene.getObjectByName('Vehicle'), game.camera),
       calls: render.calls,
       triangles: render.triangles
     };
@@ -1525,6 +1529,52 @@ async function captureMobile(browser) {
         .slice(0, 10);
     }
 
+    function countCameraScene(root, camera) {
+      const planes = makeFrustumPlanes(camera);
+      const counts = {
+        meshes: 0,
+        instancedMeshes: 0,
+        lights: 0,
+        visibleObjects: 0
+      };
+      root.updateMatrixWorld(true);
+      root.traverse((object) => {
+        if (!isEffectivelyVisible(object)) return;
+        if (object.isLight) {
+          counts.visibleObjects += 1;
+          counts.lights += 1;
+          return;
+        }
+        if (!object.isMesh || !intersectsFrustum(object, planes)) return;
+        counts.visibleObjects += 1;
+        counts.meshes += 1;
+        if (object.isInstancedMesh) counts.instancedMeshes += 1;
+      });
+      return counts;
+    }
+
+    function profileCameraScene(root, camera) {
+      if (!root) return [];
+      const planes = makeFrustumPlanes(camera);
+      const buckets = new Map();
+      root.updateMatrixWorld(true);
+      root.traverse((object) => {
+        if (!object.isMesh || !isEffectivelyVisible(object) || !intersectsFrustum(object, planes)) return;
+        const bucketName = getRenderBucketName(object, root);
+        if (!buckets.has(bucketName)) {
+          buckets.set(bucketName, { name: bucketName, meshes: 0, materials: 0, triangles: 0 });
+        }
+        const bucket = buckets.get(bucketName);
+        bucket.meshes += 1;
+        bucket.materials += Array.isArray(object.material) ? object.material.length : 1;
+        bucket.triangles += estimateTriangles(object);
+      });
+      return [...buckets.values()]
+        .map((bucket) => ({ ...bucket, triangles: Math.round(bucket.triangles) }))
+        .sort((a, b) => b.materials - a.materials)
+        .slice(0, 10);
+    }
+
     function isEffectivelyVisible(object) {
       let current = object;
       while (current) {
@@ -1538,6 +1588,56 @@ async function captureMobile(browser) {
       let current = object;
       while (current.parent && current.parent !== root) current = current.parent;
       return current.name || object.name || 'unnamed-root';
+    }
+
+    function makeFrustumPlanes(camera) {
+      camera.updateMatrixWorld(true);
+      camera.updateProjectionMatrix?.();
+      const Matrix4 = camera.projectionMatrix.constructor;
+      const matrix = new Matrix4().multiplyMatrices(camera.projectionMatrix, camera.matrixWorldInverse);
+      const me = matrix.elements;
+      return [
+        normalizePlane(me[3] - me[0], me[7] - me[4], me[11] - me[8], me[15] - me[12]),
+        normalizePlane(me[3] + me[0], me[7] + me[4], me[11] + me[8], me[15] + me[12]),
+        normalizePlane(me[3] + me[1], me[7] + me[5], me[11] + me[9], me[15] + me[13]),
+        normalizePlane(me[3] - me[1], me[7] - me[5], me[11] - me[9], me[15] - me[13]),
+        normalizePlane(me[3] - me[2], me[7] - me[6], me[11] - me[10], me[15] - me[14]),
+        normalizePlane(me[3] + me[2], me[7] + me[6], me[11] + me[10], me[15] + me[14])
+      ];
+    }
+
+    function normalizePlane(x, y, z, constant) {
+      const length = Math.hypot(x, y, z) || 1;
+      return { x: x / length, y: y / length, z: z / length, constant: constant / length };
+    }
+
+    function intersectsFrustum(object, planes) {
+      const sphere = getWorldSphere(object);
+      for (const plane of planes) {
+        const distance = plane.x * sphere.center.x + plane.y * sphere.center.y + plane.z * sphere.center.z + plane.constant;
+        if (distance < -sphere.radius) return false;
+      }
+      return true;
+    }
+
+    function getWorldSphere(object) {
+      const Vector3 = object.position.constructor;
+      let sphere = null;
+      if (object.isInstancedMesh && object.computeBoundingSphere) {
+        object.computeBoundingSphere();
+        sphere = object.boundingSphere;
+      }
+      if (!sphere) {
+        object.geometry?.computeBoundingSphere?.();
+        sphere = object.geometry?.boundingSphere;
+      }
+      const center = sphere?.center?.clone ? sphere.center.clone() : new Vector3();
+      center.applyMatrix4(object.matrixWorld);
+      const scale = object.getWorldScale(new Vector3());
+      return {
+        center,
+        radius: (sphere?.radius || 0) * Math.max(Math.abs(scale.x), Math.abs(scale.y), Math.abs(scale.z), 1)
+      };
     }
 
     function estimateTriangles(object) {
@@ -2032,6 +2132,15 @@ function assertVerification(result) {
   if (!Array.isArray(result.mobile.renderProfile) || result.mobile.renderProfile.length < 5) {
     failures.push('mobile render profile missing');
   }
+  if (!Array.isArray(result.mobile.frustumRenderProfile) || result.mobile.frustumRenderProfile.length < 5) {
+    failures.push('mobile frustum render profile missing');
+  }
+  if (!Array.isArray(result.mobile.roadFrustumProfile) || result.mobile.roadFrustumProfile.length < 3) {
+    failures.push('mobile road frustum profile missing');
+  }
+  if (!Array.isArray(result.mobile.vehicleFrustumProfile) || result.mobile.vehicleFrustumProfile.length < 3) {
+    failures.push('mobile vehicle frustum profile missing');
+  }
   if (result.mobile.stuntPark?.yardDressingVisible !== false) {
     failures.push(`mobile stunt yard cull probe failed: yardDressingVisible=${result.mobile.stuntPark?.yardDressingVisible}`);
   }
@@ -2059,7 +2168,7 @@ function assertVerification(result) {
   if ((result.mobile.roadSurfaceDetails?.visibleDetailMeshes || 0) !== 0) {
     failures.push(`mobile road detail quality probe failed: visibleDetailMeshes=${result.mobile.roadSurfaceDetails?.visibleDetailMeshes || 0}`);
   }
-  if (result.mobile.calls > 230) failures.push(`mobile draw-call budget exceeded: ${result.mobile.calls}`);
+  if (result.mobile.calls > 220) failures.push(`mobile draw-call budget exceeded: ${result.mobile.calls}`);
   if ((result.mobile.lighting?.sun?.position?.[1] || 0) < 30 || (result.mobile.lighting?.sun?.position?.[1] || 0) > 45) {
     failures.push(`mobile lighting probe failed: sun height=${result.mobile.lighting?.sun?.position?.[1]}`);
   }
