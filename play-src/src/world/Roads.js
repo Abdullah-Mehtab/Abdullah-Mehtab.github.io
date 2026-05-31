@@ -75,6 +75,16 @@ export class Roads {
 
   applyQuality() {
     const showSurfaceDetails = this.world.landscapeQuality !== 'low';
+    const simplifyRoadLayers = this.world.landscapeQuality === 'low';
+    for (const mesh of this.roadGroup.children) {
+      if (!mesh.isMesh) continue;
+      if (isLowTierRoadLayer(mesh)) {
+        mesh.visible = !simplifyRoadLayers;
+      }
+      if (mesh.name === 'ROAD_Reflector_Studs') {
+        mesh.visible = !simplifyRoadLayers;
+      }
+    }
     for (const mesh of this.detailMeshes) {
       mesh.visible = showSurfaceDetails;
     }
@@ -493,8 +503,10 @@ export class Roads {
     const edgeMesh = this.roadGroup.getObjectByName('ROAD_Transition_Edge_Bands');
     const guideMesh = this.roadGroup.getObjectByName('ROAD_Transition_Guide_Bars');
     const opacityOf = (mesh) => Number((mesh?.material?.opacity ?? 0).toFixed(3));
+    const lowTierLayers = this.getLowTierLayerStats();
     return {
       ...this.detailStats,
+      ...lowTierLayers,
       visibleWearStrips: wearMesh?.visible ? wearMesh.count || 0 : 0,
       visibleLaneSeams: seamMesh?.visible ? seamMesh.count || 0 : 0,
       visibleTransitionMeshes: this.detailMeshes.filter((mesh) => mesh.visible && mesh.name.startsWith('ROAD_Transition_')).length,
@@ -512,6 +524,27 @@ export class Roads {
       edgeFeatherAlphaMapped: Boolean(this.roadGroup.userData.edgeFeatherAlphaMapped),
       edgeFeatherOpacity: Number((this.roadGroup.userData.edgeFeatherOpacity ?? 0).toFixed(3))
     };
+  }
+
+  getLowTierLayerStats() {
+    const stats = {
+      hiddenLowTierRoadBatches: 0,
+      visibleLowTierRoadBatches: 0,
+      hiddenReflectorStuds: 0,
+      visibleReflectorStuds: 0
+    };
+    for (const mesh of this.roadGroup.children) {
+      if (!mesh.isMesh) continue;
+      if (isLowTierRoadLayer(mesh)) {
+        if (mesh.visible) stats.visibleLowTierRoadBatches += 1;
+        else stats.hiddenLowTierRoadBatches += 1;
+      }
+      if (mesh.name === 'ROAD_Reflector_Studs') {
+        if (mesh.visible) stats.visibleReflectorStuds += mesh.count || 1;
+        else stats.hiddenReflectorStuds += mesh.count || 1;
+      }
+    }
+    return stats;
   }
 
   createGuidanceMarkers() {
@@ -658,6 +691,10 @@ function roadMarkerColor(path) {
   if (path.hierarchy === 'bridge') return 0x79ffc5;
   if (path.hierarchy === 'plaza') return 0xf3e7bd;
   return (ROAD_STYLE[path.hierarchy] || ROAD_STYLE.street).line;
+}
+
+function isLowTierRoadLayer(mesh) {
+  return /^ROAD_batch_.*_(curb|verge|lane_edge|center_mark)_\d+$/.test(mesh.name || '');
 }
 
 function roadLaneEdgeColor(path) {

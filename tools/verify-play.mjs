@@ -2168,7 +2168,16 @@ function assertVerification(result) {
   if ((result.mobile.roadSurfaceDetails?.visibleDetailMeshes || 0) !== 0) {
     failures.push(`mobile road detail quality probe failed: visibleDetailMeshes=${result.mobile.roadSurfaceDetails?.visibleDetailMeshes || 0}`);
   }
-  if (result.mobile.calls > 220) failures.push(`mobile draw-call budget exceeded: ${result.mobile.calls}`);
+  if ((result.mobile.roadSurfaceDetails?.hiddenLowTierRoadBatches || 0) < 12) {
+    failures.push(`mobile road layer quality probe failed: hiddenLowTierRoadBatches=${result.mobile.roadSurfaceDetails?.hiddenLowTierRoadBatches || 0}`);
+  }
+  if ((result.mobile.roadSurfaceDetails?.visibleLowTierRoadBatches || 0) !== 0) {
+    failures.push(`mobile road layer quality probe failed: visibleLowTierRoadBatches=${result.mobile.roadSurfaceDetails?.visibleLowTierRoadBatches || 0}`);
+  }
+  if ((result.mobile.roadSurfaceDetails?.visibleReflectorStuds || 0) !== 0) {
+    failures.push(`mobile road marker quality probe failed: visibleReflectorStuds=${result.mobile.roadSurfaceDetails?.visibleReflectorStuds || 0}`);
+  }
+  if (result.mobile.calls > 205) failures.push(`mobile draw-call budget exceeded: ${result.mobile.calls}`);
   if ((result.mobile.lighting?.sun?.position?.[1] || 0) < 30 || (result.mobile.lighting?.sun?.position?.[1] || 0) > 45) {
     failures.push(`mobile lighting probe failed: sun height=${result.mobile.lighting?.sun?.position?.[1]}`);
   }
