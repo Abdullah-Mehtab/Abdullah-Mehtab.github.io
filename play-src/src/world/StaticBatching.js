@@ -7,7 +7,8 @@ export function mergeStaticMeshesInGroup(group, {
   namePrefix = 'StaticBatch',
   shouldSkip = () => false,
   pruneEmpty = true,
-  cellSize = 0
+  cellSize = 0,
+  getBatchLabel = null
 } = {}) {
   group.updateMatrixWorld(true);
   const inverseGroupMatrix = new THREE.Matrix4().copy(group.matrixWorld).invert();
@@ -23,14 +24,18 @@ export function mergeStaticMeshesInGroup(group, {
     const cell = spatialSignature(geometry, cellSize);
     cells.add(cell);
     const key = `${materialSignature(object.material)}:${geometrySignature(geometry)}:${object.renderOrder || 0}:${cell}`;
+    const label = sanitizeBatchLabel(getBatchLabel?.(object) || object.userData?.batchLabel || '');
     if (!buckets.has(key)) {
       buckets.set(key, {
         material: object.material,
         renderOrder: object.renderOrder || 0,
-        geometries: []
+        geometries: [],
+        labels: new Map()
       });
     }
-    buckets.get(key).geometries.push(geometry);
+    const bucket = buckets.get(key);
+    bucket.geometries.push(geometry);
+    if (label) bucket.labels.set(label, (bucket.labels.get(label) || 0) + 1);
     removable.push(object);
   });
 
@@ -41,7 +46,8 @@ export function mergeStaticMeshesInGroup(group, {
     const merged = entry.geometries.length === 1 ? entry.geometries[0] : mergeGeometries(entry.geometries, false);
     if (!merged) continue;
     const mesh = new THREE.Mesh(merged, entry.material);
-    mesh.name = `${namePrefix}_${batchIndex}`;
+    const label = strongestBatchLabel(entry.labels);
+    mesh.name = label ? `${namePrefix}_${label}_${batchIndex}` : `${namePrefix}_${batchIndex}`;
     mesh.renderOrder = entry.renderOrder;
     mesh.castShadow = false;
     mesh.receiveShadow = true;
@@ -58,6 +64,21 @@ export function mergeStaticMeshesInGroup(group, {
   };
 
   return batchIndex;
+}
+
+function strongestBatchLabel(labels) {
+  let best = '';
+  let bestCount = 0;
+  for (const [label, count] of labels.entries()) {
+    if (count <= bestCount) continue;
+    best = label;
+    bestCount = count;
+  }
+  return best;
+}
+
+function sanitizeBatchLabel(label) {
+  return String(label || '').replace(/[^a-z0-9_]+/gi, '_').replace(/^_+|_+$/g, '').slice(0, 64);
 }
 
 function pruneEmptyDescendants(root) {

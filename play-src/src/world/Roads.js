@@ -63,7 +63,10 @@ export class Roads {
       this.addPath(path);
     }
     this.addJunctionPatches();
-    mergeStaticMeshesInGroup(this.roadGroup, { namePrefix: 'ROAD_batch' });
+    mergeStaticMeshesInGroup(this.roadGroup, {
+      namePrefix: 'ROAD_batch',
+      getBatchLabel: (object) => object.userData?.batchLabel
+    });
     this.createRoadSurfaceDetails();
     this.createRouteThresholds();
     this.createGuidanceMarkers();
@@ -102,6 +105,7 @@ export class Roads {
       this.offsetMaterial(edgeMaterial, 1 + layer)
     );
     shoulder.name = `ROAD_${path.id}_shoulder`;
+    this.tagRoadMesh(shoulder, path, 'shoulder');
     shoulder.renderOrder = 1 + layer;
     shoulder.receiveShadow = true;
     this.roadGroup.add(shoulder);
@@ -111,6 +115,7 @@ export class Roads {
       this.offsetMaterial(surfaceMaterial, 3 + layer)
     );
     surface.name = `ROAD_${path.id}_surface`;
+    this.tagRoadMesh(surface, path, 'surface');
     surface.renderOrder = 3 + layer;
     surface.receiveShadow = true;
     this.roadGroup.add(surface);
@@ -122,6 +127,7 @@ export class Roads {
           this.offsetMaterial(this.world.materials.roadCurb, 6 + layer)
         );
         curb.name = `ROAD_${path.id}_curb`;
+        this.tagRoadMesh(curb, path, 'curb');
         curb.renderOrder = 6 + layer;
         this.roadGroup.add(curb);
       }
@@ -141,6 +147,8 @@ export class Roads {
       const tangent = curve.getTangentAt(t);
       const rotation = Math.atan2(tangent.x, tangent.z);
       const dash = this.createRoadPlane(0.28, path.hierarchy === 'stunt' ? 2.65 : 2.35, lineMaterial, 8 + layer, rotation);
+      dash.name = `ROAD_${path.id}_center_mark`;
+      this.tagRoadMesh(dash, path, 'center_mark');
       dash.position.set(point.x, surfaceY + 0.034, point.z);
       this.roadGroup.add(dash);
     }
@@ -158,6 +166,7 @@ export class Roads {
         material
       );
       line.name = `ROAD_${path.id}_lane_edge_${side > 0 ? 'right' : 'left'}`;
+      this.tagRoadMesh(line, path, 'lane_edge');
       line.renderOrder = 9 + layer;
       this.roadGroup.add(line);
       this.roadGroup.userData.laneEdgeLineCount += 1;
@@ -178,6 +187,7 @@ export class Roads {
         material
       );
       feather.name = `ROAD_${path.id}_verge_${side > 0 ? 'right' : 'left'}`;
+      this.tagRoadMesh(feather, path, 'verge');
       feather.renderOrder = 5 + layer;
       this.roadGroup.add(feather);
       this.roadGroup.userData.edgeFeatherCount += 1;
@@ -217,12 +227,14 @@ export class Roads {
       const surfaceMaterial = this.roadSurfaceMaterial(dominant);
       const shoulder = new THREE.Mesh(shoulderGeometry, this.cleanCapMaterial(edgeMaterial));
       shoulder.name = `ROAD_JunctionBlend_${patches}_shoulder`;
+      this.tagRoadMesh(shoulder, dominant, 'junction_shoulder');
       shoulder.receiveShadow = false;
       shoulder.renderOrder = 10 + layer;
       this.roadGroup.add(shoulder);
 
       const surface = new THREE.Mesh(surfaceGeometry, this.cleanCapMaterial(surfaceMaterial));
       surface.name = `ROAD_JunctionBlend_${patches}_surface`;
+      this.tagRoadMesh(surface, dominant, 'junction_surface');
       surface.receiveShadow = false;
       surface.renderOrder = 12 + layer;
       this.roadGroup.add(surface);
@@ -237,6 +249,14 @@ export class Roads {
     const roadMaterial = this.offsetMaterial(material, renderOrder);
     const mesh = new THREE.Mesh(createOrientedPlaneGeometry(width, length, rotation), roadMaterial);
     mesh.renderOrder = renderOrder;
+    return mesh;
+  }
+
+  tagRoadMesh(mesh, path, part) {
+    mesh.userData.batchLabel = `${path.hierarchy}_${part}`;
+    mesh.userData.roadPathId = path.id;
+    mesh.userData.roadHierarchy = path.hierarchy;
+    mesh.userData.roadPart = part;
     return mesh;
   }
 
