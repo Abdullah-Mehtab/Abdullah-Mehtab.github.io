@@ -1477,6 +1477,7 @@ async function captureMobile(browser) {
       roadSurfaceDetails: game.world.roads?.getDetailStats?.() || {},
       waterStats: game.world.water?.getStats?.() || {},
       atmosphere: game.world.atmosphere?.getStats?.() || {},
+      stuntPark: game.world.stuntPark?.getStats?.() || {},
       lighting: game.getLightingStats?.() || {},
       sceneObjects: countVisibleScene(game.scene),
       renderProfile: profileVisibleScene(game.scene),
@@ -2025,6 +2026,12 @@ function assertVerification(result) {
   }
   if (!Array.isArray(result.mobile.renderProfile) || result.mobile.renderProfile.length < 5) {
     failures.push('mobile render profile missing');
+  }
+  if (result.mobile.stuntPark?.yardDressingVisible !== false) {
+    failures.push(`mobile stunt yard cull probe failed: yardDressingVisible=${result.mobile.stuntPark?.yardDressingVisible}`);
+  }
+  if (result.mobile.renderProfile?.some((bucket) => bucket.name === 'STUNT_Yard_Dressing')) {
+    failures.push('mobile stunt yard cull probe failed: STUNT_Yard_Dressing remained in render profile');
   }
   if ((result.mobile.waterStats?.visibleShoreFlecks || 0) > 24) {
     failures.push(`mobile water quality probe failed: visibleShoreFlecks=${result.mobile.waterStats?.visibleShoreFlecks || 0}`);

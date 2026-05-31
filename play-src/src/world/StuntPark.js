@@ -21,6 +21,9 @@ export class StuntPark {
     this.circuitTrackGroup = null;
     this.circuitTrackDecorGroup = null;
     this.circuitCheckpointTrailGroup = null;
+    this.yardDressingGroup = null;
+    this.yardDressingCenter = new THREE.Vector3();
+    this.yardDressingRadius = 0;
     this.circuitRingMesh = null;
     this.circuitArrowMesh = null;
     this.circuitMarkerColor = new THREE.Color();
@@ -36,7 +39,8 @@ export class StuntPark {
     this.createCircuitCheckpointTrail();
   }
 
-  update(dt, elapsed) {
+  update(dt, elapsed, vehiclePosition) {
+    this.updateYardDressingVisibility(vehiclePosition);
     this.updateCircuitMarkers(elapsed);
   }
 
@@ -47,6 +51,7 @@ export class StuntPark {
     if (this.circuitTrackDecorGroup) {
       this.circuitTrackDecorGroup.visible = this.world.landscapeQuality !== 'low';
     }
+    this.updateYardDressingVisibility();
   }
 
   createStats() {
@@ -72,7 +77,9 @@ export class StuntPark {
       activeCircuitTarget: 0,
       circuitMotionSamples: 0,
       checkpointPulseSamples: 0,
-      maxCheckpointPulse: 0
+      maxCheckpointPulse: 0,
+      yardDressingVisible: true,
+      yardDressingRadius: 0
     };
   }
 
@@ -85,8 +92,12 @@ export class StuntPark {
     if (!zone) return;
     const group = new THREE.Group();
     group.name = 'STUNT_Yard_Dressing';
+    this.yardDressingGroup = group;
     const baseX = zone.position[0];
     const baseZ = zone.position[2];
+    this.yardDressingCenter.set(baseX, 0, baseZ);
+    this.yardDressingRadius = zone.radius + 32;
+    this.stats.yardDressingRadius = this.yardDressingRadius;
     const ramps = stuntRampLayout(baseX, baseZ);
 
     this.addPaintedInfieldIslands(group, baseX, baseZ);
@@ -145,7 +156,23 @@ export class StuntPark {
     }
 
     mergeStaticMeshesInGroup(group, { namePrefix: 'STUNT_yard' });
+    this.updateYardDressingVisibility();
     this.world.scene.add(group);
+  }
+
+  updateYardDressingVisibility(origin) {
+    if (!this.yardDressingGroup) return;
+    const profile = this.world.getQualityProfile();
+    const radius = profile.stuntDressingRadius || profile.districtDressingRadius || 0;
+    let visible = true;
+    if (origin && Number.isFinite(origin.x) && Number.isFinite(origin.z) && radius > 0) {
+      const edgeDistance = Math.hypot(origin.x - this.yardDressingCenter.x, origin.z - this.yardDressingCenter.z) - this.yardDressingRadius;
+      const threshold = this.yardDressingGroup.visible ? radius + 18 : radius;
+      visible = edgeDistance <= threshold;
+    }
+    this.yardDressingGroup.visible = visible;
+    this.stats.yardDressingVisible = visible;
+    this.stats.yardDressingCullRadius = radius;
   }
 
   createCircuitTrackLayout() {

@@ -416,7 +416,7 @@ export class World {
     this.potatoFarm.update(dt);
     this.zonesSystem.update(vehiclePosition);
     this.updateCircuitFeedback(dt);
-    this.stuntPark.update(dt, elapsed);
+    this.stuntPark.update(dt, elapsed, vehiclePosition);
     this.setPieces.update(dt, elapsed, vehiclePosition);
     this.atmosphere.update(dt, elapsed);
     this.updateCollectibles(dt, elapsed);
