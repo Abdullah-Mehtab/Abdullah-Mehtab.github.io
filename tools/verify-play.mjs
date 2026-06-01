@@ -85,6 +85,7 @@ try {
   await waitForReady(page);
   const loadMs = Date.now() - startedAt;
   await screenshot(page, '01-title.png');
+  const titleUi = await sampleTitleUi(page);
 
   await page.evaluate(() => window.__portfolioDrive.start());
   await delay(700);
@@ -197,6 +198,7 @@ try {
     highQuality,
     mobile,
     mobileSavedPreference,
+    titleUi,
     panelUi,
     overlayUi: { map: mapUi, menu: menuUi },
     collectibles,
@@ -1075,6 +1077,27 @@ async function sampleOverlayUi(page) {
   return page.evaluate(() => window.__portfolioDrive.game.ui?.getOverlayStats?.() || {});
 }
 
+async function sampleTitleUi(page) {
+  return page.evaluate(() => {
+    const title = document.getElementById('title-screen');
+    const card = title?.querySelector('.title-card');
+    const actions = card?.querySelectorAll('.title-actions a, .title-actions button') || [];
+    const rect = card?.getBoundingClientRect?.();
+    const titleRect = title?.getBoundingClientRect?.();
+    const area = rect && titleRect ? rect.width * rect.height : 0;
+    const screenArea = titleRect ? titleRect.width * titleRect.height : 1;
+    return {
+      visible: Boolean(title && !title.hidden),
+      cardWidth: Math.round(rect?.width || 0),
+      cardHeight: Math.round(rect?.height || 0),
+      cardAreaRatio: Number((area / screenArea).toFixed(4)),
+      actionCount: actions.length,
+      titleText: card?.querySelector('h1')?.textContent || '',
+      copyLength: card?.querySelector('p')?.textContent?.length || 0
+    };
+  });
+}
+
 async function sampleRenderSnapshot(page) {
   return page.evaluate(() => {
     const game = window.__portfolioDrive.game;
@@ -1766,6 +1789,11 @@ function assertVerification(result) {
   if (pageErrors.length) failures.push(`page errors: ${pageErrors.length}`);
   if (consoleMessages.some((message) => message.type === 'error')) failures.push('console errors were emitted');
   if (!result.ready || result.canvasSample <= 0) failures.push('canvas did not render');
+  if (!result.titleUi?.visible) failures.push('title UI probe failed: title hidden before start');
+  if ((result.titleUi?.cardWidth || 0) > 390) failures.push(`title UI probe failed: cardWidth=${result.titleUi?.cardWidth || 0}`);
+  if ((result.titleUi?.cardHeight || 0) > 172) failures.push(`title UI probe failed: cardHeight=${result.titleUi?.cardHeight || 0}`);
+  if ((result.titleUi?.cardAreaRatio || 1) > 0.055) failures.push(`title UI probe failed: cardAreaRatio=${result.titleUi?.cardAreaRatio || 0}`);
+  if ((result.titleUi?.actionCount || 0) !== 3) failures.push(`title UI probe failed: actionCount=${result.titleUi?.actionCount || 0}`);
   if (result.zoneCount !== worldZones.length) failures.push(`zone count mismatch: ${result.zoneCount}/${worldZones.length}`);
   const missingPresentation = worldZones.filter((zone) => !zonePresentation[zone.id]).map((zone) => zone.id);
   if (missingPresentation.length) failures.push(`zone presentation definitions missing: ${missingPresentation.join(', ')}`);

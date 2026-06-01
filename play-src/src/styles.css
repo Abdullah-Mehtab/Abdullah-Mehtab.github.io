@@ -72,14 +72,14 @@ button {
 
 .hud {
   position: fixed;
-  top: 18px;
-  left: 18px;
-  right: 18px;
+  top: 14px;
+  left: 14px;
+  right: 14px;
   z-index: 15;
   display: grid;
   grid-template-columns: auto minmax(0, 1fr) auto;
   align-items: center;
-  gap: 12px;
+  gap: 10px;
   pointer-events: none;
 }
 
@@ -108,8 +108,11 @@ body:not(.is-driving) .hud {
 .hud-core {
   justify-self: start;
   min-width: 0;
-  border-radius: 10px;
-  padding: 10px 14px;
+  border-radius: 8px;
+  padding: 8px 12px;
+  background:
+    linear-gradient(135deg, rgba(124, 255, 178, 0.09), transparent 48%),
+    rgba(4, 10, 17, 0.5);
 }
 
 .hud-kicker,
@@ -135,19 +138,22 @@ body:not(.is-driving) .hud {
 .hud-readouts {
   display: flex;
   align-items: center;
-  gap: 8px;
-  border-radius: 10px;
-  padding: 7px;
+  gap: 6px;
+  border-radius: 8px;
+  padding: 5px;
   pointer-events: auto;
+  background:
+    linear-gradient(135deg, rgba(255, 223, 138, 0.055), transparent 46%),
+    rgba(4, 10, 17, 0.46);
 }
 
 .hud-readouts span {
-  min-height: 36px;
+  min-height: 34px;
   display: inline-flex;
   align-items: center;
-  padding: 0 10px;
-  border-radius: 7px;
-  background: rgba(255, 223, 138, 0.055);
+  padding: 0 9px;
+  border-radius: 6px;
+  background: rgba(255, 223, 138, 0.04);
   color: var(--muted);
   white-space: nowrap;
 }
@@ -225,10 +231,10 @@ body:not(.is-driving) .hud {
 .title-screen {
   z-index: 55;
   place-items: end start;
-  padding: 0 18px 22px;
+  padding: 0 18px 18px;
   background:
-    radial-gradient(circle at 30% 52%, transparent 0 48%, rgba(3, 8, 13, 0.08) 86%),
-    linear-gradient(0deg, rgba(3, 8, 13, 0.28), rgba(3, 8, 13, 0.035) 38%, transparent 74%);
+    radial-gradient(circle at 32% 58%, transparent 0 48%, rgba(3, 8, 13, 0.055) 86%),
+    linear-gradient(0deg, rgba(3, 8, 13, 0.18), rgba(3, 8, 13, 0.025) 34%, transparent 78%);
 }
 
 .title-back {
@@ -239,18 +245,23 @@ body:not(.is-driving) .hud {
 
 .title-card {
   position: relative;
-  width: min(520px, calc(100vw - 36px));
+  width: min(360px, calc(100vw - 36px));
   border-radius: 8px;
-  padding: clamp(12px, 1.7vw, 15px) clamp(13px, 1.8vw, 16px) clamp(13px, 1.8vw, 16px) clamp(15px, 2vw, 18px);
+  padding: clamp(10px, 1.4vw, 13px) clamp(12px, 1.5vw, 14px) clamp(12px, 1.5vw, 14px) clamp(14px, 1.7vw, 16px);
   margin: 0;
   display: grid;
   grid-template-columns: minmax(0, 1fr);
   align-items: start;
-  gap: 8px;
+  gap: 6px;
   animation: title-rise 700ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
+  border-color: rgba(230, 205, 152, 0.2);
   background:
-    linear-gradient(90deg, rgba(124, 255, 178, 0.15), transparent 42%),
-    rgba(4, 10, 17, 0.58);
+    linear-gradient(90deg, rgba(124, 255, 178, 0.12), transparent 46%),
+    rgba(4, 10, 17, 0.42);
+  box-shadow:
+    0 16px 36px rgba(0, 0, 0, 0.22),
+    inset 0 1px 0 rgba(255, 255, 255, 0.07);
+  backdrop-filter: blur(9px);
 }
 
 .title-card::before {
@@ -267,18 +278,18 @@ body:not(.is-driving) .hud {
 
 .title-card h1 {
   max-width: none;
-  margin: 4px 0 0;
-  font-size: clamp(1.45rem, 2.3vw, 1.9rem);
+  margin: 2px 0 0;
+  font-size: clamp(1.32rem, 2vw, 1.62rem);
   line-height: 1;
   letter-spacing: 0;
 }
 
 .title-card p {
-  max-width: 42ch;
-  margin: 4px 0 0;
+  max-width: 36ch;
+  margin: 2px 0 0;
   color: var(--muted);
-  font-size: clamp(0.83rem, 1.05vw, 0.92rem);
-  line-height: 1.38;
+  font-size: clamp(0.78rem, 0.95vw, 0.86rem);
+  line-height: 1.32;
 }
 
 .title-actions,
@@ -290,7 +301,7 @@ body:not(.is-driving) .hud {
 
 .title-actions {
   justify-content: flex-start;
-  margin-top: 4px;
+  margin-top: 2px;
 }
 
 .panel-actions {
@@ -300,8 +311,8 @@ body:not(.is-driving) .hud {
 .title-actions button,
 .title-actions a,
 .panel-actions button {
-  min-height: 38px;
-  padding: 8px 12px;
+  min-height: 36px;
+  padding: 7px 11px;
 }
 
 .title-actions button,
@@ -455,10 +466,10 @@ body:has(.map-modal:not([hidden])) .circuit-status {
 
 .minimap {
   position: fixed;
-  left: 18px;
-  bottom: 18px;
+  left: 16px;
+  bottom: 16px;
   z-index: 18;
-  width: 190px;
+  width: 162px;
   aspect-ratio: 1;
   border: 1px solid rgba(255, 223, 138, 0.34);
   border-radius: 50%;
@@ -467,7 +478,8 @@ body:has(.map-modal:not([hidden])) .circuit-status {
     radial-gradient(circle at 50% 50%, rgba(11, 52, 43, 0.86), rgba(3, 13, 24, 0.96) 72%);
   box-shadow: 0 16px 42px rgba(0, 0, 0, 0.34);
   pointer-events: none;
-  backdrop-filter: blur(10px);
+  backdrop-filter: blur(8px);
+  opacity: 0.9;
 }
 
 body:not(.is-driving) .minimap {
