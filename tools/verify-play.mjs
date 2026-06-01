@@ -1319,6 +1319,7 @@ async function collectRuntimeMetrics(page, loadMs, gameplay, water, surfaces, su
       dataPier: game.world.setPieces?.getDataPierStats?.() || {},
       careerOffice: game.world.setPieces?.getCareerOfficeStats?.() || {},
       todoYard: game.world.setPieces?.getTodoYardStats?.() || {},
+      skillsTerminal: game.world.setPieces?.getSkillsTerminalStats?.() || {},
       projectsYard: game.world.setPieces?.getProjectsYardStats?.() || {},
       behindBuild: game.world.setPieces?.getBehindBuildStats?.() || {},
       props: game.world.props?.getStats?.() || {},
@@ -2293,6 +2294,10 @@ function assertVerification(result) {
   if ((result.todoYard?.lamps || 0) < 3) failures.push(`todo yard probe failed: lamps=${result.todoYard?.lamps || 0}`);
   if ((result.todoYard?.queueRails || 0) < 12) failures.push(`todo yard probe failed: queueRails=${result.todoYard?.queueRails || 0}`);
   if ((result.todoYard?.taskCards || 0) < 6) failures.push(`todo yard probe failed: taskCards=${result.todoYard?.taskCards || 0}`);
+  if ((result.skillsTerminal?.signalNodes || 0) < 12) failures.push(`skills terminal probe failed: signalNodes=${result.skillsTerminal?.signalNodes || 0}`);
+  if ((result.skillsTerminal?.codeCards || 0) < 8) failures.push(`skills terminal probe failed: codeCards=${result.skillsTerminal?.codeCards || 0}`);
+  if ((result.skillsTerminal?.syncRings || 0) < 1) failures.push(`skills terminal probe failed: syncRings=${result.skillsTerminal?.syncRings || 0}`);
+  if ((result.skillsTerminal?.signalRibbons || 0) < 4) failures.push(`skills terminal probe failed: signalRibbons=${result.skillsTerminal?.signalRibbons || 0}`);
   if ((result.projectsYard?.forgeSparks || 0) < 18) failures.push(`projects yard probe failed: forgeSparks=${result.projectsYard?.forgeSparks || 0}`);
   if ((result.projectsYard?.buildCards || 0) < 7) failures.push(`projects yard probe failed: buildCards=${result.projectsYard?.buildCards || 0}`);
   if ((result.projectsYard?.assemblyRings || 0) < 1) failures.push(`projects yard probe failed: assemblyRings=${result.projectsYard?.assemblyRings || 0}`);

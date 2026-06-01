@@ -205,6 +205,12 @@ export class SetPieces {
       queueRails: 0,
       taskCards: 0
     };
+    this.skillsTerminalStats = {
+      signalNodes: 0,
+      codeCards: 0,
+      syncRings: 0,
+      signalRibbons: 0
+    };
     this.projectsYardStats = {
       forgeSparks: 0,
       buildCards: 0,
@@ -252,6 +258,10 @@ export class SetPieces {
       }
       if (item.kind === 'projectsYardLife') {
         this.updateProjectsYardLife(item, elapsed);
+        continue;
+      }
+      if (item.kind === 'skillsTerminalLife') {
+        this.updateSkillsTerminalLife(item, elapsed);
         continue;
       }
       if (item.instanceMesh) {
@@ -466,6 +476,10 @@ export class SetPieces {
 
   getTodoYardStats() {
     return { ...this.todoYardStats };
+  }
+
+  getSkillsTerminalStats() {
+    return { ...this.skillsTerminalStats };
   }
 
   getProjectsYardStats() {
@@ -807,6 +821,7 @@ export class SetPieces {
       this.addDistrictStoryAsset(group, 'EnvPolishTerminalBank', x, z, rotation, scale, 'terminalBanks');
     }
     this.createSkillsTerminalComposition(group, skills);
+    this.createSkillsTerminalLife(group, skills);
 
     const awards = findZone('awards');
     this.addSign(group, 'AWARDS', 'Archive Steps', awards.position[0] - 9, awards.position[2] + 8, -0.2, 0xffdf8a, 2.3, 'AwardsSign');
@@ -942,7 +957,11 @@ export class SetPieces {
     mergeStaticMeshesInGroup(group, {
       namePrefix: 'SETPIECE_district',
       cellSize: 128,
-      shouldSkip: (object) => object.name === 'CvDocumentStream' || object.name.startsWith('BehindBuild') || object.name.startsWith('ProjectsYard')
+      shouldSkip: (object) =>
+        object.name === 'CvDocumentStream' ||
+        object.name.startsWith('BehindBuild') ||
+        object.name.startsWith('ProjectsYard') ||
+        object.name.startsWith('SkillsTerminal')
     });
     this.registerDistrictDressingBatches(group);
     this.world.scene.add(group);
@@ -3087,6 +3106,186 @@ export class SetPieces {
         'SkillsSignalGuideMark'
       );
       this.districtCompositionStats.skillsTerminalNodes += 1;
+    }
+  }
+
+  createSkillsTerminalLife(group, skills) {
+    const nodeGeometry = new THREE.OctahedronGeometry(0.28, 0);
+    const nodeMaterial = new THREE.MeshBasicMaterial({
+      color: 0xffffff,
+      vertexColors: true,
+      transparent: true,
+      opacity: 0.78,
+      depthWrite: false
+    });
+    const nodeCount = 12;
+    const nodeMesh = new THREE.InstancedMesh(nodeGeometry, nodeMaterial, nodeCount);
+    nodeMesh.name = 'SkillsTerminalSignalNodes';
+    nodeMesh.frustumCulled = false;
+    nodeMesh.renderOrder = 43;
+    group.add(nodeMesh);
+
+    const cardGeometry = new THREE.PlaneGeometry(1.05, 0.58);
+    const cardMaterial = new THREE.MeshBasicMaterial({
+      color: 0xffffff,
+      vertexColors: true,
+      transparent: true,
+      opacity: 0.58,
+      depthWrite: false,
+      side: THREE.DoubleSide
+    });
+    const cardSpecs = [
+      [-8.2, -4.6, 2.08, -0.48, 0.92, 0.0, 0x92ffea],
+      [-5.5, -2.7, 2.46, -0.54, 0.84, 0.5, 0xb6a0ff],
+      [-2.2, -0.9, 2.18, -0.62, 0.9, 1.0, 0x68d8ff],
+      [1.0, 0.9, 2.64, -0.66, 0.8, 1.5, 0xe6f3ff],
+      [4.2, 2.8, 2.28, -0.58, 0.86, 2.0, 0x92ffea],
+      [7.3, 4.6, 2.72, -0.72, 0.78, 2.5, 0xb6a0ff],
+      [10.4, 6.2, 2.18, -0.62, 0.84, 3.0, 0x68d8ff],
+      [13.4, 7.8, 2.48, -0.56, 0.76, 3.5, 0xe6f3ff]
+    ];
+    const cardMesh = new THREE.InstancedMesh(cardGeometry, cardMaterial, cardSpecs.length);
+    cardMesh.name = 'SkillsTerminalCodeCards';
+    cardMesh.frustumCulled = false;
+    cardMesh.renderOrder = 44;
+    group.add(cardMesh);
+
+    const ringMaterial = new THREE.MeshBasicMaterial({
+      color: 0x92ffea,
+      transparent: true,
+      opacity: 0.42,
+      depthWrite: false,
+      side: THREE.DoubleSide
+    });
+    const ring = new THREE.Mesh(new THREE.RingGeometry(1.1, 1.22, 6), ringMaterial);
+    ring.name = 'SkillsTerminalSyncRing';
+    ring.position.set(skills.position[0] - 0.5, 2.85, skills.position[2] - 1.4);
+    ring.rotation.y = -0.62;
+    ring.renderOrder = 45;
+    group.add(ring);
+
+    const ribbonGeometry = new THREE.BoxGeometry(1, 1, 1);
+    const ribbonMaterial = new THREE.MeshBasicMaterial({
+      color: 0x92ffea,
+      transparent: true,
+      opacity: 0.48,
+      depthWrite: false
+    });
+    const ribbonSpecs = [
+      [-8.1, -3.9, 4.8, -0.62, 0.0],
+      [-3.0, -1.2, 5.4, -0.62, 0.7],
+      [2.6, 1.5, 5.2, -0.62, 1.4],
+      [8.2, 4.0, 4.6, -0.62, 2.1]
+    ];
+    const ribbonMesh = new THREE.InstancedMesh(ribbonGeometry, ribbonMaterial, ribbonSpecs.length);
+    ribbonMesh.name = 'SkillsTerminalSignalRibbons';
+    ribbonMesh.frustumCulled = false;
+    ribbonMesh.renderOrder = 42;
+    group.add(ribbonMesh);
+
+    const nodeColors = [0x92ffea, 0xb6a0ff, 0x68d8ff, 0xe6f3ff];
+    const nodeEntries = Array.from({ length: nodeCount }, (_, index) => {
+      const angle = index * 2.399;
+      const radius = 2.6 + (index % 4) * 0.34;
+      nodeMesh.setColorAt(index, new THREE.Color(nodeColors[index % nodeColors.length]));
+      return {
+        index,
+        centerX: skills.position[0] - 0.5,
+        centerZ: skills.position[2] - 1.4,
+        angle,
+        radius,
+        baseY: 1.62 + (index % 3) * 0.24,
+        phase: index * 0.37,
+        speed: 0.42 + (index % 5) * 0.025,
+        scale: 1.06 + (index % 4) * 0.07
+      };
+    });
+    const cardEntries = cardSpecs.map(([dx, dz, y, yaw, scale, phase, color], index) => {
+      cardMesh.setColorAt(index, new THREE.Color(color));
+      return {
+        index,
+        x: skills.position[0] + dx,
+        z: skills.position[2] + dz,
+        baseY: y,
+        yaw,
+        scale,
+        phase,
+        speed: 0.48 + index * 0.035
+      };
+    });
+    const ribbonEntries = ribbonSpecs.map(([dx, dz, length, yaw, phase], index) => ({
+      index,
+      x: skills.position[0] + dx,
+      z: skills.position[2] + dz,
+      length,
+      yaw,
+      phase,
+      speed: 0.64 + index * 0.04
+    }));
+
+    if (nodeMesh.instanceColor) nodeMesh.instanceColor.needsUpdate = true;
+    if (cardMesh.instanceColor) cardMesh.instanceColor.needsUpdate = true;
+    this.skillsTerminalStats.signalNodes += nodeCount;
+    this.skillsTerminalStats.codeCards += cardSpecs.length;
+    this.skillsTerminalStats.syncRings += 1;
+    this.skillsTerminalStats.signalRibbons += ribbonSpecs.length;
+    this.animated.push({ kind: 'skillsTerminalLife', nodeMesh, nodeEntries, cardMesh, cardEntries, ring, ribbonMesh, ribbonEntries });
+    this.updateSkillsTerminalLife({ nodeMesh, nodeEntries, cardMesh, cardEntries, ring, ribbonMesh, ribbonEntries }, 0);
+  }
+
+  updateSkillsTerminalLife(life, elapsed) {
+    if (life.nodeMesh?.visible) {
+      for (const entry of life.nodeEntries) {
+        const phase = elapsed * entry.speed + entry.phase;
+        const angle = entry.angle + Math.sin(phase * 0.72) * 0.24;
+        this.lifeDummy.position.set(
+          entry.centerX + Math.cos(angle) * entry.radius,
+          entry.baseY + Math.sin(phase * 1.4) * 0.22,
+          entry.centerZ + Math.sin(angle) * entry.radius
+        );
+        this.lifeDummy.rotation.set(elapsed * 0.7 + entry.phase, elapsed * 1.1 + entry.index, elapsed * 0.5);
+        this.lifeDummy.scale.setScalar(entry.scale + Math.sin(phase * 1.8) * 0.08);
+        this.lifeDummy.updateMatrix();
+        life.nodeMesh.setMatrixAt(entry.index, this.lifeDummy.matrix);
+      }
+      life.nodeMesh.instanceMatrix.needsUpdate = true;
+      life.nodeMesh.material.opacity = 0.66 + Math.sin(elapsed * 1.6) * 0.09;
+      this.lifeStats.motionSamples += life.nodeEntries.length;
+    }
+
+    if (life.cardMesh?.visible) {
+      for (const entry of life.cardEntries) {
+        const phase = elapsed * entry.speed + entry.phase;
+        this.lifeDummy.position.set(entry.x, entry.baseY + Math.sin(phase) * 0.16, entry.z);
+        this.lifeDummy.rotation.set(Math.sin(phase * 0.62) * 0.05, entry.yaw + Math.sin(phase * 0.9) * 0.12, Math.sin(phase * 1.15) * 0.08);
+        this.lifeDummy.scale.setScalar(entry.scale + Math.sin(phase * 1.35) * 0.03);
+        this.lifeDummy.updateMatrix();
+        life.cardMesh.setMatrixAt(entry.index, this.lifeDummy.matrix);
+      }
+      life.cardMesh.instanceMatrix.needsUpdate = true;
+      life.cardMesh.material.opacity = 0.5 + Math.sin(elapsed * 1.2) * 0.07;
+      this.lifeStats.motionSamples += life.cardEntries.length;
+    }
+
+    if (life.ring?.visible) {
+      life.ring.rotation.z = elapsed * 0.68;
+      life.ring.scale.setScalar(1 + Math.sin(elapsed * 1.7) * 0.12);
+      life.ring.material.opacity = 0.36 + Math.sin(elapsed * 1.5) * 0.09;
+      this.lifeStats.motionSamples += 1;
+    }
+
+    if (life.ribbonMesh?.visible) {
+      for (const entry of life.ribbonEntries) {
+        const phase = elapsed * entry.speed + entry.phase;
+        this.lifeDummy.position.set(entry.x, 0.62 + Math.sin(phase) * 0.035, entry.z);
+        this.lifeDummy.rotation.set(0, entry.yaw, 0);
+        this.lifeDummy.scale.set(entry.length * (0.9 + Math.sin(phase * 1.3) * 0.04), 0.045, 0.13);
+        this.lifeDummy.updateMatrix();
+        life.ribbonMesh.setMatrixAt(entry.index, this.lifeDummy.matrix);
+      }
+      life.ribbonMesh.instanceMatrix.needsUpdate = true;
+      life.ribbonMesh.material.opacity = 0.4 + Math.sin(elapsed * 1.55) * 0.08;
+      this.lifeStats.motionSamples += life.ribbonEntries.length;
     }
   }
 
