@@ -13,6 +13,12 @@ export class SetPieces {
     this.animated = [];
     this.securityScanObjects = [];
     this.securityScanMaterials = [];
+    this.securityScanStats = {
+      packetShards: 0,
+      scanWaves: 0,
+      visibleScanWaves: 0,
+      packetMotionSamples: 0
+    };
     this.whisperEntries = [];
     this.lifeDummy = new THREE.Object3D();
     this.ambienceDummy = new THREE.Object3D();
@@ -177,6 +183,9 @@ export class SetPieces {
   update(dt, elapsed, vehiclePosition) {
     this.updateDistrictDressingVisibility(vehiclePosition);
     this.updateBroadSetPieceVisibility(vehiclePosition);
+    const scan = this.world.securityScan;
+    const activePulse = scan.active ? 1 : scan.complete ? 0.55 : 0;
+    let visibleScanWaves = 0;
     for (const item of this.animated) {
       if (item.instanceMesh) {
         this.writeLifeInstance(item, elapsed);
@@ -207,14 +216,33 @@ export class SetPieces {
         item.mesh.rotation.y += dt * item.rotationSpeed;
         item.mesh.material.opacity = item.baseOpacity + Math.sin(elapsed * item.speed + item.phase) * item.opacityRange;
         this.lifeStats.motionSamples += 1;
+      } else if (item.kind === 'securityPacket') {
+        const packetPulse = scan.active ? 1 : scan.complete ? 0.35 : 0;
+        const angle = elapsed * item.orbitSpeed + item.phase;
+        const orbitX = item.scanX + Math.cos(angle) * item.orbitRadius;
+        const orbitZ = item.scanZ + Math.sin(angle) * item.orbitRadius;
+        item.mesh.position.x = THREE.MathUtils.lerp(item.baseX, orbitX, packetPulse);
+        item.mesh.position.z = THREE.MathUtils.lerp(item.baseZ, orbitZ, packetPulse);
+        item.mesh.position.y = item.baseY + Math.sin(elapsed * item.speed + item.phase) * item.range + packetPulse * 0.72;
+        item.mesh.rotation.y += dt * (item.rotationSpeed + packetPulse * 2.4);
+        item.mesh.material.opacity = item.baseOpacity + packetPulse * 0.34 + Math.sin(elapsed * 5.2 + item.phase) * packetPulse * 0.12;
+        this.securityScanStats.packetMotionSamples += 1;
+      } else if (item.kind === 'securityWave') {
+        const pulse = Math.max(0, activePulse);
+        const wave = (elapsed * item.speed + item.phase) % 1;
+        const scale = item.baseScale + wave * item.range;
+        item.mesh.visible = pulse > 0.05;
+        item.mesh.scale.setScalar(scale);
+        item.mesh.rotation.z += dt * item.rotationSpeed;
+        item.mesh.material.opacity = pulse * (0.16 + (1 - wave) * 0.28);
+        if (item.mesh.visible) visibleScanWaves += 1;
       }
     }
     for (const mesh of this.lifeInstanceDirty) mesh.instanceMatrix.needsUpdate = true;
     this.lifeInstanceDirty.clear();
     this.updateDistrictAmbience(elapsed);
 
-    const scan = this.world.securityScan;
-    const activePulse = scan.active ? 1 : scan.complete ? 0.55 : 0;
+    this.securityScanStats.visibleScanWaves = visibleScanWaves;
     for (const material of this.securityScanMaterials) {
       material.opacity = 0.32 + activePulse * 0.42 + Math.sin(elapsed * 8) * activePulse * 0.12;
     }
@@ -319,6 +347,10 @@ export class SetPieces {
 
   getRouteCompositionStats() {
     return { ...this.routeCompositionStats };
+  }
+
+  getSecurityScanStats() {
+    return { ...this.securityScanStats };
   }
 
   getMeadowCompositionStats() {
@@ -508,6 +540,7 @@ export class SetPieces {
     this.box(group, zone.position[0] + 16.2, 0.18, zone.position[2], 0.32, 0.04, 24, this.world.materials.glowPink, 0, 'SecurityPadRightTrace');
 
     this.securityGate(group, zone.position[0] - 2.8, zone.position[2] - 11.2, 0.18);
+    this.securityScanWaveField(group, zone.position[0] - 2.8, zone.position[2] - 11.2, 0.18);
     this.addPolishAsset(group, 'EnvPolishSecurityScanner', zone.position[0] + 4.8, zone.position[2] + 3.0, -0.28, 0.92);
     this.addPolishAsset(group, 'EnvPolishTerminalPillar', zone.position[0] - 12.2, zone.position[2] + 9.5, 0.34, 1.05);
     this.addPolishAsset(group, 'EnvPolishSignalTotem', zone.position[0] + 13.8, zone.position[2] + 8.2, -0.44, 1.05);
@@ -537,16 +570,34 @@ export class SetPieces {
     }
 
     for (let i = 0; i < 8; i += 1) {
-      const packet = new THREE.Mesh(new THREE.OctahedronGeometry(0.52, 0), this.world.materials.glowBlue.clone());
+      const packetMaterial = this.world.materials.glowBlue.clone();
+      packetMaterial.opacity = 0.42;
+      const packet = new THREE.Mesh(new THREE.OctahedronGeometry(0.52, 0), packetMaterial);
       packet.name = 'SecurityPacketShard';
       packet.position.set(zone.position[0] - 12 + i * 3.4, 1.2 + (i % 3) * 0.2, zone.position[2] + 8 + Math.sin(i) * 2.2);
       group.add(packet);
-      this.animated.push({ kind: 'float', mesh: packet, baseY: packet.position.y, speed: 1.2, phase: i * 0.7, range: 0.34, rotationSpeed: 1.1 + i * 0.05 });
+      this.animated.push({
+        kind: 'securityPacket',
+        mesh: packet,
+        baseX: packet.position.x,
+        baseY: packet.position.y,
+        baseZ: packet.position.z,
+        baseOpacity: 0.42,
+        scanX: zone.position[0] - 2.8,
+        scanZ: zone.position[2] - 11.2,
+        orbitRadius: 3.4 + (i % 3) * 0.48,
+        orbitSpeed: 1.7 + i * 0.08,
+        speed: 1.2,
+        phase: i * 0.7,
+        range: 0.34,
+        rotationSpeed: 1.1 + i * 0.05
+      });
+      this.securityScanStats.packetShards += 1;
     }
 
     mergeStaticMeshesInGroup(group, {
       namePrefix: 'SETPIECE_security',
-      shouldSkip: (object) => object.name === 'SecurityPacketShard' || object.name === 'SetPieceBeaconGlow'
+      shouldSkip: (object) => ['SecurityPacketShard', 'SetPieceBeaconGlow', 'SecurityScanWave'].includes(object.name)
     });
     this.world.scene.add(group);
   }
@@ -2633,6 +2684,32 @@ export class SetPieces {
     gate.position.set(x, 0.16, z);
     gate.rotation.y = rotation;
     group.add(gate);
+  }
+
+  securityScanWaveField(group, x, z, rotation) {
+    const material = this.world.materials.glowBlue.clone();
+    material.opacity = 0;
+    const geometry = new THREE.RingGeometry(1.4, 1.72, 6);
+    geometry.rotateX(-Math.PI / 2);
+    for (let i = 0; i < 3; i += 1) {
+      const wave = new THREE.Mesh(geometry, material.clone());
+      wave.name = 'SecurityScanWave';
+      wave.position.set(x, 0.205 + i * 0.002, z);
+      wave.rotation.y = rotation;
+      wave.visible = false;
+      wave.renderOrder = 42;
+      group.add(wave);
+      this.animated.push({
+        kind: 'securityWave',
+        mesh: wave,
+        baseScale: 1.4 + i * 0.16,
+        range: 2.8,
+        speed: 0.42 + i * 0.08,
+        phase: i * 0.3,
+        rotationSpeed: 0.22 + i * 0.04
+      });
+      this.securityScanStats.scanWaves += 1;
+    }
   }
 
   serverRack(group, x, z, rotation) {

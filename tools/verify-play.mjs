@@ -105,6 +105,7 @@ try {
   const surfaceFeedback = await exerciseSurfaceFeedback(page, ISLAND_RADIUS);
   await screenshot(page, '05-surface-feedback.png');
   const surfaceStressMetrics = await sampleRenderSnapshot(page);
+  const securityScan = await exerciseSecurityScan(page);
   const routeReplay = await exerciseRouteReplay(page, routeReplaySegments);
   const circuitPreview = await previewCircuit(page);
   await screenshot(page, '06-circuit-target.png');
@@ -199,6 +200,7 @@ try {
     panelUi,
     overlayUi: { map: mapUi, menu: menuUi },
     collectibles,
+    securityScan,
     ...metrics
   };
 
@@ -683,6 +685,67 @@ async function exerciseRouteReplay(page, segments) {
       failures
     };
   }, segments);
+}
+
+async function exerciseSecurityScan(page) {
+  await page.evaluate(() => {
+    const game = window.__portfolioDrive.game;
+    const zone = game.world.zones.find((item) => item.id === 'security');
+    const scanner = zone.position.clone();
+    scanner.x -= 2.8;
+    scanner.z -= 11.2;
+    scanner.y = 0.3;
+    const cameraPosition = scanner.clone();
+    cameraPosition.x += 20;
+    cameraPosition.y += 9;
+    cameraPosition.z += 22;
+    const lookAt = scanner.clone();
+    lookAt.y += 1.35;
+    game.ui.closePanel?.();
+    game.ui.closeMap?.();
+    game.ui.closeMenu?.();
+    game.startDriving();
+    game.vehicle.respawn({ x: scanner.x + 5.8, y: 1.08, z: scanner.z + 8.2 }, -2.15);
+    game.vehicle.body.setLinvel({ x: 0, y: 0, z: 0 }, true);
+    game.vehicle.body.setAngvel({ x: 0, y: 0, z: 0 }, true);
+    game.cameraRig.setCinematic(cameraPosition, lookAt, 42);
+    game.cameraRig.smoothedTarget.copy(lookAt);
+    game.camera.position.copy(cameraPosition);
+    game.camera.lookAt(lookAt);
+    game.camera.fov = 42;
+    game.camera.updateProjectionMatrix();
+    game.world.securityScan.active = false;
+    game.world.securityScan.complete = false;
+    game.achievements.unlocked.delete('security_scan');
+    game.achievements.save?.();
+    game.runSecurityScan(zone);
+  });
+  await delay(560);
+  const active = await page.evaluate(() => {
+    const game = window.__portfolioDrive.game;
+    return {
+      active: game.world.securityScan.active,
+      complete: game.world.securityScan.complete,
+      stats: game.world.setPieces?.getSecurityScanStats?.() || {}
+    };
+  });
+  await screenshot(page, 'security-scan-active.png');
+  await delay(980);
+  const complete = await page.evaluate(() => {
+    const game = window.__portfolioDrive.game;
+    const sample = {
+      active: game.world.securityScan.active,
+      complete: game.world.securityScan.complete,
+      panelVisible: Boolean(document.getElementById('panel') && !document.getElementById('panel').hidden),
+      achievementUnlocked: game.achievements.unlocked.has('security_scan'),
+      stats: game.world.setPieces?.getSecurityScanStats?.() || {}
+    };
+    game.ui.closePanel?.();
+    document.getElementById('notifications')?.replaceChildren();
+    game.cameraRig.clearCinematic();
+    return sample;
+  });
+  return { active, complete };
 }
 
 async function previewCircuit(page) {
@@ -1731,6 +1794,14 @@ function assertVerification(result) {
   if ((result.circuit?.stats?.maxCheckpointPulse || 0) <= 0) failures.push(`circuit feedback probe failed: max pulse=${result.circuit?.stats?.maxCheckpointPulse || 0}`);
   if ((result.circuit?.ringInstances || 0) !== circuitCheckpoints.length - 1) failures.push(`circuit probe failed: ring instances=${result.circuit?.ringInstances || 0}`);
   if ((result.circuit?.arrowInstances || 0) !== circuitCheckpoints.length - 1) failures.push(`circuit probe failed: arrow instances=${result.circuit?.arrowInstances || 0}`);
+  if (!result.securityScan?.active?.active) failures.push('security scan probe failed: active state not observed');
+  if ((result.securityScan?.active?.stats?.packetShards || 0) < 8) failures.push(`security scan probe failed: packet shards=${result.securityScan?.active?.stats?.packetShards || 0}`);
+  if ((result.securityScan?.active?.stats?.scanWaves || 0) < 3) failures.push(`security scan probe failed: scan waves=${result.securityScan?.active?.stats?.scanWaves || 0}`);
+  if ((result.securityScan?.active?.stats?.visibleScanWaves || 0) < 1) failures.push(`security scan probe failed: visible scan waves=${result.securityScan?.active?.stats?.visibleScanWaves || 0}`);
+  if ((result.securityScan?.active?.stats?.packetMotionSamples || 0) < 1) failures.push(`security scan probe failed: packet motion samples=${result.securityScan?.active?.stats?.packetMotionSamples || 0}`);
+  if (!result.securityScan?.complete?.complete) failures.push('security scan probe failed: complete state not observed');
+  if (!result.securityScan?.complete?.panelVisible) failures.push('security scan probe failed: terminal panel did not open');
+  if (!result.securityScan?.complete?.achievementUnlocked) failures.push('security scan probe failed: security_scan achievement');
   if (result.worldLife?.counts?.zonePulses !== worldZones.length) failures.push(`world life probe failed: zone pulses ${result.worldLife?.counts?.zonePulses}/${worldZones.length}`);
   if ((result.worldLife?.counts?.windBanners || 0) < 8) failures.push('world life probe failed: wind banners');
   if ((result.worldLife?.counts?.whisperBeacons || 0) < 8) failures.push('world life probe failed: whisper beacons');
