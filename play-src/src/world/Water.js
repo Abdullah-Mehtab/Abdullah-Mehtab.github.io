@@ -216,7 +216,7 @@ export class Water {
       const prop = this.world.cloneEnvironmentAsset(spec.template);
       if (!group || !prop) return;
       const [x, z] = pointOnCoast(coastPoints, spec.angle, spec.offset);
-      if (this.world.roads?.isNear(x, z, 5.8)) return;
+      if (this.world.roads?.isNear(x, z, 0.8)) return;
       prop.name = `ShorelineLife_${spec.template}_${index}`;
       prop.position.set(x, 0.11, z);
       prop.rotation.y = -spec.angle + Math.PI * 0.5 + spec.rotation;

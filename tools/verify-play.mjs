@@ -192,6 +192,7 @@ try {
     consoleMessages,
     pageErrors,
     glbAssets: getGlbAssetSizes(),
+    roadTopology: sampleRoadTopology(),
     highQuality,
     mobile,
     mobileSavedPreference,
@@ -1919,6 +1920,10 @@ function assertVerification(result) {
   if ((result.roadGuidance?.markerOpacity || 1) > 0.43) failures.push(`road guidance readability probe failed: markerOpacity=${result.roadGuidance?.markerOpacity}`);
   if ((result.roadGuidance?.edgeFeathers || 0) < 24) failures.push(`road guidance probe failed: edgeFeathers=${result.roadGuidance?.edgeFeathers || 0}`);
   if ((result.roadGuidance?.laneEdges || 0) < 20) failures.push(`road guidance probe failed: laneEdges=${result.roadGuidance?.laneEdges || 0}`);
+  if (!result.roadTopology?.coastalLoop) failures.push('road topology probe failed: coastal loop missing');
+  if ((result.roadTopology?.closedLoops || 0) < 1) failures.push(`road topology probe failed: closedLoops=${result.roadTopology?.closedLoops || 0}`);
+  if ((result.roadTopology?.coastalLoopPoints || 0) < 12) failures.push(`road topology probe failed: coastalLoopPoints=${result.roadTopology?.coastalLoopPoints || 0}`);
+  if ((result.roadTopology?.sharedJunctions || 0) < 6) failures.push(`road topology probe failed: sharedJunctions=${result.roadTopology?.sharedJunctions || 0}`);
   if ((result.staticBatching?.groups || 0) < 8) failures.push(`static batching probe failed: groups=${result.staticBatching?.groups || 0}`);
   if ((result.staticBatching?.mergedMeshes || 0) <= (result.staticBatching?.batches || 0)) failures.push(`static batching probe failed: merged=${result.staticBatching?.mergedMeshes || 0}, batches=${result.staticBatching?.batches || 0}`);
   if ((result.staticBatching?.prunedEmptyGroups || 0) < 1) failures.push(`static batching probe failed: pruned=${result.staticBatching?.prunedEmptyGroups || 0}`);
@@ -2228,6 +2233,26 @@ function getRouteReplaySegments() {
     }
   }
   return segments;
+}
+
+function sampleRoadTopology() {
+  const coastalLoop = roadPaths.find((path) => path.id === 'coastal-loop');
+  const junctionKeys = new Map();
+  for (const path of roadPaths) {
+    for (const point of path.points) {
+      const key = `${point[0].toFixed(2)}:${point[1].toFixed(2)}`;
+      const entry = junctionKeys.get(key) || new Set();
+      entry.add(path.id);
+      junctionKeys.set(key, entry);
+    }
+  }
+  return {
+    paths: roadPaths.length,
+    closedLoops: roadPaths.filter((path) => path.closed).length,
+    coastalLoop: Boolean(coastalLoop?.closed && coastalLoop.points.length >= 12),
+    coastalLoopPoints: coastalLoop?.points.length || 0,
+    sharedJunctions: [...junctionKeys.values()].filter((paths) => paths.size > 1).length
+  };
 }
 
 function findChrome() {

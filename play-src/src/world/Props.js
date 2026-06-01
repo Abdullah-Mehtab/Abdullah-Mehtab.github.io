@@ -123,7 +123,7 @@ export class Props {
       const radius = ISLAND_RADIUS * (0.88 + pseudoRandom(i * 11.2) * 0.1);
       const x = Math.cos(angle) * radius;
       const z = Math.sin(angle) * radius;
-      if (this.world.roads.isNear(x, z, 6.5)) continue;
+      if (this.world.roads.isNear(x, z, 3.2)) continue;
       const isGrass = i % 4 === 1;
       const assetName = isGrass ? 'EnvPolishBeachGrassClump' : 'EnvPolishCoastRockCluster';
       const rock = this.createShoreProp(assetName);

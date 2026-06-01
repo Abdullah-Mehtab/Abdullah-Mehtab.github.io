@@ -142,7 +142,7 @@ export class World {
 
   isClearForProp(x, z, radius = 2) {
     if (!this.terrain?.containsPoint(x, z, radius + 6)) return false;
-    if (this.roads?.isNear(x, z, radius + 2.8)) return false;
+    if (this.roads?.isNear(x, z, radius + 1.0)) return false;
     for (const zone of worldZones) {
       const dx = x - zone.position[0];
       const dz = z - zone.position[2];

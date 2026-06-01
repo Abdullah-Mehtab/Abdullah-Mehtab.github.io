@@ -157,10 +157,37 @@ export const fieldMotifClusters = [
   { id: 'east-harbor-meadow', center: [116, 98], size: [32, 22], rotation: 0.2, palette: ['#78b7ff', '#f3d19c', '#84d7bd'], berms: 3, ribbons: 7, seed: 83 },
   { id: 'cv-west-meadow', center: [-18, -24], size: [38, 26], rotation: 0.18, palette: ['#e6f3ff', '#d8b6ff', '#9fc77a'], berms: 3, ribbons: 7, seed: 89 },
   { id: 'south-loop-inner-meadow', center: [44, -126], size: [40, 24], rotation: -0.44, palette: ['#ff9b6d', '#c79b56', '#f3e7bd'], berms: 4, ribbons: 7, seed: 97 },
-  { id: 'fcc-north-grove-meadow', center: [-106, 112], size: [34, 22], rotation: 0.24, palette: ['#9ccfff', '#f0aeb6', '#f2dfb2'], berms: 3, ribbons: 6, seed: 101 }
+  { id: 'fcc-north-grove-meadow', center: [-106, 112], size: [34, 22], rotation: 0.24, palette: ['#9ccfff', '#f0aeb6', '#f2dfb2'], berms: 3, ribbons: 6, seed: 101 },
+  { id: 'central-loop-infield', center: [48, -4], size: [32, 22], rotation: 0.22, palette: ['#84d7bd', '#ffdf8a', '#d8b6ff'], berms: 4, ribbons: 6, seed: 107 },
+  { id: 'north-loop-overlook-meadow', center: [-10, 112], size: [32, 18], rotation: -0.18, palette: ['#ff6d8d', '#9ccfff', '#f2dfb2'], berms: 4, ribbons: 6, seed: 113 }
 ];
 
 export const roadPaths = [
+  {
+    id: 'coastal-loop',
+    name: 'Coastal Loop',
+    width: 5.6,
+    hierarchy: 'avenue',
+    closed: true,
+    points: [
+      [-118, 42],
+      [-104, 94],
+      [-54, 132],
+      [18, 138],
+      [84, 114],
+      [130, 76],
+      [141, 54],
+      [142, 20],
+      [126, 34],
+      [118, -22],
+      [132, -70],
+      [86, -126],
+      [18, -118],
+      [-62, -118],
+      [-120, -58],
+      [-144, -8]
+    ]
+  },
   {
     id: 'gallery-spine',
     name: 'Gallery Spine',
@@ -324,6 +351,10 @@ export const roadPaths = [
 
 export const routeThresholds = [
   { id: 'launch-plaza-rollout', center: [4, 31], rotation: 0.14, width: 20, depth: 7.5, color: '#7cffb2', bars: 4 },
+  { id: 'coastal-loop-north-overlook', center: [18, 136], rotation: 1.5, width: 19, depth: 7, color: '#ffdf8a', bars: 3 },
+  { id: 'coastal-loop-east-harbor', center: [141, 50], rotation: 3.1, width: 18, depth: 7, color: '#78b7ff', bars: 3 },
+  { id: 'coastal-loop-south-cove', center: [70, -124], rotation: 1.45, width: 18, depth: 7, color: '#ff9b6d', bars: 3 },
+  { id: 'coastal-loop-west-return', center: [-134, -28], rotation: -0.44, width: 18, depth: 7, color: '#79ffc5', bars: 3 },
   { id: 'gallery-data-join', center: [-116, 42], rotation: 1.5, width: 17, depth: 7, color: '#79ffc5', bars: 3 },
   { id: 'gallery-harbor-join', center: [116, 40], rotation: -1.06, width: 18, depth: 7, color: '#78b7ff', bars: 3 },
   { id: 'fcc-arrival-threshold', center: [-57, 63], rotation: -0.62, width: 18, depth: 8, color: '#9ccfff', bars: 4 },

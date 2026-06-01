@@ -188,7 +188,7 @@ export class Terrain {
     fieldMotifClusters.forEach((cluster, clusterIndex) => {
       for (let i = 0; i < (cluster.berms || 0); i += 1) {
         const point = sampleFieldCluster(cluster, i, 13.7);
-        if (!this.isClearFieldMotifPoint(point.x, point.z, 3.2)) continue;
+        if (!this.isClearFieldMotifPoint(point.x, point.z, 2.0)) continue;
         berms.push({
           ...point,
           width: 3.8 + pseudoRandom(cluster.seed * 31 + i * 4.7) * 3.2,
@@ -200,7 +200,7 @@ export class Terrain {
 
       for (let i = 0; i < (cluster.ribbons || 0); i += 1) {
         const point = sampleFieldCluster(cluster, i, 29.3);
-        if (!this.isClearFieldMotifPoint(point.x, point.z, 1.4)) continue;
+        if (!this.isClearFieldMotifPoint(point.x, point.z, 0.8)) continue;
         ribbons.push({
           ...point,
           width: 4.8 + pseudoRandom(cluster.seed * 43 + i * 4.9) * 7.5,
@@ -445,7 +445,7 @@ export class Terrain {
       const radius = ISLAND_RADIUS * (0.89 + pseudoRandom(i * 7.4) * 0.08);
       const x = Math.cos(angle) * radius;
       const z = Math.sin(angle) * radius;
-      if (isNearRoad(x, z, 7.4)) continue;
+      if (isNearRoad(x, z, 2.8)) continue;
       specs.push({
         x,
         z,
