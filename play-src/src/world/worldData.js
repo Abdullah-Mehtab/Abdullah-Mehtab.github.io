@@ -647,8 +647,8 @@ export const worldZones = [
     shape: 'farm',
     achievement: 'potato_farm',
     lines: [
-      'Voxel potato patch beside the farm track.',
-      'Press P nearby, or use the summon button, to grow one temporary potato and increment the farm counter.'
+      'Stylized potato counter beside the farm track.',
+      'Press P nearby, or use the summon button, to grow one temporary potato and increment the counter.'
     ],
     potatoFarm: true
   }

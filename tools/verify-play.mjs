@@ -1321,6 +1321,7 @@ async function collectRuntimeMetrics(page, loadMs, gameplay, water, surfaces, su
       todoYard: game.world.setPieces?.getTodoYardStats?.() || {},
       props: game.world.props?.getStats?.() || {},
       stuntPark: game.world.stuntPark?.getStats?.() || {},
+      potatoFarm: game.world.potatoFarm?.getStats?.() || {},
       waterStats: game.world.water?.getStats?.() || {},
       zoneLandmarks: game.world.zonesSystem?.getLandmarkStats?.() || {},
       protectedLandmarks,
@@ -2233,6 +2234,9 @@ function assertVerification(result) {
   if ((result.districtComposition?.careerConnectors || 0) < 7) failures.push(`district composition probe failed: careerConnectors=${result.districtComposition?.careerConnectors || 0}`);
   if ((result.districtComposition?.farmRows || 0) < 8) failures.push(`district composition probe failed: farmRows=${result.districtComposition?.farmRows || 0}`);
   if ((result.districtComposition?.farmFences || 0) < 12) failures.push(`district composition probe failed: farmFences=${result.districtComposition?.farmFences || 0}`);
+  if ((result.potatoFarm?.authoredAssets || 0) < 5) failures.push(`potato counter probe failed: authoredAssets=${result.potatoFarm?.authoredAssets || 0}`);
+  if ((result.potatoFarm?.counterPanels || 0) < 11) failures.push(`potato counter probe failed: counterPanels=${result.potatoFarm?.counterPanels || 0}`);
+  if ((result.potatoFarm?.summonEffects || 0) < 7) failures.push(`potato counter probe failed: summonEffects=${result.potatoFarm?.summonEffects || 0}`);
   if ((result.districtComposition?.skillsTerminalNodes || 0) < 17) failures.push(`district composition probe failed: skillsTerminalNodes=${result.districtComposition?.skillsTerminalNodes || 0}`);
   if ((result.districtComposition?.awardsArchiveNodes || 0) < 22) failures.push(`district composition probe failed: awardsArchiveNodes=${result.districtComposition?.awardsArchiveNodes || 0}`);
   if ((result.districtComposition?.dataPierNodes || 0) < 34) failures.push(`district composition probe failed: dataPierNodes=${result.districtComposition?.dataPierNodes || 0}`);
@@ -2369,8 +2373,8 @@ function assertVerification(result) {
   if (result.mobile.potatoFarm?.visible !== false) {
     failures.push(`mobile potato farm cull probe failed: visible=${result.mobile.potatoFarm?.visible}`);
   }
-  if (result.mobile.renderProfile?.some((bucket) => bucket.name === 'ZONE_potato_voxel_farm')) {
-    failures.push('mobile potato farm cull probe failed: ZONE_potato_voxel_farm remained in render profile');
+  if (result.mobile.renderProfile?.some((bucket) => bucket.name === 'ZONE_potato_counter_pocket')) {
+    failures.push('mobile potato farm cull probe failed: ZONE_potato_counter_pocket remained in render profile');
   }
   if ((result.mobile.waterStats?.visibleShoreFlecks || 0) > 24) {
     failures.push(`mobile water quality probe failed: visibleShoreFlecks=${result.mobile.waterStats?.visibleShoreFlecks || 0}`);
