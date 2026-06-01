@@ -7,9 +7,14 @@ import { QUALITY_PROFILES, WATER_Y, pseudoRandom } from './WorldMaterials.js';
 import { mergeStaticMeshesInGroup } from './StaticBatching.js';
 
 const DISTANT_ISLET_LIMITS = { low: 8, medium: 14, high: 20 };
-const SKY_WISP_LIMITS = { low: 4, medium: 8, high: 12 };
+const SKY_WISP_LIMITS = { low: 4, medium: 8, high: 10 };
 const CLOUD_BANK_LIMITS = { low: 0, medium: 8, high: 12 };
 const CLOUD_BANK_LOBES = 5;
+const CLOUD_COLORS = {
+  lit: new THREE.Color(0xfff7e8),
+  warm: new THREE.Color(0xffdfc0),
+  shade: new THREE.Color(0xc9e7f4)
+};
 
 export class Atmosphere {
   constructor(world) {
@@ -154,20 +159,47 @@ export class Atmosphere {
       const group = new THREE.Group();
       group.name = `Cloud_${i}`;
       const material = new THREE.MeshBasicMaterial({
-        color: i % 4 === 0 ? 0xffd9c2 : 0xffffff,
-        transparent: true,
-        opacity: 0.58,
-        depthWrite: false
+        vertexColors: true,
+        transparent: false,
+        depthWrite: false,
+        depthTest: true
       });
-      const lobes = 6 + (i % 4);
+      const lobes = 8 + (i % 4);
       const geometries = [];
       for (let j = 0; j < lobes; j += 1) {
-        const geometry = new THREE.IcosahedronGeometry(3.2 + (j % 3) * 0.55, 2);
+        const lobeSeed = (i + 1) * 19.7 + j * 7.13;
+        const lobeRadius = 2.9 + pseudoRandom(lobeSeed) * 1.25;
+        const geometry = new THREE.IcosahedronGeometry(lobeRadius, 1);
+        const lobeColor = new THREE.Color(j % 5 === 0 ? CLOUD_COLORS.warm : CLOUD_COLORS.lit);
+        const colors = [];
+        const position = geometry.attributes.position;
+        for (let c = 0; c < position.count; c += 1) {
+          const shade = THREE.MathUtils.clamp((-position.getY(c) / lobeRadius + 0.25) * 0.46, 0, 0.48);
+          const vertexColor = lobeColor.clone().lerp(CLOUD_COLORS.shade, shade);
+          colors.push(vertexColor.r, vertexColor.g, vertexColor.b);
+        }
+        geometry.setAttribute('color', new THREE.Float32BufferAttribute(colors, 3));
+        const center = j - (lobes - 1) * 0.5;
+        const row = j % 3;
         const matrix = new THREE.Matrix4()
           .compose(
-            new THREE.Vector3((j - lobes / 2) * 3.1, Math.sin(j * 1.8) * 0.7, Math.cos(j * 2.1) * 1.65),
-            new THREE.Quaternion(),
-            new THREE.Vector3(1.55 + (j % 2) * 0.28, 0.46, 0.84 + (j % 3) * 0.12)
+            new THREE.Vector3(
+              center * 1.28 + (pseudoRandom(lobeSeed + 2.1) - 0.5) * 0.74,
+              Math.sin(j * 1.23 + i) * 0.92 + row * 0.54,
+              Math.cos(j * 1.91 + i * 0.3) * 2.05 + (row - 1) * 0.92
+            ),
+            new THREE.Quaternion().setFromEuler(
+              new THREE.Euler(
+                (pseudoRandom(lobeSeed + 3.7) - 0.5) * 0.18,
+                (pseudoRandom(lobeSeed + 5.2) - 0.5) * 0.38,
+                (pseudoRandom(lobeSeed + 8.4) - 0.5) * 0.16
+              )
+            ),
+            new THREE.Vector3(
+              1.75 + pseudoRandom(lobeSeed + 11.1) * 0.6,
+              0.9 + pseudoRandom(lobeSeed + 13.9) * 0.28,
+              1.18 + pseudoRandom(lobeSeed + 17.6) * 0.52
+            )
           );
         geometry.applyMatrix4(matrix);
         geometries.push(geometry);
@@ -177,10 +209,10 @@ export class Atmosphere {
       mesh.name = `Cloud_${i}_merged_lobes`;
       group.add(mesh);
       const angle = (i / maxClouds) * Math.PI * 2;
-      const radius = 132 + (i % 5) * 26;
-      group.position.set(Math.cos(angle) * radius, 58 + (i % 4) * 6, Math.sin(angle) * radius);
-      group.rotation.y = angle;
-      group.scale.setScalar(0.9 + (i % 5) * 0.12);
+      const radius = 142 + (i % 5) * 24;
+      group.position.set(Math.cos(angle) * radius, 58 + (i % 4) * 5.4, Math.sin(angle) * radius);
+      group.rotation.set((i % 3 - 1) * 0.018, angle + (pseudoRandom(i * 4.9) - 0.5) * 0.24, (pseudoRandom(i * 7.1) - 0.5) * 0.035);
+      group.scale.setScalar(0.86 + (i % 5) * 0.11);
       this.world.scene.add(group);
       this.clouds.push(group);
     }
@@ -266,7 +298,7 @@ export class Atmosphere {
     const material = new THREE.MeshBasicMaterial({
       color: 0xf2ffff,
       transparent: true,
-      opacity: 0.18,
+      opacity: 0.07,
       depthWrite: false,
       side: THREE.DoubleSide
     });
@@ -281,9 +313,9 @@ export class Atmosphere {
       this.skyWisps.push({
         angle,
         radius,
-        y: 34 + pseudoRandom(i * 5.19) * 18,
-        width: 22 + pseudoRandom(i * 7.71) * 46,
-        height: 1.4 + pseudoRandom(i * 11.43) * 2.8,
+        y: 24 + pseudoRandom(i * 5.19) * 16,
+        width: 14 + pseudoRandom(i * 7.71) * 26,
+        height: 0.65 + pseudoRandom(i * 11.43) * 1.35,
         phase: i * 0.71,
         speed: 0.08 + pseudoRandom(i * 13.91) * 0.08,
         drift: 1.2 + pseudoRandom(i * 17.17) * 2.8
@@ -454,7 +486,7 @@ export class Atmosphere {
     this.writeCloudBanks(elapsed);
     this.writeSkyWisps(elapsed);
     if (this.skyWispMesh) {
-      this.skyWispMesh.material.opacity = 0.15 + Math.sin(elapsed * 0.12) * 0.018;
+      this.skyWispMesh.material.opacity = 0.06 + Math.sin(elapsed * 0.12) * 0.01;
     }
     this.updateDistantIslets(elapsed);
     this.motionSamples += 1;
