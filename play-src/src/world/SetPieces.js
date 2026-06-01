@@ -2077,20 +2077,20 @@ export class SetPieces {
         ]
       },
       {
-        x: 118,
-        z: 18,
-        rotation: -0.36,
-        width: 30,
-        depth: 17,
-        material: this.world.materials.sand,
+        x: 112,
+        z: 1,
+        rotation: -0.24,
+        width: 42,
+        depth: 22,
+        material: this.world.materials.meadowLight,
         accent: this.world.materials.glowBlue,
-        paver: this.world.materials.paleStone,
+        paver: this.world.materials.sand,
         seed: 1087,
         assets: [
-          ['EnvPolishHarborSignal', -8.4, 3.8, 0.16, 0.58],
-          ['EnvPolishRouteVistaKit', 8.0, -3.4, -0.16, 0.64],
-          ['EnvPolishBenchPlanter', -2.4, -6.0, 0.2, 0.62],
-          ['EnvPolishRouteStoryMarker', 8.8, 5.4, -0.22, 0.62]
+          ['EnvPolishShorelineBreakwater', -11.2, 4.8, 0.12, 0.72],
+          ['EnvPolishRouteVistaKit', 10.8, -4.2, -0.18, 0.68],
+          ['EnvPolishShorelineTidePool', -2.8, -7.2, 0.18, 0.74],
+          ['EnvPolishRouteStoryMarker', 11.8, 6.6, -0.2, 0.64]
         ]
       }
     ];
