@@ -97,6 +97,7 @@ try {
   await screenshot(page, '03-driving-stress.png');
   const drivingStressMetrics = await sampleRenderSnapshot(page);
   const water = await exerciseWater(page, ISLAND_RADIUS);
+  const waterView = await stageWaterInteractionView(page, ISLAND_RADIUS);
   await screenshot(page, '04-water-interaction.png');
   await page.evaluate(() => {
     const game = window.__portfolioDrive.game;
@@ -206,6 +207,7 @@ try {
     collectibles,
     securityScan,
     vehicleLights,
+    waterView,
     ...metrics
   };
 
@@ -473,12 +475,14 @@ async function exerciseWater(page, islandRadius) {
     let surfaceSeen = false;
     let splashSeen = false;
     let wakeSeen = false;
+    let foamStreakSeen = false;
     for (let i = 0; i < 14; i += 1) {
       await delay(80);
       surfaceSeen = surfaceSeen || game.world.surfaceState?.inWater === true;
       const stats = waterStats();
       splashSeen = splashSeen || (stats.activeSplashes || stats.splashes || 0) > 0;
       wakeSeen = wakeSeen || stats.activeWakes > 0 || stats.wakesSpawned > (wakeBefore.wakesSpawned || 0);
+      foamStreakSeen = foamStreakSeen || stats.activeFoamStreaks > 0 || stats.foamStreaksSpawned > (wakeBefore.foamStreaksSpawned || 0);
     }
     const afterSpeed = horizontalSpeed();
 
@@ -496,6 +500,7 @@ async function exerciseWater(page, islandRadius) {
       await delay(80);
       const stats = waterStats();
       wakeSeen = wakeSeen || stats.activeWakes > 0 || stats.wakesSpawned > (wakeBefore.wakesSpawned || 0);
+      foamStreakSeen = foamStreakSeen || stats.activeFoamStreaks > 0 || stats.foamStreaksSpawned > (wakeBefore.foamStreaksSpawned || 0);
     }
 
     const wakeAfter = waterStats();
@@ -517,6 +522,7 @@ async function exerciseWater(page, islandRadius) {
       surfaceSeen,
       splashSeen,
       wakeSeen,
+      foamStreakSeen,
       beforeSpeed: Number(beforeSpeed.toFixed(2)),
       afterSpeed: Number(afterSpeed.toFixed(2)),
       dragReduced: afterSpeed < beforeSpeed * 0.82,
@@ -525,7 +531,59 @@ async function exerciseWater(page, islandRadius) {
       splashCount: wakeAfter.activeSplashes || wakeAfter.splashes || 0,
       wakeSpawnedDelta: (wakeAfter.wakesSpawned || 0) - (wakeBefore.wakesSpawned || 0),
       activeWakes: wakeAfter.activeWakes || 0,
+      foamStreakSpawnedDelta: (wakeAfter.foamStreaksSpawned || 0) - (wakeBefore.foamStreaksSpawned || 0),
+      activeFoamStreaks: wakeAfter.activeFoamStreaks || 0,
       stats: wakeAfter
+    };
+  }, islandRadius);
+}
+
+async function stageWaterInteractionView(page, islandRadius) {
+  return page.evaluate(async (radius) => {
+    const delay = (ms) => new Promise((resolveDelay) => setTimeout(resolveDelay, ms));
+    const game = window.__portfolioDrive.game;
+    const input = game.input;
+    const clearInput = () => {
+      input.actions.forward = false;
+      input.actions.backward = false;
+      input.actions.left = false;
+      input.actions.right = false;
+      input.actions.boost = false;
+      input.actions.handbrake = false;
+      input.actions.brake = false;
+      input.actions.jump = false;
+    };
+    clearInput();
+    const statsBefore = game.world.water?.getStats?.() || {};
+    game.vehicle.respawn({ x: radius * 0.972, y: 1.08, z: -8 }, 0);
+    game.vehicle.body.setLinvel({ x: 0, y: 0, z: 14 }, true);
+    for (let i = 0; i < 8; i += 1) {
+      await delay(80);
+    }
+    const statsAfter = game.world.water?.getStats?.() || {};
+    const target = game.vehicle.position.clone();
+    const lookAt = target.clone();
+    lookAt.y += 0.65;
+    const cameraPosition = target.clone();
+    lookAt.x += 2.2;
+    cameraPosition.x -= 7.2;
+    cameraPosition.y += 4.0;
+    cameraPosition.z -= 7.0;
+    game.cameraRig.setCinematic(cameraPosition, lookAt);
+    game.cameraRig.smoothedTarget.copy(lookAt);
+    game.camera.position.copy(cameraPosition);
+    game.camera.fov = 40;
+    game.camera.updateProjectionMatrix();
+    game.camera.lookAt(lookAt);
+
+    return {
+      surface: game.world.surfaceState?.label || null,
+      activeSplashes: statsAfter.activeSplashes || 0,
+      activeWakes: statsAfter.activeWakes || 0,
+      activeFoamStreaks: statsAfter.activeFoamStreaks || 0,
+      splashDelta: (statsAfter.splashesSpawned || 0) - (statsBefore.splashesSpawned || 0),
+      wakeDelta: (statsAfter.wakesSpawned || 0) - (statsBefore.wakesSpawned || 0),
+      foamStreakDelta: (statsAfter.foamStreaksSpawned || 0) - (statsBefore.foamStreaksSpawned || 0)
     };
   }, islandRadius);
 }
@@ -2165,6 +2223,25 @@ function assertVerification(result) {
   if (!result.water?.wakeSeen) failures.push('water probe failed: wake rings');
   if ((result.water?.wakeSpawnedDelta || 0) < 6) failures.push(`water probe failed: wake delta=${result.water?.wakeSpawnedDelta || 0}`);
   if ((result.water?.activeWakes || 0) < 4) failures.push(`water probe failed: active wakes=${result.water?.activeWakes || 0}`);
+  if (!result.water?.foamStreakSeen) failures.push('water foam streak probe failed: streaks did not spawn');
+  if ((result.water?.foamStreakSpawnedDelta || 0) < 6) {
+    failures.push(`water foam streak probe failed: delta=${result.water?.foamStreakSpawnedDelta || 0}`);
+  }
+  if ((result.water?.activeFoamStreaks || 0) < 4) {
+    failures.push(`water foam streak probe failed: active=${result.water?.activeFoamStreaks || 0}`);
+  }
+  if ((result.waterView?.activeFoamStreaks || 0) < 2) {
+    failures.push(`water screenshot staging failed: active foam streaks=${result.waterView?.activeFoamStreaks || 0}`);
+  }
+  if ((result.waterView?.wakeDelta || 0) < 2 || (result.waterView?.foamStreakDelta || 0) < 2) {
+    failures.push(`water screenshot staging failed: wakeDelta=${result.waterView?.wakeDelta || 0}, foamDelta=${result.waterView?.foamStreakDelta || 0}`);
+  }
+  if ((result.water?.stats?.foamStreakMaterialOpacity || 0) < 0.44) {
+    failures.push(`water foam streak readability probe failed: opacity=${result.water?.stats?.foamStreakMaterialOpacity || 0}`);
+  }
+  if ((result.water?.stats?.foamStreakProfile?.waterLife || 0) < 1.25) {
+    failures.push(`water foam streak readability probe failed: waterLife=${result.water?.stats?.foamStreakProfile?.waterLife || 0}`);
+  }
   if ((result.water?.stats?.wakeMaterialOpacity || 0) < 0.44) {
     failures.push(`water wake readability probe failed: opacity=${result.water?.stats?.wakeMaterialOpacity || 0}`);
   }
@@ -2188,6 +2265,13 @@ function assertVerification(result) {
   }
   if ((result.waterStats?.wakeRenderCount || 0) > (result.waterStats?.maxWakes || 0)) {
     failures.push(`water wake render cap failed: count=${result.waterStats?.wakeRenderCount || 0}, max=${result.waterStats?.maxWakes || 0}`);
+  }
+  if (!result.waterStats?.foamStreakMesh) failures.push('water foam streak probe failed: instanced mesh missing');
+  if ((result.waterStats?.foamStreakCapacity || 0) < (result.waterStats?.maxFoamStreaks || 0)) {
+    failures.push(`water foam streak probe failed: capacity=${result.waterStats?.foamStreakCapacity || 0}, max=${result.waterStats?.maxFoamStreaks || 0}`);
+  }
+  if ((result.waterStats?.foamStreakRenderCount || 0) > (result.waterStats?.maxFoamStreaks || 0)) {
+    failures.push(`water foam streak render cap failed: count=${result.waterStats?.foamStreakRenderCount || 0}, max=${result.waterStats?.maxFoamStreaks || 0}`);
   }
   if ((result.waterStats?.splashesSpawned || 0) < 2) failures.push(`water splash probe failed: spawned=${result.waterStats?.splashesSpawned || 0}`);
   if ((result.waterStats?.surfaceGlints || 0) < 30) failures.push(`water detail probe failed: surfaceGlints=${result.waterStats?.surfaceGlints || 0}`);

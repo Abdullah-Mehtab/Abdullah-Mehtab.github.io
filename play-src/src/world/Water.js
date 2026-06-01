@@ -8,6 +8,7 @@ import { getIslandCoastPoints, makeIslandBandGeometry, pseudoRandom, WATER_Y } f
 const SPLASH_LIMITS = { low: 12, medium: 24, high: 40 };
 const BOBBING_LIMITS = { low: 5, medium: 10, high: 16 };
 const WAKE_LIMITS = { low: 10, medium: 26, high: 42 };
+const FOAM_STREAK_LIMITS = { low: 6, medium: 14, high: 24 };
 const GLINT_LIMITS = { low: 0, medium: 20, high: 34 };
 const WAVE_LANE_LIMITS = { low: 16, medium: 32, high: 52 };
 const SHORE_FLECK_LIMITS = { low: 24, medium: 72, high: 112 };
@@ -35,6 +36,16 @@ const WAKE_PROFILE = {
   stretchMax: 2.7,
   expansion: 2.6
 };
+const FOAM_STREAK_PROFILE = {
+  shoreLife: 1.05,
+  waterLife: 1.32,
+  shoreWidth: 0.52,
+  waterWidth: 0.72,
+  shoreLength: 3.35,
+  waterLength: 4.7,
+  speedStretch: 0.055,
+  expansion: 1.1
+};
 const SHORE_WAKE_RADIUS = ISLAND_RADIUS * 0.94;
 const WATER_DRAG_RADIUS = ISLAND_RADIUS * 1.012;
 const WATER_RESPAWN_RADIUS = ISLAND_RADIUS * 1.04;
@@ -52,9 +63,11 @@ export class Water {
     this.tideGlimmers = [];
     this.splashes = [];
     this.wakes = [];
+    this.foamStreaks = [];
     this.maxSplashes = SPLASH_LIMITS.medium;
     this.maxBobbingProps = BOBBING_LIMITS.medium;
     this.maxWakes = WAKE_LIMITS.medium;
+    this.maxFoamStreaks = FOAM_STREAK_LIMITS.medium;
     this.maxGlints = GLINT_LIMITS.medium;
     this.maxWaveLanes = WAVE_LANE_LIMITS.medium;
     this.maxShoreFlecks = SHORE_FLECK_LIMITS.medium;
@@ -73,11 +86,14 @@ export class Water {
     this.lastWakeAt = -Infinity;
     this.splashesSpawned = 0;
     this.wakesSpawned = 0;
+    this.foamStreaksSpawned = 0;
     this.splashCursor = 0;
     this.submergeTime = 0;
     this.wakeCursor = 0;
+    this.foamStreakCursor = 0;
     this.splashDummy = new THREE.Object3D();
     this.wakeDummy = new THREE.Object3D();
+    this.foamStreakDummy = new THREE.Object3D();
     this.glintDummy = new THREE.Object3D();
     this.waveLaneDummy = new THREE.Object3D();
     this.shoreFleckDummy = new THREE.Object3D();
@@ -93,6 +109,15 @@ export class Water {
     this.wakeGeometry.rotateX(-Math.PI / 2);
     this.wakeMaterial = new THREE.MeshBasicMaterial({
       color: 0xeafff7,
+      transparent: true,
+      opacity: 0.46,
+      depthWrite: false,
+      blending: THREE.AdditiveBlending,
+      side: THREE.DoubleSide
+    });
+    this.foamStreakGeometry = makeFoamStreakGeometry();
+    this.foamStreakMaterial = new THREE.MeshBasicMaterial({
+      color: 0xf2fff8,
       transparent: true,
       opacity: 0.46,
       depthWrite: false,
@@ -120,6 +145,7 @@ export class Water {
     this.createBobbingProps();
     this.createSplashPool();
     this.createWakePool();
+    this.createFoamStreakPool();
     this.applyQuality();
   }
 
@@ -469,12 +495,37 @@ export class Water {
     this.world.scene.add(this.splashMesh);
   }
 
+  createFoamStreakPool() {
+    const capacity = FOAM_STREAK_LIMITS.high;
+    this.foamStreakMesh = new THREE.InstancedMesh(this.foamStreakGeometry, this.foamStreakMaterial, capacity);
+    this.foamStreakMesh.name = 'WaterWheelFoam_Streaks';
+    this.foamStreakMesh.frustumCulled = false;
+    this.foamStreakMesh.renderOrder = 1;
+    this.foamStreakMesh.visible = false;
+    this.foamStreakMesh.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
+    this.foamStreaks = Array.from({ length: capacity }, () => ({
+      active: false,
+      life: 0,
+      maxLife: 1,
+      position: new THREE.Vector3(),
+      rotationY: 0,
+      width: 1,
+      length: 1
+    }));
+    for (let index = 0; index < capacity; index += 1) {
+      this.hideFoamStreakInstance(index);
+    }
+    this.foamStreakMesh.instanceMatrix.needsUpdate = true;
+    this.world.scene.add(this.foamStreakMesh);
+  }
+
   applyQuality() {
     const profile = this.world.getQualityProfile();
     const waterQuality = profile.water || 'medium';
     this.maxSplashes = SPLASH_LIMITS[waterQuality] ?? SPLASH_LIMITS.medium;
     this.maxBobbingProps = BOBBING_LIMITS[waterQuality] ?? BOBBING_LIMITS.medium;
     this.maxWakes = WAKE_LIMITS[waterQuality] ?? WAKE_LIMITS.medium;
+    this.maxFoamStreaks = FOAM_STREAK_LIMITS[waterQuality] ?? FOAM_STREAK_LIMITS.medium;
     this.maxGlints = GLINT_LIMITS[waterQuality] ?? GLINT_LIMITS.medium;
     this.maxWaveLanes = WAVE_LANE_LIMITS[waterQuality] ?? WAVE_LANE_LIMITS.medium;
     this.maxShoreFlecks = SHORE_FLECK_LIMITS[waterQuality] ?? SHORE_FLECK_LIMITS.medium;
@@ -511,11 +562,16 @@ export class Water {
       this.wakeMesh.count = Math.min(this.maxWakes, this.wakes.length);
       this.wakeMesh.instanceMatrix.needsUpdate = true;
     }
+    if (this.foamStreakMesh) {
+      this.foamStreakMesh.count = Math.min(this.maxFoamStreaks, this.foamStreaks.length);
+      this.foamStreakMesh.instanceMatrix.needsUpdate = true;
+    }
     this.bobbingProps.forEach((item, index) => {
       item.group.visible = index < this.maxBobbingProps;
     });
     this.trimSplashPool();
     this.trimWakePool();
+    this.trimFoamStreakPool();
   }
 
   applyShorelineLifeQuality() {
@@ -557,6 +613,7 @@ export class Water {
     this.updateVehicleWaterInteraction(dt, elapsed, vehiclePosition, vehicle);
     this.updateSplashes(dt);
     this.updateWakes(dt);
+    this.updateFoamStreaks(dt);
   }
 
   updateBobbingProps(elapsed) {
@@ -807,6 +864,13 @@ export class Water {
         ),
         life: inWater ? WAKE_PROFILE.waterLife : WAKE_PROFILE.shoreLife
       });
+      this.writeFoamStreak({
+        position,
+        rotationY: heading,
+        width: inWater ? FOAM_STREAK_PROFILE.waterWidth : FOAM_STREAK_PROFILE.shoreWidth,
+        length: (inWater ? FOAM_STREAK_PROFILE.waterLength : FOAM_STREAK_PROFILE.shoreLength) + speed * FOAM_STREAK_PROFILE.speedStretch,
+        life: inWater ? FOAM_STREAK_PROFILE.waterLife : FOAM_STREAK_PROFILE.shoreLife
+      });
     }
   }
 
@@ -853,6 +917,29 @@ export class Water {
     this.wakeMesh.instanceMatrix.needsUpdate = true;
   }
 
+  writeFoamStreak({ position, rotationY, width, length, life }) {
+    if (!this.foamStreakMesh || !this.foamStreaks.length) return;
+    const activeCount = this.foamStreaks.filter((item) => item.active).length;
+    if (activeCount >= this.maxFoamStreaks) {
+      this.hideOldestFoamStreak();
+    }
+    const poolSize = Math.max(1, Math.min(this.maxFoamStreaks, this.foamStreaks.length));
+    const index = this.foamStreakCursor % poolSize;
+    this.foamStreakCursor = (this.foamStreakCursor + 1) % poolSize;
+    const item = this.foamStreaks[index];
+    this.foamStreakMesh.visible = true;
+    item.active = true;
+    item.life = life;
+    item.maxLife = life;
+    item.position.copy(position);
+    item.rotationY = rotationY;
+    item.width = width;
+    item.length = length;
+    this.foamStreaksSpawned += 1;
+    this.writeFoamStreakMatrix(index, item);
+    this.foamStreakMesh.instanceMatrix.needsUpdate = true;
+  }
+
   writeSplashMatrix(index, item) {
     const progress = 1 - item.life / item.maxLife;
     const fade = THREE.MathUtils.clamp(item.life / item.maxLife, 0.001, 1);
@@ -894,6 +981,40 @@ export class Water {
     this.wakeMesh.setMatrixAt(index, this.wakeDummy.matrix);
   }
 
+  updateFoamStreaks(dt) {
+    if (!this.foamStreakMesh) return;
+    let activeCount = 0;
+    for (let index = 0; index < this.foamStreaks.length; index += 1) {
+      const item = this.foamStreaks[index];
+      if (!item.active) continue;
+      item.life -= dt;
+      if (item.life <= 0 || activeCount >= this.maxFoamStreaks) {
+        this.hideFoamStreakInstance(index);
+        item.active = false;
+        continue;
+      }
+      item.position.y = WATER_Y + 0.18 + Math.sin(item.life * 8.0 + index) * 0.004;
+      this.writeFoamStreakMatrix(index, item);
+      activeCount += 1;
+    }
+    this.foamStreakMesh.visible = activeCount > 0;
+    this.foamStreakMesh.instanceMatrix.needsUpdate = true;
+  }
+
+  writeFoamStreakMatrix(index, item) {
+    const progress = 1 - item.life / item.maxLife;
+    const fade = THREE.MathUtils.clamp(item.life / item.maxLife, 0.001, 1);
+    this.foamStreakDummy.position.copy(item.position);
+    this.foamStreakDummy.rotation.set(0, item.rotationY, 0);
+    this.foamStreakDummy.scale.set(
+      item.width * (0.9 + progress * FOAM_STREAK_PROFILE.expansion) * Math.sqrt(fade),
+      1,
+      item.length * (0.78 + progress * 0.42) * fade
+    );
+    this.foamStreakDummy.updateMatrix();
+    this.foamStreakMesh.setMatrixAt(index, this.foamStreakDummy.matrix);
+  }
+
   hideOldestWake() {
     let oldest = -1;
     let lowestLife = Infinity;
@@ -907,6 +1028,22 @@ export class Water {
     if (oldest >= 0) {
       this.wakes[oldest].active = false;
       this.hideWakeInstance(oldest);
+    }
+  }
+
+  hideOldestFoamStreak() {
+    let oldest = -1;
+    let lowestLife = Infinity;
+    for (let index = 0; index < this.foamStreaks.length; index += 1) {
+      const item = this.foamStreaks[index];
+      if (item.active && item.life < lowestLife) {
+        oldest = index;
+        lowestLife = item.life;
+      }
+    }
+    if (oldest >= 0) {
+      this.foamStreaks[oldest].active = false;
+      this.hideFoamStreakInstance(oldest);
     }
   }
 
@@ -968,6 +1105,24 @@ export class Water {
     if (this.wakeMesh) this.wakeMesh.instanceMatrix.needsUpdate = true;
   }
 
+  trimFoamStreakPool() {
+    let activeCount = 0;
+    for (let index = 0; index < this.foamStreaks.length; index += 1) {
+      const item = this.foamStreaks[index];
+      if (!item.active) continue;
+      if (activeCount >= this.maxFoamStreaks) {
+        item.active = false;
+        this.hideFoamStreakInstance(index);
+      } else {
+        activeCount += 1;
+      }
+    }
+    if (this.foamStreakMesh) {
+      this.foamStreakMesh.visible = activeCount > 0;
+      this.foamStreakMesh.instanceMatrix.needsUpdate = true;
+    }
+  }
+
   hideWakeInstance(index) {
     if (!this.wakeMesh) return;
     this.wakeDummy.position.set(0, -1000, 0);
@@ -975,6 +1130,15 @@ export class Water {
     this.wakeDummy.scale.set(0, 0, 0);
     this.wakeDummy.updateMatrix();
     this.wakeMesh.setMatrixAt(index, this.wakeDummy.matrix);
+  }
+
+  hideFoamStreakInstance(index) {
+    if (!this.foamStreakMesh) return;
+    this.foamStreakDummy.position.set(0, -1000, 0);
+    this.foamStreakDummy.rotation.set(0, 0, 0);
+    this.foamStreakDummy.scale.set(0, 0, 0);
+    this.foamStreakDummy.updateMatrix();
+    this.foamStreakMesh.setMatrixAt(index, this.foamStreakDummy.matrix);
   }
 
   updateSplashes(dt) {
@@ -1028,6 +1192,14 @@ export class Water {
       wakeMesh: Boolean(this.wakeMesh),
       wakeMaterialOpacity: this.wakeMaterial?.opacity || 0,
       wakeProfile: { ...WAKE_PROFILE },
+      foamStreaksSpawned: this.foamStreaksSpawned,
+      activeFoamStreaks: this.foamStreaks.filter((item) => item.active).length,
+      maxFoamStreaks: this.maxFoamStreaks,
+      foamStreakCapacity: this.foamStreaks.length,
+      foamStreakRenderCount: this.foamStreakMesh?.count || 0,
+      foamStreakMesh: Boolean(this.foamStreakMesh),
+      foamStreakMaterialOpacity: this.foamStreakMaterial?.opacity || 0,
+      foamStreakProfile: { ...FOAM_STREAK_PROFILE },
       foamRings: this.foamMeshes.length,
       visibleFoamRings: this.foamMeshes.filter((mesh) => mesh.visible).length,
       surfaceGlints: this.surfaceGlints.length,
@@ -1049,6 +1221,25 @@ export class Water {
       visibleBobbingProps: this.bobbingProps.filter((item) => item.group.visible).length
     };
   }
+}
+
+function makeFoamStreakGeometry() {
+  const geometry = new THREE.BufferGeometry();
+  geometry.setAttribute('position', new THREE.Float32BufferAttribute([
+    -0.36, 0, -0.5,
+    0.36, 0, -0.5,
+    0.82, 0, 0.5,
+    -0.82, 0, 0.5
+  ], 3));
+  geometry.setAttribute('uv', new THREE.Float32BufferAttribute([
+    0, 0,
+    1, 0,
+    1, 1,
+    0, 1
+  ], 2));
+  geometry.setIndex([0, 1, 2, 0, 2, 3]);
+  geometry.computeVertexNormals();
+  return geometry;
 }
 
 function pointOnCoast(points, angle, offset = 1) {
