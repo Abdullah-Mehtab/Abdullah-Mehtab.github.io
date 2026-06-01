@@ -31,12 +31,6 @@ export class GameRenderer {
     this.renderer.outputColorSpace = THREE.SRGBColorSpace;
     this.renderer.toneMapping = THREE.ACESFilmicToneMapping;
     this.renderer.toneMappingExposure = 1.04;
-
-    this.composer = new EffectComposer(this.renderer);
-    this.composer.addPass(new RenderPass(this.scene, this.camera));
-    this.bloom = new UnrealBloomPass(new THREE.Vector2(window.innerWidth, window.innerHeight), 0.18, 0.58, 0.92);
-    this.composer.addPass(this.bloom);
-    this.composer.addPass(new OutputPass());
   }
 
   setQuality(quality) {
@@ -49,6 +43,7 @@ export class GameRenderer {
     this.renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, this.maxPixelRatio));
     this.renderer.shadowMap.enabled = profile.shadows;
     this.postprocessingEnabled = profile.post;
+    if (profile.post) this.ensureComposer();
     if (!this.bloom) return;
     this.bloom.strength = profile.bloom;
     if (quality === 'low') {
@@ -61,8 +56,19 @@ export class GameRenderer {
   }
 
   render() {
-    if (this.composer && this.postprocessingEnabled) this.composer.render();
+    if (this.postprocessingEnabled && this.ensureComposer()) this.composer.render();
     else this.renderer.render(this.scene, this.camera);
+  }
+
+  ensureComposer() {
+    if (this.composer && this.bloom) return this.composer;
+    this.composer = new EffectComposer(this.renderer);
+    this.composer.addPass(new RenderPass(this.scene, this.camera));
+    this.bloom = new UnrealBloomPass(new THREE.Vector2(window.innerWidth, window.innerHeight), 0.18, 0.58, 0.92);
+    this.composer.addPass(this.bloom);
+    this.composer.addPass(new OutputPass());
+    this.resize();
+    return this.composer;
   }
 
   resize() {

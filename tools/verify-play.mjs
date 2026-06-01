@@ -1686,6 +1686,8 @@ async function captureHighQuality(browser) {
       maxPixelRatio: game.rendererSystem.maxPixelRatio,
       postprocessing: game.rendererSystem.postprocessingEnabled,
       shadows: game.renderer.shadowMap.enabled,
+      composerAllocated: Boolean(game.rendererSystem.composer),
+      bloomAllocated: Boolean(game.rendererSystem.bloom),
       avgFrameMs: Number(avgMs.toFixed(2)),
       p95FrameMs: Number(p95Ms.toFixed(2)),
       fps: Number((1000 / avgMs).toFixed(2)),
@@ -1723,6 +1725,9 @@ async function captureMobile(browser) {
       canvasSample: window.__portfolioDrive.sampleCanvas(),
       quality: game.world.landscapeQuality,
       savedQuality: localStorage.getItem('portfolio-drive-landscape-quality'),
+      postprocessing: game.rendererSystem.postprocessingEnabled,
+      composerAllocated: Boolean(game.rendererSystem.composer),
+      bloomAllocated: Boolean(game.rendererSystem.bloom),
       lifeStats: game.world.setPieces?.getLifeStats?.() || { ...(game.world.setPieces?.lifeStats || {}) },
       securityLab: game.world.setPieces?.getSecurityLabStats?.() || {},
       setPieceQuality: game.world.setPieces?.getQualityStats?.() || {},
@@ -1978,6 +1983,9 @@ async function captureMobileSavedPreference(browser) {
       savedQuality: localStorage.getItem('portfolio-drive-landscape-quality'),
       pixelRatio: window.__portfolioDrive.game.renderer.getPixelRatio(),
       maxPixelRatio: window.__portfolioDrive.game.rendererSystem.maxPixelRatio,
+      postprocessing: window.__portfolioDrive.game.rendererSystem.postprocessingEnabled,
+      composerAllocated: Boolean(window.__portfolioDrive.game.rendererSystem.composer),
+      bloomAllocated: Boolean(window.__portfolioDrive.game.rendererSystem.bloom),
       calls: render.calls,
       triangles: render.triangles
     };
@@ -2140,6 +2148,9 @@ function assertVerification(result) {
   if (result.highQuality?.quality !== 'high') failures.push(`high quality probe failed: quality=${result.highQuality?.quality || 'none'}`);
   if (result.highQuality?.savedQuality !== 'high') failures.push(`high quality probe failed: savedQuality=${result.highQuality?.savedQuality || 'none'}`);
   if (!result.highQuality?.postprocessing || !result.highQuality?.shadows) failures.push('high quality probe failed: post/shadow tier inactive');
+  if (!result.highQuality?.composerAllocated || !result.highQuality?.bloomAllocated) {
+    failures.push('high quality renderer probe failed: post stack was not allocated');
+  }
   if ((result.highQuality?.p95FrameMs || Infinity) > 24) failures.push(`high quality p95 frame time too high: ${result.highQuality?.p95FrameMs}ms`);
   if ((result.highQuality?.fps || 0) < 50) failures.push(`high quality FPS too low: ${result.highQuality?.fps}`);
   if ((result.highQuality?.calls || 0) > 700) failures.push(`high quality draw-call budget exceeded: ${result.highQuality?.calls}`);
@@ -2655,6 +2666,9 @@ function assertVerification(result) {
   if (result.mobile.freshRenderSample !== true) failures.push('mobile fresh render sample missing');
   if (result.mobile.quality !== 'low') failures.push(`mobile quality tier mismatch: ${result.mobile.quality}`);
   if (result.mobile.savedQuality !== null) failures.push(`mobile default quality should not write saved preference: ${result.mobile.savedQuality}`);
+  if (result.mobile.postprocessing || result.mobile.composerAllocated || result.mobile.bloomAllocated) {
+    failures.push('mobile renderer probe failed: post stack allocated while low quality is active');
+  }
   if (result.mobile.triangles > 180000) failures.push(`mobile triangle budget exceeded: ${result.mobile.triangles}`);
   if ((result.mobile.uiFrame?.topOccupied || Infinity) > 66) {
     failures.push(`mobile HUD frame too tall: topOccupied=${result.mobile.uiFrame?.topOccupied || 0}`);
@@ -2757,6 +2771,9 @@ function assertVerification(result) {
   }
   if (result.mobileSavedPreference.savedQuality !== 'high') {
     failures.push(`mobile saved-preference storage mismatch: ${result.mobileSavedPreference.savedQuality}`);
+  }
+  if (result.mobileSavedPreference.postprocessing || result.mobileSavedPreference.composerAllocated || result.mobileSavedPreference.bloomAllocated) {
+    failures.push('mobile saved-preference renderer probe failed: post stack allocated while normalized to low quality');
   }
   if ((result.mobileSavedPreference.calls || 0) > 205) {
     failures.push(`mobile saved-preference draw-call budget exceeded: ${result.mobileSavedPreference.calls}`);
