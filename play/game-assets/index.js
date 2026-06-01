@@ -4105,12 +4105,18 @@ diffuseColor.rgb += vec3(0.055, 0.018, 0.004) * sabreFine;`)},o.customProgramCac
         float crossBands = sin(dot(vWorld.xz, vec2(-0.034, 0.026)) - time * 0.38) * 0.5 + 0.5;
         float fineBands = sin(dot(vWorld.xz, vec2(0.19, -0.16)) - time * 1.05) * 0.5 + 0.5;
         float sparkle = pow(max(0.0, fineBands * longBands), 10.0) * (1.0 - horizonMix * 0.72) * 0.22;
+        float shoreBand = smoothstep(146.0, 158.0, radius) * (1.0 - smoothstep(166.0, 188.0, radius));
+        float laceA = sin(dot(vWorld.xz, vec2(0.12, -0.08)) + time * 1.15) * 0.5 + 0.5;
+        float laceB = sin(dot(vWorld.xz, vec2(-0.07, 0.15)) - time * 0.92) * 0.5 + 0.5;
+        float shoreLace = shoreBand * smoothstep(0.48, 0.92, laceA * laceB + vWave * 0.35);
         vec3 color = mix(deep, shallow, clamp(shallowMix + vWave * 0.18, 0.0, 1.0));
         color += (longBands * 0.028 + crossBands * 0.018) * (1.0 - horizonMix * 0.42);
         color += sparkle * sun;
+        color = mix(color, vec3(0.82, 1.0, 0.94), shoreLace * 0.34);
+        color += shoreBand * vec3(0.02, 0.06, 0.055);
         color = mix(color, horizon, horizonMix * 0.82);
         color = mix(color, vec3(0.72, 0.94, 0.98), 0.08 + horizonMix * 0.16);
-        float alpha = mix(0.9, 0.88, horizonMix);
+        float alpha = mix(0.9, 0.88, horizonMix) + shoreLace * 0.035;
         gl_FragColor = vec4(color, alpha);
       }
     `})}function Ld(o="round"){const t=document.createElement("canvas");t.width=64,t.height=64;const e=t.getContext("2d");if(e.clearRect(0,0,64,64),o==="petal"){e.translate(32,32),e.rotate(-.55);const n=e.createRadialGradient(-5,-3,3,0,0,24);n.addColorStop(0,"rgba(255, 244, 247, 1)"),n.addColorStop(.55,"rgba(255, 178, 188, 0.88)"),n.addColorStop(1,"rgba(255, 178, 188, 0)"),e.fillStyle=n,e.beginPath(),e.ellipse(0,0,22,10,0,0,Math.PI*2),e.fill()}else{const n=e.createRadialGradient(32,32,2,32,32,30);n.addColorStop(0,"rgba(255, 255, 220, 1)"),n.addColorStop(.42,"rgba(199, 255, 138, 0.85)"),n.addColorStop(1,"rgba(199, 255, 138, 0)"),e.fillStyle=n,e.fillRect(0,0,64,64)}const i=new Rs(t);return i.colorSpace=Le,i.needsUpdate=!0,i}function qa({inner:o,outer:t,colorA:e,colorB:i,opacity:n=.5,noise:s=.2,animated:r=!1}){return new Fe({transparent:!0,depthWrite:!1,uniforms:{inner:{value:o},outer:{value:t},colorA:{value:new j(e)},colorB:{value:new j(i)},opacity:{value:n},noiseAmount:{value:s},time:{value:0},animated:{value:r?1:0}},vertexShader:`

@@ -463,12 +463,18 @@ export function makeWaterMaterial() {
         float crossBands = sin(dot(vWorld.xz, vec2(-0.034, 0.026)) - time * 0.38) * 0.5 + 0.5;
         float fineBands = sin(dot(vWorld.xz, vec2(0.19, -0.16)) - time * 1.05) * 0.5 + 0.5;
         float sparkle = pow(max(0.0, fineBands * longBands), 10.0) * (1.0 - horizonMix * 0.72) * 0.22;
+        float shoreBand = smoothstep(146.0, 158.0, radius) * (1.0 - smoothstep(166.0, 188.0, radius));
+        float laceA = sin(dot(vWorld.xz, vec2(0.12, -0.08)) + time * 1.15) * 0.5 + 0.5;
+        float laceB = sin(dot(vWorld.xz, vec2(-0.07, 0.15)) - time * 0.92) * 0.5 + 0.5;
+        float shoreLace = shoreBand * smoothstep(0.48, 0.92, laceA * laceB + vWave * 0.35);
         vec3 color = mix(deep, shallow, clamp(shallowMix + vWave * 0.18, 0.0, 1.0));
         color += (longBands * 0.028 + crossBands * 0.018) * (1.0 - horizonMix * 0.42);
         color += sparkle * sun;
+        color = mix(color, vec3(0.82, 1.0, 0.94), shoreLace * 0.34);
+        color += shoreBand * vec3(0.02, 0.06, 0.055);
         color = mix(color, horizon, horizonMix * 0.82);
         color = mix(color, vec3(0.72, 0.94, 0.98), 0.08 + horizonMix * 0.16);
-        float alpha = mix(0.9, 0.88, horizonMix);
+        float alpha = mix(0.9, 0.88, horizonMix) + shoreLace * 0.035;
         gl_FragColor = vec4(color, alpha);
       }
     `
