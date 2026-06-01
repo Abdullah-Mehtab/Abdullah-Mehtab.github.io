@@ -205,6 +205,11 @@ export class SetPieces {
       queueRails: 0,
       taskCards: 0
     };
+    this.projectsYardStats = {
+      forgeSparks: 0,
+      buildCards: 0,
+      assemblyRings: 0
+    };
     this.behindBuildStats = {
       processPackets: 0,
       hologramPanels: 0,
@@ -243,6 +248,10 @@ export class SetPieces {
       }
       if (item.kind === 'behindBuildLife') {
         this.updateBehindBuildLife(item, elapsed);
+        continue;
+      }
+      if (item.kind === 'projectsYardLife') {
+        this.updateProjectsYardLife(item, elapsed);
         continue;
       }
       if (item.instanceMesh) {
@@ -457,6 +466,10 @@ export class SetPieces {
 
   getTodoYardStats() {
     return { ...this.todoYardStats };
+  }
+
+  getProjectsYardStats() {
+    return { ...this.projectsYardStats };
   }
 
   getBehindBuildStats() {
@@ -734,6 +747,7 @@ export class SetPieces {
       this.addCompositionDetailAsset(group, 'EnvPolishYardSurfaceMarks', projects.position[0] + dx, projects.position[2] + dz, rotation, scale, 'surfaceMarks');
     }
     this.addCompositionDetailAsset(group, 'EnvPolishWorkshopProcessRail', projects.position[0] - 12.4, projects.position[2] - 8.2, 0.36, 0.74, 'rails');
+    this.createProjectsYardLife(group, projects);
 
     const cv = findZone('cv');
     this.addSign(group, 'CV VAULT', 'Documents', cv.position[0] - 12.4, cv.position[2] - 11.6, 0.25, 0xe6f3ff, 1.9, 'CvVaultSign');
@@ -928,7 +942,7 @@ export class SetPieces {
     mergeStaticMeshesInGroup(group, {
       namePrefix: 'SETPIECE_district',
       cellSize: 128,
-      shouldSkip: (object) => object.name === 'CvDocumentStream' || object.name.startsWith('BehindBuild')
+      shouldSkip: (object) => object.name === 'CvDocumentStream' || object.name.startsWith('BehindBuild') || object.name.startsWith('ProjectsYard')
     });
     this.registerDistrictDressingBatches(group);
     this.world.scene.add(group);
@@ -2683,6 +2697,131 @@ export class SetPieces {
     }
     stream.mesh.instanceMatrix.needsUpdate = true;
     this.lifeStats.motionSamples += stream.entries.length;
+  }
+
+  createProjectsYardLife(group, projects) {
+    const sparkGeometry = new THREE.TetrahedronGeometry(0.18, 0);
+    const sparkMaterial = new THREE.MeshBasicMaterial({
+      color: 0xffcc66,
+      transparent: true,
+      opacity: 0.8,
+      depthWrite: false
+    });
+    const sparkCount = 18;
+    const sparkMesh = new THREE.InstancedMesh(sparkGeometry, sparkMaterial, sparkCount);
+    sparkMesh.name = 'ProjectsYardForgeSparks';
+    sparkMesh.frustumCulled = false;
+    sparkMesh.renderOrder = 43;
+    group.add(sparkMesh);
+
+    const cardGeometry = new THREE.PlaneGeometry(0.92, 0.56);
+    const cardMaterial = new THREE.MeshBasicMaterial({
+      color: 0x68d8ff,
+      transparent: true,
+      opacity: 0.64,
+      depthWrite: false,
+      side: THREE.DoubleSide
+    });
+    const cardSpecs = [
+      [-3.8, 1.7, 1.58, -0.42, 0.72, 0.0],
+      [-1.1, 2.5, 2.06, -0.28, 0.66, 0.6],
+      [2.2, 2.2, 1.78, -0.08, 0.7, 1.2],
+      [5.1, 0.8, 2.24, 0.18, 0.62, 1.8],
+      [8.2, 3.4, 1.72, -0.64, 0.68, 2.4],
+      [10.3, 6.2, 2.02, -0.72, 0.58, 3.0],
+      [12.4, -1.6, 1.52, -0.38, 0.64, 3.6]
+    ];
+    const cardMesh = new THREE.InstancedMesh(cardGeometry, cardMaterial, cardSpecs.length);
+    cardMesh.name = 'ProjectsYardBuildCards';
+    cardMesh.frustumCulled = false;
+    cardMesh.renderOrder = 44;
+    group.add(cardMesh);
+
+    const ringMaterial = new THREE.MeshBasicMaterial({
+      color: 0xff9b6d,
+      transparent: true,
+      opacity: 0.48,
+      depthWrite: false,
+      side: THREE.DoubleSide
+    });
+    const ring = new THREE.Mesh(new THREE.RingGeometry(1.28, 1.4, 7), ringMaterial);
+    ring.name = 'ProjectsYardAssemblyRing';
+    ring.position.set(projects.position[0] + 4.6, 2.15, projects.position[2] + 1.8);
+    ring.rotation.y = -0.52;
+    ring.renderOrder = 45;
+    group.add(ring);
+
+    const sparkEntries = Array.from({ length: sparkCount }, (_, index) => {
+      const angle = index * 2.399;
+      const radius = 0.32 + (index % 5) * 0.13;
+      return {
+        index,
+        baseX: projects.position[0] + 4.6 + Math.cos(angle) * radius,
+        baseZ: projects.position[2] + 1.8 + Math.sin(angle) * radius,
+        driftX: Math.cos(angle + 0.7) * (0.42 + (index % 3) * 0.12),
+        driftZ: Math.sin(angle + 0.7) * (0.42 + (index % 3) * 0.12),
+        phase: index / sparkCount,
+        speed: 0.58 + (index % 4) * 0.035
+      };
+    });
+    const cardEntries = cardSpecs.map(([dx, dz, y, yaw, scale, phase], index) => ({
+      index,
+      x: projects.position[0] + dx,
+      z: projects.position[2] + dz,
+      baseY: y,
+      yaw,
+      scale,
+      phase,
+      speed: 0.5 + index * 0.035
+    }));
+
+    this.projectsYardStats.forgeSparks += sparkCount;
+    this.projectsYardStats.buildCards += cardSpecs.length;
+    this.projectsYardStats.assemblyRings += 1;
+    this.animated.push({ kind: 'projectsYardLife', sparkMesh, sparkEntries, cardMesh, cardEntries, ring });
+    this.updateProjectsYardLife({ sparkMesh, sparkEntries, cardMesh, cardEntries, ring }, 0);
+  }
+
+  updateProjectsYardLife(life, elapsed) {
+    if (life.sparkMesh?.visible) {
+      for (const entry of life.sparkEntries) {
+        const progress = (elapsed * entry.speed + entry.phase) % 1;
+        const rise = progress * progress;
+        this.lifeDummy.position.set(
+          entry.baseX + entry.driftX * progress,
+          0.76 + rise * 1.72 + Math.sin(elapsed * 7 + entry.index) * 0.04,
+          entry.baseZ + entry.driftZ * progress
+        );
+        this.lifeDummy.rotation.set(elapsed * 1.8 + entry.index, elapsed * 2.1 + entry.phase, elapsed * 1.2);
+        this.lifeDummy.scale.setScalar(0.95 * (1 - progress) + 0.08);
+        this.lifeDummy.updateMatrix();
+        life.sparkMesh.setMatrixAt(entry.index, this.lifeDummy.matrix);
+      }
+      life.sparkMesh.instanceMatrix.needsUpdate = true;
+      life.sparkMesh.material.opacity = 0.62 + Math.sin(elapsed * 3.6) * 0.12;
+      this.lifeStats.motionSamples += life.sparkEntries.length;
+    }
+
+    if (life.cardMesh?.visible) {
+      for (const entry of life.cardEntries) {
+        const phase = elapsed * entry.speed + entry.phase;
+        this.lifeDummy.position.set(entry.x, entry.baseY + Math.sin(phase) * 0.18, entry.z);
+        this.lifeDummy.rotation.set(Math.sin(phase * 0.7) * 0.05, entry.yaw + Math.sin(phase * 0.8) * 0.14, Math.sin(phase * 1.1) * 0.08);
+        this.lifeDummy.scale.setScalar(entry.scale + Math.sin(phase * 1.4) * 0.035);
+        this.lifeDummy.updateMatrix();
+        life.cardMesh.setMatrixAt(entry.index, this.lifeDummy.matrix);
+      }
+      life.cardMesh.instanceMatrix.needsUpdate = true;
+      life.cardMesh.material.opacity = 0.56 + Math.sin(elapsed * 1.25) * 0.08;
+      this.lifeStats.motionSamples += life.cardEntries.length;
+    }
+
+    if (life.ring?.visible) {
+      life.ring.rotation.z = elapsed * 0.74;
+      life.ring.scale.setScalar(1 + Math.sin(elapsed * 1.8) * 0.13);
+      life.ring.material.opacity = 0.38 + Math.sin(elapsed * 1.6) * 0.1;
+      this.lifeStats.motionSamples += 1;
+    }
   }
 
   createBehindBuildLife(group, behind) {
