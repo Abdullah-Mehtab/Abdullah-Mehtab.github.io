@@ -121,6 +121,14 @@ export class SetPieces {
       lamps: 0,
       frameRuns: 0
     };
+    this.launchFieldStats = {
+      pockets: 0,
+      patches: 0,
+      authoredAssets: 0,
+      guideTiles: 0,
+      lamps: 0,
+      frameRuns: 0
+    };
     this.southCorridorStats = {
       clusters: 0,
       patches: 0,
@@ -238,6 +246,7 @@ export class SetPieces {
     this.createRouteComposition();
     this.createMeadowComposition();
     this.createFieldBackdrops();
+    this.createLaunchFieldFrame();
     this.createSouthCorridorForeground();
     this.createLivingSignals();
     this.createDistrictAmbience();
@@ -447,6 +456,10 @@ export class SetPieces {
 
   getFieldBackdropStats() {
     return { ...this.fieldBackdropStats };
+  }
+
+  getLaunchFieldStats() {
+    return { ...this.launchFieldStats };
   }
 
   getSouthCorridorStats() {
@@ -1947,6 +1960,148 @@ export class SetPieces {
     return [
       cluster.x + Math.cos(cluster.rotation) * right + Math.sin(cluster.rotation) * forward,
       cluster.z - Math.sin(cluster.rotation) * right + Math.cos(cluster.rotation) * forward
+    ];
+  }
+
+  createLaunchFieldFrame() {
+    const group = this.registerQualityGroup(new THREE.Group(), 'secondary');
+    group.name = 'SETPIECE_Launch_Field_Frame';
+    const pockets = [
+      {
+        x: 42,
+        z: 64,
+        rotation: 0.18,
+        width: 34,
+        depth: 18,
+        material: this.world.materials.meadowLight,
+        accent: this.world.materials.glow,
+        paver: this.world.materials.paleStone,
+        seed: 1321,
+        assets: [
+          ['EnvPolishGardenArch', -10.4, 2.8, 0.14, 0.7],
+          ['EnvPolishRouteVistaKit', 8.8, -2.8, -0.16, 0.7],
+          ['EnvPolishBenchPlanter', -3.8, -6.4, 0.18, 0.66],
+          ['EnvPolishRouteStoryMarker', 9.8, 5.6, -0.22, 0.64]
+        ]
+      },
+      {
+        x: 78,
+        z: 78,
+        rotation: -0.18,
+        width: 32,
+        depth: 17,
+        material: this.world.materials.meadowDark,
+        accent: this.world.materials.warmGlow,
+        paver: this.world.materials.warmStone,
+        seed: 1337,
+        assets: [
+          ['EnvPolishSignalSpire', -9.2, 3.4, 0.12, 0.56],
+          ['EnvPolishPlazaEdgeKit', 8.6, -3.6, -0.14, 0.68],
+          ['EnvPolishRouteLantern', -2.8, -6.2, 0.18, 0.64],
+          ['EnvPolishRouteVistaKit', 9.4, 5.2, -0.2, 0.66]
+        ]
+      },
+      {
+        x: 106,
+        z: 42,
+        rotation: 0.44,
+        width: 30,
+        depth: 16,
+        material: this.world.materials.sand,
+        accent: this.world.materials.glowBlue,
+        paver: this.world.materials.paleStone,
+        seed: 1361,
+        assets: [
+          ['EnvPolishHarborSignal', -8.6, 3.6, 0.12, 0.58],
+          ['EnvPolishRouteVistaKit', 8.0, -3.4, -0.16, 0.64],
+          ['EnvPolishBenchPlanter', -2.6, -6.0, 0.2, 0.64],
+          ['EnvPolishRouteStoryMarker', 8.6, 5.2, -0.22, 0.62]
+        ]
+      }
+    ];
+
+    pockets.forEach((pocket, index) => this.addLaunchFieldPocket(group, pocket, index));
+    this.addLaunchFieldRouteRun(group, { x: 55, z: 52, rotation: 0.28, count: 7, color: this.world.materials.glow });
+    this.addLaunchFieldRouteRun(group, { x: 88, z: 61, rotation: -0.12, count: 7, color: this.world.materials.warmGlow });
+    mergeStaticMeshesInGroup(group, { namePrefix: 'SETPIECE_launch_field', cellSize: 128 });
+    group.userData.launchFieldStats = { ...this.launchFieldStats };
+    this.registerBroadSetPieceBatches('launchField', group, 'SETPIECE_launch_field', 'meadowCompositionRadius');
+    this.world.scene.add(group);
+  }
+
+  addLaunchFieldPocket(group, pocket, index) {
+    this.groundPatch(group, pocket.x, pocket.z, pocket.width, pocket.depth, pocket.material, 0.121, pocket.rotation, 'LaunchFieldLawnPatch', pocket.seed);
+    this.groundPatch(
+      group,
+      pocket.x + Math.sin(pocket.rotation) * 3.0,
+      pocket.z + Math.cos(pocket.rotation) * 3.0,
+      pocket.width * 0.6,
+      pocket.depth * 0.42,
+      this.world.materials.grassSandBlend,
+      0.124,
+      pocket.rotation - 0.08,
+      'LaunchFieldFeatherPatch',
+      pocket.seed + 5
+    );
+    this.launchFieldStats.patches += 2;
+    this.addLaunchFieldFrameRun(group, pocket);
+    this.addLaunchFieldGuideTiles(group, pocket);
+    for (const asset of pocket.assets) this.addLaunchFieldAsset(group, pocket, ...asset);
+    for (const [right, forward, color] of [
+      [-pocket.width * 0.38, -pocket.depth * 0.34, pocket.accent.color?.getHex?.() || 0x7cffb2],
+      [pocket.width * 0.36, pocket.depth * 0.32, 0xffc36a]
+    ]) {
+      const [x, z] = this.launchFieldPoint(pocket, right, forward);
+      this.addLamp(group, x, z, color, 2.35, `LaunchFieldLamp_${index}`);
+      this.launchFieldStats.lamps += 1;
+    }
+    this.launchFieldStats.pockets += 1;
+  }
+
+  addLaunchFieldFrameRun(group, pocket) {
+    const frameDepth = pocket.depth * 0.4;
+    for (let i = 0; i < 4; i += 1) {
+      const offset = -pocket.width * 0.3 + i * (pocket.width * 0.2);
+      for (const side of [-1, 1]) {
+        const [x, z] = this.launchFieldPoint(pocket, offset, side * frameDepth);
+        this.box(group, x, 0.206, z, 1.95, 0.035, 0.22, pocket.paver, pocket.rotation + side * 0.08, 'LaunchFieldFrameRun');
+        this.launchFieldStats.frameRuns += 1;
+      }
+    }
+  }
+
+  addLaunchFieldGuideTiles(group, pocket) {
+    for (let i = 0; i < 6; i += 1) {
+      const side = i % 2 === 0 ? -1 : 1;
+      const [x, z] = this.launchFieldPoint(pocket, side * pocket.width * 0.24, -5.4 + i * 2.15);
+      this.box(group, x, 0.214, z, 0.26, 0.035, 1.08, i % 2 ? pocket.accent : this.world.materials.paleStone, pocket.rotation + side * 0.06, 'LaunchFieldGuideTile');
+      this.launchFieldStats.guideTiles += 1;
+    }
+  }
+
+  addLaunchFieldRouteRun(group, run) {
+    const rightX = Math.cos(run.rotation);
+    const rightZ = -Math.sin(run.rotation);
+    for (let index = 0; index < run.count; index += 1) {
+      const offset = (index - (run.count - 1) / 2) * 2.35;
+      const x = run.x + rightX * offset;
+      const z = run.z + rightZ * offset;
+      this.box(group, x, 0.222, z, 1.15, 0.035, 0.2, index % 2 ? run.color : this.world.materials.paleStone, run.rotation, 'LaunchFieldRouteGuide');
+      this.launchFieldStats.guideTiles += 1;
+    }
+  }
+
+  addLaunchFieldAsset(group, pocket, assetName, right, forward, rotationOffset, scale) {
+    const [x, z] = this.launchFieldPoint(pocket, right, forward);
+    const placed = this.addPolishAsset(group, assetName, x, z, pocket.rotation + rotationOffset, scale);
+    if (placed) this.launchFieldStats.authoredAssets += 1;
+    return placed;
+  }
+
+  launchFieldPoint(pocket, right, forward) {
+    return [
+      pocket.x + Math.cos(pocket.rotation) * right + Math.sin(pocket.rotation) * forward,
+      pocket.z - Math.sin(pocket.rotation) * right + Math.cos(pocket.rotation) * forward
     ];
   }
 

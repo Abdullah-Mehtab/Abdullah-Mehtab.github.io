@@ -1168,7 +1168,8 @@ async function sampleRenderSnapshot(page) {
       setPieceVisibility: game.world.setPieces?.getDistrictVisibilityStats?.() || {},
       broadSetPieceVisibility: game.world.setPieces?.getBroadVisibilityStats?.() || {},
       meadowComposition: game.world.setPieces?.getMeadowCompositionStats?.() || {},
-      fieldBackdrops: game.world.setPieces?.getFieldBackdropStats?.() || {}
+      fieldBackdrops: game.world.setPieces?.getFieldBackdropStats?.() || {},
+      launchField: game.world.setPieces?.getLaunchFieldStats?.() || {}
     };
 
     function countVisibleScene(root) {
@@ -1310,6 +1311,7 @@ async function collectRuntimeMetrics(page, loadMs, gameplay, water, surfaces, su
       routeComposition: game.world.setPieces?.getRouteCompositionStats?.() || {},
       meadowComposition: game.world.setPieces?.getMeadowCompositionStats?.() || {},
       fieldBackdrops: game.world.setPieces?.getFieldBackdropStats?.() || {},
+      launchField: game.world.setPieces?.getLaunchFieldStats?.() || {},
       southCorridor: game.world.setPieces?.getSouthCorridorStats?.() || {},
       districtStory: game.world.setPieces?.getDistrictStoryStats?.() || {},
       districtComposition: game.world.setPieces?.getDistrictCompositionStats?.() || {},
@@ -1629,6 +1631,7 @@ async function captureMobile(browser) {
       broadSetPieceVisibility: game.world.setPieces?.getBroadVisibilityStats?.() || {},
       meadowComposition: game.world.setPieces?.getMeadowCompositionStats?.() || {},
       fieldBackdrops: game.world.setPieces?.getFieldBackdropStats?.() || {},
+      launchField: game.world.setPieces?.getLaunchFieldStats?.() || {},
       fieldMotifs: game.world.terrain?.getFieldMotifStats?.() || {},
       roadsideFrames: game.world.terrain?.getRoadsideFrameStats?.() || {},
       roadSurfaceDetails: game.world.roads?.getDetailStats?.() || {},
@@ -2219,6 +2222,12 @@ function assertVerification(result) {
   if ((result.fieldBackdrops?.guideTiles || 0) < 48) failures.push(`field backdrop probe failed: guideTiles=${result.fieldBackdrops?.guideTiles || 0}`);
   if ((result.fieldBackdrops?.lamps || 0) < 16) failures.push(`field backdrop probe failed: lamps=${result.fieldBackdrops?.lamps || 0}`);
   if ((result.fieldBackdrops?.frameRuns || 0) < 80) failures.push(`field backdrop probe failed: frameRuns=${result.fieldBackdrops?.frameRuns || 0}`);
+  if ((result.launchField?.pockets || 0) < 3) failures.push(`launch field probe failed: pockets=${result.launchField?.pockets || 0}`);
+  if ((result.launchField?.patches || 0) < 6) failures.push(`launch field probe failed: patches=${result.launchField?.patches || 0}`);
+  if ((result.launchField?.authoredAssets || 0) < 12) failures.push(`launch field probe failed: authoredAssets=${result.launchField?.authoredAssets || 0}`);
+  if ((result.launchField?.guideTiles || 0) < 30) failures.push(`launch field probe failed: guideTiles=${result.launchField?.guideTiles || 0}`);
+  if ((result.launchField?.lamps || 0) < 6) failures.push(`launch field probe failed: lamps=${result.launchField?.lamps || 0}`);
+  if ((result.launchField?.frameRuns || 0) < 24) failures.push(`launch field probe failed: frameRuns=${result.launchField?.frameRuns || 0}`);
   if ((result.southCorridor?.clusters || 0) < 3) failures.push(`south corridor probe failed: clusters=${result.southCorridor?.clusters || 0}`);
   if ((result.southCorridor?.patches || 0) < 6) failures.push(`south corridor probe failed: patches=${result.southCorridor?.patches || 0}`);
   if ((result.southCorridor?.authoredAssets || 0) < 12) failures.push(`south corridor probe failed: authoredAssets=${result.southCorridor?.authoredAssets || 0}`);
@@ -2376,6 +2385,9 @@ function assertVerification(result) {
   }
   if ((result.mobile.broadSetPieceVisibility?.groups?.fieldBackdrops?.visibleBatches || 0) !== 0) {
     failures.push(`mobile field backdrop quality probe failed: visibleBatches=${result.mobile.broadSetPieceVisibility?.groups?.fieldBackdrops?.visibleBatches || 0}`);
+  }
+  if ((result.mobile.broadSetPieceVisibility?.groups?.launchField?.visibleBatches || 0) !== 0) {
+    failures.push(`mobile launch field quality probe failed: visibleBatches=${result.mobile.broadSetPieceVisibility?.groups?.launchField?.visibleBatches || 0}`);
   }
   if (!Array.isArray(result.mobile.renderProfile) || result.mobile.renderProfile.length < 5) {
     failures.push('mobile render profile missing');
