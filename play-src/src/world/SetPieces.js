@@ -94,6 +94,7 @@ export class SetPieces {
       bollardRuns: 0,
       routeStoryMarkers: 0,
       vistaKits: 0,
+      coastalLoopStaging: 0,
       authoredAssets: 0,
       guideTiles: 0
     };
@@ -1173,12 +1174,86 @@ export class SetPieces {
       { x: -120, z: 48, rotation: -1.05, color: this.world.materials.glow, count: 5 }
     ];
     for (const run of guideRuns) this.addRouteGuideTiles(group, run);
+    this.addCoastalLoopStaging(group);
 
     mergeStaticMeshesInGroup(group, { namePrefix: 'SETPIECE_route_composition', cellSize: 84 });
     group.userData.routeCompositionStats = { ...this.routeCompositionStats };
     this.registerQualityGroup(group, 'secondary');
     this.registerBroadSetPieceBatches('routeComposition', group, 'SETPIECE_route_composition', 'routeCompositionRadius');
     this.world.scene.add(group);
+  }
+
+  addCoastalLoopStaging(group) {
+    const splitterIslands = [
+      [-64, 128, 1.42, 0.7],
+      [112, 96, 2.2, 0.72],
+      [106, -118, -1.4, 0.74],
+      [-134, -16, -0.36, 0.68]
+    ];
+    for (const [x, z, rotation, scale] of splitterIslands) {
+      this.addCoastalLoopAsset(group, 'EnvPolishRouteSplitterIsland', x, z, rotation, scale, 'splitterIslands');
+    }
+
+    const edgeKits = [
+      [-102, 76, 0.24, 0.68],
+      [-42, 134, 1.5, 0.7],
+      [90, 118, 2.08, 0.68],
+      [139, 38, 3.05, 0.66],
+      [124, -74, -2.84, 0.7],
+      [62, -125, -1.46, 0.72],
+      [-86, -96, -2.24, 0.7],
+      [-140, -4, -0.36, 0.66]
+    ];
+    for (const [x, z, rotation, scale] of edgeKits) {
+      this.addCoastalLoopAsset(group, 'EnvPolishPlazaEdgeKit', x, z, rotation, scale, 'plazaEdgeKits');
+    }
+
+    const bollardRuns = [
+      [-92, 104, 0.72, 0.64],
+      [8, 136, 1.54, 0.66],
+      [130, 70, 2.42, 0.64],
+      [128, -32, -2.9, 0.64],
+      [34, -123, -1.46, 0.66],
+      [-116, -54, -2.42, 0.64]
+    ];
+    for (const [x, z, rotation, scale] of bollardRuns) {
+      this.addCoastalLoopAsset(group, 'EnvPolishChevronBollardRun', x, z, rotation, scale, 'bollardRuns');
+    }
+
+    const storyMarkers = [
+      [-74, 122, 0.78, 0.68],
+      [48, 134, 1.76, 0.68],
+      [136, 54, 2.9, 0.66],
+      [104, -120, -1.3, 0.68],
+      [-36, -122, -1.9, 0.66],
+      [-140, -30, -0.42, 0.66]
+    ];
+    for (const [x, z, rotation, scale] of storyMarkers) {
+      this.addCoastalLoopAsset(group, 'EnvPolishRouteStoryMarker', x, z, rotation, scale, 'routeStoryMarkers');
+    }
+
+    const vistaKits = [
+      [-108, 96, 0.58, 0.68],
+      [18, 142, 1.5, 0.72],
+      [142, 18, 3.12, 0.68],
+      [74, -130, -1.46, 0.7],
+      [-126, -62, -2.38, 0.68]
+    ];
+    for (const [x, z, rotation, scale] of vistaKits) {
+      this.addCoastalLoopAsset(group, 'EnvPolishRouteVistaKit', x, z, rotation, scale, 'vistaKits');
+    }
+
+    const guideRuns = [
+      { x: -104, z: 94, rotation: 0.3, color: this.world.materials.glowBlue, count: 5 },
+      { x: 18, z: 138, rotation: 1.5, color: this.world.materials.warmGlow, count: 5 },
+      { x: 141, z: 50, rotation: 3.1, color: this.world.materials.glowBlue, count: 5 },
+      { x: 70, z: -124, rotation: 1.45, color: this.world.materials.warmGlow, count: 5 },
+      { x: -134, z: -28, rotation: -0.44, color: this.world.materials.glow, count: 5 }
+    ];
+    for (const run of guideRuns) {
+      this.addRouteGuideTiles(group, run);
+      this.routeCompositionStats.coastalLoopStaging += run.count || 5;
+    }
   }
 
   createMeadowComposition() {
@@ -2165,6 +2240,12 @@ export class SetPieces {
     this.routeCompositionStats.authoredAssets += 1;
     this.routeCompositionStats[statName] = (this.routeCompositionStats[statName] || 0) + 1;
     return true;
+  }
+
+  addCoastalLoopAsset(group, assetName, x, z, rotation, scale, statName) {
+    const placed = this.addRouteCompositionAsset(group, assetName, x, z, rotation, scale, statName);
+    if (placed) this.routeCompositionStats.coastalLoopStaging += 1;
+    return placed;
   }
 
   addRouteGuideTiles(group, run) {

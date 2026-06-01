@@ -2016,6 +2016,7 @@ function assertVerification(result) {
   if ((result.routeComposition?.bollardRuns || 0) < 12) failures.push(`route composition probe failed: bollardRuns=${result.routeComposition?.bollardRuns || 0}`);
   if ((result.routeComposition?.routeStoryMarkers || 0) < 10) failures.push(`route composition probe failed: routeStoryMarkers=${result.routeComposition?.routeStoryMarkers || 0}`);
   if ((result.routeComposition?.vistaKits || 0) < 6) failures.push(`route composition probe failed: vistaKits=${result.routeComposition?.vistaKits || 0}`);
+  if ((result.routeComposition?.coastalLoopStaging || 0) < 24) failures.push(`route composition probe failed: coastalLoopStaging=${result.routeComposition?.coastalLoopStaging || 0}`);
   if ((result.routeComposition?.authoredAssets || 0) < 32) failures.push(`route composition probe failed: authoredAssets=${result.routeComposition?.authoredAssets || 0}`);
   if ((result.routeComposition?.guideTiles || 0) < 40) failures.push(`route composition probe failed: guideTiles=${result.routeComposition?.guideTiles || 0}`);
   if ((result.meadowComposition?.pockets || 0) < 5) failures.push(`meadow composition probe failed: pockets=${result.meadowComposition?.pockets || 0}`);
