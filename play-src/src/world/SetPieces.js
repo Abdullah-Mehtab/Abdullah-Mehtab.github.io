@@ -139,7 +139,8 @@ export class SetPieces {
       silhouetteAnchors: 0,
       careerConnectors: 0,
       farmRows: 0,
-      farmFences: 0
+      farmFences: 0,
+      skillsTerminalNodes: 0
     };
     this.circuitStartStats = {
       pads: 0,
@@ -702,7 +703,7 @@ export class SetPieces {
     this.antennaCluster(group, sentinel.position[0] - 8, sentinel.position[2] + 8, 0x68d8ff);
 
     const skills = findZone('skills');
-    this.addSign(group, 'STACK', 'Skills Terminal', skills.position[0] - 11, skills.position[2] + 10, -0.62, 0x92ffea, 2.4, 'SkillsTerminalSign');
+    this.addSign(group, 'STACK', 'Skills Terminal', skills.position[0] - 10.6, skills.position[2] + 7.4, -0.62, 0x92ffea, 1.85, 'SkillsTerminalSign');
     this.addPolishAsset(group, 'EnvPolishSkillsArray', skills.position[0] - 0.6, skills.position[2] - 1.4, -0.62, 1.02);
     this.addPolishAsset(group, 'EnvPolishTerminalPillar', skills.position[0] + 10.8, skills.position[2] + 5.6, -0.62, 0.9);
     this.addSilhouetteAnchor(group, 'EnvPolishSignalSpire', skills.position[0] - 10.2, skills.position[2] - 2.8, -0.62, 0.9);
@@ -715,6 +716,7 @@ export class SetPieces {
     ]) {
       this.addDistrictStoryAsset(group, 'EnvPolishTerminalBank', x, z, rotation, scale, 'terminalBanks');
     }
+    this.createSkillsTerminalComposition(group, skills);
 
     const awards = findZone('awards');
     this.addSign(group, 'AWARDS', 'Archive Steps', awards.position[0] - 9, awards.position[2] + 8, -0.2, 0xffdf8a, 2.3, 'AwardsSign');
@@ -2351,6 +2353,48 @@ export class SetPieces {
   addCompositionPlanter(group, x, z, color) {
     this.addPlanterCluster(group, x, z, color);
     this.districtCompositionStats.planters += 1;
+  }
+
+  createSkillsTerminalComposition(group, skills) {
+    const x = skills.position[0];
+    const z = skills.position[2];
+    const rotation = -0.62;
+    this.addCompositionPad(group, x + 9.8, z + 2.8, 15.5, 10.2, this.world.materials.securityRoad, 0.121, 'SkillsSignalDeck');
+    this.addCompositionPad(group, x + 2.4, z + 8.4, 16.8, 4.8, this.world.materials.paleStone, 0.124, 'SkillsSignalWalk');
+    this.addYardEdgeDetails(group, x + 9.8, z + 2.8, 15.5, 10.2);
+    for (const [assetName, dx, dz, assetRotation, scale] of [
+      ['EnvPolishTerminalBank', 12.6, 3.8, -0.74, 0.66],
+      ['EnvPolishTerminalCanopy', 7.1, -0.8, -0.62, 0.58],
+      ['EnvPolishSignalSpire', 16.6, 7.1, -0.62, 0.62],
+      ['EnvPolishGardenArch', 4.4, 9.4, -0.58, 0.64],
+      ['EnvPolishRouteLantern', 15.6, -3.6, -0.54, 0.62],
+      ['EnvPolishTerminalPillar', -12.8, 4.4, -0.4, 0.68]
+    ]) {
+      if (this.addCompositionAsset(group, assetName, x + dx, z + dz, assetRotation, scale)) {
+        this.districtCompositionStats.skillsTerminalNodes += 1;
+      }
+    }
+    for (const [dx, dz, color] of [
+      [-13.8, 7.0, 0x92ffea],
+      [2.6, 9.8, 0xb6a0ff],
+      [17.8, 0.4, 0x68d8ff]
+    ]) {
+      this.addCompositionPlanter(group, x + dx, z + dz, color);
+      this.districtCompositionStats.skillsTerminalNodes += 1;
+    }
+    for (let i = 0; i < 8; i += 1) {
+      this.addCompositionPathMark(
+        group,
+        x - 10.8 + i * 3.4,
+        z + 8.8 - i * 1.58,
+        1.25,
+        0.12,
+        i % 3 === 0 ? this.world.materials.glowBlue : i % 3 === 1 ? this.world.materials.glowPink : this.world.materials.paleStone,
+        rotation,
+        'SkillsSignalGuideMark'
+      );
+      this.districtCompositionStats.skillsTerminalNodes += 1;
+    }
   }
 
   createFarmFieldComposition(group, farm) {
