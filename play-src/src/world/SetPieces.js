@@ -59,6 +59,7 @@ export class SetPieces {
       wheelieWitnessLights: 0,
       laneRails: 0,
       launchTiles: 0,
+      sightlineGuideMarks: 0,
       authoredAssets: 0
     };
     this.districtDressingEntries = [];
@@ -597,6 +598,7 @@ export class SetPieces {
     }
     this.startLaunchCueAssets(group, zone);
     this.createStartLaunchStaging(group, zone);
+    this.createStartSightlineGuides(group, zone);
 
     this.addLamp(group, zone.position[0] - 11.4, zone.position[2] - 10.5, 0xffc36a, 3.1, 'StartLampLeft');
     this.addLamp(group, zone.position[0] + 14.2, zone.position[2] - 9.4, 0x7cffb2, 3.0, 'StartLampRight');
@@ -696,6 +698,33 @@ export class SetPieces {
           'StartWheelieWitnessLight'
         );
         this.startDioramaStats.wheelieWitnessLights += 1;
+      }
+    }
+  }
+
+  createStartSightlineGuides(group, zone) {
+    const centerX = zone.position[0] + 2;
+    const baseZ = zone.position[2] - 24.5;
+    for (let index = 0; index < 6; index += 1) {
+      const z = baseZ + index * 2.65;
+      const width = 0.34 + index * 0.035;
+      const depth = 1.2 + index * 0.18;
+      const offset = 5.8 + index * 0.28;
+      const material = index % 2 ? this.world.materials.glowBlue : this.world.materials.warmGlow;
+      for (const side of [-1, 1]) {
+        this.box(
+          group,
+          centerX + side * offset,
+          0.218 + index * 0.0002,
+          z,
+          width,
+          0.035,
+          depth,
+          material,
+          side * 0.05,
+          'StartSightlineGuideMark'
+        );
+        this.startDioramaStats.sightlineGuideMarks += 1;
       }
     }
   }

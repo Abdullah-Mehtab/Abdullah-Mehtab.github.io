@@ -2487,7 +2487,14 @@ function assertVerification(result) {
   if ((result.startDiorama?.wheelieWitnessLights || 0) < 8) failures.push(`start diorama probe failed: wheelieWitnessLights=${result.startDiorama?.wheelieWitnessLights || 0}`);
   if ((result.startDiorama?.laneRails || 0) < 4) failures.push(`start diorama probe failed: laneRails=${result.startDiorama?.laneRails || 0}`);
   if ((result.startDiorama?.launchTiles || 0) < 7) failures.push(`start diorama probe failed: launchTiles=${result.startDiorama?.launchTiles || 0}`);
+  if ((result.startDiorama?.sightlineGuideMarks || 0) < 12) failures.push(`start diorama probe failed: sightlineGuideMarks=${result.startDiorama?.sightlineGuideMarks || 0}`);
   if ((result.startDiorama?.authoredAssets || 0) < 4) failures.push(`start diorama probe failed: authoredAssets=${result.startDiorama?.authoredAssets || 0}`);
+  if ((result.foliage?.startSightline?.trees || 0) > 0) {
+    failures.push(`start composition probe failed: sightline trees=${result.foliage?.startSightline?.trees || 0}`);
+  }
+  if ((result.foliage?.startSightline?.understory || 0) > 0) {
+    failures.push(`start composition probe failed: sightline understory=${result.foliage?.startSightline?.understory || 0}`);
+  }
   if ((result.launchField?.pockets || 0) < 3) failures.push(`launch field probe failed: pockets=${result.launchField?.pockets || 0}`);
   if ((result.launchField?.patches || 0) < 6) failures.push(`launch field probe failed: patches=${result.launchField?.patches || 0}`);
   if ((result.launchField?.authoredAssets || 0) < 12) failures.push(`launch field probe failed: authoredAssets=${result.launchField?.authoredAssets || 0}`);

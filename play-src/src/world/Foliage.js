@@ -14,6 +14,13 @@ const TREE_CROWN_COLORS = {
 const TRUNK_COLORS = [0x7d4928, 0x8f5a31, 0x6c3d24, 0xa46a39];
 const GRASS_COLORS = [0x83a84b, 0x9ab95c, 0x5f9041, 0xb2b960, 0x6fa34e];
 const UNDERSTORY_COLORS = [0x8bb95d, 0x4f8543, 0xd0bf63, 0x6fc0a2, 0xf1b7bf];
+const START_SIGHTLINE = {
+  centerX: 2,
+  centerZ: 24,
+  halfWidth: 18,
+  nearZ: 4,
+  farZ: 41
+};
 const FLOWER_COLORS = {
   pink: [0xf2a4b4, 0xffc0c8, 0xd994be],
   blue: [0x80d8ff, 0x9cf1ff, 0x62bddc],
@@ -81,6 +88,7 @@ export class Foliage {
         const z = zone.center[1] + (pseudoRandom(seed * 9.41) - 0.5) * zone.size[1];
         const radius = Math.hypot(x, z);
         if (radius > ISLAND_RADIUS * 0.88 || radius < 18) continue;
+        if (isInStartSightline(x, z, 2.8)) continue;
         if (!this.world.isClearForProp(x, z, 3.4)) continue;
         if (this.isNearExistingTree(x, z, zone.kind === 'grove' ? 4.8 : 5.6)) continue;
         this.treeEntries.push({
@@ -149,6 +157,7 @@ export class Foliage {
       const angle = pseudoRandom(seed * 5.1) * Math.PI * 2;
       const x = source.x + Math.cos(angle) * radius;
       const z = source.z + Math.sin(angle) * radius;
+      if (isInStartSightline(x, z, 1.2)) continue;
       if (!this.world.isClearForProp(x, z, 0.55)) continue;
       this.understoryEntries.push({
         x,
@@ -475,9 +484,26 @@ export class Foliage {
       visibleBlooms,
       treeColorVariants: Object.values(TREE_CROWN_COLORS).reduce((sum, colors) => sum + colors.length, 0),
       grassColorVariants: GRASS_COLORS.length,
-      flowerColorVariants: Object.values(FLOWER_COLORS).reduce((sum, colors) => sum + colors.length, 0)
+      flowerColorVariants: Object.values(FLOWER_COLORS).reduce((sum, colors) => sum + colors.length, 0),
+      startSightline: {
+        trees: countStartSightlineEntries(this.treeEntries),
+        understory: countStartSightlineEntries(this.understoryEntries),
+        grass: countStartSightlineEntries(this.grassEntries)
+      }
     };
   }
+}
+
+function isInStartSightline(x, z, padding = 0) {
+  return (
+    Math.abs(x - START_SIGHTLINE.centerX) <= START_SIGHTLINE.halfWidth + padding &&
+    z >= START_SIGHTLINE.nearZ - padding &&
+    z <= START_SIGHTLINE.farZ + padding
+  );
+}
+
+function countStartSightlineEntries(entries) {
+  return entries.filter((entry) => isInStartSightline(entry.x, entry.z)).length;
 }
 
 function pickTreeVariant(zone, seed) {
