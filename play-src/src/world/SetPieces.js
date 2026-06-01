@@ -13,8 +13,12 @@ const POLISH_MATERIAL_LIBRARY_KEYS = {
   polish_sunlit_wood: 'wood',
   polish_charcoal_metal: 'cable',
   polish_tire_rubber: 'cable',
+  polish_blue_green_glass: 'glass',
   polish_terminal_screen: 'screen',
+  polish_palm_leaf: 'crop',
   polish_salt_rope: 'wood',
+  polish_cv_paper: 'paleStone',
+  polish_award_gold: 'gold',
   polish_crop_green: 'crop',
   polish_campus_brick: 'campusBrick'
 };
