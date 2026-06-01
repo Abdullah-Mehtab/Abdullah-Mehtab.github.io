@@ -2152,6 +2152,16 @@ function assertVerification(result) {
   if ((result.overlayUi?.map?.mapPins || 0) !== worldZones.length) failures.push(`overlay UI probe failed: map pins=${result.overlayUi?.map?.mapPins || 0}/${worldZones.length}`);
   if (!result.water?.surfaceSeen) failures.push('water probe failed: surface state');
   if (!result.water?.splashSeen) failures.push('water probe failed: splash particles');
+  if ((result.water?.splashCount || 0) < 2) failures.push(`water splash readability probe failed: active splashes=${result.water?.splashCount || 0}`);
+  if ((result.water?.stats?.splashMaterialOpacity || 0) < 0.4) {
+    failures.push(`water splash readability probe failed: opacity=${result.water?.stats?.splashMaterialOpacity || 0}`);
+  }
+  if ((result.water?.stats?.splashProfile?.shoreLife || 0) < 0.78) {
+    failures.push(`water splash readability probe failed: shoreLife=${result.water?.stats?.splashProfile?.shoreLife || 0}`);
+  }
+  if ((result.water?.stats?.splashProfile?.waterLife || 0) < 0.92) {
+    failures.push(`water splash readability probe failed: waterLife=${result.water?.stats?.splashProfile?.waterLife || 0}`);
+  }
   if (!result.water?.wakeSeen) failures.push('water probe failed: wake rings');
   if ((result.water?.wakeSpawnedDelta || 0) < 6) failures.push(`water probe failed: wake delta=${result.water?.wakeSpawnedDelta || 0}`);
   if ((result.water?.activeWakes || 0) < 4) failures.push(`water probe failed: active wakes=${result.water?.activeWakes || 0}`);
@@ -2172,6 +2182,12 @@ function assertVerification(result) {
   if (!result.waterStats?.splashMesh) failures.push('water splash probe failed: instanced splash mesh missing');
   if ((result.waterStats?.splashCapacity || 0) < (result.waterStats?.maxSplashes || 0)) {
     failures.push(`water splash probe failed: capacity=${result.waterStats?.splashCapacity || 0}, max=${result.waterStats?.maxSplashes || 0}`);
+  }
+  if ((result.waterStats?.splashRenderCount || 0) > (result.waterStats?.maxSplashes || 0)) {
+    failures.push(`water splash render cap failed: count=${result.waterStats?.splashRenderCount || 0}, max=${result.waterStats?.maxSplashes || 0}`);
+  }
+  if ((result.waterStats?.wakeRenderCount || 0) > (result.waterStats?.maxWakes || 0)) {
+    failures.push(`water wake render cap failed: count=${result.waterStats?.wakeRenderCount || 0}, max=${result.waterStats?.maxWakes || 0}`);
   }
   if ((result.waterStats?.splashesSpawned || 0) < 2) failures.push(`water splash probe failed: spawned=${result.waterStats?.splashesSpawned || 0}`);
   if ((result.waterStats?.surfaceGlints || 0) < 30) failures.push(`water detail probe failed: surfaceGlints=${result.waterStats?.surfaceGlints || 0}`);

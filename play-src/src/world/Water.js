@@ -12,6 +12,19 @@ const GLINT_LIMITS = { low: 0, medium: 20, high: 34 };
 const WAVE_LANE_LIMITS = { low: 16, medium: 32, high: 52 };
 const SHORE_FLECK_LIMITS = { low: 24, medium: 72, high: 112 };
 const TIDE_GLIMMER_LIMITS = { low: 0, medium: 12, high: 18 };
+const SPLASH_PROFILE = {
+  burstsPerWheel: 2,
+  shoreIntensity: 0.78,
+  waterIntensity: 1.08,
+  shoreLife: 0.82,
+  waterLife: 0.96,
+  lifeJitter: 0.22,
+  baseScale: 0.82,
+  scaleJitter: 0.66,
+  lateralSpread: 2.2,
+  verticalMin: 1.0,
+  verticalMax: 1.62
+};
 const WAKE_PROFILE = {
   shoreScale: 0.82,
   waterScale: 1.05,
@@ -69,7 +82,7 @@ export class Water {
     this.waveLaneDummy = new THREE.Object3D();
     this.shoreFleckDummy = new THREE.Object3D();
     this.tideGlimmerDummy = new THREE.Object3D();
-    this.splashGeometry = new THREE.SphereGeometry(0.18, 8, 5);
+    this.splashGeometry = new THREE.SphereGeometry(0.18, 6, 4);
     this.splashMaterial = new THREE.MeshBasicMaterial({
       color: 0xeafff7,
       transparent: true,
@@ -490,6 +503,14 @@ export class Water {
       this.tideGlimmerMesh.visible = this.maxTideGlimmers > 0;
       this.tideGlimmerMesh.instanceMatrix.needsUpdate = true;
     }
+    if (this.splashMesh) {
+      this.splashMesh.count = Math.min(this.maxSplashes, this.splashes.length);
+      this.splashMesh.instanceMatrix.needsUpdate = true;
+    }
+    if (this.wakeMesh) {
+      this.wakeMesh.count = Math.min(this.maxWakes, this.wakes.length);
+      this.wakeMesh.instanceMatrix.needsUpdate = true;
+    }
     this.bobbingProps.forEach((item, index) => {
       item.group.visible = index < this.maxBobbingProps;
     });
@@ -728,22 +749,29 @@ export class Water {
 
   spawnSplashBurst(vehicle, inWater, elapsed) {
     this.lastSplashAt = elapsed;
-    const intensity = inWater ? 1.0 : 0.62;
+    const intensity = inWater ? SPLASH_PROFILE.waterIntensity : SPLASH_PROFILE.shoreIntensity;
+    const lifeBase = inWater ? SPLASH_PROFILE.waterLife : SPLASH_PROFILE.shoreLife;
     for (const side of [-0.92, 0.92]) {
-      const local = new THREE.Vector3(side, -0.35, 1.25);
-      const position = local.applyQuaternion(vehicle.group.quaternion).add(vehicle.group.position);
-      position.y = WATER_Y + 0.25 + Math.random() * 0.14;
-      this.writeSplash({
-        position,
-        baseScale: 0.7 + Math.random() * 0.55 * intensity,
-        rotationY: Math.random() * Math.PI * 2,
-        life: 0.48 + Math.random() * 0.2,
-        velocity: new THREE.Vector3(
-          (Math.random() - 0.5) * 1.7,
-          0.8 + Math.random() * 1.25,
-          (Math.random() - 0.5) * 1.7
-        )
-      });
+      for (let burst = 0; burst < SPLASH_PROFILE.burstsPerWheel; burst += 1) {
+        const local = new THREE.Vector3(
+          side + (Math.random() - 0.5) * 0.18,
+          -0.35,
+          1.08 + burst * 0.28
+        );
+        const position = local.applyQuaternion(vehicle.group.quaternion).add(vehicle.group.position);
+        position.y = WATER_Y + 0.25 + Math.random() * 0.16;
+        this.writeSplash({
+          position,
+          baseScale: (SPLASH_PROFILE.baseScale + Math.random() * SPLASH_PROFILE.scaleJitter) * intensity,
+          rotationY: Math.random() * Math.PI * 2,
+          life: lifeBase + Math.random() * SPLASH_PROFILE.lifeJitter,
+          velocity: new THREE.Vector3(
+            (Math.random() - 0.5) * SPLASH_PROFILE.lateralSpread,
+            SPLASH_PROFILE.verticalMin + Math.random() * (SPLASH_PROFILE.verticalMax - SPLASH_PROFILE.verticalMin),
+            (Math.random() - 0.5) * SPLASH_PROFILE.lateralSpread
+          )
+        });
+      }
     }
     if (elapsed - this.lastSplashAudioAt > 0.36) {
       vehicle.audio?.sweep?.(180, 430, 0.12, 0.018);
@@ -787,8 +815,9 @@ export class Water {
     if (this.getActiveSplashCount() >= this.maxSplashes) {
       this.hideOldestSplash();
     }
-    const index = this.splashCursor;
-    this.splashCursor = (this.splashCursor + 1) % this.splashes.length;
+    const poolSize = Math.max(1, Math.min(this.maxSplashes, this.splashes.length));
+    const index = this.splashCursor % poolSize;
+    this.splashCursor = (this.splashCursor + 1) % poolSize;
     const item = this.splashes[index];
     this.splashMesh.visible = true;
     item.active = true;
@@ -808,8 +837,9 @@ export class Water {
     if (activeCount >= this.maxWakes) {
       this.hideOldestWake();
     }
-    const index = this.wakeCursor;
-    this.wakeCursor = (this.wakeCursor + 1) % this.wakes.length;
+    const poolSize = Math.max(1, Math.min(this.maxWakes, this.wakes.length));
+    const index = this.wakeCursor % poolSize;
+    this.wakeCursor = (this.wakeCursor + 1) % poolSize;
     const item = this.wakes[index];
     item.active = true;
     item.life = life;
@@ -986,11 +1016,15 @@ export class Water {
       maxSplashes: this.maxSplashes,
       splashesSpawned: this.splashesSpawned,
       splashCapacity: this.splashes.length,
+      splashRenderCount: this.splashMesh?.count || 0,
       splashMesh: Boolean(this.splashMesh),
+      splashMaterialOpacity: this.splashMaterial?.opacity || 0,
+      splashProfile: { ...SPLASH_PROFILE },
       wakesSpawned: this.wakesSpawned,
       activeWakes: this.wakes.filter((item) => item.active).length,
       maxWakes: this.maxWakes,
       wakeCapacity: this.wakes.length,
+      wakeRenderCount: this.wakeMesh?.count || 0,
       wakeMesh: Boolean(this.wakeMesh),
       wakeMaterialOpacity: this.wakeMaterial?.opacity || 0,
       wakeProfile: { ...WAKE_PROFILE },
