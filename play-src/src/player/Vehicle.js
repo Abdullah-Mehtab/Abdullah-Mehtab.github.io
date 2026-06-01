@@ -51,6 +51,8 @@ export class Vehicle {
       surface: DEFAULT_SURFACE.id
     };
     this.surfaceTrailDustCounter = makeSurfaceCounter();
+    this.surfaceDragEvents = makeSurfaceCounter();
+    this.lastSurfaceDrag = { surface: DEFAULT_SURFACE.id, damp: 1, beforeSpeed: 0, afterSpeed: 0 };
     this.effectDummy = new THREE.Object3D();
     this.lightDummy = new THREE.Object3D();
     this.effectColor = new THREE.Color();
@@ -418,7 +420,16 @@ export class Vehicle {
     if (!surface || surface.drag >= 1 || this.controller.groundedWheels < 2) return;
     const damp = Math.pow(surface.drag, Math.min(2, dt * 60));
     const velocity = this.body.linvel();
+    const beforeSpeed = Math.hypot(velocity.x, velocity.z);
     this.body.setLinvel({ x: velocity.x * damp, y: velocity.y, z: velocity.z * damp }, true);
+    const surfaceId = getSurfaceEffectId(surface);
+    this.surfaceDragEvents[surfaceId] = (this.surfaceDragEvents[surfaceId] || 0) + 1;
+    this.lastSurfaceDrag = {
+      surface: surfaceId,
+      damp: Number(damp.toFixed(3)),
+      beforeSpeed: Number(beforeSpeed.toFixed(2)),
+      afterSpeed: Number((beforeSpeed * damp).toFixed(2))
+    };
   }
 
   updateSurfaceDust(dt, surface) {
@@ -861,6 +872,8 @@ export class Vehicle {
       surfaceTrail: { ...this.effectTotals.surfaceTrail },
       surfaceSmoke: { ...this.effectTotals.surfaceSmoke },
       surfaceSkid: { ...this.effectTotals.surfaceSkid },
+      surfaceDrag: { ...this.surfaceDragEvents },
+      lastSurfaceDrag: { ...this.lastSurfaceDrag },
       activeTrail: this.effectPools.trail?.activeCount || 0,
       activeSmoke: this.effectPools.smoke?.activeCount || 0,
       activeBoost: this.effectPools.boost?.activeCount || 0,

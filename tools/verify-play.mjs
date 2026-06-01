@@ -702,12 +702,15 @@ async function exerciseSurfaceFeedback(page, islandRadius) {
     const countDelta = (bucket, id) => (after[bucket]?.[id] || 0) - (before[bucket]?.[id] || 0);
     const trailDeltas = Object.fromEntries(softTargets.map((id) => [id, countDelta('surfaceTrail', id)]));
     const smokeDeltas = Object.fromEntries(softTargets.map((id) => [id, countDelta('surfaceSmoke', id)]));
+    const dragDeltas = Object.fromEntries(softTargets.map((id) => [id, countDelta('surfaceDrag', id)]));
 
     return {
       samples,
       targets: Object.fromEntries(samples.map((sample) => [sample.target, sample.seenTargetSurface && sample.grounded && sample.distance > 2])),
       trailDeltas,
       smokeDeltas,
+      dragDeltas,
+      lastSurfaceDrag: after.lastSurfaceDrag || null,
       surfaceDustDelta: (after.surfaceDustSmoke || 0) - (before.surfaceDustSmoke || 0),
       finalStats: after
     };
@@ -2254,8 +2257,10 @@ function assertVerification(result) {
     if (!surfaceFeedback.targets?.[id]) failures.push(`surface feedback probe failed: target ${id}`);
     if ((surfaceFeedback.trailDeltas?.[id] || 0) < 1) failures.push(`surface feedback probe failed: ${id} trail=${surfaceFeedback.trailDeltas?.[id] || 0}`);
     if ((surfaceFeedback.smokeDeltas?.[id] || 0) < 1) failures.push(`surface feedback probe failed: ${id} smoke=${surfaceFeedback.smokeDeltas?.[id] || 0}`);
+    if ((surfaceFeedback.dragDeltas?.[id] || 0) < 1) failures.push(`surface drag probe failed: ${id} drag=${surfaceFeedback.dragDeltas?.[id] || 0}`);
   }
   if ((surfaceFeedback.surfaceDustDelta || 0) < 6) failures.push(`surface feedback probe failed: surface dust=${surfaceFeedback.surfaceDustDelta || 0}`);
+  if ((surfaceFeedback.lastSurfaceDrag?.damp || 1) >= 1) failures.push(`surface drag probe failed: last damp=${surfaceFeedback.lastSurfaceDrag?.damp}`);
   if (!result.camera?.occlusion?.resolvedCloser) failures.push('camera occlusion probe failed');
   if ((result.camera?.stats?.tests || 0) < 1) failures.push('camera occlusion stats did not record tests');
   const cameraFeel = result.camera?.stats?.feel || {};
