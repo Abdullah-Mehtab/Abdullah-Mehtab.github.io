@@ -1400,22 +1400,44 @@ body:has(.map-modal:not([hidden])) .debug-readout {
 
 @media (max-width: 780px) {
   .hud {
-    grid-template-columns: auto 1fr;
-    top: 8px;
-    left: 8px;
-    right: 8px;
-    gap: 6px;
+    grid-template-columns: 34px minmax(0, 1fr);
+    top: 7px;
+    left: 7px;
+    right: 7px;
+    gap: 5px;
+    align-items: start;
   }
 
   .hud-core {
     display: none;
   }
 
+  .hud-back {
+    width: 34px;
+    min-width: 34px;
+    min-height: 30px;
+    justify-content: center;
+    padding: 0;
+    font-size: 0;
+  }
+
+  .hud-back::before {
+    content: "<";
+    font-size: 0.96rem;
+    font-weight: 900;
+    line-height: 1;
+  }
+
   .hud-readouts {
     justify-content: flex-end;
-    gap: 4px;
-    padding: 4px;
+    justify-self: end;
+    max-width: calc(100vw - 53px);
+    gap: 3px;
+    padding: 3px;
     overflow: hidden;
+    background:
+      linear-gradient(135deg, rgba(255, 223, 138, 0.04), transparent 44%),
+      rgba(4, 10, 17, 0.34);
   }
 
   #zone-readout {
@@ -1424,20 +1446,44 @@ body:has(.map-modal:not([hidden])) .debug-readout {
 
   .hud-readouts span,
   .hud-pill {
-    min-height: 32px;
-    padding: 6px 8px;
-    border-radius: 7px;
-    font-size: 0.74rem;
+    min-height: 28px;
+    padding: 4px 7px;
+    border-radius: 6px;
+    font-size: 0.68rem;
+  }
+
+  #speed-readout {
+    min-width: 56px;
+    justify-content: center;
+  }
+
+  #sound-button {
+    min-width: 45px;
+  }
+
+  #map-button,
+  #menu-button {
+    min-width: 43px;
+  }
+
+  .hud-back {
+    overflow: hidden;
+    color: transparent;
+    font-size: 0;
+  }
+
+  .hud-back::before {
+    color: var(--text);
   }
 
   .circuit-status {
-    top: 58px;
+    top: 48px;
     width: min(calc(100vw - 24px), 340px);
     padding: 9px 11px 10px;
   }
 
   .debug-drive .circuit-status {
-    top: 92px;
+    top: 76px;
   }
 
   .circuit-status strong {
@@ -1547,19 +1593,19 @@ body:has(.map-modal:not([hidden])) .debug-readout {
   }
 
   .minimap {
-    left: 12px;
-    bottom: 16px;
-    width: 122px;
-    opacity: 0.72;
+    left: 10px;
+    bottom: 14px;
+    width: 104px;
+    opacity: 0.66;
   }
 
   #interaction-prompt {
-    left: 148px;
+    left: 126px;
     right: 12px;
-    bottom: 18px;
+    bottom: 14px;
     width: auto;
     max-width: none;
-    padding: 10px 12px;
+    padding: 8px 10px;
     transform: none;
     animation-name: prompt-in-mobile;
   }
@@ -1579,47 +1625,72 @@ body:has(.map-modal:not([hidden])) .debug-readout {
   .whisper-feed {
     left: auto;
     right: 14px;
-    bottom: 268px;
+    bottom: 230px;
     width: min(86vw, 330px);
   }
 
   .notifications {
-    left: 148px;
+    left: 126px;
     right: 12px;
-    bottom: 18px;
+    bottom: 14px;
     width: auto;
   }
 
   .notification {
-    padding: 10px 12px;
-    font-size: 0.96rem;
+    padding: 8px 10px;
+    font-size: 0.88rem;
     line-height: 1.15;
   }
 
   .debug-readout {
-    left: 10px;
-    right: 10px;
-    top: 50px;
+    left: 7px;
+    right: 7px;
+    top: 42px;
     max-width: none;
-    max-height: 30px;
-    padding: 4px 7px;
-    font-size: 0.54rem;
-    line-height: 1.15;
+    max-height: 22px;
+    padding: 3px 6px;
+    font-size: 0.48rem;
+    line-height: 1.1;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
-    background: rgba(3, 8, 13, 0.58);
+    border-radius: 6px;
+    background: rgba(3, 8, 13, 0.5);
+  }
+
+  .touch-stick {
+    left: 16px;
+    bottom: 16px;
+    width: 112px;
+    height: 112px;
+  }
+
+  .touch-stick span {
+    width: 40px;
+    height: 40px;
+  }
+
+  .touch-buttons {
+    right: 14px;
+    bottom: 18px;
+    gap: 8px;
+  }
+
+  .touch-buttons button {
+    width: 60px;
+    height: 60px;
+    font-size: 0.68rem;
   }
 }
 
 @media (max-width: 780px) and ((hover: none) or (pointer: coarse)) {
   .minimap {
-    bottom: 112px;
+    bottom: 96px;
   }
 
   #interaction-prompt,
   .notifications {
-    bottom: 112px;
+    bottom: 96px;
   }
 }
 

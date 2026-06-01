@@ -1676,6 +1676,7 @@ async function captureMobile(browser) {
       atmosphere: game.world.atmosphere?.getStats?.() || {},
       stuntPark: game.world.stuntPark?.getStats?.() || {},
       potatoFarm: game.world.potatoFarm?.getStats?.() || {},
+      uiFrame: sampleMobileUiFrame(),
       lighting: game.getLightingStats?.() || {},
       sceneObjects: countVisibleScene(game.scene),
       renderProfile: profileVisibleScene(game.scene),
@@ -1686,6 +1687,47 @@ async function captureMobile(browser) {
       calls: render.calls,
       triangles: render.triangles
     };
+
+    function sampleMobileUiFrame() {
+      const hud = rectFor('.hud');
+      const debug = rectFor('#debug-readout');
+      const minimap = rectFor('#minimap');
+      const prompt = rectFor('#interaction-prompt');
+      const notification = rectFor('#notifications .notification');
+      const bottomTops = [minimap, prompt, notification]
+        .filter((rect) => rect.visible)
+        .map((rect) => rect.top);
+      const topOccupied = Math.max(hud.visible ? hud.bottom : 0, debug.visible ? debug.bottom : 0);
+      const bottomOccupied = bottomTops.length ? window.innerHeight - Math.min(...bottomTops) : 0;
+      return {
+        viewportHeight: window.innerHeight,
+        hudHeight: hud.height,
+        hudBottom: hud.bottom,
+        debugHeight: debug.height,
+        debugBottom: debug.bottom,
+        topOccupied: Math.round(topOccupied),
+        bottomOccupied: Math.round(bottomOccupied),
+        minimapWidth: minimap.width,
+        notificationHeight: notification.height,
+        promptVisible: prompt.visible,
+        clearHeightRatio: Number(((window.innerHeight - topOccupied - bottomOccupied) / window.innerHeight).toFixed(3))
+      };
+    }
+
+    function rectFor(selector) {
+      const element = document.querySelector(selector);
+      if (!element || element.hidden || getComputedStyle(element).display === 'none') {
+        return { visible: false, width: 0, height: 0, top: 0, bottom: 0 };
+      }
+      const rect = element.getBoundingClientRect();
+      return {
+        visible: true,
+        width: Math.round(rect.width),
+        height: Math.round(rect.height),
+        top: Math.round(rect.top),
+        bottom: Math.round(rect.bottom)
+      };
+    }
 
     function countVisibleScene(root) {
       const counts = {
@@ -2464,6 +2506,18 @@ function assertVerification(result) {
   if (result.mobile.quality !== 'low') failures.push(`mobile quality tier mismatch: ${result.mobile.quality}`);
   if (result.mobile.savedQuality !== null) failures.push(`mobile default quality should not write saved preference: ${result.mobile.savedQuality}`);
   if (result.mobile.triangles > 180000) failures.push(`mobile triangle budget exceeded: ${result.mobile.triangles}`);
+  if ((result.mobile.uiFrame?.topOccupied || Infinity) > 66) {
+    failures.push(`mobile HUD frame too tall: topOccupied=${result.mobile.uiFrame?.topOccupied || 0}`);
+  }
+  if ((result.mobile.uiFrame?.hudHeight || Infinity) > 36) {
+    failures.push(`mobile HUD frame too tall: hudHeight=${result.mobile.uiFrame?.hudHeight || 0}`);
+  }
+  if ((result.mobile.uiFrame?.debugHeight || Infinity) > 24) {
+    failures.push(`mobile debug frame too tall: debugHeight=${result.mobile.uiFrame?.debugHeight || 0}`);
+  }
+  if ((result.mobile.uiFrame?.minimapWidth || Infinity) > 112) {
+    failures.push(`mobile minimap frame too wide: minimapWidth=${result.mobile.uiFrame?.minimapWidth || 0}`);
+  }
   if ((result.mobile.setPieceQuality?.secondaryGroups || 0) < 2) failures.push(`mobile set-piece quality probe failed: secondaryGroups=${result.mobile.setPieceQuality?.secondaryGroups || 0}`);
   if ((result.mobile.setPieceQuality?.visibleSecondaryGroups || 0) !== 0) {
     failures.push(`mobile set-piece quality probe failed: visibleSecondaryGroups=${result.mobile.setPieceQuality?.visibleSecondaryGroups || 0}`);
