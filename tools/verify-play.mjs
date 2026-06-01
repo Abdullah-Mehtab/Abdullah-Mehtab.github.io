@@ -5,7 +5,7 @@ import { existsSync, readFile, statSync } from 'node:fs';
 import { mkdir, writeFile } from 'node:fs/promises';
 import { extname, join, resolve } from 'node:path';
 import puppeteer from 'puppeteer-core';
-import { circuitCheckpoints, districtFootprints, ISLAND_RADIUS, roadPaths, worldZones, zonePresentation } from '../play-src/src/world/worldData.js';
+import { circuitCheckpoints, districtFootprints, ISLAND_RADIUS, roadPaths, routeThresholds, worldZones, zonePresentation } from '../play-src/src/world/worldData.js';
 
 const repoRoot = resolve(import.meta.dirname, '..');
 const chromePath = findChrome();
@@ -2334,6 +2334,10 @@ function assertVerification(result) {
   if ((result.roadTopology?.closedLoops || 0) < 1) failures.push(`road topology probe failed: closedLoops=${result.roadTopology?.closedLoops || 0}`);
   if ((result.roadTopology?.coastalLoopPoints || 0) < 12) failures.push(`road topology probe failed: coastalLoopPoints=${result.roadTopology?.coastalLoopPoints || 0}`);
   if ((result.roadTopology?.sharedJunctions || 0) < 6) failures.push(`road topology probe failed: sharedJunctions=${result.roadTopology?.sharedJunctions || 0}`);
+  if ((result.roadTopology?.maxRoadWidth || 99) > 5.6) failures.push(`road corridor probe failed: maxRoadWidth=${result.roadTopology?.maxRoadWidth}`);
+  if ((result.roadTopology?.averageRoadWidth || 99) > 4.7) failures.push(`road corridor probe failed: averageRoadWidth=${result.roadTopology?.averageRoadWidth}`);
+  if ((result.roadTopology?.maxThresholdWidth || 99) > 16) failures.push(`road corridor probe failed: maxThresholdWidth=${result.roadTopology?.maxThresholdWidth}`);
+  if ((result.roadTopology?.averageThresholdWidth || 99) > 14.4) failures.push(`road corridor probe failed: averageThresholdWidth=${result.roadTopology?.averageThresholdWidth}`);
   if ((result.staticBatching?.groups || 0) < 8) failures.push(`static batching probe failed: groups=${result.staticBatching?.groups || 0}`);
   if ((result.staticBatching?.mergedMeshes || 0) <= (result.staticBatching?.batches || 0)) failures.push(`static batching probe failed: merged=${result.staticBatching?.mergedMeshes || 0}, batches=${result.staticBatching?.batches || 0}`);
   if ((result.staticBatching?.prunedEmptyGroups || 0) < 1) failures.push(`static batching probe failed: pruned=${result.staticBatching?.prunedEmptyGroups || 0}`);
@@ -2778,6 +2782,8 @@ function getRouteReplaySegments() {
 function sampleRoadTopology() {
   const coastalLoop = roadPaths.find((path) => path.id === 'coastal-loop');
   const junctionKeys = new Map();
+  const roadWidths = roadPaths.map((path) => path.width);
+  const thresholdWidths = routeThresholds.map((threshold) => threshold.width);
   for (const path of roadPaths) {
     for (const point of path.points) {
       const key = `${point[0].toFixed(2)}:${point[1].toFixed(2)}`;
@@ -2791,7 +2797,11 @@ function sampleRoadTopology() {
     closedLoops: roadPaths.filter((path) => path.closed).length,
     coastalLoop: Boolean(coastalLoop?.closed && coastalLoop.points.length >= 12),
     coastalLoopPoints: coastalLoop?.points.length || 0,
-    sharedJunctions: [...junctionKeys.values()].filter((paths) => paths.size > 1).length
+    sharedJunctions: [...junctionKeys.values()].filter((paths) => paths.size > 1).length,
+    averageRoadWidth: Number((roadWidths.reduce((sum, width) => sum + width, 0) / Math.max(1, roadWidths.length)).toFixed(2)),
+    maxRoadWidth: Math.max(...roadWidths),
+    averageThresholdWidth: Number((thresholdWidths.reduce((sum, width) => sum + width, 0) / Math.max(1, thresholdWidths.length)).toFixed(2)),
+    maxThresholdWidth: Math.max(...thresholdWidths)
   };
 }
 

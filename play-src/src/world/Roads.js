@@ -5,14 +5,14 @@ import { roadPaths, roadSegments, routeThresholds } from './worldData.js';
 import { mergeStaticMeshesInGroup } from './StaticBatching.js';
 
 const ROAD_STYLE = {
-  ring: { shoulder: 1.6, curb: 0.28, line: 0xf0d477 },
-  avenue: { shoulder: 1.3, curb: 0.26, line: 0xeed9a6 },
-  street: { shoulder: 1.1, curb: 0.22, line: 0xd9d6c7 },
-  plaza: { shoulder: 1.05, curb: 0.3, line: 0xf3e7bd },
-  security: { shoulder: 1.25, line: 0x68d8ff },
-  stunt: { shoulder: 1.4, curb: 0.28, line: 0xff9b6d },
-  dirt: { shoulder: 1.8, line: 0x8d6338 },
-  bridge: { shoulder: 1.4, curb: 0.22, line: 0xe8edf0 }
+  ring: { shoulder: 1.0, curb: 0.24, line: 0xf0d477 },
+  avenue: { shoulder: 0.82, curb: 0.22, line: 0xeed9a6 },
+  street: { shoulder: 0.72, curb: 0.18, line: 0xd9d6c7 },
+  plaza: { shoulder: 0.74, curb: 0.22, line: 0xf3e7bd },
+  security: { shoulder: 0.78, line: 0x68d8ff },
+  stunt: { shoulder: 0.9, curb: 0.22, line: 0xff9b6d },
+  dirt: { shoulder: 1.15, line: 0x8d6338 },
+  bridge: { shoulder: 0.82, curb: 0.18, line: 0xe8edf0 }
 };
 
 const ROAD_LAYER = {
@@ -184,7 +184,7 @@ export class Roads {
   }
 
   addEdgeFeathers(path, style, width, layer) {
-    const featherWidth = path.hierarchy === 'bridge' ? 0.62 : path.hierarchy === 'dirt' ? 1.08 : 0.74;
+    const featherWidth = path.hierarchy === 'bridge' ? 0.42 : path.hierarchy === 'dirt' ? 0.68 : 0.48;
     const y = 0.098 + layer * 0.006;
     const material = this.vergeMaterial(path);
     this.roadGroup.userData.edgeFeatherPattern = material.userData.pattern;
