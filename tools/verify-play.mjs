@@ -2227,6 +2227,8 @@ function assertVerification(result) {
   if ((result.districtStory?.terminalBanks || 0) < 2) failures.push(`district story probe failed: terminalBanks=${result.districtStory?.terminalBanks || 0}`);
   if ((result.districtStory?.archiveSteps || 0) < 1) failures.push(`district story probe failed: archiveSteps=${result.districtStory?.archiveSteps || 0}`);
   if ((result.districtStory?.todoStacks || 0) < 1) failures.push(`district story probe failed: todoStacks=${result.districtStory?.todoStacks || 0}`);
+  if ((result.districtStory?.documentPages || 0) < 12) failures.push(`district story probe failed: documentPages=${result.districtStory?.documentPages || 0}`);
+  if ((result.districtStory?.documentStreams || 0) < 1) failures.push(`district story probe failed: documentStreams=${result.districtStory?.documentStreams || 0}`);
   if ((result.districtComposition?.pads || 0) < 15) failures.push(`district composition probe failed: pads=${result.districtComposition?.pads || 0}`);
   if ((result.districtComposition?.pathMarks || 0) < 70) failures.push(`district composition probe failed: pathMarks=${result.districtComposition?.pathMarks || 0}`);
   if ((result.districtComposition?.lamps || 0) < 13) failures.push(`district composition probe failed: lamps=${result.districtComposition?.lamps || 0}`);

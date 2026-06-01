@@ -134,7 +134,9 @@ export class SetPieces {
       crateStacks: 0,
       terminalBanks: 0,
       archiveSteps: 0,
-      todoStacks: 0
+      todoStacks: 0,
+      documentPages: 0,
+      documentStreams: 0
     };
     this.districtCompositionStats = {
       pads: 0,
@@ -230,6 +232,10 @@ export class SetPieces {
     const activePulse = scan.active ? 1 : scan.complete ? 0.55 : 0;
     let visibleScanWaves = 0;
     for (const item of this.animated) {
+      if (item.kind === 'cvDocumentStream') {
+        this.updateCvDocumentStream(item, elapsed);
+        continue;
+      }
       if (item.instanceMesh) {
         this.writeLifeInstance(item, elapsed);
         this.lifeInstanceDirty.add(item.instanceMesh);
@@ -735,6 +741,7 @@ export class SetPieces {
       this.addCompositionDetailAsset(group, 'EnvPolishYardSurfaceMarks', cv.position[0] + dx, cv.position[2] + dz, rotation, scale, 'surfaceMarks');
     }
     this.addCompositionDetailAsset(group, 'EnvPolishWorkshopProcessRail', cv.position[0] - 4.4, cv.position[2] - 4.1, 0.08, 0.62, 'rails');
+    this.createCvDocumentLife(group, cv);
 
     const contact = findZone('contact');
     this.createHarborComposition(group, contact);
@@ -904,7 +911,11 @@ export class SetPieces {
     this.addSilhouetteAnchor(group, 'EnvPolishGardenArch', potato.position[0] - 5.4, potato.position[2] + 7.0, 0.28, 0.78);
     this.createFarmFieldComposition(group, potato);
 
-    mergeStaticMeshesInGroup(group, { namePrefix: 'SETPIECE_district', cellSize: 128 });
+    mergeStaticMeshesInGroup(group, {
+      namePrefix: 'SETPIECE_district',
+      cellSize: 128,
+      shouldSkip: (object) => object.name === 'CvDocumentStream'
+    });
     this.registerDistrictDressingBatches(group);
     this.world.scene.add(group);
   }
@@ -2592,6 +2603,72 @@ export class SetPieces {
     this.districtStoryStats.authoredAssets += 1;
     this.districtStoryStats[statName] = (this.districtStoryStats[statName] || 0) + 1;
     return true;
+  }
+
+  createCvDocumentLife(group, cv) {
+    const geometry = new THREE.PlaneGeometry(0.72, 0.96);
+    const material = new THREE.MeshBasicMaterial({
+      color: 0xe6f3ff,
+      transparent: true,
+      opacity: 0.78,
+      depthWrite: false,
+      side: THREE.DoubleSide
+    });
+    const pages = [
+      [-7.1, -2.6, 1.18, -0.46, 0.82, 0.00],
+      [-5.8, -0.7, 1.74, -0.28, 0.74, 0.45],
+      [-4.2, 1.4, 2.12, -0.08, 0.68, 0.94],
+      [-2.4, 3.2, 1.68, 0.16, 0.72, 1.36],
+      [-0.4, 4.1, 1.34, 0.32, 0.76, 1.82],
+      [1.9, 3.8, 1.9, 0.52, 0.7, 2.28],
+      [4.1, 2.6, 2.24, 0.74, 0.66, 2.74],
+      [5.8, 0.7, 1.58, 0.92, 0.72, 3.16],
+      [6.8, -1.7, 1.26, 1.08, 0.78, 3.62],
+      [3.4, -3.2, 1.46, 0.72, 0.64, 4.08],
+      [0.8, -3.8, 2.02, 0.34, 0.68, 4.54],
+      [-2.8, -3.5, 1.54, -0.04, 0.74, 5.0]
+    ];
+    const mesh = new THREE.InstancedMesh(geometry, material, pages.length);
+    mesh.name = 'CvDocumentStream';
+    mesh.frustumCulled = false;
+    mesh.renderOrder = 42;
+    group.add(mesh);
+
+    const entries = pages.map(([dx, dz, y, yaw, scale, phase], index) => ({
+      index,
+      x: cv.position[0] + dx,
+      z: cv.position[2] + dz,
+      baseY: y,
+      yaw,
+      scale,
+      phase,
+      speed: 0.72 + index * 0.035,
+      bob: 0.18 + (index % 3) * 0.035,
+      roll: (index % 2 === 0 ? -1 : 1) * (0.12 + index * 0.006)
+    }));
+
+    this.districtStoryStats.documentPages += pages.length;
+    this.districtStoryStats.documentStreams += 1;
+    this.animated.push({ kind: 'cvDocumentStream', mesh, entries });
+    this.updateCvDocumentStream({ mesh, entries }, 0);
+  }
+
+  updateCvDocumentStream(stream, elapsed) {
+    if (!stream.mesh?.visible) return;
+    for (const entry of stream.entries) {
+      const phase = elapsed * entry.speed + entry.phase;
+      const lateral = Math.sin(phase * 0.72) * 0.08;
+      this.lifeDummy.position.set(entry.x + lateral, entry.baseY + Math.sin(phase) * entry.bob, entry.z);
+      this.lifeDummy.rotation.set(0, entry.yaw + Math.sin(phase * 0.64) * 0.18, entry.roll + Math.sin(phase * 1.18) * 0.16);
+      this.lifeDummy.scale.setScalar(entry.scale + Math.sin(phase * 1.4) * 0.035);
+      this.lifeDummy.updateMatrix();
+      stream.mesh.setMatrixAt(entry.index, this.lifeDummy.matrix);
+    }
+    if (stream.mesh.material) {
+      stream.mesh.material.opacity = 0.72 + Math.sin(elapsed * 1.1) * 0.08;
+    }
+    stream.mesh.instanceMatrix.needsUpdate = true;
+    this.lifeStats.motionSamples += stream.entries.length;
   }
 
   addCompositionPad(group, x, z, width, depth, material, y, name) {
