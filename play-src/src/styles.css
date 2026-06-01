@@ -1548,14 +1548,32 @@ body:has(.map-modal:not([hidden])) .debug-readout {
 
   .minimap {
     left: 12px;
-    bottom: 118px;
-    width: 132px;
-    opacity: 0.76;
+    bottom: 16px;
+    width: 122px;
+    opacity: 0.72;
   }
 
-  .interaction-prompt {
-    bottom: 150px;
-    width: min(84vw, 360px);
+  #interaction-prompt {
+    left: 148px;
+    right: 12px;
+    bottom: 18px;
+    width: auto;
+    max-width: none;
+    padding: 10px 12px;
+    transform: none;
+    animation-name: prompt-in-mobile;
+  }
+
+  #interaction-prompt strong {
+    margin-top: 0;
+    font-size: 0.96rem;
+    line-height: 1.15;
+  }
+
+  #interaction-prompt p {
+    margin-top: 4px;
+    font-size: 0.78rem;
+    line-height: 1.25;
   }
 
   .whisper-feed {
@@ -1563,6 +1581,19 @@ body:has(.map-modal:not([hidden])) .debug-readout {
     right: 14px;
     bottom: 268px;
     width: min(86vw, 330px);
+  }
+
+  .notifications {
+    left: 148px;
+    right: 12px;
+    bottom: 18px;
+    width: auto;
+  }
+
+  .notification {
+    padding: 10px 12px;
+    font-size: 0.96rem;
+    line-height: 1.15;
   }
 
   .debug-readout {
@@ -1578,6 +1609,28 @@ body:has(.map-modal:not([hidden])) .debug-readout {
     text-overflow: ellipsis;
     white-space: nowrap;
     background: rgba(3, 8, 13, 0.58);
+  }
+}
+
+@media (max-width: 780px) and ((hover: none) or (pointer: coarse)) {
+  .minimap {
+    bottom: 112px;
+  }
+
+  #interaction-prompt,
+  .notifications {
+    bottom: 112px;
+  }
+}
+
+@keyframes prompt-in-mobile {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
   }
 }
 
