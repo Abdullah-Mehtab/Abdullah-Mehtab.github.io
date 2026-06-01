@@ -6,8 +6,8 @@ const SESSION_ID = crypto.randomUUID?.() || `${Date.now()}-${Math.random().toStr
 
 export class Analytics {
   constructor() {
-    this.isEnabled = Boolean(getVisitorProofEndpoint() && getSupabaseAnonKey());
-    this.visitorId = getOrCreateVisitorId();
+    this.isEnabled = !analyticsDisabled() && Boolean(getVisitorProofEndpoint() && getSupabaseAnonKey());
+    this.visitorId = this.isEnabled ? getOrCreateVisitorId() : '';
     this.fingerprintHash = '';
     this.potatoCount = null;
     this.zoneVisits = new Set();
@@ -120,6 +120,14 @@ function getVisitorProofEndpoint() {
 
 function getSupabaseAnonKey() {
   return getPortfolioConfig().supabaseAnonKey || '';
+}
+
+function analyticsDisabled() {
+  try {
+    return localStorage.getItem('portfolio-drive-disable-analytics') === '1';
+  } catch {
+    return false;
+  }
 }
 
 function getOrCreateVisitorId() {

@@ -232,6 +232,16 @@ export function createWorldMaterials() {
     potato: new THREE.MeshStandardMaterial({ color: 0xb5742b, roughness: 0.94, metalness: 0.0 }),
     crop: new THREE.MeshStandardMaterial({ color: 0x77b85a, roughness: 0.9, metalness: 0.0 }),
     softShadow: new THREE.MeshBasicMaterial({ color: 0x07100d, transparent: true, opacity: 0.16, depthWrite: false }),
+    foliageShadow: new THREE.MeshBasicMaterial({
+      color: 0x092114,
+      transparent: true,
+      opacity: 0.16,
+      depthWrite: false,
+      side: THREE.DoubleSide,
+      polygonOffset: true,
+      polygonOffsetFactor: -36,
+      polygonOffsetUnits: -36
+    }),
     water: makeWaterMaterial(),
     leaf: new THREE.PointsMaterial({
       color: 0xffb2bc,

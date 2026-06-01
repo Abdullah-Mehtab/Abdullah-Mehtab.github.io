@@ -78,6 +78,7 @@ try {
   await page.evaluateOnNewDocument(() => {
     localStorage.setItem('portfolio-drive-landscape-quality', 'medium');
     localStorage.setItem('portfolio-drive-muted', '1');
+    localStorage.setItem('portfolio-drive-disable-analytics', '1');
   });
 
   const startedAt = Date.now();
@@ -1477,6 +1478,7 @@ async function captureHighQuality(browser) {
   await page.evaluateOnNewDocument(() => {
     localStorage.setItem('portfolio-drive-landscape-quality', 'high');
     localStorage.setItem('portfolio-drive-muted', '1');
+    localStorage.setItem('portfolio-drive-disable-analytics', '1');
   });
   await page.goto(`${baseUrl}/play/?debugDrive=1`, { waitUntil: 'domcontentloaded', timeout: 60000 });
   await waitForReady(page);
@@ -1546,6 +1548,7 @@ async function captureMobile(browser) {
   await page.evaluateOnNewDocument(() => {
     localStorage.removeItem('portfolio-drive-landscape-quality');
     localStorage.setItem('portfolio-drive-muted', '1');
+    localStorage.setItem('portfolio-drive-disable-analytics', '1');
   });
   await page.goto(`${baseUrl}/play/?debugDrive=1`, { waitUntil: 'domcontentloaded', timeout: 60000 });
   await waitForReady(page);
@@ -1571,6 +1574,7 @@ async function captureMobile(browser) {
       fieldMotifs: game.world.terrain?.getFieldMotifStats?.() || {},
       roadsideFrames: game.world.terrain?.getRoadsideFrameStats?.() || {},
       roadSurfaceDetails: game.world.roads?.getDetailStats?.() || {},
+      foliage: game.world.foliage?.getStats?.() || {},
       waterStats: game.world.water?.getStats?.() || {},
       atmosphere: game.world.atmosphere?.getStats?.() || {},
       stuntPark: game.world.stuntPark?.getStats?.() || {},
@@ -1755,6 +1759,7 @@ async function captureMobileSavedPreference(browser) {
   await page.evaluateOnNewDocument(() => {
     localStorage.setItem('portfolio-drive-landscape-quality', 'high');
     localStorage.setItem('portfolio-drive-muted', '1');
+    localStorage.setItem('portfolio-drive-disable-analytics', '1');
   });
   await page.goto(`${baseUrl}/play/`, { waitUntil: 'domcontentloaded', timeout: 60000 });
   await waitForReady(page);
@@ -2038,6 +2043,9 @@ function assertVerification(result) {
   if ((result.staticBatching?.cellGroups || 0) < 1) failures.push(`static batching probe failed: cellGroups=${result.staticBatching?.cellGroups || 0}`);
   if ((result.foliage?.understoryEntries || 0) < 120) failures.push(`foliage probe failed: understoryEntries=${result.foliage?.understoryEntries || 0}`);
   if ((result.foliage?.visibleUnderstory || 0) < 90) failures.push(`foliage probe failed: visibleUnderstory=${result.foliage?.visibleUnderstory || 0}`);
+  if ((result.foliage?.visibleTreeShadows || 0) < (result.foliage?.visibleTrees || 0)) {
+    failures.push(`foliage probe failed: visibleTreeShadows=${result.foliage?.visibleTreeShadows || 0}/${result.foliage?.visibleTrees || 0}`);
+  }
   if ((result.foliage?.treeColorVariants || 0) < 10) failures.push(`foliage probe failed: treeColorVariants=${result.foliage?.treeColorVariants || 0}`);
   if ((result.foliage?.grassColorVariants || 0) < 5) failures.push(`foliage probe failed: grassColorVariants=${result.foliage?.grassColorVariants || 0}`);
   if ((result.foliage?.flowerColorVariants || 0) < 9) failures.push(`foliage probe failed: flowerColorVariants=${result.foliage?.flowerColorVariants || 0}`);
@@ -2329,6 +2337,9 @@ function assertVerification(result) {
   }
   if ((result.mobile.roadSurfaceDetails?.visibleReflectorStuds || 0) !== 0) {
     failures.push(`mobile road marker quality probe failed: visibleReflectorStuds=${result.mobile.roadSurfaceDetails?.visibleReflectorStuds || 0}`);
+  }
+  if ((result.mobile.foliage?.visibleTreeShadows || 0) !== 0) {
+    failures.push(`mobile foliage quality probe failed: visibleTreeShadows=${result.mobile.foliage?.visibleTreeShadows || 0}`);
   }
   if (result.mobile.calls > 205) failures.push(`mobile draw-call budget exceeded: ${result.mobile.calls}`);
   if ((result.mobile.lighting?.sun?.position?.[1] || 0) < 30 || (result.mobile.lighting?.sun?.position?.[1] || 0) > 45) {
