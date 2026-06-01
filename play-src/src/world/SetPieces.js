@@ -129,6 +129,14 @@ export class SetPieces {
       lamps: 0,
       frameRuns: 0
     };
+    this.innerMeadowStats = {
+      pockets: 0,
+      patches: 0,
+      authoredAssets: 0,
+      guideTiles: 0,
+      lamps: 0,
+      frameRuns: 0
+    };
     this.southCorridorStats = {
       clusters: 0,
       patches: 0,
@@ -247,6 +255,7 @@ export class SetPieces {
     this.createMeadowComposition();
     this.createFieldBackdrops();
     this.createLaunchFieldFrame();
+    this.createInnerMeadowFrame();
     this.createSouthCorridorForeground();
     this.createLivingSignals();
     this.createDistrictAmbience();
@@ -460,6 +469,10 @@ export class SetPieces {
 
   getLaunchFieldStats() {
     return { ...this.launchFieldStats };
+  }
+
+  getInnerMeadowStats() {
+    return { ...this.innerMeadowStats };
   }
 
   getSouthCorridorStats() {
@@ -2099,6 +2112,165 @@ export class SetPieces {
   }
 
   launchFieldPoint(pocket, right, forward) {
+    return [
+      pocket.x + Math.cos(pocket.rotation) * right + Math.sin(pocket.rotation) * forward,
+      pocket.z - Math.sin(pocket.rotation) * right + Math.cos(pocket.rotation) * forward
+    ];
+  }
+
+  createInnerMeadowFrame() {
+    const group = this.registerQualityGroup(new THREE.Group(), 'secondary');
+    group.name = 'SETPIECE_Inner_Meadow_Frame';
+    const pockets = [
+      {
+        x: 70,
+        z: -18,
+        rotation: -0.46,
+        width: 34,
+        depth: 18,
+        material: this.world.materials.meadowLight,
+        accent: this.world.materials.glow,
+        paver: this.world.materials.paleStone,
+        seed: 1421,
+        assets: [
+          ['EnvPolishSignalSpire', -9.8, 3.8, 0.12, 0.54],
+          ['EnvPolishRouteVistaKit', 8.6, -3.2, -0.18, 0.66],
+          ['EnvPolishTerminalBank', -2.6, -6.2, 0.2, 0.58],
+          ['EnvPolishBenchPlanter', 9.4, 5.4, -0.24, 0.64]
+        ]
+      },
+      {
+        x: 96,
+        z: -54,
+        rotation: 0.26,
+        width: 38,
+        depth: 18,
+        material: this.world.materials.warmStone,
+        accent: this.world.materials.warmGlow,
+        paver: this.world.materials.wood,
+        seed: 1439,
+        assets: [
+          ['EnvPolishWorkshopCanopy', -10.8, 3.2, 0.12, 0.64],
+          ['EnvPolishRouteStoryMarker', 9.8, -4.6, -0.18, 0.68],
+          ['EnvPolishChevronBollardRun', -2.8, -6.4, 0.16, 0.7],
+          ['EnvPolishRouteLantern', 10.6, 5.2, -0.22, 0.64]
+        ]
+      },
+      {
+        x: 64,
+        z: -86,
+        rotation: 0.12,
+        width: 32,
+        depth: 16,
+        material: this.world.materials.meadowDark,
+        accent: this.world.materials.warmGlow,
+        paver: this.world.materials.paleStone,
+        seed: 1451,
+        assets: [
+          ['EnvPolishStuntArrowFence', -8.8, 3.2, 0.12, 0.64],
+          ['EnvPolishRoadBarrier', 8.2, -3.4, -0.18, 0.72],
+          ['EnvPolishRouteVistaKit', -2.6, -6.0, 0.18, 0.62],
+          ['EnvPolishBuildCrateStack', 8.8, 5.0, -0.22, 0.56]
+        ]
+      },
+      {
+        x: 45,
+        z: -28,
+        rotation: -0.22,
+        width: 34,
+        depth: 17,
+        material: this.world.materials.meadowLight,
+        accent: this.world.materials.glowBlue,
+        paver: this.world.materials.paleStone,
+        seed: 1471,
+        assets: [
+          ['EnvPolishDocumentArcade', -9.2, 3.4, 0.12, 0.58],
+          ['EnvPolishGardenArch', 8.4, -3.2, -0.16, 0.66],
+          ['EnvPolishRouteStoryMarker', -2.4, -6.0, 0.2, 0.64],
+          ['EnvPolishBenchPlanter', 9.2, 5.2, -0.22, 0.62]
+        ]
+      }
+    ];
+
+    pockets.forEach((pocket, index) => this.addInnerMeadowPocket(group, pocket, index));
+    this.addInnerMeadowRouteRun(group, { x: 70, z: -38, rotation: -0.54, count: 8, color: this.world.materials.glow });
+    this.addInnerMeadowRouteRun(group, { x: 89, z: -73, rotation: 0.16, count: 8, color: this.world.materials.warmGlow });
+    mergeStaticMeshesInGroup(group, { namePrefix: 'SETPIECE_inner_meadow', cellSize: 128 });
+    group.userData.innerMeadowStats = { ...this.innerMeadowStats };
+    this.registerBroadSetPieceBatches('innerMeadow', group, 'SETPIECE_inner_meadow', 'meadowCompositionRadius');
+    this.world.scene.add(group);
+  }
+
+  addInnerMeadowPocket(group, pocket, index) {
+    this.groundPatch(group, pocket.x, pocket.z, pocket.width, pocket.depth, pocket.material, 0.121, pocket.rotation, 'InnerMeadowLawnPatch', pocket.seed);
+    this.groundPatch(
+      group,
+      pocket.x + Math.sin(pocket.rotation) * 3.0,
+      pocket.z + Math.cos(pocket.rotation) * 3.0,
+      pocket.width * 0.58,
+      pocket.depth * 0.42,
+      this.world.materials.grassSandBlend,
+      0.124,
+      pocket.rotation + 0.08,
+      'InnerMeadowFeatherPatch',
+      pocket.seed + 5
+    );
+    this.innerMeadowStats.patches += 2;
+    this.addInnerMeadowFrameRun(group, pocket);
+    this.addInnerMeadowGuideTiles(group, pocket);
+    for (const asset of pocket.assets) this.addInnerMeadowAsset(group, pocket, ...asset);
+    for (const [right, forward, color] of [
+      [-pocket.width * 0.38, -pocket.depth * 0.34, pocket.accent.color?.getHex?.() || 0x7cffb2],
+      [pocket.width * 0.36, pocket.depth * 0.32, 0xffc36a]
+    ]) {
+      const [x, z] = this.innerMeadowPoint(pocket, right, forward);
+      this.addLamp(group, x, z, color, 2.3, `InnerMeadowLamp_${index}`);
+      this.innerMeadowStats.lamps += 1;
+    }
+    this.innerMeadowStats.pockets += 1;
+  }
+
+  addInnerMeadowFrameRun(group, pocket) {
+    const frameDepth = pocket.depth * 0.4;
+    for (let i = 0; i < 4; i += 1) {
+      const offset = -pocket.width * 0.3 + i * (pocket.width * 0.2);
+      for (const side of [-1, 1]) {
+        const [x, z] = this.innerMeadowPoint(pocket, offset, side * frameDepth);
+        this.box(group, x, 0.206, z, 1.85, 0.035, 0.22, pocket.paver, pocket.rotation + side * 0.08, 'InnerMeadowFrameRun');
+        this.innerMeadowStats.frameRuns += 1;
+      }
+    }
+  }
+
+  addInnerMeadowGuideTiles(group, pocket) {
+    for (let i = 0; i < 6; i += 1) {
+      const side = i % 2 === 0 ? -1 : 1;
+      const [x, z] = this.innerMeadowPoint(pocket, side * pocket.width * 0.24, -5.2 + i * 2.05);
+      this.box(group, x, 0.214, z, 0.26, 0.035, 1.02, i % 2 ? pocket.accent : this.world.materials.paleStone, pocket.rotation + side * 0.06, 'InnerMeadowGuideTile');
+      this.innerMeadowStats.guideTiles += 1;
+    }
+  }
+
+  addInnerMeadowRouteRun(group, run) {
+    const rightX = Math.cos(run.rotation);
+    const rightZ = -Math.sin(run.rotation);
+    for (let index = 0; index < run.count; index += 1) {
+      const offset = (index - (run.count - 1) / 2) * 2.2;
+      const x = run.x + rightX * offset;
+      const z = run.z + rightZ * offset;
+      this.box(group, x, 0.222, z, 1.05, 0.035, 0.2, index % 2 ? run.color : this.world.materials.paleStone, run.rotation, 'InnerMeadowRouteGuide');
+      this.innerMeadowStats.guideTiles += 1;
+    }
+  }
+
+  addInnerMeadowAsset(group, pocket, assetName, right, forward, rotationOffset, scale) {
+    const [x, z] = this.innerMeadowPoint(pocket, right, forward);
+    const placed = this.addPolishAsset(group, assetName, x, z, pocket.rotation + rotationOffset, scale);
+    if (placed) this.innerMeadowStats.authoredAssets += 1;
+    return placed;
+  }
+
+  innerMeadowPoint(pocket, right, forward) {
     return [
       pocket.x + Math.cos(pocket.rotation) * right + Math.sin(pocket.rotation) * forward,
       pocket.z - Math.sin(pocket.rotation) * right + Math.cos(pocket.rotation) * forward
