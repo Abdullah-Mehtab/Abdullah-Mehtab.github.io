@@ -142,7 +142,8 @@ export class SetPieces {
       farmFences: 0,
       skillsTerminalNodes: 0,
       awardsArchiveNodes: 0,
-      dataPierNodes: 0
+      dataPierNodes: 0,
+      careerOfficeNodes: 0
     };
     this.circuitStartStats = {
       pads: 0,
@@ -173,6 +174,14 @@ export class SetPieces {
       lamps: 0,
       beacons: 0,
       deckRails: 0
+    };
+    this.careerOfficeStats = {
+      pads: 0,
+      pathMarks: 0,
+      authoredAssets: 0,
+      lamps: 0,
+      facadePanels: 0,
+      signalFrames: 0
     };
   }
 
@@ -396,6 +405,10 @@ export class SetPieces {
 
   getDataPierStats() {
     return { ...this.dataPierStats };
+  }
+
+  getCareerOfficeStats() {
+    return { ...this.careerOfficeStats };
   }
 
   getWhisperEntries() {
@@ -804,6 +817,7 @@ export class SetPieces {
       this.addCompositionDetailAsset(group, 'EnvPolishYardSurfaceMarks', career.position[0] + dx, career.position[2] + dz, rotation, scale, 'surfaceMarks');
     }
     this.addCompositionDetailAsset(group, 'EnvPolishWorkshopProcessRail', career.position[0] + 7.4, career.position[2] - 8.6, -0.08, 0.6, 'rails');
+    this.createCareerOfficeComposition(group, career);
 
     const circuit = findZone('circuit');
     this.createCircuitStartComposition(group, circuit);
@@ -2466,6 +2480,86 @@ export class SetPieces {
     this.cylinder(group, x, 1.28, z + 0.06 * scale, 0.22 * scale, 0.42 * scale, this.world.materials.gold, 8, 'AwardsDisplayTrophyStem');
     this.box(group, x, 1.58, z + 0.06 * scale, 0.5 * scale, 0.36 * scale, 0.5 * scale, accentMaterial, rotation, 'AwardsDisplayTrophy');
     this.districtCompositionStats.awardsArchiveNodes += 1;
+  }
+
+  createCareerOfficeComposition(group, career) {
+    const rotation = -0.34;
+    this.addCareerOfficePad(group, career, -5.6, -8.6, 15.2, 6.4, this.world.materials.plazaRoad, rotation + 0.04, 'CareerArrivalApron');
+    this.addCareerOfficePad(group, career, 12.4, 2.8, 10.5, 8.4, this.world.materials.warmStone, rotation - 0.08, 'CareerSignalAnnex');
+
+    for (const [assetName, right, forward, assetRotation, scale, statName] of [
+      ['EnvPolishTerminalCanopy', -4.8, -7.8, rotation + 0.02, 0.58, 'signalFrames'],
+      ['EnvPolishHarborAntenna', 13.4, 3.8, rotation - 0.14, 0.7, 'signalFrames'],
+      ['EnvPolishRouteLantern', 14.2, -3.8, rotation - 0.24, 0.62, null],
+      ['EnvPolishRouteLantern', -13.6, -8.2, rotation + 0.14, 0.62, null],
+      ['EnvPolishSignalTotem', 5.2, -10.6, rotation + 0.1, 0.68, 'signalFrames']
+    ]) {
+      this.addCareerOfficeAsset(group, assetName, career, right, forward, assetRotation, scale, statName);
+    }
+
+    for (let i = 0; i < 8; i += 1) {
+      const [markX, markZ] = this.careerPoint(career, -8.6 + i * 2.8, -7.0 + Math.sin(i * 0.72) * 0.75, rotation);
+      this.addCareerOfficePathMark(group, markX, markZ, 1.25, 0.12, rotation + Math.sin(i * 0.4) * 0.08, i % 2 ? this.world.materials.glowPink : this.world.materials.glowBlue, 'CareerArrivalGuideMark');
+    }
+
+    for (const [right, forward, color] of [
+      [-12.8, -4.2, 0xb6a0ff],
+      [12.6, -2.2, 0x68d8ff],
+      [7.8, 8.8, 0xffc36a]
+    ]) {
+      const [lampX, lampZ] = this.careerPoint(career, right, forward, rotation);
+      this.addCareerOfficeLamp(group, lampX, lampZ, color, 2.55, 'CareerOfficeSignalLamp');
+    }
+
+    this.addCareerFacadeDetail(group, career, 0.7, -1.8, 3.8, 0.1, this.world.materials.glowBlue, rotation, 2.46, 'CareerFacadeTopSignal');
+    this.addCareerFacadeDetail(group, career, -0.9, -1.98, 1.2, 0.09, this.world.materials.glowPink, rotation, 1.72, 'CareerFacadeLeftSignal');
+    this.addCareerFacadeDetail(group, career, 1.0, -2.02, 1.35, 0.09, this.world.materials.warmGlow, rotation, 1.28, 'CareerFacadeRightSignal');
+    this.addCareerFacadeDetail(group, career, -2.3, -0.6, 0.18, 1.7, this.world.materials.cable, rotation, 1.34, 'CareerFacadeSideMullionA');
+    this.addCareerFacadeDetail(group, career, 2.3, -0.6, 0.18, 1.7, this.world.materials.cable, rotation, 1.34, 'CareerFacadeSideMullionB');
+    this.addCareerFacadeDetail(group, career, 0.6, 2.22, 3.4, 0.12, this.world.materials.wood, rotation, 2.76, 'CareerRoofWarmLip');
+  }
+
+  careerPoint(career, right, forward, rotation) {
+    const x = career.position[0] + Math.cos(rotation) * right + Math.sin(rotation) * forward;
+    const z = career.position[2] - Math.sin(rotation) * right + Math.cos(rotation) * forward;
+    return [x, z];
+  }
+
+  addCareerOfficePad(group, career, right, forward, width, depth, material, rotation, name) {
+    const [x, z] = this.careerPoint(career, right, forward, rotation);
+    this.groundPatch(group, x, z, width, depth, material, 0.123, rotation, name, 871 + this.careerOfficeStats.pads);
+    this.districtCompositionStats.pads += 1;
+    this.districtCompositionStats.careerOfficeNodes += 1;
+    this.careerOfficeStats.pads += 1;
+  }
+
+  addCareerOfficeAsset(group, assetName, career, right, forward, rotation, scale, statName) {
+    const [x, z] = this.careerPoint(career, right, forward, -0.34);
+    const placed = this.addCompositionAsset(group, assetName, x, z, rotation, scale);
+    if (!placed) return false;
+    this.districtCompositionStats.careerOfficeNodes += 1;
+    this.careerOfficeStats.authoredAssets += 1;
+    if (statName) this.careerOfficeStats[statName] = (this.careerOfficeStats[statName] || 0) + 1;
+    return true;
+  }
+
+  addCareerOfficePathMark(group, x, z, width, depth, rotation, material, name) {
+    this.addCompositionPathMark(group, x, z, width, depth, material, rotation, name);
+    this.districtCompositionStats.careerOfficeNodes += 1;
+    this.careerOfficeStats.pathMarks += 1;
+  }
+
+  addCareerOfficeLamp(group, x, z, color, height, name) {
+    this.addCompositionLamp(group, x, z, color, height, name);
+    this.districtCompositionStats.careerOfficeNodes += 1;
+    this.careerOfficeStats.lamps += 1;
+  }
+
+  addCareerFacadeDetail(group, career, right, forward, width, depth, material, rotation, height, name) {
+    const [x, z] = this.careerPoint({ position: [career.position[0] + 1.2, 0, career.position[2] + 0.8] }, right, forward, rotation);
+    this.box(group, x, height, z, width, 0.08, depth, material, rotation, name);
+    this.districtCompositionStats.careerOfficeNodes += 1;
+    this.careerOfficeStats.facadePanels += 1;
   }
 
   createFarmFieldComposition(group, farm) {
