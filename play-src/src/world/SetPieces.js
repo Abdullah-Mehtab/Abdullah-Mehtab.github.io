@@ -7,6 +7,17 @@ import { makePatchGeometry } from './WorldMaterials.js';
 
 const Y = 0.16;
 const VISIBILITY_HYSTERESIS = 10;
+const POLISH_MATERIAL_LIBRARY_KEYS = {
+  polish_warm_limestone: 'warmStone',
+  polish_stone_shadow: 'stone',
+  polish_sunlit_wood: 'wood',
+  polish_charcoal_metal: 'cable',
+  polish_tire_rubber: 'cable',
+  polish_terminal_screen: 'screen',
+  polish_salt_rope: 'wood',
+  polish_crop_green: 'crop',
+  polish_campus_brick: 'campusBrick'
+};
 
 export class SetPieces {
   constructor(world) {
@@ -255,6 +266,11 @@ export class SetPieces {
       processPackets: 0,
       hologramPanels: 0,
       prototypeRings: 0
+    };
+    this.polishMaterialStats = {
+      remapped: 0,
+      untouched: 0,
+      missingReplacement: 0
     };
   }
 
@@ -545,6 +561,10 @@ export class SetPieces {
 
   getBehindBuildStats() {
     return { ...this.behindBuildStats };
+  }
+
+  getPolishMaterialStats() {
+    return { ...this.polishMaterialStats };
   }
 
   getWhisperEntries() {
@@ -3140,12 +3160,40 @@ export class SetPieces {
   addPolishAsset(group, assetName, x, z, rotation, scale) {
     const asset = this.world.cloneEnvironmentAsset(assetName);
     if (!asset) return false;
+    this.applyPolishMaterialLibrary(asset);
     asset.name = `SetPiece_${assetName}`;
     asset.position.set(x, 0.16, z);
     asset.rotation.y = rotation;
     asset.scale.setScalar(scale);
     group.add(asset);
     return true;
+  }
+
+  applyPolishMaterialLibrary(root) {
+    root.traverse((object) => {
+      if (!object.isMesh || !object.material) return;
+      if (Array.isArray(object.material)) {
+        object.material = object.material.map((material) => this.resolvePolishMaterial(material));
+        return;
+      }
+      object.material = this.resolvePolishMaterial(object.material);
+    });
+  }
+
+  resolvePolishMaterial(material) {
+    const materialName = material?.name || '';
+    const materialKey = POLISH_MATERIAL_LIBRARY_KEYS[materialName];
+    if (!materialKey) {
+      this.polishMaterialStats.untouched += 1;
+      return material;
+    }
+    const replacement = this.world.materials?.[materialKey];
+    if (!replacement) {
+      this.polishMaterialStats.missingReplacement += 1;
+      return material;
+    }
+    this.polishMaterialStats.remapped += 1;
+    return replacement;
   }
 
   addDistrictStoryAsset(group, assetName, x, z, rotation, scale, statName) {
