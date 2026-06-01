@@ -1165,6 +1165,7 @@ async function sampleRenderSnapshot(page) {
       vehicleFx: game.vehicle.getEffectStats?.() || {},
       waterStats: game.world.water?.getStats?.() || {},
       roadSurfaceDetails: game.world.roads?.getDetailStats?.() || {},
+      securityLab: game.world.setPieces?.getSecurityLabStats?.() || {},
       setPieceVisibility: game.world.setPieces?.getDistrictVisibilityStats?.() || {},
       broadSetPieceVisibility: game.world.setPieces?.getBroadVisibilityStats?.() || {},
       meadowComposition: game.world.setPieces?.getMeadowCompositionStats?.() || {},
@@ -1310,6 +1311,7 @@ async function collectRuntimeMetrics(page, loadMs, gameplay, water, surfaces, su
       approachDressing: game.world.setPieces?.getApproachStats?.() || {},
       districtGateways: game.world.setPieces?.getGatewayStats?.() || {},
       routeComposition: game.world.setPieces?.getRouteCompositionStats?.() || {},
+      securityLab: game.world.setPieces?.getSecurityLabStats?.() || {},
       meadowComposition: game.world.setPieces?.getMeadowCompositionStats?.() || {},
       fieldBackdrops: game.world.setPieces?.getFieldBackdropStats?.() || {},
       launchField: game.world.setPieces?.getLaunchFieldStats?.() || {},
@@ -1628,6 +1630,7 @@ async function captureMobile(browser) {
       quality: game.world.landscapeQuality,
       savedQuality: localStorage.getItem('portfolio-drive-landscape-quality'),
       lifeStats: game.world.setPieces?.getLifeStats?.() || { ...(game.world.setPieces?.lifeStats || {}) },
+      securityLab: game.world.setPieces?.getSecurityLabStats?.() || {},
       setPieceQuality: game.world.setPieces?.getQualityStats?.() || {},
       districtVisibility: game.world.setPieces?.getDistrictVisibilityStats?.() || {},
       broadSetPieceVisibility: game.world.setPieces?.getBroadVisibilityStats?.() || {},
@@ -1907,6 +1910,10 @@ function assertVerification(result) {
   if ((result.securityScan?.active?.stats?.scanWaves || 0) < 3) failures.push(`security scan probe failed: scan waves=${result.securityScan?.active?.stats?.scanWaves || 0}`);
   if ((result.securityScan?.active?.stats?.visibleScanWaves || 0) < 1) failures.push(`security scan probe failed: visible scan waves=${result.securityScan?.active?.stats?.visibleScanWaves || 0}`);
   if ((result.securityScan?.active?.stats?.packetMotionSamples || 0) < 1) failures.push(`security scan probe failed: packet motion samples=${result.securityScan?.active?.stats?.packetMotionSamples || 0}`);
+  if ((result.securityLab?.floorMarks || 0) < 24) failures.push(`security lab probe failed: floorMarks=${result.securityLab?.floorMarks || 0}`);
+  if ((result.securityLab?.authoredAssets || 0) < 3) failures.push(`security lab probe failed: authoredAssets=${result.securityLab?.authoredAssets || 0}`);
+  if ((result.securityLab?.cableRuns || 0) < 5) failures.push(`security lab probe failed: cableRuns=${result.securityLab?.cableRuns || 0}`);
+  if ((result.securityLab?.terminalRails || 0) < 4) failures.push(`security lab probe failed: terminalRails=${result.securityLab?.terminalRails || 0}`);
   if (!result.securityScan?.complete?.complete) failures.push('security scan probe failed: complete state not observed');
   if (!result.securityScan?.complete?.panelVisible) failures.push('security scan probe failed: terminal panel did not open');
   if (!result.securityScan?.complete?.achievementUnlocked) failures.push('security scan probe failed: security_scan achievement');

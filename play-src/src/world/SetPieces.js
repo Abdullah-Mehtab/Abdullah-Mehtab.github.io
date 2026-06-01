@@ -19,6 +19,12 @@ export class SetPieces {
       visibleScanWaves: 0,
       packetMotionSamples: 0
     };
+    this.securityLabStats = {
+      floorMarks: 0,
+      authoredAssets: 0,
+      cableRuns: 0,
+      terminalRails: 0
+    };
     this.whisperEntries = [];
     this.lifeDummy = new THREE.Object3D();
     this.ambienceDummy = new THREE.Object3D();
@@ -459,6 +465,10 @@ export class SetPieces {
     return { ...this.securityScanStats };
   }
 
+  getSecurityLabStats() {
+    return { ...this.securityLabStats };
+  }
+
   getMeadowCompositionStats() {
     return { ...this.meadowCompositionStats };
   }
@@ -680,12 +690,14 @@ export class SetPieces {
     this.box(group, zone.position[0], 0.18, zone.position[2] - 14.2, 26, 0.04, 0.32, this.world.materials.glowBlue, 0, 'SecurityPadFrontTrace');
     this.box(group, zone.position[0] - 16.2, 0.18, zone.position[2], 0.32, 0.04, 24, this.world.materials.glowBlue, 0, 'SecurityPadLeftTrace');
     this.box(group, zone.position[0] + 16.2, 0.18, zone.position[2], 0.32, 0.04, 24, this.world.materials.glowPink, 0, 'SecurityPadRightTrace');
+    this.securityLabStats.floorMarks += 3;
+    this.securityPadTraceGrid(group, zone);
 
     this.securityGate(group, zone.position[0] - 2.8, zone.position[2] - 11.2, 0.18);
     this.securityScanWaveField(group, zone.position[0] - 2.8, zone.position[2] - 11.2, 0.18);
-    this.addPolishAsset(group, 'EnvPolishSecurityScanner', zone.position[0] + 4.8, zone.position[2] + 3.0, -0.28, 0.92);
-    this.addPolishAsset(group, 'EnvPolishTerminalPillar', zone.position[0] - 12.2, zone.position[2] + 9.5, 0.34, 1.05);
-    this.addPolishAsset(group, 'EnvPolishSignalTotem', zone.position[0] + 13.8, zone.position[2] + 8.2, -0.44, 1.05);
+    this.addSecurityLabAsset(group, 'EnvPolishSecurityScanner', zone.position[0] + 4.8, zone.position[2] + 3.0, -0.28, 0.92);
+    this.addSecurityLabAsset(group, 'EnvPolishTerminalPillar', zone.position[0] - 12.2, zone.position[2] + 9.5, 0.34, 1.05);
+    this.addSecurityLabAsset(group, 'EnvPolishSignalTotem', zone.position[0] + 13.8, zone.position[2] + 8.2, -0.44, 1.05);
     this.addSign(group, 'SECURITY SCAN', 'Authorized Assessments', zone.position[0] + 12.8, zone.position[2] - 11.8, -0.55, 0x68d8ff, 3.0, 'SecurityScanSign');
 
     for (const [x, z, rot] of [
@@ -700,6 +712,9 @@ export class SetPieces {
     this.cable(group, [-139, 0.3, -49], [-132, 0.25, -44], [-124, 0.32, -45], 0x10191f);
     this.cable(group, [-111, 0.3, -56], [-122, 0.25, -50], [-130, 0.32, -55], 0x10191f);
     this.cable(group, [-136, 0.3, -31], [-128, 0.26, -36], [-119, 0.3, -34], 0x10191f);
+    this.securityLabStats.cableRuns += 3;
+    this.securityPadCableRun(group, zone.position[0] - 12.2, zone.position[2] - 4.8, zone.position[0] - 2.8, zone.position[2] - 11.2);
+    this.securityPadCableRun(group, zone.position[0] + 10.8, zone.position[2] - 4.2, zone.position[0] - 2.8, zone.position[2] - 11.2);
 
     for (const [x, z, color] of [
       [-143, -25, 0x68d8ff],
@@ -742,6 +757,45 @@ export class SetPieces {
       shouldSkip: (object) => ['SecurityPacketShard', 'SetPieceBeaconGlow', 'SecurityScanWave'].includes(object.name)
     });
     this.world.scene.add(group);
+  }
+
+  securityPadTraceGrid(group, zone) {
+    const centerX = zone.position[0];
+    const centerZ = zone.position[2];
+    for (let i = 0; i < 7; i += 1) {
+      const offset = -10.8 + i * 3.6;
+      this.box(group, centerX + offset, 0.184, centerZ - 4.4 + Math.sin(i) * 0.35, 0.24, 0.035, 6.2, i % 2 ? this.world.materials.glowBlue : this.world.materials.paleStone, 0.08, 'SecurityPadDataTrace');
+      this.securityLabStats.floorMarks += 1;
+    }
+    for (let i = 0; i < 6; i += 1) {
+      const offset = -8.6 + i * 3.4;
+      this.box(group, centerX + offset, 0.186, centerZ + 5.8 + Math.cos(i) * 0.35, 2.2, 0.035, 0.18, i % 2 ? this.world.materials.glowPink : this.world.materials.glowBlue, -0.12, 'SecurityPadPacketLane');
+      this.securityLabStats.floorMarks += 1;
+    }
+    for (let i = 0; i < 4; i += 1) {
+      const x = centerX - 7.2 + i * 4.8;
+      this.box(group, x, 0.188, centerZ + 0.8, 1.08, 0.035, 1.08, this.world.materials.securityRoad, 0.78, 'SecurityPadHatchPanel');
+      this.box(group, x, 0.191, centerZ + 0.8, 0.78, 0.035, 0.1, this.world.materials.glowBlue, 0.78, 'SecurityPadHatchStripe');
+      this.securityLabStats.floorMarks += 2;
+    }
+    for (const side of [-1, 1]) {
+      this.box(group, centerX + side * 10.2, 0.198, centerZ - 8.1, 0.42, 0.06, 5.8, this.world.materials.darkWood, 0.02, 'SecurityTerminalRail');
+      this.box(group, centerX + side * 7.8, 0.201, centerZ - 8.1, 0.32, 0.05, 4.8, this.world.materials.glowBlue, 0.02, 'SecurityTerminalRailGlow');
+      this.securityLabStats.terminalRails += 2;
+    }
+  }
+
+  securityPadCableRun(group, startX, startZ, endX, endZ) {
+    const midX = (startX + endX) * 0.5;
+    const midZ = (startZ + endZ) * 0.5;
+    this.cable(group, [startX, 0.31, startZ], [midX, 0.25, midZ + 1.4], [endX, 0.3, endZ], 0x10191f);
+    this.securityLabStats.cableRuns += 1;
+  }
+
+  addSecurityLabAsset(group, assetName, x, z, rotation, scale) {
+    const placed = this.addPolishAsset(group, assetName, x, z, rotation, scale);
+    if (placed) this.securityLabStats.authoredAssets += 1;
+    return placed;
   }
 
   createDistrictDressing() {
