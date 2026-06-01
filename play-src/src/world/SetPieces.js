@@ -55,6 +55,9 @@ export class SetPieces {
     this.ambienceDummy = new THREE.Object3D();
     this.lifeInstanceMeshes = [];
     this.lifeInstanceDirty = new Set();
+    this.lampGlowMaterial = new THREE.MeshBasicMaterial({ color: 0xffffff, vertexColors: true, transparent: true, opacity: 0.9 });
+    this.lampGlowGeometry = new THREE.SphereGeometry(0.26, 8, 6);
+    this.lampGlowGeometries = new Map();
     this.signAtlas = null;
     this.panelSeamMaterials = new Map();
     this.surfacePanelStats = {
@@ -3104,14 +3107,31 @@ export class SetPieces {
     lamp.name = name;
     this.cylinder(lamp, 0, height / 2, 0, 0.08, height, this.world.materials.darkWood, 8, `${name}_Post`);
     this.box(lamp, 0.34, height - 0.08, 0, 0.82, 0.08, 0.08, this.world.materials.darkWood, 0, `${name}_Arm`);
-    const glowMaterial = new THREE.MeshBasicMaterial({ color, transparent: true, opacity: 0.9 });
-    const glow = new THREE.Mesh(new THREE.SphereGeometry(0.26, 12, 8), glowMaterial);
+    const glow = new THREE.Mesh(this.getLampGlowGeometry(color), this.lampGlowMaterial);
     glow.name = `${name}_Glow`;
     glow.position.set(0.78, height - 0.34, 0);
     lamp.add(glow);
     lamp.position.set(x, 0.16, z);
     lamp.rotation.y = Math.sin(x * 0.2 + z * 0.1) * 0.35;
     group.add(lamp);
+  }
+
+  getLampGlowGeometry(color) {
+    const key = new THREE.Color(color).getHexString();
+    if (!this.lampGlowGeometries.has(key)) {
+      const geometry = this.lampGlowGeometry.clone();
+      const count = geometry.getAttribute('position').count;
+      const colors = new Float32Array(count * 3);
+      const vertexColor = new THREE.Color(color);
+      for (let index = 0; index < count; index += 1) {
+        colors[index * 3] = vertexColor.r;
+        colors[index * 3 + 1] = vertexColor.g;
+        colors[index * 3 + 2] = vertexColor.b;
+      }
+      geometry.setAttribute('color', new THREE.BufferAttribute(colors, 3));
+      this.lampGlowGeometries.set(key, geometry);
+    }
+    return this.lampGlowGeometries.get(key);
   }
 
   addSign(group, title, subtitle, x, z, rotation, color, scale, name) {
