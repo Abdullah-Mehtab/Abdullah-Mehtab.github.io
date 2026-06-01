@@ -2092,7 +2092,7 @@ function assertVerification(result) {
       continue;
     }
     const triangleBudget = name === 'surfaceFeedback' ? 290000 : 300000;
-    if (snapshot.calls > 660) failures.push(`active render snapshot draw-call budget exceeded: ${name}=${snapshot.calls}`);
+    if (snapshot.calls > 655) failures.push(`active render snapshot draw-call budget exceeded: ${name}=${snapshot.calls}`);
     if (snapshot.triangles > triangleBudget) failures.push(`active render snapshot triangle budget exceeded: ${name}=${snapshot.triangles}`);
   }
   const drivingVisibility = result.activeSnapshots?.driving?.setPieceVisibility;

@@ -6,6 +6,7 @@ import { mergeStaticMeshesInGroup } from './StaticBatching.js';
 import { makePatchGeometry } from './WorldMaterials.js';
 
 const Y = 0.16;
+const VISIBILITY_HYSTERESIS = 10;
 
 export class SetPieces {
   constructor(world) {
@@ -1209,7 +1210,7 @@ export class SetPieces {
       let visible = true;
       if (activeOrigin && radius > 0) {
         const edgeDistance = Math.hypot(entry.x - activeOrigin.x, entry.z - activeOrigin.z) - entry.radius;
-        const threshold = entry.object.visible ? radius + 18 : radius;
+        const threshold = entry.object.visible ? radius + VISIBILITY_HYSTERESIS : radius;
         visible = edgeDistance <= threshold;
       }
       entry.object.visible = visible;
@@ -1268,7 +1269,7 @@ export class SetPieces {
       let visible = true;
       if (activeOrigin && entryRadius > 0) {
         const edgeDistance = Math.hypot(entry.x - activeOrigin.x, entry.z - activeOrigin.z) - entry.radius;
-        const threshold = entry.object.visible ? entryRadius + 18 : entryRadius;
+        const threshold = entry.object.visible ? entryRadius + VISIBILITY_HYSTERESIS : entryRadius;
         visible = edgeDistance <= threshold;
       }
       entry.object.visible = visible;
