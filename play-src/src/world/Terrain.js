@@ -3,6 +3,7 @@
 import * as THREE from 'three';
 import { districtFootprints, districtSurfaceBreakups, fieldMotifClusters, ISLAND_RADIUS, meadowDetailPatches, roadPaths, roadSegments, terrainBrushes } from './worldData.js';
 import { getIslandCoastPoints, makeIslandBandGeometry, makeIslandGeometry, makePatchGeometry, pseudoRandom, WATER_Y } from './WorldMaterials.js';
+import { mergeStaticMeshesInGroup } from './StaticBatching.js';
 
 const DISTRICT_DETAIL_STYLES = {
   plaza: { seam: 0xe9d7ad, paver: 0x907f62, accent: 0x7cffb2 },
@@ -39,6 +40,7 @@ export class Terrain {
       visibleStoneTabs: 0,
       visibleTotal: 0
     };
+    this.districtGroundStats = { pads: 0, edgeTrims: 0, averageOutlineVertices: 0, batchedMeshes: 0, mergedMeshes: 0 };
     this.reliefStats = { mounds: 0, cliffShelves: 0, rockOutcrops: 0, duneRidges: 0, contourBands: 0, beachRipples: 0 };
     this.shorelineStats = { edgeBands: 0, foamBreaks: 0 };
   }
@@ -123,6 +125,8 @@ export class Terrain {
   }
 
   addDistrictGrounding() {
+    const group = new THREE.Group();
+    group.name = 'ToyIslandDistrictGrounding';
     const materials = {
       plaza: this.world.materials.plazaRoad,
       campus: this.world.materials.paleStone,
@@ -135,22 +139,57 @@ export class Terrain {
       harbor: this.world.materials.sand,
       pier: this.world.materials.wood
     };
+    let padsBuilt = 0;
+    let edgeTrims = 0;
+    let outlineVertices = 0;
 
     districtFootprints.forEach((district, index) => {
       const pads = getDistrictVisualPads(district, index);
       pads.forEach((pad, padIndex) => {
+        const kind = pad.kind || district.kind;
+        const seed = index * 11 + padIndex + 4;
+        const geometry = makeDistrictPadGeometry(pad.size[0], pad.size[1], seed);
         const patch = new THREE.Mesh(
-          makePatchGeometry(pad.size[0], pad.size[1], index * 11 + padIndex + 4),
-          materials[pad.kind] || materials[district.kind] || this.world.materials.plazaRoad
+          geometry,
+          materials[kind] || this.world.materials.plazaRoad
         );
         patch.name = `ToyIslandDistrictPatch_${district.id}_${pad.id}`;
         patch.position.set(pad.center[0], 0.075 + index * 0.0008 + padIndex * 0.00018, pad.center[1]);
         patch.rotation.y = pad.rotation;
         patch.receiveShadow = true;
-        patch.renderOrder = 4 + index;
-        this.world.scene.add(patch);
+        patch.renderOrder = 4;
+        patch.userData.batchLabel = `patch_${kind}`;
+        group.add(patch);
+
+        const edge = new THREE.Mesh(
+          makeDistrictPadEdgeGeometry(pad.size[0], pad.size[1], seed, districtEdgeWidth(kind)),
+          districtEdgeMaterial(this.world)
+        );
+        edge.name = `ToyIslandDistrictEdge_${district.id}_${pad.id}`;
+        edge.position.set(pad.center[0], 0.112 + index * 0.0008 + padIndex * 0.00018, pad.center[1]);
+        edge.rotation.y = pad.rotation;
+        edge.receiveShadow = false;
+        edge.renderOrder = 7;
+        edge.userData.batchLabel = `edge_${kind}`;
+        group.add(edge);
+
+        padsBuilt += 1;
+        edgeTrims += 1;
+        outlineVertices += geometry.userData.outlineVertices || 0;
       });
     });
+    mergeStaticMeshesInGroup(group, {
+      namePrefix: 'TERRAIN_DistrictGround',
+      getBatchLabel: (object) => object.userData?.batchLabel
+    });
+    this.world.scene.add(group);
+    this.districtGroundStats = {
+      pads: padsBuilt,
+      edgeTrims,
+      averageOutlineVertices: Number((outlineVertices / Math.max(1, padsBuilt)).toFixed(1)),
+      batchedMeshes: group.userData.staticBatchStats?.batches || 0,
+      mergedMeshes: group.userData.staticBatchStats?.mergedMeshes || 0
+    };
   }
 
   addTerrainBrushes() {
@@ -813,6 +852,10 @@ export class Terrain {
     return { ...this.roadsideFrameStats };
   }
 
+  getDistrictGroundStats() {
+    return { ...this.districtGroundStats };
+  }
+
   getShorelineStats() {
     return { ...this.shorelineStats };
   }
@@ -875,6 +918,90 @@ function getDistrictVisualPads(district, index) {
     kind: pad.kind || district.kind,
     rotation: pad.rotation ?? defaultRotation
   }));
+}
+
+function makeDistrictPadGeometry(width, depth, seed) {
+  const points = createDistrictPadPoints(width, depth, seed, 0);
+  const shape = makeShapeFromPoints(points);
+  const geometry = new THREE.ShapeGeometry(shape);
+  geometry.rotateX(-Math.PI / 2);
+  geometry.computeVertexNormals();
+  geometry.userData.outlineVertices = points.length;
+  return geometry;
+}
+
+function makeDistrictPadEdgeGeometry(width, depth, seed, thickness) {
+  const outer = createDistrictPadPoints(width + thickness * 1.2, depth + thickness * 1.2, seed + 0.17, thickness * 0.24);
+  const inner = createDistrictPadPoints(
+    Math.max(1, width - thickness * 1.85),
+    Math.max(1, depth - thickness * 1.85),
+    seed + 0.17,
+    -thickness * 0.14
+  );
+  const shape = makeShapeFromPoints(outer);
+  const hole = new THREE.Path();
+  [...inner].reverse().forEach(([x, z], index) => {
+    if (index === 0) hole.moveTo(x, z);
+    else hole.lineTo(x, z);
+  });
+  hole.closePath();
+  shape.holes.push(hole);
+  const geometry = new THREE.ShapeGeometry(shape);
+  geometry.rotateX(-Math.PI / 2);
+  geometry.computeVertexNormals();
+  geometry.userData.outlineVertices = outer.length;
+  return geometry;
+}
+
+function createDistrictPadPoints(width, depth, seed, expansion) {
+  const halfWidth = Math.max(0.5, width * 0.5 + expansion);
+  const halfDepth = Math.max(0.5, depth * 0.5 + expansion);
+  const chipBase = Math.max(0.52, Math.min(width, depth) * 0.07);
+  const chip = (offset, scale = 1) => chipBase * scale * (0.52 + pseudoRandom(seed * 97 + offset * 13.17) * 0.74);
+
+  return [
+    [-halfWidth + chip(1), -halfDepth],
+    [-halfWidth * 0.42, -halfDepth + chip(2, 0.22)],
+    [0, -halfDepth - chip(3, 0.12)],
+    [halfWidth * 0.42, -halfDepth + chip(4, 0.18)],
+    [halfWidth - chip(5), -halfDepth],
+    [halfWidth, -halfDepth + chip(6)],
+    [halfWidth - chip(7, 0.18), -halfDepth * 0.36],
+    [halfWidth + chip(8, 0.11), 0],
+    [halfWidth - chip(9, 0.18), halfDepth * 0.38],
+    [halfWidth, halfDepth - chip(10)],
+    [halfWidth - chip(11), halfDepth],
+    [halfWidth * 0.34, halfDepth - chip(12, 0.2)],
+    [0, halfDepth + chip(13, 0.13)],
+    [-halfWidth * 0.44, halfDepth - chip(14, 0.2)],
+    [-halfWidth + chip(15), halfDepth],
+    [-halfWidth, halfDepth - chip(16)],
+    [-halfWidth + chip(17, 0.2), halfDepth * 0.32],
+    [-halfWidth - chip(18, 0.1), 0],
+    [-halfWidth + chip(19, 0.2), -halfDepth * 0.38],
+    [-halfWidth, -halfDepth + chip(20)]
+  ];
+}
+
+function makeShapeFromPoints(points) {
+  const shape = new THREE.Shape();
+  points.forEach(([x, z], index) => {
+    if (index === 0) shape.moveTo(x, z);
+    else shape.lineTo(x, z);
+  });
+  shape.closePath();
+  return shape;
+}
+
+function districtEdgeWidth(kind) {
+  if (kind === 'security') return 1.7;
+  if (kind === 'driving') return 1.45;
+  if (kind === 'trail' || kind === 'pier') return 1.25;
+  return 1.35;
+}
+
+function districtEdgeMaterial(world) {
+  return world.materials.roadCurb;
 }
 
 function createSurfaceDetail(district, localX, localZ, width, depth, rotation, color) {

@@ -1299,6 +1299,7 @@ async function collectRuntimeMetrics(page, loadMs, gameplay, water, surfaces, su
         circularPointCaps: game.world.roads?.roadGroup?.userData?.circularPointCaps || 0
       },
       roadSurfaceDetails: game.world.roads?.getDetailStats?.() || {},
+      districtGround: game.world.terrain?.getDistrictGroundStats?.() || {},
       surfaceDetails: game.world.terrain?.surfaceDetailStats || {},
       meadowDetails: game.world.terrain?.getMeadowDetailStats?.() || {},
       fieldMotifs: game.world.terrain?.getFieldMotifStats?.() || {},
@@ -1640,6 +1641,7 @@ async function captureMobile(browser) {
       innerMeadow: game.world.setPieces?.getInnerMeadowStats?.() || {},
       fieldMotifs: game.world.terrain?.getFieldMotifStats?.() || {},
       roadsideFrames: game.world.terrain?.getRoadsideFrameStats?.() || {},
+      districtGround: game.world.terrain?.getDistrictGroundStats?.() || {},
       roadSurfaceDetails: game.world.roads?.getDetailStats?.() || {},
       foliage: game.world.foliage?.getStats?.() || {},
       waterStats: game.world.water?.getStats?.() || {},
@@ -2174,6 +2176,16 @@ function assertVerification(result) {
   if (!result.roadSurfaceDetails?.edgeFeatherAlphaMapped) failures.push('road readability probe failed: edge feather alpha map missing');
   if ((result.roadSurfaceDetails?.edgeFeatherOpacity || 1) > 0.09) {
     failures.push(`road readability probe failed: edgeFeather opacity=${result.roadSurfaceDetails?.edgeFeatherOpacity}`);
+  }
+  if ((result.districtGround?.pads || 0) < 13) failures.push(`district ground probe failed: pads=${result.districtGround?.pads || 0}`);
+  if ((result.districtGround?.edgeTrims || 0) < (result.districtGround?.pads || 0)) {
+    failures.push(`district ground probe failed: edgeTrims=${result.districtGround?.edgeTrims || 0}/${result.districtGround?.pads || 0}`);
+  }
+  if ((result.districtGround?.averageOutlineVertices || 0) < 18) {
+    failures.push(`district ground probe failed: averageOutlineVertices=${result.districtGround?.averageOutlineVertices || 0}`);
+  }
+  if ((result.districtGround?.batchedMeshes || 0) <= 0 || (result.districtGround?.batchedMeshes || 0) >= (result.districtGround?.pads || 0) + (result.districtGround?.edgeTrims || 0)) {
+    failures.push(`district ground batching probe failed: batchedMeshes=${result.districtGround?.batchedMeshes || 0}`);
   }
   if ((result.surfaceDetails?.districts || 0) < 10) failures.push(`surface detail probe failed: districts=${result.surfaceDetails?.districts || 0}`);
   if ((result.surfaceDetails?.seams || 0) < 40) failures.push(`surface detail probe failed: seams=${result.surfaceDetails?.seams || 0}`);
