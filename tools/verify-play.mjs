@@ -1045,7 +1045,8 @@ async function sampleWorldLife(page) {
     return {
       counts: mediumStats,
       presentation: {
-        zonePulseOpacity: Number((pulseMesh?.material?.opacity || 0).toFixed(3))
+        zonePulseOpacity: Number((pulseMesh?.material?.opacity || 0).toFixed(3)),
+        maxZonePulseScale: Number((pulseMesh?.userData?.maxZonePulseScale || 0).toFixed(2))
       },
       foliageWind: restoredWind,
       whisperUi,
@@ -2053,8 +2054,11 @@ function assertVerification(result) {
   if (!result.securityScan?.complete?.panelVisible) failures.push('security scan probe failed: terminal panel did not open');
   if (!result.securityScan?.complete?.achievementUnlocked) failures.push('security scan probe failed: security_scan achievement');
   if (result.worldLife?.counts?.zonePulses !== worldZones.length) failures.push(`world life probe failed: zone pulses ${result.worldLife?.counts?.zonePulses}/${worldZones.length}`);
-  if ((result.worldLife?.presentation?.zonePulseOpacity || 0) > 0.095) {
+  if ((result.worldLife?.presentation?.zonePulseOpacity || 0) > 0.065) {
     failures.push(`world life presentation probe failed: zone pulse opacity=${result.worldLife?.presentation?.zonePulseOpacity}`);
+  }
+  if ((result.worldLife?.presentation?.maxZonePulseScale || 99) > 6) {
+    failures.push(`world life presentation probe failed: max zone pulse scale=${result.worldLife?.presentation?.maxZonePulseScale}`);
   }
   if ((result.worldLife?.counts?.windBanners || 0) < 8) failures.push('world life probe failed: wind banners');
   if ((result.worldLife?.counts?.whisperBeacons || 0) < 8) failures.push('world life probe failed: whisper beacons');

@@ -2675,12 +2675,12 @@ export class SetPieces {
   }
 
   createZonePulseInstances(group, zones) {
-    const geometry = new THREE.RingGeometry(0.965, 1, 4);
+    const geometry = new THREE.RingGeometry(0.88, 1, 4);
     const material = new THREE.MeshBasicMaterial({
       color: 0xffffff,
       vertexColors: true,
       transparent: true,
-      opacity: 0.085,
+      opacity: 0.052,
       depthWrite: false,
       side: THREE.DoubleSide
     });
@@ -2690,6 +2690,7 @@ export class SetPieces {
     group.add(mesh);
     this.lifeInstanceMeshes.push(mesh);
 
+    let maxZonePulseScale = 0;
     for (const zone of zones) {
       const index = this.lifeStats.zonePulses;
       mesh.setColorAt(index, new THREE.Color(zone.color));
@@ -2706,19 +2707,21 @@ export class SetPieces {
         instanceIndex: index,
         proxy,
         position: proxy.position.clone(),
-        scale: Math.max(5.2, zone.radius * 0.78 + 1.0),
+        scale: Math.max(3.2, zone.radius * 0.43 + 0.8),
         baseScale: 1,
         baseRotation: Math.PI / 4,
-        range: 0.035,
+        range: 0.018,
         speed: 0.9 + (index % 5) * 0.08,
         phase: index * 0.73,
         rotationSpeed: 0.18
       };
+      maxZonePulseScale = Math.max(maxZonePulseScale, entry.scale);
       this.writeLifeInstance(entry, 0);
       this.animated.push(entry);
       this.lifeItems.zonePulses.push({ root: proxy, entry });
       this.lifeStats.zonePulses += 1;
     }
+    mesh.userData.maxZonePulseScale = Number(maxZonePulseScale.toFixed(2));
     if (mesh.instanceColor) mesh.instanceColor.needsUpdate = true;
     mesh.instanceMatrix.needsUpdate = true;
   }
