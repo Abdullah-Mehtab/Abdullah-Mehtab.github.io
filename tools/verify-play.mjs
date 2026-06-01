@@ -2024,7 +2024,7 @@ async function captureMobileSavedPreference(browser) {
 function getGlbAssetSizes() {
   const files = [
     'play/game-assets/sabre-turbo.glb',
-    'play/game-assets/medieval-props.glb',
+    'play/game-assets/runtime-props.glb',
     'play/game-assets/polish-props.glb',
     'play-src/assets/models/world/island-visual.glb',
     'play-src/assets/models/world/island-physics.glb'
@@ -2234,6 +2234,8 @@ function assertVerification(result) {
   }
   const polishPropsBytes = result.glbAssets?.['play/game-assets/polish-props.glb'] || 0;
   if (polishPropsBytes > 2500000) failures.push(`polish props GLB budget exceeded: ${polishPropsBytes}`);
+  const runtimePropsBytes = result.glbAssets?.['play/game-assets/runtime-props.glb'] || 0;
+  if (runtimePropsBytes > 7600000) failures.push(`runtime props GLB budget exceeded: ${runtimePropsBytes}`);
   if (result.gameplay.movementMeters < 5) failures.push(`drive movement too small: ${result.gameplay.movementMeters}m`);
   for (const key of ['keyboardHandbrake', 'boostSeen', 'jumpSeen', 'landingSeen', 'impactAudioSeen', 'burnoutSeen', 'wheelieSeen', 'handbrakeSeen']) {
     if (!result.gameplay[key]) failures.push(`gameplay probe failed: ${key}`);

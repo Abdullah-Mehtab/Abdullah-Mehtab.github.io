@@ -16,4 +16,4 @@ By default, the asset builder reuses the committed GLB files so normal validatio
 
 Set `PLAY_ASSETS_BLENDER=1` to regenerate all Blender-authored assets. The builder checks `BLENDER`, the local portable Blender path at `C:\Tools\blender-4.5.0-windows-x64\blender.exe`, and then `blender` on `PATH`.
 
-The polish prop pack is intentionally separate from `medieval-props.glb` so scenery can be iterated without regenerating the protected FCC/S-block landmark or the Sabre Turbo-style car.
+Runtime loading uses `runtime-props.glb` for the protected FCC/S-block landmark plus small bench/crate/barrel props. The larger `medieval-props.glb` remains a full source export, while the polish prop pack stays separate so scenery can be iterated without regenerating the protected FCC/S-block landmark or the Sabre Turbo-style car.

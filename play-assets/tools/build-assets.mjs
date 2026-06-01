@@ -14,6 +14,7 @@ const environmentOutput = resolve(root, 'play-src', 'assets', 'models', 'environ
 const islandVisualOutput = resolve(root, 'play-src', 'assets', 'models', 'world', 'island-visual.glb');
 const islandPhysicsOutput = resolve(root, 'play-src', 'assets', 'models', 'world', 'island-physics.glb');
 const medievalPropsOutput = resolve(root, 'play-src', 'assets', 'models', 'world', 'medieval-props.glb');
+const runtimePropsOutput = resolve(root, 'play-src', 'assets', 'models', 'world', 'runtime-props.glb');
 const polishPropsOutput = resolve(root, 'play-src', 'assets', 'models', 'world', 'polish-props.glb');
 const manifest = resolve(root, 'play-src', 'assets', 'models', 'asset-manifest.json');
 const assetOutputs = [
@@ -22,6 +23,7 @@ const assetOutputs = [
   islandVisualOutput,
   islandPhysicsOutput,
   medievalPropsOutput,
+  runtimePropsOutput,
   polishPropsOutput
 ];
 
@@ -30,6 +32,7 @@ await mkdir(dirname(environmentOutput), { recursive: true });
 await mkdir(dirname(islandVisualOutput), { recursive: true });
 await mkdir(dirname(islandPhysicsOutput), { recursive: true });
 await mkdir(dirname(medievalPropsOutput), { recursive: true });
+await mkdir(dirname(runtimePropsOutput), { recursive: true });
 await mkdir(dirname(polishPropsOutput), { recursive: true });
 await mkdir(dirname(manifest), { recursive: true });
 
@@ -53,6 +56,7 @@ if (blenderBinary) {
   runMedievalExport(blenderBinary, 'visual', islandVisualOutput);
   runMedievalExport(blenderBinary, 'physics', islandPhysicsOutput);
   runMedievalExport(blenderBinary, 'props', medievalPropsOutput);
+  runMedievalExport(blenderBinary, 'runtime-props', runtimePropsOutput);
   runBlenderExport(blenderBinary, polishPropsScript, polishPropsOutput);
   builder = 'blender';
 } else {
@@ -62,6 +66,9 @@ if (blenderBinary) {
 
   if (!await fileExists(environmentOutput)) {
     throw new Error('Environment GLB is missing and Blender is not available to rebuild it.');
+  }
+  if (!await fileExists(runtimePropsOutput)) {
+    throw new Error(`Runtime world asset is missing and Blender is not available: ${runtimePropsOutput}`);
   }
   for (const required of [islandVisualOutput, islandPhysicsOutput, medievalPropsOutput, polishPropsOutput]) {
     if (!await fileExists(required)) {
@@ -79,6 +86,7 @@ await writeFile(manifest, JSON.stringify({
     islandVisual: 'models/world/island-visual.glb',
     islandPhysics: 'models/world/island-physics.glb',
     medievalProps: 'models/world/medieval-props.glb',
+    runtimeProps: 'models/world/runtime-props.glb',
     polishProps: 'models/world/polish-props.glb'
   }
 }, null, 2));

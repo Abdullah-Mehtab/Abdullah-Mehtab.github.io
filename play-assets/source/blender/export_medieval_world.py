@@ -1,3 +1,5 @@
+# ABOUTME: Exports authored /play island, physics, and reusable world prop GLBs.
+# ABOUTME: Provides protected FCC landmark assets and runtime prop subsets for static builds.
 import argparse
 import math
 from pathlib import Path
@@ -7,7 +9,7 @@ import bpy
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument("--kind", required=True, choices=["visual", "physics", "props"])
+    parser.add_argument("--kind", required=True, choices=["visual", "physics", "props", "runtime-props"])
     parser.add_argument("--output", required=True)
     args = parser.parse_args(get_script_args())
 
@@ -17,8 +19,10 @@ def main():
       create_visual_world(mats)
     elif args.kind == "physics":
       create_physics_world(mats)
-    else:
+    elif args.kind == "props":
       create_props(mats)
+    else:
+      create_runtime_props(mats)
 
     output = Path(args.output)
     output.parent.mkdir(parents=True, exist_ok=True)
@@ -191,6 +195,13 @@ def create_props(mats):
     create_potato_farm(mats)
     create_armacost_s_block_building(mats)
     create_tkxel_babar_block_building(mats)
+
+
+def create_runtime_props(mats):
+    create_barrel(mats)
+    create_crate(mats)
+    create_bench(mats)
+    create_armacost_s_block_building(mats)
 
 
 def create_island_mesh(name, parent, mats, radius=158, rings=56, segments=220):
