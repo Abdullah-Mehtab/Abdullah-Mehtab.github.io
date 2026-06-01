@@ -1238,6 +1238,7 @@ async function collectRuntimeMetrics(page, loadMs, gameplay, water, surfaces, su
       harbor: game.world.setPieces?.getHarborStats?.() || {},
       dataPier: game.world.setPieces?.getDataPierStats?.() || {},
       careerOffice: game.world.setPieces?.getCareerOfficeStats?.() || {},
+      todoYard: game.world.setPieces?.getTodoYardStats?.() || {},
       props: game.world.props?.getStats?.() || {},
       stuntPark: game.world.stuntPark?.getStats?.() || {},
       waterStats: game.world.water?.getStats?.() || {},
@@ -2125,6 +2126,7 @@ function assertVerification(result) {
   if ((result.districtComposition?.awardsArchiveNodes || 0) < 22) failures.push(`district composition probe failed: awardsArchiveNodes=${result.districtComposition?.awardsArchiveNodes || 0}`);
   if ((result.districtComposition?.dataPierNodes || 0) < 34) failures.push(`district composition probe failed: dataPierNodes=${result.districtComposition?.dataPierNodes || 0}`);
   if ((result.districtComposition?.careerOfficeNodes || 0) < 24) failures.push(`district composition probe failed: careerOfficeNodes=${result.districtComposition?.careerOfficeNodes || 0}`);
+  if ((result.districtComposition?.todoYardNodes || 0) < 35) failures.push(`district composition probe failed: todoYardNodes=${result.districtComposition?.todoYardNodes || 0}`);
   if ((result.surfacePanels?.hardscapePanels || 0) < 20) failures.push(`surface panel probe failed: hardscapePanels=${result.surfacePanels?.hardscapePanels || 0}`);
   if ((result.surfacePanels?.chippedPanels || 0) !== (result.surfacePanels?.hardscapePanels || 0)) {
     failures.push(`surface panel probe failed: chippedPanels=${result.surfacePanels?.chippedPanels || 0}/${result.surfacePanels?.hardscapePanels || 0}`);
@@ -2159,6 +2161,12 @@ function assertVerification(result) {
   if ((result.careerOffice?.lamps || 0) < 3) failures.push(`career office probe failed: lamps=${result.careerOffice?.lamps || 0}`);
   if ((result.careerOffice?.facadePanels || 0) < 6) failures.push(`career office probe failed: facadePanels=${result.careerOffice?.facadePanels || 0}`);
   if ((result.careerOffice?.signalFrames || 0) < 3) failures.push(`career office probe failed: signalFrames=${result.careerOffice?.signalFrames || 0}`);
+  if ((result.todoYard?.pads || 0) < 2) failures.push(`todo yard probe failed: pads=${result.todoYard?.pads || 0}`);
+  if ((result.todoYard?.pathMarks || 0) < 8) failures.push(`todo yard probe failed: pathMarks=${result.todoYard?.pathMarks || 0}`);
+  if ((result.todoYard?.authoredAssets || 0) < 4) failures.push(`todo yard probe failed: authoredAssets=${result.todoYard?.authoredAssets || 0}`);
+  if ((result.todoYard?.lamps || 0) < 3) failures.push(`todo yard probe failed: lamps=${result.todoYard?.lamps || 0}`);
+  if ((result.todoYard?.queueRails || 0) < 12) failures.push(`todo yard probe failed: queueRails=${result.todoYard?.queueRails || 0}`);
+  if ((result.todoYard?.taskCards || 0) < 6) failures.push(`todo yard probe failed: taskCards=${result.todoYard?.taskCards || 0}`);
   if ((result.props?.roadLanterns || 0) < 8) failures.push(`props probe failed: roadLanterns=${result.props?.roadLanterns || 0}`);
   if ((result.props?.authoredLanterns || 0) !== (result.props?.roadLanterns || 0)) failures.push(`props probe failed: authoredLanterns=${result.props?.authoredLanterns || 0}/${result.props?.roadLanterns || 0}`);
   if ((result.props?.fallbackLanterns || 0) !== 0) failures.push(`props probe failed: fallbackLanterns=${result.props?.fallbackLanterns || 0}`);

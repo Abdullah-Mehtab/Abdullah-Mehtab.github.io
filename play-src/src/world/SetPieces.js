@@ -143,7 +143,8 @@ export class SetPieces {
       skillsTerminalNodes: 0,
       awardsArchiveNodes: 0,
       dataPierNodes: 0,
-      careerOfficeNodes: 0
+      careerOfficeNodes: 0,
+      todoYardNodes: 0
     };
     this.circuitStartStats = {
       pads: 0,
@@ -182,6 +183,14 @@ export class SetPieces {
       lamps: 0,
       facadePanels: 0,
       signalFrames: 0
+    };
+    this.todoYardStats = {
+      pads: 0,
+      pathMarks: 0,
+      authoredAssets: 0,
+      lamps: 0,
+      queueRails: 0,
+      taskCards: 0
     };
   }
 
@@ -409,6 +418,10 @@ export class SetPieces {
 
   getCareerOfficeStats() {
     return { ...this.careerOfficeStats };
+  }
+
+  getTodoYardStats() {
+    return { ...this.todoYardStats };
   }
 
   getWhisperEntries() {
@@ -785,6 +798,7 @@ export class SetPieces {
       this.addCompositionDetailAsset(group, 'EnvPolishYardSurfaceMarks', todo.position[0] + dx, todo.position[2] + dz, rotation, scale, 'surfaceMarks');
     }
     this.addCompositionDetailAsset(group, 'EnvPolishWorkshopProcessRail', todo.position[0] - 5.4, todo.position[2] - 5.4, 0.38, 0.72, 'rails');
+    this.createTodoBuildYardComposition(group, todo);
 
     const career = findZone('career');
     this.addSign(group, 'CAREER', 'Signal Office', career.position[0] - 10, career.position[2] + 9, -0.35, 0xb6a0ff, 2.4, 'CareerSign');
@@ -2480,6 +2494,104 @@ export class SetPieces {
     this.cylinder(group, x, 1.28, z + 0.06 * scale, 0.22 * scale, 0.42 * scale, this.world.materials.gold, 8, 'AwardsDisplayTrophyStem');
     this.box(group, x, 1.58, z + 0.06 * scale, 0.5 * scale, 0.36 * scale, 0.5 * scale, accentMaterial, rotation, 'AwardsDisplayTrophy');
     this.districtCompositionStats.awardsArchiveNodes += 1;
+  }
+
+  createTodoBuildYardComposition(group, todo) {
+    const rotation = 0.34;
+    this.addTodoYardPad(group, todo, 6.2, -5.4, 11.6, 5.8, this.world.materials.warmStone, rotation - 0.06, 'TodoSprintDeck');
+    this.addTodoYardPad(group, todo, -10.6, -2.0, 4.8, 10.8, this.world.materials.securityRoad, rotation + 0.03, 'TodoReviewLane');
+
+    for (const [assetName, right, forward, assetRotation, scale] of [
+      ['EnvPolishTerminalBank', 7.8, -5.2, rotation - 0.16, 0.56],
+      ['EnvPolishBuildCrateStack', 4.6, -7.8, rotation + 0.12, 0.58],
+      ['EnvPolishTodoCardStack', -6.6, -4.8, rotation + 0.06, 0.62],
+      ['EnvPolishRouteLantern', 11.2, -2.0, rotation - 0.22, 0.58]
+    ]) {
+      this.addTodoYardAsset(group, assetName, todo, right, forward, assetRotation, scale);
+    }
+
+    for (let i = 0; i < 8; i += 1) {
+      const [markX, markZ] = this.todoPoint(todo, -10.2 + i * 2.1, -4.8 + Math.sin(i * 0.68) * 0.5, rotation);
+      this.addTodoYardPathMark(group, markX, markZ, 1.06, 0.12, rotation + 0.08, i % 2 ? this.world.materials.glowPink : this.world.materials.glowBlue, 'TodoBuildQueueGuideMark');
+    }
+
+    for (let i = 0; i < 6; i += 1) {
+      const forward = -6.6 + i * 2.15;
+      const [leftX, leftZ] = this.todoPoint(todo, -12.7, forward, rotation);
+      const [rightX, rightZ] = this.todoPoint(todo, -8.5, forward, rotation);
+      this.addTodoQueueRail(group, leftX, leftZ, 0.12, 1.34, rotation, i % 2 ? this.world.materials.paleStone : this.world.materials.glowPink, 'TodoQueueLeftRail');
+      this.addTodoQueueRail(group, rightX, rightZ, 0.12, 1.34, rotation, i % 2 ? this.world.materials.glowBlue : this.world.materials.paleStone, 'TodoQueueRightRail');
+    }
+
+    for (const [right, forward, material, colorIndex] of [
+      [-1.6, -5.6, this.world.materials.glowPink, 0],
+      [0.8, -4.8, this.world.materials.glowBlue, 1],
+      [3.2, -4.0, this.world.materials.warmGlow, 2],
+      [5.6, -3.0, this.world.materials.glowPink, 3],
+      [8.0, -2.1, this.world.materials.glowBlue, 4],
+      [10.2, -1.0, this.world.materials.paleStone, 5]
+    ]) {
+      const [cardX, cardZ] = this.todoPoint(todo, right, forward, rotation);
+      this.addTodoTaskCard(group, cardX, cardZ, rotation + (colorIndex % 2 ? -0.05 : 0.05), material, 'TodoQueueTaskCard');
+    }
+
+    for (const [right, forward, color] of [
+      [-12.9, 5.6, 0xb6a0ff],
+      [12.4, -5.8, 0x68d8ff],
+      [4.2, 4.8, 0xffc36a]
+    ]) {
+      const [lampX, lampZ] = this.todoPoint(todo, right, forward, rotation);
+      this.addTodoYardLamp(group, lampX, lampZ, color, 2.45, 'TodoBuildYardLamp');
+    }
+  }
+
+  todoPoint(todo, right, forward, rotation) {
+    const x = todo.position[0] + Math.cos(rotation) * right + Math.sin(rotation) * forward;
+    const z = todo.position[2] - Math.sin(rotation) * right + Math.cos(rotation) * forward;
+    return [x, z];
+  }
+
+  addTodoYardPad(group, todo, right, forward, width, depth, material, rotation, name) {
+    const [x, z] = this.todoPoint(todo, right, forward, rotation);
+    this.groundPatch(group, x, z, width, depth, material, 0.123, rotation, name, 941 + this.todoYardStats.pads);
+    this.districtCompositionStats.pads += 1;
+    this.districtCompositionStats.todoYardNodes += 1;
+    this.todoYardStats.pads += 1;
+  }
+
+  addTodoYardAsset(group, assetName, todo, right, forward, rotation, scale) {
+    const [x, z] = this.todoPoint(todo, right, forward, 0.34);
+    const placed = this.addCompositionAsset(group, assetName, x, z, rotation, scale);
+    if (!placed) return false;
+    this.districtCompositionStats.todoYardNodes += 1;
+    this.todoYardStats.authoredAssets += 1;
+    return true;
+  }
+
+  addTodoYardPathMark(group, x, z, width, depth, rotation, material, name) {
+    this.addCompositionPathMark(group, x, z, width, depth, material, rotation, name);
+    this.districtCompositionStats.todoYardNodes += 1;
+    this.todoYardStats.pathMarks += 1;
+  }
+
+  addTodoQueueRail(group, x, z, width, depth, rotation, material, name) {
+    this.box(group, x, 0.31, z, width, 0.13, depth, material, rotation, name);
+    this.districtCompositionStats.todoYardNodes += 1;
+    this.todoYardStats.queueRails += 1;
+  }
+
+  addTodoTaskCard(group, x, z, rotation, accentMaterial, name) {
+    this.box(group, x, 0.4, z, 1.3, 0.18, 0.78, this.world.materials.darkWood, rotation, name);
+    this.box(group, x, 0.56, z - 0.18, 1.06, 0.08, 0.09, accentMaterial, rotation, `${name}Status`);
+    this.box(group, x, 0.7, z + 0.12, 0.82, 0.08, 0.08, this.world.materials.paleStone, rotation, `${name}Label`);
+    this.districtCompositionStats.todoYardNodes += 1;
+    this.todoYardStats.taskCards += 1;
+  }
+
+  addTodoYardLamp(group, x, z, color, height, name) {
+    this.addCompositionLamp(group, x, z, color, height, name);
+    this.districtCompositionStats.todoYardNodes += 1;
+    this.todoYardStats.lamps += 1;
   }
 
   createCareerOfficeComposition(group, career) {
