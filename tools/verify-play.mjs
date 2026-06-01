@@ -1221,6 +1221,7 @@ async function collectRuntimeMetrics(page, loadMs, gameplay, water, surfaces, su
       surfaceDetails: game.world.terrain?.surfaceDetailStats || {},
       meadowDetails: game.world.terrain?.getMeadowDetailStats?.() || {},
       fieldMotifs: game.world.terrain?.getFieldMotifStats?.() || {},
+      roadsideFrames: game.world.terrain?.getRoadsideFrameStats?.() || {},
       terrainRelief: game.world.terrain?.getReliefStats?.() || {},
       shoreline: game.world.terrain?.getShorelineStats?.() || {},
       setPieceQuality: game.world.setPieces?.getQualityStats?.() || {},
@@ -1545,6 +1546,7 @@ async function captureMobile(browser) {
       meadowComposition: game.world.setPieces?.getMeadowCompositionStats?.() || {},
       fieldBackdrops: game.world.setPieces?.getFieldBackdropStats?.() || {},
       fieldMotifs: game.world.terrain?.getFieldMotifStats?.() || {},
+      roadsideFrames: game.world.terrain?.getRoadsideFrameStats?.() || {},
       roadSurfaceDetails: game.world.roads?.getDetailStats?.() || {},
       waterStats: game.world.water?.getStats?.() || {},
       atmosphere: game.world.atmosphere?.getStats?.() || {},
@@ -2068,6 +2070,11 @@ function assertVerification(result) {
   if ((result.fieldMotifs?.berms || 0) < 44) failures.push(`field motif probe failed: berms=${result.fieldMotifs?.berms || 0}`);
   if ((result.fieldMotifs?.ribbons || 0) < 88) failures.push(`field motif probe failed: ribbons=${result.fieldMotifs?.ribbons || 0}`);
   if ((result.fieldMotifs?.visibleTotal || 0) < 132) failures.push(`field motif probe failed: visibleTotal=${result.fieldMotifs?.visibleTotal || 0}`);
+  if ((result.roadsideFrames?.segments || 0) < 50) failures.push(`roadside frame probe failed: segments=${result.roadsideFrames?.segments || 0}`);
+  if ((result.roadsideFrames?.berms || 0) < 90) failures.push(`roadside frame probe failed: berms=${result.roadsideFrames?.berms || 0}`);
+  if ((result.roadsideFrames?.ribbons || 0) < 150) failures.push(`roadside frame probe failed: ribbons=${result.roadsideFrames?.ribbons || 0}`);
+  if ((result.roadsideFrames?.stoneTabs || 0) < 70) failures.push(`roadside frame probe failed: stoneTabs=${result.roadsideFrames?.stoneTabs || 0}`);
+  if ((result.roadsideFrames?.visibleTotal || 0) < 310) failures.push(`roadside frame probe failed: visibleTotal=${result.roadsideFrames?.visibleTotal || 0}`);
   if ((result.terrainRelief?.mounds || 0) < 6) failures.push(`terrain relief probe failed: mounds=${result.terrainRelief?.mounds || 0}`);
   if ((result.terrainRelief?.cliffShelves || 0) < 6) failures.push(`terrain relief probe failed: cliffShelves=${result.terrainRelief?.cliffShelves || 0}`);
   if ((result.terrainRelief?.rockOutcrops || 0) < 12) failures.push(`terrain relief probe failed: rockOutcrops=${result.terrainRelief?.rockOutcrops || 0}`);
@@ -2240,6 +2247,9 @@ function assertVerification(result) {
   }
   if ((result.mobile.fieldMotifs?.visibleTotal || 0) !== 0) {
     failures.push(`mobile field motif quality probe failed: visibleTotal=${result.mobile.fieldMotifs?.visibleTotal || 0}`);
+  }
+  if ((result.mobile.roadsideFrames?.visibleTotal || 0) !== 0) {
+    failures.push(`mobile roadside frame quality probe failed: visibleTotal=${result.mobile.roadsideFrames?.visibleTotal || 0}`);
   }
   if ((result.mobile.broadSetPieceVisibility?.groups?.fieldBackdrops?.visibleBatches || 0) !== 0) {
     failures.push(`mobile field backdrop quality probe failed: visibleBatches=${result.mobile.broadSetPieceVisibility?.groups?.fieldBackdrops?.visibleBatches || 0}`);

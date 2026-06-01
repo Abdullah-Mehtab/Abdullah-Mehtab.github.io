@@ -1,7 +1,7 @@
 // ABOUTME: Builds the procedural toy-island terrain used by /play.
 // ABOUTME: Replaces the old authored island GLB while keeping a stable visible driving floor.
 import * as THREE from 'three';
-import { districtFootprints, districtSurfaceBreakups, fieldMotifClusters, ISLAND_RADIUS, meadowDetailPatches, roadSegments, terrainBrushes } from './worldData.js';
+import { districtFootprints, districtSurfaceBreakups, fieldMotifClusters, ISLAND_RADIUS, meadowDetailPatches, roadPaths, roadSegments, terrainBrushes } from './worldData.js';
 import { getIslandCoastPoints, makeIslandBandGeometry, makeIslandGeometry, makePatchGeometry, pseudoRandom, WATER_Y } from './WorldMaterials.js';
 
 const DISTRICT_DETAIL_STYLES = {
@@ -27,6 +27,18 @@ export class Terrain {
     this.meadowDetailStats = { patches: 0, colorVariants: 0 };
     this.fieldMotifEntries = [];
     this.fieldMotifStats = { clusters: 0, berms: 0, ribbons: 0, visibleBerms: 0, visibleRibbons: 0, visibleTotal: 0 };
+    this.roadsideFrameEntries = [];
+    this.roadsideFrameStats = {
+      paths: 0,
+      segments: 0,
+      berms: 0,
+      ribbons: 0,
+      stoneTabs: 0,
+      visibleBerms: 0,
+      visibleRibbons: 0,
+      visibleStoneTabs: 0,
+      visibleTotal: 0
+    };
     this.reliefStats = { mounds: 0, cliffShelves: 0, rockOutcrops: 0, duneRidges: 0, contourBands: 0, beachRipples: 0 };
     this.shorelineStats = { edgeBands: 0, foamBreaks: 0 };
   }
@@ -37,6 +49,7 @@ export class Terrain {
     this.addTerrainBrushes();
     this.addMeadowDetailPatches();
     this.addFieldMotifs();
+    this.addRoadsideFrames();
     this.addDistrictGrounding();
     this.addDistrictSurfaceDetails();
     this.addScenicRelief();
@@ -57,6 +70,21 @@ export class Terrain {
     this.fieldMotifStats.visibleBerms = visibleBerms;
     this.fieldMotifStats.visibleRibbons = visibleRibbons;
     this.fieldMotifStats.visibleTotal = visibleBerms + visibleRibbons;
+
+    let visibleRoadsideBerms = 0;
+    let visibleRoadsideRibbons = 0;
+    let visibleStoneTabs = 0;
+    for (const entry of this.roadsideFrameEntries) {
+      entry.mesh.visible = visible;
+      if (!visible) continue;
+      if (entry.kind === 'berm') visibleRoadsideBerms += entry.count;
+      if (entry.kind === 'ribbon') visibleRoadsideRibbons += entry.count;
+      if (entry.kind === 'stoneTab') visibleStoneTabs += entry.count;
+    }
+    this.roadsideFrameStats.visibleBerms = visibleRoadsideBerms;
+    this.roadsideFrameStats.visibleRibbons = visibleRoadsideRibbons;
+    this.roadsideFrameStats.visibleStoneTabs = visibleStoneTabs;
+    this.roadsideFrameStats.visibleTotal = visibleRoadsideBerms + visibleRoadsideRibbons + visibleStoneTabs;
   }
 
   addBeachBase() {
@@ -263,6 +291,166 @@ export class Terrain {
     if (mesh.instanceColor) mesh.instanceColor.needsUpdate = true;
     group.add(mesh);
     this.fieldMotifEntries.push({ mesh, kind: 'ribbon', count: specs.length });
+  }
+
+  addRoadsideFrames() {
+    const group = new THREE.Group();
+    group.name = 'ToyIslandRoadsideFrames';
+    this.roadsideFrameEntries = [];
+
+    const berms = [];
+    const ribbons = [];
+    const stoneTabs = [];
+    let segments = 0;
+
+    roadPaths.forEach((path, pathIndex) => {
+      const points = path.points;
+      const limit = path.closed ? points.length : points.length - 1;
+      for (let segmentIndex = 0; segmentIndex < limit; segmentIndex += 1) {
+        const a = points[segmentIndex];
+        const b = points[(segmentIndex + 1) % points.length];
+        const dx = b[0] - a[0];
+        const dz = b[1] - a[1];
+        const length = Math.hypot(dx, dz);
+        if (length < 7) continue;
+        segments += 1;
+        this.sampleRoadsideFrameSegment({
+          path,
+          pathIndex,
+          segmentIndex,
+          a,
+          dx,
+          dz,
+          length,
+          berms,
+          ribbons,
+          stoneTabs
+        });
+      }
+    });
+
+    this.addRoadsideBermInstances(group, berms);
+    this.addRoadsideFlatInstances('ToyIslandRoadsideFrames_Ribbons', group, ribbons, this.world.materials.fieldRibbon, 0.203);
+    this.addRoadsideFlatInstances('ToyIslandRoadsideFrames_StoneTabs', group, stoneTabs, this.world.materials.surfacePaver, 0.211);
+    this.world.scene.add(group);
+
+    this.roadsideFrameStats = {
+      paths: roadPaths.length,
+      segments,
+      berms: berms.length,
+      ribbons: ribbons.length,
+      stoneTabs: stoneTabs.length,
+      visibleBerms: berms.length,
+      visibleRibbons: ribbons.length,
+      visibleStoneTabs: stoneTabs.length,
+      visibleTotal: berms.length + ribbons.length + stoneTabs.length
+    };
+    this.applyQuality();
+  }
+
+  sampleRoadsideFrameSegment({ path, pathIndex, segmentIndex, a, dx, dz, length, berms, ribbons, stoneTabs }) {
+    const spacing = roadsideFrameSpacing(path);
+    const samples = Math.max(1, Math.floor(length / spacing));
+    const angle = Math.atan2(dx, dz);
+    const rightX = dz / length;
+    const rightZ = -dx / length;
+    const palette = roadsideFramePalette(path);
+
+    for (let sampleIndex = 0; sampleIndex < samples; sampleIndex += 1) {
+      const t = (sampleIndex + 0.5) / samples;
+      const x = a[0] + dx * t;
+      const z = a[1] + dz * t;
+      const seed = pathIndex * 911 + segmentIndex * 101 + sampleIndex * 17;
+      for (const side of [-1, 1]) {
+        const sideSeed = seed + side * 19.7;
+        if (pseudoRandom(sideSeed * 1.3) < 0.2) continue;
+        const offset = path.width * 0.5 + roadsideFrameOffset(path) + pseudoRandom(sideSeed * 2.7) * 1.25;
+        const px = x + rightX * offset * side;
+        const pz = z + rightZ * offset * side;
+        if (!this.containsPoint(px, pz, 12)) continue;
+        if (Math.hypot(px, pz) > ISLAND_RADIUS * 0.92 && path.hierarchy !== 'avenue') continue;
+
+        const rotation = angle + (pseudoRandom(sideSeed * 3.1) - 0.5) * 0.34;
+        const color = palette[Math.floor(pseudoRandom(sideSeed * 4.3) * palette.length) % palette.length];
+        ribbons.push({
+          x: px,
+          z: pz,
+          rotation,
+          width: 0.34 + pseudoRandom(sideSeed * 5.9) * 0.34,
+          length: 4.8 + pseudoRandom(sideSeed * 6.7) * 6.2,
+          color
+        });
+
+        if (pseudoRandom(sideSeed * 7.1) > 0.38) {
+          berms.push({
+            x: px + rightX * side * (0.75 + pseudoRandom(sideSeed * 7.9) * 0.7),
+            z: pz + rightZ * side * (0.75 + pseudoRandom(sideSeed * 8.3) * 0.7),
+            rotation,
+            width: 1.2 + pseudoRandom(sideSeed * 9.7) * 0.85,
+            length: 4.4 + pseudoRandom(sideSeed * 10.9) * 5.8,
+            height: 0.055 + pseudoRandom(sideSeed * 11.5) * 0.075,
+            color
+          });
+        }
+
+        if (pseudoRandom(sideSeed * 12.3) > 0.54) {
+          stoneTabs.push({
+            x: x + rightX * side * (path.width * 0.5 + 0.68),
+            z: z + rightZ * side * (path.width * 0.5 + 0.68),
+            rotation: angle + (side > 0 ? 0.05 : -0.05),
+            width: 0.62 + pseudoRandom(sideSeed * 13.1) * 0.34,
+            length: 1.9 + pseudoRandom(sideSeed * 14.7) * 2.2,
+            color: roadsideStoneColor(path)
+          });
+        }
+      }
+    }
+  }
+
+  addRoadsideBermInstances(group, specs) {
+    if (!specs.length) return;
+    const mesh = new THREE.InstancedMesh(createRoadsideMoundGeometry(), this.world.materials.fieldBerm, specs.length);
+    mesh.name = 'ToyIslandRoadsideFrames_Berms';
+    mesh.receiveShadow = true;
+    mesh.frustumCulled = false;
+    const color = new THREE.Color();
+    specs.forEach((spec, index) => {
+      this.surfaceDetailDummy.position.set(spec.x, 0.112 + index * 0.00002, spec.z);
+      this.surfaceDetailDummy.rotation.set(0, spec.rotation, 0);
+      this.surfaceDetailDummy.scale.set(spec.width, spec.height, spec.length);
+      this.surfaceDetailDummy.updateMatrix();
+      mesh.setMatrixAt(index, this.surfaceDetailDummy.matrix);
+      mesh.setColorAt(index, color.setHex(spec.color));
+    });
+    mesh.instanceMatrix.needsUpdate = true;
+    if (mesh.instanceColor) mesh.instanceColor.needsUpdate = true;
+    group.add(mesh);
+    this.roadsideFrameEntries.push({ mesh, kind: 'berm', count: specs.length });
+  }
+
+  addRoadsideFlatInstances(name, group, specs, material, y) {
+    if (!specs.length) return;
+    const mesh = new THREE.InstancedMesh(createHorizontalPlaneGeometry(), material, specs.length);
+    mesh.name = name;
+    mesh.renderOrder = 40;
+    mesh.frustumCulled = false;
+    const color = new THREE.Color();
+    specs.forEach((spec, index) => {
+      this.surfaceDetailDummy.position.set(spec.x, y + index * 0.00002, spec.z);
+      this.surfaceDetailDummy.rotation.set(0, spec.rotation, 0);
+      this.surfaceDetailDummy.scale.set(spec.width, 1, spec.length);
+      this.surfaceDetailDummy.updateMatrix();
+      mesh.setMatrixAt(index, this.surfaceDetailDummy.matrix);
+      mesh.setColorAt(index, color.setHex(spec.color));
+    });
+    mesh.instanceMatrix.needsUpdate = true;
+    if (mesh.instanceColor) mesh.instanceColor.needsUpdate = true;
+    group.add(mesh);
+    this.roadsideFrameEntries.push({
+      mesh,
+      kind: name.includes('StoneTabs') ? 'stoneTab' : 'ribbon',
+      count: specs.length
+    });
   }
 
   isClearFieldMotifPoint(x, z, roadMargin) {
@@ -603,6 +791,10 @@ export class Terrain {
     return { ...this.fieldMotifStats };
   }
 
+  getRoadsideFrameStats() {
+    return { ...this.roadsideFrameStats };
+  }
+
   getShorelineStats() {
     return { ...this.shorelineStats };
   }
@@ -698,6 +890,44 @@ function sampleFieldCluster(cluster, index, channel) {
 function colorFromCluster(cluster, index) {
   const palette = cluster.palette?.length ? cluster.palette : ['#7cffb2'];
   return Number.parseInt(palette[index % palette.length].slice(1), 16);
+}
+
+function roadsideFrameSpacing(path) {
+  if (path.hierarchy === 'avenue') return 15;
+  if (path.hierarchy === 'security') return 12;
+  if (path.hierarchy === 'stunt') return 12.5;
+  if (path.hierarchy === 'plaza') return 12.5;
+  if (path.hierarchy === 'dirt') return 13.5;
+  if (path.hierarchy === 'bridge') return 11;
+  return 13;
+}
+
+function roadsideFrameOffset(path) {
+  if (path.hierarchy === 'avenue') return 2.1;
+  if (path.hierarchy === 'security') return 1.85;
+  if (path.hierarchy === 'stunt') return 2;
+  if (path.hierarchy === 'dirt') return 2.35;
+  if (path.hierarchy === 'bridge') return 1.55;
+  return 1.75;
+}
+
+function roadsideFramePalette(path) {
+  if (path.hierarchy === 'security') return [0x35666d, 0x68d8ff, 0x2f5753];
+  if (path.hierarchy === 'stunt') return [0x7a5b46, 0xff9b6d, 0x5e7c42];
+  if (path.hierarchy === 'dirt') return [0x9b6f3d, 0xc79b56, 0x77b85a];
+  if (path.hierarchy === 'bridge') return [0x79ffc5, 0x8db8b9, 0xf3d19c];
+  if (path.hierarchy === 'plaza') return [0xb7ac87, 0xf2dfb2, 0x8fc674];
+  if (path.hierarchy === 'avenue') return [0x587c4d, 0x8fc674, 0xd7c36a];
+  return [0x5f7f43, 0x84d7bd, 0xc79b56];
+}
+
+function roadsideStoneColor(path) {
+  if (path.hierarchy === 'security') return 0x68d8ff;
+  if (path.hierarchy === 'stunt') return 0xff9b6d;
+  if (path.hierarchy === 'dirt') return 0xc79b56;
+  if (path.hierarchy === 'bridge') return 0x79ffc5;
+  if (path.hierarchy === 'plaza') return 0xf2dfb2;
+  return 0xe8d3a0;
 }
 
 function createHorizontalPlaneGeometry() {
@@ -802,6 +1032,28 @@ function createDuneRidgeGeometry(width, depth) {
     halfWidth, 0, halfDepth,
     -halfWidth, 0, halfDepth,
     0, 0.58, 0
+  ]);
+  const geometry = new THREE.BufferGeometry();
+  geometry.setAttribute('position', new THREE.BufferAttribute(vertices, 3));
+  geometry.setIndex([
+    0, 1, 4,
+    1, 2, 4,
+    2, 3, 4,
+    3, 0, 4,
+    0, 3, 2,
+    0, 2, 1
+  ]);
+  geometry.computeVertexNormals();
+  return geometry;
+}
+
+function createRoadsideMoundGeometry() {
+  const vertices = new Float32Array([
+    -0.5, 0, -0.5,
+    0.5, 0, -0.5,
+    0.5, 0, 0.5,
+    -0.5, 0, 0.5,
+    0, 1, 0
   ]);
   const geometry = new THREE.BufferGeometry();
   geometry.setAttribute('position', new THREE.BufferAttribute(vertices, 3));

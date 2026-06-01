@@ -607,7 +607,7 @@ export class Roads {
     });
     this.addMarkerInstances({
       name: 'ROAD_Reflector_Studs',
-      geometry: new THREE.BoxGeometry(0.24, 0.05, 0.58),
+      geometry: createReflectorStudGeometry(),
       material: this.createMarkerMaterial(),
       specs: studs,
       defaultScale: [1, 1, 1]
@@ -872,6 +872,19 @@ function createChevronGeometry() {
   geometry.setAttribute('uv', new THREE.BufferAttribute(new Float32Array(uvs), 2));
   geometry.setIndex(indices);
   applyWhiteVertexColors(geometry);
+  geometry.computeVertexNormals();
+  return geometry;
+}
+
+function createReflectorStudGeometry() {
+  const geometry = new THREE.BufferGeometry();
+  geometry.setAttribute('position', new THREE.BufferAttribute(new Float32Array([
+    -0.5, 0, -0.5,
+    0.5, 0, -0.5,
+    0.5, 0, 0.5,
+    -0.5, 0, 0.5
+  ]), 3));
+  geometry.setIndex([0, 2, 1, 0, 3, 2]);
   geometry.computeVertexNormals();
   return geometry;
 }
