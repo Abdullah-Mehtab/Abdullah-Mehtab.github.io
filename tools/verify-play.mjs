@@ -2120,6 +2120,7 @@ function assertVerification(result) {
   if ((result.districtComposition?.farmRows || 0) < 8) failures.push(`district composition probe failed: farmRows=${result.districtComposition?.farmRows || 0}`);
   if ((result.districtComposition?.farmFences || 0) < 12) failures.push(`district composition probe failed: farmFences=${result.districtComposition?.farmFences || 0}`);
   if ((result.districtComposition?.skillsTerminalNodes || 0) < 17) failures.push(`district composition probe failed: skillsTerminalNodes=${result.districtComposition?.skillsTerminalNodes || 0}`);
+  if ((result.districtComposition?.awardsArchiveNodes || 0) < 22) failures.push(`district composition probe failed: awardsArchiveNodes=${result.districtComposition?.awardsArchiveNodes || 0}`);
   if ((result.surfacePanels?.hardscapePanels || 0) < 20) failures.push(`surface panel probe failed: hardscapePanels=${result.surfacePanels?.hardscapePanels || 0}`);
   if ((result.surfacePanels?.chippedPanels || 0) !== (result.surfacePanels?.hardscapePanels || 0)) {
     failures.push(`surface panel probe failed: chippedPanels=${result.surfacePanels?.chippedPanels || 0}/${result.surfacePanels?.hardscapePanels || 0}`);

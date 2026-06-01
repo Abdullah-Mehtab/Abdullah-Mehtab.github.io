@@ -140,7 +140,8 @@ export class SetPieces {
       careerConnectors: 0,
       farmRows: 0,
       farmFences: 0,
-      skillsTerminalNodes: 0
+      skillsTerminalNodes: 0,
+      awardsArchiveNodes: 0
     };
     this.circuitStartStats = {
       pads: 0,
@@ -723,6 +724,7 @@ export class SetPieces {
     this.addPolishAsset(group, 'EnvPolishAwardsMonument', awards.position[0] + 0.2, awards.position[2] + 1.4, -0.18, 1.05);
     this.addPolishAsset(group, 'EnvPolishBenchPlanter', awards.position[0] + 7.5, awards.position[2] + 6.2, -0.34, 0.78);
     this.addDistrictStoryAsset(group, 'EnvPolishArchiveStepCluster', awards.position[0] - 1.2, awards.position[2] - 3.1, 0.02, 0.9, 'archiveSteps');
+    this.createAwardsArchiveComposition(group, awards);
 
     const todo = findZone('todo');
     this.addCompositionPad(group, todo.position[0] - 1.2, todo.position[2] + 1.4, 22, 15, this.world.materials.plazaRoad, 0.121, 'TodoBuildYardPad');
@@ -2395,6 +2397,66 @@ export class SetPieces {
       );
       this.districtCompositionStats.skillsTerminalNodes += 1;
     }
+  }
+
+  createAwardsArchiveComposition(group, awards) {
+    const x = awards.position[0];
+    const z = awards.position[2];
+    const rotation = -0.2;
+    this.addCompositionPad(group, x - 1.6, z + 1.8, 20.5, 13.2, this.world.materials.paleStone, 0.123, 'AwardsArchiveCourt');
+    this.addCompositionPad(group, x - 7.9, z + 3.8, 5.8, 11.4, this.world.materials.warmStone, 0.127, 'AwardsGalleryWalk');
+    this.addYardEdgeDetails(group, x - 1.6, z + 1.8, 20.5, 13.2);
+    for (const [assetName, dx, dz, assetRotation, scale] of [
+      ['EnvPolishArchiveStepCluster', -7.6, -1.4, -0.12, 0.7],
+      ['EnvPolishArchiveStepCluster', 5.8, -2.2, 0.18, 0.64],
+      ['EnvPolishGardenArch', -9.2, 7.2, -0.18, 0.62],
+      ['EnvPolishRouteLantern', -11.6, 0.4, -0.3, 0.62],
+      ['EnvPolishRouteLantern', 8.4, 6.2, -0.1, 0.58],
+      ['EnvPolishBenchPlanter', 9.4, -2.8, -0.28, 0.68]
+    ]) {
+      if (this.addCompositionAsset(group, assetName, x + dx, z + dz, assetRotation, scale)) {
+        this.districtCompositionStats.awardsArchiveNodes += 1;
+      }
+    }
+    for (const [dx, dz, angle, scale, accent] of [
+      [-7.8, 2.2, -0.2, 0.82, this.world.materials.gold],
+      [-4.4, 4.4, -0.12, 0.74, this.world.materials.warmGlow],
+      [-1.0, -1.8, 0.08, 0.86, this.world.materials.gold],
+      [2.8, 4.0, 0.12, 0.72, this.world.materials.glowBlue],
+      [6.0, 1.2, -0.24, 0.78, this.world.materials.gold],
+      [1.6, 7.0, -0.18, 0.68, this.world.materials.glowPink]
+    ]) {
+      this.addAwardDisplayPlinth(group, x + dx, z + dz, angle, scale, accent);
+    }
+    for (let i = 0; i < 8; i += 1) {
+      this.addCompositionPathMark(
+        group,
+        x - 9.4 + i * 2.65,
+        z + 5.8 - Math.sin(i * 0.72) * 1.05,
+        1.14,
+        0.12,
+        i % 2 ? this.world.materials.warmGlow : this.world.materials.paleStone,
+        rotation + Math.sin(i * 0.5) * 0.18,
+        'AwardsArchiveGuideMark'
+      );
+      this.districtCompositionStats.awardsArchiveNodes += 1;
+    }
+    for (const [dx, dz, color] of [
+      [-11.2, -2.4, 0xffdf8a],
+      [8.8, 7.6, 0xffc36a]
+    ]) {
+      this.addCompositionPlanter(group, x + dx, z + dz, color);
+      this.districtCompositionStats.awardsArchiveNodes += 1;
+    }
+  }
+
+  addAwardDisplayPlinth(group, x, z, rotation, scale, accentMaterial) {
+    this.box(group, x, 0.28, z, 2.2 * scale, 0.32, 1.28 * scale, this.world.materials.warmStone, rotation, 'AwardsDisplayBase');
+    this.box(group, x, 0.68, z, 1.38 * scale, 0.5, 0.76 * scale, this.world.materials.paleStone, rotation, 'AwardsDisplayStone');
+    this.box(group, x, 1.02, z - 0.42 * scale, 0.9 * scale, 0.08, 0.07, accentMaterial, rotation, 'AwardsDisplayPlaque');
+    this.cylinder(group, x, 1.28, z + 0.06 * scale, 0.22 * scale, 0.42 * scale, this.world.materials.gold, 8, 'AwardsDisplayTrophyStem');
+    this.box(group, x, 1.58, z + 0.06 * scale, 0.5 * scale, 0.36 * scale, 0.5 * scale, accentMaterial, rotation, 'AwardsDisplayTrophy');
+    this.districtCompositionStats.awardsArchiveNodes += 1;
   }
 
   createFarmFieldComposition(group, farm) {
