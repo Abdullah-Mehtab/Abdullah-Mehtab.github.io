@@ -7,7 +7,7 @@ import { QUALITY_PROFILES, WATER_Y, pseudoRandom } from './WorldMaterials.js';
 import { mergeStaticMeshesInGroup } from './StaticBatching.js';
 
 const DISTANT_ISLET_LIMITS = { low: 8, medium: 14, high: 20 };
-const SKY_WISP_LIMITS = { low: 4, medium: 8, high: 10 };
+const SKY_WISP_LIMITS = { low: 4, medium: 10, high: 16 };
 const CLOUD_BANK_LIMITS = { low: 0, medium: 8, high: 12 };
 const CLOUD_BANK_LOBES = 5;
 const CLOUD_COLORS = {
@@ -298,7 +298,7 @@ export class Atmosphere {
     const material = new THREE.MeshBasicMaterial({
       color: 0xf2ffff,
       transparent: true,
-      opacity: 0.07,
+      opacity: 0.12,
       depthWrite: false,
       side: THREE.DoubleSide
     });
@@ -308,14 +308,18 @@ export class Atmosphere {
     this.world.scene.add(this.skyWispMesh);
 
     for (let i = 0; i < capacity; i += 1) {
-      const angle = -Math.PI * 0.12 + (i / capacity) * Math.PI * 2 + (pseudoRandom(i * 2.31) - 0.5) * 0.18;
+      const startFrameAngles = [0.88, 1.18, 1.53, 1.86];
+      const angle = i < startFrameAngles.length
+        ? startFrameAngles[i] + (pseudoRandom(i * 2.31) - 0.5) * 0.08
+        : -Math.PI * 0.12 + (i / capacity) * Math.PI * 2 + (pseudoRandom(i * 2.31) - 0.5) * 0.18;
       const radius = WORLD_HALF_SIZE * (1.1 + pseudoRandom(i * 3.67) * 0.55);
+      const startFrameWisp = i < startFrameAngles.length;
       this.skyWisps.push({
         angle,
         radius,
-        y: 24 + pseudoRandom(i * 5.19) * 16,
-        width: 14 + pseudoRandom(i * 7.71) * 26,
-        height: 0.65 + pseudoRandom(i * 11.43) * 1.35,
+        y: startFrameWisp ? 21 + i * 3.2 : 18 + pseudoRandom(i * 5.19) * 15,
+        width: startFrameWisp ? 38 + pseudoRandom(i * 7.71) * 22 : 18 + pseudoRandom(i * 7.71) * 32,
+        height: startFrameWisp ? 1.15 + pseudoRandom(i * 11.43) * 1.05 : 0.85 + pseudoRandom(i * 11.43) * 1.65,
         phase: i * 0.71,
         speed: 0.08 + pseudoRandom(i * 13.91) * 0.08,
         drift: 1.2 + pseudoRandom(i * 17.17) * 2.8
@@ -486,7 +490,7 @@ export class Atmosphere {
     this.writeCloudBanks(elapsed);
     this.writeSkyWisps(elapsed);
     if (this.skyWispMesh) {
-      this.skyWispMesh.material.opacity = 0.06 + Math.sin(elapsed * 0.12) * 0.01;
+      this.skyWispMesh.material.opacity = 0.12 + Math.sin(elapsed * 0.12) * 0.02;
     }
     this.updateDistantIslets(elapsed);
     this.motionSamples += 1;
