@@ -52,8 +52,24 @@ export class Vehicle {
     };
     this.surfaceTrailDustCounter = makeSurfaceCounter();
     this.effectDummy = new THREE.Object3D();
+    this.lightDummy = new THREE.Object3D();
     this.effectColor = new THREE.Color();
     this.effectPools = {};
+    this.lightLensSpecs = [];
+    this.headlightPoolSpecs = [];
+    this.lightState = {
+      lensInstances: 0,
+      headlightPoolInstances: 0,
+      visibleLensInstances: 0,
+      visibleHeadlightLenses: 0,
+      visibleBrakeLenses: 0,
+      visibleReverseLenses: 0,
+      visibleBoostLenses: 0,
+      visibleHeadlightPools: 0,
+      brakeGlowScale: 0,
+      reverseGlowScale: 0,
+      boostGlowScale: 0
+    };
     this.effectTotals = {
       trail: 0,
       smoke: 0,
@@ -158,6 +174,65 @@ export class Vehicle {
       this.boostLights.push(boost);
       this.group.add(brake, reverse, boost);
     }
+    this.createVisibleLightGlows();
+    this.writeVisibleLightGlows({
+      braking: false,
+      reversing: false,
+      boost: false,
+      wheelie: false,
+      burnout: false
+    });
+  }
+
+  createVisibleLightGlows() {
+    const lensGeometry = new THREE.CircleGeometry(1, 22);
+    const lensMaterial = new THREE.MeshBasicMaterial({
+      color: 0xffffff,
+      vertexColors: true,
+      transparent: true,
+      opacity: 0.74,
+      depthWrite: false,
+      blending: THREE.AdditiveBlending
+    });
+    lensMaterial.forceSinglePass = true;
+    this.lightLensSpecs = [
+      { id: 'headlight-left', type: 'headlight', color: 0xfff0c4, position: [-0.56, 0.62 + VISUAL_Y_OFFSET, 2.72], scale: [0.22, 0.12, 1], rotationY: 0 },
+      { id: 'headlight-right', type: 'headlight', color: 0xfff0c4, position: [0.56, 0.62 + VISUAL_Y_OFFSET, 2.72], scale: [0.22, 0.12, 1], rotationY: 0 },
+      { id: 'brake-left', type: 'brake', color: 0xff2b20, position: [-0.64, 0.57 + VISUAL_Y_OFFSET, -2.62], scale: [0.19, 0.12, 1], rotationY: Math.PI },
+      { id: 'brake-right', type: 'brake', color: 0xff2b20, position: [0.64, 0.57 + VISUAL_Y_OFFSET, -2.62], scale: [0.19, 0.12, 1], rotationY: Math.PI },
+      { id: 'reverse-left', type: 'reverse', color: 0xdff7ff, position: [-0.38, 0.5 + VISUAL_Y_OFFSET, -2.67], scale: [0.11, 0.075, 1], rotationY: Math.PI },
+      { id: 'reverse-right', type: 'reverse', color: 0xdff7ff, position: [0.38, 0.5 + VISUAL_Y_OFFSET, -2.67], scale: [0.11, 0.075, 1], rotationY: Math.PI },
+      { id: 'boost-left', type: 'boost', color: 0xff8c3a, position: [-0.42, 0.3 + VISUAL_Y_OFFSET, -2.9], scale: [0.16, 0.16, 1], rotationY: Math.PI },
+      { id: 'boost-right', type: 'boost', color: 0xff8c3a, position: [0.42, 0.3 + VISUAL_Y_OFFSET, -2.9], scale: [0.16, 0.16, 1], rotationY: Math.PI }
+    ];
+    this.lightLensMesh = new THREE.InstancedMesh(lensGeometry, lensMaterial, this.lightLensSpecs.length);
+    this.lightLensMesh.name = 'VehicleVisibleLightLenses';
+    this.lightLensMesh.frustumCulled = false;
+    this.lightLensMesh.renderOrder = 13;
+    for (let index = 0; index < this.lightLensSpecs.length; index += 1) {
+      this.lightLensMesh.setColorAt(index, this.effectColor.setHex(this.lightLensSpecs[index].color));
+    }
+    if (this.lightLensMesh.instanceColor) this.lightLensMesh.instanceColor.needsUpdate = true;
+    this.group.add(this.lightLensMesh);
+
+    const poolGeometry = new THREE.CircleGeometry(1, 28);
+    const poolMaterial = new THREE.MeshBasicMaterial({
+      color: 0xfff0c4,
+      transparent: true,
+      opacity: 0.16,
+      depthWrite: false,
+      blending: THREE.AdditiveBlending
+    });
+    poolMaterial.forceSinglePass = true;
+    this.headlightPoolSpecs = [
+      { id: 'headlight-pool-left', position: [-0.5, -0.79, 5.25], scale: [0.68, 3.25, 1] },
+      { id: 'headlight-pool-right', position: [0.5, -0.79, 5.25], scale: [0.68, 3.25, 1] }
+    ];
+    this.headlightPoolMesh = new THREE.InstancedMesh(poolGeometry, poolMaterial, this.headlightPoolSpecs.length);
+    this.headlightPoolMesh.name = 'VehicleHeadlightGroundPools';
+    this.headlightPoolMesh.frustumCulled = false;
+    this.headlightPoolMesh.renderOrder = 8;
+    this.group.add(this.headlightPoolMesh);
   }
 
   createEffectPools() {
@@ -510,6 +585,77 @@ export class Vehicle {
     for (const light of this.boostLights) {
       light.intensity = state.boost ? 2.4 : state.wheelie ? 0.8 : 0;
     }
+    this.writeVisibleLightGlows({
+      braking,
+      reversing,
+      boost: state.boost,
+      wheelie: state.wheelie,
+      burnout: state.burnout
+    });
+  }
+
+  writeVisibleLightGlows({ braking, reversing, boost, wheelie, burnout }) {
+    if (!this.lightLensMesh) return;
+    const now = performance.now() * 0.001;
+    const pulse = 1 + Math.sin(now * 18) * 0.08;
+    let visibleLensInstances = 0;
+    const visibleByType = {
+      headlight: 0,
+      brake: 0,
+      reverse: 0,
+      boost: 0
+    };
+    const scaleByType = {
+      brake: braking ? 1 : burnout ? 0.56 : 0.34,
+      reverse: reversing ? 1 : 0,
+      boost: boost ? 1.18 * pulse : wheelie ? 0.62 * pulse : 0
+    };
+
+    this.lightLensSpecs.forEach((spec, index) => {
+      const amount = spec.type === 'headlight' ? 1 : scaleByType[spec.type] || 0;
+      if (amount > 0.05) {
+        visibleLensInstances += 1;
+        visibleByType[spec.type] += 1;
+      }
+      this.writeLightInstance(this.lightLensMesh, index, spec, amount);
+    });
+    this.lightLensMesh.instanceMatrix.needsUpdate = true;
+
+    let visibleHeadlightPools = 0;
+    const poolScale = boost ? 1.18 : wheelie ? 1.08 : 1;
+    this.headlightPoolSpecs.forEach((spec, index) => {
+      visibleHeadlightPools += 1;
+      this.writeLightInstance(this.headlightPoolMesh, index, { ...spec, rotationX: -Math.PI / 2 }, poolScale);
+    });
+    if (this.headlightPoolMesh) this.headlightPoolMesh.instanceMatrix.needsUpdate = true;
+
+    this.lightState = {
+      lensInstances: this.lightLensSpecs.length,
+      headlightPoolInstances: this.headlightPoolSpecs.length,
+      visibleLensInstances,
+      visibleHeadlightLenses: visibleByType.headlight,
+      visibleBrakeLenses: visibleByType.brake,
+      visibleReverseLenses: visibleByType.reverse,
+      visibleBoostLenses: visibleByType.boost,
+      visibleHeadlightPools,
+      brakeGlowScale: Number(scaleByType.brake.toFixed(2)),
+      reverseGlowScale: Number(scaleByType.reverse.toFixed(2)),
+      boostGlowScale: Number(scaleByType.boost.toFixed(2))
+    };
+  }
+
+  writeLightInstance(mesh, index, spec, amount) {
+    const visibleScale = Math.max(0.001, amount);
+    const position = spec.position;
+    this.lightDummy.position.set(position[0], position[1], position[2]);
+    this.lightDummy.rotation.set(spec.rotationX || 0, spec.rotationY || 0, spec.rotationZ || 0);
+    this.lightDummy.scale.set(
+      spec.scale[0] * visibleScale,
+      spec.scale[1] * visibleScale,
+      spec.scale[2] * visibleScale
+    );
+    this.lightDummy.updateMatrix();
+    mesh.setMatrixAt(index, this.lightDummy.matrix);
   }
 
   spawnTrail(boosting, drifting = false, surface = this.surface) {
@@ -742,8 +888,13 @@ export class Vehicle {
       activeTrail: this.effectPools.trail?.activeCount || 0,
       activeSmoke: this.effectPools.smoke?.activeCount || 0,
       activeBoost: this.effectPools.boost?.activeCount || 0,
-      activeSkid: this.effectPools.skid?.activeCount || 0
+      activeSkid: this.effectPools.skid?.activeCount || 0,
+      lights: this.getLightStats()
     };
+  }
+
+  getLightStats() {
+    return { ...this.lightState };
   }
 
   recordSurfaceEffect(counterName, surface) {

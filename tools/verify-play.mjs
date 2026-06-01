@@ -93,6 +93,7 @@ try {
   await screenshot(page, '02-start-driving.png');
 
   const gameplay = await exerciseGameplay(page);
+  const vehicleLights = await sampleVehicleLights(page);
   await screenshot(page, '03-driving-stress.png');
   const drivingStressMetrics = await sampleRenderSnapshot(page);
   const water = await exerciseWater(page, ISLAND_RADIUS);
@@ -204,6 +205,7 @@ try {
     overlayUi: { map: mapUi, menu: menuUi },
     collectibles,
     securityScan,
+    vehicleLights,
     ...metrics
   };
 
@@ -399,6 +401,58 @@ async function exerciseGameplay(page) {
       finalY: Number(game.vehicle.position.y.toFixed(2))
     };
   }, keyboardHandbrake);
+}
+
+async function sampleVehicleLights(page) {
+  return page.evaluate(async () => {
+    const delay = (ms) => new Promise((resolveDelay) => setTimeout(resolveDelay, ms));
+    const game = window.__portfolioDrive.game;
+    const input = game.input;
+    const clearInput = () => {
+      input.actions.forward = false;
+      input.actions.backward = false;
+      input.actions.left = false;
+      input.actions.right = false;
+      input.actions.boost = false;
+      input.actions.handbrake = false;
+      input.actions.brake = false;
+      input.actions.jump = false;
+    };
+    const stats = () => game.vehicle.getLightStats?.() || game.vehicle.getEffectStats?.().lights || {};
+
+    window.__portfolioDrive.respawn('landing');
+    clearInput();
+    await delay(160);
+    const base = stats();
+
+    input.actions.brake = true;
+    game.vehicle.updateVehicleLights(input, { boost: false, wheelie: false, burnout: false });
+    const brake = stats();
+
+    clearInput();
+    input.actions.backward = true;
+    game.vehicle.controller.localSpeed = -1.2;
+    game.vehicle.updateVehicleLights(input, { boost: false, wheelie: false, burnout: false });
+    const reverse = stats();
+
+    clearInput();
+    game.vehicle.updateVehicleLights(input, { boost: true, wheelie: false, burnout: false });
+    const boost = stats();
+
+    clearInput();
+    game.vehicle.updateVehicleLights(input, { boost: false, wheelie: false, burnout: false });
+
+    return {
+      base,
+      brake,
+      reverse,
+      boost,
+      headlightsReady: (base.visibleHeadlightLenses || 0) >= 2 && (base.visibleHeadlightPools || 0) >= 2,
+      brakeReady: (brake.visibleBrakeLenses || 0) >= 2 && (brake.brakeGlowScale || 0) >= 1,
+      reverseReady: (reverse.visibleReverseLenses || 0) >= 2 && (reverse.reverseGlowScale || 0) >= 1,
+      boostReady: (boost.visibleBoostLenses || 0) >= 2 && (boost.boostGlowScale || 0) >= 1
+    };
+  });
 }
 
 async function exerciseWater(page, islandRadius) {
@@ -1944,6 +1998,10 @@ function assertVerification(result) {
   if ((vehicleFx.spawnedSmoke || 0) < 2) failures.push(`vehicle FX probe failed: smoke=${vehicleFx.spawnedSmoke || 0}`);
   if ((vehicleFx.spawnedBoost || 0) < 1) failures.push(`vehicle FX probe failed: boost=${vehicleFx.spawnedBoost || 0}`);
   if ((vehicleFx.spawnedSkid || 0) < 2) failures.push(`vehicle FX probe failed: skid=${vehicleFx.spawnedSkid || 0}`);
+  if (!result.vehicleLights?.headlightsReady) failures.push('vehicle light probe failed: headlights');
+  if (!result.vehicleLights?.brakeReady) failures.push('vehicle light probe failed: brake lenses');
+  if (!result.vehicleLights?.reverseReady) failures.push('vehicle light probe failed: reverse lenses');
+  if (!result.vehicleLights?.boostReady) failures.push('vehicle light probe failed: boost lenses');
   const surfaceFeedback = result.surfaceFeedback || {};
   for (const id of ['grass', 'sand', 'shore']) {
     if (!surfaceFeedback.targets?.[id]) failures.push(`surface feedback probe failed: target ${id}`);
