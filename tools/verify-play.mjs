@@ -1319,6 +1319,7 @@ async function collectRuntimeMetrics(page, loadMs, gameplay, water, surfaces, su
       dataPier: game.world.setPieces?.getDataPierStats?.() || {},
       careerOffice: game.world.setPieces?.getCareerOfficeStats?.() || {},
       todoYard: game.world.setPieces?.getTodoYardStats?.() || {},
+      behindBuild: game.world.setPieces?.getBehindBuildStats?.() || {},
       props: game.world.props?.getStats?.() || {},
       stuntPark: game.world.stuntPark?.getStats?.() || {},
       potatoFarm: game.world.potatoFarm?.getStats?.() || {},
@@ -2291,6 +2292,9 @@ function assertVerification(result) {
   if ((result.todoYard?.lamps || 0) < 3) failures.push(`todo yard probe failed: lamps=${result.todoYard?.lamps || 0}`);
   if ((result.todoYard?.queueRails || 0) < 12) failures.push(`todo yard probe failed: queueRails=${result.todoYard?.queueRails || 0}`);
   if ((result.todoYard?.taskCards || 0) < 6) failures.push(`todo yard probe failed: taskCards=${result.todoYard?.taskCards || 0}`);
+  if ((result.behindBuild?.processPackets || 0) < 10) failures.push(`behind build probe failed: processPackets=${result.behindBuild?.processPackets || 0}`);
+  if ((result.behindBuild?.hologramPanels || 0) < 6) failures.push(`behind build probe failed: hologramPanels=${result.behindBuild?.hologramPanels || 0}`);
+  if ((result.behindBuild?.prototypeRings || 0) < 1) failures.push(`behind build probe failed: prototypeRings=${result.behindBuild?.prototypeRings || 0}`);
   if ((result.props?.roadLanterns || 0) < 8) failures.push(`props probe failed: roadLanterns=${result.props?.roadLanterns || 0}`);
   if ((result.props?.authoredLanterns || 0) !== (result.props?.roadLanterns || 0)) failures.push(`props probe failed: authoredLanterns=${result.props?.authoredLanterns || 0}/${result.props?.roadLanterns || 0}`);
   if ((result.props?.fallbackLanterns || 0) !== 0) failures.push(`props probe failed: fallbackLanterns=${result.props?.fallbackLanterns || 0}`);

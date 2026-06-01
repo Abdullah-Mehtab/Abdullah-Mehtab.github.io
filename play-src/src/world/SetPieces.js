@@ -205,6 +205,11 @@ export class SetPieces {
       queueRails: 0,
       taskCards: 0
     };
+    this.behindBuildStats = {
+      processPackets: 0,
+      hologramPanels: 0,
+      prototypeRings: 0
+    };
   }
 
   build() {
@@ -234,6 +239,10 @@ export class SetPieces {
     for (const item of this.animated) {
       if (item.kind === 'cvDocumentStream') {
         this.updateCvDocumentStream(item, elapsed);
+        continue;
+      }
+      if (item.kind === 'behindBuildLife') {
+        this.updateBehindBuildLife(item, elapsed);
         continue;
       }
       if (item.instanceMesh) {
@@ -448,6 +457,10 @@ export class SetPieces {
 
   getTodoYardStats() {
     return { ...this.todoYardStats };
+  }
+
+  getBehindBuildStats() {
+    return { ...this.behindBuildStats };
   }
 
   getWhisperEntries() {
@@ -903,6 +916,7 @@ export class SetPieces {
     }
     this.addCompositionDetailAsset(group, 'EnvPolishWorkshopProcessRail', behind.position[0] - 5.8, behind.position[2] + 5.8, -0.18, 0.76, 'rails');
     this.addCompositionDetailAsset(group, 'EnvPolishWorkshopProcessRail', behind.position[0] + 5.8, behind.position[2] - 6.2, 0.32, 0.72, 'rails');
+    this.createBehindBuildLife(group, behind);
 
     const potato = findZone('potato');
     this.addSign(group, 'FARM', 'Potato Counter', potato.position[0] - 11, potato.position[2] + 9, 0.32, 0xc79b56, 2.3, 'PotatoFarmSign');
@@ -914,7 +928,7 @@ export class SetPieces {
     mergeStaticMeshesInGroup(group, {
       namePrefix: 'SETPIECE_district',
       cellSize: 128,
-      shouldSkip: (object) => object.name === 'CvDocumentStream'
+      shouldSkip: (object) => object.name === 'CvDocumentStream' || object.name.startsWith('BehindBuild')
     });
     this.registerDistrictDressingBatches(group);
     this.world.scene.add(group);
@@ -2669,6 +2683,130 @@ export class SetPieces {
     }
     stream.mesh.instanceMatrix.needsUpdate = true;
     this.lifeStats.motionSamples += stream.entries.length;
+  }
+
+  createBehindBuildLife(group, behind) {
+    const packetGeometry = new THREE.BoxGeometry(0.34, 0.22, 0.34);
+    const packetMaterial = new THREE.MeshBasicMaterial({
+      color: 0x92ffea,
+      transparent: true,
+      opacity: 0.82,
+      depthWrite: false
+    });
+    const packetCount = 10;
+    const packetMesh = new THREE.InstancedMesh(packetGeometry, packetMaterial, packetCount);
+    packetMesh.name = 'BehindBuildProcessPackets';
+    packetMesh.frustumCulled = false;
+    packetMesh.renderOrder = 43;
+    group.add(packetMesh);
+
+    const panelGeometry = new THREE.PlaneGeometry(1.16, 0.72);
+    const panelMaterial = new THREE.MeshBasicMaterial({
+      color: 0xa8a6ff,
+      transparent: true,
+      opacity: 0.66,
+      depthWrite: false,
+      side: THREE.DoubleSide
+    });
+    const panelSpecs = [
+      [-4.8, -2.6, 1.35, -0.36, 0.86, 0.0],
+      [-2.0, -3.8, 1.88, -0.18, 0.76, 0.7],
+      [1.0, -3.2, 1.56, 0.08, 0.82, 1.4],
+      [3.4, -1.6, 2.12, 0.26, 0.72, 2.1],
+      [4.4, 1.2, 1.64, 0.42, 0.78, 2.8],
+      [1.3, 3.0, 1.96, 0.1, 0.7, 3.5]
+    ];
+    const panelMesh = new THREE.InstancedMesh(panelGeometry, panelMaterial, panelSpecs.length);
+    panelMesh.name = 'BehindBuildHologramPanels';
+    panelMesh.frustumCulled = false;
+    panelMesh.renderOrder = 44;
+    group.add(panelMesh);
+
+    const ringMaterial = new THREE.MeshBasicMaterial({
+      color: 0x7cffb2,
+      transparent: true,
+      opacity: 0.5,
+      depthWrite: false,
+      side: THREE.DoubleSide
+    });
+    const ring = new THREE.Mesh(new THREE.RingGeometry(1.08, 1.18, 6), ringMaterial);
+    ring.name = 'BehindBuildPrototypeRing';
+    ring.position.set(behind.position[0] + 4.2, 2.45, behind.position[2] - 1.8);
+    ring.rotation.y = 0.42;
+    ring.renderOrder = 45;
+    group.add(ring);
+
+    const packetEntries = Array.from({ length: packetCount }, (_, index) => ({
+      index,
+      offset: index / packetCount,
+      startX: behind.position[0] - 10.8,
+      startZ: behind.position[2] + 6.4,
+      endX: behind.position[0] + 8.4,
+      endZ: behind.position[2] - 5.6,
+      speed: 0.13 + (index % 3) * 0.012,
+      phase: index * 0.47
+    }));
+    const panelEntries = panelSpecs.map(([dx, dz, y, yaw, scale, phase], index) => ({
+      index,
+      x: behind.position[0] + dx,
+      z: behind.position[2] + dz,
+      baseY: y,
+      yaw,
+      scale,
+      phase,
+      speed: 0.58 + index * 0.04
+    }));
+
+    this.behindBuildStats.processPackets += packetCount;
+    this.behindBuildStats.hologramPanels += panelSpecs.length;
+    this.behindBuildStats.prototypeRings += 1;
+    this.animated.push({ kind: 'behindBuildLife', packetMesh, packetEntries, panelMesh, panelEntries, ring });
+    this.updateBehindBuildLife({ packetMesh, packetEntries, panelMesh, panelEntries, ring }, 0);
+  }
+
+  updateBehindBuildLife(life, elapsed) {
+    if (life.packetMesh?.visible) {
+      for (const entry of life.packetEntries) {
+        const progress = (elapsed * entry.speed + entry.offset) % 1;
+        const flow = progress * progress * (3 - 2 * progress);
+        const arc = Math.sin(progress * Math.PI);
+        const x = THREE.MathUtils.lerp(entry.startX, entry.endX, flow);
+        const z = THREE.MathUtils.lerp(entry.startZ, entry.endZ, flow);
+        this.lifeDummy.position.set(x, 0.66 + arc * 0.62 + Math.sin(elapsed * 2.8 + entry.phase) * 0.05, z);
+        this.lifeDummy.rotation.set(
+          elapsed * 0.42 + entry.phase,
+          Math.atan2(entry.endX - entry.startX, entry.endZ - entry.startZ),
+          elapsed * 0.7 + entry.phase
+        );
+        this.lifeDummy.scale.setScalar(0.78 + arc * 0.34);
+        this.lifeDummy.updateMatrix();
+        life.packetMesh.setMatrixAt(entry.index, this.lifeDummy.matrix);
+      }
+      life.packetMesh.instanceMatrix.needsUpdate = true;
+      life.packetMesh.material.opacity = 0.7 + Math.sin(elapsed * 1.4) * 0.08;
+      this.lifeStats.motionSamples += life.packetEntries.length;
+    }
+
+    if (life.panelMesh?.visible) {
+      for (const entry of life.panelEntries) {
+        const phase = elapsed * entry.speed + entry.phase;
+        this.lifeDummy.position.set(entry.x, entry.baseY + Math.sin(phase) * 0.16, entry.z);
+        this.lifeDummy.rotation.set(Math.sin(phase * 0.5) * 0.06, entry.yaw + Math.sin(phase * 0.8) * 0.16, Math.sin(phase * 1.2) * 0.1);
+        this.lifeDummy.scale.setScalar(entry.scale + Math.sin(phase * 1.3) * 0.03);
+        this.lifeDummy.updateMatrix();
+        life.panelMesh.setMatrixAt(entry.index, this.lifeDummy.matrix);
+      }
+      life.panelMesh.instanceMatrix.needsUpdate = true;
+      life.panelMesh.material.opacity = 0.58 + Math.sin(elapsed * 1.2) * 0.07;
+      this.lifeStats.motionSamples += life.panelEntries.length;
+    }
+
+    if (life.ring?.visible) {
+      life.ring.rotation.z = elapsed * 0.62;
+      life.ring.scale.setScalar(1 + Math.sin(elapsed * 1.65) * 0.12);
+      life.ring.material.opacity = 0.4 + Math.sin(elapsed * 1.5) * 0.1;
+      this.lifeStats.motionSamples += 1;
+    }
   }
 
   addCompositionPad(group, x, z, width, depth, material, y, name) {
