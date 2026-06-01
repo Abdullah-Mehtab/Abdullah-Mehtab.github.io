@@ -973,11 +973,10 @@ function shouldKeepVehicleMeshSeparate(object) {
     ? object.material.map((material) => material?.name || '').join(' ')
     : object.material?.name || '';
   const meshName = object.name || '';
-  if (object.material?.transparent) return true;
-  return isVehicleGlassPane(meshName, materialName);
+  return isVehicleWindowGlassPane(meshName, materialName);
 }
 
-function isVehicleGlassPane(meshName, materialName) {
+function isVehicleWindowGlassPane(meshName, materialName) {
   return /Glass_Attached(?:RearWindow|SideWindow|Windshield)|attached_.*(?:reflective|smoked|windshield).*glass/i.test(`${meshName} ${materialName}`);
 }
 
