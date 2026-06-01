@@ -497,12 +497,13 @@ async function exerciseWater(page, islandRadius) {
       const stats = waterStats();
       wakeSeen = wakeSeen || stats.activeWakes > 0 || stats.wakesSpawned > (wakeBefore.wakesSpawned || 0);
     }
+
     const wakeAfter = waterStats();
     const target = game.vehicle.position.clone();
     const lookAt = target.clone();
     lookAt.y += 0.7;
     const cameraPosition = target.clone();
-    cameraPosition.x -= 7.8;
+    cameraPosition.x += 8.8;
     cameraPosition.y += 4.6;
     cameraPosition.z -= 8.2;
     game.cameraRig.setCinematic(cameraPosition, lookAt);
@@ -2152,8 +2153,20 @@ function assertVerification(result) {
   if (!result.water?.surfaceSeen) failures.push('water probe failed: surface state');
   if (!result.water?.splashSeen) failures.push('water probe failed: splash particles');
   if (!result.water?.wakeSeen) failures.push('water probe failed: wake rings');
-  if ((result.water?.wakeSpawnedDelta || 0) < 2) failures.push(`water probe failed: wake delta=${result.water?.wakeSpawnedDelta || 0}`);
-  if ((result.water?.activeWakes || 0) < 1) failures.push(`water probe failed: active wakes=${result.water?.activeWakes || 0}`);
+  if ((result.water?.wakeSpawnedDelta || 0) < 6) failures.push(`water probe failed: wake delta=${result.water?.wakeSpawnedDelta || 0}`);
+  if ((result.water?.activeWakes || 0) < 4) failures.push(`water probe failed: active wakes=${result.water?.activeWakes || 0}`);
+  if ((result.water?.stats?.wakeMaterialOpacity || 0) < 0.44) {
+    failures.push(`water wake readability probe failed: opacity=${result.water?.stats?.wakeMaterialOpacity || 0}`);
+  }
+  if ((result.water?.stats?.wakeProfile?.waterLife || 0) < 1.5) {
+    failures.push(`water wake readability probe failed: waterLife=${result.water?.stats?.wakeProfile?.waterLife || 0}`);
+  }
+  if ((result.water?.stats?.wakeProfile?.shoreLife || 0) < 1.1) {
+    failures.push(`water wake readability probe failed: shoreLife=${result.water?.stats?.wakeProfile?.shoreLife || 0}`);
+  }
+  if ((result.water?.stats?.wakeProfile?.stretchMax || 0) < 2.65) {
+    failures.push(`water wake readability probe failed: stretchMax=${result.water?.stats?.wakeProfile?.stretchMax || 0}`);
+  }
   if (!result.water?.dragReduced) failures.push('water probe failed: drag');
   if (!result.water?.submergeRespawned) failures.push('water probe failed: submerge respawn');
   if (!result.waterStats?.splashMesh) failures.push('water splash probe failed: instanced splash mesh missing');

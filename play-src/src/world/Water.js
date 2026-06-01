@@ -12,6 +12,16 @@ const GLINT_LIMITS = { low: 0, medium: 20, high: 34 };
 const WAVE_LANE_LIMITS = { low: 16, medium: 32, high: 52 };
 const SHORE_FLECK_LIMITS = { low: 24, medium: 72, high: 112 };
 const TIDE_GLIMMER_LIMITS = { low: 0, medium: 12, high: 18 };
+const WAKE_PROFILE = {
+  shoreScale: 0.82,
+  waterScale: 1.05,
+  shoreLife: 1.18,
+  waterLife: 1.55,
+  stretchBase: 1.18,
+  stretchSpeed: 0.032,
+  stretchMax: 2.7,
+  expansion: 2.6
+};
 const SHORE_WAKE_RADIUS = ISLAND_RADIUS * 0.94;
 const WATER_DRAG_RADIUS = ISLAND_RADIUS * 1.012;
 const WATER_RESPAWN_RADIUS = ISLAND_RADIUS * 1.04;
@@ -71,7 +81,7 @@ export class Water {
     this.wakeMaterial = new THREE.MeshBasicMaterial({
       color: 0xeafff7,
       transparent: true,
-      opacity: 0.38,
+      opacity: 0.46,
       depthWrite: false,
       blending: THREE.AdditiveBlending,
       side: THREE.DoubleSide
@@ -761,9 +771,13 @@ export class Water {
       this.writeWake({
         position,
         rotationY: heading,
-        baseScale: inWater ? 0.9 : 0.7,
-        stretch: THREE.MathUtils.clamp(1.1 + speed * 0.025, 1.1, 2.4),
-        life: inWater ? 1.12 : 0.86
+        baseScale: inWater ? WAKE_PROFILE.waterScale : WAKE_PROFILE.shoreScale,
+        stretch: THREE.MathUtils.clamp(
+          WAKE_PROFILE.stretchBase + speed * WAKE_PROFILE.stretchSpeed,
+          WAKE_PROFILE.stretchBase,
+          WAKE_PROFILE.stretchMax
+        ),
+        life: inWater ? WAKE_PROFILE.waterLife : WAKE_PROFILE.shoreLife
       });
     }
   }
@@ -841,7 +855,7 @@ export class Water {
 
   writeWakeMatrix(index, item) {
     const progress = 1 - item.life / item.maxLife;
-    const scale = item.baseScale * (1 + progress * 2.2);
+    const scale = item.baseScale * (1 + progress * WAKE_PROFILE.expansion);
     const flatten = Math.max(0.001, 1 - progress * 0.5);
     this.wakeDummy.position.copy(item.position);
     this.wakeDummy.rotation.set(0, item.rotationY, 0);
@@ -978,6 +992,8 @@ export class Water {
       maxWakes: this.maxWakes,
       wakeCapacity: this.wakes.length,
       wakeMesh: Boolean(this.wakeMesh),
+      wakeMaterialOpacity: this.wakeMaterial?.opacity || 0,
+      wakeProfile: { ...WAKE_PROFILE },
       foamRings: this.foamMeshes.length,
       visibleFoamRings: this.foamMeshes.filter((mesh) => mesh.visible).length,
       surfaceGlints: this.surfaceGlints.length,
