@@ -29,7 +29,18 @@ export const districtFootprints = [
     ]
   },
   { id: 'west-trail', label: 'Skills And Farm Trail', center: [-58, -104], size: [62, 46], color: '#92ffea', kind: 'trail' },
-  { id: 'harbor', label: 'Signal Harbor', center: [126, 46], size: [36, 38], color: '#78b7ff', kind: 'harbor' },
+  {
+    id: 'harbor',
+    label: 'Signal Harbor',
+    center: [126, 46],
+    size: [30, 30],
+    color: '#78b7ff',
+    kind: 'harbor',
+    visualPads: [
+      { id: 'signal-court', center: [126, 48], size: [25, 20], rotation: -0.34, kind: 'harbor' },
+      { id: 'pier-pocket', center: [136, 66], size: [12, 10], rotation: -0.5, kind: 'pier' }
+    ]
+  },
   { id: 'data-pier', label: 'Data Pier', center: [-126, 66], size: [32, 34], color: '#79ffc5', kind: 'pier' }
 ];
 
@@ -60,7 +71,7 @@ export const terrainBrushes = [
   { id: 'stunt-pit-warm-apron', center: [116, -74], size: [32, 18], rotation: -0.34, material: 'warmStone' },
   { id: 'south-loop-grass-infield', center: [56, -118], size: [46, 18], rotation: -0.36, material: 'meadowLight' },
   { id: 'farm-gold-field', center: [-50, -126], size: [54, 30], rotation: -0.16, material: 'warmStone' },
-  { id: 'harbor-sand-apron', center: [126, 52], size: [42, 34], rotation: -0.18, material: 'sand' },
+  { id: 'harbor-sand-apron', center: [132, 58], size: [30, 22], rotation: -0.26, material: 'sand' },
   { id: 'west-data-beach', center: [-132, 60], size: [36, 32], rotation: 0.42, material: 'sand' }
 ];
 

@@ -2542,6 +2542,7 @@ function assertVerification(result) {
   if ((result.circuitStart?.arrowFences || 0) < 2) failures.push(`circuit start probe failed: arrowFences=${result.circuitStart?.arrowFences || 0}`);
   if ((result.circuitStart?.laneLights || 0) < 6) failures.push(`circuit start probe failed: laneLights=${result.circuitStart?.laneLights || 0}`);
   if ((result.harbor?.pads || 0) < 2) failures.push(`harbor probe failed: pads=${result.harbor?.pads || 0}`);
+  if ((result.harbor?.maxPadArea || 999) > 320) failures.push(`harbor pad scale probe failed: maxPadArea=${result.harbor?.maxPadArea}`);
   if ((result.harbor?.pathMarks || 0) < 16) failures.push(`harbor probe failed: pathMarks=${result.harbor?.pathMarks || 0}`);
   if ((result.harbor?.authoredAssets || 0) < 12) failures.push(`harbor probe failed: authoredAssets=${result.harbor?.authoredAssets || 0}`);
   if ((result.harbor?.piers || 0) < 3) failures.push(`harbor probe failed: piers=${result.harbor?.piers || 0}`);

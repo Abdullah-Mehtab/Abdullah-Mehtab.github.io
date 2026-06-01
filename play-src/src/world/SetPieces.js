@@ -199,6 +199,7 @@ export class SetPieces {
     this.harborStats = {
       pads: 0,
       pathMarks: 0,
+      maxPadArea: 0,
       authoredAssets: 0,
       piers: 0,
       cargoStacks: 0,
@@ -2937,14 +2938,15 @@ export class SetPieces {
     this.districtAmbience.mesh.setMatrixAt(entry.index, this.ambienceDummy.matrix);
   }
 
-  groundRect(group, x, z, width, depth, material, y, name) {
+  groundRect(group, x, z, width, depth, material, y, name, rotation = 0) {
     const mesh = new THREE.Mesh(makeHardscapePanelGeometry(width, depth, panelSeed(name, x, z)), material);
     mesh.name = name;
     mesh.position.set(x, y + 0.026, z);
+    mesh.rotation.y = rotation;
     mesh.receiveShadow = true;
     mesh.userData.surfacePanel = 'chipped-hardscape';
     group.add(mesh);
-    this.addGroundPanelSeams(group, x, z, width, depth, material, y + 0.058, name);
+    this.addGroundPanelSeams(group, x, z, width, depth, material, y + 0.058, name, rotation);
     this.surfacePanelStats.hardscapePanels += 1;
     this.surfacePanelStats.chippedPanels += 1;
   }
@@ -2969,7 +2971,7 @@ export class SetPieces {
     return mesh;
   }
 
-  addGroundPanelSeams(group, x, z, width, depth, material, y, name) {
+  addGroundPanelSeams(group, x, z, width, depth, material, y, name, rotation = 0) {
     const seamMaterial = this.panelSeamMaterial(material);
     const long = Math.max(width, depth);
     const short = Math.min(width, depth);
@@ -2984,11 +2986,13 @@ export class SetPieces {
       strips.push([0, 0, width * 0.46, 0.08, 0]);
     }
     for (let index = 0; index < strips.length; index += 1) {
-      const [dx, dz, sx, sz, rotation] = strips[index];
+      const [dx, dz, sx, sz, localRotation] = strips[index];
+      const cos = Math.cos(rotation);
+      const sin = Math.sin(rotation);
       const seam = new THREE.Mesh(new THREE.BoxGeometry(sx, 0.018, sz), seamMaterial);
       seam.name = `${name}_PanelSeam_${index}`;
-      seam.position.set(x + dx, y + index * 0.0006, z + dz);
-      seam.rotation.y = rotation;
+      seam.position.set(x + dx * cos + dz * sin, y + index * 0.0006, z - dx * sin + dz * cos);
+      seam.rotation.y = rotation + localRotation;
       seam.receiveShadow = false;
       seam.renderOrder = 42;
       group.add(seam);
@@ -3511,21 +3515,26 @@ export class SetPieces {
     return placed;
   }
 
-  addYardEdgeDetails(group, centerX, centerZ, width, depth) {
+  addYardEdgeDetails(group, centerX, centerZ, width, depth, rotation = 0) {
     const segmentSpacing = 6.2;
     const edgeZ = depth / 2 + 0.24;
     const edgeX = width / 2 + 0.24;
     const longCount = Math.max(2, Math.floor(width / segmentSpacing));
     const shortCount = Math.max(2, Math.floor(depth / segmentSpacing));
+    const place = (localX, localZ, localRotation) => {
+      const x = centerX + Math.cos(rotation) * localX + Math.sin(rotation) * localZ;
+      const z = centerZ - Math.sin(rotation) * localX + Math.cos(rotation) * localZ;
+      this.addCompositionDetailAsset(group, 'EnvPolishYardEdgeTrim', x, z, rotation + localRotation, 0.78, 'edgeTrims');
+    };
     for (let i = 0; i < longCount; i += 1) {
       const offset = -((longCount - 1) * segmentSpacing) / 2 + i * segmentSpacing;
-      this.addCompositionDetailAsset(group, 'EnvPolishYardEdgeTrim', centerX + offset, centerZ - edgeZ, 0, 0.78, 'edgeTrims');
-      this.addCompositionDetailAsset(group, 'EnvPolishYardEdgeTrim', centerX + offset, centerZ + edgeZ, Math.PI, 0.78, 'edgeTrims');
+      place(offset, -edgeZ, 0);
+      place(offset, edgeZ, Math.PI);
     }
     for (let i = 0; i < shortCount; i += 1) {
       const offset = -((shortCount - 1) * segmentSpacing) / 2 + i * segmentSpacing;
-      this.addCompositionDetailAsset(group, 'EnvPolishYardEdgeTrim', centerX - edgeX, centerZ + offset, Math.PI * 0.5, 0.78, 'edgeTrims');
-      this.addCompositionDetailAsset(group, 'EnvPolishYardEdgeTrim', centerX + edgeX, centerZ + offset, -Math.PI * 0.5, 0.78, 'edgeTrims');
+      place(-edgeX, offset, Math.PI * 0.5);
+      place(edgeX, offset, -Math.PI * 0.5);
     }
   }
 
@@ -4182,8 +4191,8 @@ export class SetPieces {
     const x = contact.position[0];
     const z = contact.position[2];
     const rotation = contact.rotation || -0.34;
-    this.addHarborPad(group, x + 1.2, z + 4.8, 28, 18, this.world.materials.paleStone, rotation, 'HarborSignalDeck');
-    this.addHarborPad(group, x + 8.8, z + 13.2, 11, 9, this.world.materials.sand, rotation - 0.18, 'HarborPierApron');
+    this.addHarborPad(group, x + 1.2, z + 4.8, 22, 14, this.world.materials.paleStone, rotation, 'HarborSignalDeck');
+    this.addHarborPad(group, x + 8.8, z + 13.2, 8.8, 7.2, this.world.materials.sand, rotation - 0.18, 'HarborPierApron');
 
     this.addSign(group, 'CONTACT', 'Harbor Signal', ...this.harborPoint(contact, -10.4, 14.3, rotation), rotation - 0.34, 0x78b7ff, 2.5, 'HarborSign');
     this.addHarborAsset(group, 'EnvPolishHarborSignal', contact, 1.6, 3.8, rotation + 0.02, 1.18, null);
@@ -4232,7 +4241,7 @@ export class SetPieces {
       const [markX, markZ] = this.harborPoint(contact, 4.8 + Math.sin(i * 0.7) * 1.2, 4.2 + i * 1.9, rotation);
       this.addHarborPathMark(group, markX, markZ, 0.28, 1.2, rotation - 0.14, this.world.materials.glowBlue, 'HarborPierGuideMark');
     }
-    this.addYardEdgeDetails(group, x + 1.2, z + 4.8, 28, 18);
+    this.addYardEdgeDetails(group, x + 1.2, z + 4.8, 22, 14, rotation);
   }
 
   createHarborSignalLife(group, contact, rotation) {
@@ -4302,10 +4311,10 @@ export class SetPieces {
   }
 
   addHarborPad(group, x, z, width, depth, material, rotation, name) {
-    this.groundRect(group, x, z, width, depth, material, 0.124, name);
-    group.children[group.children.length - 1].rotation.y = rotation;
+    this.groundRect(group, x, z, width, depth, material, 0.124, name, rotation);
     this.districtCompositionStats.pads += 1;
     this.harborStats.pads += 1;
+    this.harborStats.maxPadArea = Math.max(this.harborStats.maxPadArea, Number((width * depth).toFixed(1)));
   }
 
   addHarborPathMark(group, x, z, width, depth, rotation, material, name) {
