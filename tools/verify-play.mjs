@@ -1262,6 +1262,7 @@ async function collectRuntimeMetrics(page, loadMs, gameplay, water, surfaces, su
     const game = window.__portfolioDrive.game;
     const protectedLandmarks = sampleProtectedLandmarks(game);
     const info = game.renderer.info.render;
+    const materialPalette = sampleMaterialPalette(game.world.materials || {});
     return {
       ready: window.__portfolioDrive.ready(),
       canvasSample: window.__portfolioDrive.sampleCanvas(),
@@ -1290,6 +1291,7 @@ async function collectRuntimeMetrics(page, loadMs, gameplay, water, surfaces, su
         laneEdges: game.world.roads?.roadGroup?.userData?.laneEdgeLineCount || 0
       },
       staticBatching: sampleStaticBatching(game.scene),
+      materialPalette,
       lighting: game.getLightingStats?.() || {},
       foliage: game.world.foliage?.getStats?.() || {},
       mapStats: game.ui?.getMapStats?.() || {},
@@ -1350,6 +1352,30 @@ async function collectRuntimeMetrics(page, loadMs, gameplay, water, surfaces, su
         landingEvents: game.vehicle?.landingEvents || 0
       }
     };
+
+    function sampleMaterialPalette(materials) {
+      const names = ['ground', 'meadowLight', 'meadowDark', 'stoneRoad', 'plazaRoad', 'securityRoad', 'roadShoulder', 'roadCurb', 'stuntRamp', 'dirtRoad'];
+      const palette = {};
+      for (const name of names) {
+        const material = materials[name];
+        const color = material?.color;
+        if (!color) continue;
+        const hex = color.getHex();
+        const r = ((hex >> 16) & 255) / 255;
+        const g = ((hex >> 8) & 255) / 255;
+        const b = (hex & 255) / 255;
+        const luma = r * 0.2126 + g * 0.7152 + b * 0.0722;
+        palette[name] = {
+          hex: `#${color.getHexString()}`,
+          luma: Number(luma.toFixed(3)),
+          opacity: Number((material.opacity ?? 1).toFixed(3))
+        };
+      }
+      if (palette.ground && palette.stoneRoad) {
+        palette.roadGrassContrast = Number((palette.ground.luma - palette.stoneRoad.luma).toFixed(3));
+      }
+      return palette;
+    }
 
     function countSceneObjects(root) {
       let meshes = 0;
@@ -2010,6 +2036,22 @@ function assertVerification(result) {
   }
   if ((result.lighting?.toneMappingExposure || 0) > 1.08) {
     failures.push(`lighting probe failed: exposure=${result.lighting?.toneMappingExposure}`);
+  }
+  if ((result.materialPalette?.securityRoad?.luma || 0) < 0.22) {
+    failures.push(`material palette probe failed: securityRoad luma=${result.materialPalette?.securityRoad?.luma || 0}`);
+  }
+  if ((result.materialPalette?.stoneRoad?.luma || 0) < 0.4) {
+    failures.push(`material palette probe failed: stoneRoad luma=${result.materialPalette?.stoneRoad?.luma || 0}`);
+  }
+  if ((result.materialPalette?.roadShoulder?.luma || 0) < 0.49) {
+    failures.push(`material palette probe failed: roadShoulder luma=${result.materialPalette?.roadShoulder?.luma || 0}`);
+  }
+  if ((result.materialPalette?.meadowDark?.luma || 0) < 0.45) {
+    failures.push(`material palette probe failed: meadowDark luma=${result.materialPalette?.meadowDark?.luma || 0}`);
+  }
+  const roadGrassContrast = result.materialPalette?.roadGrassContrast ?? 0;
+  if (roadGrassContrast < 0.16 || roadGrassContrast > 0.29) {
+    failures.push(`material palette probe failed: roadGrassContrast=${roadGrassContrast}`);
   }
   const polishPropsBytes = result.glbAssets?.['play/game-assets/polish-props.glb'] || 0;
   if (polishPropsBytes > 2500000) failures.push(`polish props GLB budget exceeded: ${polishPropsBytes}`);
