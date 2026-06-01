@@ -15,7 +15,7 @@ const ROAD_STYLE = {
   bridge: { shoulder: 0.82, curb: 0.18, line: 0xe8edf0 }
 };
 
-const ROAD_LAYER = {
+const ROAD_SURFACE_PRIORITY = {
   ring: 0,
   avenue: 1,
   street: 2,
@@ -24,6 +24,17 @@ const ROAD_LAYER = {
   dirt: 2,
   stunt: 3,
   bridge: 4
+};
+
+const ROAD_VISUAL_LAYER = {
+  ring: 1,
+  avenue: 1,
+  street: 1,
+  plaza: 1,
+  security: 1,
+  dirt: 0,
+  stunt: 1,
+  bridge: 1
 };
 
 const ROAD_DETAIL_OPACITY = {
@@ -97,7 +108,7 @@ export class Roads {
   addPathRibbon(path) {
     const style = ROAD_STYLE[path.hierarchy] || ROAD_STYLE.street;
     const width = path.width;
-    const layer = ROAD_LAYER[path.hierarchy] ?? 1;
+    const layer = ROAD_VISUAL_LAYER[path.hierarchy] ?? 1;
     const shoulderY = 0.068 + layer * 0.001;
     const surfaceY = 0.104 + layer * 0.006;
 
@@ -229,7 +240,7 @@ export class Roads {
       if (node.pathIds.size < 2 || node.connections.length < 2) continue;
       const dominant = dominantRoadPath(node.connections.map((connection) => connection.path));
       const style = ROAD_STYLE[dominant.hierarchy] || ROAD_STYLE.street;
-      const layer = ROAD_LAYER[dominant.hierarchy] ?? 1;
+      const layer = ROAD_VISUAL_LAYER[dominant.hierarchy] ?? 1;
       const shoulderPadding = style.shoulder * 0.46;
       const shoulderGeometry = createJunctionBlendGeometry(node.point, node.connections, shoulderPadding, 0.088 + layer * 0.003);
       const surfaceGeometry = createJunctionBlendGeometry(node.point, node.connections, 0.12, 0.148 + layer * 0.007);
@@ -338,7 +349,7 @@ export class Roads {
       const path = roadPaths[pathIndex];
       const curve = makePathCurve(path.points, path.closed);
       const totalLength = curve.getLength();
-      const layer = ROAD_LAYER[path.hierarchy] ?? 1;
+      const layer = ROAD_VISUAL_LAYER[path.hierarchy] ?? 1;
       const surfaceY = 0.104 + layer * 0.006;
       const wearColor = roadWearColor(path);
       const seamColor = roadSeamColor(path);
@@ -557,7 +568,7 @@ export class Roads {
       const curve = makePathCurve(path.points, path.closed);
       const totalLength = curve.getLength();
       const style = ROAD_STYLE[path.hierarchy] || ROAD_STYLE.street;
-      const layer = ROAD_LAYER[path.hierarchy] ?? 1;
+      const layer = ROAD_VISUAL_LAYER[path.hierarchy] ?? 1;
       const surfaceY = 0.104 + layer * 0.006;
       const color = roadMarkerColor(path);
       const chevronSpacing = roadMarkerSpacing(path);
@@ -774,8 +785,8 @@ function createJunctionConnection(point, neighbor, path) {
 
 function dominantRoadPath(paths) {
   return paths.reduce((best, path) => {
-    const bestLayer = ROAD_LAYER[best.hierarchy] ?? 1;
-    const pathLayer = ROAD_LAYER[path.hierarchy] ?? 1;
+    const bestLayer = ROAD_SURFACE_PRIORITY[best.hierarchy] ?? 1;
+    const pathLayer = ROAD_SURFACE_PRIORITY[path.hierarchy] ?? 1;
     if (pathLayer !== bestLayer) return pathLayer > bestLayer ? path : best;
     return path.width > best.width ? path : best;
   }, paths[0]);
@@ -956,7 +967,7 @@ function createRoadSurfaceSegments(paths) {
         width: path.width,
         length: length + path.width * 0.64,
         rotation: Math.atan2(dx, dz),
-        priority: ROAD_LAYER[path.hierarchy] ?? 1
+        priority: ROAD_SURFACE_PRIORITY[path.hierarchy] ?? 1
       });
     }
     return segments;
