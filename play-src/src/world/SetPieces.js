@@ -2679,7 +2679,7 @@ export class SetPieces {
       color: 0xffffff,
       vertexColors: true,
       transparent: true,
-      opacity: 0.13,
+      opacity: 0.085,
       depthWrite: false,
       side: THREE.DoubleSide
     });
@@ -2705,10 +2705,10 @@ export class SetPieces {
         instanceIndex: index,
         proxy,
         position: proxy.position.clone(),
-        scale: zone.radius + 2.05,
+        scale: Math.max(5.2, zone.radius * 0.78 + 1.0),
         baseScale: 1,
         baseRotation: Math.PI / 4,
-        range: 0.055,
+        range: 0.035,
         speed: 0.9 + (index % 5) * 0.08,
         phase: index * 0.73,
         rotationSpeed: 0.18
