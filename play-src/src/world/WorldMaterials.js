@@ -37,7 +37,7 @@ export const QUALITY_PROFILES = {
     lifeSignals: { zonePulses: 16, windBanners: 8, whisperBeacons: 8, terminalPulses: 5, districtMotes: 48, districtSignals: 12 },
     districtDressingRadius: 104,
     broadSetPieceRadius: 118,
-    stuntDressingRadius: 96,
+    stuntDressingRadius: 24,
     farmDressingRadius: 96,
     routeCompositionRadius: 68,
     meadowCompositionRadius: 34,

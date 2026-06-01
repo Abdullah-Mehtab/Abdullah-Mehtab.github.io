@@ -1853,6 +1853,9 @@ function assertVerification(result) {
   const broadSurfaceVisibility = result.activeSnapshots?.surfaceFeedback?.broadSetPieceVisibility;
   if ((broadSurfaceVisibility?.batches || 0) < 30) failures.push(`broad set-piece visibility probe failed: batches=${broadSurfaceVisibility?.batches || 0}`);
   if ((broadSurfaceVisibility?.hiddenBatches || 0) < 1) failures.push(`broad set-piece visibility probe failed: surface hiddenBatches=${broadSurfaceVisibility?.hiddenBatches || 0}`);
+  if (result.activeSnapshots?.surfaceFeedback?.renderProfile?.some((bucket) => bucket.name === 'STUNT_Yard_Dressing')) {
+    failures.push('stunt yard cull probe failed: visible during surface feedback snapshot');
+  }
   const routeDrivingVisibility = result.activeSnapshots?.driving?.broadSetPieceVisibility?.groups?.routeComposition;
   const routeSurfaceVisibility = broadSurfaceVisibility?.groups?.routeComposition;
   if ((routeDrivingVisibility?.batches || 0) < 80) {
