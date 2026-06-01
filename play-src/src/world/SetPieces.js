@@ -101,6 +101,7 @@ export class SetPieces {
       routeStoryMarkers: 0,
       vistaKits: 0,
       coastalLoopStaging: 0,
+      eastVistaAnchors: 0,
       authoredAssets: 0,
       guideTiles: 0
     };
@@ -1255,6 +1256,18 @@ export class SetPieces {
       );
     }
 
+    const eastVistaAnchors = [
+      ['EnvPolishSignalSpire', 114, 18, -0.36, 0.58],
+      ['EnvPolishGardenArch', 102, 30, 0.42, 0.66],
+      ['EnvPolishRouteVistaKit', 124, 18, -0.28, 0.7],
+      ['EnvPolishRouteStoryMarker', 132, 38, 0.82, 0.66],
+      ['EnvPolishPlazaEdgeKit', 96, 16, -0.28, 0.66],
+      ['EnvPolishChevronBollardRun', 116, 7, -0.36, 0.64]
+    ];
+    for (const [assetName, x, z, rotation, scale] of eastVistaAnchors) {
+      this.addRouteCompositionAsset(group, assetName, x, z, rotation, scale, 'eastVistaAnchors');
+    }
+
     const guideRuns = [
       { x: -12, z: 30, rotation: 0.18, color: this.world.materials.glow, count: 5 },
       { x: -40, z: 42, rotation: -0.5, color: this.world.materials.glowBlue, count: 5 },
@@ -1263,7 +1276,8 @@ export class SetPieces {
       { x: 23, z: -22, rotation: 2.68, color: this.world.materials.paleStone, count: 5 },
       { x: 84, z: -92, rotation: 1.5, color: this.world.materials.warmGlow, count: 5 },
       { x: 101, z: 58, rotation: 1.0, color: this.world.materials.glowBlue, count: 5 },
-      { x: -120, z: 48, rotation: -1.05, color: this.world.materials.glow, count: 5 }
+      { x: -120, z: 48, rotation: -1.05, color: this.world.materials.glow, count: 5 },
+      { x: 116, z: 24, rotation: -0.32, color: this.world.materials.glowBlue, count: 7 }
     ];
     for (const run of guideRuns) this.addRouteGuideTiles(group, run);
     this.addCoastalLoopStaging(group);
