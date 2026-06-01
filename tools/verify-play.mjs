@@ -1309,6 +1309,7 @@ async function collectRuntimeMetrics(page, loadMs, gameplay, water, surfaces, su
       terrainRelief: game.world.terrain?.getReliefStats?.() || {},
       shoreline: game.world.terrain?.getShorelineStats?.() || {},
       setPieceQuality: game.world.setPieces?.getQualityStats?.() || {},
+      startDiorama: game.world.setPieces?.getStartDioramaStats?.() || {},
       districtVisibility: game.world.setPieces?.getDistrictVisibilityStats?.() || {},
       broadSetPieceVisibility: game.world.setPieces?.getBroadVisibilityStats?.() || {},
       approachDressing: game.world.setPieces?.getApproachStats?.() || {},
@@ -1659,6 +1660,7 @@ async function captureMobile(browser) {
       lifeStats: game.world.setPieces?.getLifeStats?.() || { ...(game.world.setPieces?.lifeStats || {}) },
       securityLab: game.world.setPieces?.getSecurityLabStats?.() || {},
       setPieceQuality: game.world.setPieces?.getQualityStats?.() || {},
+      startDiorama: game.world.setPieces?.getStartDioramaStats?.() || {},
       districtVisibility: game.world.setPieces?.getDistrictVisibilityStats?.() || {},
       broadSetPieceVisibility: game.world.setPieces?.getBroadVisibilityStats?.() || {},
       meadowComposition: game.world.setPieces?.getMeadowCompositionStats?.() || {},
@@ -2300,6 +2302,11 @@ function assertVerification(result) {
   if ((result.fieldBackdrops?.guideTiles || 0) < 48) failures.push(`field backdrop probe failed: guideTiles=${result.fieldBackdrops?.guideTiles || 0}`);
   if ((result.fieldBackdrops?.lamps || 0) < 16) failures.push(`field backdrop probe failed: lamps=${result.fieldBackdrops?.lamps || 0}`);
   if ((result.fieldBackdrops?.frameRuns || 0) < 80) failures.push(`field backdrop probe failed: frameRuns=${result.fieldBackdrops?.frameRuns || 0}`);
+  if ((result.startDiorama?.burnoutScuffs || 0) < 8) failures.push(`start diorama probe failed: burnoutScuffs=${result.startDiorama?.burnoutScuffs || 0}`);
+  if ((result.startDiorama?.wheelieWitnessLights || 0) < 8) failures.push(`start diorama probe failed: wheelieWitnessLights=${result.startDiorama?.wheelieWitnessLights || 0}`);
+  if ((result.startDiorama?.laneRails || 0) < 4) failures.push(`start diorama probe failed: laneRails=${result.startDiorama?.laneRails || 0}`);
+  if ((result.startDiorama?.launchTiles || 0) < 7) failures.push(`start diorama probe failed: launchTiles=${result.startDiorama?.launchTiles || 0}`);
+  if ((result.startDiorama?.authoredAssets || 0) < 4) failures.push(`start diorama probe failed: authoredAssets=${result.startDiorama?.authoredAssets || 0}`);
   if ((result.launchField?.pockets || 0) < 3) failures.push(`launch field probe failed: pockets=${result.launchField?.pockets || 0}`);
   if ((result.launchField?.patches || 0) < 6) failures.push(`launch field probe failed: patches=${result.launchField?.patches || 0}`);
   if ((result.launchField?.authoredAssets || 0) < 12) failures.push(`launch field probe failed: authoredAssets=${result.launchField?.authoredAssets || 0}`);

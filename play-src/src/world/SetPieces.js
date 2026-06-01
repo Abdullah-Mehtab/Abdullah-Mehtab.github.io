@@ -54,6 +54,13 @@ export class SetPieces {
       secondaryGroups: 0,
       visibleSecondaryGroups: 0
     };
+    this.startDioramaStats = {
+      burnoutScuffs: 0,
+      wheelieWitnessLights: 0,
+      laneRails: 0,
+      launchTiles: 0,
+      authoredAssets: 0
+    };
     this.districtDressingEntries = [];
     this.districtVisibilityOrigin = null;
     this.districtVisibilityStats = {
@@ -438,6 +445,10 @@ export class SetPieces {
     return { ...this.qualityStats };
   }
 
+  getStartDioramaStats() {
+    return { ...this.startDioramaStats };
+  }
+
   getDistrictVisibilityStats() {
     return { ...this.districtVisibilityStats };
   }
@@ -584,6 +595,7 @@ export class SetPieces {
       this.box(group, zone.position[0] + dx, 0.13, zone.position[2] + dz, sx, 0.08, sz, this.world.materials.paleStone, rot, 'StartPaver');
     }
     this.startLaunchCueAssets(group, zone);
+    this.createStartLaunchStaging(group, zone);
 
     this.addLamp(group, zone.position[0] - 11.4, zone.position[2] - 10.5, 0xffc36a, 3.1, 'StartLampLeft');
     this.addLamp(group, zone.position[0] + 14.2, zone.position[2] - 9.4, 0x7cffb2, 3.0, 'StartLampRight');
@@ -617,9 +629,74 @@ export class SetPieces {
   startLaunchCueAssets(group, zone) {
     const centerX = zone.position[0] + 2;
     const centerZ = zone.position[2] - 10.2;
-    this.addPolishAsset(group, 'EnvPolishChevronBollardRun', centerX - 5.7, centerZ - 1.8, Math.PI * 0.5, 0.92);
-    this.addPolishAsset(group, 'EnvPolishChevronBollardRun', centerX + 5.7, centerZ - 1.8, Math.PI * 0.5, 0.92);
+    if (this.addPolishAsset(group, 'EnvPolishChevronBollardRun', centerX - 5.7, centerZ - 1.8, Math.PI * 0.5, 0.92)) {
+      this.startDioramaStats.authoredAssets += 1;
+    }
+    if (this.addPolishAsset(group, 'EnvPolishChevronBollardRun', centerX + 5.7, centerZ - 1.8, Math.PI * 0.5, 0.92)) {
+      this.startDioramaStats.authoredAssets += 1;
+    }
     this.arrowMarker(group, centerX, zone.position[2] - 11.2, 0, 0xffc36a, 'StartDriveGroundCue');
+  }
+
+  createStartLaunchStaging(group, zone) {
+    const centerX = zone.position[0] + 2;
+    const stagingZ = zone.position[2] - 13.6;
+    const laneZ = zone.position[2] - 15.8;
+
+    for (const side of [-1, 1]) {
+      const sideX = centerX + side * 2.1;
+      for (let index = 0; index < 4; index += 1) {
+        this.box(
+          group,
+          sideX + side * Math.sin(index * 0.8) * 0.18,
+          0.206 + index * 0.0004,
+          laneZ + index * 1.55,
+          0.42 + index * 0.05,
+          0.026,
+          2.35 + index * 0.32,
+          this.world.materials.darkWood,
+          side * (0.05 + index * 0.018),
+          'StartBurnoutScuff'
+        );
+        this.startDioramaStats.burnoutScuffs += 1;
+      }
+    }
+
+    for (let index = 0; index < 7; index += 1) {
+      const offset = -5.1 + index * 1.7;
+      const material = index % 3 === 0 ? this.world.materials.glowBlue : this.world.materials.glow;
+      this.box(group, centerX + offset, 0.226 + index * 0.0003, stagingZ - 1.1, 1.05, 0.055, 0.36, material, 0.02, 'StartLaunchTile');
+      this.startDioramaStats.launchTiles += 1;
+    }
+
+    for (const side of [-1, 1]) {
+      const railX = centerX + side * 6.4;
+      this.box(group, railX, 0.38, stagingZ - 1.5, 0.22, 0.38, 7.6, this.world.materials.darkWood, 0.04, 'StartLaneRail');
+      this.box(group, railX - side * 0.34, 0.62, stagingZ - 1.5, 0.14, 0.14, 7.1, this.world.materials.paleStone, 0.04, 'StartLaneRailTop');
+      this.startDioramaStats.laneRails += 2;
+
+      if (this.addPolishAsset(group, 'EnvPolishRoadBarrier', centerX + side * 8.4, stagingZ - 4.6, side * 0.12, 0.68)) {
+        this.startDioramaStats.authoredAssets += 1;
+      }
+
+      for (let index = 0; index < 4; index += 1) {
+        const lightZ = stagingZ - 4.2 + index * 2.1;
+        this.cylinder(group, centerX + side * 5.1, 0.72, lightZ, 0.055, 1.1, this.world.materials.darkWood, 8, 'StartWitnessPost');
+        this.box(
+          group,
+          centerX + side * 5.1,
+          1.34,
+          lightZ,
+          0.38,
+          0.22,
+          0.18,
+          index % 2 === 0 ? this.world.materials.glowBlue : this.world.materials.glow,
+          0,
+          'StartWheelieWitnessLight'
+        );
+        this.startDioramaStats.wheelieWitnessLights += 1;
+      }
+    }
   }
 
   createEducationPlaza() {
