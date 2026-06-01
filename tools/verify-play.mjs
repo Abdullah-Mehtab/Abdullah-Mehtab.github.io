@@ -1236,6 +1236,7 @@ async function collectRuntimeMetrics(page, loadMs, gameplay, water, surfaces, su
       surfacePanels: game.world.setPieces?.getSurfacePanelStats?.() || {},
       circuitStart: game.world.setPieces?.getCircuitStartStats?.() || {},
       harbor: game.world.setPieces?.getHarborStats?.() || {},
+      dataPier: game.world.setPieces?.getDataPierStats?.() || {},
       props: game.world.props?.getStats?.() || {},
       stuntPark: game.world.stuntPark?.getStats?.() || {},
       waterStats: game.world.water?.getStats?.() || {},
@@ -2121,6 +2122,7 @@ function assertVerification(result) {
   if ((result.districtComposition?.farmFences || 0) < 12) failures.push(`district composition probe failed: farmFences=${result.districtComposition?.farmFences || 0}`);
   if ((result.districtComposition?.skillsTerminalNodes || 0) < 17) failures.push(`district composition probe failed: skillsTerminalNodes=${result.districtComposition?.skillsTerminalNodes || 0}`);
   if ((result.districtComposition?.awardsArchiveNodes || 0) < 22) failures.push(`district composition probe failed: awardsArchiveNodes=${result.districtComposition?.awardsArchiveNodes || 0}`);
+  if ((result.districtComposition?.dataPierNodes || 0) < 34) failures.push(`district composition probe failed: dataPierNodes=${result.districtComposition?.dataPierNodes || 0}`);
   if ((result.surfacePanels?.hardscapePanels || 0) < 20) failures.push(`surface panel probe failed: hardscapePanels=${result.surfacePanels?.hardscapePanels || 0}`);
   if ((result.surfacePanels?.chippedPanels || 0) !== (result.surfacePanels?.hardscapePanels || 0)) {
     failures.push(`surface panel probe failed: chippedPanels=${result.surfacePanels?.chippedPanels || 0}/${result.surfacePanels?.hardscapePanels || 0}`);
@@ -2141,6 +2143,14 @@ function assertVerification(result) {
   if ((result.harbor?.shadeStructures || 0) < 1) failures.push(`harbor probe failed: shadeStructures=${result.harbor?.shadeStructures || 0}`);
   if ((result.harbor?.lamps || 0) < 4) failures.push(`harbor probe failed: lamps=${result.harbor?.lamps || 0}`);
   if ((result.harbor?.beacons || 0) < 3) failures.push(`harbor probe failed: beacons=${result.harbor?.beacons || 0}`);
+  if ((result.dataPier?.pads || 0) < 3) failures.push(`data pier probe failed: pads=${result.dataPier?.pads || 0}`);
+  if ((result.dataPier?.pathMarks || 0) < 8) failures.push(`data pier probe failed: pathMarks=${result.dataPier?.pathMarks || 0}`);
+  if ((result.dataPier?.authoredAssets || 0) < 12) failures.push(`data pier probe failed: authoredAssets=${result.dataPier?.authoredAssets || 0}`);
+  if ((result.dataPier?.piers || 0) < 2) failures.push(`data pier probe failed: piers=${result.dataPier?.piers || 0}`);
+  if ((result.dataPier?.cargoStacks || 0) < 2) failures.push(`data pier probe failed: cargoStacks=${result.dataPier?.cargoStacks || 0}`);
+  if ((result.dataPier?.lamps || 0) < 4) failures.push(`data pier probe failed: lamps=${result.dataPier?.lamps || 0}`);
+  if ((result.dataPier?.beacons || 0) < 3) failures.push(`data pier probe failed: beacons=${result.dataPier?.beacons || 0}`);
+  if ((result.dataPier?.deckRails || 0) < 12) failures.push(`data pier probe failed: deckRails=${result.dataPier?.deckRails || 0}`);
   if ((result.props?.roadLanterns || 0) < 8) failures.push(`props probe failed: roadLanterns=${result.props?.roadLanterns || 0}`);
   if ((result.props?.authoredLanterns || 0) !== (result.props?.roadLanterns || 0)) failures.push(`props probe failed: authoredLanterns=${result.props?.authoredLanterns || 0}/${result.props?.roadLanterns || 0}`);
   if ((result.props?.fallbackLanterns || 0) !== 0) failures.push(`props probe failed: fallbackLanterns=${result.props?.fallbackLanterns || 0}`);

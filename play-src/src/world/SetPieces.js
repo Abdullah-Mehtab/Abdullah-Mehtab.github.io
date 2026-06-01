@@ -141,7 +141,8 @@ export class SetPieces {
       farmRows: 0,
       farmFences: 0,
       skillsTerminalNodes: 0,
-      awardsArchiveNodes: 0
+      awardsArchiveNodes: 0,
+      dataPierNodes: 0
     };
     this.circuitStartStats = {
       pads: 0,
@@ -162,6 +163,16 @@ export class SetPieces {
       shadeStructures: 0,
       lamps: 0,
       beacons: 0
+    };
+    this.dataPierStats = {
+      pads: 0,
+      pathMarks: 0,
+      authoredAssets: 0,
+      piers: 0,
+      cargoStacks: 0,
+      lamps: 0,
+      beacons: 0,
+      deckRails: 0
     };
   }
 
@@ -381,6 +392,10 @@ export class SetPieces {
 
   getHarborStats() {
     return { ...this.harborStats };
+  }
+
+  getDataPierStats() {
+    return { ...this.dataPierStats };
   }
 
   getWhisperEntries() {
@@ -687,13 +702,7 @@ export class SetPieces {
     this.addPolishAsset(group, 'EnvPolishRoadBarrier', stunt.position[0] + 12.2, stunt.position[2] - 5.8, -0.36, 0.9);
 
     const data = findZone('data-pier');
-    this.addSign(group, 'DATA', 'Visitor Trail', data.position[0] - 8, data.position[2] - 13, 0.75, 0x79ffc5, 2.5, 'DataPierSign');
-    this.addPolishAsset(group, 'EnvPolishInfoKiosk', data.position[0] + 9.8, data.position[2] - 5.4, 0.72, 0.72);
-    for (let i = 0; i < 7; i += 1) {
-      this.box(group, data.position[0] + i * 1.6 - 4.8, 0.26, data.position[2] + 2.6, 1.3, 0.14, 7.2, this.world.materials.wood, 0.1, 'DataPierPlank');
-    }
-    this.addLamp(group, data.position[0] - 7, data.position[2] + 7, 0x79ffc5, 2.6, 'DataPierLampA');
-    this.addLamp(group, data.position[0] + 7, data.position[2] + 7, 0x79ffc5, 2.6, 'DataPierLampB');
+    this.createDataPierComposition(group, data);
 
     const sentinel = findZone('sentinel');
     this.addSign(group, 'SENTINEL', 'Cyber Ridge', sentinel.position[0] - 12, sentinel.position[2] - 12, 0.22, 0xff6d8d, 2.7, 'SentinelRidgeSign');
@@ -2596,6 +2605,100 @@ export class SetPieces {
     this.harborStats.authoredAssets += 1;
     if (statName) this.harborStats[statName] = (this.harborStats[statName] || 0) + 1;
     return true;
+  }
+
+  createDataPierComposition(group, data) {
+    const rotation = data.rotation || 0.68;
+    this.addDataPierPad(group, data, -0.6, 1.8, 24, 13.2, this.world.materials.wood, rotation + 0.08, 'DataPierBoardwalkDeck');
+    this.addDataPierPad(group, data, -7.8, -5.2, 10.5, 7.2, this.world.materials.sand, rotation - 0.16, 'DataPierSandThreshold');
+    this.addDataPierPad(group, data, 7.2, -2.4, 8.6, 5.8, this.world.materials.paleStone, rotation + 0.1, 'DataPierSignalCourt');
+
+    const [signX, signZ] = this.harborPoint(data, -9.6, -6.8, rotation);
+    this.addSign(group, 'DATA', 'Visitor Trail', signX, signZ, rotation + 0.12, 0x79ffc5, 2.15, 'DataPierSign');
+    this.addDataPierAsset(group, 'EnvPolishInfoKiosk', data, 8.8, -4.6, rotation + 0.12, 0.72, null);
+    this.addDataPierAsset(group, 'EnvPolishHarborPier', data, -1.8, 9.2, rotation - 0.02, 1.04, 'piers');
+    this.addDataPierAsset(group, 'EnvPolishDockFloat', data, -6.4, 15.8, rotation - 0.22, 0.92, 'piers');
+    this.addDataPierAsset(group, 'EnvPolishHarborAntenna', data, 7.6, 4.2, rotation + 0.16, 0.76, null);
+    this.addDataPierAsset(group, 'EnvPolishTerminalBank', data, -7.4, 2.8, rotation - 0.12, 0.64, null);
+    this.addDataPierAsset(group, 'EnvPolishHarborCargoStack', data, 5.4, 7.6, rotation + 0.42, 0.7, 'cargoStacks');
+    this.addDataPierAsset(group, 'EnvPolishHarborCargoStack', data, -10.4, -0.8, rotation - 0.38, 0.64, 'cargoStacks');
+    this.addDataPierAsset(group, 'EnvPolishHarborShade', data, 3.8, -7.4, rotation + 0.04, 0.72, null);
+    this.addDataPierAsset(group, 'EnvPolishWaveMarker', data, 3.6, 13.4, rotation + 0.26, 0.72, null);
+    this.addDataPierAsset(group, 'EnvPolishShoreBuoy', data, -3.8, 17.6, rotation - 0.16, 0.78, null);
+    this.addDataPierAsset(group, 'EnvPolishShorelineTidePool', data, -12.8, 8.8, rotation - 0.34, 0.82, null);
+    this.addDataPierAsset(group, 'EnvPolishShorelineBreakwater', data, 9.4, 12.6, rotation + 0.18, 0.76, null);
+
+    for (const side of [-1, 1]) {
+      for (let i = 0; i < 4; i += 1) {
+        const [x, z] = this.harborPoint(data, side * 10.9, -3.2 + i * 4.2, rotation);
+        this.addDataPierRailPost(group, x, z, rotation, i % 2 ? this.world.materials.glow : this.world.materials.glowBlue);
+      }
+      const [railX, railZ] = this.harborPoint(data, side * 10.9, 3.1, rotation);
+      this.box(group, railX, 1.06, railZ, 0.12, 0.12, 15.0, this.world.materials.darkWood, rotation, 'DataPierSideRail');
+      this.box(group, railX, 0.64, railZ, 0.1, 0.09, 14.2, this.world.materials.wood, rotation, 'DataPierLowerRail');
+      this.dataPierStats.deckRails += 2;
+      this.districtCompositionStats.dataPierNodes += 2;
+    }
+    for (let i = 0; i < 8; i += 1) {
+      const [markX, markZ] = this.harborPoint(data, -5.6 + i * 1.55, -5.6 + i * 1.7, rotation);
+      this.addDataPierPathMark(group, markX, markZ, 0.28, 1.16, rotation + 0.08, i % 2 ? this.world.materials.glowBlue : this.world.materials.paleStone, 'DataPierBoardwalkGuideMark');
+    }
+    for (const [right, forward, color] of [
+      [-10.8, -5.4, 0x79ffc5],
+      [9.6, -4.2, 0x9ccfff],
+      [-9.8, 9.8, 0x79ffc5],
+      [8.4, 9.4, 0x79ffc5]
+    ]) {
+      const [lampX, lampZ] = this.harborPoint(data, right, forward, rotation);
+      this.addDataPierLamp(group, lampX, lampZ, color, 2.55, 'DataPierLamp');
+    }
+    for (const [right, forward] of [
+      [-2.4, 5.2],
+      [4.8, 12.4],
+      [-8.8, 13.2]
+    ]) {
+      const [beaconX, beaconZ] = this.harborPoint(data, right, forward, rotation);
+      this.beacon(group, beaconX, beaconZ, 0x79ffc5);
+      this.dataPierStats.beacons += 1;
+      this.districtCompositionStats.dataPierNodes += 1;
+    }
+  }
+
+  addDataPierPad(group, data, right, forward, width, depth, material, rotation, name) {
+    const [x, z] = this.harborPoint(data, right, forward, data.rotation || 0.68);
+    this.groundPatch(group, x, z, width, depth, material, 0.123, rotation, name, 811 + this.dataPierStats.pads);
+    this.districtCompositionStats.pads += 1;
+    this.districtCompositionStats.dataPierNodes += 1;
+    this.dataPierStats.pads += 1;
+  }
+
+  addDataPierPathMark(group, x, z, width, depth, rotation, material, name) {
+    this.addCompositionPathMark(group, x, z, width, depth, material, rotation, name);
+    this.districtCompositionStats.dataPierNodes += 1;
+    this.dataPierStats.pathMarks += 1;
+  }
+
+  addDataPierLamp(group, x, z, color, height, name) {
+    this.addCompositionLamp(group, x, z, color, height, name);
+    this.districtCompositionStats.dataPierNodes += 1;
+    this.dataPierStats.lamps += 1;
+  }
+
+  addDataPierAsset(group, assetName, data, right, forward, rotation, scale, statName) {
+    const [x, z] = this.harborPoint(data, right, forward, data.rotation || 0.68);
+    const placed = this.addCompositionAsset(group, assetName, x, z, rotation, scale);
+    if (!placed) return false;
+    this.districtCompositionStats.dataPierNodes += 1;
+    this.dataPierStats.authoredAssets += 1;
+    if (statName) this.dataPierStats[statName] = (this.dataPierStats[statName] || 0) + 1;
+    return true;
+  }
+
+  addDataPierRailPost(group, x, z, rotation, glowMaterial) {
+    this.box(group, x, 0.72, z, 0.16, 1.15, 0.16, this.world.materials.darkWood, rotation, 'DataPierRailPost');
+    this.box(group, x, 1.34, z, 0.34, 0.18, 0.34, glowMaterial, rotation, 'DataPierRailLamp');
+    this.dataPierStats.deckRails += 1;
+    this.districtCompositionStats.dataPierNodes += 1;
   }
 
   createCircuitStartComposition(group, circuit) {
