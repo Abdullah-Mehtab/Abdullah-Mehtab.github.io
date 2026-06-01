@@ -224,11 +224,11 @@ body:not(.is-driving) .hud {
 
 .title-screen {
   z-index: 55;
-  place-items: end center;
-  padding: 0 18px 20px;
+  place-items: end start;
+  padding: 0 18px 22px;
   background:
-    radial-gradient(circle at 36% 48%, transparent 0 46%, rgba(3, 8, 13, 0.1) 82%),
-    linear-gradient(0deg, rgba(3, 8, 13, 0.42), rgba(3, 8, 13, 0.04) 42%, transparent 72%);
+    radial-gradient(circle at 30% 52%, transparent 0 48%, rgba(3, 8, 13, 0.08) 86%),
+    linear-gradient(0deg, rgba(3, 8, 13, 0.28), rgba(3, 8, 13, 0.035) 38%, transparent 74%);
 }
 
 .title-back {
@@ -238,33 +238,46 @@ body:not(.is-driving) .hud {
 }
 
 .title-card {
-  width: min(760px, calc(100vw - 36px));
+  position: relative;
+  width: min(520px, calc(100vw - 36px));
   border-radius: 8px;
-  padding: clamp(12px, 2vw, 16px);
+  padding: clamp(12px, 1.7vw, 15px) clamp(13px, 1.8vw, 16px) clamp(13px, 1.8vw, 16px) clamp(15px, 2vw, 18px);
   margin: 0;
   display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
-  align-items: end;
-  gap: 14px;
+  grid-template-columns: minmax(0, 1fr);
+  align-items: start;
+  gap: 8px;
   animation: title-rise 700ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
   background:
-    linear-gradient(90deg, rgba(124, 255, 178, 0.13), transparent 34%),
-    rgba(4, 10, 17, 0.68);
+    linear-gradient(90deg, rgba(124, 255, 178, 0.15), transparent 42%),
+    rgba(4, 10, 17, 0.58);
+}
+
+.title-card::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 12px;
+  bottom: 12px;
+  width: 3px;
+  border-radius: 999px;
+  background: var(--accent-2);
+  box-shadow: 0 0 18px rgba(124, 255, 178, 0.58);
 }
 
 .title-card h1 {
   max-width: none;
-  margin: 5px 0 0;
-  font-size: clamp(1.7rem, 3.2vw, 2.25rem);
+  margin: 4px 0 0;
+  font-size: clamp(1.45rem, 2.3vw, 1.9rem);
   line-height: 1;
   letter-spacing: 0;
 }
 
 .title-card p {
-  max-width: 48ch;
-  margin: 6px 0 0;
+  max-width: 42ch;
+  margin: 4px 0 0;
   color: var(--muted);
-  font-size: clamp(0.86rem, 1.25vw, 0.96rem);
+  font-size: clamp(0.83rem, 1.05vw, 0.92rem);
   line-height: 1.38;
 }
 
@@ -276,12 +289,19 @@ body:not(.is-driving) .hud {
 }
 
 .title-actions {
-  justify-content: flex-end;
-  margin-top: 0;
+  justify-content: flex-start;
+  margin-top: 4px;
 }
 
 .panel-actions {
   margin-top: 18px;
+}
+
+.title-actions button,
+.title-actions a,
+.panel-actions button {
+  min-height: 38px;
+  padding: 8px 12px;
 }
 
 .title-actions button,
@@ -1412,7 +1432,7 @@ body:has(.map-modal:not([hidden])) .debug-readout {
 
   .title-card h1 {
     max-width: none;
-    font-size: clamp(1.8rem, 8.6vw, 2.35rem);
+    font-size: clamp(1.45rem, 7vw, 1.9rem);
   }
 
   .title-card {
@@ -1425,7 +1445,7 @@ body:has(.map-modal:not([hidden])) .debug-readout {
 
   .title-actions {
     gap: 8px;
-    margin-top: 14px;
+    margin-top: 8px;
     justify-content: flex-start;
   }
 
