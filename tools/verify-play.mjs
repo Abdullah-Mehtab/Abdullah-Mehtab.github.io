@@ -2267,6 +2267,8 @@ function assertVerification(result) {
   if ((result.harbor?.shadeStructures || 0) < 1) failures.push(`harbor probe failed: shadeStructures=${result.harbor?.shadeStructures || 0}`);
   if ((result.harbor?.lamps || 0) < 4) failures.push(`harbor probe failed: lamps=${result.harbor?.lamps || 0}`);
   if ((result.harbor?.beacons || 0) < 3) failures.push(`harbor probe failed: beacons=${result.harbor?.beacons || 0}`);
+  if ((result.harbor?.signalBeams || 0) < 3) failures.push(`harbor probe failed: signalBeams=${result.harbor?.signalBeams || 0}`);
+  if ((result.harbor?.signalRings || 0) < 1) failures.push(`harbor probe failed: signalRings=${result.harbor?.signalRings || 0}`);
   if ((result.dataPier?.pads || 0) < 3) failures.push(`data pier probe failed: pads=${result.dataPier?.pads || 0}`);
   if ((result.dataPier?.pathMarks || 0) < 8) failures.push(`data pier probe failed: pathMarks=${result.dataPier?.pathMarks || 0}`);
   if ((result.dataPier?.authoredAssets || 0) < 12) failures.push(`data pier probe failed: authoredAssets=${result.dataPier?.authoredAssets || 0}`);

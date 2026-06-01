@@ -173,7 +173,9 @@ export class SetPieces {
       cargoStacks: 0,
       shadeStructures: 0,
       lamps: 0,
-      beacons: 0
+      beacons: 0,
+      signalBeams: 0,
+      signalRings: 0
     };
     this.dataPierStats = {
       pads: 0,
@@ -256,6 +258,10 @@ export class SetPieces {
         item.mesh.position.y = item.baseY + Math.sin(elapsed * item.speed + item.phase) * item.range;
         item.mesh.rotation.y += dt * item.rotationSpeed;
         item.mesh.material.opacity = item.baseOpacity + Math.sin(elapsed * item.speed + item.phase) * item.opacityRange;
+        this.lifeStats.motionSamples += 1;
+      } else if (item.kind === 'harborSignalBeam') {
+        item.mesh.rotation.y = item.baseRotation + Math.sin(elapsed * item.speed + item.phase) * item.range;
+        item.mesh.material.opacity = item.baseOpacity + Math.sin(elapsed * item.opacitySpeed + item.phase) * item.opacityRange;
         this.lifeStats.motionSamples += 1;
       } else if (item.kind === 'securityPacket') {
         const packetPulse = scan.active ? 1 : scan.complete ? 0.35 : 0;
@@ -3063,6 +3069,7 @@ export class SetPieces {
       this.beacon(group, beaconX, beaconZ, 0x78b7ff);
       this.harborStats.beacons += 1;
     }
+    this.createHarborSignalLife(group, contact, rotation);
     for (let i = 0; i < 9; i += 1) {
       const [markX, markZ] = this.harborPoint(contact, -7.6 + i * 2.0, -3.6 + Math.sin(i * 0.8) * 0.8, rotation);
       this.addHarborPathMark(group, markX, markZ, 1.2, 0.16, rotation + 0.08, i % 2 ? this.world.materials.glowBlue : this.world.materials.paleStone, 'HarborRoadGuideMark');
@@ -3072,6 +3079,66 @@ export class SetPieces {
       this.addHarborPathMark(group, markX, markZ, 0.28, 1.2, rotation - 0.14, this.world.materials.glowBlue, 'HarborPierGuideMark');
     }
     this.addYardEdgeDetails(group, x + 1.2, z + 4.8, 28, 18);
+  }
+
+  createHarborSignalLife(group, contact, rotation) {
+    const [originX, originZ] = this.harborPoint(contact, 1.6, 3.8, rotation);
+    const beamGeometry = new THREE.BoxGeometry(18, 0.035, 0.2);
+    beamGeometry.translate(9, 0, 0);
+    for (let i = 0; i < 3; i += 1) {
+      const material = new THREE.MeshBasicMaterial({
+        color: i === 1 ? 0x9ccfff : 0x78b7ff,
+        transparent: true,
+        opacity: 0.2,
+        depthWrite: false,
+        blending: THREE.AdditiveBlending
+      });
+      const beam = new THREE.Mesh(beamGeometry, material);
+      beam.name = 'HarborSignalSweepBeam';
+      beam.position.set(originX, 4.18 + i * 0.12, originZ);
+      beam.rotation.y = rotation + i * 0.72;
+      beam.renderOrder = 40;
+      group.add(beam);
+      this.animated.push({
+        kind: 'harborSignalBeam',
+        mesh: beam,
+        baseRotation: beam.rotation.y,
+        range: 0.16 + i * 0.035,
+        speed: 0.34 + i * 0.05,
+        opacitySpeed: 0.7 + i * 0.08,
+        phase: i * 0.9,
+        baseOpacity: 0.18,
+        opacityRange: 0.07
+      });
+      this.harborStats.signalBeams += 1;
+    }
+
+    const ringMaterial = new THREE.MeshBasicMaterial({
+      color: 0x78b7ff,
+      transparent: true,
+      opacity: 0.32,
+      depthWrite: false,
+      side: THREE.DoubleSide,
+      blending: THREE.AdditiveBlending
+    });
+    const ring = new THREE.Mesh(new THREE.RingGeometry(2.6, 3.05, 28), ringMaterial);
+    ring.name = 'HarborSignalPulseRing';
+    ring.position.set(originX, 4.3, originZ);
+    ring.rotation.x = -Math.PI / 2;
+    ring.renderOrder = 41;
+    group.add(ring);
+    this.animated.push({
+      kind: 'pulse',
+      mesh: ring,
+      baseScale: 0.92,
+      range: 0.14,
+      speed: 1.2,
+      phase: 0.4,
+      rotationSpeed: 0.18,
+      baseOpacity: 0.26,
+      opacityRange: 0.08
+    });
+    this.harborStats.signalRings += 1;
   }
 
   harborPoint(contact, right, forward, rotation) {
