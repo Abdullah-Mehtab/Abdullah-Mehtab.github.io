@@ -27,18 +27,18 @@ const ROAD_LAYER = {
 };
 
 const ROAD_DETAIL_OPACITY = {
-  wear: 0.15,
-  seam: 0.12,
-  transitionApron: 0.085,
-  transitionEdge: 0.13,
-  transitionGuide: 0.2,
-  marker: 0.34
+  wear: 0.11,
+  seam: 0.085,
+  transitionApron: 0.065,
+  transitionEdge: 0.09,
+  transitionGuide: 0.14,
+  marker: 0.23
 };
 
 const ROAD_VERGE_OPACITY = {
-  security: 0.082,
-  dirt: 0.052,
-  default: 0.06
+  security: 0.052,
+  dirt: 0.038,
+  default: 0.042
 };
 
 export class Roads {
@@ -502,6 +502,7 @@ export class Roads {
     const apronMesh = this.roadGroup.getObjectByName('ROAD_Transition_Aprons');
     const edgeMesh = this.roadGroup.getObjectByName('ROAD_Transition_Edge_Bands');
     const guideMesh = this.roadGroup.getObjectByName('ROAD_Transition_Guide_Bars');
+    const chevronMesh = this.roadGroup.getObjectByName('ROAD_Guidance_Chevrons');
     const opacityOf = (mesh) => Number((mesh?.material?.opacity ?? 0).toFixed(3));
     const lowTierLayers = this.getLowTierLayerStats();
     return {
@@ -516,7 +517,8 @@ export class Roads {
         seam: opacityOf(seamMesh),
         transitionApron: opacityOf(apronMesh),
         transitionEdge: opacityOf(edgeMesh),
-        transitionGuide: opacityOf(guideMesh)
+        transitionGuide: opacityOf(guideMesh),
+        marker: opacityOf(chevronMesh)
       },
       transitionApronPattern: apronMesh?.material?.userData?.pattern || 'missing',
       transitionApronAlphaMapped: Boolean(apronMesh?.material?.alphaMap),

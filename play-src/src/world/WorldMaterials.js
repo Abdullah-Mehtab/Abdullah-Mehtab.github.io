@@ -128,12 +128,12 @@ export function createWorldMaterials() {
       polygonOffsetFactor: -18,
       polygonOffsetUnits: -18
     }),
-    roadLine: new THREE.MeshBasicMaterial({ color: 0xf4ddb1, transparent: true, opacity: 0.36 }),
-    roadLineBright: new THREE.MeshBasicMaterial({ color: 0x9df7ff, transparent: true, opacity: 0.4 }),
+    roadLine: new THREE.MeshBasicMaterial({ color: 0xf4ddb1, transparent: true, opacity: 0.28 }),
+    roadLineBright: new THREE.MeshBasicMaterial({ color: 0x9df7ff, transparent: true, opacity: 0.32 }),
     surfaceSeam: new THREE.MeshBasicMaterial({
       color: 0xffffff,
       transparent: true,
-      opacity: 0.2,
+      opacity: 0.14,
       alphaMap: surfaceSeamAlpha,
       alphaTest: 0.018,
       depthWrite: false,
@@ -146,7 +146,7 @@ export function createWorldMaterials() {
     surfacePaver: new THREE.MeshBasicMaterial({
       color: 0xffffff,
       transparent: true,
-      opacity: 0.1,
+      opacity: 0.072,
       alphaMap: surfacePaverAlpha,
       alphaTest: 0.02,
       depthWrite: false,
@@ -159,7 +159,7 @@ export function createWorldMaterials() {
     surfaceAccent: new THREE.MeshBasicMaterial({
       color: 0xffffff,
       transparent: true,
-      opacity: 0.24,
+      opacity: 0.16,
       alphaMap: surfaceAccentAlpha,
       alphaTest: 0.018,
       depthWrite: false,
@@ -172,7 +172,7 @@ export function createWorldMaterials() {
     meadowDetail: new THREE.MeshBasicMaterial({
       color: 0xffffff,
       transparent: true,
-      opacity: 0.078,
+      opacity: 0.055,
       alphaMap: meadowDetailAlpha,
       alphaTest: 0.014,
       depthWrite: false,
@@ -186,7 +186,7 @@ export function createWorldMaterials() {
     fieldRibbon: new THREE.MeshBasicMaterial({
       color: 0xffffff,
       transparent: true,
-      opacity: 0.105,
+      opacity: 0.072,
       alphaMap: fieldRibbonAlpha,
       alphaTest: 0.018,
       depthWrite: false,
