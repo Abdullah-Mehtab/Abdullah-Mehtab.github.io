@@ -2294,6 +2294,9 @@ function assertVerification(result) {
   if ((result.todoYard?.lamps || 0) < 3) failures.push(`todo yard probe failed: lamps=${result.todoYard?.lamps || 0}`);
   if ((result.todoYard?.queueRails || 0) < 12) failures.push(`todo yard probe failed: queueRails=${result.todoYard?.queueRails || 0}`);
   if ((result.todoYard?.taskCards || 0) < 6) failures.push(`todo yard probe failed: taskCards=${result.todoYard?.taskCards || 0}`);
+  if ((result.todoYard?.queuePips || 0) < 12) failures.push(`todo yard probe failed: queuePips=${result.todoYard?.queuePips || 0}`);
+  if ((result.todoYard?.floatingTasks || 0) < 8) failures.push(`todo yard probe failed: floatingTasks=${result.todoYard?.floatingTasks || 0}`);
+  if ((result.todoYard?.reviewRings || 0) < 1) failures.push(`todo yard probe failed: reviewRings=${result.todoYard?.reviewRings || 0}`);
   if ((result.skillsTerminal?.signalNodes || 0) < 12) failures.push(`skills terminal probe failed: signalNodes=${result.skillsTerminal?.signalNodes || 0}`);
   if ((result.skillsTerminal?.codeCards || 0) < 8) failures.push(`skills terminal probe failed: codeCards=${result.skillsTerminal?.codeCards || 0}`);
   if ((result.skillsTerminal?.syncRings || 0) < 1) failures.push(`skills terminal probe failed: syncRings=${result.skillsTerminal?.syncRings || 0}`);

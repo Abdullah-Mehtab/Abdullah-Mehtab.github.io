@@ -203,7 +203,10 @@ export class SetPieces {
       authoredAssets: 0,
       lamps: 0,
       queueRails: 0,
-      taskCards: 0
+      taskCards: 0,
+      queuePips: 0,
+      floatingTasks: 0,
+      reviewRings: 0
     };
     this.skillsTerminalStats = {
       signalNodes: 0,
@@ -262,6 +265,10 @@ export class SetPieces {
       }
       if (item.kind === 'skillsTerminalLife') {
         this.updateSkillsTerminalLife(item, elapsed);
+        continue;
+      }
+      if (item.kind === 'todoYardLife') {
+        this.updateTodoYardLife(item, elapsed);
         continue;
       }
       if (item.instanceMesh) {
@@ -868,6 +875,7 @@ export class SetPieces {
     }
     this.addCompositionDetailAsset(group, 'EnvPolishWorkshopProcessRail', todo.position[0] - 5.4, todo.position[2] - 5.4, 0.38, 0.72, 'rails');
     this.createTodoBuildYardComposition(group, todo);
+    this.createTodoBuildYardLife(group, todo);
 
     const career = findZone('career');
     this.addSign(group, 'CAREER', 'Signal Office', career.position[0] - 10, career.position[2] + 9, -0.35, 0xb6a0ff, 2.4, 'CareerSign');
@@ -961,7 +969,8 @@ export class SetPieces {
         object.name === 'CvDocumentStream' ||
         object.name.startsWith('BehindBuild') ||
         object.name.startsWith('ProjectsYard') ||
-        object.name.startsWith('SkillsTerminal')
+        object.name.startsWith('SkillsTerminal') ||
+        object.name.startsWith('TodoYard')
     });
     this.registerDistrictDressingBatches(group);
     this.world.scene.add(group);
@@ -3395,6 +3404,140 @@ export class SetPieces {
     ]) {
       const [lampX, lampZ] = this.todoPoint(todo, right, forward, rotation);
       this.addTodoYardLamp(group, lampX, lampZ, color, 2.45, 'TodoBuildYardLamp');
+    }
+  }
+
+  createTodoBuildYardLife(group, todo) {
+    const rotation = 0.34;
+    const pipGeometry = new THREE.OctahedronGeometry(0.22, 0);
+    const pipMaterial = new THREE.MeshBasicMaterial({
+      color: 0xffffff,
+      vertexColors: true,
+      transparent: true,
+      opacity: 0.76,
+      depthWrite: false
+    });
+    const pipCount = 12;
+    const pipMesh = new THREE.InstancedMesh(pipGeometry, pipMaterial, pipCount);
+    pipMesh.name = 'TodoYardQueuePips';
+    pipMesh.frustumCulled = false;
+    pipMesh.renderOrder = 43;
+    group.add(pipMesh);
+
+    const taskGeometry = new THREE.BoxGeometry(0.88, 0.52, 0.045);
+    const taskMaterial = new THREE.MeshBasicMaterial({
+      color: 0xffffff,
+      vertexColors: true,
+      transparent: true,
+      opacity: 0.62,
+      depthWrite: false,
+      blending: THREE.AdditiveBlending
+    });
+    const taskSpecs = [
+      [-8.8, -5.8, 1.38, 0.44, 0.82, 0.0, 0xb6a0ff],
+      [-6.8, -4.7, 1.72, 0.38, 0.74, 0.44, 0x68d8ff],
+      [-4.6, -3.6, 1.48, 0.34, 0.78, 0.88, 0xffc36a],
+      [-2.2, -2.6, 1.92, 0.28, 0.7, 1.32, 0xe6f3ff],
+      [0.8, -1.4, 1.62, 0.3, 0.76, 1.76, 0xb6a0ff],
+      [3.8, -0.3, 2.04, 0.36, 0.68, 2.2, 0x68d8ff],
+      [6.6, 0.7, 1.58, 0.3, 0.72, 2.64, 0xffc36a],
+      [9.6, 1.7, 1.86, 0.24, 0.66, 3.08, 0xe6f3ff]
+    ];
+    const taskMesh = new THREE.InstancedMesh(taskGeometry, taskMaterial, taskSpecs.length);
+    taskMesh.name = 'TodoYardFloatingTasks';
+    taskMesh.frustumCulled = false;
+    taskMesh.renderOrder = 44;
+    group.add(taskMesh);
+
+    const [ringX, ringZ] = this.todoPoint(todo, 0.6, 1.0, rotation);
+    const ringMaterial = new THREE.MeshBasicMaterial({
+      color: 0xb6a0ff,
+      transparent: true,
+      opacity: 0.42,
+      depthWrite: false,
+      side: THREE.DoubleSide
+    });
+    const ring = new THREE.Mesh(new THREE.RingGeometry(1.1, 1.22, 6), ringMaterial);
+    ring.name = 'TodoYardReviewRing';
+    ring.position.set(ringX, 2.1, ringZ);
+    ring.rotation.y = rotation;
+    ring.renderOrder = 45;
+    group.add(ring);
+
+    const pipColors = [0xb6a0ff, 0x68d8ff, 0xffc36a, 0xe6f3ff];
+    const pipEntries = Array.from({ length: pipCount }, (_, index) => {
+      const lane = index % 2 === 0 ? -11.7 : -8.9;
+      const forward = -6.6 + Math.floor(index / 2) * 2.05;
+      const [x, z] = this.todoPoint(todo, lane, forward, rotation);
+      pipMesh.setColorAt(index, new THREE.Color(pipColors[index % pipColors.length]));
+      return {
+        index,
+        x,
+        z,
+        baseY: 0.76 + (index % 3) * 0.04,
+        phase: index * 0.42,
+        speed: 0.76 + (index % 4) * 0.04,
+        scale: 0.86 + (index % 3) * 0.06
+      };
+    });
+    const taskEntries = taskSpecs.map(([right, forward, y, yaw, scale, phase, color], index) => {
+      const [x, z] = this.todoPoint(todo, right, forward, rotation);
+      taskMesh.setColorAt(index, new THREE.Color(color));
+      return {
+        index,
+        x,
+        z,
+        baseY: y,
+        yaw,
+        scale,
+        phase,
+        speed: 0.52 + index * 0.035
+      };
+    });
+
+    if (pipMesh.instanceColor) pipMesh.instanceColor.needsUpdate = true;
+    if (taskMesh.instanceColor) taskMesh.instanceColor.needsUpdate = true;
+    this.todoYardStats.queuePips += pipCount;
+    this.todoYardStats.floatingTasks += taskSpecs.length;
+    this.todoYardStats.reviewRings += 1;
+    this.animated.push({ kind: 'todoYardLife', pipMesh, pipEntries, taskMesh, taskEntries, ring });
+    this.updateTodoYardLife({ pipMesh, pipEntries, taskMesh, taskEntries, ring }, 0);
+  }
+
+  updateTodoYardLife(life, elapsed) {
+    if (life.pipMesh?.visible) {
+      for (const entry of life.pipEntries) {
+        const phase = elapsed * entry.speed + entry.phase;
+        this.lifeDummy.position.set(entry.x, entry.baseY + Math.sin(phase * 1.4) * 0.12, entry.z);
+        this.lifeDummy.rotation.set(elapsed * 0.8 + entry.phase, elapsed * 1.25 + entry.index, elapsed * 0.55);
+        this.lifeDummy.scale.setScalar(entry.scale + Math.sin(phase * 1.6) * 0.08);
+        this.lifeDummy.updateMatrix();
+        life.pipMesh.setMatrixAt(entry.index, this.lifeDummy.matrix);
+      }
+      life.pipMesh.instanceMatrix.needsUpdate = true;
+      life.pipMesh.material.opacity = 0.66 + Math.sin(elapsed * 1.7) * 0.08;
+      this.lifeStats.motionSamples += life.pipEntries.length;
+    }
+
+    if (life.taskMesh?.visible) {
+      for (const entry of life.taskEntries) {
+        const phase = elapsed * entry.speed + entry.phase;
+        this.lifeDummy.position.set(entry.x, entry.baseY + Math.sin(phase) * 0.17, entry.z);
+        this.lifeDummy.rotation.set(Math.sin(phase * 0.64) * 0.05, entry.yaw + Math.sin(phase * 0.86) * 0.12, Math.sin(phase * 1.1) * 0.08);
+        this.lifeDummy.scale.setScalar(entry.scale + Math.sin(phase * 1.32) * 0.03);
+        this.lifeDummy.updateMatrix();
+        life.taskMesh.setMatrixAt(entry.index, this.lifeDummy.matrix);
+      }
+      life.taskMesh.instanceMatrix.needsUpdate = true;
+      life.taskMesh.material.opacity = 0.56 + Math.sin(elapsed * 1.15) * 0.08;
+      this.lifeStats.motionSamples += life.taskEntries.length;
+    }
+
+    if (life.ring?.visible) {
+      life.ring.rotation.z = elapsed * 0.72;
+      life.ring.scale.setScalar(1 + Math.sin(elapsed * 1.8) * 0.12);
+      life.ring.material.opacity = 0.34 + Math.sin(elapsed * 1.45) * 0.1;
+      this.lifeStats.motionSamples += 1;
     }
   }
 
