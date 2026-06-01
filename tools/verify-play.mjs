@@ -189,6 +189,7 @@ try {
   const activeSnapshots = { driving: drivingStressMetrics, surfaceFeedback: surfaceStressMetrics };
   const metrics = await collectRuntimeMetrics(page, loadMs, gameplay, water, surfaces, surfaceFeedback, routeReplay, circuit, worldLife, activeSnapshots);
   const highQuality = await captureHighQuality(browser);
+  const highDpiDesktop = await captureHighDpiDesktop(browser);
   const mobile = await captureMobile(browser);
   const mobileSavedPreference = await captureMobileSavedPreference(browser);
   const result = {
@@ -199,6 +200,7 @@ try {
     glbAssets: getGlbAssetSizes(),
     roadTopology: sampleRoadTopology(),
     highQuality,
+    highDpiDesktop,
     mobile,
     mobileSavedPreference,
     titleUi,
@@ -1630,9 +1632,27 @@ async function collectRuntimeMetrics(page, loadMs, gameplay, water, surfaces, su
 }
 
 async function captureHighQuality(browser) {
+  return captureHighQualityProbe(browser, {
+    width: 1440,
+    height: 900,
+    deviceScaleFactor: 1,
+    screenshotName: 'high-quality-start.png'
+  });
+}
+
+async function captureHighDpiDesktop(browser) {
+  return captureHighQualityProbe(browser, {
+    width: 2560,
+    height: 1440,
+    deviceScaleFactor: 2,
+    screenshotName: 'high-dpi-desktop.png'
+  });
+}
+
+async function captureHighQualityProbe(browser, { width, height, deviceScaleFactor, screenshotName }) {
   const page = await browser.newPage();
   wirePageDiagnostics(page);
-  await page.setViewport({ width: 1440, height: 900, deviceScaleFactor: 1 });
+  await page.setViewport({ width, height, deviceScaleFactor });
   await page.evaluateOnNewDocument(() => {
     localStorage.setItem('portfolio-drive-landscape-quality', 'high');
     localStorage.setItem('portfolio-drive-muted', '1');
@@ -1642,7 +1662,7 @@ async function captureHighQuality(browser) {
   await waitForReady(page);
   await page.evaluate(() => window.__portfolioDrive.start());
   await delay(700);
-  await page.screenshot({ path: join(outputDir, 'high-quality-start.png'), fullPage: true });
+  await page.screenshot({ path: join(outputDir, screenshotName), fullPage: true });
   const sample = await page.evaluate(async () => {
     const frameDeltas = [];
     await new Promise((resolveFrames) => {
@@ -1680,10 +1700,17 @@ async function captureHighQuality(browser) {
     return {
       ready: window.__portfolioDrive.ready(),
       canvasSample: window.__portfolioDrive.sampleCanvas(),
+      viewportWidth: window.innerWidth,
+      viewportHeight: window.innerHeight,
+      devicePixelRatio: window.devicePixelRatio || 1,
+      canvasWidth: game.renderer.domElement.width,
+      canvasHeight: game.renderer.domElement.height,
+      renderPixels: game.renderer.domElement.width * game.renderer.domElement.height,
       quality: game.world.landscapeQuality,
       savedQuality: localStorage.getItem('portfolio-drive-landscape-quality'),
       pixelRatio: game.renderer.getPixelRatio(),
       maxPixelRatio: game.rendererSystem.maxPixelRatio,
+      maxRenderPixels: game.rendererSystem.maxRenderPixels,
       postprocessing: game.rendererSystem.postprocessingEnabled,
       shadows: game.renderer.shadowMap.enabled,
       composerAllocated: Boolean(game.rendererSystem.composer),
@@ -2155,6 +2182,21 @@ function assertVerification(result) {
   if ((result.highQuality?.fps || 0) < 50) failures.push(`high quality FPS too low: ${result.highQuality?.fps}`);
   if ((result.highQuality?.calls || 0) > 700) failures.push(`high quality draw-call budget exceeded: ${result.highQuality?.calls}`);
   if ((result.highQuality?.triangles || 0) > 330000) failures.push(`high quality triangle budget exceeded: ${result.highQuality?.triangles}`);
+  if (!result.highDpiDesktop?.ready || (result.highDpiDesktop?.canvasSample || 0) <= 0) failures.push('high-DPI desktop probe failed: canvas did not render');
+  if (result.highDpiDesktop?.quality !== 'high') failures.push(`high-DPI desktop probe failed: quality=${result.highDpiDesktop?.quality || 'none'}`);
+  if (!result.highDpiDesktop?.postprocessing || !result.highDpiDesktop?.shadows) failures.push('high-DPI desktop probe failed: post/shadow tier inactive');
+  if (!result.highDpiDesktop?.composerAllocated || !result.highDpiDesktop?.bloomAllocated) {
+    failures.push('high-DPI desktop renderer probe failed: post stack was not allocated');
+  }
+  if ((result.highDpiDesktop?.renderPixels || Infinity) > 2100000) {
+    failures.push(`high-DPI desktop render pixel budget exceeded: ${result.highDpiDesktop?.renderPixels}`);
+  }
+  if ((result.highDpiDesktop?.pixelRatio || Infinity) > 0.8) {
+    failures.push(`high-DPI desktop pixel ratio too high: ${result.highDpiDesktop?.pixelRatio}`);
+  }
+  if ((result.highDpiDesktop?.p95FrameMs || Infinity) > 24) {
+    failures.push(`high-DPI desktop p95 frame time too high: ${result.highDpiDesktop?.p95FrameMs}ms`);
+  }
   if (!result.lighting?.sun) failures.push('lighting probe failed: missing sun stats');
   if ((result.lighting?.sun?.position?.[1] || 0) < 30 || (result.lighting?.sun?.position?.[1] || 0) > 45) {
     failures.push(`lighting probe failed: sun height=${result.lighting?.sun?.position?.[1]}`);

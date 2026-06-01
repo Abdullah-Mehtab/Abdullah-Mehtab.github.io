@@ -6,6 +6,13 @@ import { RenderPass } from 'three/examples/jsm/postprocessing/RenderPass.js';
 import { UnrealBloomPass } from 'three/examples/jsm/postprocessing/UnrealBloomPass.js';
 import { OutputPass } from 'three/examples/jsm/postprocessing/OutputPass.js';
 
+const QUALITY_PROFILES = {
+  low: { pixelRatio: 1, minPixelRatio: 0.45, maxRenderPixels: 1100000, shadows: false, post: false, bloom: 0.04 },
+  medium: { pixelRatio: 1.15, minPixelRatio: 0.5, maxRenderPixels: 1720000, shadows: false, post: false, bloom: 0.08 },
+  high: { pixelRatio: 1.2, minPixelRatio: 0.5, maxRenderPixels: 1900000, shadows: true, post: true, bloom: 0.16 }
+};
+const DEFAULT_QUALITY_PROFILE = QUALITY_PROFILES.medium;
+
 export class GameRenderer {
   constructor({ canvas, scene, camera }) {
     this.canvas = canvas;
@@ -20,11 +27,13 @@ export class GameRenderer {
     this.composer = null;
     this.bloom = null;
     this.postprocessingEnabled = false;
-    this.maxPixelRatio = 1.15;
+    this.qualityProfile = DEFAULT_QUALITY_PROFILE;
+    this.maxPixelRatio = DEFAULT_QUALITY_PROFILE.pixelRatio;
+    this.maxRenderPixels = DEFAULT_QUALITY_PROFILE.maxRenderPixels;
   }
 
   setup() {
-    this.renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, this.maxPixelRatio));
+    this.applyPixelRatio();
     this.renderer.setSize(window.innerWidth, window.innerHeight, false);
     this.renderer.shadowMap.enabled = false;
     this.renderer.shadowMap.type = THREE.PCFShadowMap;
@@ -34,13 +43,11 @@ export class GameRenderer {
   }
 
   setQuality(quality) {
-    const profile = {
-      low: { pixelRatio: 1, shadows: false, post: false, bloom: 0.04 },
-      medium: { pixelRatio: 1.15, shadows: false, post: false, bloom: 0.08 },
-      high: { pixelRatio: 1.2, shadows: true, post: true, bloom: 0.16 }
-    }[quality] || { pixelRatio: 1.15, shadows: false, post: false, bloom: 0.08 };
+    const profile = QUALITY_PROFILES[quality] || DEFAULT_QUALITY_PROFILE;
+    this.qualityProfile = profile;
     this.maxPixelRatio = profile.pixelRatio;
-    this.renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, this.maxPixelRatio));
+    this.maxRenderPixels = profile.maxRenderPixels;
+    this.applyPixelRatio();
     this.renderer.shadowMap.enabled = profile.shadows;
     this.postprocessingEnabled = profile.post;
     if (profile.post) this.ensureComposer();
@@ -72,10 +79,28 @@ export class GameRenderer {
   }
 
   resize() {
-    const pixelRatio = Math.min(window.devicePixelRatio || 1, this.maxPixelRatio);
-    this.renderer.setPixelRatio(pixelRatio);
+    const pixelRatio = this.applyPixelRatio();
     this.renderer.setSize(window.innerWidth, window.innerHeight, false);
+    this.composer?.setPixelRatio?.(pixelRatio);
     this.composer?.setSize(window.innerWidth, window.innerHeight);
     this.bloom?.resolution.set(window.innerWidth, window.innerHeight);
+  }
+
+  applyPixelRatio() {
+    const pixelRatio = this.getBoundedPixelRatio();
+    this.renderer.setPixelRatio(pixelRatio);
+    return pixelRatio;
+  }
+
+  getBoundedPixelRatio() {
+    const profile = this.qualityProfile || DEFAULT_QUALITY_PROFILE;
+    const width = Math.max(1, window.innerWidth || this.canvas.clientWidth || 1);
+    const height = Math.max(1, window.innerHeight || this.canvas.clientHeight || 1);
+    const budgetRatio = Math.sqrt(profile.maxRenderPixels / (width * height));
+    return Math.min(
+      window.devicePixelRatio || 1,
+      profile.pixelRatio,
+      Math.max(profile.minPixelRatio, budgetRatio)
+    );
   }
 }
