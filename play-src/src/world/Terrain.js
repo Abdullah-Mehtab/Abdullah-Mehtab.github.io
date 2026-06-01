@@ -27,7 +27,16 @@ export class Terrain {
     this.surfaceDetailStats = { districts: 0, seams: 0, pavers: 0, accents: 0, breakups: 0, opacities: {}, alphaMapped: {} };
     this.meadowDetailStats = { patches: 0, colorVariants: 0, opacity: 0, alphaMapped: false };
     this.fieldMotifEntries = [];
-    this.fieldMotifStats = { clusters: 0, berms: 0, ribbons: 0, visibleBerms: 0, visibleRibbons: 0, visibleTotal: 0 };
+    this.fieldMotifStats = {
+      clusters: 0,
+      berms: 0,
+      ribbons: 0,
+      visibleBerms: 0,
+      visibleRibbons: 0,
+      visibleTotal: 0,
+      bermGeometryTriangles: 0,
+      ribbonGeometryTriangles: 0
+    };
     this.roadsideFrameEntries = [];
     this.roadsideFrameStats = {
       paths: 0,
@@ -289,6 +298,8 @@ export class Terrain {
       visibleBerms: berms.length,
       visibleRibbons: ribbons.length,
       visibleTotal: berms.length + ribbons.length,
+      bermGeometryTriangles: this.fieldMotifStats.bermGeometryTriangles,
+      ribbonGeometryTriangles: this.fieldMotifStats.ribbonGeometryTriangles,
       ribbonOpacity: materialOpacity(this.world.materials.fieldRibbon),
       ribbonAlphaMapped: Boolean(this.world.materials.fieldRibbon.alphaMap)
     };
@@ -297,9 +308,10 @@ export class Terrain {
 
   addFieldBermInstances(group, specs) {
     if (!specs.length) return;
-    const mesh = new THREE.InstancedMesh(createMoundGeometry(1, 1, 1, 157), this.world.materials.fieldBerm, specs.length);
+    const mesh = new THREE.InstancedMesh(createMoundGeometry(1, 1, 1, 157, 7, 4), this.world.materials.fieldBerm, specs.length);
     mesh.name = 'ToyIslandFieldMotif_Berms';
     mesh.receiveShadow = true;
+    this.fieldMotifStats.bermGeometryTriangles = countGeometryTriangles(mesh.geometry);
     const color = new THREE.Color();
     specs.forEach((spec, index) => {
       this.surfaceDetailDummy.position.set(spec.x, 0.13 + index * 0.0002, spec.z);
@@ -321,6 +333,7 @@ export class Terrain {
     mesh.name = 'ToyIslandFieldMotif_Ribbons';
     mesh.renderOrder = 39;
     mesh.frustumCulled = false;
+    this.fieldMotifStats.ribbonGeometryTriangles = countGeometryTriangles(mesh.geometry);
     const color = new THREE.Color();
     specs.forEach((spec, index) => {
       this.surfaceDetailDummy.position.set(spec.x, 0.188 + index * 0.00002, spec.z);
@@ -1108,9 +1121,7 @@ function isNearRoad(x, z, margin) {
   });
 }
 
-function createMoundGeometry(width, depth, height, seed) {
-  const columns = 9;
-  const rows = 5;
+function createMoundGeometry(width, depth, height, seed, columns = 9, rows = 5) {
   const vertices = [];
   const uvs = [];
   const indices = [];
@@ -1143,6 +1154,11 @@ function createMoundGeometry(width, depth, height, seed) {
   geometry.setIndex(indices);
   geometry.computeVertexNormals();
   return geometry;
+}
+
+function countGeometryTriangles(geometry) {
+  if (geometry.index) return geometry.index.count / 3;
+  return (geometry.getAttribute('position')?.count || 0) / 3;
 }
 
 function createShelfGeometry(width, depth) {

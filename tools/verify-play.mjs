@@ -2494,6 +2494,8 @@ function assertVerification(result) {
   if ((result.fieldMotifs?.berms || 0) < 44) failures.push(`field motif probe failed: berms=${result.fieldMotifs?.berms || 0}`);
   if ((result.fieldMotifs?.ribbons || 0) < 88) failures.push(`field motif probe failed: ribbons=${result.fieldMotifs?.ribbons || 0}`);
   if ((result.fieldMotifs?.visibleTotal || 0) < 132) failures.push(`field motif probe failed: visibleTotal=${result.fieldMotifs?.visibleTotal || 0}`);
+  if ((result.fieldMotifs?.bermGeometryTriangles || 0) <= 0) failures.push(`field motif geometry probe failed: bermGeometryTriangles=${result.fieldMotifs?.bermGeometryTriangles || 0}`);
+  if ((result.fieldMotifs?.bermGeometryTriangles || 0) > 36) failures.push(`field motif geometry budget failed: bermGeometryTriangles=${result.fieldMotifs?.bermGeometryTriangles || 0}`);
   if ((result.fieldMotifs?.ribbonOpacity || 1) > 0.08) failures.push(`field motif tone probe failed: ribbonOpacity=${result.fieldMotifs?.ribbonOpacity}`);
   if (!result.fieldMotifs?.ribbonAlphaMapped) failures.push('field motif tone probe failed: ribbon alpha map missing');
   if ((result.roadsideFrames?.segments || 0) < 50) failures.push(`roadside frame probe failed: segments=${result.roadsideFrames?.segments || 0}`);
