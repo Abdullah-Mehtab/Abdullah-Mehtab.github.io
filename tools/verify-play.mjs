@@ -1418,7 +1418,7 @@ async function collectRuntimeMetrics(page, loadMs, gameplay, water, surfaces, su
     };
 
     function sampleMaterialPalette(materials) {
-      const names = ['ground', 'meadowLight', 'meadowDark', 'stoneRoad', 'plazaRoad', 'securityRoad', 'roadShoulder', 'roadCurb', 'stuntRamp', 'dirtRoad'];
+      const names = ['ground', 'meadowLight', 'meadowDark', 'stoneRoad', 'plazaRoad', 'securityRoad', 'roadShoulder', 'roadCurb', 'stuntRamp', 'dirtRoad', 'sand', 'paleStone', 'warmStone'];
       const palette = {};
       for (const name of names) {
         const material = materials[name];
@@ -2158,6 +2158,15 @@ function assertVerification(result) {
   }
   if ((result.materialPalette?.meadowDark?.luma || 0) < 0.45) {
     failures.push(`material palette probe failed: meadowDark luma=${result.materialPalette?.meadowDark?.luma || 0}`);
+  }
+  if ((result.materialPalette?.sand?.luma || 0) < 0.62 || (result.materialPalette?.sand?.luma || 0) > 0.78) {
+    failures.push(`material palette probe failed: sand luma=${result.materialPalette?.sand?.luma || 0}`);
+  }
+  if ((result.materialPalette?.paleStone?.luma || 0) < 0.68 || (result.materialPalette?.paleStone?.luma || 0) > 0.86) {
+    failures.push(`material palette probe failed: paleStone luma=${result.materialPalette?.paleStone?.luma || 0}`);
+  }
+  if ((result.materialPalette?.warmStone?.luma || 0) < 0.62 || (result.materialPalette?.warmStone?.luma || 0) > 0.8) {
+    failures.push(`material palette probe failed: warmStone luma=${result.materialPalette?.warmStone?.luma || 0}`);
   }
   const roadGrassContrast = result.materialPalette?.roadGrassContrast ?? 0;
   if (roadGrassContrast < 0.16 || roadGrassContrast > 0.29) {

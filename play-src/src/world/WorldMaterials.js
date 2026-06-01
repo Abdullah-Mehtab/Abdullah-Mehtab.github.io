@@ -82,7 +82,7 @@ export function createWorldMaterials() {
   grassTexture.minFilter = THREE.LinearMipmapLinearFilter;
   grassTexture.anisotropy = 12;
 
-  const stoneTexture = makeNoiseTexture(['#626b64', '#777a6c', '#56605a', '#8a826d'], 256, 720);
+  const stoneTexture = makeNoiseTexture(['#5d6965', '#738078', '#55635d', '#8a866f'], 256, 720);
   stoneTexture.wrapS = THREE.RepeatWrapping;
   stoneTexture.wrapT = THREE.RepeatWrapping;
   stoneTexture.repeat.set(2, 18);
@@ -101,23 +101,23 @@ export function createWorldMaterials() {
 
   return {
     ground: new THREE.MeshStandardMaterial({
-      color: 0x78bd63,
+      color: 0x72c069,
       map: grassTexture,
       roughness: 0.96,
       metalness: 0.01,
       vertexColors: false,
       side: THREE.DoubleSide
     }),
-    meadowLight: new THREE.MeshStandardMaterial({ color: 0x8bcf68, roughness: 0.98, metalness: 0.0 }),
-    meadowDark: new THREE.MeshStandardMaterial({ color: 0x4f8e4e, roughness: 0.98, metalness: 0.0 }),
+    meadowLight: new THREE.MeshStandardMaterial({ color: 0x91d874, roughness: 0.98, metalness: 0.0 }),
+    meadowDark: new THREE.MeshStandardMaterial({ color: 0x559a58, roughness: 0.98, metalness: 0.0 }),
     flowerField: new THREE.MeshBasicMaterial({ color: 0xf4b8be, transparent: true, opacity: 0.22, depthWrite: false }),
     wildflowerBlue: new THREE.MeshBasicMaterial({ color: 0x8fddff, transparent: true, opacity: 0.2, depthWrite: false }),
-    stoneRoad: new THREE.MeshStandardMaterial({ color: 0x687067, map: stoneTexture, roughness: 0.92, metalness: 0.02 }),
-    plazaRoad: new THREE.MeshStandardMaterial({ color: 0xc7ba95, map: stoneTexture, roughness: 0.9, metalness: 0.02 }),
+    stoneRoad: new THREE.MeshStandardMaterial({ color: 0x5f6d68, map: stoneTexture, roughness: 0.92, metalness: 0.02 }),
+    plazaRoad: new THREE.MeshStandardMaterial({ color: 0xc9c4a7, map: stoneTexture, roughness: 0.9, metalness: 0.02 }),
     securityRoad: new THREE.MeshStandardMaterial({ color: 0x24434c, roughness: 0.74, metalness: 0.1, emissive: 0x0b2831, emissiveIntensity: 0.28 }),
     roadEdge: new THREE.MeshStandardMaterial({ color: 0x4a5148, roughness: 0.94, metalness: 0.02 }),
-    roadShoulder: new THREE.MeshStandardMaterial({ color: 0x8a8665, roughness: 0.96, metalness: 0.0 }),
-    roadCurb: new THREE.MeshStandardMaterial({ color: 0xdccca1, roughness: 0.86, metalness: 0.02 }),
+    roadShoulder: new THREE.MeshStandardMaterial({ color: 0x969276, roughness: 0.96, metalness: 0.0 }),
+    roadCurb: new THREE.MeshStandardMaterial({ color: 0xdfd4b2, roughness: 0.86, metalness: 0.02 }),
     roadVerge: new THREE.MeshBasicMaterial({
       color: 0xffffff,
       transparent: true,
@@ -196,21 +196,21 @@ export function createWorldMaterials() {
       polygonOffsetFactor: -31,
       polygonOffsetUnits: -31
     }),
-    stuntRamp: new THREE.MeshStandardMaterial({ color: 0xa67555, roughness: 0.86, metalness: 0.02 }),
-    dirtRoad: new THREE.MeshStandardMaterial({ color: 0xaa7a43, roughness: 0.98, metalness: 0.0 }),
-    sand: new THREE.MeshStandardMaterial({ color: 0xf2bc82, map: sandTexture, roughness: 0.98, metalness: 0.0 }),
+    stuntRamp: new THREE.MeshStandardMaterial({ color: 0x9e7563, roughness: 0.86, metalness: 0.02 }),
+    dirtRoad: new THREE.MeshStandardMaterial({ color: 0x9c7445, roughness: 0.98, metalness: 0.0 }),
+    sand: new THREE.MeshStandardMaterial({ color: 0xe9bd8a, map: sandTexture, roughness: 0.98, metalness: 0.0 }),
     grassSandBlend: makeRadialBlendMaterial({
       inner: 136,
       outer: 151,
       colorA: 0x245b26,
-      colorB: 0xe8c987,
+      colorB: 0xe4ca91,
       opacity: 0.58,
       noise: 0.28
     }),
     wetSandBlend: makeRadialBlendMaterial({
       inner: 151,
       outer: 166,
-      colorA: 0xd1ad6e,
+      colorA: 0xcab37a,
       colorB: 0xa5e6dc,
       opacity: 0.34,
       noise: 0.24
@@ -225,14 +225,14 @@ export function createWorldMaterials() {
       animated: true
     }),
     cliff: new THREE.MeshStandardMaterial({ color: 0x5c5146, roughness: 0.92, metalness: 0.01 }),
-    shoreCliff: new THREE.MeshStandardMaterial({ color: 0x9b7650, roughness: 0.96, metalness: 0.0 }),
+    shoreCliff: new THREE.MeshStandardMaterial({ color: 0x8f795c, roughness: 0.96, metalness: 0.0 }),
     shallow: new THREE.MeshBasicMaterial({ color: 0x79d6d0, transparent: true, opacity: 0.16, depthWrite: false }),
     foam: new THREE.MeshBasicMaterial({ color: 0xf1fff6, transparent: true, opacity: 0.26, depthWrite: false }),
     wood: new THREE.MeshStandardMaterial({ color: 0x8a542c, roughness: 0.86, metalness: 0.02 }),
     darkWood: new THREE.MeshStandardMaterial({ color: 0x241711, roughness: 0.88, metalness: 0.03 }),
     stone: new THREE.MeshStandardMaterial({ color: 0x827968, roughness: 0.86, metalness: 0.04 }),
-    paleStone: new THREE.MeshStandardMaterial({ color: 0xd4c69d, roughness: 0.82, metalness: 0.03 }),
-    warmStone: new THREE.MeshStandardMaterial({ color: 0xe1c482, roughness: 0.84, metalness: 0.02 }),
+    paleStone: new THREE.MeshStandardMaterial({ color: 0xd8cfaa, roughness: 0.82, metalness: 0.03 }),
+    warmStone: new THREE.MeshStandardMaterial({ color: 0xd8bf85, roughness: 0.84, metalness: 0.02 }),
     roof: new THREE.MeshStandardMaterial({ color: 0x293845, roughness: 0.78, metalness: 0.08 }),
     bannerRed: new THREE.MeshStandardMaterial({ color: 0xa43130, roughness: 0.78, metalness: 0.03 }),
     bannerBlue: new THREE.MeshStandardMaterial({ color: 0x2d5f86, roughness: 0.78, metalness: 0.03 }),
@@ -682,9 +682,9 @@ function makeSandTexture(size) {
   canvas.height = size;
   const ctx = canvas.getContext('2d');
   const gradient = ctx.createLinearGradient(0, 0, size, size);
-  gradient.addColorStop(0, '#d1a869');
-  gradient.addColorStop(0.45, '#f0d392');
-  gradient.addColorStop(1, '#b9894e');
+  gradient.addColorStop(0, '#cab37a');
+  gradient.addColorStop(0.45, '#efd6a2');
+  gradient.addColorStop(1, '#a68658');
   ctx.fillStyle = gradient;
   ctx.fillRect(0, 0, size, size);
   for (let i = 0; i < 9000; i += 1) {
@@ -693,7 +693,7 @@ function makeSandTexture(size) {
     const r = 0.45 + pseudoRandom(i * 5.11) * 1.4;
     const light = pseudoRandom(i * 7.71);
     ctx.globalAlpha = 0.08 + pseudoRandom(i * 11.17) * 0.14;
-    ctx.fillStyle = light > 0.54 ? '#fff1be' : '#8f6538';
+    ctx.fillStyle = light > 0.54 ? '#fff0c5' : '#80633f';
     ctx.beginPath();
     ctx.arc(x, y, r, 0, Math.PI * 2);
     ctx.fill();
@@ -717,7 +717,7 @@ function makeGrassTexture(size) {
   canvas.width = size;
   canvas.height = size;
   const ctx = canvas.getContext('2d');
-  ctx.fillStyle = '#2f7132';
+  ctx.fillStyle = '#2f7a39';
   ctx.fillRect(0, 0, size, size);
 
   for (let i = 0; i < 24000; i += 1) {
@@ -727,7 +727,7 @@ function makeGrassTexture(size) {
     const angle = -Math.PI / 2 + (pseudoRandom(i * 11.43) - 0.5) * 0.9;
     const green = pseudoRandom(i * 13.17);
     ctx.globalAlpha = 0.06 + pseudoRandom(i * 17.77) * 0.16;
-    ctx.strokeStyle = green > 0.68 ? '#8fc65a' : green > 0.32 ? '#3f8335' : '#1d4a24';
+    ctx.strokeStyle = green > 0.68 ? '#9ad970' : green > 0.32 ? '#439346' : '#1d562a';
     ctx.lineWidth = 0.55 + pseudoRandom(i * 19.21) * 1.1;
     ctx.beginPath();
     ctx.moveTo(x, y);
@@ -740,7 +740,7 @@ function makeGrassTexture(size) {
     const y = pseudoRandom(i * 31.27) * size;
     const r = 6 + pseudoRandom(i * 41.13) * 22;
     ctx.globalAlpha = 0.035;
-    ctx.fillStyle = pseudoRandom(i * 47.4) > 0.55 ? '#78ad4d' : '#1b3b20';
+    ctx.fillStyle = pseudoRandom(i * 47.4) > 0.55 ? '#82bd58' : '#1f4f2a';
     ctx.beginPath();
     ctx.ellipse(x, y, r, r * (0.25 + pseudoRandom(i * 53.3) * 0.4), pseudoRandom(i * 59.7) * Math.PI, 0, Math.PI * 2);
     ctx.fill();
