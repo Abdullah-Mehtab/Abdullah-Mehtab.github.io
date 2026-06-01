@@ -15,12 +15,21 @@ const POLISH_MATERIAL_LIBRARY_KEYS = {
   polish_tire_rubber: 'cable',
   polish_blue_green_glass: 'glass',
   polish_terminal_screen: 'screen',
+  polish_mint_light: 'glow',
+  polish_amber_light: 'warmGlow',
+  polish_warning_pink: 'glowPink',
+  polish_soft_purple_light: 'glowPink',
+  polish_aqua_marker: 'glowBlue',
+  polish_seafoam_white: 'paleStone',
   polish_palm_leaf: 'crop',
+  polish_planter_flower: 'glowPink',
   polish_salt_rope: 'wood',
   polish_cv_paper: 'paleStone',
   polish_award_gold: 'gold',
   polish_crop_green: 'crop',
-  polish_campus_brick: 'campusBrick'
+  polish_campus_brick: 'campusBrick',
+  polish_distant_islet_sand: 'sand',
+  polish_distant_islet_meadow: 'meadowDark'
 };
 
 export class SetPieces {
