@@ -1231,6 +1231,7 @@ async function collectRuntimeMetrics(page, loadMs, gameplay, water, surfaces, su
       routeComposition: game.world.setPieces?.getRouteCompositionStats?.() || {},
       meadowComposition: game.world.setPieces?.getMeadowCompositionStats?.() || {},
       fieldBackdrops: game.world.setPieces?.getFieldBackdropStats?.() || {},
+      southCorridor: game.world.setPieces?.getSouthCorridorStats?.() || {},
       districtStory: game.world.setPieces?.getDistrictStoryStats?.() || {},
       districtComposition: game.world.setPieces?.getDistrictCompositionStats?.() || {},
       surfacePanels: game.world.setPieces?.getSurfacePanelStats?.() || {},
@@ -2108,6 +2109,12 @@ function assertVerification(result) {
   if ((result.fieldBackdrops?.guideTiles || 0) < 48) failures.push(`field backdrop probe failed: guideTiles=${result.fieldBackdrops?.guideTiles || 0}`);
   if ((result.fieldBackdrops?.lamps || 0) < 16) failures.push(`field backdrop probe failed: lamps=${result.fieldBackdrops?.lamps || 0}`);
   if ((result.fieldBackdrops?.frameRuns || 0) < 80) failures.push(`field backdrop probe failed: frameRuns=${result.fieldBackdrops?.frameRuns || 0}`);
+  if ((result.southCorridor?.clusters || 0) < 3) failures.push(`south corridor probe failed: clusters=${result.southCorridor?.clusters || 0}`);
+  if ((result.southCorridor?.patches || 0) < 6) failures.push(`south corridor probe failed: patches=${result.southCorridor?.patches || 0}`);
+  if ((result.southCorridor?.authoredAssets || 0) < 12) failures.push(`south corridor probe failed: authoredAssets=${result.southCorridor?.authoredAssets || 0}`);
+  if ((result.southCorridor?.guideTiles || 0) < 30) failures.push(`south corridor probe failed: guideTiles=${result.southCorridor?.guideTiles || 0}`);
+  if ((result.southCorridor?.lamps || 0) < 6) failures.push(`south corridor probe failed: lamps=${result.southCorridor?.lamps || 0}`);
+  if ((result.southCorridor?.railRuns || 0) < 3) failures.push(`south corridor probe failed: railRuns=${result.southCorridor?.railRuns || 0}`);
   if ((result.districtStory?.authoredAssets || 0) < 10) failures.push(`district story probe failed: authoredAssets=${result.districtStory?.authoredAssets || 0}`);
   if ((result.districtStory?.crateStacks || 0) < 6) failures.push(`district story probe failed: crateStacks=${result.districtStory?.crateStacks || 0}`);
   if ((result.districtStory?.terminalBanks || 0) < 2) failures.push(`district story probe failed: terminalBanks=${result.districtStory?.terminalBanks || 0}`);

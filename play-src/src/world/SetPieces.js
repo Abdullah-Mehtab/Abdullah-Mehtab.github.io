@@ -121,6 +121,14 @@ export class SetPieces {
       lamps: 0,
       frameRuns: 0
     };
+    this.southCorridorStats = {
+      clusters: 0,
+      patches: 0,
+      authoredAssets: 0,
+      guideTiles: 0,
+      lamps: 0,
+      railRuns: 0
+    };
     this.districtStoryStats = {
       authoredAssets: 0,
       crateStacks: 0,
@@ -207,6 +215,7 @@ export class SetPieces {
     this.createRouteComposition();
     this.createMeadowComposition();
     this.createFieldBackdrops();
+    this.createSouthCorridorForeground();
     this.createLivingSignals();
     this.createDistrictAmbience();
     this.applyQuality();
@@ -391,6 +400,10 @@ export class SetPieces {
 
   getFieldBackdropStats() {
     return { ...this.fieldBackdropStats };
+  }
+
+  getSouthCorridorStats() {
+    return { ...this.southCorridorStats };
   }
 
   getDistrictStoryStats() {
@@ -1858,6 +1871,154 @@ export class SetPieces {
   }
 
   fieldBackdropPoint(cluster, right, forward) {
+    return [
+      cluster.x + Math.cos(cluster.rotation) * right + Math.sin(cluster.rotation) * forward,
+      cluster.z - Math.sin(cluster.rotation) * right + Math.cos(cluster.rotation) * forward
+    ];
+  }
+
+  createSouthCorridorForeground() {
+    const group = this.registerQualityGroup(new THREE.Group(), 'secondary');
+    group.name = 'SETPIECE_South_Corridor_Foreground';
+    const clusters = [
+      {
+        x: -30,
+        z: -68,
+        rotation: 0.18,
+        width: 36,
+        depth: 18,
+        material: this.world.materials.paleStone,
+        accent: this.world.materials.glowBlue,
+        paver: this.world.materials.plazaRoad,
+        seed: 1201,
+        assets: [
+          ['EnvPolishDocumentArcade', -11.2, 2.8, 0.12, 0.72],
+          ['EnvPolishRouteStoryMarker', 9.4, -4.6, -0.18, 0.72],
+          ['EnvPolishRouteVistaKit', -2.6, -6.8, 0.18, 0.7],
+          ['EnvPolishBenchPlanter', 10.6, 5.0, -0.24, 0.7]
+        ]
+      },
+      {
+        x: -42,
+        z: -94,
+        rotation: 0.34,
+        width: 36,
+        depth: 18,
+        material: this.world.materials.wood,
+        accent: this.world.materials.warmGlow,
+        paver: this.world.materials.meadowDark,
+        seed: 1211,
+        assets: [
+          ['EnvPolishBuildWorkbench', -10.6, 2.8, 0.18, 0.66],
+          ['EnvPolishWorkshopCanopy', 8.8, -3.8, -0.16, 0.7],
+          ['EnvPolishTerminalCanopy', -1.8, -6.6, 0.2, 0.62],
+          ['EnvPolishRouteStoryMarker', 10.2, 5.2, -0.24, 0.66]
+        ]
+      },
+      {
+        x: 4,
+        z: -82,
+        rotation: -0.24,
+        width: 30,
+        depth: 16,
+        material: this.world.materials.meadowDark,
+        accent: this.world.materials.glow,
+        paver: this.world.materials.paleStone,
+        seed: 1223,
+        assets: [
+          ['EnvPolishChevronBollardRun', -8.8, 2.8, 0.16, 0.7],
+          ['EnvPolishYardEdgeTrim', 8.0, -3.6, -0.18, 0.72],
+          ['EnvPolishRouteStoryMarker', -1.8, -5.6, 0.18, 0.66],
+          ['EnvPolishBenchPlanter', 8.6, 4.8, -0.22, 0.66]
+        ]
+      }
+    ];
+
+    clusters.forEach((cluster, index) => this.addSouthCorridorCluster(group, cluster, index));
+    this.addSouthCorridorRouteRun(group, { x: -13, z: -72, rotation: 0.42, count: 9, color: this.world.materials.glowBlue });
+    this.addSouthCorridorRouteRun(group, { x: -29, z: -88, rotation: 0.56, count: 8, color: this.world.materials.warmGlow });
+    this.addSouthCorridorRailRun(group, -45, -76, 0.18, 17, this.world.materials.paleStone);
+    this.addSouthCorridorRailRun(group, -55, -99, 0.34, 16, this.world.materials.wood);
+    this.addSouthCorridorRailRun(group, 4, -94, -0.24, 14, this.world.materials.paleStone);
+
+    mergeStaticMeshesInGroup(group, { namePrefix: 'SETPIECE_south_corridor', cellSize: 42 });
+    group.userData.southCorridorStats = { ...this.southCorridorStats };
+    this.registerBroadSetPieceBatches('southCorridor', group, 'SETPIECE_south_corridor', 'routeCompositionRadius');
+    this.world.scene.add(group);
+  }
+
+  addSouthCorridorCluster(group, cluster, index) {
+    this.groundPatch(group, cluster.x, cluster.z, cluster.width, cluster.depth, cluster.material, 0.122, cluster.rotation, 'SouthCorridorYardPatch', cluster.seed);
+    this.groundPatch(
+      group,
+      cluster.x + Math.sin(cluster.rotation) * 3,
+      cluster.z + Math.cos(cluster.rotation) * 3,
+      cluster.width * 0.62,
+      cluster.depth * 0.42,
+      cluster.paver,
+      0.126,
+      cluster.rotation + 0.12,
+      'SouthCorridorInsetPatch',
+      cluster.seed + 7
+    );
+    this.southCorridorStats.clusters += 1;
+    this.southCorridorStats.patches += 2;
+
+    for (const asset of cluster.assets) this.addSouthCorridorAsset(group, cluster, ...asset);
+
+    for (const [right, forward, color] of [
+      [-cluster.width * 0.36, -cluster.depth * 0.34, cluster.accent.color?.getHex?.() || 0x92ffea],
+      [cluster.width * 0.34, cluster.depth * 0.34, 0xffc36a]
+    ]) {
+      const [lampX, lampZ] = this.southCorridorPoint(cluster, right, forward);
+      this.addSouthCorridorLamp(group, lampX, lampZ, color, 2.35, 'SouthCorridorLamp');
+    }
+
+    for (let i = -3; i <= 3; i += 1) {
+      const [tileX, tileZ] = this.southCorridorPoint(cluster, i * 2.25, -cluster.depth * 0.16 + Math.sin(i + index) * 0.7);
+      this.box(group, tileX, 0.218, tileZ, 1.45, 0.035, 0.22, i % 2 ? cluster.accent : this.world.materials.paleStone, cluster.rotation + 0.08, 'SouthCorridorGuideTile');
+      this.southCorridorStats.guideTiles += 1;
+    }
+  }
+
+  addSouthCorridorRouteRun(group, run) {
+    const rightX = Math.cos(run.rotation);
+    const rightZ = -Math.sin(run.rotation);
+    for (let index = 0; index < run.count; index += 1) {
+      const offset = (index - (run.count - 1) / 2) * 2.2;
+      const x = run.x + rightX * offset;
+      const z = run.z + rightZ * offset;
+      this.box(group, x, 0.224, z, 1.18, 0.035, 0.18, index % 2 ? run.color : this.world.materials.paleStone, run.rotation, 'SouthCorridorRouteGuide');
+      this.southCorridorStats.guideTiles += 1;
+    }
+  }
+
+  addSouthCorridorRailRun(group, x, z, rotation, length, material) {
+    const count = Math.max(3, Math.floor(length / 3.2));
+    const rightX = Math.cos(rotation);
+    const rightZ = -Math.sin(rotation);
+    for (let index = 0; index < count; index += 1) {
+      const offset = (index - (count - 1) / 2) * 3.2;
+      this.box(group, x + rightX * offset, 0.62, z + rightZ * offset, 0.14, 0.96, 0.14, this.world.materials.darkWood, rotation, 'SouthCorridorRailPost');
+    }
+    this.box(group, x, 0.92, z, length, 0.1, 0.12, material, rotation, 'SouthCorridorRailTop');
+    this.box(group, x, 0.5, z, length * 0.94, 0.08, 0.1, this.world.materials.wood, rotation, 'SouthCorridorRailLow');
+    this.southCorridorStats.railRuns += 1;
+  }
+
+  addSouthCorridorAsset(group, cluster, assetName, right, forward, rotationOffset, scale) {
+    const [x, z] = this.southCorridorPoint(cluster, right, forward);
+    const placed = this.addPolishAsset(group, assetName, x, z, cluster.rotation + rotationOffset, scale);
+    if (placed) this.southCorridorStats.authoredAssets += 1;
+    return placed;
+  }
+
+  addSouthCorridorLamp(group, x, z, color, height, name) {
+    this.addLamp(group, x, z, color, height, name);
+    this.southCorridorStats.lamps += 1;
+  }
+
+  southCorridorPoint(cluster, right, forward) {
     return [
       cluster.x + Math.cos(cluster.rotation) * right + Math.sin(cluster.rotation) * forward,
       cluster.z - Math.sin(cluster.rotation) * right + Math.cos(cluster.rotation) * forward
