@@ -704,15 +704,15 @@ export const zonePresentation = {
   },
   circuit: {
     respawn: { position: [38, 1.08, 116], heading: 2.3 },
-    camera: [34, 8, 87],
-    target: [57, 3, 102],
-    fov: 42
+    camera: [84, 10, 82],
+    target: [58, 3.4, 102],
+    fov: 39
   },
   contact: {
     respawn: { position: [112, 1.08, 66], heading: 2.13 },
-    camera: [104, 8, 74],
-    target: [128, 4, 56],
-    fov: 42
+    camera: [144, 10, 69],
+    target: [127, 3.6, 56],
+    fov: 40
   },
   behind: {
     respawn: { position: [8, 1.08, -78], heading: -2.18 },
@@ -734,9 +734,9 @@ export const zonePresentation = {
   },
   potato: {
     respawn: { position: [-22, 1.08, -128], heading: -1.72 },
-    camera: [-14, 8, -120],
-    target: [-50, 2.5, -132],
-    fov: 42
+    camera: [-72, 10, -104],
+    target: [-50, 3.2, -132],
+    fov: 40
   }
 };
 
