@@ -58,6 +58,8 @@ export class SetPieces {
     this.lampGlowMaterial = new THREE.MeshBasicMaterial({ color: 0xffffff, vertexColors: true, transparent: true, opacity: 0.9 });
     this.lampGlowGeometry = new THREE.SphereGeometry(0.26, 8, 6);
     this.lampGlowGeometries = new Map();
+    this.beaconGlowGeometry = new THREE.SphereGeometry(0.34, 8, 6);
+    this.beaconGlowMaterials = new Map();
     this.signAtlas = null;
     this.panelSeamMaterials = new Map();
     this.surfacePanelStats = {
@@ -866,7 +868,7 @@ export class SetPieces {
       [-116, -64, 0x7cffb2],
       [-145, -58, 0x68d8ff]
     ]) {
-      const beacon = this.beacon(group, x, z, color);
+      const beacon = this.beacon(group, x, z, color, { dynamicMaterial: true });
       this.securityScanObjects.push(beacon);
     }
 
@@ -3134,6 +3136,14 @@ export class SetPieces {
     return this.lampGlowGeometries.get(key);
   }
 
+  getBeaconGlowMaterial(color) {
+    const key = new THREE.Color(color).getHexString();
+    if (!this.beaconGlowMaterials.has(key)) {
+      this.beaconGlowMaterials.set(key, new THREE.MeshBasicMaterial({ color, transparent: true, opacity: 0.88 }));
+    }
+    return this.beaconGlowMaterials.get(key);
+  }
+
   addSign(group, title, subtitle, x, z, rotation, color, scale, name) {
     const sign = new THREE.Group();
     sign.name = name;
@@ -4793,11 +4803,14 @@ export class SetPieces {
     group.add(mesh);
   }
 
-  beacon(group, x, z, color) {
+  beacon(group, x, z, color, { dynamicMaterial = false } = {}) {
     const beacon = new THREE.Group();
     beacon.name = 'SetPieceBeacon';
     this.cylinder(beacon, 0, 0.62, 0, 0.16, 1.24, this.world.materials.cable, 10, 'BeaconPost');
-    const glow = new THREE.Mesh(new THREE.SphereGeometry(0.34, 12, 8), new THREE.MeshBasicMaterial({ color, transparent: true, opacity: 0.88 }));
+    const material = this.getBeaconGlowMaterial(color);
+    const glow = dynamicMaterial
+      ? new THREE.Mesh(this.beaconGlowGeometry, material.clone())
+      : new THREE.Mesh(this.beaconGlowGeometry, material);
     glow.name = 'SetPieceBeaconGlow';
     glow.position.y = 1.34;
     beacon.add(glow);
