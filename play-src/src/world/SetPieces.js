@@ -1450,6 +1450,57 @@ export class SetPieces {
           ['EnvPolishBenchPlanter', -2.4, -6.6, 0.18, 0.66],
           ['EnvPolishRouteVistaKit', 7.4, 5.8, -0.22, 0.68]
         ]
+      },
+      {
+        x: -8,
+        z: -72,
+        rotation: 0.18,
+        width: 30,
+        depth: 18,
+        material: this.world.materials.meadowDark,
+        accent: this.world.materials.glowBlue,
+        paver: this.world.materials.paleStone,
+        seed: 881,
+        assets: [
+          ['EnvPolishDocumentArcade', -9.4, 2.8, 0.16, 0.66],
+          ['EnvPolishBenchPlanter', 8.4, -3.2, -0.18, 0.66],
+          ['EnvPolishRouteVistaKit', -4.8, -7.0, 0.2, 0.68],
+          ['EnvPolishRouteLantern', 10.4, 6.2, -0.24, 0.64]
+        ]
+      },
+      {
+        x: 78,
+        z: 20,
+        rotation: -0.26,
+        width: 34,
+        depth: 20,
+        material: this.world.materials.meadowLight,
+        accent: this.world.materials.glow,
+        paver: this.world.materials.warmStone,
+        seed: 887,
+        assets: [
+          ['EnvPolishSignalSpire', -9.4, 3.4, 0.12, 0.58],
+          ['EnvPolishPlazaEdgeKit', 8.6, -4.6, -0.14, 0.68],
+          ['EnvPolishBenchPlanter', -2.8, -6.8, 0.18, 0.66],
+          ['EnvPolishRouteStoryMarker', 10.2, 6.2, -0.22, 0.64]
+        ]
+      },
+      {
+        x: -34,
+        z: -94,
+        rotation: 0.34,
+        width: 30,
+        depth: 18,
+        material: this.world.materials.meadowLight,
+        accent: this.world.materials.warmGlow,
+        paver: this.world.materials.wood,
+        seed: 893,
+        assets: [
+          ['EnvPolishBuildWorkbench', -8.6, 2.8, 0.18, 0.58],
+          ['EnvPolishGardenArch', 8.2, -2.8, -0.14, 0.66],
+          ['EnvPolishBenchPlanter', -2.4, -6.2, 0.22, 0.64],
+          ['EnvPolishRouteVistaKit', 9.4, 5.4, -0.18, 0.66]
+        ]
       }
     ];
 
@@ -1665,6 +1716,74 @@ export class SetPieces {
           ['EnvPolishBenchPlanter', 7.6, -3.6, -0.16, 0.64],
           ['EnvPolishRouteLantern', -2.6, -6.0, 0.16, 0.62],
           ['EnvPolishRouteStoryMarker', 8.8, 5.4, -0.22, 0.64]
+        ]
+      },
+      {
+        x: -10,
+        z: -46,
+        rotation: -0.16,
+        width: 30,
+        depth: 17,
+        material: this.world.materials.meadowDark,
+        accent: this.world.materials.glowBlue,
+        paver: this.world.materials.paleStone,
+        seed: 1049,
+        assets: [
+          ['EnvPolishDocumentArcade', -8.6, 3.8, 0.12, 0.58],
+          ['EnvPolishRouteVistaKit', 8.4, -3.4, -0.18, 0.66],
+          ['EnvPolishBenchPlanter', -2.4, -6.0, 0.2, 0.62],
+          ['EnvPolishRouteLantern', 9.2, 5.2, -0.18, 0.62]
+        ]
+      },
+      {
+        x: 72,
+        z: 24,
+        rotation: 0.24,
+        width: 32,
+        depth: 18,
+        material: this.world.materials.meadowLight,
+        accent: this.world.materials.glow,
+        paver: this.world.materials.warmStone,
+        seed: 1061,
+        assets: [
+          ['EnvPolishSignalSpire', -8.6, 3.8, 0.12, 0.52],
+          ['EnvPolishRouteStoryMarker', 8.6, -3.8, -0.16, 0.64],
+          ['EnvPolishPlazaEdgeKit', -2.6, -6.2, 0.16, 0.66],
+          ['EnvPolishBenchPlanter', 9.0, 5.6, -0.2, 0.62]
+        ]
+      },
+      {
+        x: -18,
+        z: -112,
+        rotation: 0.38,
+        width: 30,
+        depth: 17,
+        material: this.world.materials.meadowDark,
+        accent: this.world.materials.warmGlow,
+        paver: this.world.materials.wood,
+        seed: 1073,
+        assets: [
+          ['EnvPolishBuildWorkbench', -8.4, 3.4, 0.16, 0.56],
+          ['EnvPolishRouteVistaKit', 8.4, -3.2, -0.16, 0.64],
+          ['EnvPolishBenchPlanter', -2.4, -6.0, 0.2, 0.62],
+          ['EnvPolishRouteLantern', 9.2, 5.4, -0.18, 0.62]
+        ]
+      },
+      {
+        x: 118,
+        z: 18,
+        rotation: -0.36,
+        width: 30,
+        depth: 17,
+        material: this.world.materials.sand,
+        accent: this.world.materials.glowBlue,
+        paver: this.world.materials.paleStone,
+        seed: 1087,
+        assets: [
+          ['EnvPolishHarborSignal', -8.4, 3.8, 0.16, 0.58],
+          ['EnvPolishRouteVistaKit', 8.0, -3.4, -0.16, 0.64],
+          ['EnvPolishBenchPlanter', -2.4, -6.0, 0.2, 0.62],
+          ['EnvPolishRouteStoryMarker', 8.8, 5.4, -0.22, 0.62]
         ]
       }
     ];
