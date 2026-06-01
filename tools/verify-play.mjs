@@ -1818,14 +1818,19 @@ async function captureMobileSavedPreference(browser) {
   });
   await page.goto(`${baseUrl}/play/`, { waitUntil: 'domcontentloaded', timeout: 60000 });
   await waitForReady(page);
-  const sample = await page.evaluate(() => ({
-    ready: window.__portfolioDrive.ready(),
-    canvasSample: window.__portfolioDrive.sampleCanvas(),
-    quality: window.__portfolioDrive.game.world.landscapeQuality,
-    savedQuality: localStorage.getItem('portfolio-drive-landscape-quality'),
-    pixelRatio: window.__portfolioDrive.game.renderer.getPixelRatio(),
-    maxPixelRatio: window.__portfolioDrive.game.rendererSystem.maxPixelRatio
-  }));
+  const sample = await page.evaluate(() => {
+    const render = window.__portfolioDrive.game.renderer.info.render;
+    return {
+      ready: window.__portfolioDrive.ready(),
+      canvasSample: window.__portfolioDrive.sampleCanvas(),
+      quality: window.__portfolioDrive.game.world.landscapeQuality,
+      savedQuality: localStorage.getItem('portfolio-drive-landscape-quality'),
+      pixelRatio: window.__portfolioDrive.game.renderer.getPixelRatio(),
+      maxPixelRatio: window.__portfolioDrive.game.rendererSystem.maxPixelRatio,
+      calls: render.calls,
+      triangles: render.triangles
+    };
+  });
   await page.close();
   return sample;
 }
@@ -2417,14 +2422,17 @@ function assertVerification(result) {
     failures.push('mobile quality probe failed: visible life signals were not reduced');
   }
   if (!result.mobileSavedPreference.ready || result.mobileSavedPreference.canvasSample <= 0) failures.push('mobile saved-preference canvas did not render');
-  if (result.mobileSavedPreference.quality !== 'high') {
+  if (result.mobileSavedPreference.quality !== 'low') {
     failures.push(`mobile saved-preference quality mismatch: ${result.mobileSavedPreference.quality}`);
   }
   if (result.mobileSavedPreference.savedQuality !== 'high') {
     failures.push(`mobile saved-preference storage mismatch: ${result.mobileSavedPreference.savedQuality}`);
   }
+  if ((result.mobileSavedPreference.calls || 0) > 205) {
+    failures.push(`mobile saved-preference draw-call budget exceeded: ${result.mobileSavedPreference.calls}`);
+  }
   if ((result.mobileSavedPreference.maxPixelRatio || 0) > 1.2) {
-    failures.push(`mobile saved-preference high pixel ratio too high: ${result.mobileSavedPreference.maxPixelRatio}`);
+    failures.push(`mobile saved-preference pixel ratio too high: ${result.mobileSavedPreference.maxPixelRatio}`);
   }
   if (failures.length) {
     throw new Error(`Play verification failed: ${failures.join('; ')}`);

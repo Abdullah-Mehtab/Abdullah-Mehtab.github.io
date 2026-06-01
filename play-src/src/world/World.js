@@ -112,8 +112,9 @@ export class World {
 
   readLandscapeQuality() {
     const saved = localStorage.getItem('portfolio-drive-landscape-quality');
-    if (QUALITY_PROFILES[saved]) return saved;
-    return prefersLightLandscape() ? 'low' : 'medium';
+    const lightLandscape = prefersLightLandscape();
+    if (QUALITY_PROFILES[saved]) return normalizeLandscapeQualityForDevice(saved, lightLandscape);
+    return lightLandscape ? 'low' : 'medium';
   }
 
   getQualityProfile() {
@@ -473,6 +474,10 @@ function prefersLightLandscape() {
   const coarsePointer = window.matchMedia?.('(pointer: coarse)')?.matches === true;
   const touch = navigator.maxTouchPoints > 1;
   return narrow || coarsePointer || touch;
+}
+
+function normalizeLandscapeQualityForDevice(quality, lightLandscape) {
+  return lightLandscape && quality === 'high' ? 'low' : quality;
 }
 
 function roadSurfaceForPath(path) {
