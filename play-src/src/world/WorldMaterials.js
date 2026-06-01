@@ -93,6 +93,12 @@ export function createWorldMaterials() {
   sandTexture.repeat.set(18, 18);
   sandTexture.anisotropy = 12;
 
+  const surfaceSeamAlpha = makeGroundDetailAlphaTexture('seam');
+  const surfacePaverAlpha = makeGroundDetailAlphaTexture('paver');
+  const surfaceAccentAlpha = makeGroundDetailAlphaTexture('accent');
+  const meadowDetailAlpha = makeGroundDetailAlphaTexture('meadow');
+  const fieldRibbonAlpha = makeGroundDetailAlphaTexture('ribbon');
+
   return {
     ground: new THREE.MeshStandardMaterial({
       color: 0x69b65f,
@@ -122,12 +128,14 @@ export function createWorldMaterials() {
       polygonOffsetFactor: -18,
       polygonOffsetUnits: -18
     }),
-    roadLine: new THREE.MeshBasicMaterial({ color: 0xf4ddb1, transparent: true, opacity: 0.42 }),
-    roadLineBright: new THREE.MeshBasicMaterial({ color: 0x9df7ff, transparent: true, opacity: 0.46 }),
+    roadLine: new THREE.MeshBasicMaterial({ color: 0xf4ddb1, transparent: true, opacity: 0.36 }),
+    roadLineBright: new THREE.MeshBasicMaterial({ color: 0x9df7ff, transparent: true, opacity: 0.4 }),
     surfaceSeam: new THREE.MeshBasicMaterial({
       color: 0xffffff,
       transparent: true,
-      opacity: 0.26,
+      opacity: 0.2,
+      alphaMap: surfaceSeamAlpha,
+      alphaTest: 0.018,
       depthWrite: false,
       side: THREE.DoubleSide,
       vertexColors: true,
@@ -138,7 +146,9 @@ export function createWorldMaterials() {
     surfacePaver: new THREE.MeshBasicMaterial({
       color: 0xffffff,
       transparent: true,
-      opacity: 0.13,
+      opacity: 0.1,
+      alphaMap: surfacePaverAlpha,
+      alphaTest: 0.02,
       depthWrite: false,
       side: THREE.DoubleSide,
       vertexColors: true,
@@ -149,7 +159,9 @@ export function createWorldMaterials() {
     surfaceAccent: new THREE.MeshBasicMaterial({
       color: 0xffffff,
       transparent: true,
-      opacity: 0.32,
+      opacity: 0.24,
+      alphaMap: surfaceAccentAlpha,
+      alphaTest: 0.018,
       depthWrite: false,
       side: THREE.DoubleSide,
       vertexColors: true,
@@ -160,7 +172,9 @@ export function createWorldMaterials() {
     meadowDetail: new THREE.MeshBasicMaterial({
       color: 0xffffff,
       transparent: true,
-      opacity: 0.1,
+      opacity: 0.078,
+      alphaMap: meadowDetailAlpha,
+      alphaTest: 0.014,
       depthWrite: false,
       side: THREE.DoubleSide,
       vertexColors: true,
@@ -172,7 +186,9 @@ export function createWorldMaterials() {
     fieldRibbon: new THREE.MeshBasicMaterial({
       color: 0xffffff,
       transparent: true,
-      opacity: 0.16,
+      opacity: 0.105,
+      alphaMap: fieldRibbonAlpha,
+      alphaTest: 0.018,
       depthWrite: false,
       side: THREE.DoubleSide,
       vertexColors: true,
@@ -514,6 +530,69 @@ function makeParticleTexture(kind = 'round') {
   return texture;
 }
 
+function makeGroundDetailAlphaTexture(kind = 'paver', size = 96) {
+  const canvas = document.createElement('canvas');
+  canvas.width = size;
+  canvas.height = size;
+  const ctx = canvas.getContext('2d');
+  const image = ctx.createImageData(size, size);
+
+  for (let y = 0; y < size; y += 1) {
+    for (let x = 0; x < size; x += 1) {
+      const u = (x + 0.5) / size;
+      const v = (y + 0.5) / size;
+      const edgeFade = smoothstep(0.02, 0.16, u)
+        * smoothstep(0.02, 0.16, v)
+        * smoothstep(0.02, 0.16, 1 - u)
+        * smoothstep(0.02, 0.16, 1 - v);
+      const cell = pseudoRandom(Math.floor(u * 13) * 7.1 + Math.floor(v * 11) * 13.7);
+      const grain = 0.58 + pseudoRandom(x * 3.17 + y * 5.83) * 0.42;
+      const chip = pseudoRandom(x * 11.73 + y * 17.41) > 0.18 ? 1 : 0.22;
+      const scuff = pseudoRandom(x * 2.29 + y * 7.91) > 0.72 ? 0.54 : 1;
+      let profile = 1;
+
+      if (kind === 'seam') {
+        const brokenLength = 0.46 + 0.54 * stripe((v + cell * 0.13) % 1, 0.5, 0.42);
+        profile = smoothstep(0.05, 0.32, u) * smoothstep(0.05, 0.32, 1 - u) * brokenLength;
+      } else if (kind === 'accent') {
+        const centerStripe = stripe(u, 0.5, 0.38);
+        const endWear = 0.5 + 0.5 * stripe((v + cell * 0.2) % 1, 0.5, 0.44);
+        profile = centerStripe * endWear;
+      } else if (kind === 'meadow') {
+        const softCenter = smoothstep(0.03, 0.5, u) * smoothstep(0.03, 0.5, 1 - u)
+          * smoothstep(0.03, 0.5, v) * smoothstep(0.03, 0.5, 1 - v);
+        const bladeBreak = pseudoRandom(x * 19.1 + Math.floor(v * 24) * 3.7) > 0.34 ? 1 : 0.28;
+        profile = softCenter * bladeBreak;
+      } else if (kind === 'ribbon') {
+        const longBreak = 0.5 + 0.5 * stripe((v + cell * 0.1) % 1, 0.5, 0.38);
+        profile = smoothstep(0.08, 0.34, u) * smoothstep(0.08, 0.34, 1 - u) * longBreak;
+      } else {
+        const wornPatch = 0.72 + 0.28 * stripe((u + v * 0.35 + cell * 0.2) % 1, 0.5, 0.42);
+        profile = wornPatch;
+      }
+
+      const alpha = Math.max(0, Math.min(1, edgeFade * profile * grain * chip * scuff));
+      const value = Math.round(alpha * 255);
+      const index = (y * size + x) * 4;
+      image.data[index] = value;
+      image.data[index + 1] = value;
+      image.data[index + 2] = value;
+      image.data[index + 3] = value;
+    }
+  }
+
+  ctx.putImageData(image, 0, 0);
+  const texture = new THREE.CanvasTexture(canvas);
+  texture.name = `GroundDetailAlpha_${kind}`;
+  texture.wrapS = THREE.ClampToEdgeWrapping;
+  texture.wrapT = THREE.ClampToEdgeWrapping;
+  texture.minFilter = THREE.LinearFilter;
+  texture.magFilter = THREE.LinearFilter;
+  texture.generateMipmaps = false;
+  texture.needsUpdate = true;
+  return texture;
+}
+
 function makeRadialBlendMaterial({ inner, outer, colorA, colorB, opacity = 0.5, noise = 0.2, animated = false }) {
   return new THREE.ShaderMaterial({
     transparent: true,
@@ -672,6 +751,15 @@ function makeGrassTexture(size) {
 
 export function pseudoRandom(seed) {
   return Math.sin(seed * 999.91) * 43758.5453 % 1 + (Math.sin(seed * 999.91) * 43758.5453 < 0 ? 1 : 0);
+}
+
+function stripe(value, center, halfWidth) {
+  return 1 - smoothstep(halfWidth * 0.45, halfWidth, Math.abs(value - center));
+}
+
+function smoothstep(edge0, edge1, value) {
+  const t = Math.max(0, Math.min(1, (value - edge0) / (edge1 - edge0)));
+  return t * t * (3 - 2 * t);
 }
 
 function roundRect(ctx, x, y, width, height, radius) {

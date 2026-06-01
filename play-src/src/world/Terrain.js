@@ -23,8 +23,8 @@ export class Terrain {
     this.authoredIslandLoaded = false;
     this.surfaceDetailDummy = new THREE.Object3D();
     this.reliefDummy = new THREE.Object3D();
-    this.surfaceDetailStats = { districts: 0, seams: 0, pavers: 0, accents: 0, breakups: 0 };
-    this.meadowDetailStats = { patches: 0, colorVariants: 0 };
+    this.surfaceDetailStats = { districts: 0, seams: 0, pavers: 0, accents: 0, breakups: 0, opacities: {}, alphaMapped: {} };
+    this.meadowDetailStats = { patches: 0, colorVariants: 0, opacity: 0, alphaMapped: false };
     this.fieldMotifEntries = [];
     this.fieldMotifStats = { clusters: 0, berms: 0, ribbons: 0, visibleBerms: 0, visibleRibbons: 0, visibleTotal: 0 };
     this.roadsideFrameEntries = [];
@@ -183,7 +183,9 @@ export class Terrain {
     this.addMeadowDetailInstances(specs);
     this.meadowDetailStats = {
       patches: specs.length,
-      colorVariants: new Set(meadowDetailPatches.map((patch) => patch.color)).size
+      colorVariants: new Set(meadowDetailPatches.map((patch) => patch.color)).size,
+      opacity: materialOpacity(this.world.materials.meadowDetail),
+      alphaMapped: Boolean(this.world.materials.meadowDetail.alphaMap)
     };
   }
 
@@ -247,7 +249,9 @@ export class Terrain {
       ribbons: ribbons.length,
       visibleBerms: berms.length,
       visibleRibbons: ribbons.length,
-      visibleTotal: berms.length + ribbons.length
+      visibleTotal: berms.length + ribbons.length,
+      ribbonOpacity: materialOpacity(this.world.materials.fieldRibbon),
+      ribbonAlphaMapped: Boolean(this.world.materials.fieldRibbon.alphaMap)
     };
     this.applyQuality();
   }
@@ -343,7 +347,11 @@ export class Terrain {
       visibleBerms: berms.length,
       visibleRibbons: ribbons.length,
       visibleStoneTabs: stoneTabs.length,
-      visibleTotal: berms.length + ribbons.length + stoneTabs.length
+      visibleTotal: berms.length + ribbons.length + stoneTabs.length,
+      ribbonOpacity: materialOpacity(this.world.materials.fieldRibbon),
+      ribbonAlphaMapped: Boolean(this.world.materials.fieldRibbon.alphaMap),
+      stoneTabOpacity: materialOpacity(this.world.materials.surfacePaver),
+      stoneTabAlphaMapped: Boolean(this.world.materials.surfacePaver.alphaMap)
     };
     this.applyQuality();
   }
@@ -522,7 +530,17 @@ export class Terrain {
       seams: seams.length,
       pavers: pavers.length,
       accents: accents.length,
-      breakups: breakups.length
+      breakups: breakups.length,
+      opacities: {
+        seam: materialOpacity(this.world.materials.surfaceSeam),
+        paver: materialOpacity(this.world.materials.surfacePaver),
+        accent: materialOpacity(this.world.materials.surfaceAccent)
+      },
+      alphaMapped: {
+        seam: Boolean(this.world.materials.surfaceSeam.alphaMap),
+        paver: Boolean(this.world.materials.surfacePaver.alphaMap),
+        accent: Boolean(this.world.materials.surfaceAccent.alphaMap)
+      }
     };
   }
 
@@ -928,6 +946,10 @@ function roadsideStoneColor(path) {
   if (path.hierarchy === 'bridge') return 0x79ffc5;
   if (path.hierarchy === 'plaza') return 0xf2dfb2;
   return 0xe8d3a0;
+}
+
+function materialOpacity(material) {
+  return Number((material?.opacity ?? 0).toFixed(3));
 }
 
 function createHorizontalPlaneGeometry() {

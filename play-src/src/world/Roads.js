@@ -27,18 +27,18 @@ const ROAD_LAYER = {
 };
 
 const ROAD_DETAIL_OPACITY = {
-  wear: 0.2,
-  seam: 0.16,
-  transitionApron: 0.1,
-  transitionEdge: 0.18,
-  transitionGuide: 0.26,
-  marker: 0.42
+  wear: 0.15,
+  seam: 0.12,
+  transitionApron: 0.085,
+  transitionEdge: 0.13,
+  transitionGuide: 0.2,
+  marker: 0.34
 };
 
 const ROAD_VERGE_OPACITY = {
-  security: 0.11,
-  dirt: 0.07,
-  default: 0.08
+  security: 0.082,
+  dirt: 0.052,
+  default: 0.06
 };
 
 export class Roads {

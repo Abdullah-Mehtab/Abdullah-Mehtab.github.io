@@ -2110,7 +2110,7 @@ function assertVerification(result) {
   }
   if ((result.roadGuidance?.chevrons || 0) < 40) failures.push(`road guidance probe failed: chevrons=${result.roadGuidance?.chevrons || 0}`);
   if ((result.roadGuidance?.reflectorStuds || 0) < 140) failures.push(`road guidance probe failed: reflectorStuds=${result.roadGuidance?.reflectorStuds || 0}`);
-  if ((result.roadGuidance?.markerOpacity || 1) > 0.43) failures.push(`road guidance readability probe failed: markerOpacity=${result.roadGuidance?.markerOpacity}`);
+  if ((result.roadGuidance?.markerOpacity || 1) > 0.36) failures.push(`road guidance readability probe failed: markerOpacity=${result.roadGuidance?.markerOpacity}`);
   if ((result.roadGuidance?.edgeFeathers || 0) < 24) failures.push(`road guidance probe failed: edgeFeathers=${result.roadGuidance?.edgeFeathers || 0}`);
   if ((result.roadGuidance?.laneEdges || 0) < 20) failures.push(`road guidance probe failed: laneEdges=${result.roadGuidance?.laneEdges || 0}`);
   if (!result.roadTopology?.coastalLoop) failures.push('road topology probe failed: coastal loop missing');
@@ -2160,10 +2160,10 @@ function assertVerification(result) {
   if ((result.roadSurfaceDetails?.transitionAprons || 0) < 16) failures.push(`road transition probe failed: transitionAprons=${result.roadSurfaceDetails?.transitionAprons || 0}`);
   if ((result.roadSurfaceDetails?.transitionGuideBars || 0) < 56) failures.push(`road transition probe failed: transitionGuideBars=${result.roadSurfaceDetails?.transitionGuideBars || 0}`);
   if ((result.roadSurfaceDetails?.visibleTransitionMeshes || 0) < 3) failures.push(`road transition probe failed: visibleTransitionMeshes=${result.roadSurfaceDetails?.visibleTransitionMeshes || 0}`);
-  if ((result.roadSurfaceDetails?.opacities?.wear || 1) > 0.22) failures.push(`road readability probe failed: wear opacity=${result.roadSurfaceDetails?.opacities?.wear}`);
-  if ((result.roadSurfaceDetails?.opacities?.seam || 1) > 0.18) failures.push(`road readability probe failed: seam opacity=${result.roadSurfaceDetails?.opacities?.seam}`);
-  if ((result.roadSurfaceDetails?.opacities?.transitionApron || 1) > 0.12) failures.push(`road readability probe failed: transitionApron opacity=${result.roadSurfaceDetails?.opacities?.transitionApron}`);
-  if ((result.roadSurfaceDetails?.opacities?.transitionGuide || 1) > 0.28) failures.push(`road readability probe failed: transitionGuide opacity=${result.roadSurfaceDetails?.opacities?.transitionGuide}`);
+  if ((result.roadSurfaceDetails?.opacities?.wear || 1) > 0.16) failures.push(`road readability probe failed: wear opacity=${result.roadSurfaceDetails?.opacities?.wear}`);
+  if ((result.roadSurfaceDetails?.opacities?.seam || 1) > 0.13) failures.push(`road readability probe failed: seam opacity=${result.roadSurfaceDetails?.opacities?.seam}`);
+  if ((result.roadSurfaceDetails?.opacities?.transitionApron || 1) > 0.095) failures.push(`road readability probe failed: transitionApron opacity=${result.roadSurfaceDetails?.opacities?.transitionApron}`);
+  if ((result.roadSurfaceDetails?.opacities?.transitionGuide || 1) > 0.22) failures.push(`road readability probe failed: transitionGuide opacity=${result.roadSurfaceDetails?.opacities?.transitionGuide}`);
   if (result.roadSurfaceDetails?.transitionApronPattern !== 'broken-threshold') {
     failures.push(`road readability probe failed: transition apron pattern=${result.roadSurfaceDetails?.transitionApronPattern}`);
   }
@@ -2172,7 +2172,7 @@ function assertVerification(result) {
     failures.push(`road readability probe failed: edge feather pattern=${result.roadSurfaceDetails?.edgeFeatherPattern}`);
   }
   if (!result.roadSurfaceDetails?.edgeFeatherAlphaMapped) failures.push('road readability probe failed: edge feather alpha map missing');
-  if ((result.roadSurfaceDetails?.edgeFeatherOpacity || 1) > 0.12) {
+  if ((result.roadSurfaceDetails?.edgeFeatherOpacity || 1) > 0.09) {
     failures.push(`road readability probe failed: edgeFeather opacity=${result.roadSurfaceDetails?.edgeFeatherOpacity}`);
   }
   if ((result.surfaceDetails?.districts || 0) < 10) failures.push(`surface detail probe failed: districts=${result.surfaceDetails?.districts || 0}`);
@@ -2180,17 +2180,31 @@ function assertVerification(result) {
   if ((result.surfaceDetails?.pavers || 0) < 24) failures.push(`surface detail probe failed: pavers=${result.surfaceDetails?.pavers || 0}`);
   if ((result.surfaceDetails?.accents || 0) < 18) failures.push(`surface detail probe failed: accents=${result.surfaceDetails?.accents || 0}`);
   if ((result.surfaceDetails?.breakups || 0) < 28) failures.push(`surface breakup probe failed: breakups=${result.surfaceDetails?.breakups || 0}`);
+  if ((result.surfaceDetails?.opacities?.seam || 1) > 0.21) failures.push(`surface tone probe failed: seam opacity=${result.surfaceDetails?.opacities?.seam}`);
+  if ((result.surfaceDetails?.opacities?.paver || 1) > 0.11) failures.push(`surface tone probe failed: paver opacity=${result.surfaceDetails?.opacities?.paver}`);
+  if ((result.surfaceDetails?.opacities?.accent || 1) > 0.25) failures.push(`surface tone probe failed: accent opacity=${result.surfaceDetails?.opacities?.accent}`);
+  if (!result.surfaceDetails?.alphaMapped?.seam) failures.push('surface tone probe failed: seam alpha map missing');
+  if (!result.surfaceDetails?.alphaMapped?.paver) failures.push('surface tone probe failed: paver alpha map missing');
+  if (!result.surfaceDetails?.alphaMapped?.accent) failures.push('surface tone probe failed: accent alpha map missing');
   if ((result.meadowDetails?.patches || 0) < 36) failures.push(`meadow detail probe failed: patches=${result.meadowDetails?.patches || 0}`);
   if ((result.meadowDetails?.colorVariants || 0) < 20) failures.push(`meadow detail probe failed: colorVariants=${result.meadowDetails?.colorVariants || 0}`);
+  if ((result.meadowDetails?.opacity || 1) > 0.085) failures.push(`meadow tone probe failed: opacity=${result.meadowDetails?.opacity}`);
+  if (!result.meadowDetails?.alphaMapped) failures.push('meadow tone probe failed: alpha map missing');
   if ((result.fieldMotifs?.clusters || 0) < 20) failures.push(`field motif probe failed: clusters=${result.fieldMotifs?.clusters || 0}`);
   if ((result.fieldMotifs?.berms || 0) < 44) failures.push(`field motif probe failed: berms=${result.fieldMotifs?.berms || 0}`);
   if ((result.fieldMotifs?.ribbons || 0) < 88) failures.push(`field motif probe failed: ribbons=${result.fieldMotifs?.ribbons || 0}`);
   if ((result.fieldMotifs?.visibleTotal || 0) < 132) failures.push(`field motif probe failed: visibleTotal=${result.fieldMotifs?.visibleTotal || 0}`);
+  if ((result.fieldMotifs?.ribbonOpacity || 1) > 0.12) failures.push(`field motif tone probe failed: ribbonOpacity=${result.fieldMotifs?.ribbonOpacity}`);
+  if (!result.fieldMotifs?.ribbonAlphaMapped) failures.push('field motif tone probe failed: ribbon alpha map missing');
   if ((result.roadsideFrames?.segments || 0) < 50) failures.push(`roadside frame probe failed: segments=${result.roadsideFrames?.segments || 0}`);
   if ((result.roadsideFrames?.berms || 0) < 90) failures.push(`roadside frame probe failed: berms=${result.roadsideFrames?.berms || 0}`);
   if ((result.roadsideFrames?.ribbons || 0) < 150) failures.push(`roadside frame probe failed: ribbons=${result.roadsideFrames?.ribbons || 0}`);
   if ((result.roadsideFrames?.stoneTabs || 0) < 70) failures.push(`roadside frame probe failed: stoneTabs=${result.roadsideFrames?.stoneTabs || 0}`);
   if ((result.roadsideFrames?.visibleTotal || 0) < 310) failures.push(`roadside frame probe failed: visibleTotal=${result.roadsideFrames?.visibleTotal || 0}`);
+  if ((result.roadsideFrames?.ribbonOpacity || 1) > 0.12) failures.push(`roadside frame tone probe failed: ribbonOpacity=${result.roadsideFrames?.ribbonOpacity}`);
+  if ((result.roadsideFrames?.stoneTabOpacity || 1) > 0.11) failures.push(`roadside frame tone probe failed: stoneTabOpacity=${result.roadsideFrames?.stoneTabOpacity}`);
+  if (!result.roadsideFrames?.ribbonAlphaMapped) failures.push('roadside frame tone probe failed: ribbon alpha map missing');
+  if (!result.roadsideFrames?.stoneTabAlphaMapped) failures.push('roadside frame tone probe failed: stone tab alpha map missing');
   if ((result.terrainRelief?.mounds || 0) < 6) failures.push(`terrain relief probe failed: mounds=${result.terrainRelief?.mounds || 0}`);
   if ((result.terrainRelief?.cliffShelves || 0) < 6) failures.push(`terrain relief probe failed: cliffShelves=${result.terrainRelief?.cliffShelves || 0}`);
   if ((result.terrainRelief?.rockOutcrops || 0) < 12) failures.push(`terrain relief probe failed: rockOutcrops=${result.terrainRelief?.rockOutcrops || 0}`);
