@@ -717,8 +717,27 @@ function makeGrassTexture(size) {
   canvas.width = size;
   canvas.height = size;
   const ctx = canvas.getContext('2d');
-  ctx.fillStyle = '#2f7a39';
+  const gradient = ctx.createLinearGradient(0, 0, size, size);
+  gradient.addColorStop(0, '#4f8f42');
+  gradient.addColorStop(0.52, '#6eaa55');
+  gradient.addColorStop(1, '#2e6d34');
+  ctx.fillStyle = gradient;
   ctx.fillRect(0, 0, size, size);
+
+  for (let i = 0; i < 72; i += 1) {
+    const x = pseudoRandom(i * 3.17) * size;
+    const y = pseudoRandom(i * 7.43) * size;
+    const width = 44 + pseudoRandom(i * 11.91) * 120;
+    const height = 8 + pseudoRandom(i * 13.67) * 22;
+    const rotation = -0.68 + pseudoRandom(i * 17.23) * 1.34;
+    ctx.save();
+    ctx.translate(x, y);
+    ctx.rotate(rotation);
+    ctx.globalAlpha = 0.035 + pseudoRandom(i * 19.41) * 0.06;
+    ctx.fillStyle = pseudoRandom(i * 23.19) > 0.5 ? '#a5d76e' : '#255c2d';
+    ctx.fillRect(-width / 2, -height / 2, width, height);
+    ctx.restore();
+  }
 
   for (let i = 0; i < 24000; i += 1) {
     const x = pseudoRandom(i * 2.37) * size;
@@ -739,8 +758,8 @@ function makeGrassTexture(size) {
     const x = pseudoRandom(i * 23.31) * size;
     const y = pseudoRandom(i * 31.27) * size;
     const r = 6 + pseudoRandom(i * 41.13) * 22;
-    ctx.globalAlpha = 0.035;
-    ctx.fillStyle = pseudoRandom(i * 47.4) > 0.55 ? '#82bd58' : '#1f4f2a';
+    ctx.globalAlpha = 0.032 + pseudoRandom(i * 43.77) * 0.028;
+    ctx.fillStyle = pseudoRandom(i * 47.4) > 0.55 ? '#b4df75' : '#1f4f2a';
     ctx.beginPath();
     ctx.ellipse(x, y, r, r * (0.25 + pseudoRandom(i * 53.3) * 0.4), pseudoRandom(i * 59.7) * Math.PI, 0, Math.PI * 2);
     ctx.fill();
