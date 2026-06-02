@@ -98,6 +98,7 @@ export function createWorldMaterials() {
   const surfaceAccentAlpha = makeGroundDetailAlphaTexture('accent');
   const meadowDetailAlpha = makeGroundDetailAlphaTexture('meadow');
   const fieldRibbonAlpha = makeGroundDetailAlphaTexture('ribbon');
+  const terrainBrushAlpha = makeGroundDetailAlphaTexture('meadow', 128);
 
   return {
     ground: new THREE.MeshStandardMaterial({
@@ -112,6 +113,12 @@ export function createWorldMaterials() {
     meadowDark: new THREE.MeshStandardMaterial({ color: 0x559a58, roughness: 0.98, metalness: 0.0 }),
     flowerField: new THREE.MeshBasicMaterial({ color: 0xf4b8be, transparent: true, opacity: 0.22, depthWrite: false }),
     wildflowerBlue: new THREE.MeshBasicMaterial({ color: 0x8fddff, transparent: true, opacity: 0.2, depthWrite: false }),
+    terrainBrushLight: makeTerrainBrushMaterial(0xb2df7a, 0.42, terrainBrushAlpha),
+    terrainBrushDark: makeTerrainBrushMaterial(0x2f6b3b, 0.34, terrainBrushAlpha),
+    terrainBrushWarm: makeTerrainBrushMaterial(0xd0b072, 0.32, terrainBrushAlpha),
+    terrainBrushSand: makeTerrainBrushMaterial(0xe2bd82, 0.4, terrainBrushAlpha),
+    terrainBrushFlower: makeTerrainBrushMaterial(0xf4b8be, 0.22, terrainBrushAlpha),
+    terrainBrushBlue: makeTerrainBrushMaterial(0x8fddff, 0.2, terrainBrushAlpha),
     stoneRoad: new THREE.MeshStandardMaterial({ color: 0x5f6d68, map: stoneTexture, roughness: 0.92, metalness: 0.02 }),
     plazaRoad: new THREE.MeshStandardMaterial({ color: 0xc9c4a7, map: stoneTexture, roughness: 0.9, metalness: 0.02 }),
     securityRoad: new THREE.MeshStandardMaterial({ color: 0x24434c, roughness: 0.74, metalness: 0.1, emissive: 0x0b2831, emissiveIntensity: 0.28 }),
@@ -674,6 +681,21 @@ export function makeNoiseTexture(colors, size = 256, dots = 800) {
   }
   ctx.globalAlpha = 1;
   return new THREE.CanvasTexture(canvas);
+}
+
+function makeTerrainBrushMaterial(color, opacity, alphaMap) {
+  return new THREE.MeshBasicMaterial({
+    color,
+    transparent: true,
+    opacity,
+    alphaMap,
+    alphaTest: 0.014,
+    depthWrite: false,
+    side: THREE.DoubleSide,
+    polygonOffset: true,
+    polygonOffsetFactor: -22,
+    polygonOffsetUnits: -22
+  });
 }
 
 function makeSandTexture(size) {
