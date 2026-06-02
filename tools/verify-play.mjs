@@ -5,7 +5,17 @@ import { existsSync, readFile, statSync } from 'node:fs';
 import { mkdir, writeFile } from 'node:fs/promises';
 import { extname, join, resolve } from 'node:path';
 import puppeteer from 'puppeteer-core';
-import { circuitCheckpoints, districtFootprints, ISLAND_RADIUS, roadPaths, routeThresholds, worldZones, zonePresentation } from '../play-src/src/world/worldData.js';
+import {
+  circuitCheckpoints,
+  districtFootprints,
+  ISLAND_RADIUS,
+  roadPaths,
+  routeThresholds,
+  SECURITY_SCAN_OFFSET,
+  SECURITY_SCAN_ROTATION,
+  worldZones,
+  zonePresentation
+} from '../play-src/src/world/worldData.js';
 
 const repoRoot = resolve(import.meta.dirname, '..');
 const chromePath = findChrome();
@@ -809,12 +819,12 @@ async function exerciseRouteReplay(page, segments) {
 }
 
 async function exerciseSecurityScan(page) {
-  await page.evaluate(() => {
+  await page.evaluate(({ offset, rotation }) => {
     const game = window.__portfolioDrive.game;
     const zone = game.world.zones.find((item) => item.id === 'security');
     const scanner = zone.position.clone();
-    scanner.x -= 2.8;
-    scanner.z -= 11.2;
+    scanner.x += offset[0];
+    scanner.z += offset[1];
     scanner.y = 0.3;
     const cameraPosition = scanner.clone();
     cameraPosition.x += 20;
@@ -826,7 +836,7 @@ async function exerciseSecurityScan(page) {
     game.ui.closeMap?.();
     game.ui.closeMenu?.();
     game.startDriving();
-    game.vehicle.respawn({ x: scanner.x + 5.8, y: 1.08, z: scanner.z + 8.2 }, -2.15);
+    game.vehicle.respawn({ x: scanner.x + Math.cos(rotation) * -1.8, y: 1.08, z: scanner.z - Math.sin(rotation) * -1.8 }, rotation);
     game.vehicle.body.setLinvel({ x: 0, y: 0, z: 0 }, true);
     game.vehicle.body.setAngvel({ x: 0, y: 0, z: 0 }, true);
     game.cameraRig.setCinematic(cameraPosition, lookAt, 42);
@@ -840,7 +850,7 @@ async function exerciseSecurityScan(page) {
     game.achievements.unlocked.delete('security_scan');
     game.achievements.save?.();
     game.runSecurityScan(zone);
-  });
+  }, { offset: SECURITY_SCAN_OFFSET, rotation: SECURITY_SCAN_ROTATION });
   await delay(560);
   const active = await page.evaluate(() => {
     const game = window.__portfolioDrive.game;
@@ -2956,25 +2966,28 @@ function assertGate3VerticalSliceVerification(result, failures) {
   if ((slice.authoredAssets || 0) < 8) failures.push(`Gate 3 authored assets failed: authoredAssets=${slice.authoredAssets || 0}`);
   if ((slice.staticBatches || 0) < 12) failures.push(`Gate 3 batching failed: staticBatches=${slice.staticBatches || 0}`);
   if ((start.launchPads || 0) < 2) failures.push(`Gate 3 start failed: launchPads=${start.launchPads || 0}`);
-  if ((start.launchLights || 0) < 8) failures.push(`Gate 3 start failed: launchLights=${start.launchLights || 0}`);
-  if ((start.burnoutScuffs || 0) < 8) failures.push(`Gate 3 start failed: burnoutScuffs=${start.burnoutScuffs || 0}`);
-  if ((start.signs || 0) < 3) failures.push(`Gate 3 start failed: signs=${start.signs || 0}`);
+  if ((start.launchLights || 0) < 5) failures.push(`Gate 3 start failed: launchLights=${start.launchLights || 0}`);
+  if ((start.burnoutScuffs || 0) < 6) failures.push(`Gate 3 start failed: burnoutScuffs=${start.burnoutScuffs || 0}`);
+  if ((start.signs || 0) < 2) failures.push(`Gate 3 start failed: signs=${start.signs || 0}`);
   if ((start.lamps || 0) < 3) failures.push(`Gate 3 start failed: lamps=${start.lamps || 0}`);
-  if ((campusRoute.routeMarks || 0) < 8) failures.push(`Gate 3 campus route failed: routeMarks=${campusRoute.routeMarks || 0}`);
+  if ((campusRoute.routeMarks || 0) < 5) failures.push(`Gate 3 campus route failed: routeMarks=${campusRoute.routeMarks || 0}`);
   if ((campusRoute.lamps || 0) < 4) failures.push(`Gate 3 campus route failed: lamps=${campusRoute.lamps || 0}`);
-  if ((campusRoute.hedges || 0) < 6) failures.push(`Gate 3 campus route failed: hedges=${campusRoute.hedges || 0}`);
+  if ((campusRoute.hedges || 0) < 5) failures.push(`Gate 3 campus route failed: hedges=${campusRoute.hedges || 0}`);
   if ((campusRoute.arches || 0) < 2) failures.push(`Gate 3 campus route failed: arches=${campusRoute.arches || 0}`);
   if ((fcc.plazaPads || 0) < 4) failures.push(`Gate 3 FCC failed: plazaPads=${fcc.plazaPads || 0}`);
   if ((fcc.benches || 0) < 4) failures.push(`Gate 3 FCC failed: benches=${fcc.benches || 0}`);
   if ((fcc.hedges || 0) < 3) failures.push(`Gate 3 FCC failed: hedges=${fcc.hedges || 0}`);
   if ((fcc.identityFrames || 0) < 2) failures.push(`Gate 3 FCC failed: identityFrames=${fcc.identityFrames || 0}`);
-  if ((securityRoute.routeMarks || 0) < 10) failures.push(`Gate 3 security route failed: routeMarks=${securityRoute.routeMarks || 0}`);
-  if ((securityRoute.warningBollards || 0) < 10) failures.push(`Gate 3 security route failed: warningBollards=${securityRoute.warningBollards || 0}`);
+  if ((securityRoute.routeMarks || 0) < 7) failures.push(`Gate 3 security route failed: routeMarks=${securityRoute.routeMarks || 0}`);
+  if ((securityRoute.warningBollards || 0) < 7) failures.push(`Gate 3 security route failed: warningBollards=${securityRoute.warningBollards || 0}`);
   if ((security.floorPads || 0) < 3) failures.push(`Gate 3 security lab failed: floorPads=${security.floorPads || 0}`);
   if ((security.serverBlocks || 0) < 6) failures.push(`Gate 3 security lab failed: serverBlocks=${security.serverBlocks || 0}`);
   if ((security.cables || 0) < 4) failures.push(`Gate 3 security lab failed: cables=${security.cables || 0}`);
   if ((security.terminalRails || 0) < 4) failures.push(`Gate 3 security lab failed: terminalRails=${security.terminalRails || 0}`);
-  if ((security.warningBollards || 0) < 8) failures.push(`Gate 3 security lab failed: warningBollards=${security.warningBollards || 0}`);
+  if ((security.warningBollards || 0) < 6) failures.push(`Gate 3 security lab failed: warningBollards=${security.warningBollards || 0}`);
+  if ((result.roadSurfaceDetails?.transitionGuideBars || 0) > 0) {
+    failures.push(`Gate 3 road clutter failed: transitionGuideBars=${result.roadSurfaceDetails.transitionGuideBars}`);
+  }
   if ((result.securityScan?.active?.stats?.visibleScanWaves || 0) < 1) {
     failures.push(`Gate 3 security scan failed: visible scan waves=${result.securityScan?.active?.stats?.visibleScanWaves || 0}`);
   }

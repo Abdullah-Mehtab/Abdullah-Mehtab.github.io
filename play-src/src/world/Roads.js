@@ -52,6 +52,14 @@ const ROAD_VERGE_OPACITY = {
   default: 0.042
 };
 
+const GATE3_THRESHOLD_IDS = new Set([
+  'launch-plaza-rollout',
+  'fcc-arrival-threshold',
+  'fcc-courtyard-threshold',
+  'scanner-gate-threshold',
+  'security-return-threshold'
+]);
+
 export class Roads {
   constructor(world) {
     this.world = world;
@@ -156,7 +164,7 @@ export class Roads {
       }
     }
     this.addEdgeFeathers(path, style, width, layer);
-    if (path.hierarchy !== 'dirt') {
+    if (path.hierarchy !== 'dirt' && !this.world.verticalSliceMode) {
       this.addLaneEdgeLines(path, width, layer, surfaceY);
     }
 
@@ -411,8 +419,12 @@ export class Roads {
     const aprons = [];
     const edgeBands = [];
     const guideBars = [];
+    const thresholds = this.world.verticalSliceMode
+      ? routeThresholds.filter((threshold) => GATE3_THRESHOLD_IDS.has(threshold.id))
+      : routeThresholds;
+    const showGuideBars = !this.world.verticalSliceMode;
 
-    for (const threshold of routeThresholds) {
+    for (const threshold of thresholds) {
       aprons.push({
         x: threshold.center[0],
         y: 0.194,
@@ -437,24 +449,28 @@ export class Roads {
         });
       }
 
-      const bars = Math.max(2, threshold.bars || 3);
-      for (let index = 0; index < bars; index += 1) {
-        const forward = -threshold.depth * 0.34 + (index / Math.max(1, bars - 1)) * threshold.depth * 0.68;
-        const bar = offsetThresholdPoint(threshold, 0, forward);
-        guideBars.push({
-          x: bar.x,
-          y: 0.208 + index * 0.00004,
-          z: bar.z,
-          rotation: threshold.rotation + Math.PI / 2,
-          width: 0.16,
-          length: threshold.width * (0.44 + (index % 2) * 0.12),
-          color: Number.parseInt(threshold.color.slice(1), 16)
-        });
+      if (showGuideBars) {
+        const bars = Math.max(2, threshold.bars || 3);
+        for (let index = 0; index < bars; index += 1) {
+          const forward = -threshold.depth * 0.34 + (index / Math.max(1, bars - 1)) * threshold.depth * 0.68;
+          const bar = offsetThresholdPoint(threshold, 0, forward);
+          guideBars.push({
+            x: bar.x,
+            y: 0.208 + index * 0.00004,
+            z: bar.z,
+            rotation: threshold.rotation + Math.PI / 2,
+            width: 0.16,
+            length: threshold.width * (0.44 + (index % 2) * 0.12),
+            color: Number.parseInt(threshold.color.slice(1), 16)
+          });
+        }
       }
     }
 
-    this.addRoadDetailInstances('ROAD_Transition_Aprons', aprons, this.createRoadDetailMaterial('transition-apron', ROAD_DETAIL_OPACITY.transitionApron), 31);
-    this.addRoadDetailInstances('ROAD_Transition_Edge_Bands', edgeBands, this.createRoadDetailMaterial('transition-edge', ROAD_DETAIL_OPACITY.transitionEdge), 32);
+    const apronOpacity = this.world.verticalSliceMode ? 0.022 : ROAD_DETAIL_OPACITY.transitionApron;
+    const edgeOpacity = this.world.verticalSliceMode ? 0.038 : ROAD_DETAIL_OPACITY.transitionEdge;
+    this.addRoadDetailInstances('ROAD_Transition_Aprons', aprons, this.createRoadDetailMaterial('transition-apron', apronOpacity), 31);
+    this.addRoadDetailInstances('ROAD_Transition_Edge_Bands', edgeBands, this.createRoadDetailMaterial('transition-edge', edgeOpacity), 32);
     this.addRoadDetailInstances('ROAD_Transition_Guide_Bars', guideBars, this.createRoadDetailMaterial('transition-guide', ROAD_DETAIL_OPACITY.transitionGuide), 33);
     this.detailStats.transitionAprons = aprons.length;
     this.detailStats.transitionGuideBars = guideBars.length;

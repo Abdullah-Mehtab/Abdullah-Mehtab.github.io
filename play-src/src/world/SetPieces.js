@@ -1,7 +1,7 @@
 // ABOUTME: Builds authored landmark staging and dense portfolio world set pieces.
 // ABOUTME: Keeps protected assets intact while adding roadsides, signs, lights, and interaction scenery.
 import * as THREE from 'three';
-import { worldZones } from './worldData.js';
+import { SECURITY_SCAN_OFFSET, SECURITY_SCAN_ROTATION, worldZones } from './worldData.js';
 import { mergeStaticMeshesInGroup } from './StaticBatching.js';
 import { makePatchGeometry } from './WorldMaterials.js';
 
@@ -62,6 +62,8 @@ export class SetPieces {
     this.beaconGlowMaterials = new Map();
     this.signAtlas = null;
     this.panelSeamMaterials = new Map();
+    this.sliceSurfaceMaterials = new Map();
+    this.sliceOverlayMaterials = new Map();
     this.surfacePanelStats = {
       hardscapePanels: 0,
       chippedPanels: 0,
@@ -699,6 +701,8 @@ export class SetPieces {
   createBlockoutScaffold() {
     const group = new THREE.Group();
     group.name = 'BLOCKOUT_Island_District_Scaffold';
+    const verticalSliceMode = this.world.verticalSliceMode;
+    const focusZones = new Set(['landing', 'education', 'security']);
     const materials = {
       landing: this.world.materials.plazaRoad,
       security: this.world.materials.securityRoad,
@@ -719,20 +723,28 @@ export class SetPieces {
     };
 
     for (const zone of worldZones) {
-      const size = Math.max(12, zone.radius * 2.2);
-      const depth = Math.max(10, zone.radius * 1.7);
+      const focusZone = focusZones.has(zone.id);
+      const blockoutScale = verticalSliceMode ? (focusZone ? 0.3 : 0.52) : 1;
+      const size = Math.max(12, zone.radius * 2.2) * blockoutScale;
+      const depth = Math.max(10, zone.radius * 1.7) * blockoutScale;
       const material = materials[zone.id] || this.world.materials.plazaRoad;
-      this.groundRect(group, zone.position[0], zone.position[2], size, depth, material, 0.126, `BLOCKOUT_${zone.id}_district_pad`, zone.rotation || 0);
-      this.box(group, zone.position[0], 1.08, zone.position[2], 1.1, 2.1, 1.1, material, zone.rotation || 0, `BLOCKOUT_${zone.id}_zone_marker`);
+      const padY = verticalSliceMode ? 0.112 : 0.126;
+      const markerWidth = verticalSliceMode ? 0.55 : 1.1;
+      const markerHeight = verticalSliceMode ? 0.58 : 2.1;
+      const markerY = verticalSliceMode ? 0.42 : 1.08;
+      const labelScale = verticalSliceMode ? (focusZone ? 0.86 : 0.68) : 1.35;
+      const labelDistance = zone.radius + (verticalSliceMode ? 3.2 : 5);
+      this.groundRect(group, zone.position[0], zone.position[2], size, depth, material, padY, `BLOCKOUT_${zone.id}_district_pad`, zone.rotation || 0);
+      this.box(group, zone.position[0], markerY, zone.position[2], markerWidth, markerHeight, markerWidth, material, zone.rotation || 0, `BLOCKOUT_${zone.id}_zone_marker`);
       this.addSign(
         group,
         zone.name.toUpperCase(),
         zone.kind,
-        zone.position[0] + Math.cos(zone.rotation || 0) * (zone.radius + 5),
-        zone.position[2] - Math.sin(zone.rotation || 0) * (zone.radius + 5),
+        zone.position[0] + Math.cos(zone.rotation || 0) * labelDistance,
+        zone.position[2] - Math.sin(zone.rotation || 0) * labelDistance,
         (zone.rotation || 0) + Math.PI * 0.5,
         Number.parseInt(zone.color.slice(1), 16),
-        1.35,
+        labelScale,
         `BLOCKOUT_${zone.id}_label`
       );
       this.blockoutStats.zonePads += 1;
@@ -750,11 +762,15 @@ export class SetPieces {
 
   createBlockoutSecurityScan(group) {
     const zone = findZone('security');
-    const scanX = zone.position[0] - 2.8;
-    const scanZ = zone.position[2] - 11.2;
-    this.groundRect(group, zone.position[0], zone.position[2] - 3.5, 24, 18, this.world.materials.securityRoad, 0.138, 'BLOCKOUT_security_scan_pad', zone.rotation || 0);
-    this.securityGate(group, scanX, scanZ, 0.18);
-    this.securityScanWaveField(group, scanX, scanZ, 0.18);
+    const scan = this.securityScanPose(zone);
+    const scanX = scan.x;
+    const scanZ = scan.z;
+    const scanPadWidth = this.world.verticalSliceMode ? 16 : 24;
+    const scanPadDepth = this.world.verticalSliceMode ? 12 : 18;
+    const scanPadY = this.world.verticalSliceMode ? 0.116 : 0.138;
+    this.groundRect(group, scanX, scanZ, scanPadWidth, scanPadDepth, this.world.materials.securityRoad, scanPadY, 'BLOCKOUT_security_scan_pad', scan.rotation);
+    this.securityGate(group, scanX, scanZ, scan.rotation);
+    this.securityScanWaveField(group, scanX, scanZ, scan.rotation);
     this.blockoutStats.securityGate += 1;
 
     for (let i = 0; i < 8; i += 1) {
@@ -811,61 +827,107 @@ export class SetPieces {
     this.world.scene.add(group);
   }
 
+  securityScanPose(zone) {
+    return {
+      x: zone.position[0] + SECURITY_SCAN_OFFSET[0],
+      z: zone.position[2] + SECURITY_SCAN_OFFSET[1],
+      rotation: SECURITY_SCAN_ROTATION
+    };
+  }
+
+  slicePad(group, x, z, width, depth, material, y, name, rotation = 0) {
+    const geometry = new THREE.PlaneGeometry(width, depth);
+    geometry.rotateX(-Math.PI / 2);
+    const mesh = new THREE.Mesh(geometry, this.sliceSurfaceMaterial(material));
+    mesh.name = name;
+    mesh.position.set(x, y, z);
+    mesh.rotation.y = rotation;
+    mesh.receiveShadow = true;
+    mesh.renderOrder = 5;
+    group.add(mesh);
+    return mesh;
+  }
+
+  sliceSurfaceMaterial(material) {
+    const key = material.uuid;
+    if (this.sliceSurfaceMaterials.has(key)) return this.sliceSurfaceMaterials.get(key);
+    const clone = material.clone();
+    clone.polygonOffset = true;
+    clone.polygonOffsetFactor = -4;
+    clone.polygonOffsetUnits = -4;
+    this.sliceSurfaceMaterials.set(key, clone);
+    return clone;
+  }
+
+  sliceOverlayMaterial(color, opacity) {
+    const key = `${color}:${opacity}`;
+    if (this.sliceOverlayMaterials.has(key)) return this.sliceOverlayMaterials.get(key);
+    const material = new THREE.MeshBasicMaterial({
+      color,
+      transparent: true,
+      opacity,
+      depthWrite: false,
+      polygonOffset: true,
+      polygonOffsetFactor: -72,
+      polygonOffsetUnits: -72
+    });
+    this.sliceOverlayMaterials.set(key, material);
+    return material;
+  }
+
   createGate3StartHub(group) {
     const zone = findZone('landing');
     const stats = this.verticalSliceStats.start;
     const rotation = zone.rotation || 0;
-    this.groundRect(group, zone.position[0] + 1.5, zone.position[2] - 4, 35, 22, this.world.materials.plazaRoad, 0.19, 'GATE3_Start_LaunchCourt', rotation);
-    this.groundRect(group, zone.position[0] - 5, zone.position[2] + 9, 24, 11, this.world.materials.paleStone, 0.195, 'GATE3_Start_Rear_Promenade', rotation + 0.08);
+    this.slicePad(group, zone.position[0] + 2.8, zone.position[2] - 8.5, 20, 10.5, this.world.materials.plazaRoad, 0.204, 'GATE3_Start_LaunchCourt', rotation);
+    this.slicePad(group, zone.position[0] - 6, zone.position[2] + 7.2, 14, 5.6, this.world.materials.paleStone, 0.202, 'GATE3_Start_Rear_Promenade', rotation + 0.08);
     stats.launchPads += 2;
 
-    this.box(group, zone.position[0] + 1.5, 0.245, zone.position[2] - 15.2, 25, 0.04, 0.42, this.world.materials.glow, rotation, 'GATE3_Start_Glow_StartLine');
-    this.box(group, zone.position[0] - 14.8, 0.242, zone.position[2] - 4.4, 0.42, 0.04, 17.6, this.world.materials.glowBlue, rotation, 'GATE3_Start_Glow_LeftRail');
-    this.box(group, zone.position[0] + 17.2, 0.242, zone.position[2] - 4.1, 0.42, 0.04, 17.2, this.world.materials.warmGlow, rotation, 'GATE3_Start_Glow_RightRail');
+    this.box(group, zone.position[0] + 2.8, 0.238, zone.position[2] - 13.8, 13, 0.035, 0.3, this.world.materials.glow, rotation, 'GATE3_Start_Glow_StartLine');
+    this.box(group, zone.position[0] - 8.0, 0.236, zone.position[2] - 8.5, 0.22, 0.035, 7.4, this.world.materials.glowBlue, rotation, 'GATE3_Start_Glow_LeftRail');
+    this.box(group, zone.position[0] + 13.6, 0.236, zone.position[2] - 8.5, 0.22, 0.035, 7.4, this.world.materials.warmGlow, rotation, 'GATE3_Start_Glow_RightRail');
     stats.routeMarks += 3;
 
-    for (let index = 0; index < 9; index += 1) {
-      const offset = -9.6 + index * 2.4;
-      this.box(group, zone.position[0] + offset, 0.258, zone.position[2] - 13.2, 1.05, 0.055, 0.38, index % 2 ? this.world.materials.glowBlue : this.world.materials.warmGlow, rotation, 'GATE3_Start_LaunchLight');
+    for (let index = 0; index < 5; index += 1) {
+      const offset = -5.2 + index * 2.6;
+      this.box(group, zone.position[0] + 2.5 + offset, 0.252, zone.position[2] - 13.15, 0.82, 0.045, 0.32, index % 2 ? this.world.materials.glowBlue : this.world.materials.warmGlow, rotation, 'GATE3_Start_LaunchLight');
       stats.launchLights += 1;
     }
 
+    const scuffMaterial = this.sliceOverlayMaterial(0x17140f, 0.22);
     for (let side = -1; side <= 1; side += 2) {
-      for (let index = 0; index < 5; index += 1) {
+      for (let index = 0; index < 3; index += 1) {
         this.box(
           group,
-          zone.position[0] + side * (2.4 + index * 0.24),
-          0.252 + index * 0.0004,
-          zone.position[2] - 10.4 + index * 1.22,
-          0.34 + index * 0.04,
-          0.026,
-          2.2 + index * 0.28,
-          this.world.materials.darkWood,
-          rotation + side * (0.06 + index * 0.015),
+          zone.position[0] + 2.5 + side * (1.6 + index * 0.22),
+          0.248 + index * 0.0004,
+          zone.position[2] - 10.2 + index * 1.08,
+          0.22 + index * 0.03,
+          0.018,
+          1.45 + index * 0.22,
+          scuffMaterial,
+          rotation + side * (0.04 + index * 0.012),
           'GATE3_Start_BurnoutScuff'
         );
         stats.burnoutScuffs += 1;
       }
     }
 
-    this.addLamp(group, zone.position[0] - 16, zone.position[2] - 11, 0xffc36a, 3.1, 'GATE3_Start_Lamp_Warm');
-    this.addLamp(group, zone.position[0] + 16, zone.position[2] - 8, 0x7cffb2, 3.0, 'GATE3_Start_Lamp_Mint');
+    this.addLamp(group, zone.position[0] - 15.5, zone.position[2] - 12.5, 0xffc36a, 3.1, 'GATE3_Start_Lamp_Warm');
+    this.addLamp(group, zone.position[0] + 15.5, zone.position[2] - 10.5, 0x7cffb2, 3.0, 'GATE3_Start_Lamp_Mint');
     this.addLamp(group, zone.position[0] - 10, zone.position[2] + 10, 0x68d8ff, 2.9, 'GATE3_Start_Lamp_Blue');
     stats.lamps += 3;
 
-    this.addPlanterCluster(group, zone.position[0] - 18, zone.position[2] + 1.5, 0x7cffb2);
-    this.addPlanterCluster(group, zone.position[0] + 18, zone.position[2] + 1.2, 0x68d8ff);
-    this.addPlanterCluster(group, zone.position[0] + 8, zone.position[2] + 14, 0xffc36a);
-    stats.planters += 3;
+    this.addPlanterCluster(group, zone.position[0] - 17.5, zone.position[2] + 2.5, 0x7cffb2);
+    this.addPlanterCluster(group, zone.position[0] + 17.5, zone.position[2] + 2.0, 0x68d8ff);
+    stats.planters += 2;
 
-    this.addSign(group, 'START', 'Launch Plaza', zone.position[0] + 16.8, zone.position[2] + 8.2, -0.88, 0x7cffb2, 2.8, 'GATE3_Start_Sign');
-    this.addSign(group, 'FCC GROVE', 'Campus route', zone.position[0] - 20.5, zone.position[2] + 13.2, 0.78, 0x9ccfff, 2.3, 'GATE3_Start_Fcc_Sign');
-    this.addSign(group, 'SCAN RUN', 'Security lab', zone.position[0] - 22, zone.position[2] - 10.2, 1.08, 0x68d8ff, 2.3, 'GATE3_Start_Security_Sign');
-    stats.signs += 3;
+    this.addSign(group, 'START', 'Launch Plaza', zone.position[0] + 16.2, zone.position[2] + 7.8, -0.88, 0x7cffb2, 2.15, 'GATE3_Start_Sign');
+    this.addSign(group, 'FCC / SCAN', 'Route split ahead', zone.position[0] - 20.5, zone.position[2] + 11.8, 0.78, 0x9ccfff, 2.0, 'GATE3_Start_Route_Sign');
+    stats.signs += 2;
 
-    this.recordGate3Asset(this.addPolishAsset(group, 'EnvPolishInfoKiosk', zone.position[0] + 11.6, zone.position[2] - 1.5, -0.72, 0.78));
-    this.recordGate3Asset(this.addPolishAsset(group, 'EnvPolishChevronBollardRun', zone.position[0] - 6.4, zone.position[2] - 15.4, Math.PI * 0.5, 0.82));
-    this.recordGate3Asset(this.addPolishAsset(group, 'EnvPolishChevronBollardRun', zone.position[0] + 7.4, zone.position[2] - 15.4, Math.PI * 0.5, 0.82));
+    this.recordGate3Asset(this.addPolishAsset(group, 'EnvPolishInfoKiosk', zone.position[0] + 11.0, zone.position[2] - 1.5, -0.72, 0.68));
+    this.recordGate3Asset(this.addPolishAsset(group, 'EnvPolishChevronBollardRun', zone.position[0] + 2.5, zone.position[2] - 16.0, Math.PI * 0.5, 0.72));
   }
 
   createGate3CampusRoute(group) {
@@ -887,11 +949,11 @@ export class SetPieces {
     });
     this.campusArch(group, -54, 64, -0.45);
     this.campusArch(group, -46, 94, 0.55);
-    this.addSign(group, 'FCCU', 'Education Grove', -48, 53, -0.44, 0x9ccfff, 2.15, 'GATE3_CampusRoute_Sign');
+    this.addSign(group, 'FCCU', 'Education Grove', -48, 53, -0.44, 0x9ccfff, 1.85, 'GATE3_CampusRoute_Sign');
     stats.arches += 2;
     stats.signs += 1;
     this.recordGate3Asset(this.addPolishAsset(group, 'EnvPolishRouteLantern', -39, 38, -0.34, 0.68));
-    this.recordGate3Asset(this.addPolishAsset(group, 'EnvPolishBenchPlanter', -60, 69, -0.12, 0.66));
+    this.recordGate3Asset(this.addPolishAsset(group, 'EnvPolishBenchPlanter', -62, 70, -0.12, 0.58));
   }
 
   createGate3FccGrove(group) {
@@ -899,10 +961,10 @@ export class SetPieces {
     const stats = this.verticalSliceStats.fcc;
     const x = zone.position[0];
     const z = zone.position[2];
-    this.groundRect(group, x, z - 14, 46, 21, this.world.materials.plazaRoad, 0.202, 'GATE3_FCC_Front_Plaza', 0.02);
-    this.groundRect(group, x - 17, z - 1, 7, 28, this.world.materials.paleStone, 0.206, 'GATE3_FCC_Left_Walk', -0.04);
-    this.groundRect(group, x + 18, z - 1, 7, 28, this.world.materials.paleStone, 0.206, 'GATE3_FCC_Right_Walk', 0.04);
-    this.groundRect(group, x, z + 12, 34, 12, this.world.materials.paleStone, 0.2, 'GATE3_FCC_Rear_Walk', 0);
+    this.slicePad(group, x, z - 13, 31, 11.5, this.world.materials.plazaRoad, 0.214, 'GATE3_FCC_Front_Plaza', 0.02);
+    this.slicePad(group, x - 15.5, z - 1, 4.2, 17, this.world.materials.paleStone, 0.212, 'GATE3_FCC_Left_Walk', -0.04);
+    this.slicePad(group, x + 16.5, z - 1, 4.2, 17, this.world.materials.paleStone, 0.212, 'GATE3_FCC_Right_Walk', 0.04);
+    this.slicePad(group, x, z + 10.5, 21, 6.5, this.world.materials.paleStone, 0.21, 'GATE3_FCC_Rear_Walk', 0);
     stats.plazaPads += 4;
 
     for (const dx of [-19, -7, 7, 19]) {
@@ -910,40 +972,39 @@ export class SetPieces {
       stats.lamps += 1;
     }
     for (const [bx, bz, rot] of [
-      [x - 24, z - 8, 0.84],
-      [x - 16, z + 19, -0.62],
-      [x + 16, z - 12, -0.38],
-      [x + 24, z + 14, 0.48]
+      [x - 24, z - 6, 0.84],
+      [x - 15, z + 17, -0.62],
+      [x + 16, z - 11, -0.38],
+      [x + 23, z + 12, 0.48]
     ]) {
       this.addBench(group, bx, bz, rot, 0.92);
       stats.benches += 1;
     }
     for (const [px, pz] of [
-      [x - 27, z - 15],
-      [x - 22, z + 15],
-      [x + 25, z - 13],
-      [x + 22, z + 16],
-      [x - 2, z + 27]
+      [x - 26, z - 14],
+      [x - 21, z + 13],
+      [x + 24, z - 12],
+      [x + 21, z + 14]
     ]) {
       this.addPlanterCluster(group, px, pz, 0x9ccfff);
       stats.planters += 1;
     }
-    this.hedgeLine(group, x - 24, z - 21, 44, 0);
-    this.hedgeLine(group, x + 24, z - 21, 44, 0);
-    this.hedgeLine(group, x, z + 25, 34, 0);
+    this.hedgeLine(group, x - 20, z - 19, 24, 0);
+    this.hedgeLine(group, x + 20, z - 19, 24, 0);
+    this.hedgeLine(group, x, z + 18, 20, 0);
     stats.hedges += 3;
 
-    this.addSign(group, 'FCCU S BLOCK', 'Protected model identity', x - 19, z - 17.5, 0.2, 0x9ccfff, 2.6, 'GATE3_FCC_Identity_Sign');
-    this.box(group, x - 22.5, 0.248, z - 23.4, 12, 0.04, 0.38, this.world.materials.glowBlue, 0.04, 'GATE3_FCC_Identity_Frame_Left');
-    this.box(group, x + 22.5, 0.248, z - 23.4, 12, 0.04, 0.38, this.world.materials.warmGlow, -0.04, 'GATE3_FCC_Identity_Frame_Right');
+    this.addSign(group, 'FCCU S BLOCK', 'Protected model identity', x - 19, z - 17.5, 0.2, 0x9ccfff, 2.1, 'GATE3_FCC_Identity_Sign');
+    this.box(group, x - 16.5, 0.244, z - 21.0, 8.0, 0.035, 0.28, this.world.materials.glowBlue, 0.04, 'GATE3_FCC_Identity_Frame_Left');
+    this.box(group, x + 16.5, 0.244, z - 21.0, 8.0, 0.035, 0.28, this.world.materials.warmGlow, -0.04, 'GATE3_FCC_Identity_Frame_Right');
     stats.signs += 1;
     stats.identityFrames += 2;
 
-    this.recordGate3Asset(this.addPolishAsset(group, 'EnvPolishCampusWalkwayPavilion', x - 1.4, z - 24, 0.05, 0.86));
-    this.recordGate3Asset(this.addPolishAsset(group, 'EnvPolishCampusFountain', x + 16.8, z - 8.8, -0.12, 0.68));
-    this.recordGate3Asset(this.addPolishAsset(group, 'EnvPolishCampusNoticeBoard', x - 23.0, z - 8.8, 0.34, 0.72));
-    this.recordGate3Asset(this.addPolishAsset(group, 'EnvPolishCampusStudyBench', x - 19.2, z + 10.8, 0.52, 0.72));
-    this.recordGate3Asset(this.addPolishAsset(group, 'EnvPolishCampusStudyBench', x + 19.0, z + 10.4, -0.52, 0.72));
+    this.recordGate3Asset(this.addPolishAsset(group, 'EnvPolishCampusWalkwayPavilion', x - 1.4, z - 23.2, 0.05, 0.72));
+    this.recordGate3Asset(this.addPolishAsset(group, 'EnvPolishCampusFountain', x + 14.8, z - 7.8, -0.12, 0.56));
+    this.recordGate3Asset(this.addPolishAsset(group, 'EnvPolishCampusNoticeBoard', x - 22.4, z - 8.2, 0.34, 0.6));
+    this.recordGate3Asset(this.addPolishAsset(group, 'EnvPolishCampusStudyBench', x - 18.2, z + 9.8, 0.52, 0.62));
+    this.recordGate3Asset(this.addPolishAsset(group, 'EnvPolishCampusStudyBench', x + 18.0, z + 9.6, -0.52, 0.62));
   }
 
   createGate3SecurityRoute(group) {
@@ -963,10 +1024,10 @@ export class SetPieces {
       hedgeMaterial: this.world.materials.cable,
       kind: 'security'
     });
-    this.addSign(group, 'SECURITY', 'Scanner gate ahead', -74, -24, -0.72, 0x68d8ff, 2.2, 'GATE3_SecurityRoute_Sign');
+    this.addSign(group, 'SECURITY', 'Scanner gate ahead', -77, -26, -0.72, 0x68d8ff, 1.85, 'GATE3_SecurityRoute_Sign');
     stats.signs += 1;
-    this.recordGate3Asset(this.addPolishAsset(group, 'EnvPolishSignalTotem', -70, -18, -0.45, 0.78));
-    this.recordGate3Asset(this.addPolishAsset(group, 'EnvPolishRoadBarrier', -91, -38, -0.72, 0.72));
+    this.recordGate3Asset(this.addPolishAsset(group, 'EnvPolishSignalTotem', -72, -20, -0.45, 0.62));
+    this.recordGate3Asset(this.addPolishAsset(group, 'EnvPolishRoadBarrier', -101, -48, -0.72, 0.44));
   }
 
   createGate3SecurityLab(group) {
@@ -974,45 +1035,68 @@ export class SetPieces {
     const stats = this.verticalSliceStats.security;
     const x = zone.position[0];
     const z = zone.position[2];
-    this.groundRect(group, x, z - 1.4, 38, 30, this.world.materials.securityRoad, 0.212, 'GATE3_Security_Lab_Floor', -0.08);
-    this.groundRect(group, x - 13.5, z + 11.5, 10, 9, this.world.materials.stoneRoad, 0.216, 'GATE3_Security_Server_Deck_West', -0.18);
-    this.groundRect(group, x + 14.0, z + 9.6, 10, 9, this.world.materials.stoneRoad, 0.216, 'GATE3_Security_Server_Deck_East', 0.18);
+    const scan = this.securityScanPose(zone);
+    const sideX = Math.cos(scan.rotation);
+    const sideZ = -Math.sin(scan.rotation);
+    const forwardX = Math.sin(scan.rotation);
+    const forwardZ = Math.cos(scan.rotation);
+    this.slicePad(group, scan.x, scan.z, 16, 8, this.world.materials.securityRoad, 0.222, 'GATE3_Security_Lab_Floor', scan.rotation);
+    this.slicePad(group, scan.x + sideX * 8.4, scan.z + sideZ * 8.4, 6.4, 5.2, this.world.materials.stoneRoad, 0.224, 'GATE3_Security_Server_Deck_West', scan.rotation);
+    this.slicePad(group, scan.x - sideX * 8.4, scan.z - sideZ * 8.4, 6.4, 5.2, this.world.materials.stoneRoad, 0.224, 'GATE3_Security_Server_Deck_East', scan.rotation);
     stats.floorPads += 3;
 
-    this.addSign(group, 'SECURITY SCAN', 'Stop inside the beam', x + 13, z - 13, -0.55, 0x68d8ff, 2.4, 'GATE3_Security_Scan_Sign');
+    this.addSign(group, 'SECURITY SCAN', 'Stop inside the beam', scan.x - sideX * 9.4, scan.z - sideZ * 9.4, scan.rotation - 1.1, 0x68d8ff, 1.8, 'GATE3_Security_Scan_Sign');
     stats.signs += 1;
 
-    for (let index = 0; index < 8; index += 1) {
-      const offset = -13.5 + index * 3.85;
-      this.box(group, x + offset, 0.262, z - 14.8, 1.4, 0.05, 0.32, index % 2 ? this.world.materials.glowPink : this.world.materials.glowBlue, -0.08, 'GATE3_Security_Floor_Trace');
+    for (let index = 0; index < 3; index += 1) {
+      const offset = -4.2 + index * 4.2;
+      this.box(group, scan.x + sideX * offset, 0.258, scan.z + sideZ * offset, 0.8, 0.03, 0.2, index % 2 ? this.world.materials.glowPink : this.world.materials.glowBlue, scan.rotation, 'GATE3_Security_Floor_Trace');
       stats.lightStrips = (stats.lightStrips || 0) + 1;
     }
     for (const side of [-1, 1]) {
-      this.box(group, x + side * 10.4, 0.48, z - 8.4, 0.34, 0.58, 7.2, this.world.materials.cable, 0.02, 'GATE3_Security_Terminal_Rail');
-      this.box(group, x + side * 8.8, 0.64, z - 8.4, 0.18, 0.22, 6.5, this.world.materials.glowBlue, 0.02, 'GATE3_Security_Terminal_Glow');
+      const railX = scan.x + sideX * side * 5.7;
+      const railZ = scan.z + sideZ * side * 5.7;
+      this.box(group, railX, 0.44, railZ, 0.2, 0.34, 3.8, this.world.materials.cable, scan.rotation, 'GATE3_Security_Terminal_Rail');
+      this.box(group, railX - sideX * side * 0.75, 0.59, railZ - sideZ * side * 0.75, 0.12, 0.14, 3.4, this.world.materials.glowBlue, scan.rotation, 'GATE3_Security_Terminal_Glow');
       stats.terminalRails += 2;
       this.securityLabStats.terminalRails += 2;
     }
 
-    for (const [rx, rz, rot] of [
-      [x - 17.2, z + 7.8, 0.34],
-      [x - 13.1, z + 15.4, 0.08],
-      [x + 13.6, z + 14.0, -0.28],
-      [x + 17.3, z + 5.8, -0.48],
-      [x - 6.8, z + 12.4, 0.14],
-      [x + 6.8, z + 11.8, -0.14]
+    for (const [side, forward, extraRotation] of [
+      [1, -3.2, 0.24],
+      [1, 2.8, 0.08],
+      [-1, -2.8, -0.18],
+      [-1, 3.2, -0.32],
+      [1, 5.8, 0.14],
+      [-1, 5.5, -0.14]
     ]) {
-      this.serverRack(group, rx, rz, rot);
+      const rx = scan.x + sideX * side * 9.4 + forwardX * forward;
+      const rz = scan.z + sideZ * side * 9.4 + forwardZ * forward;
+      this.serverRack(group, rx, rz, scan.rotation + extraRotation);
       stats.serverBlocks += 1;
     }
 
-    const scanX = x - 2.8;
-    const scanZ = z - 11.2;
     const cableRuns = [
-      [[x - 17.2, 0.31, z + 7.8], [x - 12.5, 0.28, z - 1.0], [scanX, 0.31, scanZ]],
-      [[x + 17.3, 0.31, z + 5.8], [x + 9.0, 0.28, z - 2.5], [scanX, 0.31, scanZ]],
-      [[x - 6.8, 0.31, z + 12.4], [x - 5.2, 0.28, z + 0.5], [scanX, 0.31, scanZ]],
-      [[x + 6.8, 0.31, z + 11.8], [x + 3.8, 0.28, z + 0.2], [scanX, 0.31, scanZ]]
+      [
+        [scan.x + sideX * 9.4 + forwardX * -3.2, 0.31, scan.z + sideZ * 9.4 + forwardZ * -3.2],
+        [scan.x + sideX * 7.2 + forwardX * -1.6, 0.28, scan.z + sideZ * 7.2 + forwardZ * -1.6],
+        [scan.x + sideX * 5.8, 0.31, scan.z + sideZ * 5.8]
+      ],
+      [
+        [scan.x + sideX * 9.4 + forwardX * 2.8, 0.31, scan.z + sideZ * 9.4 + forwardZ * 2.8],
+        [scan.x + sideX * 7.2 + forwardX * 1.6, 0.28, scan.z + sideZ * 7.2 + forwardZ * 1.6],
+        [scan.x + sideX * 5.8, 0.31, scan.z + sideZ * 5.8]
+      ],
+      [
+        [scan.x - sideX * 9.4 + forwardX * -2.8, 0.31, scan.z - sideZ * 9.4 + forwardZ * -2.8],
+        [scan.x - sideX * 7.2 + forwardX * -1.5, 0.28, scan.z - sideZ * 7.2 + forwardZ * -1.5],
+        [scan.x - sideX * 5.8, 0.31, scan.z - sideZ * 5.8]
+      ],
+      [
+        [scan.x - sideX * 9.4 + forwardX * 3.2, 0.31, scan.z - sideZ * 9.4 + forwardZ * 3.2],
+        [scan.x - sideX * 7.2 + forwardX * 1.7, 0.28, scan.z - sideZ * 7.2 + forwardZ * 1.7],
+        [scan.x - sideX * 5.8, 0.31, scan.z - sideZ * 5.8]
+      ]
     ];
     for (const run of cableRuns) {
       this.cable(group, run[0], run[1], run[2], 0x10191f);
@@ -1021,27 +1105,27 @@ export class SetPieces {
     }
 
     for (const [bx, bz, color] of [
-      [x - 20, z - 12, 0x68d8ff],
-      [x + 19, z - 12, 0xff6d8d],
-      [x - 20, z + 12, 0x7cffb2],
-      [x + 19, z + 12, 0x68d8ff]
+      [scan.x + sideX * 11.8, scan.z + sideZ * 11.8, 0x68d8ff],
+      [scan.x - sideX * 11.8, scan.z - sideZ * 11.8, 0xff6d8d],
+      [scan.x + forwardX * 6.6, scan.z + forwardZ * 6.6, 0x7cffb2],
+      [scan.x - forwardX * 6.6, scan.z - forwardZ * 6.6, 0x68d8ff]
     ]) {
       this.beacon(group, bx, bz, color);
       stats.beacons += 1;
     }
 
-    for (let index = 0; index < 10; index += 1) {
+    for (let index = 0; index < 6; index += 1) {
       const side = index % 2 ? -1 : 1;
-      const bx = x + side * (15.8 + (index % 3) * 1.1);
-      const bz = z - 13.5 + index * 2.7;
+      const bx = scan.x + sideX * side * 7.0 + forwardX * (-4.2 + index * 1.55);
+      const bz = scan.z + sideZ * side * 7.0 + forwardZ * (-4.2 + index * 1.55);
       this.cylinder(group, bx, 0.58, bz, 0.16, 1.12, this.world.materials.cable, 8, 'GATE3_Security_Warning_Bollard');
-      this.box(group, bx, 1.22, bz, 0.42, 0.18, 0.16, index % 2 ? this.world.materials.glowPink : this.world.materials.glowBlue, 0, 'GATE3_Security_Warning_Light');
+      this.box(group, bx, 1.22, bz, 0.42, 0.18, 0.16, index % 2 ? this.world.materials.glowPink : this.world.materials.glowBlue, scan.rotation, 'GATE3_Security_Warning_Light');
       stats.warningBollards += 1;
     }
 
-    this.recordGate3Asset(this.addPolishAsset(group, 'EnvPolishSecurityScanner', x + 4.8, z + 3.0, -0.28, 0.86));
-    this.recordGate3Asset(this.addPolishAsset(group, 'EnvPolishTerminalPillar', x - 12.2, z + 9.5, 0.34, 0.96));
-    this.recordGate3Asset(this.addPolishAsset(group, 'EnvPolishSignalTotem', x + 13.8, z + 8.2, -0.44, 0.96));
+    this.recordGate3Asset(this.addPolishAsset(group, 'EnvPolishSecurityScanner', scan.x - sideX * 5.8, scan.z - sideZ * 5.8, scan.rotation - 0.16, 0.62));
+    this.recordGate3Asset(this.addPolishAsset(group, 'EnvPolishTerminalPillar', scan.x + sideX * 8.2 + forwardX * 5.0, scan.z + sideZ * 8.2 + forwardZ * 5.0, scan.rotation + 0.28, 0.62));
+    this.recordGate3Asset(this.addPolishAsset(group, 'EnvPolishSignalTotem', scan.x - sideX * 8.2 + forwardX * 4.6, scan.z - sideZ * 8.2 + forwardZ * 4.6, scan.rotation - 0.28, 0.62));
   }
 
   createGate3RoadsideRun(group, points, stats, spec) {
@@ -1054,25 +1138,25 @@ export class SetPieces {
       const rotation = Math.atan2(dx, dz);
       const rightX = Math.cos(rotation);
       const rightZ = -Math.sin(rotation);
-      const steps = Math.max(2, Math.floor(length / 11));
+      const steps = Math.max(1, Math.floor(length / 16));
       for (let step = 0; step < steps; step += 1) {
         const t = (step + 0.5) / steps;
         const x = ax + dx * t;
         const z = az + dz * t;
         const side = (step + segmentIndex) % 2 ? -1 : 1;
-        const edgeX = x + rightX * side * 4.0;
-        const edgeZ = z + rightZ * side * 4.0;
-        this.box(group, edgeX, 0.252, edgeZ, 0.32, 0.036, 1.25, spec.accentMaterial, rotation, `${spec.prefix}_Edge_Glow`);
+        const edgeX = x + rightX * side * 4.35;
+        const edgeZ = z + rightZ * side * 4.35;
+        this.box(group, edgeX, 0.244, edgeZ, 0.22, 0.03, 0.92, spec.accentMaterial, rotation, `${spec.prefix}_Edge_Glow`);
         stats.routeMarks += 1;
 
         if (spec.kind === 'security') {
-          this.cylinder(group, x - rightX * side * 3.25, 0.56, z - rightZ * side * 3.25, 0.13, 1.08, this.world.materials.cable, 8, `${spec.prefix}_Warning_Bollard`);
-          this.box(group, x - rightX * side * 3.25, 1.13, z - rightZ * side * 3.25, 0.36, 0.14, 0.16, spec.accentMaterial, rotation, `${spec.prefix}_Warning_Light`);
+          this.cylinder(group, x - rightX * side * 4.4, 0.52, z - rightZ * side * 4.4, 0.1, 0.92, this.world.materials.cable, 8, `${spec.prefix}_Warning_Bollard`);
+          this.box(group, x - rightX * side * 4.4, 1.0, z - rightZ * side * 4.4, 0.3, 0.12, 0.13, spec.accentMaterial, rotation, `${spec.prefix}_Warning_Light`);
           stats.warningBollards += 1;
           stats.lightStrips += 1;
         } else {
-          this.box(group, x - rightX * side * 3.2, 0.44, z - rightZ * side * 3.2, 2.6, 0.42, 0.44, spec.hedgeMaterial, rotation, `${spec.prefix}_Hedge`);
-          this.box(group, x + rightX * side * 5.1, 0.245, z + rightZ * side * 5.1, 2.2, 0.05, 0.54, spec.bedMaterial, rotation, `${spec.prefix}_Flower_Bed`);
+          this.box(group, x - rightX * side * 4.15, 0.38, z - rightZ * side * 4.15, 2.2, 0.28, 0.34, spec.hedgeMaterial, rotation, `${spec.prefix}_Hedge`);
+          this.box(group, x + rightX * side * 5.4, 0.238, z + rightZ * side * 5.4, 1.8, 0.035, 0.38, spec.bedMaterial, rotation, `${spec.prefix}_Flower_Bed`);
           stats.hedges += 1;
           stats.flowerBeds += 1;
         }
@@ -1305,6 +1389,7 @@ export class SetPieces {
 
   createSecurityLab() {
     const zone = findZone('security');
+    const scan = this.securityScanPose(zone);
     const group = new THREE.Group();
     group.name = 'SETPIECE_Security_Lab';
 
@@ -1315,8 +1400,8 @@ export class SetPieces {
     this.securityLabStats.floorMarks += 3;
     this.securityPadTraceGrid(group, zone);
 
-    this.securityGate(group, zone.position[0] - 2.8, zone.position[2] - 11.2, 0.18);
-    this.securityScanWaveField(group, zone.position[0] - 2.8, zone.position[2] - 11.2, 0.18);
+    this.securityGate(group, scan.x, scan.z, scan.rotation);
+    this.securityScanWaveField(group, scan.x, scan.z, scan.rotation);
     this.addSecurityLabAsset(group, 'EnvPolishSecurityScanner', zone.position[0] + 4.8, zone.position[2] + 3.0, -0.28, 0.92);
     this.addSecurityLabAsset(group, 'EnvPolishTerminalPillar', zone.position[0] - 12.2, zone.position[2] + 9.5, 0.34, 1.05);
     this.addSecurityLabAsset(group, 'EnvPolishSignalTotem', zone.position[0] + 13.8, zone.position[2] + 8.2, -0.44, 1.05);
@@ -1335,8 +1420,8 @@ export class SetPieces {
     this.cable(group, [-111, 0.3, -56], [-122, 0.25, -50], [-130, 0.32, -55], 0x10191f);
     this.cable(group, [-136, 0.3, -31], [-128, 0.26, -36], [-119, 0.3, -34], 0x10191f);
     this.securityLabStats.cableRuns += 3;
-    this.securityPadCableRun(group, zone.position[0] - 12.2, zone.position[2] - 4.8, zone.position[0] - 2.8, zone.position[2] - 11.2);
-    this.securityPadCableRun(group, zone.position[0] + 10.8, zone.position[2] - 4.2, zone.position[0] - 2.8, zone.position[2] - 11.2);
+    this.securityPadCableRun(group, zone.position[0] - 12.2, zone.position[2] - 4.8, scan.x, scan.z);
+    this.securityPadCableRun(group, zone.position[0] + 10.8, zone.position[2] - 4.2, scan.x, scan.z);
 
     for (const [x, z, color] of [
       [-143, -25, 0x68d8ff],
@@ -1362,8 +1447,8 @@ export class SetPieces {
         baseY: packet.position.y,
         baseZ: packet.position.z,
         baseOpacity: 0.42,
-        scanX: zone.position[0] - 2.8,
-        scanZ: zone.position[2] - 11.2,
+        scanX: scan.x,
+        scanZ: scan.z,
         orbitRadius: 3.4 + (i % 3) * 0.48,
         orbitSpeed: 1.7 + i * 0.08,
         speed: 1.2,
@@ -3493,7 +3578,9 @@ export class SetPieces {
     mesh.receiveShadow = true;
     mesh.userData.surfacePanel = 'chipped-hardscape';
     group.add(mesh);
-    this.addGroundPanelSeams(group, x, z, width, depth, material, y + 0.058, name, rotation);
+    if (!(this.world.verticalSliceMode && name.startsWith('BLOCKOUT_'))) {
+      this.addGroundPanelSeams(group, x, z, width, depth, material, y + 0.058, name, rotation);
+    }
     this.surfacePanelStats.hardscapePanels += 1;
     this.surfacePanelStats.chippedPanels += 1;
   }

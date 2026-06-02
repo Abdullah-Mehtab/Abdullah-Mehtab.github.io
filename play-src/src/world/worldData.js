@@ -4,6 +4,8 @@
 export const WORLD_HALF_SIZE = 190;
 export const MAP_PADDING = 24;
 export const ISLAND_RADIUS = 158;
+export const SECURITY_SCAN_OFFSET = [-13, 1];
+export const SECURITY_SCAN_ROTATION = -2.66;
 
 export const canalSegments = [];
 
@@ -447,7 +449,7 @@ export const worldZones = [
     kind: 'Offensive Security',
     position: [-94, 0, -66],
     rotation: -0.28,
-    radius: 10,
+    radius: 14,
     color: '#68d8ff',
     shape: 'lab',
     dialogueId: '1',
@@ -692,9 +694,9 @@ export const zonePresentation = {
     fov: 42
   },
   security: {
-    respawn: { position: [-64, 1.08, -12], heading: -2.17 },
-    camera: [-80, 10, -48],
-    target: [-94, 3, -66],
+    respawn: { position: [-105, 1.08, -64], heading: SECURITY_SCAN_ROTATION },
+    camera: [-84, 10, -48],
+    target: [-107, 3, -65],
     fov: 43
   },
   projects: {
