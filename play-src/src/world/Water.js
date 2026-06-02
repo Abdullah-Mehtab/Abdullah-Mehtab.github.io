@@ -137,6 +137,13 @@ export class Water {
 
     this.createShallowShelf();
     this.createShoreFoam();
+    if (this.world.blockoutMode) {
+      this.createSplashPool();
+      this.createWakePool();
+      this.createFoamStreakPool();
+      this.applyQuality();
+      return;
+    }
     this.createShoreFlecks();
     this.createShorelineLifeKits();
     this.createTideGlimmers();

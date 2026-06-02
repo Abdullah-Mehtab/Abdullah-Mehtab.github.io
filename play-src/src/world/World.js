@@ -38,12 +38,16 @@ const ROAD_SURFACES = {
   bridge: { label: 'pier deck', forwardGrip: 0.96, sideGrip: 0.93, engineFactor: 0.96, topSpeedFactor: 0.88, dustColor: 0x7aa9a7, skidColor: 0x2e4d4b, audioId: 'bridge-road', roughnessFeedback: 0.34 }
 };
 
+const GOAL_GATE = 'gate-2-blockout';
+
 export class World {
   constructor({ scene, physics, resumeData, environmentAssets }) {
     this.scene = scene;
     this.physics = physics;
     this.resumeData = resumeData;
     this.environmentAssets = environmentAssets;
+    this.goalGate = GOAL_GATE;
+    this.blockoutMode = GOAL_GATE === 'gate-2-blockout';
     this.materials = createWorldMaterials();
     this.zones = [];
     this.decor = [];
@@ -88,9 +92,9 @@ export class World {
     this.zonesSystem = new Zones(this);
     this.stuntPark = new StuntPark(this);
     this.setPieces = new SetPieces(this);
-    this.props = new Props(this);
-    this.foliage = new Foliage(this);
-    this.potatoFarm = new PotatoFarm(this);
+    this.props = this.blockoutMode ? null : new Props(this);
+    this.foliage = this.blockoutMode ? null : new Foliage(this);
+    this.potatoFarm = this.blockoutMode ? null : new PotatoFarm(this);
     this.atmosphere = new Atmosphere(this);
 
     this.terrain.build();
@@ -99,9 +103,9 @@ export class World {
     this.zonesSystem.build();
     this.stuntPark.build();
     this.setPieces.build();
-    this.potatoFarm.build();
-    this.props.build();
-    this.foliage.build();
+    this.potatoFarm?.build();
+    this.props?.build();
+    this.foliage?.build();
     this.createCollectibles();
     this.atmosphere.build();
   }
@@ -128,9 +132,9 @@ export class World {
     this.terrain?.applyQuality?.();
     this.water?.applyQuality?.();
     this.roads?.applyQuality?.();
-    this.foliage?.applyQuality();
+    this.foliage?.applyQuality?.();
     this.stuntPark?.applyQuality?.();
-    this.setPieces?.applyQuality();
+    this.setPieces?.applyQuality?.();
     this.atmosphere?.applyQuality?.();
     this.onQualityChange?.(quality);
     return this.landscapeQuality;
@@ -412,15 +416,40 @@ export class World {
   }
 
   update(dt, elapsed, vehiclePosition, vehicle) {
-    this.water.update(dt, elapsed, vehiclePosition, vehicle);
-    this.foliage.update(dt, elapsed, vehiclePosition);
-    this.potatoFarm.update(dt, vehiclePosition);
-    this.zonesSystem.update(vehiclePosition);
+    this.water?.update(dt, elapsed, vehiclePosition, vehicle);
+    this.foliage?.update?.(dt, elapsed, vehiclePosition);
+    this.potatoFarm?.update?.(dt, vehiclePosition);
+    this.zonesSystem?.update?.(vehiclePosition);
     this.updateCircuitFeedback(dt);
-    this.stuntPark.update(dt, elapsed, vehiclePosition);
-    this.setPieces.update(dt, elapsed, vehiclePosition);
-    this.atmosphere.update(dt, elapsed);
+    this.stuntPark?.update?.(dt, elapsed, vehiclePosition);
+    this.setPieces?.update?.(dt, elapsed, vehiclePosition);
+    this.atmosphere?.update?.(dt, elapsed);
     this.updateCollectibles(dt, elapsed);
+  }
+
+  getBlockoutStats() {
+    return {
+      gate: this.goalGate,
+      enabled: this.blockoutMode,
+      densePropsBuilt: Boolean(this.props),
+      denseFoliageBuilt: Boolean(this.foliage),
+      potatoPocketBuilt: Boolean(this.potatoFarm?.group),
+      setPieces: this.setPieces?.getBlockoutStats?.() || {},
+      terrain: {
+        districtGround: this.terrain?.getDistrictGroundStats?.() || {},
+        surfaceDetails: this.terrain?.surfaceDetailStats || {},
+        meadowDetails: this.terrain?.getMeadowDetailStats?.() || {},
+        fieldMotifs: this.terrain?.getFieldMotifStats?.() || {},
+        relief: this.terrain?.getReliefStats?.() || {},
+        shoreline: this.terrain?.getShorelineStats?.() || {}
+      },
+      roads: {
+        details: this.roads?.getDetailStats?.() || {},
+        guidanceChevrons: this.scene.getObjectByName('ROAD_Guidance_Chevrons')?.count || 0,
+        reflectorStuds: this.scene.getObjectByName('ROAD_Reflector_Studs')?.count || 0,
+        thresholdBars: this.roads?.roadGroup?.userData?.routeThresholdBars || 0
+      }
+    };
   }
 
   updateCircuitFeedback(dt) {

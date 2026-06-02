@@ -58,6 +58,12 @@ export class Terrain {
   build() {
     this.addBeachBase();
     this.addGrassPlateau();
+    if (this.world.blockoutMode) {
+      this.addDistrictGrounding();
+      this.addCoastalEdges();
+      this.addPhysicsFloor();
+      return;
+    }
     this.addTerrainBrushes();
     this.addMeadowDetailPatches();
     this.addFieldMotifs();

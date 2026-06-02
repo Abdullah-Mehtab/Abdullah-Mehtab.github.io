@@ -32,10 +32,14 @@ export class StuntPark {
 
   build() {
     this.stats = this.createStats();
-    this.createYardDressing();
     this.createCircuitTrackLayout();
     this.createRamps();
     this.createBoostPads();
+    if (this.world.blockoutMode) {
+      this.createCircuitTargetMarkers(Math.max(0, circuitCheckpoints.length - 1));
+      return;
+    }
+    this.createYardDressing();
     this.createCircuitCheckpointTrail();
   }
 
@@ -202,9 +206,11 @@ export class StuntPark {
     const decor = new THREE.Group();
     decor.name = 'STUNT_Circuit_Track_Detail';
     this.circuitTrackDecorGroup = decor;
-    this.addCircuitCurbEdges(decor, points);
-    this.addCircuitApexMarkers(decor, points);
-    group.add(decor);
+    if (!this.world.blockoutMode) {
+      this.addCircuitCurbEdges(decor, points);
+      this.addCircuitApexMarkers(decor, points);
+      group.add(decor);
+    }
 
     this.stats.circuitTrackSegments = points.length - 1;
     this.applyQuality();

@@ -49,6 +49,7 @@ const ignoredDirs = new Set([
   '.migration-safety',
   '.vscode',
   'docs',
+  'localbackups',
   'node_modules',
   'supabase'
 ]);

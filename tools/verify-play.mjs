@@ -1336,6 +1336,8 @@ async function collectRuntimeMetrics(page, loadMs, gameplay, water, surfaces, su
     return {
       ready: window.__portfolioDrive.ready(),
       canvasSample: window.__portfolioDrive.sampleCanvas(),
+      goalGate: game.world.goalGate || null,
+      blockout: game.world.getBlockoutStats?.() || {},
       avgFrameMs: Number(avgMs.toFixed(2)),
       p95FrameMs: Number(p95Ms.toFixed(2)),
       fps: Number((1000 / avgMs).toFixed(2)),
@@ -2064,6 +2066,13 @@ function assertVerification(result) {
   if (result.colliderAudit?.failures?.length) failures.push(`collider audit failed: ${result.colliderAudit.failures.map((item) => item.name).join(', ')}`);
   if (result.routeReplay?.total !== routeReplaySegments.length) failures.push(`route replay count mismatch: ${result.routeReplay?.total}/${routeReplaySegments.length}`);
   if (result.routeReplay?.failed) failures.push(`route replay failed: ${result.routeReplay.failed}/${result.routeReplay.total}`);
+  if (result.goalGate === 'gate-2-blockout') {
+    assertGate2BlockoutVerification(result, failures);
+    if (failures.length) {
+      throw new Error(`Play verification failed: ${failures.join('; ')}`);
+    }
+    return;
+  }
   if (result.circuit?.targetCount !== circuitCheckpoints.length - 1) failures.push(`circuit probe failed: targetCount=${result.circuit?.targetCount}/${circuitCheckpoints.length - 1}`);
   if (!result.circuit?.preview?.active) failures.push('circuit probe failed: preview inactive');
   if (result.circuit?.preview?.activeTarget !== 1) failures.push(`circuit probe failed: preview target=${result.circuit?.preview?.activeTarget}`);
@@ -2835,6 +2844,94 @@ function assertVerification(result) {
   if (failures.length) {
     throw new Error(`Play verification failed: ${failures.join('; ')}`);
   }
+}
+
+function assertGate2BlockoutVerification(result, failures) {
+  const blockout = result.blockout || {};
+  const blockoutSetPieces = blockout.setPieces || {};
+  if (result.goalGate !== 'gate-2-blockout') failures.push(`Gate 2 probe failed: goalGate=${result.goalGate || 'none'}`);
+  if (!blockout.enabled) failures.push('Gate 2 probe failed: blockout mode inactive');
+  if (blockout.densePropsBuilt) failures.push('Gate 2 probe failed: dense prop system was built');
+  if (blockout.denseFoliageBuilt) failures.push('Gate 2 probe failed: dense foliage system was built');
+  if (blockout.potatoPocketBuilt) failures.push('Gate 2 probe failed: final potato pocket was built');
+  if ((blockoutSetPieces.zonePads || 0) !== worldZones.length) {
+    failures.push(`Gate 2 scaffold failed: zonePads=${blockoutSetPieces.zonePads || 0}/${worldZones.length}`);
+  }
+  if ((blockoutSetPieces.zoneMarkers || 0) !== worldZones.length) {
+    failures.push(`Gate 2 scaffold failed: zoneMarkers=${blockoutSetPieces.zoneMarkers || 0}/${worldZones.length}`);
+  }
+  if ((blockoutSetPieces.zoneLabels || 0) !== worldZones.length) {
+    failures.push(`Gate 2 scaffold failed: zoneLabels=${blockoutSetPieces.zoneLabels || 0}/${worldZones.length}`);
+  }
+  if ((blockoutSetPieces.securityGate || 0) < 1) failures.push('Gate 2 security scaffold failed: scanner gate missing');
+  if ((blockoutSetPieces.securityPacketShards || 0) < 8) {
+    failures.push(`Gate 2 security scaffold failed: packet shards=${blockoutSetPieces.securityPacketShards || 0}`);
+  }
+  if ((blockoutSetPieces.securityScanWaves || 0) < 3) {
+    failures.push(`Gate 2 security scaffold failed: scan waves=${blockoutSetPieces.securityScanWaves || 0}`);
+  }
+  if ((result.districtGround?.pads || 0) < districtFootprints.length) {
+    failures.push(`Gate 2 terrain failed: district pads=${result.districtGround?.pads || 0}/${districtFootprints.length}`);
+  }
+  if ((result.surfaceDetails?.districts || 0) !== 0) failures.push(`Gate 2 terrain failed: final surface details built=${result.surfaceDetails?.districts || 0}`);
+  if ((result.meadowDetails?.patches || 0) !== 0) failures.push(`Gate 2 terrain failed: meadow detail patches built=${result.meadowDetails?.patches || 0}`);
+  if ((result.fieldMotifs?.clusters || 0) !== 0) failures.push(`Gate 2 terrain failed: field motif clusters built=${result.fieldMotifs?.clusters || 0}`);
+  if ((result.roadSurfaceDetails?.wearStrips || 0) !== 0) failures.push(`Gate 2 roads failed: wear strips built=${result.roadSurfaceDetails?.wearStrips || 0}`);
+  if ((result.roadSurfaceDetails?.laneSeams || 0) !== 0) failures.push(`Gate 2 roads failed: lane seams built=${result.roadSurfaceDetails?.laneSeams || 0}`);
+  if ((result.roadGuidance?.chevrons || 0) !== 0) failures.push(`Gate 2 roads failed: final chevrons built=${result.roadGuidance?.chevrons || 0}`);
+  if ((result.roadGuidance?.reflectorStuds || 0) !== 0) failures.push(`Gate 2 roads failed: reflector studs built=${result.roadGuidance?.reflectorStuds || 0}`);
+  if (!result.roadTopology?.coastalLoop) failures.push('Gate 2 road topology failed: coastal loop missing');
+  if ((result.roadTopology?.closedLoops || 0) < 1) failures.push(`Gate 2 road topology failed: closedLoops=${result.roadTopology?.closedLoops || 0}`);
+  if ((result.roadTopology?.paths || 0) < 12) failures.push(`Gate 2 road topology failed: paths=${result.roadTopology?.paths || 0}`);
+  if ((result.roadTopology?.sharedJunctions || 0) < 8) failures.push(`Gate 2 road topology failed: sharedJunctions=${result.roadTopology?.sharedJunctions || 0}`);
+  if ((result.roadTopology?.maxRoadWidth || 99) > 5.2) failures.push(`Gate 2 road width failed: maxRoadWidth=${result.roadTopology?.maxRoadWidth}`);
+  if ((result.roadTopology?.maxThresholdWidth || 99) > 15.2) failures.push(`Gate 2 threshold width failed: maxThresholdWidth=${result.roadTopology?.maxThresholdWidth}`);
+  if ((result.mapStats?.pins || 0) !== worldZones.length) failures.push(`Gate 2 map failed: pins=${result.mapStats?.pins || 0}/${worldZones.length}`);
+  if ((result.mapStats?.districtLabels || 0) !== districtFootprints.length) {
+    failures.push(`Gate 2 map failed: districtLabels=${result.mapStats?.districtLabels || 0}/${districtFootprints.length}`);
+  }
+  if ((result.mapStats?.roadLines || 0) !== roadPaths.length) failures.push(`Gate 2 map failed: roadLines=${result.mapStats?.roadLines || 0}/${roadPaths.length}`);
+  if ((result.zoneLandmarks?.protected || 0) !== 1) failures.push(`Gate 2 protected landmark failed: protected=${result.zoneLandmarks?.protected || 0}`);
+  if (!result.protectedLandmarks?.near?.exactVisible || !result.protectedLandmarks?.far?.silhouetteVisible) {
+    failures.push('Gate 2 protected landmark failed: FCC exact/silhouette probe missing');
+  }
+  if ((result.gameplay?.movementMeters || 0) < 2) failures.push(`Gate 2 driving failed: movementMeters=${result.gameplay?.movementMeters || 0}`);
+  if (!result.gameplay?.boostSeen) failures.push('Gate 2 driving failed: boost not observed');
+  if (!result.gameplay?.jumpSeen) failures.push('Gate 2 driving failed: jump not observed');
+  if (!result.gameplay?.burnoutSeen) failures.push('Gate 2 driving failed: burnout not observed');
+  if (!result.gameplay?.wheelieSeen) failures.push('Gate 2 driving failed: wheelie not observed');
+  if (!result.water?.surfaceSeen) failures.push('Gate 2 water failed: water surface state not observed');
+  if (!result.water?.dragReduced) failures.push('Gate 2 water failed: water drag not observed');
+  if (!result.water?.submergeRespawned) failures.push('Gate 2 water failed: submerge respawn not observed');
+  if (result.surfaces?.road !== 'road') failures.push(`Gate 2 surface failed: road=${result.surfaces?.road}`);
+  if (result.surfaces?.grass !== 'grass') failures.push(`Gate 2 surface failed: grass=${result.surfaces?.grass}`);
+  if (result.surfaces?.sand !== 'sand') failures.push(`Gate 2 surface failed: sand=${result.surfaces?.sand}`);
+  if (result.surfaces?.shore !== 'shore') failures.push(`Gate 2 surface failed: shore=${result.surfaces?.shore}`);
+  if (result.surfaces?.water !== 'water') failures.push(`Gate 2 surface failed: water=${result.surfaces?.water}`);
+  if (!result.securityScan?.active?.active) failures.push('Gate 2 security scan failed: active state not observed');
+  if ((result.securityScan?.active?.stats?.packetShards || 0) < 8) {
+    failures.push(`Gate 2 security scan failed: packet shards=${result.securityScan?.active?.stats?.packetShards || 0}`);
+  }
+  if ((result.securityScan?.active?.stats?.scanWaves || 0) < 3) {
+    failures.push(`Gate 2 security scan failed: scan waves=${result.securityScan?.active?.stats?.scanWaves || 0}`);
+  }
+  if (!result.securityScan?.complete?.complete) failures.push('Gate 2 security scan failed: complete state not observed');
+  if (!result.securityScan?.complete?.panelVisible) failures.push('Gate 2 security scan failed: panel did not open');
+  if (!result.securityScan?.complete?.achievementUnlocked) failures.push('Gate 2 security scan failed: security_scan achievement');
+  if (result.circuit?.targetCount !== circuitCheckpoints.length - 1) failures.push(`Gate 2 circuit failed: targetCount=${result.circuit?.targetCount}/${circuitCheckpoints.length - 1}`);
+  if (!result.circuit?.preview?.active) failures.push('Gate 2 circuit failed: preview inactive');
+  if (!result.circuit?.finished) failures.push('Gate 2 circuit failed: finish event');
+  if ((result.circuit?.ringInstances || 0) !== circuitCheckpoints.length - 1) {
+    failures.push(`Gate 2 circuit failed: ring instances=${result.circuit?.ringInstances || 0}`);
+  }
+  if ((result.circuit?.arrowInstances || 0) !== circuitCheckpoints.length - 1) {
+    failures.push(`Gate 2 circuit failed: arrow instances=${result.circuit?.arrowInstances || 0}`);
+  }
+  if (!Number.isFinite(result.p95FrameMs) || result.p95FrameMs <= 0) failures.push(`Gate 2 metrics failed: p95FrameMs=${result.p95FrameMs}`);
+  if (!Number.isFinite(result.calls) || result.calls <= 0) failures.push(`Gate 2 metrics failed: calls=${result.calls}`);
+  if (!Number.isFinite(result.triangles) || result.triangles <= 0) failures.push(`Gate 2 metrics failed: triangles=${result.triangles}`);
+  if (!result.highQuality?.ready || (result.highQuality?.canvasSample || 0) <= 0) failures.push('Gate 2 high quality probe failed: canvas did not render');
+  if (!result.mobile?.ready || (result.mobile?.canvasSample || 0) <= 0) failures.push('Gate 2 mobile probe failed: canvas did not render');
 }
 
 function getRouteReplaySegments() {

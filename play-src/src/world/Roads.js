@@ -78,9 +78,11 @@ export class Roads {
       namePrefix: 'ROAD_batch',
       getBatchLabel: (object) => object.userData?.batchLabel
     });
-    this.createRoadSurfaceDetails();
     this.createRouteThresholds();
-    this.createGuidanceMarkers();
+    if (!this.world.blockoutMode) {
+      this.createRoadSurfaceDetails();
+      this.createGuidanceMarkers();
+    }
     this.applyQuality();
   }
 
@@ -458,6 +460,7 @@ export class Roads {
     this.detailStats.transitionGuideBars = guideBars.length;
     this.roadGroup.userData.transitionAprons = aprons.length;
     this.roadGroup.userData.transitionGuideBars = guideBars.length;
+    this.roadGroup.userData.routeThresholdBars = guideBars.length;
   }
 
   addRoadDetailInstances(name, specs, material, renderOrder) {

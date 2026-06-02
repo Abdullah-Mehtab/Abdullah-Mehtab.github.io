@@ -8,40 +8,39 @@ export const ISLAND_RADIUS = 158;
 export const canalSegments = [];
 
 export const districtFootprints = [
-  { id: 'start-plaza', label: 'Launch Plaza', center: [0, 28], size: [50, 38], color: '#7cffb2', kind: 'plaza' },
-  { id: 'fcc-campus', label: 'FCC Education Grove', center: [-78, 82], size: [58, 48], color: '#9ccfff', kind: 'campus' },
-  { id: 'security-campus', label: 'Security Lab', center: [-94, -66], size: [56, 44], color: '#68d8ff', kind: 'security' },
-  { id: 'project-yard', label: 'Projects Yard', center: [62, 56], size: [44, 36], color: '#ffcc66', kind: 'workshop' },
-  { id: 'ridge', label: 'Sentinel Ridge', center: [16, 112], size: [46, 34], color: '#ff6d8d', kind: 'tower' },
-  { id: 'archive', label: 'Archive Steps', center: [-44, 72], size: [36, 30], color: '#ffdf8a', kind: 'archive' },
+  { id: 'start-plaza', label: 'Launch Plaza', center: [0, 42], size: [46, 34], color: '#7cffb2', kind: 'plaza' },
+  { id: 'fcc-campus', label: 'FCC Education Grove', center: [-82, 82], size: [58, 46], color: '#9ccfff', kind: 'campus' },
+  { id: 'security-campus', label: 'Security Lab', center: [-94, -66], size: [54, 42], color: '#68d8ff', kind: 'security' },
+  { id: 'project-yard', label: 'Projects Yard', center: [62, 58], size: [44, 34], color: '#ffcc66', kind: 'workshop' },
+  { id: 'ridge', label: 'Sentinel Ridge', center: [18, 112], size: [46, 32], color: '#ff6d8d', kind: 'tower' },
+  { id: 'archive', label: 'Archive Steps', center: [-44, 72], size: [34, 28], color: '#ffdf8a', kind: 'archive' },
   {
     id: 'south-loop',
     label: 'Stunt And CV Run',
-    center: [58, -82],
+    center: [58, -86],
     size: [82, 46],
     color: '#ff9b6d',
     kind: 'driving',
     visualPads: [
-      { id: 'cv-approach-deck', center: [26, -60], size: [38, 24], rotation: -0.18, kind: 'archive' },
-      { id: 'stunt-runway-apron', center: [86, -92], size: [52, 22], rotation: 0.08, kind: 'driving' },
-      { id: 'stunt-pit-yard', center: [114, -72], size: [31, 22], rotation: -0.34, kind: 'driving' },
-      { id: 'south-return-ribbon', center: [58, -116], size: [44, 15], rotation: -0.28, kind: 'trail' }
+      { id: 'cv-approach-deck', center: [8, -58], size: [36, 24], rotation: -0.18, kind: 'archive' },
+      { id: 'stunt-runway-apron', center: [94, -86], size: [54, 24], rotation: 0.08, kind: 'driving' },
+      { id: 'south-return-ribbon', center: [32, -124], size: [52, 16], rotation: -0.28, kind: 'trail' }
     ]
   },
-  { id: 'west-trail', label: 'Skills And Farm Trail', center: [-58, -104], size: [62, 46], color: '#92ffea', kind: 'trail' },
+  { id: 'west-trail', label: 'Skills And Farm Trail', center: [-62, -104], size: [64, 46], color: '#92ffea', kind: 'trail' },
   {
     id: 'harbor',
     label: 'Signal Harbor',
-    center: [126, 46],
+    center: [104, 86],
     size: [30, 30],
     color: '#78b7ff',
     kind: 'harbor',
     visualPads: [
-      { id: 'signal-court', center: [126, 48], size: [25, 20], rotation: -0.34, kind: 'harbor' },
-      { id: 'pier-pocket', center: [136, 66], size: [12, 10], rotation: -0.5, kind: 'pier' }
+      { id: 'signal-court', center: [104, 86], size: [25, 20], rotation: -0.34, kind: 'harbor' },
+      { id: 'pier-pocket', center: [132, 70], size: [12, 10], rotation: -0.5, kind: 'pier' }
     ]
   },
-  { id: 'data-pier', label: 'Data Pier', center: [-126, 66], size: [32, 34], color: '#79ffc5', kind: 'pier' }
+  { id: 'data-pier', label: 'Data Pier', center: [-112, 58], size: [32, 32], color: '#79ffc5', kind: 'pier' }
 ];
 
 export const scenicPropZones = [
@@ -194,42 +193,40 @@ export const roadPaths = [
   {
     id: 'coastal-loop',
     name: 'Coastal Loop',
-    width: 4.8,
+    width: 4.6,
     hierarchy: 'avenue',
     closed: true,
     points: [
-      [-118, 42],
-      [-104, 94],
-      [-54, 132],
-      [18, 138],
-      [84, 114],
-      [130, 76],
-      [141, 54],
-      [142, 20],
-      [126, 34],
-      [118, -22],
-      [132, -70],
-      [86, -126],
-      [18, -118],
-      [-62, -118],
-      [-120, -58],
-      [-144, -8]
+      [-132, 48],
+      [-110, 98],
+      [-56, 130],
+      [20, 136],
+      [82, 116],
+      [128, 72],
+      [142, 12],
+      [118, -54],
+      [86, -108],
+      [18, -132],
+      [-58, -124],
+      [-98, -82],
+      [-132, -18],
+      [-136, 30]
     ]
   },
   {
-    id: 'gallery-spine',
-    name: 'Gallery Spine',
-    width: 5.4,
+    id: 'portfolio-spine',
+    name: 'Portfolio Spine',
+    width: 5.0,
     hierarchy: 'avenue',
     closed: false,
     points: [
-      [-118, 42],
-      [-78, 40],
-      [-36, 30],
-      [0, 24],
-      [42, 34],
+      [-132, 48],
+      [-90, 44],
+      [-42, 34],
+      [0, 28],
+      [44, 38],
       [84, 48],
-      [126, 34]
+      [128, 72]
     ]
   },
   {
@@ -239,10 +236,12 @@ export const roadPaths = [
     hierarchy: 'plaza',
     closed: false,
     points: [
-      [-36, 30],
-      [-52, 52],
-      [-64, 74],
-      [-54, 94]
+      [-42, 34],
+      [-56, 56],
+      [-58, 72],
+      [-48, 96],
+      [-70, 116],
+      [-110, 98]
     ]
   },
   {
@@ -252,11 +251,11 @@ export const roadPaths = [
     hierarchy: 'security',
     closed: false,
     points: [
-      [0, 24],
+      [0, 28],
       [-28, 4],
       [-64, -12],
-      [-96, -34],
-      [-120, -58]
+      [-94, -40],
+      [-114, -78]
     ]
   },
   {
@@ -266,23 +265,24 @@ export const roadPaths = [
     hierarchy: 'street',
     closed: false,
     points: [
-      [0, 24],
-      [18, -10],
+      [0, 28],
+      [16, -8],
       [34, -42],
       [52, -72],
-      [76, -96]
+      [78, -96],
+      [92, -112]
     ]
   },
   {
     id: 'stunt-causeway',
     name: 'Stunt Causeway',
-    width: 5.4,
+    width: 5.0,
     hierarchy: 'stunt',
     closed: false,
     points: [
-      [76, -96],
+      [78, -96],
       [104, -94],
-      [132, -70]
+      [118, -54]
     ]
   },
   {
@@ -292,11 +292,11 @@ export const roadPaths = [
     hierarchy: 'dirt',
     closed: false,
     points: [
-      [18, -118],
+      [18, -132],
       [-22, -128],
-      [-62, -118],
-      [-98, -92],
-      [-120, -58]
+      [-58, -124],
+      [-90, -100],
+      [-114, -78]
     ]
   },
   {
@@ -306,10 +306,11 @@ export const roadPaths = [
     hierarchy: 'street',
     closed: false,
     points: [
-      [-36, 30],
+      [-42, 34],
       [-18, 66],
-      [10, 94],
-      [38, 116]
+      [12, 94],
+      [44, 116],
+      [82, 116]
     ]
   },
   {
@@ -319,11 +320,11 @@ export const roadPaths = [
     hierarchy: 'street',
     closed: false,
     points: [
-      [42, 34],
+      [44, 38],
       [68, 8],
       [92, -18],
-      [112, -23],
-      [104, -31]
+      [112, -32],
+      [118, -54]
     ]
   },
   {
@@ -334,8 +335,8 @@ export const roadPaths = [
     closed: false,
     points: [
       [84, 48],
-      [112, 66],
-      [130, 76]
+      [112, 58],
+      [128, 72]
     ]
   },
   {
@@ -345,9 +346,9 @@ export const roadPaths = [
     hierarchy: 'bridge',
     closed: false,
     points: [
-      [-118, 42],
-      [-132, 50],
-      [-138, 62]
+      [-132, 48],
+      [-136, 62],
+      [-132, 70]
     ]
   },
   {
@@ -360,7 +361,7 @@ export const roadPaths = [
       [34, -42],
       [10, -76],
       [-4, -104],
-      [18, -118]
+      [18, -132]
     ]
   },
   {
@@ -370,43 +371,57 @@ export const roadPaths = [
     hierarchy: 'plaza',
     closed: false,
     points: [
-      [-36, 30],
-      [-28, 58],
-      [-24, 82]
+      [-42, 34],
+      [-34, 56],
+      [-40, 78]
+    ]
+  },
+  {
+    id: 'skills-link',
+    name: 'Skills Link',
+    width: 4.2,
+    hierarchy: 'security',
+    closed: false,
+    points: [
+      [-64, -12],
+      [-74, -48],
+      [-90, -100],
+      [-58, -124]
     ]
   }
 ];
 
 export const routeThresholds = [
-  { id: 'launch-plaza-rollout', center: [4, 31], rotation: 0.14, width: 15.5, depth: 6.2, color: '#7cffb2', bars: 4 },
-  { id: 'coastal-loop-north-overlook', center: [18, 136], rotation: 1.5, width: 14.8, depth: 5.8, color: '#ffdf8a', bars: 3 },
-  { id: 'coastal-loop-east-harbor', center: [141, 50], rotation: 3.1, width: 14.2, depth: 5.8, color: '#78b7ff', bars: 3 },
-  { id: 'coastal-loop-south-cove', center: [70, -124], rotation: 1.45, width: 14.2, depth: 5.8, color: '#ff9b6d', bars: 3 },
-  { id: 'coastal-loop-west-return', center: [-134, -28], rotation: -0.44, width: 14.2, depth: 5.8, color: '#79ffc5', bars: 3 },
-  { id: 'gallery-data-join', center: [-116, 42], rotation: 1.5, width: 13.6, depth: 5.8, color: '#79ffc5', bars: 3 },
-  { id: 'gallery-harbor-join', center: [116, 40], rotation: -1.06, width: 14.2, depth: 5.8, color: '#78b7ff', bars: 3 },
-  { id: 'fcc-arrival-threshold', center: [-57, 63], rotation: -0.62, width: 14.2, depth: 6.4, color: '#9ccfff', bars: 4 },
-  { id: 'fcc-courtyard-threshold', center: [-57, 91], rotation: 0.48, width: 14.2, depth: 5.8, color: '#f2dfb2', bars: 3 },
-  { id: 'scanner-gate-threshold', center: [-90, -31], rotation: -2.2, width: 14.8, depth: 6.4, color: '#68d8ff', bars: 4 },
-  { id: 'security-return-threshold', center: [-119, -57], rotation: -2.36, width: 13.6, depth: 5.8, color: '#68d8ff', bars: 3 },
-  { id: 'document-run-threshold', center: [28, -29], rotation: 2.64, width: 14.2, depth: 6.4, color: '#e6f3ff', bars: 4 },
-  { id: 'cv-vault-threshold', center: [36, -53], rotation: 2.62, width: 14.2, depth: 6.0, color: '#d8b6ff', bars: 4 },
-  { id: 'stunt-yard-threshold', center: [86, -96], rotation: 1.48, width: 14.2, depth: 5.4, color: '#ff9b6d', bars: 5 },
-  { id: 'farm-track-threshold', center: [-52, -121], rotation: -1.32, width: 14.2, depth: 6.4, color: '#c79b56', bars: 4 },
-  { id: 'behind-build-threshold', center: [5, -92], rotation: -2.72, width: 13.6, depth: 5.8, color: '#a8a6ff', bars: 3 },
-  { id: 'sentinel-ridge-threshold', center: [18, 99], rotation: 0.82, width: 14.2, depth: 5.8, color: '#ff6d8d', bars: 4 },
-  { id: 'career-office-threshold', center: [94, -22], rotation: -2.42, width: 14.2, depth: 5.8, color: '#b6a0ff', bars: 3 },
-  { id: 'harbor-link-threshold', center: [124, 70], rotation: 1.08, width: 13.6, depth: 5.8, color: '#78b7ff', bars: 3 },
-  { id: 'data-pier-threshold', center: [-135, 58], rotation: -0.62, width: 12.8, depth: 5.8, color: '#79ffc5', bars: 3 },
-  { id: 'archive-steps-threshold', center: [-27, 64], rotation: 0.1, width: 12.8, depth: 5.8, color: '#ffdf8a', bars: 3 }
+  { id: 'launch-plaza-rollout', center: [4, 30], rotation: 0.22, width: 15.0, depth: 6.2, color: '#7cffb2', bars: 4 },
+  { id: 'coastal-loop-north-overlook', center: [20, 136], rotation: 1.5, width: 14.0, depth: 5.8, color: '#ffdf8a', bars: 3 },
+  { id: 'coastal-loop-east-harbor', center: [128, 72], rotation: 2.45, width: 14.0, depth: 5.8, color: '#78b7ff', bars: 3 },
+  { id: 'coastal-loop-south-cove', center: [86, -108], rotation: 0.75, width: 14.0, depth: 5.8, color: '#ff9b6d', bars: 3 },
+  { id: 'coastal-loop-west-return', center: [-132, -18], rotation: -0.28, width: 14.0, depth: 5.8, color: '#79ffc5', bars: 3 },
+  { id: 'spine-data-join', center: [-132, 48], rotation: 1.48, width: 13.2, depth: 5.8, color: '#79ffc5', bars: 3 },
+  { id: 'spine-harbor-join', center: [112, 58], rotation: -0.9, width: 13.8, depth: 5.8, color: '#78b7ff', bars: 3 },
+  { id: 'fcc-arrival-threshold', center: [-58, 72], rotation: -0.08, width: 13.8, depth: 6.2, color: '#9ccfff', bars: 4 },
+  { id: 'fcc-courtyard-threshold', center: [-48, 96], rotation: 0.58, width: 13.8, depth: 5.8, color: '#f2dfb2', bars: 3 },
+  { id: 'scanner-gate-threshold', center: [-94, -40], rotation: -2.66, width: 14.2, depth: 6.2, color: '#68d8ff', bars: 4 },
+  { id: 'security-return-threshold', center: [-114, -78], rotation: -2.36, width: 13.2, depth: 5.8, color: '#68d8ff', bars: 3 },
+  { id: 'document-run-threshold', center: [34, -42], rotation: 2.64, width: 13.8, depth: 6.2, color: '#e6f3ff', bars: 4 },
+  { id: 'cv-vault-threshold', center: [10, -76], rotation: -2.66, width: 13.6, depth: 6.0, color: '#d8b6ff', bars: 4 },
+  { id: 'stunt-yard-threshold', center: [104, -94], rotation: 1.48, width: 14.0, depth: 5.4, color: '#ff9b6d', bars: 5 },
+  { id: 'farm-track-threshold', center: [-58, -124], rotation: -1.48, width: 13.8, depth: 6.2, color: '#c79b56', bars: 4 },
+  { id: 'behind-build-threshold', center: [8, -76], rotation: -2.66, width: 13.2, depth: 5.8, color: '#a8a6ff', bars: 3 },
+  { id: 'sentinel-ridge-threshold', center: [12, 94], rotation: 0.82, width: 13.8, depth: 5.8, color: '#ff6d8d', bars: 4 },
+  { id: 'career-office-threshold', center: [92, -18], rotation: -2.42, width: 13.8, depth: 5.8, color: '#b6a0ff', bars: 3 },
+  { id: 'harbor-link-threshold', center: [128, 72], rotation: 0.9, width: 13.2, depth: 5.8, color: '#78b7ff', bars: 3 },
+  { id: 'data-pier-threshold', center: [-136, 62], rotation: -0.28, width: 12.4, depth: 5.8, color: '#79ffc5', bars: 3 },
+  { id: 'archive-steps-threshold', center: [-34, 56], rotation: 0.35, width: 12.4, depth: 5.8, color: '#ffdf8a', bars: 3 },
+  { id: 'skills-link-threshold', center: [-74, -48], rotation: -2.86, width: 13.2, depth: 5.8, color: '#92ffea', bars: 3 }
 ];
 
 export const roadSegments = roadPaths.flatMap((path) => pathToSegments(path));
 
 export const boostPads = [
   { id: 'scanner-boost', position: [-64, 0, -12], rotation: -2.17, color: '#68d8ff', district: 'security' },
-  { id: 'document-run-boost', position: [22, 0, -18], rotation: 2.68, color: '#7cffb2', district: 'cv' },
-  { id: 'stunt-yard-boost', position: [72, 0, -96], rotation: Math.PI / 2, color: '#ff9b6d', district: 'stunt' }
+  { id: 'document-run-boost', position: [16, 0, -8], rotation: 2.68, color: '#7cffb2', district: 'cv' },
+  { id: 'stunt-yard-boost', position: [78, 0, -96], rotation: Math.PI / 2, color: '#ff9b6d', district: 'stunt' }
 ];
 
 export const worldZones = [
@@ -447,7 +462,7 @@ export const worldZones = [
     id: 'projects',
     name: 'Projects Yard',
     kind: 'Project Gallery',
-    position: [62, 0, 56],
+    position: [62, 0, 58],
     rotation: -0.44,
     radius: 10,
     color: '#ffcc66',
@@ -507,7 +522,7 @@ export const worldZones = [
     id: 'education',
     name: 'FCC Education Grove',
     kind: 'Academics',
-    position: [-78, 0, 82],
+    position: [-82, 0, 82],
     rotation: -0.08,
     radius: 11,
     color: '#9ccfff',
@@ -591,7 +606,7 @@ export const worldZones = [
     id: 'contact',
     name: 'Signal Harbor',
     kind: 'Links',
-    position: [128, 0, 56],
+    position: [104, 0, 86],
     rotation: -0.34,
     radius: 8,
     color: '#78b7ff',
@@ -626,7 +641,7 @@ export const worldZones = [
     id: 'drift',
     name: 'Stunt Yard',
     kind: 'Driving',
-    position: [106, 0, -72],
+    position: [82, 0, -70],
     rotation: -0.48,
     radius: 11,
     color: '#ff9b6d',
@@ -640,7 +655,7 @@ export const worldZones = [
     id: 'data-pier',
     name: 'Data Pier',
     kind: 'Visitor Trail',
-    position: [-126, 0, 66],
+    position: [-112, 0, 58],
     rotation: 0.68,
     radius: 9,
     color: '#79ffc5',
@@ -671,50 +686,50 @@ export const worldZones = [
 
 export const zonePresentation = {
   landing: {
-    respawn: { position: [4, 1.08, 26], heading: 0.15 },
-    camera: [17, 8, 57],
-    target: [2, 1.7, 36],
+    respawn: { position: [4, 1.08, 30], heading: 0.22 },
+    camera: [16, 8, 58],
+    target: [1, 1.7, 42],
     fov: 42
   },
   security: {
-    respawn: { position: [-72, 1.08, -17.5], heading: -2.17 },
-    camera: [-74, 10, -39],
-    target: [-99, 3, -68],
+    respawn: { position: [-64, 1.08, -12], heading: -2.17 },
+    camera: [-80, 10, -48],
+    target: [-94, 3, -66],
     fov: 43
   },
   projects: {
-    respawn: { position: [43, 1.08, 34], heading: 0.71 },
-    camera: [40, 9, 44],
-    target: [64, 2.5, 58],
+    respawn: { position: [44, 1.08, 38], heading: 0.71 },
+    camera: [43, 9, 45],
+    target: [62, 2.5, 58],
     fov: 42
   },
   sentinel: {
-    respawn: { position: [10, 1.08, 94], heading: 0.91 },
+    respawn: { position: [12, 1.08, 94], heading: 0.91 },
     camera: [-8, 10, 100],
     target: [17, 4.5, 113],
     fov: 42
   },
   career: {
-    respawn: { position: [112, 1.08, -23], heading: -2.42 },
-    camera: [120, 9, -12],
+    respawn: { position: [92, 1.08, -18], heading: -2.42 },
+    camera: [116, 9, -16],
     target: [99, 3, -42],
     fov: 43
   },
   skills: {
-    respawn: { position: [-82, 1.08, -103.5], heading: 2.17 },
+    respawn: { position: [-90, 1.08, -100], heading: 2.17 },
     camera: [-86, 9, -66],
     target: [-62, 3.2, -84],
     fov: 40
   },
   education: {
-    respawn: { position: [-60, 1.08, 64], heading: -0.79 },
-    camera: [-44, 13, 52],
-    target: [-78, 5.2, 82],
+    respawn: { position: [-58, 1.08, 72], heading: -0.79 },
+    camera: [-50, 13, 58],
+    target: [-82, 5.2, 82],
     fov: 43
   },
   awards: {
-    respawn: { position: [-30, 1.08, 54], heading: -0.66 },
-    camera: [-28, 8, 54],
+    respawn: { position: [-34, 1.08, 56], heading: -0.66 },
+    camera: [-28, 8, 58],
     target: [-44, 3, 73],
     fov: 41
   },
@@ -725,43 +740,43 @@ export const zonePresentation = {
     fov: 41
   },
   todo: {
-    respawn: { position: [-82, 1.08, 40], heading: 3.14 },
-    camera: [-64, 9, -4],
+    respawn: { position: [-90, 1.08, 44], heading: 3.14 },
+    camera: [-65, 9, 2],
     target: [-83, 3, 15],
     fov: 40
   },
   circuit: {
-    respawn: { position: [38, 1.08, 116], heading: 2.3 },
+    respawn: { position: [44, 1.08, 116], heading: 2.3 },
     camera: [84, 10, 82],
     target: [58, 3.4, 102],
     fov: 39
   },
   contact: {
-    respawn: { position: [112, 1.08, 66], heading: 2.13 },
-    camera: [144, 10, 69],
-    target: [127, 3.6, 56],
+    respawn: { position: [128, 1.08, 72], heading: 2.13 },
+    camera: [126, 10, 96],
+    target: [104, 3.6, 86],
     fov: 40
   },
   behind: {
-    respawn: { position: [8, 1.08, -78], heading: -2.18 },
+    respawn: { position: [8, 1.08, -76], heading: -2.18 },
     camera: [6, 8, -76],
     target: [-17, 3, -96],
     fov: 40
   },
   drift: {
-    respawn: { position: [78, 1.08, -94], heading: 0.9 },
-    camera: [70, 8, -102],
-    target: [106, 3, -72],
+    respawn: { position: [104, 1.08, -94], heading: 0.9 },
+    camera: [66, 8, -92],
+    target: [82, 3, -70],
     fov: 42
   },
   'data-pier': {
-    respawn: { position: [-118, 1.08, 42], heading: -0.32 },
-    camera: [-108, 8, 38],
-    target: [-128, 2.4, 68],
+    respawn: { position: [-132, 1.08, 48], heading: -0.32 },
+    camera: [-98, 8, 42],
+    target: [-112, 2.4, 58],
     fov: 42
   },
   potato: {
-    respawn: { position: [-22, 1.08, -128], heading: -1.72 },
+    respawn: { position: [-58, 1.08, -124], heading: -1.72 },
     camera: [-72, 10, -104],
     target: [-50, 3.2, -132],
     fov: 40
@@ -799,16 +814,17 @@ export const achievementDefinitions = [
 
 export const circuitCheckpoints = [
   [56, 0, 100],
-  [16, 0, 112],
-  [-24, 0, 82],
-  [-78, 0, 82],
-  [-118, 0, 42],
-  [-120, 0, -58],
-  [-62, 0, -118],
-  [18, 0, -118],
-  [76, 0, -96],
-  [132, 0, -70],
-  [126, 0, 34],
+  [44, 0, 116],
+  [12, 0, 94],
+  [-34, 0, 56],
+  [-58, 0, 72],
+  [-132, 0, 48],
+  [-114, 0, -78],
+  [-58, 0, -124],
+  [18, 0, -132],
+  [78, 0, -96],
+  [118, 0, -54],
+  [128, 0, 72],
   [84, 0, 48],
   [56, 0, 100]
 ];

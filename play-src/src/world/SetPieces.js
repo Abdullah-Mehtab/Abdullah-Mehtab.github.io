@@ -290,9 +290,23 @@ export class SetPieces {
       untouched: 0,
       missingReplacement: 0
     };
+    this.blockoutStats = {
+      zonePads: 0,
+      zoneMarkers: 0,
+      zoneLabels: 0,
+      securityGate: 0,
+      securityPacketShards: 0,
+      securityScanWaves: 0,
+      denseDressingSkipped: true
+    };
   }
 
   build() {
+    if (this.world.blockoutMode) {
+      this.createBlockoutScaffold();
+      this.applyQuality();
+      return;
+    }
     this.createStartDiorama();
     this.createEducationPlaza();
     this.createSecurityLab();
@@ -585,6 +599,10 @@ export class SetPieces {
     return { ...this.polishMaterialStats };
   }
 
+  getBlockoutStats() {
+    return { ...this.blockoutStats };
+  }
+
   getWhisperEntries() {
     return this.whisperEntries.map((entry) => ({
       index: entry.index,
@@ -612,6 +630,96 @@ export class SetPieces {
       };
     }
     return best;
+  }
+
+  createBlockoutScaffold() {
+    const group = new THREE.Group();
+    group.name = 'BLOCKOUT_Island_District_Scaffold';
+    const materials = {
+      landing: this.world.materials.plazaRoad,
+      security: this.world.materials.securityRoad,
+      projects: this.world.materials.stoneRoad,
+      sentinel: this.world.materials.stone,
+      career: this.world.materials.paleStone,
+      skills: this.world.materials.securityRoad,
+      education: this.world.materials.paleStone,
+      awards: this.world.materials.warmStone,
+      cv: this.world.materials.paleStone,
+      todo: this.world.materials.warmStone,
+      circuit: this.world.materials.stuntRamp,
+      contact: this.world.materials.sand,
+      behind: this.world.materials.stoneRoad,
+      drift: this.world.materials.stuntRamp,
+      'data-pier': this.world.materials.wood,
+      potato: this.world.materials.dirtRoad
+    };
+
+    for (const zone of worldZones) {
+      const size = Math.max(12, zone.radius * 2.2);
+      const depth = Math.max(10, zone.radius * 1.7);
+      const material = materials[zone.id] || this.world.materials.plazaRoad;
+      this.groundRect(group, zone.position[0], zone.position[2], size, depth, material, 0.126, `BLOCKOUT_${zone.id}_district_pad`, zone.rotation || 0);
+      this.box(group, zone.position[0], 1.08, zone.position[2], 1.1, 2.1, 1.1, material, zone.rotation || 0, `BLOCKOUT_${zone.id}_zone_marker`);
+      this.addSign(
+        group,
+        zone.name.toUpperCase(),
+        zone.kind,
+        zone.position[0] + Math.cos(zone.rotation || 0) * (zone.radius + 5),
+        zone.position[2] - Math.sin(zone.rotation || 0) * (zone.radius + 5),
+        (zone.rotation || 0) + Math.PI * 0.5,
+        Number.parseInt(zone.color.slice(1), 16),
+        1.35,
+        `BLOCKOUT_${zone.id}_label`
+      );
+      this.blockoutStats.zonePads += 1;
+      this.blockoutStats.zoneMarkers += 1;
+      this.blockoutStats.zoneLabels += 1;
+    }
+
+    this.createBlockoutSecurityScan(group);
+    mergeStaticMeshesInGroup(group, {
+      namePrefix: 'BLOCKOUT_scaffold',
+      shouldSkip: (object) => ['SecurityPacketShard', 'SecurityScanWave', 'ScannerLightCurtain'].includes(object.name)
+    });
+    this.world.scene.add(group);
+  }
+
+  createBlockoutSecurityScan(group) {
+    const zone = findZone('security');
+    const scanX = zone.position[0] - 2.8;
+    const scanZ = zone.position[2] - 11.2;
+    this.groundRect(group, zone.position[0], zone.position[2] - 3.5, 24, 18, this.world.materials.securityRoad, 0.138, 'BLOCKOUT_security_scan_pad', zone.rotation || 0);
+    this.securityGate(group, scanX, scanZ, 0.18);
+    this.securityScanWaveField(group, scanX, scanZ, 0.18);
+    this.blockoutStats.securityGate += 1;
+
+    for (let i = 0; i < 8; i += 1) {
+      const packetMaterial = this.world.materials.glowBlue.clone();
+      packetMaterial.opacity = 0.46;
+      const packet = new THREE.Mesh(new THREE.OctahedronGeometry(0.52, 0), packetMaterial);
+      packet.name = 'SecurityPacketShard';
+      packet.position.set(zone.position[0] - 10 + i * 2.9, 1.2 + (i % 3) * 0.2, zone.position[2] + 5 + Math.sin(i) * 1.8);
+      group.add(packet);
+      this.animated.push({
+        kind: 'securityPacket',
+        mesh: packet,
+        baseX: packet.position.x,
+        baseY: packet.position.y,
+        baseZ: packet.position.z,
+        baseOpacity: 0.46,
+        scanX,
+        scanZ,
+        orbitRadius: 3.2 + (i % 3) * 0.42,
+        orbitSpeed: 1.6 + i * 0.08,
+        speed: 1.2,
+        phase: i * 0.7,
+        range: 0.34,
+        rotationSpeed: 1.1 + i * 0.05
+      });
+      this.securityScanStats.packetShards += 1;
+      this.blockoutStats.securityPacketShards += 1;
+    }
+    this.blockoutStats.securityScanWaves = this.securityScanStats.scanWaves;
   }
 
   createStartDiorama() {
