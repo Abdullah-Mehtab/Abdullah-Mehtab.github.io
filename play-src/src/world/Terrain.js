@@ -51,7 +51,7 @@ export class Terrain {
       visibleTotal: 0
     };
     this.districtGroundStats = { pads: 0, edgeTrims: 0, averageOutlineVertices: 0, batchedMeshes: 0, mergedMeshes: 0 };
-    this.reliefStats = { mounds: 0, cliffShelves: 0, rockOutcrops: 0, duneRidges: 0, contourBands: 0, beachRipples: 0, beachCombs: 0, interiorRidges: 0, visibleInteriorRidges: 0 };
+    this.reliefStats = { mounds: 0, cliffShelves: 0, rockOutcrops: 0, duneRidges: 0, contourBands: 0, beachRipples: 0, beachCombs: 0, interiorRidges: 0, visibleInteriorRidges: 0, batchedMeshes: 0, mergedMeshes: 0 };
     this.shorelineStats = { edgeBands: 0, foamBreaks: 0 };
   }
 
@@ -621,6 +621,7 @@ export class Terrain {
       mound.position.set(spec.x, 0.08, spec.z);
       mound.rotation.y = spec.rotation;
       mound.receiveShadow = true;
+      mound.userData.batchLabel = spec.material === this.world.materials.meadowDark ? 'mound_dark' : 'mound_light';
       group.add(mound);
     }
 
@@ -638,6 +639,7 @@ export class Terrain {
       shelf.position.set(spec.x, 0.32, spec.z);
       shelf.rotation.y = spec.rotation;
       shelf.receiveShadow = true;
+      shelf.userData.batchLabel = 'cliff_shelf';
       group.add(shelf);
     }
 
@@ -655,6 +657,7 @@ export class Terrain {
       ridge.position.set(spec.x, 0.18, spec.z);
       ridge.rotation.y = spec.rotation;
       ridge.receiveShadow = true;
+      ridge.userData.batchLabel = 'dune_ridge';
       group.add(ridge);
     }
 
@@ -662,6 +665,11 @@ export class Terrain {
     this.addContourBands(group);
     this.addBeachRipples(group);
     this.addRockOutcrops(group);
+    mergeStaticMeshesInGroup(group, {
+      namePrefix: 'TERRAIN_Relief',
+      shouldSkip: (object) => object.isInstancedMesh,
+      getBatchLabel: (object) => object.userData?.batchLabel
+    });
     this.world.scene.add(group);
     this.reliefStats = {
       mounds: mounds.length,
@@ -672,7 +680,9 @@ export class Terrain {
       beachRipples: group.userData.beachRipples || 0,
       beachCombs: group.userData.beachCombs || 0,
       interiorRidges: group.userData.interiorRidges || 0,
-      visibleInteriorRidges: group.userData.interiorRidges || 0
+      visibleInteriorRidges: group.userData.interiorRidges || 0,
+      batchedMeshes: group.userData.staticBatchStats?.batches || 0,
+      mergedMeshes: group.userData.staticBatchStats?.mergedMeshes || 0
     };
     this.applyQuality();
   }
