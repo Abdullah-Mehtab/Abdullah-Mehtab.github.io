@@ -568,6 +568,10 @@ body:has(.map-modal:not([hidden])) .whisper-feed {
   opacity: 0.74;
 }
 
+.map-road-underlay {
+  opacity: 0.48;
+}
+
 .minimap-road-line,
 .map-road-line {
   fill: none;
@@ -577,7 +581,8 @@ body:has(.map-modal:not([hidden])) .whisper-feed {
 }
 
 .map-road-line {
-  filter: drop-shadow(0 0 2px rgba(0, 0, 0, 0.35));
+  filter: drop-shadow(0 0 1px rgba(0, 0, 0, 0.28));
+  opacity: 0.88;
 }
 
 .minimap-road-plaza,
@@ -644,19 +649,34 @@ body:has(.map-modal:not([hidden])) .whisper-feed {
 }
 
 .map-route-label {
-  padding: 2px 5px;
-  border: 1px solid rgba(255, 223, 138, 0.18);
+  padding: 2px 4px;
+  border: 1px solid rgba(255, 223, 138, 0.14);
   border-radius: 999px;
-  background: rgba(2, 8, 13, 0.64);
-  color: rgba(255, 246, 220, 0.78);
-  font-size: 0.46rem;
+  background: rgba(2, 8, 13, 0.48);
+  color: rgba(255, 246, 220, 0.68);
+  font-size: 0.42rem;
   font-weight: 800;
   line-height: 1;
   text-transform: uppercase;
   transform: translate(-50%, -50%);
   white-space: nowrap;
-  box-shadow: 0 0 10px rgba(0, 0, 0, 0.34);
-  opacity: 0.82;
+  box-shadow: 0 0 7px rgba(0, 0, 0, 0.24);
+  opacity: 0.66;
+}
+
+.map-route-major {
+  background: rgba(2, 8, 13, 0.66);
+  border-color: rgba(255, 223, 138, 0.22);
+  color: rgba(255, 246, 220, 0.86);
+  font-size: 0.46rem;
+  opacity: 0.78;
+  z-index: 4;
+}
+
+.map-route-minor {
+  font-size: 0.38rem;
+  opacity: 0.42;
+  z-index: 2;
 }
 
 .map-route-security {

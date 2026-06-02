@@ -687,12 +687,31 @@ function worldToMap(x, z) {
   };
 }
 
+const ROUTE_LABEL_LAYOUT = {
+  default: { dx: 0, dy: 0, priority: 'minor' },
+  'coastal-loop': { dx: 5.2, dy: 4.4, priority: 'major', label: 'Coastal' },
+  'gallery-spine': { dx: 0, dy: -3.4, priority: 'major', label: 'Gallery Spine' },
+  'fcc-walk': { dx: -8.2, dy: -0.4, priority: 'major', label: 'Campus' },
+  'security-run': { dx: -5.2, dy: -2.2, priority: 'major', label: 'Scanner' },
+  'cv-run': { dx: 5.4, dy: -2.8, priority: 'major', label: 'CV Run' },
+  'stunt-causeway': { dx: 4.8, dy: 4.2, priority: 'major', label: 'Stunt Link' },
+  'farm-track': { dx: -6.8, dy: 5.4, priority: 'minor', label: 'Farm' },
+  'sentinel-ridge': { dx: 3.8, dy: -5.2, priority: 'minor', label: 'Sentinel' },
+  'career-link': { dx: 4.6, dy: -3.8, priority: 'minor', label: 'Career' },
+  'harbor-link': { dx: 4.2, dy: 4.2, priority: 'minor', label: 'Harbor' },
+  'data-pier': { dx: -7.6, dy: 0.4, priority: 'minor', label: 'Pier' },
+  'behind-spur': { dx: -4.8, dy: 3.8, priority: 'minor', label: 'Build' },
+  'awards-link': { dx: 4.2, dy: -7, priority: 'minor', label: 'Awards' }
+};
+
 function createRoadSvg(mode) {
   const span = WORLD_HALF_SIZE * 2 + MAP_PADDING * 2;
   const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
   svg.setAttribute('class', `${mode}-roads-svg`);
   svg.setAttribute('viewBox', '0 0 100 100');
   svg.setAttribute('aria-hidden', 'true');
+  const underlayPadding = mode === 'map' ? 5.2 : 8.6;
+  const linePadding = mode === 'map' ? 1.6 : 3.4;
   for (const path of roadPaths) {
     const points = path.closed ? [...path.points, path.points[0]] : path.points;
     const underlay = document.createElementNS('http://www.w3.org/2000/svg', 'polyline');
@@ -701,7 +720,7 @@ function createRoadSvg(mode) {
       const coords = worldToMap(x, z);
       return `${coords.x.toFixed(2)},${coords.y.toFixed(2)}`;
     }).join(' '));
-    underlay.setAttribute('stroke-width', `${((path.width + 8.6) / span) * 100}`);
+    underlay.setAttribute('stroke-width', `${((path.width + underlayPadding) / span) * 100}`);
     svg.append(underlay);
 
     const polyline = document.createElementNS('http://www.w3.org/2000/svg', 'polyline');
@@ -710,7 +729,7 @@ function createRoadSvg(mode) {
       const coords = worldToMap(x, z);
       return `${coords.x.toFixed(2)},${coords.y.toFixed(2)}`;
     }).join(' '));
-    polyline.setAttribute('stroke-width', `${((path.width + 3.4) / span) * 100}`);
+    polyline.setAttribute('stroke-width', `${((path.width + linePadding) / span) * 100}`);
     svg.append(polyline);
   }
   return svg;
@@ -751,11 +770,13 @@ function appendRouteLabels(container) {
     const anchor = path.points[Math.floor((path.points.length - 1) / 2)];
     const next = path.points[Math.min(path.points.length - 1, Math.floor((path.points.length - 1) / 2) + 1)] || anchor;
     const coords = worldToMap((anchor[0] + next[0]) / 2, (anchor[1] + next[1]) / 2);
+    const layout = ROUTE_LABEL_LAYOUT[path.id] || ROUTE_LABEL_LAYOUT.default;
     const label = document.createElement('span');
-    label.className = `map-route-label map-route-${path.hierarchy}`;
-    label.textContent = path.name;
-    label.style.left = `${coords.x}%`;
-    label.style.top = `${coords.y}%`;
+    label.className = `map-route-label map-route-${path.hierarchy} map-route-${layout.priority}`;
+    label.textContent = layout.label || path.name;
+    label.title = path.name;
+    label.style.left = `${coords.x + layout.dx}%`;
+    label.style.top = `${coords.y + layout.dy}%`;
     container.append(label);
     count += 1;
   }
