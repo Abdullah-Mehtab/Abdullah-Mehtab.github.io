@@ -299,9 +299,62 @@ export class SetPieces {
       securityScanWaves: 0,
       denseDressingSkipped: true
     };
+    this.verticalSliceStats = {
+      enabled: false,
+      authoredAssets: 0,
+      staticBatches: 0,
+      start: {
+        launchPads: 0,
+        launchLights: 0,
+        burnoutScuffs: 0,
+        signs: 0,
+        lamps: 0,
+        planters: 0,
+        routeMarks: 0
+      },
+      campusRoute: {
+        routeMarks: 0,
+        lamps: 0,
+        hedges: 0,
+        flowerBeds: 0,
+        arches: 0,
+        signs: 0
+      },
+      fcc: {
+        plazaPads: 0,
+        benches: 0,
+        hedges: 0,
+        lamps: 0,
+        planters: 0,
+        signs: 0,
+        identityFrames: 0
+      },
+      securityRoute: {
+        routeMarks: 0,
+        warningBollards: 0,
+        lightStrips: 0,
+        lamps: 0,
+        signs: 0
+      },
+      security: {
+        floorPads: 0,
+        serverBlocks: 0,
+        cables: 0,
+        beacons: 0,
+        terminalRails: 0,
+        warningBollards: 0,
+        lightStrips: 0,
+        signs: 0
+      }
+    };
   }
 
   build() {
+    if (this.world.verticalSliceMode) {
+      this.createVerticalSliceScaffold();
+      this.applyQuality();
+      return;
+    }
     if (this.world.blockoutMode) {
       this.createBlockoutScaffold();
       this.applyQuality();
@@ -603,6 +656,17 @@ export class SetPieces {
     return { ...this.blockoutStats };
   }
 
+  getVerticalSliceStats() {
+    return {
+      ...this.verticalSliceStats,
+      start: { ...this.verticalSliceStats.start },
+      campusRoute: { ...this.verticalSliceStats.campusRoute },
+      fcc: { ...this.verticalSliceStats.fcc },
+      securityRoute: { ...this.verticalSliceStats.securityRoute },
+      security: { ...this.verticalSliceStats.security }
+    };
+  }
+
   getWhisperEntries() {
     return this.whisperEntries.map((entry) => ({
       index: entry.index,
@@ -720,6 +784,310 @@ export class SetPieces {
       this.blockoutStats.securityPacketShards += 1;
     }
     this.blockoutStats.securityScanWaves = this.securityScanStats.scanWaves;
+  }
+
+  createVerticalSliceScaffold() {
+    this.createBlockoutScaffold();
+    this.verticalSliceStats.enabled = true;
+
+    const group = new THREE.Group();
+    group.name = 'GATE3_Start_FCC_Security_Vertical_Slice';
+    this.createGate3StartHub(group);
+    this.createGate3CampusRoute(group);
+    this.createGate3FccGrove(group);
+    this.createGate3SecurityRoute(group);
+    this.createGate3SecurityLab(group);
+
+    this.verticalSliceStats.staticBatches = mergeStaticMeshesInGroup(group, {
+      namePrefix: 'GATE3_slice',
+      cellSize: 64,
+      shouldSkip: (object) => (
+        object.name === 'SecurityPacketShard'
+        || object.name === 'SecurityScanWave'
+        || object.name === 'ScannerLightCurtain'
+        || object.name === 'SetPieceBeaconGlow'
+      )
+    });
+    this.world.scene.add(group);
+  }
+
+  createGate3StartHub(group) {
+    const zone = findZone('landing');
+    const stats = this.verticalSliceStats.start;
+    const rotation = zone.rotation || 0;
+    this.groundRect(group, zone.position[0] + 1.5, zone.position[2] - 4, 35, 22, this.world.materials.plazaRoad, 0.19, 'GATE3_Start_LaunchCourt', rotation);
+    this.groundRect(group, zone.position[0] - 5, zone.position[2] + 9, 24, 11, this.world.materials.paleStone, 0.195, 'GATE3_Start_Rear_Promenade', rotation + 0.08);
+    stats.launchPads += 2;
+
+    this.box(group, zone.position[0] + 1.5, 0.245, zone.position[2] - 15.2, 25, 0.04, 0.42, this.world.materials.glow, rotation, 'GATE3_Start_Glow_StartLine');
+    this.box(group, zone.position[0] - 14.8, 0.242, zone.position[2] - 4.4, 0.42, 0.04, 17.6, this.world.materials.glowBlue, rotation, 'GATE3_Start_Glow_LeftRail');
+    this.box(group, zone.position[0] + 17.2, 0.242, zone.position[2] - 4.1, 0.42, 0.04, 17.2, this.world.materials.warmGlow, rotation, 'GATE3_Start_Glow_RightRail');
+    stats.routeMarks += 3;
+
+    for (let index = 0; index < 9; index += 1) {
+      const offset = -9.6 + index * 2.4;
+      this.box(group, zone.position[0] + offset, 0.258, zone.position[2] - 13.2, 1.05, 0.055, 0.38, index % 2 ? this.world.materials.glowBlue : this.world.materials.warmGlow, rotation, 'GATE3_Start_LaunchLight');
+      stats.launchLights += 1;
+    }
+
+    for (let side = -1; side <= 1; side += 2) {
+      for (let index = 0; index < 5; index += 1) {
+        this.box(
+          group,
+          zone.position[0] + side * (2.4 + index * 0.24),
+          0.252 + index * 0.0004,
+          zone.position[2] - 10.4 + index * 1.22,
+          0.34 + index * 0.04,
+          0.026,
+          2.2 + index * 0.28,
+          this.world.materials.darkWood,
+          rotation + side * (0.06 + index * 0.015),
+          'GATE3_Start_BurnoutScuff'
+        );
+        stats.burnoutScuffs += 1;
+      }
+    }
+
+    this.addLamp(group, zone.position[0] - 16, zone.position[2] - 11, 0xffc36a, 3.1, 'GATE3_Start_Lamp_Warm');
+    this.addLamp(group, zone.position[0] + 16, zone.position[2] - 8, 0x7cffb2, 3.0, 'GATE3_Start_Lamp_Mint');
+    this.addLamp(group, zone.position[0] - 10, zone.position[2] + 10, 0x68d8ff, 2.9, 'GATE3_Start_Lamp_Blue');
+    stats.lamps += 3;
+
+    this.addPlanterCluster(group, zone.position[0] - 18, zone.position[2] + 1.5, 0x7cffb2);
+    this.addPlanterCluster(group, zone.position[0] + 18, zone.position[2] + 1.2, 0x68d8ff);
+    this.addPlanterCluster(group, zone.position[0] + 8, zone.position[2] + 14, 0xffc36a);
+    stats.planters += 3;
+
+    this.addSign(group, 'START', 'Launch Plaza', zone.position[0] + 16.8, zone.position[2] + 8.2, -0.88, 0x7cffb2, 2.8, 'GATE3_Start_Sign');
+    this.addSign(group, 'FCC GROVE', 'Campus route', zone.position[0] - 20.5, zone.position[2] + 13.2, 0.78, 0x9ccfff, 2.3, 'GATE3_Start_Fcc_Sign');
+    this.addSign(group, 'SCAN RUN', 'Security lab', zone.position[0] - 22, zone.position[2] - 10.2, 1.08, 0x68d8ff, 2.3, 'GATE3_Start_Security_Sign');
+    stats.signs += 3;
+
+    this.recordGate3Asset(this.addPolishAsset(group, 'EnvPolishInfoKiosk', zone.position[0] + 11.6, zone.position[2] - 1.5, -0.72, 0.78));
+    this.recordGate3Asset(this.addPolishAsset(group, 'EnvPolishChevronBollardRun', zone.position[0] - 6.4, zone.position[2] - 15.4, Math.PI * 0.5, 0.82));
+    this.recordGate3Asset(this.addPolishAsset(group, 'EnvPolishChevronBollardRun', zone.position[0] + 7.4, zone.position[2] - 15.4, Math.PI * 0.5, 0.82));
+  }
+
+  createGate3CampusRoute(group) {
+    const stats = this.verticalSliceStats.campusRoute;
+    const points = [
+      [0, 28],
+      [-42, 34],
+      [-56, 56],
+      [-58, 72],
+      [-48, 96]
+    ];
+    this.createGate3RoadsideRun(group, points, stats, {
+      prefix: 'GATE3_CampusRoute',
+      color: 0x9ccfff,
+      accentMaterial: this.world.materials.glowBlue,
+      bedMaterial: this.world.materials.paleStone,
+      hedgeMaterial: this.world.materials.meadowDark,
+      kind: 'campus'
+    });
+    this.campusArch(group, -54, 64, -0.45);
+    this.campusArch(group, -46, 94, 0.55);
+    this.addSign(group, 'FCCU', 'Education Grove', -48, 53, -0.44, 0x9ccfff, 2.15, 'GATE3_CampusRoute_Sign');
+    stats.arches += 2;
+    stats.signs += 1;
+    this.recordGate3Asset(this.addPolishAsset(group, 'EnvPolishRouteLantern', -39, 38, -0.34, 0.68));
+    this.recordGate3Asset(this.addPolishAsset(group, 'EnvPolishBenchPlanter', -60, 69, -0.12, 0.66));
+  }
+
+  createGate3FccGrove(group) {
+    const zone = findZone('education');
+    const stats = this.verticalSliceStats.fcc;
+    const x = zone.position[0];
+    const z = zone.position[2];
+    this.groundRect(group, x, z - 14, 46, 21, this.world.materials.plazaRoad, 0.202, 'GATE3_FCC_Front_Plaza', 0.02);
+    this.groundRect(group, x - 17, z - 1, 7, 28, this.world.materials.paleStone, 0.206, 'GATE3_FCC_Left_Walk', -0.04);
+    this.groundRect(group, x + 18, z - 1, 7, 28, this.world.materials.paleStone, 0.206, 'GATE3_FCC_Right_Walk', 0.04);
+    this.groundRect(group, x, z + 12, 34, 12, this.world.materials.paleStone, 0.2, 'GATE3_FCC_Rear_Walk', 0);
+    stats.plazaPads += 4;
+
+    for (const dx of [-19, -7, 7, 19]) {
+      this.addLamp(group, x + dx, z - 22, 0x9ccfff, 3.2, 'GATE3_FCC_Front_Lamp');
+      stats.lamps += 1;
+    }
+    for (const [bx, bz, rot] of [
+      [x - 24, z - 8, 0.84],
+      [x - 16, z + 19, -0.62],
+      [x + 16, z - 12, -0.38],
+      [x + 24, z + 14, 0.48]
+    ]) {
+      this.addBench(group, bx, bz, rot, 0.92);
+      stats.benches += 1;
+    }
+    for (const [px, pz] of [
+      [x - 27, z - 15],
+      [x - 22, z + 15],
+      [x + 25, z - 13],
+      [x + 22, z + 16],
+      [x - 2, z + 27]
+    ]) {
+      this.addPlanterCluster(group, px, pz, 0x9ccfff);
+      stats.planters += 1;
+    }
+    this.hedgeLine(group, x - 24, z - 21, 44, 0);
+    this.hedgeLine(group, x + 24, z - 21, 44, 0);
+    this.hedgeLine(group, x, z + 25, 34, 0);
+    stats.hedges += 3;
+
+    this.addSign(group, 'FCCU S BLOCK', 'Protected model identity', x - 19, z - 17.5, 0.2, 0x9ccfff, 2.6, 'GATE3_FCC_Identity_Sign');
+    this.box(group, x - 22.5, 0.248, z - 23.4, 12, 0.04, 0.38, this.world.materials.glowBlue, 0.04, 'GATE3_FCC_Identity_Frame_Left');
+    this.box(group, x + 22.5, 0.248, z - 23.4, 12, 0.04, 0.38, this.world.materials.warmGlow, -0.04, 'GATE3_FCC_Identity_Frame_Right');
+    stats.signs += 1;
+    stats.identityFrames += 2;
+
+    this.recordGate3Asset(this.addPolishAsset(group, 'EnvPolishCampusWalkwayPavilion', x - 1.4, z - 24, 0.05, 0.86));
+    this.recordGate3Asset(this.addPolishAsset(group, 'EnvPolishCampusFountain', x + 16.8, z - 8.8, -0.12, 0.68));
+    this.recordGate3Asset(this.addPolishAsset(group, 'EnvPolishCampusNoticeBoard', x - 23.0, z - 8.8, 0.34, 0.72));
+    this.recordGate3Asset(this.addPolishAsset(group, 'EnvPolishCampusStudyBench', x - 19.2, z + 10.8, 0.52, 0.72));
+    this.recordGate3Asset(this.addPolishAsset(group, 'EnvPolishCampusStudyBench', x + 19.0, z + 10.4, -0.52, 0.72));
+  }
+
+  createGate3SecurityRoute(group) {
+    const stats = this.verticalSliceStats.securityRoute;
+    const points = [
+      [0, 28],
+      [-28, 4],
+      [-64, -12],
+      [-94, -40],
+      [-114, -78]
+    ];
+    this.createGate3RoadsideRun(group, points, stats, {
+      prefix: 'GATE3_SecurityRoute',
+      color: 0x68d8ff,
+      accentMaterial: this.world.materials.glowBlue,
+      bedMaterial: this.world.materials.securityRoad,
+      hedgeMaterial: this.world.materials.cable,
+      kind: 'security'
+    });
+    this.addSign(group, 'SECURITY', 'Scanner gate ahead', -74, -24, -0.72, 0x68d8ff, 2.2, 'GATE3_SecurityRoute_Sign');
+    stats.signs += 1;
+    this.recordGate3Asset(this.addPolishAsset(group, 'EnvPolishSignalTotem', -70, -18, -0.45, 0.78));
+    this.recordGate3Asset(this.addPolishAsset(group, 'EnvPolishRoadBarrier', -91, -38, -0.72, 0.72));
+  }
+
+  createGate3SecurityLab(group) {
+    const zone = findZone('security');
+    const stats = this.verticalSliceStats.security;
+    const x = zone.position[0];
+    const z = zone.position[2];
+    this.groundRect(group, x, z - 1.4, 38, 30, this.world.materials.securityRoad, 0.212, 'GATE3_Security_Lab_Floor', -0.08);
+    this.groundRect(group, x - 13.5, z + 11.5, 10, 9, this.world.materials.stoneRoad, 0.216, 'GATE3_Security_Server_Deck_West', -0.18);
+    this.groundRect(group, x + 14.0, z + 9.6, 10, 9, this.world.materials.stoneRoad, 0.216, 'GATE3_Security_Server_Deck_East', 0.18);
+    stats.floorPads += 3;
+
+    this.addSign(group, 'SECURITY SCAN', 'Stop inside the beam', x + 13, z - 13, -0.55, 0x68d8ff, 2.4, 'GATE3_Security_Scan_Sign');
+    stats.signs += 1;
+
+    for (let index = 0; index < 8; index += 1) {
+      const offset = -13.5 + index * 3.85;
+      this.box(group, x + offset, 0.262, z - 14.8, 1.4, 0.05, 0.32, index % 2 ? this.world.materials.glowPink : this.world.materials.glowBlue, -0.08, 'GATE3_Security_Floor_Trace');
+      stats.lightStrips = (stats.lightStrips || 0) + 1;
+    }
+    for (const side of [-1, 1]) {
+      this.box(group, x + side * 10.4, 0.48, z - 8.4, 0.34, 0.58, 7.2, this.world.materials.cable, 0.02, 'GATE3_Security_Terminal_Rail');
+      this.box(group, x + side * 8.8, 0.64, z - 8.4, 0.18, 0.22, 6.5, this.world.materials.glowBlue, 0.02, 'GATE3_Security_Terminal_Glow');
+      stats.terminalRails += 2;
+      this.securityLabStats.terminalRails += 2;
+    }
+
+    for (const [rx, rz, rot] of [
+      [x - 17.2, z + 7.8, 0.34],
+      [x - 13.1, z + 15.4, 0.08],
+      [x + 13.6, z + 14.0, -0.28],
+      [x + 17.3, z + 5.8, -0.48],
+      [x - 6.8, z + 12.4, 0.14],
+      [x + 6.8, z + 11.8, -0.14]
+    ]) {
+      this.serverRack(group, rx, rz, rot);
+      stats.serverBlocks += 1;
+    }
+
+    const scanX = x - 2.8;
+    const scanZ = z - 11.2;
+    const cableRuns = [
+      [[x - 17.2, 0.31, z + 7.8], [x - 12.5, 0.28, z - 1.0], [scanX, 0.31, scanZ]],
+      [[x + 17.3, 0.31, z + 5.8], [x + 9.0, 0.28, z - 2.5], [scanX, 0.31, scanZ]],
+      [[x - 6.8, 0.31, z + 12.4], [x - 5.2, 0.28, z + 0.5], [scanX, 0.31, scanZ]],
+      [[x + 6.8, 0.31, z + 11.8], [x + 3.8, 0.28, z + 0.2], [scanX, 0.31, scanZ]]
+    ];
+    for (const run of cableRuns) {
+      this.cable(group, run[0], run[1], run[2], 0x10191f);
+      stats.cables += 1;
+      this.securityLabStats.cableRuns += 1;
+    }
+
+    for (const [bx, bz, color] of [
+      [x - 20, z - 12, 0x68d8ff],
+      [x + 19, z - 12, 0xff6d8d],
+      [x - 20, z + 12, 0x7cffb2],
+      [x + 19, z + 12, 0x68d8ff]
+    ]) {
+      this.beacon(group, bx, bz, color);
+      stats.beacons += 1;
+    }
+
+    for (let index = 0; index < 10; index += 1) {
+      const side = index % 2 ? -1 : 1;
+      const bx = x + side * (15.8 + (index % 3) * 1.1);
+      const bz = z - 13.5 + index * 2.7;
+      this.cylinder(group, bx, 0.58, bz, 0.16, 1.12, this.world.materials.cable, 8, 'GATE3_Security_Warning_Bollard');
+      this.box(group, bx, 1.22, bz, 0.42, 0.18, 0.16, index % 2 ? this.world.materials.glowPink : this.world.materials.glowBlue, 0, 'GATE3_Security_Warning_Light');
+      stats.warningBollards += 1;
+    }
+
+    this.recordGate3Asset(this.addPolishAsset(group, 'EnvPolishSecurityScanner', x + 4.8, z + 3.0, -0.28, 0.86));
+    this.recordGate3Asset(this.addPolishAsset(group, 'EnvPolishTerminalPillar', x - 12.2, z + 9.5, 0.34, 0.96));
+    this.recordGate3Asset(this.addPolishAsset(group, 'EnvPolishSignalTotem', x + 13.8, z + 8.2, -0.44, 0.96));
+  }
+
+  createGate3RoadsideRun(group, points, stats, spec) {
+    for (let segmentIndex = 0; segmentIndex < points.length - 1; segmentIndex += 1) {
+      const [ax, az] = points[segmentIndex];
+      const [bx, bz] = points[segmentIndex + 1];
+      const dx = bx - ax;
+      const dz = bz - az;
+      const length = Math.hypot(dx, dz);
+      const rotation = Math.atan2(dx, dz);
+      const rightX = Math.cos(rotation);
+      const rightZ = -Math.sin(rotation);
+      const steps = Math.max(2, Math.floor(length / 11));
+      for (let step = 0; step < steps; step += 1) {
+        const t = (step + 0.5) / steps;
+        const x = ax + dx * t;
+        const z = az + dz * t;
+        const side = (step + segmentIndex) % 2 ? -1 : 1;
+        const edgeX = x + rightX * side * 4.0;
+        const edgeZ = z + rightZ * side * 4.0;
+        this.box(group, edgeX, 0.252, edgeZ, 0.32, 0.036, 1.25, spec.accentMaterial, rotation, `${spec.prefix}_Edge_Glow`);
+        stats.routeMarks += 1;
+
+        if (spec.kind === 'security') {
+          this.cylinder(group, x - rightX * side * 3.25, 0.56, z - rightZ * side * 3.25, 0.13, 1.08, this.world.materials.cable, 8, `${spec.prefix}_Warning_Bollard`);
+          this.box(group, x - rightX * side * 3.25, 1.13, z - rightZ * side * 3.25, 0.36, 0.14, 0.16, spec.accentMaterial, rotation, `${spec.prefix}_Warning_Light`);
+          stats.warningBollards += 1;
+          stats.lightStrips += 1;
+        } else {
+          this.box(group, x - rightX * side * 3.2, 0.44, z - rightZ * side * 3.2, 2.6, 0.42, 0.44, spec.hedgeMaterial, rotation, `${spec.prefix}_Hedge`);
+          this.box(group, x + rightX * side * 5.1, 0.245, z + rightZ * side * 5.1, 2.2, 0.05, 0.54, spec.bedMaterial, rotation, `${spec.prefix}_Flower_Bed`);
+          stats.hedges += 1;
+          stats.flowerBeds += 1;
+        }
+
+        if (step % 2 === 0) {
+          this.addLamp(group, x + rightX * side * 5.7, z + rightZ * side * 5.7, spec.color, 2.7, `${spec.prefix}_Lamp`);
+          stats.lamps = (stats.lamps || 0) + 1;
+        }
+      }
+    }
+  }
+
+  recordGate3Asset(placed) {
+    if (placed) this.verticalSliceStats.authoredAssets += 1;
+    return placed;
   }
 
   createStartDiorama() {

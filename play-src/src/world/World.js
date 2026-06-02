@@ -38,7 +38,7 @@ const ROAD_SURFACES = {
   bridge: { label: 'pier deck', forwardGrip: 0.96, sideGrip: 0.93, engineFactor: 0.96, topSpeedFactor: 0.88, dustColor: 0x7aa9a7, skidColor: 0x2e4d4b, audioId: 'bridge-road', roughnessFeedback: 0.34 }
 };
 
-const GOAL_GATE = 'gate-2-blockout';
+const GOAL_GATE = 'gate-3-vertical-slice';
 
 export class World {
   constructor({ scene, physics, resumeData, environmentAssets }) {
@@ -47,7 +47,8 @@ export class World {
     this.resumeData = resumeData;
     this.environmentAssets = environmentAssets;
     this.goalGate = GOAL_GATE;
-    this.blockoutMode = GOAL_GATE === 'gate-2-blockout';
+    this.verticalSliceMode = GOAL_GATE === 'gate-3-vertical-slice';
+    this.blockoutMode = GOAL_GATE === 'gate-2-blockout' || this.verticalSliceMode;
     this.materials = createWorldMaterials();
     this.zones = [];
     this.decor = [];
@@ -435,6 +436,7 @@ export class World {
       denseFoliageBuilt: Boolean(this.foliage),
       potatoPocketBuilt: Boolean(this.potatoFarm?.group),
       setPieces: this.setPieces?.getBlockoutStats?.() || {},
+      verticalSlice: this.setPieces?.getVerticalSliceStats?.() || {},
       terrain: {
         districtGround: this.terrain?.getDistrictGroundStats?.() || {},
         surfaceDetails: this.terrain?.surfaceDetailStats || {},

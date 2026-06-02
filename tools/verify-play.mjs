@@ -1338,6 +1338,7 @@ async function collectRuntimeMetrics(page, loadMs, gameplay, water, surfaces, su
       canvasSample: window.__portfolioDrive.sampleCanvas(),
       goalGate: game.world.goalGate || null,
       blockout: game.world.getBlockoutStats?.() || {},
+      verticalSlice: game.world.setPieces?.getVerticalSliceStats?.() || {},
       avgFrameMs: Number(avgMs.toFixed(2)),
       p95FrameMs: Number(p95Ms.toFixed(2)),
       fps: Number((1000 / avgMs).toFixed(2)),
@@ -2068,6 +2069,13 @@ function assertVerification(result) {
   if (result.routeReplay?.failed) failures.push(`route replay failed: ${result.routeReplay.failed}/${result.routeReplay.total}`);
   if (result.goalGate === 'gate-2-blockout') {
     assertGate2BlockoutVerification(result, failures);
+    if (failures.length) {
+      throw new Error(`Play verification failed: ${failures.join('; ')}`);
+    }
+    return;
+  }
+  if (result.goalGate === 'gate-3-vertical-slice') {
+    assertGate3VerticalSliceVerification(result, failures);
     if (failures.length) {
       throw new Error(`Play verification failed: ${failures.join('; ')}`);
     }
@@ -2849,7 +2857,8 @@ function assertVerification(result) {
 function assertGate2BlockoutVerification(result, failures) {
   const blockout = result.blockout || {};
   const blockoutSetPieces = blockout.setPieces || {};
-  if (result.goalGate !== 'gate-2-blockout') failures.push(`Gate 2 probe failed: goalGate=${result.goalGate || 'none'}`);
+  const blockoutCompatibleGate = result.goalGate === 'gate-2-blockout' || result.goalGate === 'gate-3-vertical-slice';
+  if (!blockoutCompatibleGate) failures.push(`Gate 2 probe failed: goalGate=${result.goalGate || 'none'}`);
   if (!blockout.enabled) failures.push('Gate 2 probe failed: blockout mode inactive');
   if (blockout.densePropsBuilt) failures.push('Gate 2 probe failed: dense prop system was built');
   if (blockout.denseFoliageBuilt) failures.push('Gate 2 probe failed: dense foliage system was built');
@@ -2932,6 +2941,47 @@ function assertGate2BlockoutVerification(result, failures) {
   if (!Number.isFinite(result.triangles) || result.triangles <= 0) failures.push(`Gate 2 metrics failed: triangles=${result.triangles}`);
   if (!result.highQuality?.ready || (result.highQuality?.canvasSample || 0) <= 0) failures.push('Gate 2 high quality probe failed: canvas did not render');
   if (!result.mobile?.ready || (result.mobile?.canvasSample || 0) <= 0) failures.push('Gate 2 mobile probe failed: canvas did not render');
+}
+
+function assertGate3VerticalSliceVerification(result, failures) {
+  assertGate2BlockoutVerification(result, failures);
+  if (result.goalGate !== 'gate-3-vertical-slice') failures.push(`Gate 3 probe failed: goalGate=${result.goalGate || 'none'}`);
+  const slice = result.verticalSlice || result.blockout?.verticalSlice || {};
+  const start = slice.start || {};
+  const campusRoute = slice.campusRoute || {};
+  const fcc = slice.fcc || {};
+  const securityRoute = slice.securityRoute || {};
+  const security = slice.security || {};
+  if (!slice.enabled) failures.push('Gate 3 vertical slice failed: slice mode inactive');
+  if ((slice.authoredAssets || 0) < 8) failures.push(`Gate 3 authored assets failed: authoredAssets=${slice.authoredAssets || 0}`);
+  if ((slice.staticBatches || 0) < 12) failures.push(`Gate 3 batching failed: staticBatches=${slice.staticBatches || 0}`);
+  if ((start.launchPads || 0) < 2) failures.push(`Gate 3 start failed: launchPads=${start.launchPads || 0}`);
+  if ((start.launchLights || 0) < 8) failures.push(`Gate 3 start failed: launchLights=${start.launchLights || 0}`);
+  if ((start.burnoutScuffs || 0) < 8) failures.push(`Gate 3 start failed: burnoutScuffs=${start.burnoutScuffs || 0}`);
+  if ((start.signs || 0) < 3) failures.push(`Gate 3 start failed: signs=${start.signs || 0}`);
+  if ((start.lamps || 0) < 3) failures.push(`Gate 3 start failed: lamps=${start.lamps || 0}`);
+  if ((campusRoute.routeMarks || 0) < 8) failures.push(`Gate 3 campus route failed: routeMarks=${campusRoute.routeMarks || 0}`);
+  if ((campusRoute.lamps || 0) < 4) failures.push(`Gate 3 campus route failed: lamps=${campusRoute.lamps || 0}`);
+  if ((campusRoute.hedges || 0) < 6) failures.push(`Gate 3 campus route failed: hedges=${campusRoute.hedges || 0}`);
+  if ((campusRoute.arches || 0) < 2) failures.push(`Gate 3 campus route failed: arches=${campusRoute.arches || 0}`);
+  if ((fcc.plazaPads || 0) < 4) failures.push(`Gate 3 FCC failed: plazaPads=${fcc.plazaPads || 0}`);
+  if ((fcc.benches || 0) < 4) failures.push(`Gate 3 FCC failed: benches=${fcc.benches || 0}`);
+  if ((fcc.hedges || 0) < 3) failures.push(`Gate 3 FCC failed: hedges=${fcc.hedges || 0}`);
+  if ((fcc.identityFrames || 0) < 2) failures.push(`Gate 3 FCC failed: identityFrames=${fcc.identityFrames || 0}`);
+  if ((securityRoute.routeMarks || 0) < 10) failures.push(`Gate 3 security route failed: routeMarks=${securityRoute.routeMarks || 0}`);
+  if ((securityRoute.warningBollards || 0) < 10) failures.push(`Gate 3 security route failed: warningBollards=${securityRoute.warningBollards || 0}`);
+  if ((security.floorPads || 0) < 3) failures.push(`Gate 3 security lab failed: floorPads=${security.floorPads || 0}`);
+  if ((security.serverBlocks || 0) < 6) failures.push(`Gate 3 security lab failed: serverBlocks=${security.serverBlocks || 0}`);
+  if ((security.cables || 0) < 4) failures.push(`Gate 3 security lab failed: cables=${security.cables || 0}`);
+  if ((security.terminalRails || 0) < 4) failures.push(`Gate 3 security lab failed: terminalRails=${security.terminalRails || 0}`);
+  if ((security.warningBollards || 0) < 8) failures.push(`Gate 3 security lab failed: warningBollards=${security.warningBollards || 0}`);
+  if ((result.securityScan?.active?.stats?.visibleScanWaves || 0) < 1) {
+    failures.push(`Gate 3 security scan failed: visible scan waves=${result.securityScan?.active?.stats?.visibleScanWaves || 0}`);
+  }
+  if ((result.calls || 0) > 280) failures.push(`Gate 3 desktop draw-call budget exceeded: ${result.calls}`);
+  if ((result.triangles || 0) > 180000) failures.push(`Gate 3 desktop triangle budget exceeded: ${result.triangles}`);
+  if ((result.mobile?.calls || 0) > 180) failures.push(`Gate 3 mobile draw-call budget exceeded: ${result.mobile?.calls || 0}`);
+  if ((result.highQuality?.calls || 0) > 300) failures.push(`Gate 3 high quality draw-call budget exceeded: ${result.highQuality?.calls || 0}`);
 }
 
 function getRouteReplaySegments() {
