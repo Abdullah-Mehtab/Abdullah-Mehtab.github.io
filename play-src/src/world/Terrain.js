@@ -50,7 +50,7 @@ export class Terrain {
       visibleTotal: 0
     };
     this.districtGroundStats = { pads: 0, edgeTrims: 0, averageOutlineVertices: 0, batchedMeshes: 0, mergedMeshes: 0 };
-    this.reliefStats = { mounds: 0, cliffShelves: 0, rockOutcrops: 0, duneRidges: 0, contourBands: 0, beachRipples: 0 };
+    this.reliefStats = { mounds: 0, cliffShelves: 0, rockOutcrops: 0, duneRidges: 0, contourBands: 0, beachRipples: 0, beachCombs: 0 };
     this.shorelineStats = { edgeBands: 0, foamBreaks: 0 };
   }
 
@@ -660,7 +660,8 @@ export class Terrain {
       rockOutcrops: group.userData.rockOutcrops || 0,
       duneRidges: duneRidges.length,
       contourBands: group.userData.contourBands || 0,
-      beachRipples: group.userData.beachRipples || 0
+      beachRipples: group.userData.beachRipples || 0,
+      beachCombs: group.userData.beachCombs || 0
     };
   }
 
@@ -687,6 +688,7 @@ export class Terrain {
       transparent: true,
       opacity: 0.18,
       depthWrite: false,
+      side: THREE.DoubleSide,
       polygonOffset: true,
       polygonOffsetFactor: -34,
       polygonOffsetUnits: -34
@@ -712,25 +714,59 @@ export class Terrain {
         length: 4.2 + pseudoRandom(i * 13.8) * 7.6
       });
     }
+    const combs = this.createBeachCombSpecs();
+    specs.push(...combs);
     const material = new THREE.MeshBasicMaterial({
       color: 0x946638,
       transparent: true,
       opacity: 0.18,
       depthWrite: false,
+      side: THREE.DoubleSide,
       polygonOffset: true,
       polygonOffsetFactor: -35,
       polygonOffsetUnits: -35
     });
     const mesh = this.addFlatDetailInstances('TerrainRelief_BeachRipples', specs, material, 0.19);
     group.add(mesh);
-    group.userData.beachRipples = specs.length;
+    group.userData.beachRipples = specs.length - combs.length;
+    group.userData.beachCombs = combs.length;
+  }
+
+  createBeachCombSpecs() {
+    const clusters = [
+      { center: [148, -6], size: [24, 74], rotation: -Math.PI / 2, count: 32, seed: 19 },
+      { center: [22, -149], size: [106, 24], rotation: 0.05, count: 34, seed: 31 },
+      { center: [-148, 12], size: [22, 76], rotation: Math.PI / 2, count: 24, seed: 43 },
+      { center: [12, 148], size: [78, 22], rotation: -0.08, count: 22, seed: 59 }
+    ];
+    const specs = [];
+    for (const cluster of clusters) {
+      for (let i = 0; i < cluster.count; i += 1) {
+        const seed = cluster.seed + i * 7.31;
+        const localX = (pseudoRandom(seed) - 0.5) * cluster.size[0];
+        const localZ = (pseudoRandom(seed * 1.67) - 0.5) * cluster.size[1];
+        const cos = Math.cos(cluster.rotation);
+        const sin = Math.sin(cluster.rotation);
+        const x = cluster.center[0] + localX * cos + localZ * sin;
+        const z = cluster.center[1] - localX * sin + localZ * cos;
+        if (!this.containsPoint(x, z, 2.5)) continue;
+        if (isNearRoad(x, z, 3.2)) continue;
+        specs.push({
+          x,
+          z,
+          rotation: cluster.rotation + (pseudoRandom(seed * 2.13) - 0.5) * 0.28,
+          width: 0.1 + pseudoRandom(seed * 3.17) * 0.13,
+          length: 3.2 + pseudoRandom(seed * 5.11) * 4.8
+        });
+      }
+    }
+    return specs;
   }
 
   addFlatDetailInstances(name, specs, material, y) {
-    const mesh = new THREE.InstancedMesh(new THREE.BoxGeometry(1, 0.02, 1), material, specs.length);
+    const mesh = new THREE.InstancedMesh(createHorizontalPlaneGeometry(), material, specs.length);
     mesh.name = name;
     mesh.renderOrder = 38;
-    mesh.frustumCulled = false;
     specs.forEach((spec, index) => {
       this.reliefDummy.position.set(spec.x, y, spec.z);
       this.reliefDummy.rotation.set(0, spec.rotation, 0);
@@ -739,6 +775,7 @@ export class Terrain {
       mesh.setMatrixAt(index, this.reliefDummy.matrix);
     });
     mesh.instanceMatrix.needsUpdate = true;
+    mesh.computeBoundingSphere();
     return mesh;
   }
 
@@ -826,6 +863,7 @@ export class Terrain {
     }
     const material = this.world.materials.foam.clone();
     material.opacity = 0.22;
+    material.side = THREE.DoubleSide;
     material.polygonOffset = true;
     material.polygonOffsetFactor = -42;
     material.polygonOffsetUnits = -42;
