@@ -38,12 +38,12 @@ const ROAD_VISUAL_LAYER = {
 };
 
 const ROAD_DETAIL_OPACITY = {
-  wear: 0.11,
-  seam: 0.085,
-  transitionApron: 0.065,
-  transitionEdge: 0.09,
-  transitionGuide: 0.14,
-  marker: 0.23
+  wear: 0.095,
+  seam: 0.074,
+  transitionApron: 0.052,
+  transitionEdge: 0.074,
+  transitionGuide: 0.105,
+  marker: 0.165
 };
 
 const ROAD_VERGE_OPACITY = {
@@ -353,8 +353,8 @@ export class Roads {
       const surfaceY = 0.104 + layer * 0.006;
       const wearColor = roadWearColor(path);
       const seamColor = roadSeamColor(path);
-      const wearSpacing = path.hierarchy === 'dirt' ? 7.5 : path.hierarchy === 'stunt' ? 8.8 : 11.5;
-      const seamSpacing = path.hierarchy === 'avenue' ? 20 : 24;
+      const wearSpacing = path.hierarchy === 'dirt' ? 9.25 : path.hierarchy === 'stunt' ? 10.75 : 14.25;
+      const seamSpacing = path.hierarchy === 'avenue' ? 25 : 30;
 
       for (let distance = path.width * 1.2; distance < totalLength - path.width * 1.2; distance += wearSpacing) {
         const seed = pathIndex * 1000 + distance;
@@ -572,7 +572,7 @@ export class Roads {
       const surfaceY = 0.104 + layer * 0.006;
       const color = roadMarkerColor(path);
       const chevronSpacing = roadMarkerSpacing(path);
-      const studSpacing = Math.max(6, chevronSpacing * 0.5);
+      const studSpacing = Math.max(10, chevronSpacing * 0.9);
       const inset = path.width * (path.hierarchy === 'plaza' ? 0.24 : path.hierarchy === 'dirt' ? 0.2 : 0.32);
 
       for (let distance = chevronSpacing * 0.85; distance < totalLength - chevronSpacing * 0.75; distance += chevronSpacing) {
@@ -729,12 +729,12 @@ function roadVergeColor(path) {
 }
 
 function roadMarkerSpacing(path) {
-  if (path.hierarchy === 'security' || path.hierarchy === 'stunt') return 11;
-  if (path.hierarchy === 'bridge') return 8.5;
-  if (path.hierarchy === 'plaza') return 12.5;
-  if (path.hierarchy === 'dirt') return 16;
-  if (path.hierarchy === 'avenue') return 15;
-  return 13.5;
+  if (path.hierarchy === 'security' || path.hierarchy === 'stunt') return 14.5;
+  if (path.hierarchy === 'bridge') return 11.5;
+  if (path.hierarchy === 'plaza') return 16;
+  if (path.hierarchy === 'dirt') return 19;
+  if (path.hierarchy === 'avenue') return 18;
+  return 16.5;
 }
 
 function roadWearColor(path) {
