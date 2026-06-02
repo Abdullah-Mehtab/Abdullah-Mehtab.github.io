@@ -27,6 +27,7 @@ export class Terrain {
     this.surfaceDetailStats = { districts: 0, seams: 0, pavers: 0, accents: 0, breakups: 0, opacities: {}, alphaMapped: {} };
     this.meadowDetailStats = { patches: 0, colorVariants: 0, opacity: 0, alphaMapped: false };
     this.fieldMotifEntries = [];
+    this.reliefEntries = [];
     this.fieldMotifStats = {
       clusters: 0,
       berms: 0,
@@ -50,7 +51,7 @@ export class Terrain {
       visibleTotal: 0
     };
     this.districtGroundStats = { pads: 0, edgeTrims: 0, averageOutlineVertices: 0, batchedMeshes: 0, mergedMeshes: 0 };
-    this.reliefStats = { mounds: 0, cliffShelves: 0, rockOutcrops: 0, duneRidges: 0, contourBands: 0, beachRipples: 0, beachCombs: 0 };
+    this.reliefStats = { mounds: 0, cliffShelves: 0, rockOutcrops: 0, duneRidges: 0, contourBands: 0, beachRipples: 0, beachCombs: 0, interiorRidges: 0, visibleInteriorRidges: 0 };
     this.shorelineStats = { edgeBands: 0, foamBreaks: 0 };
   }
 
@@ -96,6 +97,13 @@ export class Terrain {
     this.roadsideFrameStats.visibleRibbons = visibleRoadsideRibbons;
     this.roadsideFrameStats.visibleStoneTabs = visibleStoneTabs;
     this.roadsideFrameStats.visibleTotal = visibleRoadsideBerms + visibleRoadsideRibbons + visibleStoneTabs;
+
+    let visibleInteriorRidges = 0;
+    for (const entry of this.reliefEntries) {
+      entry.mesh.visible = visible;
+      if (visible && entry.kind === 'interiorRidge') visibleInteriorRidges += entry.count;
+    }
+    this.reliefStats.visibleInteriorRidges = visibleInteriorRidges;
   }
 
   addBeachBase() {
@@ -650,6 +658,7 @@ export class Terrain {
       group.add(ridge);
     }
 
+    this.addInteriorLandformRidges(group);
     this.addContourBands(group);
     this.addBeachRipples(group);
     this.addRockOutcrops(group);
@@ -661,8 +670,54 @@ export class Terrain {
       duneRidges: duneRidges.length,
       contourBands: group.userData.contourBands || 0,
       beachRipples: group.userData.beachRipples || 0,
-      beachCombs: group.userData.beachCombs || 0
+      beachCombs: group.userData.beachCombs || 0,
+      interiorRidges: group.userData.interiorRidges || 0,
+      visibleInteriorRidges: group.userData.interiorRidges || 0
     };
+    this.applyQuality();
+  }
+
+  addInteriorLandformRidges(group) {
+    const candidates = [
+      { x: -37, z: 55, width: 34, depth: 7.5, height: 0.27, rotation: -0.2, color: 0x8fc674 },
+      { x: 18, z: 70, width: 42, depth: 8.2, height: 0.3, rotation: 0.18, color: 0xd7c36a },
+      { x: 46, z: -4, width: 32, depth: 6.8, height: 0.24, rotation: -0.34, color: 0x84d7bd },
+      { x: 104, z: -4, width: 38, depth: 7.2, height: 0.27, rotation: -0.26, color: 0x78b7ff },
+      { x: 100, z: 34, width: 32, depth: 6.6, height: 0.24, rotation: 0.42, color: 0xffcc66 },
+      { x: 108, z: 83, width: 34, depth: 7.1, height: 0.25, rotation: 0.24, color: 0x84d7bd },
+      { x: 30, z: -128, width: 38, depth: 7.5, height: 0.29, rotation: -0.44, color: 0xff9b6d },
+      { x: 96, z: -85, width: 36, depth: 7.2, height: 0.28, rotation: -0.24, color: 0xff9b6d },
+      { x: 84, z: -108, width: 34, depth: 7.0, height: 0.27, rotation: 0.22, color: 0xc79b56 },
+      { x: -10, z: -78, width: 34, depth: 7.0, height: 0.26, rotation: 0.16, color: 0xd8b6ff },
+      { x: -95, z: -104, width: 38, depth: 7.4, height: 0.29, rotation: -0.28, color: 0x92ffea },
+      { x: -53, z: -133, width: 34, depth: 6.8, height: 0.23, rotation: -0.12, color: 0xc79b56 },
+      { x: -134, z: -50, width: 30, depth: 6.4, height: 0.27, rotation: 0.48, color: 0x68d8ff },
+      { x: -88, z: 94, width: 34, depth: 6.8, height: 0.24, rotation: 0.22, color: 0xf0aeb6 },
+      { x: -136, z: 36, width: 30, depth: 6.5, height: 0.23, rotation: -0.5, color: 0x79ffc5 },
+      { x: 6, z: 116, width: 36, depth: 6.8, height: 0.25, rotation: -0.18, color: 0xff6d8d },
+      { x: -48, z: 24, width: 30, depth: 6.6, height: 0.24, rotation: 0.26, color: 0xffdf8a }
+    ];
+    const specs = candidates.filter((spec) => this.containsPoint(spec.x, spec.z, 14) && !isNearRoad(spec.x, spec.z, spec.roadMargin || 5.5));
+    if (!specs.length) return;
+
+    const mesh = new THREE.InstancedMesh(createMoundGeometry(1, 1, 1, 211, 7, 4), this.world.materials.fieldBerm, specs.length);
+    mesh.name = 'TerrainRelief_InteriorRidges';
+    mesh.receiveShadow = true;
+    mesh.frustumCulled = false;
+    const color = new THREE.Color();
+    specs.forEach((spec, index) => {
+      this.reliefDummy.position.set(spec.x, 0.102 + index * 0.00004, spec.z);
+      this.reliefDummy.rotation.set(0, spec.rotation, 0);
+      this.reliefDummy.scale.set(spec.width, spec.height, spec.depth);
+      this.reliefDummy.updateMatrix();
+      mesh.setMatrixAt(index, this.reliefDummy.matrix);
+      mesh.setColorAt(index, color.setHex(spec.color));
+    });
+    mesh.instanceMatrix.needsUpdate = true;
+    if (mesh.instanceColor) mesh.instanceColor.needsUpdate = true;
+    group.add(mesh);
+    this.reliefEntries.push({ mesh, kind: 'interiorRidge', count: specs.length });
+    group.userData.interiorRidges = specs.length;
   }
 
   addContourBands(group) {
