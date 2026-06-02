@@ -296,6 +296,8 @@ export class SetPieces {
       zonePads: 0,
       zoneMarkers: 0,
       zoneLabels: 0,
+      foundationAnchors: 0,
+      foundationLabels: 0,
       securityGate: 0,
       securityPacketShards: 0,
       securityScanWaves: 0,
@@ -352,6 +354,11 @@ export class SetPieces {
   }
 
   build() {
+    if (this.world.foundationReplacementMode) {
+      this.createFoundationScaffold();
+      this.applyQuality();
+      return;
+    }
     if (this.world.verticalSliceMode) {
       this.createVerticalSliceScaffold();
       this.applyQuality();
@@ -698,6 +705,75 @@ export class SetPieces {
     return best;
   }
 
+  createFoundationScaffold() {
+    const group = new THREE.Group();
+    group.name = 'FOUNDATION_Island_Route_Anchors';
+    const materials = {
+      landing: this.world.materials.plazaRoad,
+      education: this.world.materials.paleStone,
+      security: this.world.materials.securityRoad,
+      projects: this.world.materials.workbench,
+      sentinel: this.world.materials.glowPink,
+      career: this.world.materials.glowPurple,
+      skills: this.world.materials.glowCyan,
+      awards: this.world.materials.warmGlow,
+      cv: this.world.materials.paleStone,
+      todo: this.world.materials.glowGreen,
+      circuit: this.world.materials.stuntSurface,
+      contact: this.world.materials.waterBlue,
+      behind: this.world.materials.glowPurple,
+      drift: this.world.materials.stuntSurface,
+      'data-pier': this.world.materials.waterBlue,
+      potato: this.world.materials.soil,
+    };
+    const primaryZones = new Set(['landing', 'education', 'security', 'drift', 'circuit']);
+
+    for (const zone of worldZones) {
+      const primary = primaryZones.has(zone.id);
+      const rotation = zone.rotation || 0;
+      const markerWidth = primary ? 0.72 : 0.48;
+      const markerHeight = primary ? 1.2 : 0.72;
+      const markerY = 0.28 + markerHeight * 0.5;
+      const material = materials[zone.id] || this.world.materials.plazaRoad;
+      this.box(
+        group,
+        zone.position[0],
+        markerY,
+        zone.position[2],
+        markerWidth,
+        markerHeight,
+        markerWidth,
+        material,
+        rotation,
+        `FOUNDATION_${zone.id}_anchor`
+      );
+      this.blockoutStats.foundationAnchors += 1;
+
+      if (primary) {
+        const labelDistance = zone.radius + 4;
+        this.addSign(
+          group,
+          zone.name.toUpperCase(),
+          zone.kind,
+          zone.position[0] + Math.cos(rotation) * labelDistance,
+          zone.position[2] - Math.sin(rotation) * labelDistance,
+          rotation + Math.PI * 0.5,
+          Number.parseInt(zone.color.slice(1), 16),
+          0.92,
+          `FOUNDATION_${zone.id}_label`
+        );
+        this.blockoutStats.foundationLabels += 1;
+      }
+    }
+
+    this.createBlockoutSecurityScan(group);
+    mergeStaticMeshesInGroup(group, {
+      namePrefix: 'FOUNDATION_scaffold',
+      shouldSkip: (object) => ['SecurityPacketShard', 'SecurityScanWave', 'ScannerLightCurtain'].includes(object.name)
+    });
+    this.world.scene.add(group);
+  }
+
   createBlockoutScaffold() {
     const group = new THREE.Group();
     group.name = 'BLOCKOUT_Island_District_Scaffold';
@@ -765,9 +841,9 @@ export class SetPieces {
     const scan = this.securityScanPose(zone);
     const scanX = scan.x;
     const scanZ = scan.z;
-    const scanPadWidth = this.world.verticalSliceMode ? 16 : 24;
-    const scanPadDepth = this.world.verticalSliceMode ? 12 : 18;
-    const scanPadY = this.world.verticalSliceMode ? 0.116 : 0.138;
+    const scanPadWidth = this.world.foundationReplacementMode ? 11 : this.world.verticalSliceMode ? 16 : 24;
+    const scanPadDepth = this.world.foundationReplacementMode ? 7 : this.world.verticalSliceMode ? 12 : 18;
+    const scanPadY = this.world.foundationReplacementMode ? 0.118 : this.world.verticalSliceMode ? 0.116 : 0.138;
     this.groundRect(group, scanX, scanZ, scanPadWidth, scanPadDepth, this.world.materials.securityRoad, scanPadY, 'BLOCKOUT_security_scan_pad', scan.rotation);
     this.securityGate(group, scanX, scanZ, scan.rotation);
     this.securityScanWaveField(group, scanX, scanZ, scan.rotation);
@@ -3578,7 +3654,7 @@ export class SetPieces {
     mesh.receiveShadow = true;
     mesh.userData.surfacePanel = 'chipped-hardscape';
     group.add(mesh);
-    if (!(this.world.verticalSliceMode && name.startsWith('BLOCKOUT_'))) {
+    if (!((this.world.verticalSliceMode || this.world.foundationReplacementMode) && (name.startsWith('BLOCKOUT_') || name.startsWith('FOUNDATION_')))) {
       this.addGroundPanelSeams(group, x, z, width, depth, material, y + 0.058, name, rotation);
     }
     this.surfacePanelStats.hardscapePanels += 1;

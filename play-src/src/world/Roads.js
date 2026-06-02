@@ -86,7 +86,9 @@ export class Roads {
       namePrefix: 'ROAD_batch',
       getBatchLabel: (object) => object.userData?.batchLabel
     });
-    this.createRouteThresholds();
+    if (!this.world.foundationReplacementMode) {
+      this.createRouteThresholds();
+    }
     if (!this.world.blockoutMode) {
       this.createRoadSurfaceDetails();
       this.createGuidanceMarkers();
@@ -163,8 +165,10 @@ export class Roads {
         this.roadGroup.add(curb);
       }
     }
-    this.addEdgeFeathers(path, style, width, layer);
-    if (path.hierarchy !== 'dirt' && !this.world.verticalSliceMode) {
+    if (!this.world.foundationReplacementMode) {
+      this.addEdgeFeathers(path, style, width, layer);
+    }
+    if (path.hierarchy !== 'dirt' && !this.world.verticalSliceMode && !this.world.foundationReplacementMode) {
       this.addLaneEdgeLines(path, width, layer, surfaceY);
     }
 

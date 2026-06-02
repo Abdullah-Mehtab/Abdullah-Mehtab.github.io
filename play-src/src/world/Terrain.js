@@ -59,7 +59,9 @@ export class Terrain {
     this.addBeachBase();
     this.addGrassPlateau();
     if (this.world.blockoutMode) {
-      this.addDistrictGrounding();
+      if (!this.world.foundationReplacementMode) {
+        this.addDistrictGrounding();
+      }
       this.addCoastalEdges();
       this.addPhysicsFloor();
       return;
