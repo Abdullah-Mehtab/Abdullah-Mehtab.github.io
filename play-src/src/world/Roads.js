@@ -82,8 +82,7 @@ export class Roads {
       this.addPath(path);
     }
     if (this.world.foundationReplacementMode) {
-      this.roadGroup.userData.junctionPatchCount = 0;
-      this.roadGroup.userData.circularPointCaps = 0;
+      this.addFoundationJunctionCaps();
     } else {
       this.addJunctionPatches();
     }
@@ -286,6 +285,43 @@ export class Roads {
       this.tagRoadMesh(surface, dominant, 'junction_surface');
       surface.receiveShadow = false;
       surface.renderOrder = 12 + layer;
+      this.roadGroup.add(surface);
+      patches += 1;
+    }
+
+    this.roadGroup.userData.junctionPatchCount = patches;
+    this.roadGroup.userData.circularPointCaps = 0;
+  }
+
+  addFoundationJunctionCaps() {
+    const graph = new Map();
+    for (const path of roadPaths) {
+      for (let index = 0; index < path.points.length; index += 1) {
+        const point = path.points[index];
+        const key = pointKey(point);
+        if (!graph.has(key)) {
+          graph.set(key, { point, connections: [], pathIds: new Set() });
+        }
+        const node = graph.get(key);
+        node.pathIds.add(path.id);
+        if (index > 0) node.connections.push(createJunctionConnection(point, path.points[index - 1], path));
+        if (index < path.points.length - 1) node.connections.push(createJunctionConnection(point, path.points[index + 1], path));
+        if (path.closed && index === 0) node.connections.push(createJunctionConnection(point, path.points[path.points.length - 1], path));
+        if (path.closed && index === path.points.length - 1) node.connections.push(createJunctionConnection(point, path.points[0], path));
+      }
+    }
+
+    let patches = 0;
+    for (const node of graph.values()) {
+      if (node.pathIds.size < 2 || node.connections.length < 2) continue;
+      const dominant = dominantFoundationJunctionPath(node.connections.map((connection) => connection.path));
+      const layer = ROAD_VISUAL_LAYER[dominant.hierarchy] ?? 1;
+      const surfaceGeometry = createJunctionBlendGeometry(node.point, node.connections, 0.18, 0.158 + layer * 0.007);
+      const surface = new THREE.Mesh(surfaceGeometry, this.offsetMaterial(this.foundationRoadMaterial(dominant), 22 + layer));
+      surface.name = `ROAD_FoundationJunctionCap_${patches}`;
+      this.tagRoadMesh(surface, dominant, 'junction_surface');
+      surface.receiveShadow = false;
+      surface.renderOrder = 16 + layer;
       this.roadGroup.add(surface);
       patches += 1;
     }
@@ -833,6 +869,16 @@ function dominantRoadPath(paths) {
     const pathLayer = ROAD_SURFACE_PRIORITY[path.hierarchy] ?? 1;
     if (pathLayer !== bestLayer) return pathLayer > bestLayer ? path : best;
     return path.width > best.width ? path : best;
+  }, paths[0]);
+}
+
+function dominantFoundationJunctionPath(paths) {
+  return paths.reduce((best, path) => {
+    if (path.width > best.width + 0.05) return path;
+    if (best.width > path.width + 0.05) return best;
+    const bestLayer = ROAD_SURFACE_PRIORITY[best.hierarchy] ?? 1;
+    const pathLayer = ROAD_SURFACE_PRIORITY[path.hierarchy] ?? 1;
+    return pathLayer > bestLayer ? path : best;
   }, paths[0]);
 }
 

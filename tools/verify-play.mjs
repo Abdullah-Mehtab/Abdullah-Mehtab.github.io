@@ -101,6 +101,10 @@ try {
   await page.evaluate(() => window.__portfolioDrive.start());
   await delay(700);
   await screenshot(page, '02-start-driving.png');
+  await stageRoadJunctionView(page, [-56, 18, -20], [-68, 0.25, -12]);
+  await screenshot(page, 'road-junction-security.png');
+  await stageRoadJunctionView(page, [-42, 18, -88], [-52, 0.25, -98]);
+  await screenshot(page, 'road-junction-dirt.png');
 
   const gameplay = await exerciseGameplay(page);
   const vehicleLights = await sampleVehicleLights(page);
@@ -842,6 +846,26 @@ async function exerciseRouteReplay(page, segments) {
       failures
     };
   }, segments);
+}
+
+async function stageRoadJunctionView(page, camera, target) {
+  await page.evaluate(({ camera, target }) => {
+    const game = window.__portfolioDrive.game;
+    const cameraPosition = game.camera.position.clone();
+    const lookAt = game.camera.position.clone();
+    cameraPosition.set(camera[0], camera[1], camera[2]);
+    lookAt.set(target[0], target[1], target[2]);
+    game.ui.closePanel?.();
+    game.ui.closeMap?.();
+    game.ui.closeMenu?.();
+    game.cameraRig.setCinematic(cameraPosition, lookAt);
+    game.cameraRig.smoothedTarget.copy(lookAt);
+    game.camera.position.copy(cameraPosition);
+    game.camera.fov = 42;
+    game.camera.updateProjectionMatrix();
+    game.camera.lookAt(lookAt);
+  }, { camera, target });
+  await delay(260);
 }
 
 async function exerciseForwardDriveProbe(page, segments) {
@@ -3109,7 +3133,9 @@ function assertGate2RFoundationReplacementVerification(result, failures) {
   if ((result.roadSurfaceDetails?.laneSeams || 0) !== 0) failures.push(`Gate 2R roads failed: lane seams built=${result.roadSurfaceDetails?.laneSeams || 0}`);
   if ((result.roadSurfaceDetails?.transitionAprons || 0) !== 0) failures.push(`Gate 2R roads failed: transition aprons built=${result.roadSurfaceDetails?.transitionAprons || 0}`);
   if ((result.roadSurfaceDetails?.transitionGuideBars || 0) !== 0) failures.push(`Gate 2R roads failed: transition guide bars built=${result.roadSurfaceDetails?.transitionGuideBars || 0}`);
-  if ((result.roadJunctions?.blendPatches || 0) !== 0) failures.push(`Gate 2R roads failed: junction slabs built=${result.roadJunctions?.blendPatches || 0}`);
+  if ((result.roadJunctions?.blendPatches || 0) < (result.roadTopology?.sharedJunctions || 0)) {
+    failures.push(`Gate 2R roads failed: junction caps=${result.roadJunctions?.blendPatches || 0}/${result.roadTopology?.sharedJunctions || 0}`);
+  }
   if ((result.roadGuidance?.chevrons || 0) !== 0) failures.push(`Gate 2R roads failed: final chevrons built=${result.roadGuidance?.chevrons || 0}`);
   if ((result.roadGuidance?.reflectorStuds || 0) !== 0) failures.push(`Gate 2R roads failed: reflector studs built=${result.roadGuidance?.reflectorStuds || 0}`);
   if (!result.roadTopology?.coastalLoop) failures.push('Gate 2R road topology failed: coastal loop missing');
@@ -3245,7 +3271,9 @@ function assertGate3RVerticalSliceVerification(result, failures) {
   if ((result.roadSurfaceDetails?.laneSeams || 0) !== 0) failures.push(`Gate 3R roads failed: lane seams built=${result.roadSurfaceDetails?.laneSeams || 0}`);
   if ((result.roadSurfaceDetails?.transitionAprons || 0) !== 0) failures.push(`Gate 3R roads failed: transition aprons built=${result.roadSurfaceDetails?.transitionAprons || 0}`);
   if ((result.roadSurfaceDetails?.transitionGuideBars || 0) !== 0) failures.push(`Gate 3R roads failed: transition guide bars built=${result.roadSurfaceDetails?.transitionGuideBars || 0}`);
-  if ((result.roadJunctions?.blendPatches || 0) !== 0) failures.push(`Gate 3R roads failed: junction slabs built=${result.roadJunctions?.blendPatches || 0}`);
+  if ((result.roadJunctions?.blendPatches || 0) < (result.roadTopology?.sharedJunctions || 0)) {
+    failures.push(`Gate 3R roads failed: junction caps=${result.roadJunctions?.blendPatches || 0}/${result.roadTopology?.sharedJunctions || 0}`);
+  }
   if ((result.roadGuidance?.chevrons || 0) !== 0) failures.push(`Gate 3R roads failed: final chevrons built=${result.roadGuidance?.chevrons || 0}`);
   if ((result.roadGuidance?.reflectorStuds || 0) !== 0) failures.push(`Gate 3R roads failed: reflector studs built=${result.roadGuidance?.reflectorStuds || 0}`);
   if (!result.roadTopology?.coastalLoop) failures.push('Gate 3R road topology failed: coastal loop missing');
