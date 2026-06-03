@@ -102,15 +102,15 @@ export function createWorldMaterials() {
 
   return {
     ground: new THREE.MeshStandardMaterial({
-      color: 0x72c069,
+      color: 0x5f9f58,
       map: grassTexture,
       roughness: 0.96,
       metalness: 0.01,
       vertexColors: false,
       side: THREE.DoubleSide
     }),
-    meadowLight: new THREE.MeshStandardMaterial({ color: 0x91d874, roughness: 0.98, metalness: 0.0 }),
-    meadowDark: new THREE.MeshStandardMaterial({ color: 0x559a58, roughness: 0.98, metalness: 0.0 }),
+    meadowLight: new THREE.MeshStandardMaterial({ color: 0x82c66f, roughness: 0.98, metalness: 0.0 }),
+    meadowDark: new THREE.MeshStandardMaterial({ color: 0x4b8750, roughness: 0.98, metalness: 0.0 }),
     flowerField: new THREE.MeshBasicMaterial({ color: 0xf4b8be, transparent: true, opacity: 0.22, depthWrite: false }),
     wildflowerBlue: new THREE.MeshBasicMaterial({ color: 0x8fddff, transparent: true, opacity: 0.2, depthWrite: false }),
     terrainBrushLight: makeTerrainBrushMaterial(0xb2df7a, 0.42, terrainBrushAlpha),
@@ -122,8 +122,8 @@ export function createWorldMaterials() {
     stoneRoad: new THREE.MeshStandardMaterial({ color: 0x5f6d68, map: stoneTexture, roughness: 0.92, metalness: 0.02 }),
     plazaRoad: new THREE.MeshStandardMaterial({ color: 0xc9c4a7, map: stoneTexture, roughness: 0.9, metalness: 0.02 }),
     securityRoad: new THREE.MeshStandardMaterial({ color: 0x24434c, roughness: 0.74, metalness: 0.1, emissive: 0x0b2831, emissiveIntensity: 0.28 }),
-    roadEdge: new THREE.MeshStandardMaterial({ color: 0x4a5148, roughness: 0.94, metalness: 0.02 }),
-    roadShoulder: new THREE.MeshStandardMaterial({ color: 0x969276, roughness: 0.96, metalness: 0.0 }),
+    roadEdge: new THREE.MeshStandardMaterial({ color: 0x28362f, roughness: 0.94, metalness: 0.02 }),
+    roadShoulder: new THREE.MeshStandardMaterial({ color: 0x7f8067, roughness: 0.96, metalness: 0.0 }),
     roadCurb: new THREE.MeshStandardMaterial({ color: 0xdfd4b2, roughness: 0.86, metalness: 0.02 }),
     roadVerge: new THREE.MeshBasicMaterial({
       color: 0xffffff,

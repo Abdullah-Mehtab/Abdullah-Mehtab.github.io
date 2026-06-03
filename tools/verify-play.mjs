@@ -508,7 +508,9 @@ async function exerciseWater(page, islandRadius) {
     }
     const afterRespawn = game.vehicle.position;
     const respawnDistance = Math.hypot(afterRespawn.x, afterRespawn.z);
-    const submergedRespawned = respawnDistance < radius * 0.55;
+    const landingPose = game.world.getRespawnPose('landing');
+    const landingRespawnDistance = afterRespawn.distanceTo(landingPose.position);
+    const submergedRespawned = landingRespawnDistance < 8;
 
     game.vehicle.respawn({ x: radius * 0.972, y: 1.08, z: 0 }, 0);
     game.vehicle.body.setLinvel({ x: 0, y: 0, z: 12 }, true);
@@ -544,6 +546,7 @@ async function exerciseWater(page, islandRadius) {
       dragReduced: afterSpeed < beforeSpeed * 0.82,
       submergeRespawned: submergedRespawned,
       finalDistance: Number(respawnDistance.toFixed(2)),
+      landingRespawnDistance: Number(landingRespawnDistance.toFixed(2)),
       splashCount: wakeAfter.activeSplashes || wakeAfter.splashes || 0,
       wakeSpawnedDelta: (wakeAfter.wakesSpawned || 0) - (wakeBefore.wakesSpawned || 0),
       activeWakes: wakeAfter.activeWakes || 0,
@@ -2952,8 +2955,9 @@ function assertGate2RFoundationReplacementVerification(result, failures) {
   if (!result.roadTopology?.coastalLoop) failures.push('Gate 2R road topology failed: coastal loop missing');
   if ((result.roadTopology?.closedLoops || 0) < 1) failures.push(`Gate 2R road topology failed: closedLoops=${result.roadTopology?.closedLoops || 0}`);
   if ((result.roadTopology?.paths || 0) !== roadPaths.length) failures.push(`Gate 2R road topology failed: paths=${result.roadTopology?.paths || 0}/${roadPaths.length}`);
+  if ((result.roadTopology?.paths || 0) > 6) failures.push(`Gate 2R road topology failed: too many route families=${result.roadTopology?.paths || 0}`);
   if ((result.roadTopology?.sharedJunctions || 0) < 4) failures.push(`Gate 2R road topology failed: sharedJunctions=${result.roadTopology?.sharedJunctions || 0}`);
-  if ((result.roadTopology?.sharedJunctions || 0) > 10) failures.push(`Gate 2R road topology failed: too many shared junctions=${result.roadTopology?.sharedJunctions || 0}`);
+  if ((result.roadTopology?.sharedJunctions || 0) > 8) failures.push(`Gate 2R road topology failed: too many shared junctions=${result.roadTopology?.sharedJunctions || 0}`);
   if ((result.roadTopology?.maxRoadWidth || 99) > 5.2) failures.push(`Gate 2R road width failed: maxRoadWidth=${result.roadTopology?.maxRoadWidth}`);
   if ((result.surfacePanels?.hardscapePanels || 0) !== 0) failures.push(`Gate 2R scaffold failed: hardscape panels still built=${result.surfacePanels?.hardscapePanels || 0}`);
   if ((result.stuntPark?.ramps || 0) !== 0) failures.push(`Gate 2R stunt failed: rejected ramps still built=${result.stuntPark?.ramps || 0}`);
@@ -2973,9 +2977,18 @@ function assertGate2RFoundationReplacementVerification(result, failures) {
   if ((result.atmosphere?.visibleDistantIslets || 0) !== 0) failures.push(`Gate 2R atmosphere failed: visible distant islets=${result.atmosphere?.visibleDistantIslets || 0}`);
   if ((result.gameplay?.vehicleFx?.spawnedSkid || 0) !== 0) failures.push(`Gate 2R vehicle FX failed: skid strips still spawned=${result.gameplay?.vehicleFx?.spawnedSkid || 0}`);
   const colliderSummary = result.colliderAudit?.summary || [];
-  if (colliderSummary.some((collider) => collider.type === 'trimesh')) failures.push('Gate 2R physics failed: terrain trimesh collider still active');
-  if (!colliderSummary.some((collider) => collider.name === 'ToyIslandFlatTerrainCollider' && collider.type === 'box')) {
-    failures.push('Gate 2R physics failed: flat terrain collider missing');
+  if (colliderSummary.some((collider) => collider.name === 'ToyIslandFlatTerrainCollider')) {
+    failures.push('Gate 2R physics failed: rejected flat terrain collider still active');
+  }
+  if (!colliderSummary.some((collider) => collider.name === 'ToyIslandTerrainCollider' && collider.type === 'trimesh')) {
+    failures.push('Gate 2R physics failed: visible island terrain collider missing');
+  }
+  const nonProtectedColliders = colliderSummary.filter((collider) => (
+    collider.name !== 'ToyIslandTerrainCollider'
+    && collider.name !== 'ZONE_education_protected_landmark_collider'
+  ));
+  if (nonProtectedColliders.length) {
+    failures.push(`Gate 2R physics failed: extra driving colliders=${nonProtectedColliders.map((collider) => collider.name).join(', ')}`);
   }
   if ((result.mapStats?.pins || 0) !== worldZones.length) failures.push(`Gate 2R map failed: pins=${result.mapStats?.pins || 0}/${worldZones.length}`);
   if ((result.mapStats?.districtLabels || 0) !== districtFootprints.length) {

@@ -947,8 +947,9 @@ export class Terrain {
 
   addPhysicsFloor() {
     if (this.world.foundationReplacementMode) {
-      this.world.physics.createFixedBox([0, -0.05, 0], [WORLD_HALF_SIZE * 2.4, 0.18, WORLD_HALF_SIZE * 2.4], {
-        debugName: 'ToyIslandFlatTerrainCollider',
+      const { vertices, indices } = makeIslandTopColliderMesh(ISLAND_RADIUS, 1.01, 112, 0.04);
+      this.world.physics.createFixedTrimesh([0, 0, 0], vertices, indices, {
+        debugName: 'ToyIslandTerrainCollider',
         visualName: 'ToyIslandGrassPlateau',
         friction: 1.08,
         restitution: 0.01
@@ -1031,6 +1032,27 @@ function makeIslandColliderMesh(radius, scale, segments, topY, bottomY) {
     indices[cursor++] = topCurrent;
     indices[cursor++] = bottomNext;
     indices[cursor++] = bottomCurrent;
+  }
+  return { vertices, indices };
+}
+
+function makeIslandTopColliderMesh(radius, scale, segments, topY) {
+  const points = getIslandCoastPoints(radius, scale, segments);
+  const vertices = new Float32Array((1 + points.length) * 3);
+  writeVertex(vertices, 0, 0, topY, 0);
+
+  for (let i = 0; i < points.length; i += 1) {
+    const [x, z] = points[i];
+    writeVertex(vertices, 1 + i, x, topY, z);
+  }
+
+  const indices = new Uint32Array(points.length * 3);
+  let cursor = 0;
+  for (let i = 0; i < points.length; i += 1) {
+    const next = (i + 1) % points.length;
+    indices[cursor++] = 0;
+    indices[cursor++] = 1 + next;
+    indices[cursor++] = 1 + i;
   }
   return { vertices, indices };
 }

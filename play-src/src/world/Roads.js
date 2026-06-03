@@ -126,12 +126,15 @@ export class Roads {
     const style = ROAD_STYLE[path.hierarchy] || ROAD_STYLE.street;
     const width = path.width;
     const layer = ROAD_VISUAL_LAYER[path.hierarchy] ?? 1;
-    const shoulderWidth = this.world.foundationReplacementMode ? Math.min(style.shoulder, 0.48) : style.shoulder;
+    const foundationMode = this.world.foundationReplacementMode;
+    const shoulderWidth = foundationMode ? 0 : style.shoulder;
     const shoulderY = 0.068 + layer * 0.001;
     const surfaceY = 0.104 + layer * 0.006;
 
     const edgeMaterial = path.hierarchy === 'dirt' ? this.world.materials.sand : this.world.materials.roadShoulder;
-    const surfaceMaterial = path.hierarchy === 'dirt'
+    const surfaceMaterial = foundationMode
+      ? this.foundationRoadMaterial(path)
+      : path.hierarchy === 'dirt'
       ? this.world.materials.dirtRoad
       : path.hierarchy === 'security'
         ? this.world.materials.securityRoad
@@ -139,15 +142,17 @@ export class Roads {
           ? this.world.materials.plazaRoad
           : this.world.materials.stoneRoad;
 
-    const shoulder = new THREE.Mesh(
-      createPathRibbonGeometry(path.points, width + shoulderWidth * 2, path.closed, shoulderY, 9),
-      this.offsetMaterial(edgeMaterial, 1 + layer)
-    );
-    shoulder.name = `ROAD_${path.id}_shoulder`;
-    this.tagRoadMesh(shoulder, path, 'shoulder');
-    shoulder.renderOrder = 1 + layer;
-    shoulder.receiveShadow = true;
-    this.roadGroup.add(shoulder);
+    if (!foundationMode && shoulderWidth > 0) {
+      const shoulder = new THREE.Mesh(
+        createPathRibbonGeometry(path.points, width + shoulderWidth * 2, path.closed, shoulderY, 9),
+        this.offsetMaterial(edgeMaterial, 1 + layer)
+      );
+      shoulder.name = `ROAD_${path.id}_shoulder`;
+      this.tagRoadMesh(shoulder, path, 'shoulder');
+      shoulder.renderOrder = 1 + layer;
+      shoulder.receiveShadow = true;
+      this.roadGroup.add(shoulder);
+    }
 
     const surface = new THREE.Mesh(
       createPathRibbonGeometry(path.points, width, path.closed, surfaceY, 9),
@@ -362,6 +367,13 @@ export class Roads {
     if (path.hierarchy === 'plaza') return this.world.materials.plazaRoad;
     if (path.hierarchy === 'stunt') return this.world.materials.stuntRamp;
     return this.world.materials.stoneRoad;
+  }
+
+  foundationRoadMaterial(path) {
+    if (path.hierarchy === 'security') return this.world.materials.securityRoad;
+    if (path.hierarchy === 'dirt') return this.world.materials.dirtRoad;
+    if (path.hierarchy === 'bridge') return this.world.materials.wood;
+    return this.world.materials.roadEdge;
   }
 
   createRoadSurfaceDetails() {
