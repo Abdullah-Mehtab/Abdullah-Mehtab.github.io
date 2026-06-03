@@ -7,6 +7,7 @@ import { makePatchGeometry } from './WorldMaterials.js';
 
 const Y = 0.16;
 const VISIBILITY_HYSTERESIS = 10;
+const GATE3R_DEFAULT_PROP_CLEARANCE = 2.4;
 const POLISH_MATERIAL_LIBRARY_KEYS = {
   polish_warm_limestone: 'warmStone',
   polish_stone_shadow: 'stone',
@@ -351,6 +352,14 @@ export class SetPieces {
         signs: 0
       }
     };
+    this.gate3rPlacementStats = {
+      recorded: 0,
+      intentionalRoadOverlays: 0,
+      roadIntrusions: 0,
+      minClearance: null,
+      byKind: {},
+      entries: []
+    };
   }
 
   build() {
@@ -561,6 +570,14 @@ export class SetPieces {
 
   getQualityStats() {
     return { ...this.qualityStats };
+  }
+
+  getGate3RPlacementStats() {
+    return {
+      ...this.gate3rPlacementStats,
+      byKind: { ...this.gate3rPlacementStats.byKind },
+      entries: this.gate3rPlacementStats.entries.map((entry) => ({ ...entry }))
+    };
   }
 
   getStartDioramaStats() {
@@ -879,6 +896,80 @@ export class SetPieces {
     this.world.scene.add(group);
   }
 
+  distancePointToSegment2d(px, pz, ax, az, bx, bz) {
+    const abx = bx - ax;
+    const abz = bz - az;
+    const lengthSq = abx * abx + abz * abz;
+    if (lengthSq <= 0.0001) return Math.hypot(px - ax, pz - az);
+    const t = THREE.MathUtils.clamp(((px - ax) * abx + (pz - az) * abz) / lengthSq, 0, 1);
+    const cx = ax + abx * t;
+    const cz = az + abz * t;
+    return Math.hypot(px - cx, pz - cz);
+  }
+
+  gate3rDistanceToRoad(x, z) {
+    let bestDistance = Infinity;
+    let bestRoad = 'none';
+    let bestHalfWidth = 0;
+    for (const path of roadPaths) {
+      const points = path.points || [];
+      const segmentCount = path.closed ? points.length : points.length - 1;
+      for (let index = 0; index < segmentCount; index += 1) {
+        const [ax, az] = points[index];
+        const [bx, bz] = points[(index + 1) % points.length];
+        const distance = this.distancePointToSegment2d(x, z, ax, az, bx, bz);
+        if (distance < bestDistance) {
+          bestDistance = distance;
+          bestRoad = path.id;
+          bestHalfWidth = (path.width || 4) * 0.5;
+        }
+      }
+    }
+    return {
+      roadId: bestRoad,
+      distance: Number(bestDistance.toFixed(3)),
+      clearance: Number((bestDistance - bestHalfWidth).toFixed(3))
+    };
+  }
+
+  recordGate3RPlacement(kind, name, x, z, options = {}) {
+    const stats = this.gate3rPlacementStats;
+    const measurement = this.gate3rDistanceToRoad(x, z);
+    if (options.allowRoad) {
+      stats.intentionalRoadOverlays += 1;
+      return;
+    }
+
+    const minClearance = options.minClearance ?? GATE3R_DEFAULT_PROP_CLEARANCE;
+    const pass = measurement.clearance >= minClearance;
+    stats.recorded += 1;
+    stats.byKind[kind] = (stats.byKind[kind] || 0) + 1;
+    stats.minClearance = stats.minClearance === null
+      ? measurement.clearance
+      : Math.min(stats.minClearance, measurement.clearance);
+    if (!pass) stats.roadIntrusions += 1;
+    stats.entries.push({
+      kind,
+      name,
+      x: Number(x.toFixed(2)),
+      z: Number(z.toFixed(2)),
+      roadId: measurement.roadId,
+      clearance: measurement.clearance,
+      minClearance,
+      pass
+    });
+  }
+
+  gate3rLamp(group, x, z, color, height, name, rotation, minClearance = GATE3R_DEFAULT_PROP_CLEARANCE) {
+    this.addLamp(group, x, z, color, height, name, rotation);
+    this.recordGate3RPlacement('lamp', name, x, z, { minClearance });
+  }
+
+  gate3rSign(group, title, subtitle, x, z, rotation, color, scale, name, minClearance = GATE3R_DEFAULT_PROP_CLEARANCE) {
+    this.addSign(group, title, subtitle, x, z, rotation, color, scale, name);
+    this.recordGate3RPlacement('sign', name, x, z, { minClearance });
+  }
+
   createGate3RStartHub(group) {
     const zone = findZone('landing');
     const stats = this.verticalSliceStats.start;
@@ -891,9 +982,6 @@ export class SetPieces {
       return [centerX + right * cos + forward * sin, centerZ - right * sin + forward * cos];
     };
 
-    this.slicePad(group, centerX, centerZ, 8.6, 3.2, this.world.materials.stoneRoad, 0.128, 'GATE3R_Start_Launch_Frame', rotation);
-    stats.launchPads += 1;
-
     const markY = 0.137;
     const [lineX, lineZ] = local(0, -2.4);
     const [leftGuideX, leftGuideZ] = local(-3.35, 0.15);
@@ -903,10 +991,14 @@ export class SetPieces {
     this.box(group, rightGuideX, markY, rightGuideZ, 0.12, 0.022, 4.4, this.world.materials.glow, rotation, 'GATE3R_Start_Right_Guide');
     group.children.slice(-3).forEach((mesh) => { mesh.position.y = markY; });
     stats.routeMarks += 3;
+    this.recordGate3RPlacement('road-overlay', 'GATE3R_Start_Line', lineX, lineZ, { allowRoad: true });
+    this.recordGate3RPlacement('road-overlay', 'GATE3R_Start_Left_Guide', leftGuideX, leftGuideZ, { allowRoad: true });
+    this.recordGate3RPlacement('road-overlay', 'GATE3R_Start_Right_Guide', rightGuideX, rightGuideZ, { allowRoad: true });
 
     for (let index = 0; index < 6; index += 1) {
       const [x, z] = local(-2.75 + index * 1.1, -2.05);
       this.box(group, x, markY + 0.003, z, 0.58, 0.018, 0.16, index % 2 ? this.world.materials.glowBlue : this.world.materials.warmGlow, rotation, 'GATE3R_Start_Launch_Light');
+      this.recordGate3RPlacement('road-overlay', 'GATE3R_Start_Launch_Light', x, z, { allowRoad: true });
       stats.launchLights += 1;
     }
 
@@ -926,46 +1018,39 @@ export class SetPieces {
           rotation + side * (0.035 + index * 0.008),
           'GATE3R_Start_Burnout_Witness'
         );
+        this.recordGate3RPlacement('road-overlay', 'GATE3R_Start_Burnout_Witness', x, z, { allowRoad: true });
         stats.burnoutScuffs += 1;
       }
     }
 
-    const lampA = local(-7.6, -3.6);
-    const lampB = local(7.5, -3.2);
-    const lampC = local(-8.8, 6.4);
-    this.addLamp(group, lampA[0], lampA[1], 0xffc36a, 2.8, 'GATE3R_Start_Lamp_Warm');
-    this.addLamp(group, lampB[0], lampB[1], 0x7cffb2, 2.8, 'GATE3R_Start_Lamp_Mint');
-    this.addLamp(group, lampC[0], lampC[1], 0x68d8ff, 2.65, 'GATE3R_Start_Route_Lamp');
-    stats.lamps += 3;
+    const lampA = local(-12, 14);
+    const lampB = local(14, -4);
+    this.gate3rLamp(group, lampA[0], lampA[1], 0xffc36a, 2.8, 'GATE3R_Start_Lamp_Left', rotation + 0.18, 3.2);
+    this.gate3rLamp(group, lampB[0], lampB[1], 0x7cffb2, 2.8, 'GATE3R_Start_Lamp_Right', rotation - 0.18, 3.2);
+    stats.lamps += 2;
 
-    const planterA = local(-9.5, 1.8);
-    const planterB = local(9.4, 1.6);
-    this.addPlanterCluster(group, planterA[0], planterA[1], 0x7cffb2);
-    this.addPlanterCluster(group, planterB[0], planterB[1], 0x68d8ff);
-    stats.planters += 2;
-
-    const startSign = local(8.9, 5.8);
-    const routeSign = local(-9.7, 6.8);
-    this.addSign(group, 'START', 'Follow campus road', startSign[0], startSign[1], rotation - 0.82, 0x7cffb2, 1.72, 'GATE3R_Start_Sign');
-    this.addSign(group, 'FCC / SCAN', 'Split ahead', routeSign[0], routeSign[1], rotation + 0.68, 0x9ccfff, 1.65, 'GATE3R_Start_Route_Sign');
+    const startSign = local(20, -4);
+    const routeSign = local(-24, 4);
+    this.gate3rSign(group, 'START', 'Campus route', startSign[0], startSign[1], rotation - 0.82, 0x7cffb2, 1.6, 'GATE3R_Start_Sign', 3.4);
+    this.gate3rSign(group, 'FCC / SCAN', 'One clean road', routeSign[0], routeSign[1], rotation + 0.68, 0x9ccfff, 1.55, 'GATE3R_Start_Route_Sign', 3.4);
     stats.signs += 2;
   }
 
   createGate3RCampusRoute(group) {
     const stats = this.verticalSliceStats.campusRoute;
     const path = findPath('campus-boulevard');
-    this.createGate3RRouteRun(group, path.points, stats, {
+    this.createGate3RRouteRun(group, path, stats, {
       prefix: 'GATE3R_CampusRoute',
       color: 0x9ccfff,
       accentMaterial: this.world.materials.glowBlue,
-      bedMaterial: this.world.materials.paleStone,
-      hedgeMaterial: this.world.materials.meadowDark,
       kind: 'campus',
-      markOffset: 3.1,
-      propOffset: 5.45,
-      stepLength: 18
+      side: 1,
+      markSpacing: 19,
+      lampSpacing: 42,
+      lampSetback: 4.7,
+      firstLampAt: 32
     });
-    this.addSign(group, 'FCCU', 'Education Grove', -91.5, 62.5, -0.48, 0x9ccfff, 1.58, 'GATE3R_CampusRoute_Sign');
+    this.gate3rSign(group, 'FCCU', 'Education Grove', -83, 43.5, -0.48, 0x9ccfff, 1.58, 'GATE3R_CampusRoute_Sign', 4.2);
     stats.signs += 1;
   }
 
@@ -975,50 +1060,32 @@ export class SetPieces {
     const x = zone.position[0];
     const z = zone.position[2];
     const rotation = zone.rotation || 0;
+    const local = (right, forward) => {
+      const cos = Math.cos(rotation);
+      const sin = Math.sin(rotation);
+      return [x + right * cos + forward * sin, z - right * sin + forward * cos];
+    };
 
-    this.slicePad(group, x - 1.2, z - 15.6, 16, 4.4, this.world.materials.paleStone, 0.13, 'GATE3R_FCC_Arrival_Walk', rotation);
-    this.slicePad(group, x + 13.4, z - 11.2, 3.8, 7.2, this.world.materials.warmStone, 0.128, 'GATE3R_FCC_Garden_Edge_East', rotation);
+    const walk = local(0, -10);
+    const step = local(0, -7.4);
+    this.slicePad(group, walk[0], walk[1], 10, 1.8, this.world.materials.paleStone, 0.13, 'GATE3R_FCC_Road_Parallel_Walk', rotation);
+    this.slicePad(group, step[0], step[1], 7.4, 1.6, this.world.materials.warmStone, 0.132, 'GATE3R_FCC_Entry_Step', rotation);
     stats.plazaPads += 2;
 
-    this.box(group, x - 6.2, 0.139, z - 21.8, 7.2, 0.018, 0.12, this.world.materials.paleStone, rotation - 0.08, 'GATE3R_FCC_Road_Walk_Edge_A');
-    this.box(group, x + 4.2, 0.139, z - 21.0, 5.8, 0.018, 0.12, this.world.materials.paleStone, rotation - 0.08, 'GATE3R_FCC_Road_Walk_Edge_B');
+    const lampA = local(-16, -16);
+    const lampB = local(16, -18);
+    this.gate3rLamp(group, lampA[0], lampA[1], 0x9ccfff, 2.9, 'GATE3R_FCC_Lamp_Left', rotation + 0.1, 3.2);
+    this.gate3rLamp(group, lampB[0], lampB[1], 0x9ccfff, 2.9, 'GATE3R_FCC_Lamp_Right', rotation - 0.1, 3.2);
+    stats.lamps += 2;
 
-    for (const [dx, dz, color] of [
-      [-14.6, -20.4, 0x9ccfff],
-      [11.8, -20.8, 0x9ccfff],
-      [-17.6, -6.2, 0x7cffb2],
-      [18.2, -5.8, 0xffc36a]
-    ]) {
-      this.addLamp(group, x + dx, z + dz, color, 2.9, 'GATE3R_FCC_Lamp');
-      stats.lamps += 1;
-    }
-
-    for (const [bx, bz, rot] of [
-      [x - 18.4, z - 10.8, 0.78],
-      [x + 17.6, z - 10.2, -0.72],
-      [x - 13.8, z + 12.6, -0.42]
-    ]) {
-      this.addBench(group, bx, bz, rot, 0.82);
-      stats.benches += 1;
-    }
-
-    for (const [px, pz] of [
-      [x - 21.4, z - 17.2],
-      [x + 20.4, z - 16.8],
-      [x + 17.8, z + 5.8]
-    ]) {
-      this.addPlanterCluster(group, px, pz, 0x9ccfff);
-      stats.planters += 1;
-    }
-
-    this.hedgeLine(group, x - 17.2, z - 19.1, 13.5, rotation);
-    this.hedgeLine(group, x + 18.8, z - 18.7, 13.5, rotation);
-    this.hedgeLine(group, x + 18.8, z + 2.8, 10.5, rotation + Math.PI * 0.5);
-    stats.hedges += 3;
-
-    this.addSign(group, 'FCCU S BLOCK', 'Education stop', x - 17.2, z - 22.6, rotation + 0.22, 0x9ccfff, 1.72, 'GATE3R_FCC_Identity_Sign');
-    this.box(group, x - 9.0, 0.139, z - 19.6, 6.8, 0.02, 0.16, this.world.materials.glowBlue, rotation, 'GATE3R_FCC_Frame_Left');
-    this.box(group, x + 8.6, 0.139, z - 19.6, 6.8, 0.02, 0.16, this.world.materials.warmGlow, rotation, 'GATE3R_FCC_Frame_Right');
+    const sign = local(-24, -12);
+    this.gate3rSign(group, 'FCCU S BLOCK', 'Education stop', sign[0], sign[1], rotation + 0.2, 0x9ccfff, 1.62, 'GATE3R_FCC_Identity_Sign', 3.8);
+    const frameA = local(-4.4, -10.8);
+    const frameB = local(4.4, -10.8);
+    this.box(group, frameA[0], 0.139, frameA[1], 5.2, 0.02, 0.14, this.world.materials.glowBlue, rotation, 'GATE3R_FCC_Frame_Left');
+    this.box(group, frameB[0], 0.139, frameB[1], 5.2, 0.02, 0.14, this.world.materials.warmGlow, rotation, 'GATE3R_FCC_Frame_Right');
+    this.recordGate3RPlacement('walk-overlay', 'GATE3R_FCC_Frame_Left', frameA[0], frameA[1], { allowRoad: true });
+    this.recordGate3RPlacement('walk-overlay', 'GATE3R_FCC_Frame_Right', frameB[0], frameB[1], { allowRoad: true });
     stats.signs += 1;
     stats.identityFrames += 2;
   }
@@ -1026,18 +1093,18 @@ export class SetPieces {
   createGate3RSecurityRoute(group) {
     const stats = this.verticalSliceStats.securityRoute;
     const path = findPath('security-spur');
-    this.createGate3RRouteRun(group, path.points, stats, {
+    this.createGate3RRouteRun(group, path, stats, {
       prefix: 'GATE3R_SecurityRoute',
       color: 0x68d8ff,
       accentMaterial: this.world.materials.glowBlue,
-      bedMaterial: this.world.materials.securityRoad,
-      hedgeMaterial: this.world.materials.cable,
       kind: 'security',
-      markOffset: 3.05,
-      propOffset: 5.2,
-      stepLength: 11
+      side: 1,
+      markSpacing: 12,
+      warningSpacing: 16,
+      warningSetback: 10.2,
+      firstWarningAt: 13
     });
-    this.addSign(group, 'SECURITY', 'Scanner gate', -86.8, -25.2, -0.82, 0x68d8ff, 1.58, 'GATE3R_SecurityRoute_Sign');
+    this.gate3rSign(group, 'SECURITY', 'Scanner gate', -84.4, -31.4, -0.82, 0x68d8ff, 1.54, 'GATE3R_SecurityRoute_Sign', 3.6);
     stats.signs += 1;
   }
 
@@ -1055,8 +1122,8 @@ export class SetPieces {
     ];
 
     this.slicePad(group, scan.x, scan.z, 13.2, 6.4, this.world.materials.securityRoad, 0.131, 'GATE3R_Security_Scanner_Lane', scan.rotation);
-    this.slicePad(group, ...point(7.0, 0), 4.8, 4.6, this.world.materials.stoneRoad, 0.132, 'GATE3R_Security_Server_Deck_A', scan.rotation);
-    this.slicePad(group, ...point(-7.0, 0), 4.8, 4.6, this.world.materials.stoneRoad, 0.132, 'GATE3R_Security_Server_Deck_B', scan.rotation);
+    this.slicePad(group, ...point(12, -5), 4.2, 3.6, this.world.materials.stoneRoad, 0.132, 'GATE3R_Security_Server_Deck_A', scan.rotation);
+    this.slicePad(group, ...point(-14, 5), 4.2, 3.6, this.world.materials.stoneRoad, 0.132, 'GATE3R_Security_Server_Deck_B', scan.rotation);
     stats.floorPads += 3;
 
     this.securityScanWaveField(group, scan.x, scan.z, scan.rotation);
@@ -1078,13 +1145,14 @@ export class SetPieces {
     }
 
     for (const [side, forward, rot] of [
-      [1, -2.3, 0.22],
-      [1, 2.2, 0.08],
-      [-1, -2.1, -0.2],
-      [-1, 2.35, -0.1]
+      [12, -5, 0.22],
+      [10, 5, 0.08],
+      [-12, 5, -0.2],
+      [-16, 5, -0.1]
     ]) {
-      const [rackX, rackZ] = point(side * 7.1, forward);
+      const [rackX, rackZ] = point(side, forward);
       this.serverRack(group, rackX, rackZ, scan.rotation + rot);
+      this.recordGate3RPlacement('security-rack', 'GATE3R_Security_Server_Rack', rackX, rackZ, { minClearance: 2.2 });
       stats.serverBlocks += 1;
     }
 
@@ -1107,13 +1175,14 @@ export class SetPieces {
     }
 
     for (const [side, forward, color] of [
-      [8.9, -3.3, 0x68d8ff],
-      [-8.9, -3.1, 0xff6d8d],
-      [7.9, 3.5, 0x7cffb2],
-      [-7.9, 3.4, 0x68d8ff]
+      [16, -5, 0x68d8ff],
+      [14, 5, 0xff6d8d],
+      [-10, 5, 0x7cffb2],
+      [-14, 5, 0x68d8ff]
     ]) {
       const [x, z] = point(side, forward);
       this.beacon(group, x, z, color);
+      this.recordGate3RPlacement('security-beacon', 'GATE3R_Security_Beacon', x, z, { minClearance: 2.2 });
       stats.beacons += 1;
     }
 
@@ -1122,15 +1191,25 @@ export class SetPieces {
       const [x, z] = point(side * 5.7, -3.8 + index * 1.5);
       this.cylinder(group, x, 0.5, z, 0.12, 0.92, this.world.materials.cable, 8, 'GATE3R_Security_Warning_Bollard');
       this.box(group, x, 0.98, z, 0.32, 0.12, 0.12, index % 2 ? this.world.materials.glowPink : this.world.materials.glowBlue, scan.rotation, 'GATE3R_Security_Warning_Light');
+      this.recordGate3RPlacement('scanner-boundary', 'GATE3R_Security_Warning_Bollard', x, z, { allowRoad: true });
       stats.warningBollards += 1;
     }
 
-    const sign = point(-9.2, -4.8);
-    this.addSign(group, 'SECURITY SCAN', 'Hold in beam', sign[0], sign[1], scan.rotation - 0.95, 0x68d8ff, 1.56, 'GATE3R_Security_Scan_Sign');
+    const sign = point(18, -5);
+    this.gate3rSign(group, 'SECURITY SCAN', 'Hold in beam', sign[0], sign[1], scan.rotation - 0.95, 0x68d8ff, 1.56, 'GATE3R_Security_Scan_Sign', 2.8);
     stats.signs += 1;
   }
 
-  createGate3RRouteRun(group, points, stats, spec) {
+  createGate3RRouteRun(group, path, stats, spec) {
+    const points = path.points || [];
+    const side = spec.side || 1;
+    const markerOffset = (path.width || 4) * 0.5 + 0.24;
+    const lampOffset = (path.width || 4) * 0.5 + (path.shoulder || 0.8) + (spec.lampSetback || 4.2);
+    const warningOffset = (path.width || 4) * 0.5 + (path.shoulder || 0.8) + (spec.warningSetback || 3.8);
+    let travelled = 0;
+    let nextLampAt = spec.firstLampAt ?? 28;
+    let nextWarningAt = spec.firstWarningAt ?? 14;
+
     for (let segmentIndex = 0; segmentIndex < points.length - 1; segmentIndex += 1) {
       const [ax, az] = points[segmentIndex];
       const [bx, bz] = points[segmentIndex + 1];
@@ -1140,40 +1219,48 @@ export class SetPieces {
       const rotation = Math.atan2(dx, dz);
       const rightX = Math.cos(rotation);
       const rightZ = -Math.sin(rotation);
-      const steps = Math.max(1, Math.floor(length / spec.stepLength));
+      const steps = Math.max(1, Math.floor(length / spec.markSpacing));
       for (let step = 0; step < steps; step += 1) {
         const t = (step + 0.5) / steps;
         const x = ax + dx * t;
         const z = az + dz * t;
-        const side = (step + segmentIndex) % 2 ? -1 : 1;
-        const edgeX = x + rightX * side * spec.markOffset;
-        const edgeZ = z + rightZ * side * spec.markOffset;
-        this.box(group, edgeX, 0.138, edgeZ, 0.14, 0.018, 0.78, spec.accentMaterial, rotation, `${spec.prefix}_Road_Edge_Mark`);
+        const edgeX = x + rightX * side * markerOffset;
+        const edgeZ = z + rightZ * side * markerOffset;
+        this.box(group, edgeX, 0.138, edgeZ, 0.12, 0.018, 0.72, spec.accentMaterial, rotation, `${spec.prefix}_Road_Edge_Mark`);
+        this.recordGate3RPlacement('road-overlay', `${spec.prefix}_Road_Edge_Mark`, edgeX, edgeZ, { allowRoad: true });
         stats.routeMarks += 1;
+      }
 
-        const propX = x - rightX * side * spec.propOffset;
-        const propZ = z - rightZ * side * spec.propOffset;
-        if (spec.kind === 'security') {
-          this.cylinder(group, propX, 0.46, propZ, 0.095, 0.84, this.world.materials.cable, 8, `${spec.prefix}_Warning_Bollard`);
-          this.box(group, propX, 0.91, propZ, 0.26, 0.1, 0.1, spec.accentMaterial, rotation, `${spec.prefix}_Warning_Light`);
-          stats.warningBollards += 1;
-          stats.lightStrips += 1;
-        } else {
-          this.box(group, propX, 0.34, propZ, 1.9, 0.34, 0.32, spec.hedgeMaterial, rotation, `${spec.prefix}_Setback_Hedge`);
-          const bedX = x + rightX * side * (spec.propOffset + 0.7);
-          const bedZ = z + rightZ * side * (spec.propOffset + 0.7);
-          this.box(group, bedX, 0.134, bedZ, 1.5, 0.026, 0.3, spec.bedMaterial, rotation, `${spec.prefix}_Setback_Flower_Bed`);
-          stats.hedges += 1;
-          stats.flowerBeds += 1;
-        }
-
-        if (step % 2 === 0) {
-          const lampX = x + rightX * side * (spec.propOffset + 1.35);
-          const lampZ = z + rightZ * side * (spec.propOffset + 1.35);
-          this.addLamp(group, lampX, lampZ, spec.color, 2.55, `${spec.prefix}_Lamp`);
+      if (Number.isFinite(spec.lampSpacing)) {
+        while (nextLampAt < travelled + length) {
+          const t = (nextLampAt - travelled) / length;
+          const x = ax + dx * t;
+          const z = az + dz * t;
+          const lampX = x + rightX * side * lampOffset;
+          const lampZ = z + rightZ * side * lampOffset;
+          this.gate3rLamp(group, lampX, lampZ, spec.color, 2.55, `${spec.prefix}_Lamp`, rotation + side * 0.32, 3.3);
           stats.lamps = (stats.lamps || 0) + 1;
+          nextLampAt += spec.lampSpacing;
         }
       }
+
+      if (Number.isFinite(spec.warningSpacing)) {
+        while (nextWarningAt < travelled + length) {
+          const t = (nextWarningAt - travelled) / length;
+          const x = ax + dx * t;
+          const z = az + dz * t;
+          const propX = x + rightX * side * warningOffset;
+          const propZ = z + rightZ * side * warningOffset;
+          this.cylinder(group, propX, 0.46, propZ, 0.095, 0.84, this.world.materials.cable, 8, `${spec.prefix}_Warning_Bollard`);
+          this.box(group, propX, 0.91, propZ, 0.26, 0.1, 0.1, spec.accentMaterial, rotation, `${spec.prefix}_Warning_Light`);
+          this.recordGate3RPlacement('warning-bollard', `${spec.prefix}_Warning_Bollard`, propX, propZ, { minClearance: 3.0 });
+          stats.warningBollards += 1;
+          stats.lightStrips += 1;
+          nextWarningAt += spec.warningSpacing;
+        }
+      }
+
+      travelled += length;
     }
   }
 
@@ -4059,7 +4146,7 @@ export class SetPieces {
     return mesh;
   }
 
-  addLamp(group, x, z, color, height, name) {
+  addLamp(group, x, z, color, height, name, rotation = null) {
     const lamp = new THREE.Group();
     lamp.name = name;
     this.cylinder(lamp, 0, height / 2, 0, 0.08, height, this.world.materials.darkWood, 8, `${name}_Post`);
@@ -4069,7 +4156,7 @@ export class SetPieces {
     glow.position.set(0.78, height - 0.34, 0);
     lamp.add(glow);
     lamp.position.set(x, 0.16, z);
-    lamp.rotation.y = Math.sin(x * 0.2 + z * 0.1) * 0.35;
+    lamp.rotation.y = Number.isFinite(rotation) ? rotation : Math.sin(x * 0.2 + z * 0.1) * 0.35;
     group.add(lamp);
   }
 

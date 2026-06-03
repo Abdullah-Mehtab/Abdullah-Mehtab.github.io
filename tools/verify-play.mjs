@@ -1424,6 +1424,7 @@ async function collectRuntimeMetrics(page, loadMs, gameplay, water, surfaces, su
       districtGateways: game.world.setPieces?.getGatewayStats?.() || {},
       routeComposition: game.world.setPieces?.getRouteCompositionStats?.() || {},
       securityLab: game.world.setPieces?.getSecurityLabStats?.() || {},
+      gate3rPlacement: game.world.setPieces?.getGate3RPlacementStats?.() || {},
       meadowComposition: game.world.setPieces?.getMeadowCompositionStats?.() || {},
       fieldBackdrops: game.world.setPieces?.getFieldBackdropStats?.() || {},
       launchField: game.world.setPieces?.getLaunchFieldStats?.() || {},
@@ -1825,6 +1826,7 @@ async function captureMobile(browser) {
       stuntPark: game.world.stuntPark?.getStats?.() || {},
       potatoFarm: game.world.potatoFarm?.getStats?.() || {},
       uiFrame: sampleMobileUiFrame(),
+      vehicleFrame: sampleVehicleFrame(game),
       lighting: game.getLightingStats?.() || {},
       sceneObjects: countVisibleScene(game.scene),
       renderProfile: profileVisibleScene(game.scene),
@@ -1859,6 +1861,19 @@ async function captureMobile(browser) {
         notificationHeight: notification.height,
         promptVisible: prompt.visible,
         clearHeightRatio: Number(((window.innerHeight - topOccupied - bottomOccupied) / window.innerHeight).toFixed(3))
+      };
+    }
+
+    function sampleVehicleFrame(game) {
+      const point = game.vehicle?.position?.clone?.();
+      if (!point) return { ready: false };
+      point.y += 1.1;
+      point.project(game.camera);
+      return {
+        ready: true,
+        centerX: Number(((point.x + 1) / 2).toFixed(3)),
+        centerY: Number(((1 - point.y) / 2).toFixed(3)),
+        inFrame: point.x > -1 && point.x < 1 && point.y > -1 && point.y < 1
       };
     }
 
@@ -3066,6 +3081,7 @@ function assertGate3RVerticalSliceVerification(result, failures) {
   const fcc = slice.fcc || {};
   const securityRoute = slice.securityRoute || {};
   const security = slice.security || {};
+  const placement = result.gate3rPlacement || {};
 
   if (result.goalGate !== 'gate-3r-vertical-slice') {
     failures.push(`Gate 3R probe failed: goalGate=${result.goalGate || 'none'}`);
@@ -3111,6 +3127,20 @@ function assertGate3RVerticalSliceVerification(result, failures) {
   if ((result.collectibles?.stats?.visibleShards || 0) !== 0) failures.push(`Gate 3R collectibles failed: visible shards=${result.collectibles?.stats?.visibleShards || 0}`);
   if ((result.atmosphere?.distantIslets || 0) !== 0) failures.push(`Gate 3R atmosphere failed: distant islets built=${result.atmosphere?.distantIslets || 0}`);
   if ((result.atmosphere?.visibleDistantIslets || 0) !== 0) failures.push(`Gate 3R atmosphere failed: visible distant islets=${result.atmosphere?.visibleDistantIslets || 0}`);
+  if ((placement.recorded || 0) < 20) failures.push(`Gate 3R placement audit failed: recorded props=${placement.recorded || 0}`);
+  if ((placement.roadIntrusions || 0) !== 0) {
+    const intrusions = (placement.entries || [])
+      .filter((entry) => entry && entry.pass === false)
+      .slice(0, 5)
+      .map((entry) => `${entry.name}:${entry.clearance}/${entry.minClearance}`)
+      .join(', ');
+    failures.push(`Gate 3R placement audit failed: roadIntrusions=${placement.roadIntrusions || 0}${intrusions ? ` (${intrusions})` : ''}`);
+  }
+  if (!Number.isFinite(placement.minClearance) || placement.minClearance < 2.2) {
+    failures.push(`Gate 3R placement audit failed: minClearance=${placement.minClearance}`);
+  }
+  if ((placement.byKind?.lamp || 0) < 8) failures.push(`Gate 3R placement audit failed: lamps=${placement.byKind?.lamp || 0}`);
+  if ((placement.byKind?.sign || 0) < 6) failures.push(`Gate 3R placement audit failed: signs=${placement.byKind?.sign || 0}`);
 
   const colliderSummary = result.colliderAudit?.summary || [];
   if (colliderSummary.some((collider) => collider.name === 'ToyIslandFlatTerrainCollider')) {
@@ -3171,21 +3201,24 @@ function assertGate3RVerticalSliceVerification(result, failures) {
 
   if (!slice.enabled) failures.push('Gate 3R vertical slice failed: slice mode inactive');
   if ((slice.staticBatches || 0) < 4) failures.push(`Gate 3R batching failed: staticBatches=${slice.staticBatches || 0}`);
-  if ((start.launchPads || 0) < 1) failures.push(`Gate 3R start failed: launchPads=${start.launchPads || 0}`);
+  if ((start.launchPads || 0) !== 0) failures.push(`Gate 3R start failed: rejected launch slab built=${start.launchPads || 0}`);
+  if ((start.planters || 0) !== 0) failures.push(`Gate 3R start failed: rejected planters built=${start.planters || 0}`);
   if ((start.launchLights || 0) < 6) failures.push(`Gate 3R start failed: launchLights=${start.launchLights || 0}`);
   if ((start.burnoutScuffs || 0) < 6) failures.push(`Gate 3R start failed: burnoutScuffs=${start.burnoutScuffs || 0}`);
   if ((start.signs || 0) < 2) failures.push(`Gate 3R start failed: signs=${start.signs || 0}`);
-  if ((start.lamps || 0) < 3) failures.push(`Gate 3R start failed: lamps=${start.lamps || 0}`);
+  if ((start.lamps || 0) < 2) failures.push(`Gate 3R start failed: lamps=${start.lamps || 0}`);
   if ((campusRoute.routeMarks || 0) < 9) failures.push(`Gate 3R campus route failed: routeMarks=${campusRoute.routeMarks || 0}`);
-  if ((campusRoute.lamps || 0) < 5) failures.push(`Gate 3R campus route failed: lamps=${campusRoute.lamps || 0}`);
-  if ((campusRoute.hedges || 0) < 9) failures.push(`Gate 3R campus route failed: hedges=${campusRoute.hedges || 0}`);
+  if ((campusRoute.lamps || 0) < 4) failures.push(`Gate 3R campus route failed: lamps=${campusRoute.lamps || 0}`);
+  if ((campusRoute.hedges || 0) !== 0) failures.push(`Gate 3R campus route failed: rejected hedges built=${campusRoute.hedges || 0}`);
+  if ((campusRoute.flowerBeds || 0) !== 0) failures.push(`Gate 3R campus route failed: rejected flowerBeds built=${campusRoute.flowerBeds || 0}`);
   if ((fcc.plazaPads || 0) < 2) failures.push(`Gate 3R FCC failed: plazaPads=${fcc.plazaPads || 0}`);
-  if ((fcc.benches || 0) < 3) failures.push(`Gate 3R FCC failed: benches=${fcc.benches || 0}`);
-  if ((fcc.hedges || 0) < 3) failures.push(`Gate 3R FCC failed: hedges=${fcc.hedges || 0}`);
-  if ((fcc.lamps || 0) < 4) failures.push(`Gate 3R FCC failed: lamps=${fcc.lamps || 0}`);
+  if ((fcc.benches || 0) !== 0) failures.push(`Gate 3R FCC failed: rejected benches built=${fcc.benches || 0}`);
+  if ((fcc.hedges || 0) !== 0) failures.push(`Gate 3R FCC failed: rejected hedges built=${fcc.hedges || 0}`);
+  if ((fcc.planters || 0) !== 0) failures.push(`Gate 3R FCC failed: rejected planters built=${fcc.planters || 0}`);
+  if ((fcc.lamps || 0) < 2) failures.push(`Gate 3R FCC failed: lamps=${fcc.lamps || 0}`);
   if ((fcc.identityFrames || 0) < 2) failures.push(`Gate 3R FCC failed: identityFrames=${fcc.identityFrames || 0}`);
   if ((securityRoute.routeMarks || 0) < 3) failures.push(`Gate 3R security route failed: routeMarks=${securityRoute.routeMarks || 0}`);
-  if ((securityRoute.warningBollards || 0) < 3) failures.push(`Gate 3R security route failed: warningBollards=${securityRoute.warningBollards || 0}`);
+  if ((securityRoute.warningBollards || 0) < 2) failures.push(`Gate 3R security route failed: warningBollards=${securityRoute.warningBollards || 0}`);
   if ((security.floorPads || 0) < 3) failures.push(`Gate 3R security lab failed: floorPads=${security.floorPads || 0}`);
   if ((security.serverBlocks || 0) < 4) failures.push(`Gate 3R security lab failed: serverBlocks=${security.serverBlocks || 0}`);
   if ((security.cables || 0) < 4) failures.push(`Gate 3R security lab failed: cables=${security.cables || 0}`);
@@ -3203,6 +3236,10 @@ function assertGate3RVerticalSliceVerification(result, failures) {
   if (!result.mobile?.ready || (result.mobile?.canvasSample || 0) <= 0) failures.push('Gate 3R mobile probe failed: canvas did not render');
   if ((result.mobile?.calls || 0) > 185) failures.push(`Gate 3R mobile draw-call budget exceeded: ${result.mobile?.calls || 0}`);
   if ((result.mobile?.triangles || 0) > 135000) failures.push(`Gate 3R mobile triangle budget exceeded: ${result.mobile?.triangles || 0}`);
+  if (!result.mobile?.vehicleFrame?.inFrame) failures.push('Gate 3R mobile framing failed: vehicle focus is outside the viewport');
+  if ((result.mobile?.vehicleFrame?.centerY || 0) > 0.84) {
+    failures.push(`Gate 3R mobile framing failed: vehicle centerY=${result.mobile?.vehicleFrame?.centerY}`);
+  }
 }
 
 function assertGate2BlockoutVerification(result, failures) {

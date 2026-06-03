@@ -244,7 +244,7 @@ export const worldZones = [
     title: 'FCC Education Grove',
     districtId: 'fcc-campus',
     position: [-96, 0, 84],
-    rotation: -0.08,
+    rotation: -0.43,
     radius: 11,
     color: '#9ccfff',
     shape: 'library',
@@ -531,9 +531,9 @@ export const zonePresentation = {
   },
   education: {
     respawn: { position: [-100, 1.08, 58], heading: 0.72 },
-    camera: [-128, 13, 96],
-    target: [-98, 5, 84],
-    fov: 42,
+    camera: [-136, 15, 105],
+    target: [-97, 5, 83],
+    fov: 48,
   },
   security: {
     respawn: { position: [-104, 1.08, -40], heading: -1.93 },

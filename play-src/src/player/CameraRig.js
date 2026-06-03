@@ -61,15 +61,20 @@ export class CameraRig {
     const speedPull = THREE.MathUtils.clamp(Math.abs(this.vehicle.speed) * 0.19, 0, 5.8);
     const zoom = this.input.pointer.zoom;
     const pitch = this.input.pointer.orbitY;
+    const portrait = this.camera.aspect < 0.72;
+    const targetLead = portrait ? 1.1 : 4.6;
+    const chaseDistance = portrait ? -27.5 : -12.8;
+    const heightBase = portrait ? 11.2 : 6.65;
+    const speedHeight = portrait ? 0.22 : 0.32;
 
     const target = vehiclePosition.clone()
       .add(new THREE.Vector3(0, 1.28 + speedAmount * 0.28, 0))
-      .addScaledVector(cameraForward, 4.6 + speedAmount * 1.25)
+      .addScaledVector(cameraForward, targetLead + speedAmount * (portrait ? 0.82 : 1.25))
       .addScaledVector(right, lateralPull * (driveState.handbrake ? 0.34 : 0.24));
     const desired = vehiclePosition.clone()
-      .addScaledVector(cameraForward, (-12.8 - speedPull) * zoom)
+      .addScaledVector(cameraForward, (chaseDistance - speedPull * (portrait ? 0.72 : 1)) * zoom)
       .addScaledVector(right, -lateralPull * (driveState.handbrake ? 1.22 : 0.66))
-      .add(new THREE.Vector3(0, 6.65 + speedPull * 0.32 + (driveState.wheelie ? 0.55 : 0) + pitch * 4.5, 0));
+      .add(new THREE.Vector3(0, heightBase + speedPull * speedHeight + (driveState.wheelie ? 0.55 : 0) + pitch * 4.5, 0));
     const now = performance.now() * 0.001;
     const landingAge = now - (this.vehicle.lastLandingAt ?? -Infinity);
     const landingShake = landingAge < 0.34
@@ -95,6 +100,7 @@ export class CameraRig {
     this.camera.position.lerp(resolvedDesired, cameraEase * 0.62);
     this.smoothedTarget.lerp(target, targetEase * 0.7);
     const fovTarget = this.baseFov
+      + (portrait ? 8 : 0)
       + Math.min(8.2, Math.abs(this.vehicle.speed) * 0.15)
       + (driveState.boost ? 3.2 : 0)
       + (driveState.handbrake ? 1.45 : 0)
