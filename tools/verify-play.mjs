@@ -1563,7 +1563,9 @@ async function collectRuntimeMetrics(page, loadMs, gameplay, water, surfaces, su
         foundationTrimmedEndpoints: game.world.roads?.roadGroup?.userData?.foundationTrimmedEndpoints || 0,
         foundationTaperedEndpoints: game.world.roads?.roadGroup?.userData?.foundationTaperedEndpoints || 0,
         foundationFusedLayers: game.world.roads?.roadGroup?.userData?.foundationFusedLayers || 0,
-        foundationFullWidthPaths: game.world.roads?.roadGroup?.userData?.foundationFullWidthPaths || 0
+        foundationFullWidthPaths: game.world.roads?.roadGroup?.userData?.foundationFullWidthPaths || 0,
+        foundationRoadPolishMarks: game.world.roads?.roadGroup?.userData?.foundationRoadPolishMarks || 0,
+        foundationThroughRoadPriority: game.world.roads?.roadGroup?.userData?.foundationThroughRoadPriority || 0
       },
       roadSurfaceDetails: game.world.roads?.getDetailStats?.() || {},
       districtGround: game.world.terrain?.getDistrictGroundStats?.() || {},
@@ -3140,6 +3142,8 @@ function assertGate2RFoundationReplacementVerification(result, failures) {
   if ((result.roadJunctions?.blendPatches || 0) !== 0) failures.push(`Gate 2R roads failed: visible junction slabs=${result.roadJunctions?.blendPatches || 0}`);
   if ((result.roadJunctions?.foundationFusedLayers || 0) !== 1) failures.push(`Gate 2R roads failed: fused foundation road layers=${result.roadJunctions?.foundationFusedLayers || 0}`);
   if ((result.roadJunctions?.foundationFullWidthPaths || 0) !== (result.roadTopology?.paths || 0)) failures.push(`Gate 2R roads failed: full-width paths=${result.roadJunctions?.foundationFullWidthPaths || 0}/${result.roadTopology?.paths || 0}`);
+  if ((result.roadJunctions?.foundationRoadPolishMarks || 0) < ((result.roadTopology?.paths || 0) * 2)) failures.push(`Gate 2R roads failed: polish marks=${result.roadJunctions?.foundationRoadPolishMarks || 0}`);
+  if ((result.roadJunctions?.foundationThroughRoadPriority || 0) < 2) failures.push(`Gate 2R roads failed: through-road priority=${result.roadJunctions?.foundationThroughRoadPriority || 0}`);
   if ((result.roadJunctions?.foundationTrimmedEndpoints || 0) !== 0) failures.push(`Gate 2R roads failed: trimmed endpoints=${result.roadJunctions?.foundationTrimmedEndpoints || 0}`);
   if ((result.roadJunctions?.foundationTaperedEndpoints || 0) !== 0) failures.push(`Gate 2R roads failed: tapered endpoints=${result.roadJunctions?.foundationTaperedEndpoints || 0}`);
   if ((result.roadGuidance?.chevrons || 0) !== 0) failures.push(`Gate 2R roads failed: final chevrons built=${result.roadGuidance?.chevrons || 0}`);
@@ -3280,6 +3284,8 @@ function assertGate3RVerticalSliceVerification(result, failures) {
   if ((result.roadJunctions?.blendPatches || 0) !== 0) failures.push(`Gate 3R roads failed: visible junction slabs=${result.roadJunctions?.blendPatches || 0}`);
   if ((result.roadJunctions?.foundationFusedLayers || 0) !== 1) failures.push(`Gate 3R roads failed: fused foundation road layers=${result.roadJunctions?.foundationFusedLayers || 0}`);
   if ((result.roadJunctions?.foundationFullWidthPaths || 0) !== (result.roadTopology?.paths || 0)) failures.push(`Gate 3R roads failed: full-width paths=${result.roadJunctions?.foundationFullWidthPaths || 0}/${result.roadTopology?.paths || 0}`);
+  if ((result.roadJunctions?.foundationRoadPolishMarks || 0) < ((result.roadTopology?.paths || 0) * 2)) failures.push(`Gate 3R roads failed: polish marks=${result.roadJunctions?.foundationRoadPolishMarks || 0}`);
+  if ((result.roadJunctions?.foundationThroughRoadPriority || 0) < 2) failures.push(`Gate 3R roads failed: through-road priority=${result.roadJunctions?.foundationThroughRoadPriority || 0}`);
   if ((result.roadJunctions?.foundationTrimmedEndpoints || 0) !== 0) failures.push(`Gate 3R roads failed: trimmed endpoints=${result.roadJunctions?.foundationTrimmedEndpoints || 0}`);
   if ((result.roadJunctions?.foundationTaperedEndpoints || 0) !== 0) failures.push(`Gate 3R roads failed: tapered endpoints=${result.roadJunctions?.foundationTaperedEndpoints || 0}`);
   if ((result.roadGuidance?.chevrons || 0) !== 0) failures.push(`Gate 3R roads failed: final chevrons built=${result.roadGuidance?.chevrons || 0}`);

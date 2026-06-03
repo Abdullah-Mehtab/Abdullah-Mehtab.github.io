@@ -61,6 +61,14 @@ const GATE3_THRESHOLD_IDS = new Set([
 ]);
 
 const FOUNDATION_ROAD_TEXTURE_SIZE = 2048;
+const FOUNDATION_ROAD_DRAW_RANK = {
+  'farm-service': 10,
+  'pier-deck': 12,
+  'security-spur': 20,
+  'stunt-service': 22,
+  'campus-boulevard': 70,
+  'coastal-loop': 90
+};
 
 export class Roads {
   constructor(world) {
@@ -128,9 +136,9 @@ export class Roads {
   }
 
   addFoundationRoadLayer() {
-    const texture = makeFoundationRoadTexture(roadPaths, WORLD_HALF_SIZE, FOUNDATION_ROAD_TEXTURE_SIZE);
+    const roadLayer = makeFoundationRoadTexture(roadPaths, WORLD_HALF_SIZE, FOUNDATION_ROAD_TEXTURE_SIZE);
     const material = new THREE.MeshBasicMaterial({
-      map: texture,
+      map: roadLayer.texture,
       transparent: true,
       depthWrite: false
     });
@@ -152,6 +160,8 @@ export class Roads {
     this.roadGroup.add(mesh);
     this.roadGroup.userData.foundationFusedLayers = 1;
     this.roadGroup.userData.foundationFullWidthPaths = roadPaths.length;
+    this.roadGroup.userData.foundationRoadPolishMarks = roadLayer.stats.centerMarks + roadLayer.stats.edgeMarks;
+    this.roadGroup.userData.foundationThroughRoadPriority = roadLayer.stats.throughPriorityPaths;
   }
 
   addPathRibbon(path) {
@@ -1056,10 +1066,8 @@ function makeFoundationRoadTexture(paths, halfSize, textureSize) {
   canvas.height = textureSize;
   const ctx = canvas.getContext('2d');
   const pixelsPerUnit = textureSize / (halfSize * 2);
-  const orderedPaths = [...paths].sort((a, b) => {
-    if (a.width !== b.width) return a.width - b.width;
-    return (ROAD_SURFACE_PRIORITY[a.hierarchy] ?? 1) - (ROAD_SURFACE_PRIORITY[b.hierarchy] ?? 1);
-  });
+  const orderedPaths = [...paths].sort(compareFoundationRoadDrawOrder);
+  const stats = { edgeStrokes: 0, surfaceStrokes: 0, centerMarks: 0, edgeMarks: 0, throughPriorityPaths: 0 };
 
   ctx.clearRect(0, 0, textureSize, textureSize);
   ctx.lineCap = 'round';
@@ -1067,24 +1075,68 @@ function makeFoundationRoadTexture(paths, halfSize, textureSize) {
 
   for (const path of orderedPaths) {
     drawFoundationRoadPath(ctx, path, halfSize, textureSize, (path.width + 0.62) * pixelsPerUnit, foundationRoadEdgeColor(path));
-  }
-  for (const path of orderedPaths) {
     drawFoundationRoadPath(ctx, path, halfSize, textureSize, path.width * pixelsPerUnit, foundationRoadSurfaceColor(path));
+    const marks = drawFoundationRoadMarkings(ctx, path, halfSize, textureSize, pixelsPerUnit);
+    stats.edgeStrokes += 1;
+    stats.surfaceStrokes += 1;
+    stats.centerMarks += marks.centerMarks;
+    stats.edgeMarks += marks.edgeMarks;
+    if ((FOUNDATION_ROAD_DRAW_RANK[path.id] || 0) >= 70) stats.throughPriorityPaths += 1;
   }
 
   const texture = new THREE.CanvasTexture(canvas);
   texture.colorSpace = THREE.SRGBColorSpace;
   texture.anisotropy = 4;
   texture.needsUpdate = true;
-  return texture;
+  return { texture, stats };
 }
 
-function drawFoundationRoadPath(ctx, path, halfSize, textureSize, lineWidth, color) {
+function compareFoundationRoadDrawOrder(a, b) {
+  const rankDifference = (FOUNDATION_ROAD_DRAW_RANK[a.id] || 50) - (FOUNDATION_ROAD_DRAW_RANK[b.id] || 50);
+  if (rankDifference !== 0) return rankDifference;
+  if (a.width !== b.width) return a.width - b.width;
+  return (ROAD_SURFACE_PRIORITY[a.hierarchy] ?? 1) - (ROAD_SURFACE_PRIORITY[b.hierarchy] ?? 1);
+}
+
+function drawFoundationRoadMarkings(ctx, path, halfSize, textureSize, pixelsPerUnit) {
+  if (path.hierarchy === 'dirt') {
+    drawFoundationRoadPath(ctx, path, halfSize, textureSize, 0.13 * pixelsPerUnit, '#ba9361', {
+      alpha: 0.2,
+      dash: [1.2 * pixelsPerUnit, 4.4 * pixelsPerUnit]
+    });
+    return { centerMarks: 1, edgeMarks: 0 };
+  }
+
+  drawFoundationRoadPath(ctx, path, halfSize, textureSize, 0.09 * pixelsPerUnit, foundationRoadMarkColor(path), {
+    alpha: path.hierarchy === 'security' ? 0.42 : 0.32,
+    dash: [2.2 * pixelsPerUnit, 5.8 * pixelsPerUnit]
+  });
+
+  let edgeMarks = 0;
+  if (path.hierarchy !== 'bridge') {
+    const offset = path.width * 0.5 - 0.22;
+    for (const side of [-1, 1]) {
+      drawFoundationOffsetRoadPath(ctx, path, halfSize, textureSize, offset * side, 0.055 * pixelsPerUnit, foundationRoadEdgeMarkColor(path), {
+        alpha: path.hierarchy === 'security' ? 0.22 : 0.18
+      });
+      edgeMarks += 1;
+    }
+  }
+
+  return { centerMarks: 1, edgeMarks };
+}
+
+function drawFoundationRoadPath(ctx, path, halfSize, textureSize, lineWidth, color, options = {}) {
   const curve = makePathCurve(path.points, path.closed);
   const divisions = Math.max(32, path.points.length * 24);
+  ctx.save();
   ctx.beginPath();
   ctx.lineWidth = lineWidth;
   ctx.strokeStyle = color;
+  ctx.globalAlpha = options.alpha ?? 1;
+  ctx.lineCap = options.lineCap || 'round';
+  ctx.lineJoin = options.lineJoin || 'round';
+  if (options.dash) ctx.setLineDash(options.dash);
   for (let index = 0; index <= divisions; index += 1) {
     const point = curve.getPointAt(index / divisions);
     const canvasPoint = worldToRoadCanvas(point.x, point.z, halfSize, textureSize);
@@ -1096,6 +1148,34 @@ function drawFoundationRoadPath(ctx, path, halfSize, textureSize, lineWidth, col
   }
   if (path.closed) ctx.closePath();
   ctx.stroke();
+  ctx.restore();
+}
+
+function drawFoundationOffsetRoadPath(ctx, path, halfSize, textureSize, offset, lineWidth, color, options = {}) {
+  const curve = makePathCurve(path.points, path.closed);
+  const divisions = Math.max(32, path.points.length * 24);
+  ctx.save();
+  ctx.beginPath();
+  ctx.lineWidth = lineWidth;
+  ctx.strokeStyle = color;
+  ctx.globalAlpha = options.alpha ?? 1;
+  ctx.lineCap = options.lineCap || 'round';
+  ctx.lineJoin = options.lineJoin || 'round';
+  if (options.dash) ctx.setLineDash(options.dash);
+  for (let index = 0; index <= divisions; index += 1) {
+    const t = index / divisions;
+    const point = curve.getPointAt(t);
+    const tangent = curve.getTangentAt(t).normalize();
+    const canvasPoint = worldToRoadCanvas(point.x + tangent.z * offset, point.z - tangent.x * offset, halfSize, textureSize);
+    if (index === 0) {
+      ctx.moveTo(canvasPoint.x, canvasPoint.y);
+    } else {
+      ctx.lineTo(canvasPoint.x, canvasPoint.y);
+    }
+  }
+  if (path.closed) ctx.closePath();
+  ctx.stroke();
+  ctx.restore();
 }
 
 function worldToRoadCanvas(x, z, halfSize, textureSize) {
@@ -1106,19 +1186,34 @@ function worldToRoadCanvas(x, z, halfSize, textureSize) {
 }
 
 function foundationRoadSurfaceColor(path) {
-  if (path.hierarchy === 'dirt') return '#6d4527';
-  if (path.hierarchy === 'security') return '#102f36';
-  if (path.hierarchy === 'bridge') return '#23363b';
-  if (path.hierarchy === 'stunt') return '#281817';
+  if (path.hierarchy === 'dirt') return '#755032';
+  if (path.hierarchy === 'security') return '#0c2830';
+  if (path.hierarchy === 'bridge') return '#263b41';
+  if (path.hierarchy === 'stunt') return '#2d1c19';
   return '#111813';
 }
 
 function foundationRoadEdgeColor(path) {
-  if (path.hierarchy === 'dirt') return '#83613a';
-  if (path.hierarchy === 'security') return '#183e45';
-  if (path.hierarchy === 'bridge') return '#30454a';
-  if (path.hierarchy === 'stunt') return '#442721';
-  return '#202a23';
+  if (path.hierarchy === 'dirt') return '#9b7446';
+  if (path.hierarchy === 'security') return '#153f47';
+  if (path.hierarchy === 'bridge') return '#365158';
+  if (path.hierarchy === 'stunt') return '#503028';
+  return '#263128';
+}
+
+function foundationRoadMarkColor(path) {
+  if (path.hierarchy === 'security') return '#7fe9ff';
+  if (path.hierarchy === 'stunt') return '#ffb17c';
+  if (path.hierarchy === 'bridge') return '#d4ecef';
+  if (path.hierarchy === 'plaza') return '#d6d0bd';
+  return '#d9dccf';
+}
+
+function foundationRoadEdgeMarkColor(path) {
+  if (path.hierarchy === 'security') return '#59c8df';
+  if (path.hierarchy === 'stunt') return '#d98661';
+  if (path.hierarchy === 'plaza') return '#b9b39f';
+  return '#aeb5a6';
 }
 
 function createPathRibbonGeometry(points, width, closed, y, samplesPerSegment = 8, offset = 0) {
