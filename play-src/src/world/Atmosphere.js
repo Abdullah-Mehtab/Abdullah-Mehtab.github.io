@@ -45,7 +45,9 @@ export class Atmosphere {
     this.createClouds();
     this.createCloudBanks();
     this.createSkyWisps();
-    this.createDistantIslets();
+    if (!this.world.foundationReplacementMode) {
+      this.createDistantIslets();
+    }
     this.createCloudShadows();
   }
 

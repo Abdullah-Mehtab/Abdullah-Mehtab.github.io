@@ -450,6 +450,8 @@ export class SetPieces {
         this.lifeStats.motionSamples += 1;
       } else if (item.kind === 'securityPacket') {
         const packetPulse = scan.active ? 1 : scan.complete ? 0.35 : 0;
+        item.mesh.visible = packetPulse > 0.05;
+        if (!item.mesh.visible) continue;
         const angle = elapsed * item.orbitSpeed + item.phase;
         const orbitX = item.scanX + Math.cos(angle) * item.orbitRadius;
         const orbitZ = item.scanZ + Math.sin(angle) * item.orbitRadius;
@@ -707,49 +709,11 @@ export class SetPieces {
 
   createFoundationScaffold() {
     const group = new THREE.Group();
-    group.name = 'FOUNDATION_Island_Route_Anchors';
-    const materials = {
-      landing: this.world.materials.plazaRoad,
-      education: this.world.materials.paleStone,
-      security: this.world.materials.securityRoad,
-      projects: this.world.materials.workbench,
-      sentinel: this.world.materials.glowPink,
-      career: this.world.materials.glowPurple,
-      skills: this.world.materials.glowCyan,
-      awards: this.world.materials.warmGlow,
-      cv: this.world.materials.paleStone,
-      todo: this.world.materials.glowGreen,
-      circuit: this.world.materials.stuntSurface,
-      contact: this.world.materials.waterBlue,
-      behind: this.world.materials.glowPurple,
-      drift: this.world.materials.stuntSurface,
-      'data-pier': this.world.materials.waterBlue,
-      potato: this.world.materials.soil,
-    };
-    for (const zone of worldZones) {
-      const rotation = zone.rotation || 0;
-      const primary = zone.id === 'landing' || zone.id === 'education' || zone.id === 'security';
-      const markerRadius = primary ? 0.72 : 0.46;
-      const markerHeight = primary ? 0.08 : 0.06;
-      const material = materials[zone.id] || this.world.materials.plazaRoad;
-      const marker = this.cylinder(
-        group,
-        zone.position[0],
-        0.145 + (primary ? 0.012 : 0),
-        zone.position[2],
-        markerRadius,
-        markerHeight,
-        material,
-        10,
-        `FOUNDATION_${zone.id}_anchor`
-      );
-      marker.rotation.y = rotation;
-      this.blockoutStats.foundationAnchors += 1;
-    }
+    group.name = 'FOUNDATION_Security_Gate';
 
     this.createBlockoutSecurityScan(group);
     mergeStaticMeshesInGroup(group, {
-      namePrefix: 'FOUNDATION_scaffold',
+      namePrefix: 'FOUNDATION_security_gate',
       shouldSkip: (object) => ['SecurityPacketShard', 'SecurityScanWave', 'ScannerLightCurtain'].includes(object.name)
     });
     this.world.scene.add(group);
@@ -829,14 +793,16 @@ export class SetPieces {
       this.groundRect(group, scanX, scanZ, scanPadWidth, scanPadDepth, this.world.materials.securityRoad, scanPadY, 'BLOCKOUT_security_scan_pad', scan.rotation);
     }
     this.securityGate(group, scanX, scanZ, scan.rotation);
-    this.securityScanWaveField(group, scanX, scanZ, scan.rotation);
     this.blockoutStats.securityGate += 1;
+    if (this.world.foundationReplacementMode) return;
 
+    this.securityScanWaveField(group, scanX, scanZ, scan.rotation);
     for (let i = 0; i < 8; i += 1) {
       const packetMaterial = this.world.materials.glowBlue.clone();
       packetMaterial.opacity = 0.46;
       const packet = new THREE.Mesh(new THREE.OctahedronGeometry(0.52, 0), packetMaterial);
       packet.name = 'SecurityPacketShard';
+      packet.visible = false;
       packet.position.set(zone.position[0] - 10 + i * 2.9, 1.2 + (i % 3) * 0.2, zone.position[2] + 5 + Math.sin(i) * 1.8);
       group.add(packet);
       this.animated.push({

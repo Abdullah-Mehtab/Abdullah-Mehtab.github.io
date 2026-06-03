@@ -15,11 +15,12 @@ const SURFACE_IDS = ['road', 'avenue-road', 'plaza-road', 'security-road', 'stun
 const SOFT_SURFACES = new Set(['grass', 'sand', 'shore', 'dirt-road']);
 
 export class Vehicle {
-  constructor({ scene, physics, achievements, audio }) {
+  constructor({ scene, physics, achievements, audio, world }) {
     this.scene = scene;
     this.physics = physics;
     this.achievements = achievements;
     this.audio = audio;
+    this.world = world;
     this.RAPIER = physics.RAPIER;
     this.group = new THREE.Group();
     this.group.name = 'Vehicle';
@@ -768,6 +769,7 @@ export class Vehicle {
   }
 
   spawnSkidMark(surface = this.surface) {
+    if (this.world?.foundationReplacementMode) return;
     const currentSurface = normalizeSurface(surface);
     if (currentSurface.skidMarks === false) return;
     for (const side of [-0.82, 0.82]) {

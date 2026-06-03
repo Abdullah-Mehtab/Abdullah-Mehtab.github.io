@@ -178,7 +178,7 @@ export class Roads {
       this.addLaneEdgeLines(path, width, layer, surfaceY);
     }
 
-    const showCenterMarks = !this.world.foundationReplacementMode || path.hierarchy === 'avenue' || path.hierarchy === 'stunt';
+    const showCenterMarks = !this.world.foundationReplacementMode;
     if (showCenterMarks) {
       const lineMaterial = this.cachedLineMaterial(style.line);
       const curve = makePathCurve(path.points, path.closed);

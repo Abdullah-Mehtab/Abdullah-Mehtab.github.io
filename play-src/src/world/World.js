@@ -159,6 +159,8 @@ export class World {
   }
 
   createCollectibles() {
+    if (this.foundationReplacementMode) return;
+
     const points = [
       [-62, 0, 68],
       [28, 0, 96],

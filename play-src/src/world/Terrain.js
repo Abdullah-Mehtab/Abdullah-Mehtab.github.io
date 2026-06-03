@@ -1,7 +1,7 @@
 // ABOUTME: Builds the procedural toy-island terrain used by /play.
 // ABOUTME: Replaces the old authored island GLB while keeping a stable visible driving floor.
 import * as THREE from 'three';
-import { districtFootprints, districtSurfaceBreakups, fieldMotifClusters, ISLAND_RADIUS, meadowDetailPatches, roadPaths, roadSegments, terrainBrushes } from './worldData.js';
+import { districtFootprints, districtSurfaceBreakups, fieldMotifClusters, ISLAND_RADIUS, WORLD_HALF_SIZE, meadowDetailPatches, roadPaths, roadSegments, terrainBrushes } from './worldData.js';
 import { getIslandCoastPoints, makeIslandBandGeometry, makeIslandGeometry, makePatchGeometry, pseudoRandom, WATER_Y } from './WorldMaterials.js';
 import { mergeStaticMeshesInGroup } from './StaticBatching.js';
 
@@ -946,6 +946,16 @@ export class Terrain {
   }
 
   addPhysicsFloor() {
+    if (this.world.foundationReplacementMode) {
+      this.world.physics.createFixedBox([0, -0.05, 0], [WORLD_HALF_SIZE * 2.4, 0.18, WORLD_HALF_SIZE * 2.4], {
+        debugName: 'ToyIslandFlatTerrainCollider',
+        visualName: 'ToyIslandGrassPlateau',
+        friction: 1.08,
+        restitution: 0.01
+      });
+      return;
+    }
+
     const { vertices, indices } = makeIslandColliderMesh(ISLAND_RADIUS, 1.01, 112, 0.04, -0.95);
 
     this.world.physics.createFixedTrimesh([0, 0, 0], vertices, indices, {

@@ -141,9 +141,10 @@ try {
   }
   await page.evaluate(() => window.__portfolioDrive.game.clearFocus());
 
-  await page.evaluate(() => {
+  const collectiblePreviewAvailable = await page.evaluate(() => {
     const game = window.__portfolioDrive.game;
     const shard = game.world.collectibles[0];
+    if (!shard) return false;
     localStorage.removeItem(`portfolio-drive-shard-${shard.index}`);
     shard.collected = false;
     shard.mesh.visible = true;
@@ -162,15 +163,18 @@ try {
     game.camera.fov = 38;
     game.camera.updateProjectionMatrix();
     game.camera.lookAt(lookAt);
+    return true;
   });
-  await delay(350);
-  await screenshot(page, 'collectible-data-shard.png');
-  await page.evaluate(() => {
-    const game = window.__portfolioDrive.game;
-    game.camera.fov = game.cameraRig.baseFov;
-    game.camera.updateProjectionMatrix();
-    game.clearFocus();
-  });
+  if (collectiblePreviewAvailable) {
+    await delay(350);
+    await screenshot(page, 'collectible-data-shard.png');
+    await page.evaluate(() => {
+      const game = window.__portfolioDrive.game;
+      game.camera.fov = game.cameraRig.baseFov;
+      game.camera.updateProjectionMatrix();
+      game.clearFocus();
+    });
+  }
   const panelUi = await exercisePanelUi(page);
 
   await page.click('#map-button');
@@ -1438,6 +1442,7 @@ async function collectRuntimeMetrics(page, loadMs, gameplay, water, surfaces, su
       potatoFarm: game.world.potatoFarm?.getStats?.() || {},
       waterStats: game.world.water?.getStats?.() || {},
       zoneLandmarks: game.world.zonesSystem?.getLandmarkStats?.() || {},
+      zoneInteractionRings: countVisibleByName(game.scene, /_interaction_ring$/),
       protectedLandmarks,
       vehicleFx: game.vehicle.getEffectStats?.() || {},
       zonePresentation: sampleZonePresentation(game),
@@ -1648,6 +1653,14 @@ async function collectRuntimeMetrics(page, loadMs, gameplay, water, surfaces, su
           sample.fov > 50
         ))
       };
+    }
+
+    function countVisibleByName(root, pattern) {
+      let count = 0;
+      root.traverse((object) => {
+        if (object.visible && pattern.test(object.name || '')) count += 1;
+      });
+      return count;
     }
   }, { district: authoredDistrictAssets, stunt: authoredStuntAssets });
   return {
@@ -2907,18 +2920,18 @@ function assertGate2RFoundationReplacementVerification(result, failures) {
   if ((blockoutSetPieces.zoneLabels || 0) !== 0) {
     failures.push(`Gate 2R scaffold failed: rejected zone labels still built=${blockoutSetPieces.zoneLabels || 0}`);
   }
-  if ((blockoutSetPieces.foundationAnchors || 0) < worldZones.length) {
-    failures.push(`Gate 2R scaffold failed: foundationAnchors=${blockoutSetPieces.foundationAnchors || 0}/${worldZones.length}`);
+  if ((blockoutSetPieces.foundationAnchors || 0) !== 0) {
+    failures.push(`Gate 2R scaffold failed: foundation anchors still built=${blockoutSetPieces.foundationAnchors || 0}`);
   }
   if ((blockoutSetPieces.foundationLabels || 0) !== 0) {
     failures.push(`Gate 2R scaffold failed: foundationLabels still built=${blockoutSetPieces.foundationLabels || 0}`);
   }
   if ((blockoutSetPieces.securityGate || 0) < 1) failures.push('Gate 2R security foundation failed: scanner gate missing');
-  if ((blockoutSetPieces.securityPacketShards || 0) < 8) {
-    failures.push(`Gate 2R security foundation failed: packet shards=${blockoutSetPieces.securityPacketShards || 0}`);
+  if ((blockoutSetPieces.securityPacketShards || 0) !== 0) {
+    failures.push(`Gate 2R security foundation failed: packet shards still built=${blockoutSetPieces.securityPacketShards || 0}`);
   }
-  if ((blockoutSetPieces.securityScanWaves || 0) < 3) {
-    failures.push(`Gate 2R security foundation failed: scan waves=${blockoutSetPieces.securityScanWaves || 0}`);
+  if ((blockoutSetPieces.securityScanWaves || 0) !== 0) {
+    failures.push(`Gate 2R security foundation failed: scan waves still built=${blockoutSetPieces.securityScanWaves || 0}`);
   }
   if ((result.districtGround?.pads || 0) !== 0) {
     failures.push(`Gate 2R terrain failed: rejected district pads still built=${result.districtGround?.pads || 0}`);
@@ -2946,6 +2959,24 @@ function assertGate2RFoundationReplacementVerification(result, failures) {
   if ((result.stuntPark?.ramps || 0) !== 0) failures.push(`Gate 2R stunt failed: rejected ramps still built=${result.stuntPark?.ramps || 0}`);
   if ((result.stuntPark?.boostPads || 0) !== 0) failures.push(`Gate 2R stunt failed: rejected boost pads still built=${result.stuntPark?.boostPads || 0}`);
   if ((result.stuntPark?.landingMarkers || 0) !== 0) failures.push(`Gate 2R stunt failed: rejected landing markers still built=${result.stuntPark?.landingMarkers || 0}`);
+  if ((result.stuntPark?.circuitTargetRings || 0) !== 0) failures.push(`Gate 2R stunt failed: circuit target rings still built=${result.stuntPark?.circuitTargetRings || 0}`);
+  if ((result.stuntPark?.circuitTargetArrows || 0) !== 0) failures.push(`Gate 2R stunt failed: circuit target arrows still built=${result.stuntPark?.circuitTargetArrows || 0}`);
+  if ((result.collectibles?.total || 0) !== 0) failures.push(`Gate 2R collectibles failed: data shards still built=${result.collectibles?.total || 0}`);
+  if ((result.collectibles?.stats?.visibleShards || 0) !== 0) failures.push(`Gate 2R collectibles failed: visible shards=${result.collectibles?.stats?.visibleShards || 0}`);
+  if ((result.securityScan?.active?.stats?.packetShards || 0) !== 0) {
+    failures.push(`Gate 2R security scan failed: visible packet system still built=${result.securityScan?.active?.stats?.packetShards || 0}`);
+  }
+  if ((result.securityScan?.active?.stats?.scanWaves || 0) !== 0) {
+    failures.push(`Gate 2R security scan failed: visible scan waves still built=${result.securityScan?.active?.stats?.scanWaves || 0}`);
+  }
+  if ((result.atmosphere?.distantIslets || 0) !== 0) failures.push(`Gate 2R atmosphere failed: distant islets still built=${result.atmosphere?.distantIslets || 0}`);
+  if ((result.atmosphere?.visibleDistantIslets || 0) !== 0) failures.push(`Gate 2R atmosphere failed: visible distant islets=${result.atmosphere?.visibleDistantIslets || 0}`);
+  if ((result.gameplay?.vehicleFx?.spawnedSkid || 0) !== 0) failures.push(`Gate 2R vehicle FX failed: skid strips still spawned=${result.gameplay?.vehicleFx?.spawnedSkid || 0}`);
+  const colliderSummary = result.colliderAudit?.summary || [];
+  if (colliderSummary.some((collider) => collider.type === 'trimesh')) failures.push('Gate 2R physics failed: terrain trimesh collider still active');
+  if (!colliderSummary.some((collider) => collider.name === 'ToyIslandFlatTerrainCollider' && collider.type === 'box')) {
+    failures.push('Gate 2R physics failed: flat terrain collider missing');
+  }
   if ((result.mapStats?.pins || 0) !== worldZones.length) failures.push(`Gate 2R map failed: pins=${result.mapStats?.pins || 0}/${worldZones.length}`);
   if ((result.mapStats?.districtLabels || 0) !== districtFootprints.length) {
     failures.push(`Gate 2R map failed: districtLabels=${result.mapStats?.districtLabels || 0}/${districtFootprints.length}`);
@@ -2954,6 +2985,9 @@ function assertGate2RFoundationReplacementVerification(result, failures) {
   if ((result.mapStats?.roadLines || 0) !== roadPaths.length) failures.push(`Gate 2R map failed: roadLines=${result.mapStats?.roadLines || 0}/${roadPaths.length}`);
   if ((result.mapStats?.circuitCheckpoints || 0) !== circuitCheckpoints.length) {
     failures.push(`Gate 2R map failed: circuitCheckpoints=${result.mapStats?.circuitCheckpoints || 0}/${circuitCheckpoints.length}`);
+  }
+  if ((result.zoneInteractionRings || 0) !== 0) {
+    failures.push(`Gate 2R zone markers failed: visible interaction rings=${result.zoneInteractionRings || 0}`);
   }
   if ((result.zoneLandmarks?.protected || 0) !== 1) failures.push(`Gate 2R protected landmark failed: protected=${result.zoneLandmarks?.protected || 0}`);
   if (!result.protectedLandmarks?.near?.exactVisible || !result.protectedLandmarks?.far?.silhouetteVisible) {
@@ -2980,24 +3014,12 @@ function assertGate2RFoundationReplacementVerification(result, failures) {
     }
   }
   if (!result.securityScan?.active?.active) failures.push('Gate 2R security scan failed: active state not observed');
-  if ((result.securityScan?.active?.stats?.packetShards || 0) < 8) {
-    failures.push(`Gate 2R security scan failed: packet shards=${result.securityScan?.active?.stats?.packetShards || 0}`);
-  }
-  if ((result.securityScan?.active?.stats?.scanWaves || 0) < 3) {
-    failures.push(`Gate 2R security scan failed: scan waves=${result.securityScan?.active?.stats?.scanWaves || 0}`);
-  }
   if (!result.securityScan?.complete?.complete) failures.push('Gate 2R security scan failed: complete state not observed');
   if (!result.securityScan?.complete?.panelVisible) failures.push('Gate 2R security scan failed: panel did not open');
   if (!result.securityScan?.complete?.achievementUnlocked) failures.push('Gate 2R security scan failed: security_scan achievement');
   if (result.circuit?.targetCount !== circuitCheckpoints.length - 1) failures.push(`Gate 2R circuit failed: targetCount=${result.circuit?.targetCount}/${circuitCheckpoints.length - 1}`);
   if (!result.circuit?.preview?.active) failures.push('Gate 2R circuit failed: preview inactive');
   if (!result.circuit?.finished) failures.push('Gate 2R circuit failed: finish event');
-  if ((result.circuit?.ringInstances || 0) !== circuitCheckpoints.length - 1) {
-    failures.push(`Gate 2R circuit failed: ring instances=${result.circuit?.ringInstances || 0}`);
-  }
-  if ((result.circuit?.arrowInstances || 0) !== circuitCheckpoints.length - 1) {
-    failures.push(`Gate 2R circuit failed: arrow instances=${result.circuit?.arrowInstances || 0}`);
-  }
   if (!Number.isFinite(result.p95FrameMs) || result.p95FrameMs <= 0 || result.p95FrameMs > 22) {
     failures.push(`Gate 2R metrics failed: p95FrameMs=${result.p95FrameMs}`);
   }

@@ -59,7 +59,8 @@ export class Game {
       scene: this.scene,
       physics: this.physics,
       achievements: this.achievements,
-      audio: this.audio
+      audio: this.audio,
+      world: this.world
     });
     this.cameraRig = new CameraRig(this.camera, this.vehicle, this.input, this.physics);
     this.analytics = new Analytics();

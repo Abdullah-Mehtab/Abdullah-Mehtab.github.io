@@ -37,7 +37,9 @@ export class Zones {
     group.name = `ZONE_${definition.id}_${definition.name.replace(/\s+/g, '_')}`;
     group.position.copy(zone.position);
     group.rotation.y = definition.rotation || 0;
-    this.addInteractionRing(group, zone);
+    if (!this.world.foundationReplacementMode) {
+      this.addInteractionRing(group, zone);
+    }
     this.addLandmark(group, zone);
     this.world.scene.add(group);
   }

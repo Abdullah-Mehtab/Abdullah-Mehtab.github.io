@@ -33,7 +33,6 @@ export class StuntPark {
   build() {
     this.stats = this.createStats();
     if (this.world.foundationReplacementMode) {
-      this.createCircuitTargetMarkers(Math.max(0, circuitCheckpoints.length - 1));
       return;
     }
     this.createCircuitTrackLayout();
