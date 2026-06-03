@@ -2110,6 +2110,13 @@ function assertVerification(result) {
   if (result.colliderAudit?.failures?.length) failures.push(`collider audit failed: ${result.colliderAudit.failures.map((item) => item.name).join(', ')}`);
   if (result.routeReplay?.total !== routeReplaySegments.length) failures.push(`route replay count mismatch: ${result.routeReplay?.total}/${routeReplaySegments.length}`);
   if (result.routeReplay?.failed) failures.push(`route replay failed: ${result.routeReplay.failed}/${result.routeReplay.total}`);
+  if (result.goalGate === 'gate-3r-vertical-slice') {
+    assertGate3RVerticalSliceVerification(result, failures);
+    if (failures.length) {
+      throw new Error(`Play verification failed: ${failures.join('; ')}`);
+    }
+    return;
+  }
   if (result.goalGate === 'gate-2r-foundation-replacement') {
     assertGate2RFoundationReplacementVerification(result, failures);
     if (failures.length) {
@@ -3048,6 +3055,154 @@ function assertGate2RFoundationReplacementVerification(result, failures) {
   if (!result.mobile?.ready || (result.mobile?.canvasSample || 0) <= 0) failures.push('Gate 2R mobile probe failed: canvas did not render');
   if ((result.mobile?.calls || 0) > 170) failures.push(`Gate 2R mobile draw-call budget exceeded: ${result.mobile?.calls || 0}`);
   if ((result.mobile?.triangles || 0) > 125000) failures.push(`Gate 2R mobile triangle budget exceeded: ${result.mobile?.triangles || 0}`);
+}
+
+function assertGate3RVerticalSliceVerification(result, failures) {
+  const blockout = result.blockout || {};
+  const blockoutSetPieces = blockout.setPieces || {};
+  const slice = result.verticalSlice || blockout.verticalSlice || {};
+  const start = slice.start || {};
+  const campusRoute = slice.campusRoute || {};
+  const fcc = slice.fcc || {};
+  const securityRoute = slice.securityRoute || {};
+  const security = slice.security || {};
+
+  if (result.goalGate !== 'gate-3r-vertical-slice') {
+    failures.push(`Gate 3R probe failed: goalGate=${result.goalGate || 'none'}`);
+  }
+  if (!blockout.enabled) failures.push('Gate 3R probe failed: foundation mode inactive');
+  if (blockout.densePropsBuilt) failures.push('Gate 3R probe failed: dense prop system was built');
+  if (blockout.denseFoliageBuilt) failures.push('Gate 3R probe failed: dense foliage system was built');
+  if (blockout.potatoPocketBuilt) failures.push('Gate 3R probe failed: final potato pocket was built');
+  if ((blockoutSetPieces.zonePads || 0) !== 0) failures.push(`Gate 3R scaffold failed: rejected zone pads built=${blockoutSetPieces.zonePads || 0}`);
+  if ((blockoutSetPieces.zoneMarkers || 0) !== 0) failures.push(`Gate 3R scaffold failed: rejected zone markers built=${blockoutSetPieces.zoneMarkers || 0}`);
+  if ((blockoutSetPieces.zoneLabels || 0) !== 0) failures.push(`Gate 3R scaffold failed: rejected zone labels built=${blockoutSetPieces.zoneLabels || 0}`);
+  if ((blockoutSetPieces.securityGate || 0) < 1) failures.push('Gate 3R security foundation failed: scanner gate missing');
+  if ((blockoutSetPieces.securityPacketShards || 0) !== 0) failures.push(`Gate 3R foundation failed: blockout packet shards built=${blockoutSetPieces.securityPacketShards || 0}`);
+  if ((blockoutSetPieces.securityScanWaves || 0) !== 0) failures.push(`Gate 3R foundation failed: blockout scan waves built=${blockoutSetPieces.securityScanWaves || 0}`);
+
+  if ((result.districtGround?.pads || 0) !== 0) failures.push(`Gate 3R terrain failed: rejected district pads built=${result.districtGround?.pads || 0}`);
+  if ((result.districtGround?.edgeTrims || 0) !== 0) failures.push(`Gate 3R terrain failed: rejected district edge trims built=${result.districtGround?.edgeTrims || 0}`);
+  if ((result.surfaceDetails?.districts || 0) !== 0) failures.push(`Gate 3R terrain failed: final surface details built=${result.surfaceDetails?.districts || 0}`);
+  if ((result.meadowDetails?.patches || 0) !== 0) failures.push(`Gate 3R terrain failed: meadow detail patches built=${result.meadowDetails?.patches || 0}`);
+  if ((result.fieldMotifs?.clusters || 0) !== 0) failures.push(`Gate 3R terrain failed: field motif clusters built=${result.fieldMotifs?.clusters || 0}`);
+  if ((result.roadSurfaceDetails?.wearStrips || 0) !== 0) failures.push(`Gate 3R roads failed: wear strips built=${result.roadSurfaceDetails?.wearStrips || 0}`);
+  if ((result.roadSurfaceDetails?.laneSeams || 0) !== 0) failures.push(`Gate 3R roads failed: lane seams built=${result.roadSurfaceDetails?.laneSeams || 0}`);
+  if ((result.roadSurfaceDetails?.transitionAprons || 0) !== 0) failures.push(`Gate 3R roads failed: transition aprons built=${result.roadSurfaceDetails?.transitionAprons || 0}`);
+  if ((result.roadSurfaceDetails?.transitionGuideBars || 0) !== 0) failures.push(`Gate 3R roads failed: transition guide bars built=${result.roadSurfaceDetails?.transitionGuideBars || 0}`);
+  if ((result.roadJunctions?.blendPatches || 0) !== 0) failures.push(`Gate 3R roads failed: junction slabs built=${result.roadJunctions?.blendPatches || 0}`);
+  if ((result.roadGuidance?.chevrons || 0) !== 0) failures.push(`Gate 3R roads failed: final chevrons built=${result.roadGuidance?.chevrons || 0}`);
+  if ((result.roadGuidance?.reflectorStuds || 0) !== 0) failures.push(`Gate 3R roads failed: reflector studs built=${result.roadGuidance?.reflectorStuds || 0}`);
+  if (!result.roadTopology?.coastalLoop) failures.push('Gate 3R road topology failed: coastal loop missing');
+  if ((result.roadTopology?.closedLoops || 0) < 1) failures.push(`Gate 3R road topology failed: closedLoops=${result.roadTopology?.closedLoops || 0}`);
+  if ((result.roadTopology?.paths || 0) !== roadPaths.length) failures.push(`Gate 3R road topology failed: paths=${result.roadTopology?.paths || 0}/${roadPaths.length}`);
+  if ((result.roadTopology?.paths || 0) > 6) failures.push(`Gate 3R road topology failed: too many route families=${result.roadTopology?.paths || 0}`);
+  if ((result.roadTopology?.sharedJunctions || 0) < 4) failures.push(`Gate 3R road topology failed: sharedJunctions=${result.roadTopology?.sharedJunctions || 0}`);
+  if ((result.roadTopology?.sharedJunctions || 0) > 8) failures.push(`Gate 3R road topology failed: too many shared junctions=${result.roadTopology?.sharedJunctions || 0}`);
+  if ((result.roadTopology?.maxRoadWidth || 99) > 5.2) failures.push(`Gate 3R road width failed: maxRoadWidth=${result.roadTopology?.maxRoadWidth}`);
+  if ((result.surfacePanels?.hardscapePanels || 0) !== 0) failures.push(`Gate 3R scaffold failed: hardscape panels built=${result.surfacePanels?.hardscapePanels || 0}`);
+  if ((result.districtComposition?.pads || 0) !== 0) failures.push(`Gate 3R district dressing failed: unrelated pads built=${result.districtComposition?.pads || 0}`);
+  if ((result.stuntPark?.ramps || 0) !== 0) failures.push(`Gate 3R stunt failed: rejected ramps built=${result.stuntPark?.ramps || 0}`);
+  if ((result.stuntPark?.boostPads || 0) !== 0) failures.push(`Gate 3R stunt failed: rejected boost pads built=${result.stuntPark?.boostPads || 0}`);
+  if ((result.stuntPark?.landingMarkers || 0) !== 0) failures.push(`Gate 3R stunt failed: rejected landing markers built=${result.stuntPark?.landingMarkers || 0}`);
+  if ((result.stuntPark?.circuitTargetRings || 0) !== 0) failures.push(`Gate 3R stunt failed: circuit target rings built=${result.stuntPark?.circuitTargetRings || 0}`);
+  if ((result.stuntPark?.circuitTargetArrows || 0) !== 0) failures.push(`Gate 3R stunt failed: circuit target arrows built=${result.stuntPark?.circuitTargetArrows || 0}`);
+  if ((result.collectibles?.total || 0) !== 0) failures.push(`Gate 3R collectibles failed: data shards built=${result.collectibles?.total || 0}`);
+  if ((result.collectibles?.stats?.visibleShards || 0) !== 0) failures.push(`Gate 3R collectibles failed: visible shards=${result.collectibles?.stats?.visibleShards || 0}`);
+  if ((result.atmosphere?.distantIslets || 0) !== 0) failures.push(`Gate 3R atmosphere failed: distant islets built=${result.atmosphere?.distantIslets || 0}`);
+  if ((result.atmosphere?.visibleDistantIslets || 0) !== 0) failures.push(`Gate 3R atmosphere failed: visible distant islets=${result.atmosphere?.visibleDistantIslets || 0}`);
+
+  const colliderSummary = result.colliderAudit?.summary || [];
+  if (colliderSummary.some((collider) => collider.name === 'ToyIslandFlatTerrainCollider')) {
+    failures.push('Gate 3R physics failed: rejected flat terrain collider active');
+  }
+  if (!colliderSummary.some((collider) => collider.name === 'ToyIslandTerrainCollider' && collider.type === 'trimesh')) {
+    failures.push('Gate 3R physics failed: visible island terrain collider missing');
+  }
+  const nonProtectedColliders = colliderSummary.filter((collider) => (
+    collider.name !== 'ToyIslandTerrainCollider'
+    && collider.name !== 'ZONE_education_protected_landmark_collider'
+  ));
+  if (nonProtectedColliders.length) {
+    failures.push(`Gate 3R physics failed: extra driving colliders=${nonProtectedColliders.map((collider) => collider.name).join(', ')}`);
+  }
+
+  if ((result.mapStats?.pins || 0) !== worldZones.length) failures.push(`Gate 3R map failed: pins=${result.mapStats?.pins || 0}/${worldZones.length}`);
+  if ((result.mapStats?.districtLabels || 0) !== districtFootprints.length) failures.push(`Gate 3R map failed: districtLabels=${result.mapStats?.districtLabels || 0}/${districtFootprints.length}`);
+  if ((result.mapStats?.routeLabels || 0) !== roadPaths.length) failures.push(`Gate 3R map failed: routeLabels=${result.mapStats?.routeLabels || 0}/${roadPaths.length}`);
+  if ((result.mapStats?.roadLines || 0) !== roadPaths.length) failures.push(`Gate 3R map failed: roadLines=${result.mapStats?.roadLines || 0}/${roadPaths.length}`);
+  if ((result.mapStats?.circuitCheckpoints || 0) !== circuitCheckpoints.length) failures.push(`Gate 3R map failed: circuitCheckpoints=${result.mapStats?.circuitCheckpoints || 0}/${circuitCheckpoints.length}`);
+  if ((result.zoneInteractionRings || 0) !== 0) failures.push(`Gate 3R zone markers failed: visible interaction rings=${result.zoneInteractionRings || 0}`);
+  if ((result.zoneLandmarks?.protected || 0) !== 1) failures.push(`Gate 3R protected landmark failed: protected=${result.zoneLandmarks?.protected || 0}`);
+  if (!result.protectedLandmarks?.near?.exactVisible || !result.protectedLandmarks?.far?.silhouetteVisible) {
+    failures.push('Gate 3R protected landmark failed: FCC exact/silhouette probe missing');
+  }
+
+  if ((result.gameplay?.movementMeters || 0) < 2) failures.push(`Gate 3R driving failed: movementMeters=${result.gameplay?.movementMeters || 0}`);
+  if (!result.gameplay?.boostSeen) failures.push('Gate 3R driving failed: boost not observed');
+  if (!result.gameplay?.jumpSeen) failures.push('Gate 3R driving failed: jump not observed');
+  if (!result.gameplay?.burnoutSeen) failures.push('Gate 3R driving failed: burnout not observed');
+  if (!result.gameplay?.wheelieSeen) failures.push('Gate 3R driving failed: wheelie not observed');
+  if (!result.water?.surfaceSeen) failures.push('Gate 3R water failed: water surface state not observed');
+  if (!result.water?.dragReduced) failures.push('Gate 3R water failed: water drag not observed');
+  if (!result.water?.submergeRespawned) failures.push('Gate 3R water failed: submerge respawn not observed');
+  if (result.surfaces?.road !== 'road') failures.push(`Gate 3R surface failed: road=${result.surfaces?.road}`);
+  if (result.surfaces?.grass !== 'grass') failures.push(`Gate 3R surface failed: grass=${result.surfaces?.grass}`);
+  if (result.surfaces?.sand !== 'sand') failures.push(`Gate 3R surface failed: sand=${result.surfaces?.sand}`);
+  if (result.surfaces?.shore !== 'shore') failures.push(`Gate 3R surface failed: shore=${result.surfaces?.shore}`);
+  if (result.surfaces?.water !== 'water') failures.push(`Gate 3R surface failed: water=${result.surfaces?.water}`);
+  for (const hierarchy of ['avenue', 'plaza', 'security', 'stunt', 'dirt', 'bridge']) {
+    const profile = result.surfaces?.roadProfiles?.[hierarchy];
+    if (profile?.id !== 'road') failures.push(`Gate 3R road profile failed: ${hierarchy}=${profile?.id || 'missing'}`);
+    if (profile?.roadHierarchy !== hierarchy) failures.push(`Gate 3R road profile failed: ${hierarchy} hierarchy=${profile?.roadHierarchy || 'missing'}`);
+  }
+
+  if (!result.securityScan?.active?.active) failures.push('Gate 3R security scan failed: active state not observed');
+  if ((result.securityScan?.active?.stats?.packetShards || 0) < 8) failures.push(`Gate 3R security scan failed: packet shards=${result.securityScan?.active?.stats?.packetShards || 0}`);
+  if ((result.securityScan?.active?.stats?.scanWaves || 0) < 3) failures.push(`Gate 3R security scan failed: scan waves=${result.securityScan?.active?.stats?.scanWaves || 0}`);
+  if ((result.securityScan?.active?.stats?.visibleScanWaves || 0) < 1) failures.push(`Gate 3R security scan failed: visible scan waves=${result.securityScan?.active?.stats?.visibleScanWaves || 0}`);
+  if ((result.securityScan?.active?.stats?.packetMotionSamples || 0) < 1) failures.push(`Gate 3R security scan failed: packet motion samples=${result.securityScan?.active?.stats?.packetMotionSamples || 0}`);
+  if (!result.securityScan?.complete?.complete) failures.push('Gate 3R security scan failed: complete state not observed');
+  if (!result.securityScan?.complete?.panelVisible) failures.push('Gate 3R security scan failed: panel did not open');
+  if (!result.securityScan?.complete?.achievementUnlocked) failures.push('Gate 3R security scan failed: security_scan achievement');
+  if (result.circuit?.targetCount !== circuitCheckpoints.length - 1) failures.push(`Gate 3R circuit failed: targetCount=${result.circuit?.targetCount}/${circuitCheckpoints.length - 1}`);
+  if (!result.circuit?.preview?.active) failures.push('Gate 3R circuit failed: preview inactive');
+  if (!result.circuit?.finished) failures.push('Gate 3R circuit failed: finish event');
+
+  if (!slice.enabled) failures.push('Gate 3R vertical slice failed: slice mode inactive');
+  if ((slice.staticBatches || 0) < 4) failures.push(`Gate 3R batching failed: staticBatches=${slice.staticBatches || 0}`);
+  if ((start.launchPads || 0) < 1) failures.push(`Gate 3R start failed: launchPads=${start.launchPads || 0}`);
+  if ((start.launchLights || 0) < 6) failures.push(`Gate 3R start failed: launchLights=${start.launchLights || 0}`);
+  if ((start.burnoutScuffs || 0) < 6) failures.push(`Gate 3R start failed: burnoutScuffs=${start.burnoutScuffs || 0}`);
+  if ((start.signs || 0) < 2) failures.push(`Gate 3R start failed: signs=${start.signs || 0}`);
+  if ((start.lamps || 0) < 3) failures.push(`Gate 3R start failed: lamps=${start.lamps || 0}`);
+  if ((campusRoute.routeMarks || 0) < 9) failures.push(`Gate 3R campus route failed: routeMarks=${campusRoute.routeMarks || 0}`);
+  if ((campusRoute.lamps || 0) < 5) failures.push(`Gate 3R campus route failed: lamps=${campusRoute.lamps || 0}`);
+  if ((campusRoute.hedges || 0) < 9) failures.push(`Gate 3R campus route failed: hedges=${campusRoute.hedges || 0}`);
+  if ((fcc.plazaPads || 0) < 2) failures.push(`Gate 3R FCC failed: plazaPads=${fcc.plazaPads || 0}`);
+  if ((fcc.benches || 0) < 3) failures.push(`Gate 3R FCC failed: benches=${fcc.benches || 0}`);
+  if ((fcc.hedges || 0) < 3) failures.push(`Gate 3R FCC failed: hedges=${fcc.hedges || 0}`);
+  if ((fcc.lamps || 0) < 4) failures.push(`Gate 3R FCC failed: lamps=${fcc.lamps || 0}`);
+  if ((fcc.identityFrames || 0) < 2) failures.push(`Gate 3R FCC failed: identityFrames=${fcc.identityFrames || 0}`);
+  if ((securityRoute.routeMarks || 0) < 3) failures.push(`Gate 3R security route failed: routeMarks=${securityRoute.routeMarks || 0}`);
+  if ((securityRoute.warningBollards || 0) < 3) failures.push(`Gate 3R security route failed: warningBollards=${securityRoute.warningBollards || 0}`);
+  if ((security.floorPads || 0) < 3) failures.push(`Gate 3R security lab failed: floorPads=${security.floorPads || 0}`);
+  if ((security.serverBlocks || 0) < 4) failures.push(`Gate 3R security lab failed: serverBlocks=${security.serverBlocks || 0}`);
+  if ((security.cables || 0) < 4) failures.push(`Gate 3R security lab failed: cables=${security.cables || 0}`);
+  if ((security.beacons || 0) < 4) failures.push(`Gate 3R security lab failed: beacons=${security.beacons || 0}`);
+  if ((security.terminalRails || 0) < 4) failures.push(`Gate 3R security lab failed: terminalRails=${security.terminalRails || 0}`);
+  if ((security.warningBollards || 0) < 6) failures.push(`Gate 3R security lab failed: warningBollards=${security.warningBollards || 0}`);
+  if ((security.lightStrips || 0) < 5) failures.push(`Gate 3R security lab failed: lightStrips=${security.lightStrips || 0}`);
+
+  if (!Number.isFinite(result.p95FrameMs) || result.p95FrameMs <= 0 || result.p95FrameMs > 22) failures.push(`Gate 3R metrics failed: p95FrameMs=${result.p95FrameMs}`);
+  if (!Number.isFinite(result.calls) || result.calls <= 0 || result.calls > 280) failures.push(`Gate 3R metrics failed: calls=${result.calls}`);
+  if (!Number.isFinite(result.triangles) || result.triangles <= 0 || result.triangles > 190000) failures.push(`Gate 3R metrics failed: triangles=${result.triangles}`);
+  if (!result.highQuality?.ready || (result.highQuality?.canvasSample || 0) <= 0) failures.push('Gate 3R high quality probe failed: canvas did not render');
+  if ((result.highQuality?.calls || 0) > 300) failures.push(`Gate 3R high quality draw-call budget exceeded: ${result.highQuality?.calls || 0}`);
+  if ((result.highQuality?.triangles || 0) > 210000) failures.push(`Gate 3R high quality triangle budget exceeded: ${result.highQuality?.triangles || 0}`);
+  if (!result.mobile?.ready || (result.mobile?.canvasSample || 0) <= 0) failures.push('Gate 3R mobile probe failed: canvas did not render');
+  if ((result.mobile?.calls || 0) > 185) failures.push(`Gate 3R mobile draw-call budget exceeded: ${result.mobile?.calls || 0}`);
+  if ((result.mobile?.triangles || 0) > 135000) failures.push(`Gate 3R mobile triangle budget exceeded: ${result.mobile?.triangles || 0}`);
 }
 
 function assertGate2BlockoutVerification(result, failures) {

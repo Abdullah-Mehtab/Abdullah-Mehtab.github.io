@@ -1,7 +1,7 @@
 // ABOUTME: Builds authored landmark staging and dense portfolio world set pieces.
 // ABOUTME: Keeps protected assets intact while adding roadsides, signs, lights, and interaction scenery.
 import * as THREE from 'three';
-import { SECURITY_SCAN_OFFSET, SECURITY_SCAN_ROTATION, worldZones } from './worldData.js';
+import { SECURITY_SCAN_OFFSET, SECURITY_SCAN_ROTATION, roadPaths, worldZones } from './worldData.js';
 import { mergeStaticMeshesInGroup } from './StaticBatching.js';
 import { makePatchGeometry } from './WorldMaterials.js';
 
@@ -356,6 +356,9 @@ export class SetPieces {
   build() {
     if (this.world.foundationReplacementMode) {
       this.createFoundationScaffold();
+      if (this.world.gate3rMode) {
+        this.createGate3RVerticalSliceScaffold();
+      }
       this.applyQuality();
       return;
     }
@@ -850,6 +853,370 @@ export class SetPieces {
       )
     });
     this.world.scene.add(group);
+  }
+
+  createGate3RVerticalSliceScaffold() {
+    this.verticalSliceStats.enabled = true;
+
+    const group = new THREE.Group();
+    group.name = 'GATE3R_Start_FCC_Security_Vertical_Slice';
+    this.createGate3RStartHub(group);
+    this.createGate3RCampusRoute(group);
+    this.createGate3RFccGrove(group);
+    this.createGate3RSecurityRoute(group);
+    this.createGate3RSecurityLab(group);
+
+    this.verticalSliceStats.staticBatches = mergeStaticMeshesInGroup(group, {
+      namePrefix: 'GATE3R_slice',
+      cellSize: 56,
+      shouldSkip: (object) => (
+        object.name === 'SecurityPacketShard'
+        || object.name === 'SecurityScanWave'
+        || object.name === 'ScannerLightCurtain'
+        || object.name === 'SetPieceBeaconGlow'
+      )
+    });
+    this.world.scene.add(group);
+  }
+
+  createGate3RStartHub(group) {
+    const zone = findZone('landing');
+    const stats = this.verticalSliceStats.start;
+    const rotation = zone.rotation || 0;
+    const centerX = 2.2;
+    const centerZ = -108.4;
+    const local = (right, forward) => {
+      const cos = Math.cos(rotation);
+      const sin = Math.sin(rotation);
+      return [centerX + right * cos + forward * sin, centerZ - right * sin + forward * cos];
+    };
+
+    this.slicePad(group, centerX, centerZ, 8.6, 3.2, this.world.materials.stoneRoad, 0.128, 'GATE3R_Start_Launch_Frame', rotation);
+    stats.launchPads += 1;
+
+    const markY = 0.137;
+    const [lineX, lineZ] = local(0, -2.4);
+    const [leftGuideX, leftGuideZ] = local(-3.35, 0.15);
+    const [rightGuideX, rightGuideZ] = local(3.35, 0.15);
+    this.box(group, lineX, markY, lineZ, 6.4, 0.022, 0.22, this.world.materials.warmGlow, rotation, 'GATE3R_Start_Line');
+    this.box(group, leftGuideX, markY, leftGuideZ, 0.12, 0.022, 4.4, this.world.materials.glowBlue, rotation, 'GATE3R_Start_Left_Guide');
+    this.box(group, rightGuideX, markY, rightGuideZ, 0.12, 0.022, 4.4, this.world.materials.glow, rotation, 'GATE3R_Start_Right_Guide');
+    group.children.slice(-3).forEach((mesh) => { mesh.position.y = markY; });
+    stats.routeMarks += 3;
+
+    for (let index = 0; index < 6; index += 1) {
+      const [x, z] = local(-2.75 + index * 1.1, -2.05);
+      this.box(group, x, markY + 0.003, z, 0.58, 0.018, 0.16, index % 2 ? this.world.materials.glowBlue : this.world.materials.warmGlow, rotation, 'GATE3R_Start_Launch_Light');
+      stats.launchLights += 1;
+    }
+
+    const scuffMaterial = this.sliceOverlayMaterial(0x181a14, 0.12);
+    for (let side = -1; side <= 1; side += 2) {
+      for (let index = 0; index < 3; index += 1) {
+        const [x, z] = local(side * (0.78 + index * 0.16), 0.48 + index * 0.7);
+        this.box(
+          group,
+          x,
+          markY + 0.006 + index * 0.0004,
+          z,
+          0.14,
+          0.014,
+          1.05 + index * 0.16,
+          scuffMaterial,
+          rotation + side * (0.035 + index * 0.008),
+          'GATE3R_Start_Burnout_Witness'
+        );
+        stats.burnoutScuffs += 1;
+      }
+    }
+
+    const lampA = local(-7.6, -3.6);
+    const lampB = local(7.5, -3.2);
+    const lampC = local(-8.8, 6.4);
+    this.addLamp(group, lampA[0], lampA[1], 0xffc36a, 2.8, 'GATE3R_Start_Lamp_Warm');
+    this.addLamp(group, lampB[0], lampB[1], 0x7cffb2, 2.8, 'GATE3R_Start_Lamp_Mint');
+    this.addLamp(group, lampC[0], lampC[1], 0x68d8ff, 2.65, 'GATE3R_Start_Route_Lamp');
+    stats.lamps += 3;
+
+    const planterA = local(-9.5, 1.8);
+    const planterB = local(9.4, 1.6);
+    this.addPlanterCluster(group, planterA[0], planterA[1], 0x7cffb2);
+    this.addPlanterCluster(group, planterB[0], planterB[1], 0x68d8ff);
+    stats.planters += 2;
+
+    const startSign = local(8.9, 5.8);
+    const routeSign = local(-9.7, 6.8);
+    this.addSign(group, 'START', 'Follow campus road', startSign[0], startSign[1], rotation - 0.82, 0x7cffb2, 1.72, 'GATE3R_Start_Sign');
+    this.addSign(group, 'FCC / SCAN', 'Split ahead', routeSign[0], routeSign[1], rotation + 0.68, 0x9ccfff, 1.65, 'GATE3R_Start_Route_Sign');
+    stats.signs += 2;
+  }
+
+  createGate3RCampusRoute(group) {
+    const stats = this.verticalSliceStats.campusRoute;
+    const path = findPath('campus-boulevard');
+    this.createGate3RRouteRun(group, path.points, stats, {
+      prefix: 'GATE3R_CampusRoute',
+      color: 0x9ccfff,
+      accentMaterial: this.world.materials.glowBlue,
+      bedMaterial: this.world.materials.paleStone,
+      hedgeMaterial: this.world.materials.meadowDark,
+      kind: 'campus',
+      markOffset: 3.1,
+      propOffset: 5.45,
+      stepLength: 18
+    });
+    this.addSign(group, 'FCCU', 'Education Grove', -91.5, 62.5, -0.48, 0x9ccfff, 1.58, 'GATE3R_CampusRoute_Sign');
+    stats.signs += 1;
+  }
+
+  createGate3RFccGrove(group) {
+    const zone = findZone('education');
+    const stats = this.verticalSliceStats.fcc;
+    const x = zone.position[0];
+    const z = zone.position[2];
+    const rotation = zone.rotation || 0;
+
+    this.slicePad(group, x - 1.2, z - 15.6, 16, 4.4, this.world.materials.paleStone, 0.13, 'GATE3R_FCC_Arrival_Walk', rotation);
+    this.slicePad(group, x + 13.4, z - 11.2, 3.8, 7.2, this.world.materials.warmStone, 0.128, 'GATE3R_FCC_Garden_Edge_East', rotation);
+    stats.plazaPads += 2;
+
+    this.box(group, x - 6.2, 0.139, z - 21.8, 7.2, 0.018, 0.12, this.world.materials.paleStone, rotation - 0.08, 'GATE3R_FCC_Road_Walk_Edge_A');
+    this.box(group, x + 4.2, 0.139, z - 21.0, 5.8, 0.018, 0.12, this.world.materials.paleStone, rotation - 0.08, 'GATE3R_FCC_Road_Walk_Edge_B');
+
+    for (const [dx, dz, color] of [
+      [-14.6, -20.4, 0x9ccfff],
+      [11.8, -20.8, 0x9ccfff],
+      [-17.6, -6.2, 0x7cffb2],
+      [18.2, -5.8, 0xffc36a]
+    ]) {
+      this.addLamp(group, x + dx, z + dz, color, 2.9, 'GATE3R_FCC_Lamp');
+      stats.lamps += 1;
+    }
+
+    for (const [bx, bz, rot] of [
+      [x - 18.4, z - 10.8, 0.78],
+      [x + 17.6, z - 10.2, -0.72],
+      [x - 13.8, z + 12.6, -0.42]
+    ]) {
+      this.addBench(group, bx, bz, rot, 0.82);
+      stats.benches += 1;
+    }
+
+    for (const [px, pz] of [
+      [x - 21.4, z - 17.2],
+      [x + 20.4, z - 16.8],
+      [x + 17.8, z + 5.8]
+    ]) {
+      this.addPlanterCluster(group, px, pz, 0x9ccfff);
+      stats.planters += 1;
+    }
+
+    this.hedgeLine(group, x - 17.2, z - 19.1, 13.5, rotation);
+    this.hedgeLine(group, x + 18.8, z - 18.7, 13.5, rotation);
+    this.hedgeLine(group, x + 18.8, z + 2.8, 10.5, rotation + Math.PI * 0.5);
+    stats.hedges += 3;
+
+    this.addSign(group, 'FCCU S BLOCK', 'Education stop', x - 17.2, z - 22.6, rotation + 0.22, 0x9ccfff, 1.72, 'GATE3R_FCC_Identity_Sign');
+    this.box(group, x - 9.0, 0.139, z - 19.6, 6.8, 0.02, 0.16, this.world.materials.glowBlue, rotation, 'GATE3R_FCC_Frame_Left');
+    this.box(group, x + 8.6, 0.139, z - 19.6, 6.8, 0.02, 0.16, this.world.materials.warmGlow, rotation, 'GATE3R_FCC_Frame_Right');
+    stats.signs += 1;
+    stats.identityFrames += 2;
+  }
+
+  createGate3RSecurityRoute(group) {
+    const stats = this.verticalSliceStats.securityRoute;
+    const path = findPath('security-spur');
+    this.createGate3RRouteRun(group, path.points, stats, {
+      prefix: 'GATE3R_SecurityRoute',
+      color: 0x68d8ff,
+      accentMaterial: this.world.materials.glowBlue,
+      bedMaterial: this.world.materials.securityRoad,
+      hedgeMaterial: this.world.materials.cable,
+      kind: 'security',
+      markOffset: 3.05,
+      propOffset: 5.2,
+      stepLength: 11
+    });
+    this.addSign(group, 'SECURITY', 'Scanner gate', -86.8, -25.2, -0.82, 0x68d8ff, 1.58, 'GATE3R_SecurityRoute_Sign');
+    stats.signs += 1;
+  }
+
+  createGate3RSecurityLab(group) {
+    const zone = findZone('security');
+    const stats = this.verticalSliceStats.security;
+    const scan = this.securityScanPose(zone);
+    const sideX = Math.cos(scan.rotation);
+    const sideZ = -Math.sin(scan.rotation);
+    const forwardX = Math.sin(scan.rotation);
+    const forwardZ = Math.cos(scan.rotation);
+    const point = (side, forward) => [
+      scan.x + sideX * side + forwardX * forward,
+      scan.z + sideZ * side + forwardZ * forward
+    ];
+
+    this.slicePad(group, scan.x, scan.z, 13.2, 6.4, this.world.materials.securityRoad, 0.131, 'GATE3R_Security_Scanner_Lane', scan.rotation);
+    this.slicePad(group, ...point(7.0, 0), 4.8, 4.6, this.world.materials.stoneRoad, 0.132, 'GATE3R_Security_Server_Deck_A', scan.rotation);
+    this.slicePad(group, ...point(-7.0, 0), 4.8, 4.6, this.world.materials.stoneRoad, 0.132, 'GATE3R_Security_Server_Deck_B', scan.rotation);
+    stats.floorPads += 3;
+
+    this.securityScanWaveField(group, scan.x, scan.z, scan.rotation);
+    this.createGate3RSecurityPackets(group, zone, scan);
+
+    for (let index = 0; index < 5; index += 1) {
+      const [x, z] = point(-3.0 + index * 1.5, -2.6 + (index % 2) * 0.34);
+      this.box(group, x, 0.139 + index * 0.0004, z, 0.66, 0.018, 0.16, index % 2 ? this.world.materials.glowPink : this.world.materials.glowBlue, scan.rotation, 'GATE3R_Security_Floor_Trace');
+      stats.lightStrips += 1;
+      this.securityLabStats.floorMarks += 1;
+    }
+
+    for (const side of [-1, 1]) {
+      const [railX, railZ] = point(side * 4.8, 0);
+      this.box(group, railX, 0.39, railZ, 0.16, 0.28, 3.2, this.world.materials.cable, scan.rotation, 'GATE3R_Security_Terminal_Rail');
+      this.box(group, railX - sideX * side * 0.55, 0.54, railZ - sideZ * side * 0.55, 0.1, 0.12, 2.9, this.world.materials.glowBlue, scan.rotation, 'GATE3R_Security_Terminal_Glow');
+      stats.terminalRails += 2;
+      this.securityLabStats.terminalRails += 2;
+    }
+
+    for (const [side, forward, rot] of [
+      [1, -2.3, 0.22],
+      [1, 2.2, 0.08],
+      [-1, -2.1, -0.2],
+      [-1, 2.35, -0.1]
+    ]) {
+      const [rackX, rackZ] = point(side * 7.1, forward);
+      this.serverRack(group, rackX, rackZ, scan.rotation + rot);
+      stats.serverBlocks += 1;
+    }
+
+    const cableRuns = [
+      [point(7.1, -2.3), point(5.8, -1.2), point(4.8, 0)],
+      [point(7.1, 2.2), point(5.8, 1.0), point(4.8, 0)],
+      [point(-7.1, -2.1), point(-5.8, -1.0), point(-4.8, 0)],
+      [point(-7.1, 2.35), point(-5.8, 1.1), point(-4.8, 0)]
+    ];
+    for (const run of cableRuns) {
+      this.cable(
+        group,
+        [run[0][0], 0.24, run[0][1]],
+        [run[1][0], 0.23, run[1][1]],
+        [run[2][0], 0.24, run[2][1]],
+        0x10191f
+      );
+      stats.cables += 1;
+      this.securityLabStats.cableRuns += 1;
+    }
+
+    for (const [side, forward, color] of [
+      [8.9, -3.3, 0x68d8ff],
+      [-8.9, -3.1, 0xff6d8d],
+      [7.9, 3.5, 0x7cffb2],
+      [-7.9, 3.4, 0x68d8ff]
+    ]) {
+      const [x, z] = point(side, forward);
+      this.beacon(group, x, z, color);
+      stats.beacons += 1;
+    }
+
+    for (let index = 0; index < 6; index += 1) {
+      const side = index % 2 ? -1 : 1;
+      const [x, z] = point(side * 5.7, -3.8 + index * 1.5);
+      this.cylinder(group, x, 0.5, z, 0.12, 0.92, this.world.materials.cable, 8, 'GATE3R_Security_Warning_Bollard');
+      this.box(group, x, 0.98, z, 0.32, 0.12, 0.12, index % 2 ? this.world.materials.glowPink : this.world.materials.glowBlue, scan.rotation, 'GATE3R_Security_Warning_Light');
+      stats.warningBollards += 1;
+    }
+
+    const sign = point(-9.2, -4.8);
+    this.addSign(group, 'SECURITY SCAN', 'Hold in beam', sign[0], sign[1], scan.rotation - 0.95, 0x68d8ff, 1.56, 'GATE3R_Security_Scan_Sign');
+    stats.signs += 1;
+  }
+
+  createGate3RRouteRun(group, points, stats, spec) {
+    for (let segmentIndex = 0; segmentIndex < points.length - 1; segmentIndex += 1) {
+      const [ax, az] = points[segmentIndex];
+      const [bx, bz] = points[segmentIndex + 1];
+      const dx = bx - ax;
+      const dz = bz - az;
+      const length = Math.hypot(dx, dz);
+      const rotation = Math.atan2(dx, dz);
+      const rightX = Math.cos(rotation);
+      const rightZ = -Math.sin(rotation);
+      const steps = Math.max(1, Math.floor(length / spec.stepLength));
+      for (let step = 0; step < steps; step += 1) {
+        const t = (step + 0.5) / steps;
+        const x = ax + dx * t;
+        const z = az + dz * t;
+        const side = (step + segmentIndex) % 2 ? -1 : 1;
+        const edgeX = x + rightX * side * spec.markOffset;
+        const edgeZ = z + rightZ * side * spec.markOffset;
+        this.box(group, edgeX, 0.138, edgeZ, 0.14, 0.018, 0.78, spec.accentMaterial, rotation, `${spec.prefix}_Road_Edge_Mark`);
+        stats.routeMarks += 1;
+
+        const propX = x - rightX * side * spec.propOffset;
+        const propZ = z - rightZ * side * spec.propOffset;
+        if (spec.kind === 'security') {
+          this.cylinder(group, propX, 0.46, propZ, 0.095, 0.84, this.world.materials.cable, 8, `${spec.prefix}_Warning_Bollard`);
+          this.box(group, propX, 0.91, propZ, 0.26, 0.1, 0.1, spec.accentMaterial, rotation, `${spec.prefix}_Warning_Light`);
+          stats.warningBollards += 1;
+          stats.lightStrips += 1;
+        } else {
+          this.box(group, propX, 0.34, propZ, 1.9, 0.34, 0.32, spec.hedgeMaterial, rotation, `${spec.prefix}_Setback_Hedge`);
+          const bedX = x + rightX * side * (spec.propOffset + 0.7);
+          const bedZ = z + rightZ * side * (spec.propOffset + 0.7);
+          this.box(group, bedX, 0.134, bedZ, 1.5, 0.026, 0.3, spec.bedMaterial, rotation, `${spec.prefix}_Setback_Flower_Bed`);
+          stats.hedges += 1;
+          stats.flowerBeds += 1;
+        }
+
+        if (step % 2 === 0) {
+          const lampX = x + rightX * side * (spec.propOffset + 1.35);
+          const lampZ = z + rightZ * side * (spec.propOffset + 1.35);
+          this.addLamp(group, lampX, lampZ, spec.color, 2.55, `${spec.prefix}_Lamp`);
+          stats.lamps = (stats.lamps || 0) + 1;
+        }
+      }
+    }
+  }
+
+  createGate3RSecurityPackets(group, zone, scan) {
+    const sideX = Math.cos(scan.rotation);
+    const sideZ = -Math.sin(scan.rotation);
+    const forwardX = Math.sin(scan.rotation);
+    const forwardZ = Math.cos(scan.rotation);
+    for (let index = 0; index < 8; index += 1) {
+      const side = index % 2 ? -1 : 1;
+      const forward = -3.6 + Math.floor(index / 2) * 1.75;
+      const baseSide = side * (7.4 + (index % 3) * 0.28);
+      const packetMaterial = this.world.materials.glowBlue.clone();
+      packetMaterial.transparent = true;
+      packetMaterial.depthWrite = false;
+      packetMaterial.opacity = 0.42;
+      const packet = new THREE.Mesh(new THREE.OctahedronGeometry(0.42, 0), packetMaterial);
+      packet.name = 'SecurityPacketShard';
+      packet.visible = false;
+      packet.position.set(
+        scan.x + sideX * baseSide + forwardX * forward,
+        1.12 + (index % 3) * 0.18,
+        scan.z + sideZ * baseSide + forwardZ * forward
+      );
+      group.add(packet);
+      this.animated.push({
+        kind: 'securityPacket',
+        mesh: packet,
+        baseX: packet.position.x,
+        baseY: packet.position.y,
+        baseZ: packet.position.z,
+        baseOpacity: 0.42,
+        scanX: scan.x,
+        scanZ: scan.z,
+        orbitRadius: 2.85 + (index % 3) * 0.36,
+        orbitSpeed: 1.45 + index * 0.08,
+        speed: 1.18,
+        phase: index * 0.72,
+        range: 0.3,
+        rotationSpeed: 1.0 + index * 0.06
+      });
+      this.securityScanStats.packetShards += 1;
+    }
   }
 
   securityScanPose(zone) {
@@ -5411,6 +5778,10 @@ export class SetPieces {
 function findZone(id) {
   const zone = worldZones.find((item) => item.id === id);
   return zone || { position: [0, 0, 0], radius: 10 };
+}
+
+function findPath(id) {
+  return roadPaths.find((item) => item.id === id) || { points: [] };
 }
 
 function createSignAtlas() {

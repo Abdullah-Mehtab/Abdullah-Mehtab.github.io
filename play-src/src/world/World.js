@@ -38,7 +38,9 @@ const ROAD_SURFACES = {
   bridge: { label: 'pier deck', forwardGrip: 0.96, sideGrip: 0.93, engineFactor: 0.96, topSpeedFactor: 0.88, dustColor: 0x7aa9a7, skidColor: 0x2e4d4b, audioId: 'bridge-road', roughnessFeedback: 0.34 }
 };
 
-const GOAL_GATE = 'gate-2r-foundation-replacement';
+const GOAL_GATE = 'gate-3r-vertical-slice';
+const FOUNDATION_GATE_IDS = new Set(['gate-2r-foundation-replacement', 'gate-3r-vertical-slice']);
+const VERTICAL_SLICE_GATE_IDS = new Set(['gate-3-vertical-slice', 'gate-3r-vertical-slice']);
 
 export class World {
   constructor({ scene, physics, resumeData, environmentAssets }) {
@@ -47,8 +49,9 @@ export class World {
     this.resumeData = resumeData;
     this.environmentAssets = environmentAssets;
     this.goalGate = GOAL_GATE;
-    this.verticalSliceMode = GOAL_GATE === 'gate-3-vertical-slice';
-    this.foundationReplacementMode = GOAL_GATE === 'gate-2r-foundation-replacement';
+    this.verticalSliceMode = VERTICAL_SLICE_GATE_IDS.has(GOAL_GATE);
+    this.foundationReplacementMode = FOUNDATION_GATE_IDS.has(GOAL_GATE);
+    this.gate3rMode = GOAL_GATE === 'gate-3r-vertical-slice';
     this.blockoutMode = GOAL_GATE === 'gate-2-blockout' || this.verticalSliceMode || this.foundationReplacementMode;
     this.materials = createWorldMaterials();
     this.zones = [];
