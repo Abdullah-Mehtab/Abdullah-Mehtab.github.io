@@ -3139,6 +3139,32 @@ function assertGate3RVerticalSliceVerification(result, failures) {
   if (!Number.isFinite(placement.minClearance) || placement.minClearance < 2.2) {
     failures.push(`Gate 3R placement audit failed: minClearance=${placement.minClearance}`);
   }
+  if ((placement.recordedFootprints || 0) < 5) failures.push(`Gate 3R footprint audit failed: recordedFootprints=${placement.recordedFootprints || 0}`);
+  if ((placement.footprintIntrusions || 0) !== 0) {
+    const intrusions = (placement.entries || [])
+      .filter((entry) => entry && entry.footprint && entry.pass === false)
+      .slice(0, 5)
+      .map((entry) => `${entry.name}:${entry.clearance}/${entry.minClearance}`)
+      .join(', ');
+    failures.push(`Gate 3R footprint audit failed: footprintIntrusions=${placement.footprintIntrusions || 0}${intrusions ? ` (${intrusions})` : ''}`);
+  }
+  if (!Number.isFinite(placement.minFootprintClearance) || placement.minFootprintClearance < 4) {
+    failures.push(`Gate 3R footprint audit failed: minFootprintClearance=${placement.minFootprintClearance}`);
+  }
+  if ((placement.shorelineFootprintIntrusions || 0) !== 0) {
+    const intrusions = (placement.entries || [])
+      .filter((entry) => entry && entry.footprint && Number.isFinite(entry.grassClearance) && entry.grassClearance < 0)
+      .slice(0, 5)
+      .map((entry) => `${entry.name}:${entry.grassClearance}`)
+      .join(', ');
+    failures.push(`Gate 3R footprint audit failed: shorelineFootprintIntrusions=${placement.shorelineFootprintIntrusions || 0}${intrusions ? ` (${intrusions})` : ''}`);
+  }
+  if (!Number.isFinite(placement.maxFootprintRadius) || placement.maxFootprintRadius > ISLAND_RADIUS * 0.88) {
+    failures.push(`Gate 3R footprint audit failed: maxFootprintRadius=${placement.maxFootprintRadius}`);
+  }
+  if ((placement.byFootprintKind?.['protected-landmark'] || 0) < 1) failures.push('Gate 3R footprint audit failed: protected FCC footprint missing');
+  if ((placement.byFootprintKind?.['security-pad'] || 0) < 3) failures.push(`Gate 3R footprint audit failed: security pads=${placement.byFootprintKind?.['security-pad'] || 0}`);
+  if ((placement.byFootprintKind?.['fcc-walk'] || 0) < 2) failures.push(`Gate 3R footprint audit failed: FCC walks=${placement.byFootprintKind?.['fcc-walk'] || 0}`);
   if ((placement.byKind?.lamp || 0) < 8) failures.push(`Gate 3R placement audit failed: lamps=${placement.byKind?.lamp || 0}`);
   if ((placement.byKind?.sign || 0) < 6) failures.push(`Gate 3R placement audit failed: signs=${placement.byKind?.sign || 0}`);
 
@@ -3207,7 +3233,7 @@ function assertGate3RVerticalSliceVerification(result, failures) {
   if ((start.burnoutScuffs || 0) < 6) failures.push(`Gate 3R start failed: burnoutScuffs=${start.burnoutScuffs || 0}`);
   if ((start.signs || 0) < 2) failures.push(`Gate 3R start failed: signs=${start.signs || 0}`);
   if ((start.lamps || 0) < 2) failures.push(`Gate 3R start failed: lamps=${start.lamps || 0}`);
-  if ((campusRoute.routeMarks || 0) < 9) failures.push(`Gate 3R campus route failed: routeMarks=${campusRoute.routeMarks || 0}`);
+  if ((campusRoute.routeMarks || 0) !== 0) failures.push(`Gate 3R campus route failed: rejected white route marks built=${campusRoute.routeMarks || 0}`);
   if ((campusRoute.lamps || 0) < 4) failures.push(`Gate 3R campus route failed: lamps=${campusRoute.lamps || 0}`);
   if ((campusRoute.hedges || 0) !== 0) failures.push(`Gate 3R campus route failed: rejected hedges built=${campusRoute.hedges || 0}`);
   if ((campusRoute.flowerBeds || 0) !== 0) failures.push(`Gate 3R campus route failed: rejected flowerBeds built=${campusRoute.flowerBeds || 0}`);
@@ -3217,7 +3243,7 @@ function assertGate3RVerticalSliceVerification(result, failures) {
   if ((fcc.planters || 0) !== 0) failures.push(`Gate 3R FCC failed: rejected planters built=${fcc.planters || 0}`);
   if ((fcc.lamps || 0) < 2) failures.push(`Gate 3R FCC failed: lamps=${fcc.lamps || 0}`);
   if ((fcc.identityFrames || 0) < 2) failures.push(`Gate 3R FCC failed: identityFrames=${fcc.identityFrames || 0}`);
-  if ((securityRoute.routeMarks || 0) < 3) failures.push(`Gate 3R security route failed: routeMarks=${securityRoute.routeMarks || 0}`);
+  if ((securityRoute.routeMarks || 0) !== 0) failures.push(`Gate 3R security route failed: rejected white route marks built=${securityRoute.routeMarks || 0}`);
   if ((securityRoute.warningBollards || 0) < 2) failures.push(`Gate 3R security route failed: warningBollards=${securityRoute.warningBollards || 0}`);
   if ((security.floorPads || 0) < 3) failures.push(`Gate 3R security lab failed: floorPads=${security.floorPads || 0}`);
   if ((security.serverBlocks || 0) < 4) failures.push(`Gate 3R security lab failed: serverBlocks=${security.serverBlocks || 0}`);

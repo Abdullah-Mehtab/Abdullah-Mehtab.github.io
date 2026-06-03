@@ -5,8 +5,8 @@ export const WORLD_HALF_SIZE = 190;
 export const MAP_PADDING = 24;
 export const ISLAND_RADIUS = 158;
 export const WATER_RADIUS = ISLAND_RADIUS + 42;
-export const SECURITY_SCAN_OFFSET = [18, 14];
-export const SECURITY_SCAN_ROTATION = -1.93;
+export const SECURITY_SCAN_OFFSET = [0, 0];
+export const SECURITY_SCAN_ROTATION = -2.36;
 
 export const roadSurfaceProfiles = {
   avenue: {
@@ -76,8 +76,8 @@ export const roadSurfaceProfiles = {
 
 export const districtFootprints = [
   { id: 'launch-run', label: 'Launch Run', center: [10, -98], size: [34, 24], color: '#7cffb2', kind: 'plaza' },
-  { id: 'fcc-campus', label: 'FCC Campus', center: [-88, 80], size: [48, 34], color: '#9ccfff', kind: 'campus' },
-  { id: 'security-yard', label: 'Security Yard', center: [-112, -46], size: [34, 26], color: '#68d8ff', kind: 'security' },
+  { id: 'fcc-campus', label: 'FCC Campus', center: [-74, 58], size: [48, 34], color: '#9ccfff', kind: 'campus' },
+  { id: 'security-yard', label: 'Security Yard', center: [-116, -50], size: [34, 26], color: '#68d8ff', kind: 'security' },
   { id: 'gallery-side', label: 'Gallery Side', center: [96, -16], size: [42, 34], color: '#ffcc66', kind: 'workshop' },
   { id: 'north-ridge', label: 'North Ridge', center: [34, 108], size: [54, 26], color: '#ff6d8d', kind: 'tower' },
   { id: 'west-service', label: 'West Service', center: [-72, -88], size: [42, 28], color: '#92ffea', kind: 'trail' },
@@ -243,7 +243,7 @@ export const worldZones = [
     kind: 'Academics',
     title: 'FCC Education Grove',
     districtId: 'fcc-campus',
-    position: [-96, 0, 84],
+    position: [-74, 0, 58],
     rotation: -0.43,
     radius: 11,
     color: '#9ccfff',
@@ -260,8 +260,8 @@ export const worldZones = [
     kind: 'Offensive Security',
     title: 'Cyber Sentinel Lab',
     districtId: 'security-yard',
-    position: [-122, 0, -50],
-    rotation: -0.28,
+    position: [-116, 0, -50],
+    rotation: -2.36,
     radius: 13,
     color: '#68d8ff',
     shape: 'lab',
@@ -530,15 +530,15 @@ export const zonePresentation = {
     fov: 42,
   },
   education: {
-    respawn: { position: [-100, 1.08, 58], heading: 0.72 },
-    camera: [-136, 15, 105],
-    target: [-97, 5, 83],
-    fov: 48,
+    respawn: { position: [-96, 1.08, 62], heading: 0.72 },
+    camera: [-112, 15, 42],
+    target: [-74, 5, 58],
+    fov: 42,
   },
   security: {
-    respawn: { position: [-104, 1.08, -40], heading: -1.93 },
-    camera: [-140, 9, -54],
-    target: [-122, 3, -50],
+    respawn: { position: [-104, 1.08, -40], heading: -2.36 },
+    camera: [-132, 11, -64],
+    target: [-116, 3, -50],
     fov: 42,
   },
   projects: {
