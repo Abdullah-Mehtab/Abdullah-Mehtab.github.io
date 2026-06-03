@@ -78,11 +78,14 @@ export class Roads {
     this.world.scene.add(this.roadGroup);
     this.roadGroup.userData.edgeFeatherCount = 0;
     this.roadGroup.userData.laneEdgeLineCount = 0;
+    this.roadGroup.userData.foundationTrimmedEndpoints = 0;
+    this.roadGroup.userData.foundationTaperedEndpoints = 0;
     for (const path of roadPaths) {
       this.addPath(path);
     }
     if (this.world.foundationReplacementMode) {
-      this.addFoundationJunctionCaps();
+      this.roadGroup.userData.junctionPatchCount = 0;
+      this.roadGroup.userData.circularPointCaps = 0;
     } else {
       this.addJunctionPatches();
     }
@@ -126,6 +129,8 @@ export class Roads {
     const width = path.width;
     const layer = ROAD_VISUAL_LAYER[path.hierarchy] ?? 1;
     const foundationMode = this.world.foundationReplacementMode;
+    const foundationProfile = foundationMode ? this.foundationVisualProfile(path) : null;
+    const visualPoints = foundationProfile?.points || path.points;
     const shoulderWidth = foundationMode ? 0 : style.shoulder;
     const shoulderY = 0.068 + layer * 0.001;
     const surfaceY = 0.104 + layer * 0.006;
@@ -143,7 +148,7 @@ export class Roads {
 
     if (!foundationMode && shoulderWidth > 0) {
       const shoulder = new THREE.Mesh(
-        createPathRibbonGeometry(path.points, width + shoulderWidth * 2, path.closed, shoulderY, 9),
+        createPathRibbonGeometry(visualPoints, width + shoulderWidth * 2, path.closed, shoulderY, 9),
         this.offsetMaterial(edgeMaterial, 1 + layer)
       );
       shoulder.name = `ROAD_${path.id}_shoulder`;
@@ -154,7 +159,15 @@ export class Roads {
     }
 
     const surface = new THREE.Mesh(
-      createPathRibbonGeometry(path.points, width, path.closed, surfaceY, 9),
+      createPathRibbonGeometry(
+        visualPoints,
+        width,
+        path.closed,
+        surfaceY,
+        9,
+        0,
+        foundationProfile?.endpointScale
+      ),
       this.offsetMaterial(surfaceMaterial, 3 + layer)
     );
     surface.name = `ROAD_${path.id}_surface`;
@@ -202,6 +215,23 @@ export class Roads {
     }
 
     // Roads stay visual so the car always drives on one continuous terrain collider.
+  }
+
+  foundationVisualProfile(path) {
+    if (path.closed || path.points.length < 2) return { points: path.points, endpointScale: null };
+    const points = path.points.map((point) => [...point]);
+    const endpointScale = { start: 1, end: 1 };
+    if (trimFoundationEndpoint(points, 0, 1, path)) {
+      this.roadGroup.userData.foundationTrimmedEndpoints += 1;
+      this.roadGroup.userData.foundationTaperedEndpoints += 1;
+      endpointScale.start = 0.42;
+    }
+    if (trimFoundationEndpoint(points, points.length - 1, points.length - 2, path)) {
+      this.roadGroup.userData.foundationTrimmedEndpoints += 1;
+      this.roadGroup.userData.foundationTaperedEndpoints += 1;
+      endpointScale.end = 0.42;
+    }
+    return { points, endpointScale };
   }
 
   addLaneEdgeLines(path, width, layer, surfaceY) {
@@ -285,43 +315,6 @@ export class Roads {
       this.tagRoadMesh(surface, dominant, 'junction_surface');
       surface.receiveShadow = false;
       surface.renderOrder = 12 + layer;
-      this.roadGroup.add(surface);
-      patches += 1;
-    }
-
-    this.roadGroup.userData.junctionPatchCount = patches;
-    this.roadGroup.userData.circularPointCaps = 0;
-  }
-
-  addFoundationJunctionCaps() {
-    const graph = new Map();
-    for (const path of roadPaths) {
-      for (let index = 0; index < path.points.length; index += 1) {
-        const point = path.points[index];
-        const key = pointKey(point);
-        if (!graph.has(key)) {
-          graph.set(key, { point, connections: [], pathIds: new Set() });
-        }
-        const node = graph.get(key);
-        node.pathIds.add(path.id);
-        if (index > 0) node.connections.push(createJunctionConnection(point, path.points[index - 1], path));
-        if (index < path.points.length - 1) node.connections.push(createJunctionConnection(point, path.points[index + 1], path));
-        if (path.closed && index === 0) node.connections.push(createJunctionConnection(point, path.points[path.points.length - 1], path));
-        if (path.closed && index === path.points.length - 1) node.connections.push(createJunctionConnection(point, path.points[0], path));
-      }
-    }
-
-    let patches = 0;
-    for (const node of graph.values()) {
-      if (node.pathIds.size < 2 || node.connections.length < 2) continue;
-      const dominant = dominantFoundationJunctionPath(node.connections.map((connection) => connection.path));
-      const layer = ROAD_VISUAL_LAYER[dominant.hierarchy] ?? 1;
-      const surfaceGeometry = createJunctionBlendGeometry(node.point, node.connections, 0.18, 0.158 + layer * 0.007);
-      const surface = new THREE.Mesh(surfaceGeometry, this.offsetMaterial(this.foundationRoadMaterial(dominant), 22 + layer));
-      surface.name = `ROAD_FoundationJunctionCap_${patches}`;
-      this.tagRoadMesh(surface, dominant, 'junction_surface');
-      surface.receiveShadow = false;
-      surface.renderOrder = 16 + layer;
       this.roadGroup.add(surface);
       patches += 1;
     }
@@ -882,6 +875,25 @@ function dominantFoundationJunctionPath(paths) {
   }, paths[0]);
 }
 
+function trimFoundationEndpoint(points, endpointIndex, neighborIndex, path) {
+  const point = points[endpointIndex];
+  const sharedPaths = roadPaths.filter((candidate) => candidate.points.some((candidatePoint) => pointKey(candidatePoint) === pointKey(point)));
+  if (sharedPaths.length < 2) return false;
+  const dominant = dominantFoundationJunctionPath(sharedPaths);
+  if (dominant.id === path.id) return false;
+  const neighbor = points[neighborIndex];
+  const dx = neighbor[0] - point[0];
+  const dz = neighbor[1] - point[1];
+  const length = Math.hypot(dx, dz);
+  if (length < 0.001) return false;
+  const trim = Math.min(length * 0.42, Math.max(1.8, (dominant.width || path.width) * 0.52));
+  points[endpointIndex] = [
+    point[0] + (dx / length) * trim,
+    point[1] + (dz / length) * trim
+  ];
+  return true;
+}
+
 function createJunctionBlendGeometry(point, connections, padding, y) {
   const center = { x: point[0], z: point[1] };
   const outline = [];
@@ -1064,7 +1076,7 @@ function createRoadSurfaceSegments(paths) {
   });
 }
 
-function createPathRibbonGeometry(points, width, closed, y, samplesPerSegment = 8, offset = 0) {
+function createPathRibbonGeometry(points, width, closed, y, samplesPerSegment = 8, offset = 0, endpointScale = null) {
   const curve = makePathCurve(points, closed);
   const divisions = Math.max(12, (closed ? points.length : points.length - 1) * samplesPerSegment);
   const vertexCount = (divisions + 1) * 2;
@@ -1090,8 +1102,9 @@ function createPathRibbonGeometry(points, width, closed, y, samplesPerSegment = 
 
     const left = i * 2;
     const right = left + 1;
-    writeRibbonVertex(vertices, left, centerX - rightX * width * 0.5, y, centerZ - rightZ * width * 0.5);
-    writeRibbonVertex(vertices, right, centerX + rightX * width * 0.5, y, centerZ + rightZ * width * 0.5);
+    const localWidth = width * ribbonWidthScale(t, endpointScale);
+    writeRibbonVertex(vertices, left, centerX - rightX * localWidth * 0.5, y, centerZ - rightZ * localWidth * 0.5);
+    writeRibbonVertex(vertices, right, centerX + rightX * localWidth * 0.5, y, centerZ + rightZ * localWidth * 0.5);
     uvs[left * 2] = accumulated / 9;
     uvs[left * 2 + 1] = 0;
     uvs[right * 2] = accumulated / 9;
@@ -1115,6 +1128,18 @@ function writeRibbonVertex(vertices, index, x, y, z) {
   vertices[cursor] = x;
   vertices[cursor + 1] = y;
   vertices[cursor + 2] = z;
+}
+
+function ribbonWidthScale(t, endpointScale) {
+  if (!endpointScale) return 1;
+  let scale = 1;
+  if (endpointScale.start < 1 && t < 0.18) {
+    scale = Math.min(scale, endpointScale.start + (1 - endpointScale.start) * smoothstep(0, 0.18, t));
+  }
+  if (endpointScale.end < 1 && t > 0.82) {
+    scale = Math.min(scale, endpointScale.end + (1 - endpointScale.end) * smoothstep(0, 0.18, 1 - t));
+  }
+  return scale;
 }
 
 function makeThresholdApronAlphaMap(size = 96) {
