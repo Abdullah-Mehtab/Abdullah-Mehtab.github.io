@@ -1561,7 +1561,9 @@ async function collectRuntimeMetrics(page, loadMs, gameplay, water, surfaces, su
         blendPatches: game.world.roads?.roadGroup?.userData?.junctionPatchCount || 0,
         circularPointCaps: game.world.roads?.roadGroup?.userData?.circularPointCaps || 0,
         foundationTrimmedEndpoints: game.world.roads?.roadGroup?.userData?.foundationTrimmedEndpoints || 0,
-        foundationTaperedEndpoints: game.world.roads?.roadGroup?.userData?.foundationTaperedEndpoints || 0
+        foundationTaperedEndpoints: game.world.roads?.roadGroup?.userData?.foundationTaperedEndpoints || 0,
+        foundationFusedLayers: game.world.roads?.roadGroup?.userData?.foundationFusedLayers || 0,
+        foundationFullWidthPaths: game.world.roads?.roadGroup?.userData?.foundationFullWidthPaths || 0
       },
       roadSurfaceDetails: game.world.roads?.getDetailStats?.() || {},
       districtGround: game.world.terrain?.getDistrictGroundStats?.() || {},
@@ -3136,12 +3138,10 @@ function assertGate2RFoundationReplacementVerification(result, failures) {
   if ((result.roadSurfaceDetails?.transitionAprons || 0) !== 0) failures.push(`Gate 2R roads failed: transition aprons built=${result.roadSurfaceDetails?.transitionAprons || 0}`);
   if ((result.roadSurfaceDetails?.transitionGuideBars || 0) !== 0) failures.push(`Gate 2R roads failed: transition guide bars built=${result.roadSurfaceDetails?.transitionGuideBars || 0}`);
   if ((result.roadJunctions?.blendPatches || 0) !== 0) failures.push(`Gate 2R roads failed: visible junction slabs=${result.roadJunctions?.blendPatches || 0}`);
-  if ((result.roadJunctions?.foundationTrimmedEndpoints || 0) < (result.roadTopology?.sharedJunctions || 0)) {
-    failures.push(`Gate 2R roads failed: trimmed endpoints=${result.roadJunctions?.foundationTrimmedEndpoints || 0}/${result.roadTopology?.sharedJunctions || 0}`);
-  }
-  if ((result.roadJunctions?.foundationTaperedEndpoints || 0) < (result.roadTopology?.sharedJunctions || 0)) {
-    failures.push(`Gate 2R roads failed: tapered endpoints=${result.roadJunctions?.foundationTaperedEndpoints || 0}/${result.roadTopology?.sharedJunctions || 0}`);
-  }
+  if ((result.roadJunctions?.foundationFusedLayers || 0) !== 1) failures.push(`Gate 2R roads failed: fused foundation road layers=${result.roadJunctions?.foundationFusedLayers || 0}`);
+  if ((result.roadJunctions?.foundationFullWidthPaths || 0) !== (result.roadTopology?.paths || 0)) failures.push(`Gate 2R roads failed: full-width paths=${result.roadJunctions?.foundationFullWidthPaths || 0}/${result.roadTopology?.paths || 0}`);
+  if ((result.roadJunctions?.foundationTrimmedEndpoints || 0) !== 0) failures.push(`Gate 2R roads failed: trimmed endpoints=${result.roadJunctions?.foundationTrimmedEndpoints || 0}`);
+  if ((result.roadJunctions?.foundationTaperedEndpoints || 0) !== 0) failures.push(`Gate 2R roads failed: tapered endpoints=${result.roadJunctions?.foundationTaperedEndpoints || 0}`);
   if ((result.roadGuidance?.chevrons || 0) !== 0) failures.push(`Gate 2R roads failed: final chevrons built=${result.roadGuidance?.chevrons || 0}`);
   if ((result.roadGuidance?.reflectorStuds || 0) !== 0) failures.push(`Gate 2R roads failed: reflector studs built=${result.roadGuidance?.reflectorStuds || 0}`);
   if (!result.roadTopology?.coastalLoop) failures.push('Gate 2R road topology failed: coastal loop missing');
@@ -3278,12 +3278,10 @@ function assertGate3RVerticalSliceVerification(result, failures) {
   if ((result.roadSurfaceDetails?.transitionAprons || 0) !== 0) failures.push(`Gate 3R roads failed: transition aprons built=${result.roadSurfaceDetails?.transitionAprons || 0}`);
   if ((result.roadSurfaceDetails?.transitionGuideBars || 0) !== 0) failures.push(`Gate 3R roads failed: transition guide bars built=${result.roadSurfaceDetails?.transitionGuideBars || 0}`);
   if ((result.roadJunctions?.blendPatches || 0) !== 0) failures.push(`Gate 3R roads failed: visible junction slabs=${result.roadJunctions?.blendPatches || 0}`);
-  if ((result.roadJunctions?.foundationTrimmedEndpoints || 0) < (result.roadTopology?.sharedJunctions || 0)) {
-    failures.push(`Gate 3R roads failed: trimmed endpoints=${result.roadJunctions?.foundationTrimmedEndpoints || 0}/${result.roadTopology?.sharedJunctions || 0}`);
-  }
-  if ((result.roadJunctions?.foundationTaperedEndpoints || 0) < (result.roadTopology?.sharedJunctions || 0)) {
-    failures.push(`Gate 3R roads failed: tapered endpoints=${result.roadJunctions?.foundationTaperedEndpoints || 0}/${result.roadTopology?.sharedJunctions || 0}`);
-  }
+  if ((result.roadJunctions?.foundationFusedLayers || 0) !== 1) failures.push(`Gate 3R roads failed: fused foundation road layers=${result.roadJunctions?.foundationFusedLayers || 0}`);
+  if ((result.roadJunctions?.foundationFullWidthPaths || 0) !== (result.roadTopology?.paths || 0)) failures.push(`Gate 3R roads failed: full-width paths=${result.roadJunctions?.foundationFullWidthPaths || 0}/${result.roadTopology?.paths || 0}`);
+  if ((result.roadJunctions?.foundationTrimmedEndpoints || 0) !== 0) failures.push(`Gate 3R roads failed: trimmed endpoints=${result.roadJunctions?.foundationTrimmedEndpoints || 0}`);
+  if ((result.roadJunctions?.foundationTaperedEndpoints || 0) !== 0) failures.push(`Gate 3R roads failed: tapered endpoints=${result.roadJunctions?.foundationTaperedEndpoints || 0}`);
   if ((result.roadGuidance?.chevrons || 0) !== 0) failures.push(`Gate 3R roads failed: final chevrons built=${result.roadGuidance?.chevrons || 0}`);
   if ((result.roadGuidance?.reflectorStuds || 0) !== 0) failures.push(`Gate 3R roads failed: reflector studs built=${result.roadGuidance?.reflectorStuds || 0}`);
   if (!result.roadTopology?.coastalLoop) failures.push('Gate 3R road topology failed: coastal loop missing');

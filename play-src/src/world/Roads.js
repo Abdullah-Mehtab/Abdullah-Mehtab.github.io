@@ -1,7 +1,7 @@
 // ABOUTME: Builds the visible driving routes and junction markings for /play.
 // ABOUTME: Keeps roads visual-only so decorative route geometry cannot block the car.
 import * as THREE from 'three';
-import { roadPaths, roadSegments, routeThresholds } from './worldData.js';
+import { WORLD_HALF_SIZE, roadPaths, roadSegments, routeThresholds } from './worldData.js';
 import { mergeStaticMeshesInGroup } from './StaticBatching.js';
 
 const ROAD_STYLE = {
@@ -60,6 +60,8 @@ const GATE3_THRESHOLD_IDS = new Set([
   'security-return-threshold'
 ]);
 
+const FOUNDATION_ROAD_TEXTURE_SIZE = 2048;
+
 export class Roads {
   constructor(world) {
     this.world = world;
@@ -80,13 +82,14 @@ export class Roads {
     this.roadGroup.userData.laneEdgeLineCount = 0;
     this.roadGroup.userData.foundationTrimmedEndpoints = 0;
     this.roadGroup.userData.foundationTaperedEndpoints = 0;
-    for (const path of roadPaths) {
-      this.addPath(path);
-    }
     if (this.world.foundationReplacementMode) {
+      this.addFoundationRoadLayer();
       this.roadGroup.userData.junctionPatchCount = 0;
       this.roadGroup.userData.circularPointCaps = 0;
     } else {
+      for (const path of roadPaths) {
+        this.addPath(path);
+      }
       this.addJunctionPatches();
     }
     mergeStaticMeshesInGroup(this.roadGroup, {
@@ -124,13 +127,38 @@ export class Roads {
     this.addPathRibbon(path);
   }
 
+  addFoundationRoadLayer() {
+    const texture = makeFoundationRoadTexture(roadPaths, WORLD_HALF_SIZE, FOUNDATION_ROAD_TEXTURE_SIZE);
+    const material = new THREE.MeshBasicMaterial({
+      map: texture,
+      transparent: true,
+      depthWrite: false
+    });
+    material.polygonOffset = true;
+    material.polygonOffsetFactor = -8;
+    material.polygonOffsetUnits = -8;
+
+    const mesh = new THREE.Mesh(
+      new THREE.PlaneGeometry(WORLD_HALF_SIZE * 2, WORLD_HALF_SIZE * 2),
+      material
+    );
+    mesh.name = 'ROAD_FoundationFusedLayer';
+    mesh.rotation.x = -Math.PI / 2;
+    mesh.position.y = 0.116;
+    mesh.renderOrder = 3;
+    mesh.receiveShadow = false;
+    mesh.userData.batchLabel = 'foundation_fused_surface';
+    mesh.userData.roadPart = 'foundation_fused_surface';
+    this.roadGroup.add(mesh);
+    this.roadGroup.userData.foundationFusedLayers = 1;
+    this.roadGroup.userData.foundationFullWidthPaths = roadPaths.length;
+  }
+
   addPathRibbon(path) {
     const style = ROAD_STYLE[path.hierarchy] || ROAD_STYLE.street;
     const width = path.width;
     const layer = ROAD_VISUAL_LAYER[path.hierarchy] ?? 1;
     const foundationMode = this.world.foundationReplacementMode;
-    const foundationProfile = foundationMode ? this.foundationVisualProfile(path) : null;
-    const visualPoints = foundationProfile?.points || path.points;
     const shoulderWidth = foundationMode ? 0 : style.shoulder;
     const shoulderY = 0.068 + layer * 0.001;
     const surfaceY = 0.104 + layer * 0.006;
@@ -148,7 +176,7 @@ export class Roads {
 
     if (!foundationMode && shoulderWidth > 0) {
       const shoulder = new THREE.Mesh(
-        createPathRibbonGeometry(visualPoints, width + shoulderWidth * 2, path.closed, shoulderY, 9),
+        createPathRibbonGeometry(path.points, width + shoulderWidth * 2, path.closed, shoulderY, 9),
         this.offsetMaterial(edgeMaterial, 1 + layer)
       );
       shoulder.name = `ROAD_${path.id}_shoulder`;
@@ -159,15 +187,7 @@ export class Roads {
     }
 
     const surface = new THREE.Mesh(
-      createPathRibbonGeometry(
-        visualPoints,
-        width,
-        path.closed,
-        surfaceY,
-        9,
-        0,
-        foundationProfile?.endpointScale
-      ),
+      createPathRibbonGeometry(path.points, width, path.closed, surfaceY, 9),
       this.offsetMaterial(surfaceMaterial, 3 + layer)
     );
     surface.name = `ROAD_${path.id}_surface`;
@@ -215,23 +235,6 @@ export class Roads {
     }
 
     // Roads stay visual so the car always drives on one continuous terrain collider.
-  }
-
-  foundationVisualProfile(path) {
-    if (path.closed || path.points.length < 2) return { points: path.points, endpointScale: null };
-    const points = path.points.map((point) => [...point]);
-    const endpointScale = { start: 1, end: 1 };
-    if (trimFoundationEndpoint(points, 0, 1, path)) {
-      this.roadGroup.userData.foundationTrimmedEndpoints += 1;
-      this.roadGroup.userData.foundationTaperedEndpoints += 1;
-      endpointScale.start = 0.42;
-    }
-    if (trimFoundationEndpoint(points, points.length - 1, points.length - 2, path)) {
-      this.roadGroup.userData.foundationTrimmedEndpoints += 1;
-      this.roadGroup.userData.foundationTaperedEndpoints += 1;
-      endpointScale.end = 0.42;
-    }
-    return { points, endpointScale };
   }
 
   addLaneEdgeLines(path, width, layer, surfaceY) {
@@ -865,35 +868,6 @@ function dominantRoadPath(paths) {
   }, paths[0]);
 }
 
-function dominantFoundationJunctionPath(paths) {
-  return paths.reduce((best, path) => {
-    if (path.width > best.width + 0.05) return path;
-    if (best.width > path.width + 0.05) return best;
-    const bestLayer = ROAD_SURFACE_PRIORITY[best.hierarchy] ?? 1;
-    const pathLayer = ROAD_SURFACE_PRIORITY[path.hierarchy] ?? 1;
-    return pathLayer > bestLayer ? path : best;
-  }, paths[0]);
-}
-
-function trimFoundationEndpoint(points, endpointIndex, neighborIndex, path) {
-  const point = points[endpointIndex];
-  const sharedPaths = roadPaths.filter((candidate) => candidate.points.some((candidatePoint) => pointKey(candidatePoint) === pointKey(point)));
-  if (sharedPaths.length < 2) return false;
-  const dominant = dominantFoundationJunctionPath(sharedPaths);
-  if (dominant.id === path.id) return false;
-  const neighbor = points[neighborIndex];
-  const dx = neighbor[0] - point[0];
-  const dz = neighbor[1] - point[1];
-  const length = Math.hypot(dx, dz);
-  if (length < 0.001) return false;
-  const trim = Math.min(length * 0.42, Math.max(1.8, (dominant.width || path.width) * 0.52));
-  points[endpointIndex] = [
-    point[0] + (dx / length) * trim,
-    point[1] + (dz / length) * trim
-  ];
-  return true;
-}
-
 function createJunctionBlendGeometry(point, connections, padding, y) {
   const center = { x: point[0], z: point[1] };
   const outline = [];
@@ -1076,7 +1050,78 @@ function createRoadSurfaceSegments(paths) {
   });
 }
 
-function createPathRibbonGeometry(points, width, closed, y, samplesPerSegment = 8, offset = 0, endpointScale = null) {
+function makeFoundationRoadTexture(paths, halfSize, textureSize) {
+  const canvas = document.createElement('canvas');
+  canvas.width = textureSize;
+  canvas.height = textureSize;
+  const ctx = canvas.getContext('2d');
+  const pixelsPerUnit = textureSize / (halfSize * 2);
+  const orderedPaths = [...paths].sort((a, b) => {
+    if (a.width !== b.width) return a.width - b.width;
+    return (ROAD_SURFACE_PRIORITY[a.hierarchy] ?? 1) - (ROAD_SURFACE_PRIORITY[b.hierarchy] ?? 1);
+  });
+
+  ctx.clearRect(0, 0, textureSize, textureSize);
+  ctx.lineCap = 'round';
+  ctx.lineJoin = 'round';
+
+  for (const path of orderedPaths) {
+    drawFoundationRoadPath(ctx, path, halfSize, textureSize, (path.width + 0.62) * pixelsPerUnit, foundationRoadEdgeColor(path));
+  }
+  for (const path of orderedPaths) {
+    drawFoundationRoadPath(ctx, path, halfSize, textureSize, path.width * pixelsPerUnit, foundationRoadSurfaceColor(path));
+  }
+
+  const texture = new THREE.CanvasTexture(canvas);
+  texture.colorSpace = THREE.SRGBColorSpace;
+  texture.anisotropy = 4;
+  texture.needsUpdate = true;
+  return texture;
+}
+
+function drawFoundationRoadPath(ctx, path, halfSize, textureSize, lineWidth, color) {
+  const curve = makePathCurve(path.points, path.closed);
+  const divisions = Math.max(32, path.points.length * 24);
+  ctx.beginPath();
+  ctx.lineWidth = lineWidth;
+  ctx.strokeStyle = color;
+  for (let index = 0; index <= divisions; index += 1) {
+    const point = curve.getPointAt(index / divisions);
+    const canvasPoint = worldToRoadCanvas(point.x, point.z, halfSize, textureSize);
+    if (index === 0) {
+      ctx.moveTo(canvasPoint.x, canvasPoint.y);
+    } else {
+      ctx.lineTo(canvasPoint.x, canvasPoint.y);
+    }
+  }
+  if (path.closed) ctx.closePath();
+  ctx.stroke();
+}
+
+function worldToRoadCanvas(x, z, halfSize, textureSize) {
+  return {
+    x: ((x + halfSize) / (halfSize * 2)) * textureSize,
+    y: ((halfSize + z) / (halfSize * 2)) * textureSize
+  };
+}
+
+function foundationRoadSurfaceColor(path) {
+  if (path.hierarchy === 'dirt') return '#6d4527';
+  if (path.hierarchy === 'security') return '#102f36';
+  if (path.hierarchy === 'bridge') return '#23363b';
+  if (path.hierarchy === 'stunt') return '#281817';
+  return '#111813';
+}
+
+function foundationRoadEdgeColor(path) {
+  if (path.hierarchy === 'dirt') return '#83613a';
+  if (path.hierarchy === 'security') return '#183e45';
+  if (path.hierarchy === 'bridge') return '#30454a';
+  if (path.hierarchy === 'stunt') return '#442721';
+  return '#202a23';
+}
+
+function createPathRibbonGeometry(points, width, closed, y, samplesPerSegment = 8, offset = 0) {
   const curve = makePathCurve(points, closed);
   const divisions = Math.max(12, (closed ? points.length : points.length - 1) * samplesPerSegment);
   const vertexCount = (divisions + 1) * 2;
@@ -1102,9 +1147,8 @@ function createPathRibbonGeometry(points, width, closed, y, samplesPerSegment = 
 
     const left = i * 2;
     const right = left + 1;
-    const localWidth = width * ribbonWidthScale(t, endpointScale);
-    writeRibbonVertex(vertices, left, centerX - rightX * localWidth * 0.5, y, centerZ - rightZ * localWidth * 0.5);
-    writeRibbonVertex(vertices, right, centerX + rightX * localWidth * 0.5, y, centerZ + rightZ * localWidth * 0.5);
+    writeRibbonVertex(vertices, left, centerX - rightX * width * 0.5, y, centerZ - rightZ * width * 0.5);
+    writeRibbonVertex(vertices, right, centerX + rightX * width * 0.5, y, centerZ + rightZ * width * 0.5);
     uvs[left * 2] = accumulated / 9;
     uvs[left * 2 + 1] = 0;
     uvs[right * 2] = accumulated / 9;
@@ -1128,18 +1172,6 @@ function writeRibbonVertex(vertices, index, x, y, z) {
   vertices[cursor] = x;
   vertices[cursor + 1] = y;
   vertices[cursor + 2] = z;
-}
-
-function ribbonWidthScale(t, endpointScale) {
-  if (!endpointScale) return 1;
-  let scale = 1;
-  if (endpointScale.start < 1 && t < 0.18) {
-    scale = Math.min(scale, endpointScale.start + (1 - endpointScale.start) * smoothstep(0, 0.18, t));
-  }
-  if (endpointScale.end < 1 && t > 0.82) {
-    scale = Math.min(scale, endpointScale.end + (1 - endpointScale.end) * smoothstep(0, 0.18, 1 - t));
-  }
-  return scale;
 }
 
 function makeThresholdApronAlphaMap(size = 96) {
