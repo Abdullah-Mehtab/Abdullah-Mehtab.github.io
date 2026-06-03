@@ -1171,12 +1171,12 @@ export class SetPieces {
       color: 0x68d8ff,
       accentMaterial: this.world.materials.glowBlue,
       kind: 'security',
-      side: 1,
+      side: -1,
       warningSpacing: 16,
       warningSetback: 8.8,
       firstWarningAt: 13
     });
-    this.gate3rSign(group, 'SECURITY', 'Scanner gate', -84.4, -31.4, -0.82, 0x68d8ff, 1.54, 'GATE3R_SecurityRoute_Sign', 3.6);
+    this.gate3rSign(group, 'SECURITY', 'Scanner gate', -70.5, -30.4, -0.82, 0x68d8ff, 1.54, 'GATE3R_SecurityRoute_Sign', 3.6);
     stats.signs += 1;
   }
 

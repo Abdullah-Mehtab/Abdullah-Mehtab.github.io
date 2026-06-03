@@ -121,6 +121,7 @@ try {
   const surfaceStressMetrics = await sampleRenderSnapshot(page);
   const securityScan = await exerciseSecurityScan(page);
   const routeReplay = await exerciseRouteReplay(page, routeReplaySegments);
+  const forwardDriveProbe = await exerciseForwardDriveProbe(page, routeReplaySegments);
   const circuitPreview = await previewCircuit(page);
   await screenshot(page, '06-circuit-target.png');
   const circuit = await finishCircuit(page, circuitPreview);
@@ -222,6 +223,7 @@ try {
     overlayUi: { map: mapUi, menu: menuUi },
     collectibles,
     securityScan,
+    forwardDriveProbe,
     vehicleLights,
     waterView,
     ...metrics
@@ -838,6 +840,134 @@ async function exerciseRouteReplay(page, segments) {
       minDistance: Number(Math.min(...samples.map((sample) => sample.distance)).toFixed(2)),
       minY: Number(Math.min(...samples.map((sample) => sample.minY)).toFixed(2)),
       failures
+    };
+  }, segments);
+}
+
+async function exerciseForwardDriveProbe(page, segments) {
+  return page.evaluate(async (probeSegments) => {
+    const delay = (ms) => new Promise((resolveDelay) => setTimeout(resolveDelay, ms));
+    const game = window.__portfolioDrive.game;
+    const input = game.input;
+    const samples = [];
+    const haltEvents = [];
+
+    const clearInput = () => {
+      input.actions.forward = false;
+      input.actions.backward = false;
+      input.actions.left = false;
+      input.actions.right = false;
+      input.actions.boost = false;
+      input.actions.handbrake = false;
+      input.actions.brake = false;
+      input.actions.jump = false;
+    };
+
+    const waitForGrounded = async () => {
+      for (let i = 0; i < 54; i += 1) {
+        if ((game.vehicle.controller?.groundedWheels || 0) >= 2) return true;
+        await delay(35);
+      }
+      return false;
+    };
+
+    for (const segment of probeSegments) {
+      clearInput();
+      const offset = Math.min(10, Math.max(4, segment.length * 0.24));
+      const heading = segment.rotation;
+      const start = {
+        x: segment.cx - Math.sin(heading) * offset,
+        y: 1.12,
+        z: segment.cz - Math.cos(heading) * offset
+      };
+      game.vehicle.respawn(start, heading);
+      await delay(120);
+      const grounded = await waitForGrounded();
+      const startPosition = game.vehicle.position.clone();
+      const startSurface = game.world.getSurfaceInfo(startPosition).id;
+      input.actions.forward = true;
+
+      let previous = null;
+      let maxSpeed = 0;
+      let minSpeedAfterLaunch = Infinity;
+      let maxDrop = 0;
+      const segmentHalts = [];
+      const frames = [];
+      for (let i = 0; i < 28; i += 1) {
+        await delay(50);
+        const position = game.vehicle.position.clone();
+        const velocity = game.vehicle.body.linvel();
+        const speed = Math.hypot(velocity.x, velocity.z);
+        const surface = game.world.getSurfaceInfo(position).id;
+        const frame = {
+          t: i * 50,
+          x: Number(position.x.toFixed(2)),
+          z: Number(position.z.toFixed(2)),
+          speed: Number(speed.toFixed(2)),
+          surface,
+          groundedWheels: game.vehicle.controller?.groundedWheels || 0
+        };
+        frames.push(frame);
+        maxSpeed = Math.max(maxSpeed, speed);
+        if (maxSpeed > 5.5) minSpeedAfterLaunch = Math.min(minSpeedAfterLaunch, speed);
+        if (previous) {
+          const drop = previous.speed - speed;
+          maxDrop = Math.max(maxDrop, drop);
+          if (
+            i > 5 &&
+            maxSpeed > 6.5 &&
+            previous.speed > 5.5 &&
+            speed < Math.max(1.8, previous.speed * 0.36) &&
+            drop > 5.2
+          ) {
+            const halt = {
+              id: segment.id,
+              index: segment.index,
+              t: frame.t,
+              x: frame.x,
+              z: frame.z,
+              previousSpeed: Number(previous.speed.toFixed(2)),
+              speed: frame.speed,
+              drop: Number(drop.toFixed(2)),
+              surface,
+              groundedWheels: frame.groundedWheels
+            };
+            segmentHalts.push(halt);
+            haltEvents.push(halt);
+          }
+        }
+        previous = { speed };
+      }
+      input.actions.forward = false;
+
+      const finalPosition = game.vehicle.position.clone();
+      samples.push({
+        id: segment.id,
+        index: segment.index,
+        grounded,
+        startSurface,
+        finalSurface: game.world.getSurfaceInfo(finalPosition).id,
+        start: { x: Number(startPosition.x.toFixed(2)), z: Number(startPosition.z.toFixed(2)) },
+        final: { x: Number(finalPosition.x.toFixed(2)), z: Number(finalPosition.z.toFixed(2)) },
+        distance: Number(startPosition.distanceTo(finalPosition).toFixed(2)),
+        maxSpeed: Number(maxSpeed.toFixed(2)),
+        minSpeedAfterLaunch: Number((Number.isFinite(minSpeedAfterLaunch) ? minSpeedAfterLaunch : 0).toFixed(2)),
+        maxDrop: Number(maxDrop.toFixed(2)),
+        halts: segmentHalts,
+        frames: frames.filter((_, index) => index % 4 === 0)
+      });
+      await delay(80);
+    }
+
+    clearInput();
+    window.__portfolioDrive.respawn('landing');
+    return {
+      total: samples.length,
+      halts: haltEvents.length,
+      events: haltEvents.slice(0, 8),
+      minDistance: Number(Math.min(...samples.map((sample) => sample.distance)).toFixed(2)),
+      maxDrop: Number(Math.max(...samples.map((sample) => sample.maxDrop)).toFixed(2)),
+      samples
     };
   }, segments);
 }
@@ -2125,6 +2255,14 @@ function assertVerification(result) {
   if (result.colliderAudit?.failures?.length) failures.push(`collider audit failed: ${result.colliderAudit.failures.map((item) => item.name).join(', ')}`);
   if (result.routeReplay?.total !== routeReplaySegments.length) failures.push(`route replay count mismatch: ${result.routeReplay?.total}/${routeReplaySegments.length}`);
   if (result.routeReplay?.failed) failures.push(`route replay failed: ${result.routeReplay.failed}/${result.routeReplay.total}`);
+  if (result.forwardDriveProbe?.total !== routeReplaySegments.length) failures.push(`forward drive probe count mismatch: ${result.forwardDriveProbe?.total}/${routeReplaySegments.length}`);
+  if ((result.forwardDriveProbe?.halts || 0) !== 0) {
+    const events = (result.forwardDriveProbe.events || [])
+      .slice(0, 3)
+      .map((event) => `${event.id}[${event.index}]@${event.x},${event.z} drop=${event.drop}`)
+      .join(', ');
+    failures.push(`forward drive probe failed: halts=${result.forwardDriveProbe.halts}${events ? ` (${events})` : ''}`);
+  }
   if (result.goalGate === 'gate-3r-vertical-slice') {
     assertGate3RVerticalSliceVerification(result, failures);
     if (failures.length) {
@@ -2977,6 +3115,7 @@ function assertGate2RFoundationReplacementVerification(result, failures) {
   if (!result.roadTopology?.coastalLoop) failures.push('Gate 2R road topology failed: coastal loop missing');
   if ((result.roadTopology?.closedLoops || 0) < 1) failures.push(`Gate 2R road topology failed: closedLoops=${result.roadTopology?.closedLoops || 0}`);
   if ((result.roadTopology?.paths || 0) !== roadPaths.length) failures.push(`Gate 2R road topology failed: paths=${result.roadTopology?.paths || 0}/${roadPaths.length}`);
+  if ((result.roadTopology?.nonJunctionCrossings || 0) !== 0) failures.push(`Gate 2R road topology failed: nonJunctionCrossings=${result.roadTopology?.nonJunctionCrossings || 0}`);
   if ((result.roadTopology?.paths || 0) > 6) failures.push(`Gate 2R road topology failed: too many route families=${result.roadTopology?.paths || 0}`);
   if ((result.roadTopology?.sharedJunctions || 0) < 4) failures.push(`Gate 2R road topology failed: sharedJunctions=${result.roadTopology?.sharedJunctions || 0}`);
   if ((result.roadTopology?.sharedJunctions || 0) > 8) failures.push(`Gate 2R road topology failed: too many shared junctions=${result.roadTopology?.sharedJunctions || 0}`);
@@ -3112,6 +3251,7 @@ function assertGate3RVerticalSliceVerification(result, failures) {
   if (!result.roadTopology?.coastalLoop) failures.push('Gate 3R road topology failed: coastal loop missing');
   if ((result.roadTopology?.closedLoops || 0) < 1) failures.push(`Gate 3R road topology failed: closedLoops=${result.roadTopology?.closedLoops || 0}`);
   if ((result.roadTopology?.paths || 0) !== roadPaths.length) failures.push(`Gate 3R road topology failed: paths=${result.roadTopology?.paths || 0}/${roadPaths.length}`);
+  if ((result.roadTopology?.nonJunctionCrossings || 0) !== 0) failures.push(`Gate 3R road topology failed: nonJunctionCrossings=${result.roadTopology?.nonJunctionCrossings || 0}`);
   if ((result.roadTopology?.paths || 0) > 6) failures.push(`Gate 3R road topology failed: too many route families=${result.roadTopology?.paths || 0}`);
   if ((result.roadTopology?.sharedJunctions || 0) < 4) failures.push(`Gate 3R road topology failed: sharedJunctions=${result.roadTopology?.sharedJunctions || 0}`);
   if ((result.roadTopology?.sharedJunctions || 0) > 8) failures.push(`Gate 3R road topology failed: too many shared junctions=${result.roadTopology?.sharedJunctions || 0}`);
@@ -3444,12 +3584,59 @@ function sampleRoadTopology() {
     closedLoops: roadPaths.filter((path) => path.closed).length,
     coastalLoop: Boolean(coastalLoop?.closed && coastalLoop.points.length >= 12),
     coastalLoopPoints: coastalLoop?.points.length || 0,
+    nonJunctionCrossings: countRoadCrossings(),
     sharedJunctions: [...junctionKeys.values()].filter((paths) => paths.size > 1).length,
     averageRoadWidth: Number((roadWidths.reduce((sum, width) => sum + width, 0) / Math.max(1, roadWidths.length)).toFixed(2)),
     maxRoadWidth: Math.max(...roadWidths),
     averageThresholdWidth: Number((thresholdWidths.reduce((sum, width) => sum + width, 0) / Math.max(1, thresholdWidths.length)).toFixed(2)),
     maxThresholdWidth: Math.max(...thresholdWidths)
   };
+}
+
+function countRoadCrossings() {
+  const segments = roadPaths.flatMap((path) => rawPathSegments(path));
+  let crossings = 0;
+  for (let i = 0; i < segments.length; i += 1) {
+    for (let j = i + 1; j < segments.length; j += 1) {
+      const a = segments[i];
+      const b = segments[j];
+      if (a.pathId === b.pathId) continue;
+      const hit = segmentIntersection2D(a.a, a.b, b.a, b.b);
+      if (!hit) continue;
+      if (hit.t <= 0.02 || hit.t >= 0.98 || hit.u <= 0.02 || hit.u >= 0.98) continue;
+      crossings += 1;
+    }
+  }
+  return crossings;
+}
+
+function rawPathSegments(path) {
+  const segments = [];
+  const limit = path.closed ? path.points.length : path.points.length - 1;
+  for (let index = 0; index < limit; index += 1) {
+    segments.push({
+      pathId: path.id,
+      a: path.points[index],
+      b: path.points[(index + 1) % path.points.length]
+    });
+  }
+  return segments;
+}
+
+function segmentIntersection2D(a, b, c, d) {
+  const r = [b[0] - a[0], b[1] - a[1]];
+  const s = [d[0] - c[0], d[1] - c[1]];
+  const denominator = cross2D(r, s);
+  if (Math.abs(denominator) < 0.000001) return null;
+  const ca = [c[0] - a[0], c[1] - a[1]];
+  const t = cross2D(ca, s) / denominator;
+  const u = cross2D(ca, r) / denominator;
+  if (t < -0.000001 || t > 1.000001 || u < -0.000001 || u > 1.000001) return null;
+  return { t, u };
+}
+
+function cross2D(a, b) {
+  return a[0] * b[1] - a[1] * b[0];
 }
 
 function findChrome() {

@@ -141,8 +141,8 @@ export const roadPaths = [
     color: '#163a42',
     points: [
       [-68, -12],
-      [-92, -28],
-      [-104, -40],
+      [-82, -34],
+      [-94, -58],
     ],
   },
   {
@@ -188,7 +188,7 @@ export const roadPaths = [
 export const routeThresholds = [
   { id: 'launch-entry', label: 'Launch', center: [0, -110], position: [0, 0.05, -110], rotation: 0.36, width: 10, depth: 7, color: '#7cffb2' },
   { id: 'campus-entry', label: 'Campus', center: [-100, 58], position: [-100, 0.05, 58], rotation: -0.72, width: 10, depth: 7, color: '#9ccfff' },
-  { id: 'security-entry', label: 'Security', center: [-92, -28], position: [-92, 0.05, -28], rotation: -1.93, width: 10, depth: 7, color: '#68d8ff' },
+  { id: 'security-entry', label: 'Security', center: [-82, -34], position: [-82, 0.05, -34], rotation: -2.56, width: 10, depth: 7, color: '#68d8ff' },
   { id: 'stunt-entry', label: 'Stunt', center: [84, -116], position: [84, 0.05, -116], rotation: 0.86, width: 10, depth: 7, color: '#ff9b6d' },
 ];
 
@@ -536,7 +536,7 @@ export const zonePresentation = {
     fov: 42,
   },
   security: {
-    respawn: { position: [-104, 1.08, -40], heading: -2.36 },
+    respawn: { position: [-94, 1.08, -58], heading: -2.63 },
     camera: [-132, 11, -64],
     target: [-116, 3, -50],
     fov: 42,

@@ -15,6 +15,7 @@ validateBounds();
 validateZones();
 validateZoneSeparation();
 validateBoostPads();
+validateRoadCrossings();
 validateRoadConnectivity();
 
 if (errors.length) {
@@ -129,6 +130,21 @@ function validateRoadConnectivity() {
   }
 }
 
+function validateRoadCrossings() {
+  const segments = roadPaths.flatMap((path) => rawPathSegments(path));
+  for (let i = 0; i < segments.length; i += 1) {
+    for (let j = i + 1; j < segments.length; j += 1) {
+      const a = segments[i];
+      const b = segments[j];
+      if (a.pathId === b.pathId) continue;
+      const crossing = segmentIntersection(a.a, a.b, b.a, b.b);
+      if (!crossing) continue;
+      if (crossing.t <= 0.02 || crossing.t >= 0.98 || crossing.u <= 0.02 || crossing.u >= 0.98) continue;
+      errors.push(`${a.pathId} crosses ${b.pathId} away from a junction at ${crossing.x.toFixed(1)}, ${crossing.z.toFixed(1)}.`);
+    }
+  }
+}
+
 function nearestRoad(x, z) {
   let best = { distance: Infinity, width: 0 };
   for (const road of roadRects) {
@@ -180,6 +196,20 @@ function pathSegments(points, width, closed = false) {
   return segments;
 }
 
+function rawPathSegments(path) {
+  const segments = [];
+  const limit = path.closed ? path.points.length : path.points.length - 1;
+  for (let index = 0; index < limit; index += 1) {
+    segments.push({
+      pathId: path.id,
+      index,
+      a: path.points[index],
+      b: path.points[(index + 1) % path.points.length]
+    });
+  }
+  return segments;
+}
+
 function pointToSegmentDistance(point, a, b) {
   const vx = b[0] - a[0];
   const vz = b[1] - a[1];
@@ -206,6 +236,27 @@ function segmentsIntersect(a, b, c, d) {
   const o3 = orient(c, d, a);
   const o4 = orient(c, d, b);
   return o1 * o2 < 0 && o3 * o4 < 0;
+}
+
+function segmentIntersection(a, b, c, d) {
+  const r = [b[0] - a[0], b[1] - a[1]];
+  const s = [d[0] - c[0], d[1] - c[1]];
+  const denominator = cross2D(r, s);
+  if (Math.abs(denominator) < 0.000001) return null;
+  const ca = [c[0] - a[0], c[1] - a[1]];
+  const t = cross2D(ca, s) / denominator;
+  const u = cross2D(ca, r) / denominator;
+  if (t < -0.000001 || t > 1.000001 || u < -0.000001 || u > 1.000001) return null;
+  return {
+    t,
+    u,
+    x: a[0] + r[0] * t,
+    z: a[1] + r[1] * t
+  };
+}
+
+function cross2D(a, b) {
+  return a[0] * b[1] - a[1] * b[0];
 }
 
 function orient(a, b, c) {
