@@ -726,44 +726,25 @@ export class SetPieces {
       'data-pier': this.world.materials.waterBlue,
       potato: this.world.materials.soil,
     };
-    const primaryZones = new Set(['landing', 'education', 'security', 'drift', 'circuit']);
-
     for (const zone of worldZones) {
-      const primary = primaryZones.has(zone.id);
       const rotation = zone.rotation || 0;
-      const markerWidth = primary ? 0.72 : 0.48;
-      const markerHeight = primary ? 1.2 : 0.72;
-      const markerY = 0.28 + markerHeight * 0.5;
+      const primary = zone.id === 'landing' || zone.id === 'education' || zone.id === 'security';
+      const markerRadius = primary ? 0.72 : 0.46;
+      const markerHeight = primary ? 0.08 : 0.06;
       const material = materials[zone.id] || this.world.materials.plazaRoad;
-      this.box(
+      const marker = this.cylinder(
         group,
         zone.position[0],
-        markerY,
+        0.145 + (primary ? 0.012 : 0),
         zone.position[2],
-        markerWidth,
+        markerRadius,
         markerHeight,
-        markerWidth,
         material,
-        rotation,
+        10,
         `FOUNDATION_${zone.id}_anchor`
       );
+      marker.rotation.y = rotation;
       this.blockoutStats.foundationAnchors += 1;
-
-      if (primary) {
-        const labelDistance = zone.radius + 4;
-        this.addSign(
-          group,
-          zone.name.toUpperCase(),
-          zone.kind,
-          zone.position[0] + Math.cos(rotation) * labelDistance,
-          zone.position[2] - Math.sin(rotation) * labelDistance,
-          rotation + Math.PI * 0.5,
-          Number.parseInt(zone.color.slice(1), 16),
-          0.92,
-          `FOUNDATION_${zone.id}_label`
-        );
-        this.blockoutStats.foundationLabels += 1;
-      }
     }
 
     this.createBlockoutSecurityScan(group);
@@ -841,10 +822,12 @@ export class SetPieces {
     const scan = this.securityScanPose(zone);
     const scanX = scan.x;
     const scanZ = scan.z;
-    const scanPadWidth = this.world.foundationReplacementMode ? 11 : this.world.verticalSliceMode ? 16 : 24;
-    const scanPadDepth = this.world.foundationReplacementMode ? 7 : this.world.verticalSliceMode ? 12 : 18;
-    const scanPadY = this.world.foundationReplacementMode ? 0.118 : this.world.verticalSliceMode ? 0.116 : 0.138;
-    this.groundRect(group, scanX, scanZ, scanPadWidth, scanPadDepth, this.world.materials.securityRoad, scanPadY, 'BLOCKOUT_security_scan_pad', scan.rotation);
+    if (!this.world.foundationReplacementMode) {
+      const scanPadWidth = this.world.verticalSliceMode ? 16 : 24;
+      const scanPadDepth = this.world.verticalSliceMode ? 12 : 18;
+      const scanPadY = this.world.verticalSliceMode ? 0.116 : 0.138;
+      this.groundRect(group, scanX, scanZ, scanPadWidth, scanPadDepth, this.world.materials.securityRoad, scanPadY, 'BLOCKOUT_security_scan_pad', scan.rotation);
+    }
     this.securityGate(group, scanX, scanZ, scan.rotation);
     this.securityScanWaveField(group, scanX, scanZ, scan.rotation);
     this.blockoutStats.securityGate += 1;

@@ -3,11 +3,12 @@
 import * as THREE from 'three';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 import { VehicleController } from '../physics/VehicleController.js';
-import { ISLAND_RADIUS, WORLD_HALF_SIZE } from '../world/worldData.js';
+import { ISLAND_RADIUS, WORLD_HALF_SIZE, zonePresentation } from '../world/worldData.js';
 import { mergeStaticMeshesInGroup } from '../world/StaticBatching.js';
 import sabreTurboModelUrl from '../../assets/models/vehicles/sabre-turbo.glb?url';
 
-const START = new THREE.Vector3(10, 1.08, 27);
+const START = new THREE.Vector3(...zonePresentation.landing.respawn.position);
+const START_HEADING = zonePresentation.landing.respawn.heading || 0;
 const VISUAL_Y_OFFSET = -0.88;
 const DEFAULT_SURFACE = { id: 'road', drag: 1, dustColor: 0x6f6250, skidColor: 0x161410, skidMarks: true, roughnessFeedback: 0 };
 const SURFACE_IDS = ['road', 'avenue-road', 'plaza-road', 'security-road', 'stunt-road', 'dirt-road', 'bridge-road', 'grass', 'sand', 'shore', 'water'];
@@ -907,7 +908,7 @@ export class Vehicle {
     return true;
   }
 
-  respawn(position = START, heading = 0) {
+  respawn(position = START, heading = START_HEADING) {
     this.body.setTranslation({ x: position.x, y: position.y, z: position.z }, true);
     this.body.setRotation(yawQuaternion(heading), true);
     this.body.setLinvel({ x: 0, y: 0, z: 0 }, true);

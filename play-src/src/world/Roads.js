@@ -81,7 +81,12 @@ export class Roads {
     for (const path of roadPaths) {
       this.addPath(path);
     }
-    this.addJunctionPatches();
+    if (this.world.foundationReplacementMode) {
+      this.roadGroup.userData.junctionPatchCount = 0;
+      this.roadGroup.userData.circularPointCaps = 0;
+    } else {
+      this.addJunctionPatches();
+    }
     mergeStaticMeshesInGroup(this.roadGroup, {
       namePrefix: 'ROAD_batch',
       getBatchLabel: (object) => object.userData?.batchLabel
@@ -121,6 +126,7 @@ export class Roads {
     const style = ROAD_STYLE[path.hierarchy] || ROAD_STYLE.street;
     const width = path.width;
     const layer = ROAD_VISUAL_LAYER[path.hierarchy] ?? 1;
+    const shoulderWidth = this.world.foundationReplacementMode ? Math.min(style.shoulder, 0.48) : style.shoulder;
     const shoulderY = 0.068 + layer * 0.001;
     const surfaceY = 0.104 + layer * 0.006;
 
@@ -134,7 +140,7 @@ export class Roads {
           : this.world.materials.stoneRoad;
 
     const shoulder = new THREE.Mesh(
-      createPathRibbonGeometry(path.points, width + style.shoulder * 2, path.closed, shoulderY, 9),
+      createPathRibbonGeometry(path.points, width + shoulderWidth * 2, path.closed, shoulderY, 9),
       this.offsetMaterial(edgeMaterial, 1 + layer)
     );
     shoulder.name = `ROAD_${path.id}_shoulder`;
@@ -153,7 +159,7 @@ export class Roads {
     surface.receiveShadow = true;
     this.roadGroup.add(surface);
 
-    if (path.hierarchy !== 'dirt') {
+    if (path.hierarchy !== 'dirt' && !this.world.foundationReplacementMode) {
       for (const side of [-1, 1]) {
         const curb = new THREE.Mesh(
           createPathRibbonGeometry(path.points, style.curb || 0.22, path.closed, surfaceY + 0.046, 9, (width / 2 + (style.curb || 0.22) * 0.66) * side),
@@ -172,20 +178,23 @@ export class Roads {
       this.addLaneEdgeLines(path, width, layer, surfaceY);
     }
 
-    const lineMaterial = this.cachedLineMaterial(style.line);
-    const curve = makePathCurve(path.points, path.closed);
-    const totalLength = curve.getLength();
-    const dashSpacing = path.hierarchy === 'stunt' ? 9.5 : 13.5;
-    for (let distance = width * 1.35; distance < totalLength - width * 1.35; distance += dashSpacing) {
-      const t = distance / totalLength;
-      const point = curve.getPointAt(t);
-      const tangent = curve.getTangentAt(t);
-      const rotation = Math.atan2(tangent.x, tangent.z);
-      const dash = this.createRoadPlane(0.28, path.hierarchy === 'stunt' ? 2.65 : 2.35, lineMaterial, 8 + layer, rotation);
-      dash.name = `ROAD_${path.id}_center_mark`;
-      this.tagRoadMesh(dash, path, 'center_mark');
-      dash.position.set(point.x, surfaceY + 0.034, point.z);
-      this.roadGroup.add(dash);
+    const showCenterMarks = !this.world.foundationReplacementMode || path.hierarchy === 'avenue' || path.hierarchy === 'stunt';
+    if (showCenterMarks) {
+      const lineMaterial = this.cachedLineMaterial(style.line);
+      const curve = makePathCurve(path.points, path.closed);
+      const totalLength = curve.getLength();
+      const dashSpacing = this.world.foundationReplacementMode ? 24 : path.hierarchy === 'stunt' ? 9.5 : 13.5;
+      for (let distance = width * 1.35; distance < totalLength - width * 1.35; distance += dashSpacing) {
+        const t = distance / totalLength;
+        const point = curve.getPointAt(t);
+        const tangent = curve.getTangentAt(t);
+        const rotation = Math.atan2(tangent.x, tangent.z);
+        const dash = this.createRoadPlane(0.22, path.hierarchy === 'stunt' ? 2.45 : 2.15, lineMaterial, 8 + layer, rotation);
+        dash.name = `ROAD_${path.id}_center_mark`;
+        this.tagRoadMesh(dash, path, 'center_mark');
+        dash.position.set(point.x, surfaceY + 0.034, point.z);
+        this.roadGroup.add(dash);
+      }
     }
 
     // Roads stay visual so the car always drives on one continuous terrain collider.

@@ -2910,8 +2910,8 @@ function assertGate2RFoundationReplacementVerification(result, failures) {
   if ((blockoutSetPieces.foundationAnchors || 0) < worldZones.length) {
     failures.push(`Gate 2R scaffold failed: foundationAnchors=${blockoutSetPieces.foundationAnchors || 0}/${worldZones.length}`);
   }
-  if ((blockoutSetPieces.foundationLabels || 0) < 5) {
-    failures.push(`Gate 2R scaffold failed: foundationLabels=${blockoutSetPieces.foundationLabels || 0}`);
+  if ((blockoutSetPieces.foundationLabels || 0) !== 0) {
+    failures.push(`Gate 2R scaffold failed: foundationLabels still built=${blockoutSetPieces.foundationLabels || 0}`);
   }
   if ((blockoutSetPieces.securityGate || 0) < 1) failures.push('Gate 2R security foundation failed: scanner gate missing');
   if ((blockoutSetPieces.securityPacketShards || 0) < 8) {
@@ -2933,13 +2933,19 @@ function assertGate2RFoundationReplacementVerification(result, failures) {
   if ((result.roadSurfaceDetails?.laneSeams || 0) !== 0) failures.push(`Gate 2R roads failed: lane seams built=${result.roadSurfaceDetails?.laneSeams || 0}`);
   if ((result.roadSurfaceDetails?.transitionAprons || 0) !== 0) failures.push(`Gate 2R roads failed: transition aprons built=${result.roadSurfaceDetails?.transitionAprons || 0}`);
   if ((result.roadSurfaceDetails?.transitionGuideBars || 0) !== 0) failures.push(`Gate 2R roads failed: transition guide bars built=${result.roadSurfaceDetails?.transitionGuideBars || 0}`);
+  if ((result.roadJunctions?.blendPatches || 0) !== 0) failures.push(`Gate 2R roads failed: junction slabs built=${result.roadJunctions?.blendPatches || 0}`);
   if ((result.roadGuidance?.chevrons || 0) !== 0) failures.push(`Gate 2R roads failed: final chevrons built=${result.roadGuidance?.chevrons || 0}`);
   if ((result.roadGuidance?.reflectorStuds || 0) !== 0) failures.push(`Gate 2R roads failed: reflector studs built=${result.roadGuidance?.reflectorStuds || 0}`);
   if (!result.roadTopology?.coastalLoop) failures.push('Gate 2R road topology failed: coastal loop missing');
   if ((result.roadTopology?.closedLoops || 0) < 1) failures.push(`Gate 2R road topology failed: closedLoops=${result.roadTopology?.closedLoops || 0}`);
   if ((result.roadTopology?.paths || 0) !== roadPaths.length) failures.push(`Gate 2R road topology failed: paths=${result.roadTopology?.paths || 0}/${roadPaths.length}`);
-  if ((result.roadTopology?.sharedJunctions || 0) < 8) failures.push(`Gate 2R road topology failed: sharedJunctions=${result.roadTopology?.sharedJunctions || 0}`);
+  if ((result.roadTopology?.sharedJunctions || 0) < 4) failures.push(`Gate 2R road topology failed: sharedJunctions=${result.roadTopology?.sharedJunctions || 0}`);
+  if ((result.roadTopology?.sharedJunctions || 0) > 10) failures.push(`Gate 2R road topology failed: too many shared junctions=${result.roadTopology?.sharedJunctions || 0}`);
   if ((result.roadTopology?.maxRoadWidth || 99) > 5.2) failures.push(`Gate 2R road width failed: maxRoadWidth=${result.roadTopology?.maxRoadWidth}`);
+  if ((result.surfacePanels?.hardscapePanels || 0) !== 0) failures.push(`Gate 2R scaffold failed: hardscape panels still built=${result.surfacePanels?.hardscapePanels || 0}`);
+  if ((result.stuntPark?.ramps || 0) !== 0) failures.push(`Gate 2R stunt failed: rejected ramps still built=${result.stuntPark?.ramps || 0}`);
+  if ((result.stuntPark?.boostPads || 0) !== 0) failures.push(`Gate 2R stunt failed: rejected boost pads still built=${result.stuntPark?.boostPads || 0}`);
+  if ((result.stuntPark?.landingMarkers || 0) !== 0) failures.push(`Gate 2R stunt failed: rejected landing markers still built=${result.stuntPark?.landingMarkers || 0}`);
   if ((result.mapStats?.pins || 0) !== worldZones.length) failures.push(`Gate 2R map failed: pins=${result.mapStats?.pins || 0}/${worldZones.length}`);
   if ((result.mapStats?.districtLabels || 0) !== districtFootprints.length) {
     failures.push(`Gate 2R map failed: districtLabels=${result.mapStats?.districtLabels || 0}/${districtFootprints.length}`);
