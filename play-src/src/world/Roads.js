@@ -68,6 +68,12 @@ const FOUNDATION_ROAD_DRAW_RANK = {
   'campus-boulevard': 70,
   'coastal-loop': 90
 };
+const FOUNDATION_TERRAIN_COLLIDER_Y = 0.04;
+const FOUNDATION_ROAD_BASE_Y = 0.066;
+const FOUNDATION_ROAD_LAYER_STEP = 0.00016;
+const FOUNDATION_ROAD_EDGE_OFFSET_Y = -0.00004;
+const FOUNDATION_ROAD_LINE_OFFSET_Y = 0.00008;
+const FOUNDATION_ROAD_MARK_OFFSET_Y = 0.00012;
 
 export class Roads {
   constructor(world) {
@@ -140,13 +146,19 @@ export class Roads {
     const centerMarks = [];
     let edgeMarks = 0;
     let throughPriorityPaths = 0;
+    let minRoadY = Infinity;
+    let maxRoadY = -Infinity;
 
     for (let index = 0; index < orderedPaths.length; index += 1) {
       const path = orderedPaths[index];
-      const surfaceY = 0.106 + index * 0.004;
-      const edgeY = surfaceY - 0.0016;
+      const surfaceY = FOUNDATION_ROAD_BASE_Y + index * FOUNDATION_ROAD_LAYER_STEP;
+      const edgeY = surfaceY + FOUNDATION_ROAD_EDGE_OFFSET_Y;
+      const lineY = surfaceY + FOUNDATION_ROAD_LINE_OFFSET_Y;
+      const markY = surfaceY + FOUNDATION_ROAD_MARK_OFFSET_Y;
       const renderBase = 4 + index * 4;
       const edgeWidth = path.width + foundationRoadShoulderWidth(path) * 2;
+      minRoadY = Math.min(minRoadY, edgeY);
+      maxRoadY = Math.max(maxRoadY, markY);
 
       const edge = new THREE.Mesh(
         createPathRibbonGeometry(path.points, edgeWidth, path.closed, edgeY, 12),
@@ -169,9 +181,9 @@ export class Roads {
       this.roadGroup.add(surface);
 
       if (path.hierarchy !== 'bridge') {
-        edgeMarks += this.addFoundationLaneEdgeLines(path, surfaceY + 0.0012, renderBase + 2);
+        edgeMarks += this.addFoundationLaneEdgeLines(path, lineY, renderBase + 2);
       }
-      centerMarks.push(...createFoundationCenterMarkSpecs(path, surfaceY + 0.0014));
+      centerMarks.push(...createFoundationCenterMarkSpecs(path, markY));
       if (foundationRoadRank(path) >= 70) throughPriorityPaths += 1;
     }
 
@@ -182,6 +194,9 @@ export class Roads {
     this.roadGroup.userData.foundationRoadPolishMarks = centerMarks.length + edgeMarks;
     this.roadGroup.userData.foundationThroughRoadPriority = throughPriorityPaths;
     this.roadGroup.userData.foundationTexturePixelsPerUnit = 0;
+    this.roadGroup.userData.foundationMinRoadY = Number(minRoadY.toFixed(5));
+    this.roadGroup.userData.foundationMaxRoadY = Number(maxRoadY.toFixed(5));
+    this.roadGroup.userData.foundationRoadHeightAboveCollider = Number((maxRoadY - FOUNDATION_TERRAIN_COLLIDER_Y).toFixed(5));
   }
 
   addPathRibbon(path) {

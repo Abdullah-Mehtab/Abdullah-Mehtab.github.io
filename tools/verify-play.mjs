@@ -1567,7 +1567,10 @@ async function collectRuntimeMetrics(page, loadMs, gameplay, water, surfaces, su
         foundationFullWidthPaths: game.world.roads?.roadGroup?.userData?.foundationFullWidthPaths || 0,
         foundationRoadPolishMarks: game.world.roads?.roadGroup?.userData?.foundationRoadPolishMarks || 0,
         foundationThroughRoadPriority: game.world.roads?.roadGroup?.userData?.foundationThroughRoadPriority || 0,
-        foundationTexturePixelsPerUnit: game.world.roads?.roadGroup?.userData?.foundationTexturePixelsPerUnit || 0
+        foundationTexturePixelsPerUnit: game.world.roads?.roadGroup?.userData?.foundationTexturePixelsPerUnit || 0,
+        foundationMinRoadY: game.world.roads?.roadGroup?.userData?.foundationMinRoadY || 0,
+        foundationMaxRoadY: game.world.roads?.roadGroup?.userData?.foundationMaxRoadY || 0,
+        foundationRoadHeightAboveCollider: game.world.roads?.roadGroup?.userData?.foundationRoadHeightAboveCollider || 0
       },
       roadSurfaceDetails: game.world.roads?.getDetailStats?.() || {},
       districtGround: game.world.terrain?.getDistrictGroundStats?.() || {},
@@ -3145,6 +3148,7 @@ function assertGate2RFoundationReplacementVerification(result, failures) {
   if ((result.roadJunctions?.foundationFusedLayers || 0) !== 0) failures.push(`Gate 2R roads failed: fused foundation texture layers=${result.roadJunctions?.foundationFusedLayers || 0}`);
   if ((result.roadJunctions?.foundationGeometryLayers || 0) !== (result.roadTopology?.paths || 0)) failures.push(`Gate 2R roads failed: geometry road layers=${result.roadJunctions?.foundationGeometryLayers || 0}/${result.roadTopology?.paths || 0}`);
   if ((result.roadJunctions?.foundationTexturePixelsPerUnit || 0) !== 0) failures.push(`Gate 2R roads failed: foundation texture pixels/unit=${result.roadJunctions?.foundationTexturePixelsPerUnit || 0}`);
+  if ((result.roadJunctions?.foundationRoadHeightAboveCollider || 99) > 0.03) failures.push(`Gate 2R roads failed: road visual height above collider=${result.roadJunctions?.foundationRoadHeightAboveCollider}`);
   if ((result.roadJunctions?.foundationFullWidthPaths || 0) !== (result.roadTopology?.paths || 0)) failures.push(`Gate 2R roads failed: full-width paths=${result.roadJunctions?.foundationFullWidthPaths || 0}/${result.roadTopology?.paths || 0}`);
   if ((result.roadJunctions?.foundationRoadPolishMarks || 0) < ((result.roadTopology?.paths || 0) * 2)) failures.push(`Gate 2R roads failed: polish marks=${result.roadJunctions?.foundationRoadPolishMarks || 0}`);
   if ((result.roadJunctions?.foundationThroughRoadPriority || 0) < 2) failures.push(`Gate 2R roads failed: through-road priority=${result.roadJunctions?.foundationThroughRoadPriority || 0}`);
@@ -3289,6 +3293,7 @@ function assertGate3RVerticalSliceVerification(result, failures) {
   if ((result.roadJunctions?.foundationFusedLayers || 0) !== 0) failures.push(`Gate 3R roads failed: fused foundation texture layers=${result.roadJunctions?.foundationFusedLayers || 0}`);
   if ((result.roadJunctions?.foundationGeometryLayers || 0) !== (result.roadTopology?.paths || 0)) failures.push(`Gate 3R roads failed: geometry road layers=${result.roadJunctions?.foundationGeometryLayers || 0}/${result.roadTopology?.paths || 0}`);
   if ((result.roadJunctions?.foundationTexturePixelsPerUnit || 0) !== 0) failures.push(`Gate 3R roads failed: foundation texture pixels/unit=${result.roadJunctions?.foundationTexturePixelsPerUnit || 0}`);
+  if ((result.roadJunctions?.foundationRoadHeightAboveCollider || 99) > 0.03) failures.push(`Gate 3R roads failed: road visual height above collider=${result.roadJunctions?.foundationRoadHeightAboveCollider}`);
   if ((result.roadJunctions?.foundationFullWidthPaths || 0) !== (result.roadTopology?.paths || 0)) failures.push(`Gate 3R roads failed: full-width paths=${result.roadJunctions?.foundationFullWidthPaths || 0}/${result.roadTopology?.paths || 0}`);
   if ((result.roadJunctions?.foundationRoadPolishMarks || 0) < ((result.roadTopology?.paths || 0) * 2)) failures.push(`Gate 3R roads failed: polish marks=${result.roadJunctions?.foundationRoadPolishMarks || 0}`);
   if ((result.roadJunctions?.foundationThroughRoadPriority || 0) < 2) failures.push(`Gate 3R roads failed: through-road priority=${result.roadJunctions?.foundationThroughRoadPriority || 0}`);
