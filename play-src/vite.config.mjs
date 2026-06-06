@@ -6,6 +6,7 @@ import { fileURLToPath } from 'node:url';
 import { defineConfig } from 'vite';
 
 const sharedSiteConfigPath = fileURLToPath(new URL('../assets/js/site-config.js', import.meta.url));
+const playAssetCacheKey = process.env.PLAY_ASSET_CACHE_KEY || 'body-road-20260607';
 
 function serveSharedSiteConfig() {
   return {
@@ -38,11 +39,27 @@ function serveSharedSiteConfig() {
   };
 }
 
+function appendPlayAssetCacheKey() {
+  return {
+    name: 'append-play-asset-cache-key',
+    enforce: 'post',
+    transformIndexHtml: {
+      order: 'post',
+      handler(html) {
+        const key = encodeURIComponent(playAssetCacheKey);
+        return html
+          .replace(/(src="\.\/game-assets\/index\.js)(?=")/g, `$1?v=${key}`)
+          .replace(/(href="\.\/game-assets\/index\.css)(?=")/g, `$1?v=${key}`);
+      }
+    }
+  };
+}
+
 export default defineConfig({
   root: 'play-src',
   base: './',
   publicDir: false,
-  plugins: [serveSharedSiteConfig()],
+  plugins: [serveSharedSiteConfig(), appendPlayAssetCacheKey()],
   build: {
     outDir: '../play',
     emptyOutDir: false,
