@@ -6,7 +6,7 @@ import { fileURLToPath } from 'node:url';
 import { defineConfig } from 'vite';
 
 const sharedSiteConfigPath = fileURLToPath(new URL('../assets/js/site-config.js', import.meta.url));
-const playAssetCacheKey = process.env.PLAY_ASSET_CACHE_KEY || 'body-road-20260607';
+const playAssetCacheKey = process.env.PLAY_ASSET_CACHE_KEY || 'road-car-clipping-20260607';
 
 function serveSharedSiteConfig() {
   return {
