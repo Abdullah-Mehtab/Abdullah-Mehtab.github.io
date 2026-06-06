@@ -1635,10 +1635,13 @@ async function collectRuntimeMetrics(page, loadMs, gameplay, water, surfaces, su
       shadow?.updateMatrixWorld?.(true);
       const roadMaxY = game.world.roads?.roadGroup?.userData?.foundationMaxRoadY || 0;
       const contactShadowY = shadow ? shadow.matrixWorld.elements[13] : null;
+      const vehicleModel = game.vehicle?.modelRoot?.children?.[0] || null;
+      const bodyVisualLift = vehicleModel?.userData?.bodyVisualLift ?? null;
       return {
         contactShadowY: contactShadowY === null ? null : Number(contactShadowY.toFixed(5)),
         contactShadowLiftAboveRoad: contactShadowY === null ? null : Number((contactShadowY - roadMaxY).toFixed(5)),
-        contactShadowOpacity: Number((shadow?.material?.opacity || 0).toFixed(3))
+        contactShadowOpacity: Number((shadow?.material?.opacity || 0).toFixed(3)),
+        bodyVisualLift: bodyVisualLift === null ? null : Number(bodyVisualLift.toFixed(3))
       };
     }
 
@@ -3165,6 +3168,12 @@ function assertGate2RFoundationReplacementVerification(result, failures) {
   if (!Number.isFinite(result.vehicleGrounding?.contactShadowLiftAboveRoad) || Math.abs(result.vehicleGrounding.contactShadowLiftAboveRoad) > 0.045) {
     failures.push(`Gate 2R vehicle grounding failed: contact shadow lift=${result.vehicleGrounding?.contactShadowLiftAboveRoad}`);
   }
+  if ((result.vehicleFx?.lights?.visibleHeadlightPools || 0) !== 0) {
+    failures.push(`Gate 2R vehicle grounding failed: idle headlight pools visible=${result.vehicleFx?.lights?.visibleHeadlightPools || 0}`);
+  }
+  if (!Number.isFinite(result.vehicleGrounding?.bodyVisualLift) || result.vehicleGrounding.bodyVisualLift < 0.05 || result.vehicleGrounding.bodyVisualLift > 0.12) {
+    failures.push(`Gate 2R vehicle grounding failed: body visual lift=${result.vehicleGrounding?.bodyVisualLift}`);
+  }
   if ((result.roadJunctions?.foundationFullWidthPaths || 0) !== (result.roadTopology?.paths || 0)) failures.push(`Gate 2R roads failed: full-width paths=${result.roadJunctions?.foundationFullWidthPaths || 0}/${result.roadTopology?.paths || 0}`);
   if ((result.roadJunctions?.foundationRoadPolishMarks || 0) < ((result.roadTopology?.paths || 0) * 2)) failures.push(`Gate 2R roads failed: polish marks=${result.roadJunctions?.foundationRoadPolishMarks || 0}`);
   if ((result.roadJunctions?.foundationThroughRoadPriority || 0) < 2) failures.push(`Gate 2R roads failed: through-road priority=${result.roadJunctions?.foundationThroughRoadPriority || 0}`);
@@ -3312,6 +3321,12 @@ function assertGate3RVerticalSliceVerification(result, failures) {
   if ((result.roadJunctions?.foundationRoadHeightAboveCollider || 99) > 0.03) failures.push(`Gate 3R roads failed: road visual height above collider=${result.roadJunctions?.foundationRoadHeightAboveCollider}`);
   if (!Number.isFinite(result.vehicleGrounding?.contactShadowLiftAboveRoad) || Math.abs(result.vehicleGrounding.contactShadowLiftAboveRoad) > 0.045) {
     failures.push(`Gate 3R vehicle grounding failed: contact shadow lift=${result.vehicleGrounding?.contactShadowLiftAboveRoad}`);
+  }
+  if ((result.vehicleFx?.lights?.visibleHeadlightPools || 0) !== 0) {
+    failures.push(`Gate 3R vehicle grounding failed: idle headlight pools visible=${result.vehicleFx?.lights?.visibleHeadlightPools || 0}`);
+  }
+  if (!Number.isFinite(result.vehicleGrounding?.bodyVisualLift) || result.vehicleGrounding.bodyVisualLift < 0.05 || result.vehicleGrounding.bodyVisualLift > 0.12) {
+    failures.push(`Gate 3R vehicle grounding failed: body visual lift=${result.vehicleGrounding?.bodyVisualLift}`);
   }
   if ((result.roadJunctions?.foundationFullWidthPaths || 0) !== (result.roadTopology?.paths || 0)) failures.push(`Gate 3R roads failed: full-width paths=${result.roadJunctions?.foundationFullWidthPaths || 0}/${result.roadTopology?.paths || 0}`);
   if ((result.roadJunctions?.foundationRoadPolishMarks || 0) < ((result.roadTopology?.paths || 0) * 2)) failures.push(`Gate 3R roads failed: polish marks=${result.roadJunctions?.foundationRoadPolishMarks || 0}`);

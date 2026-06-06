@@ -10,10 +10,13 @@ import sabreTurboModelUrl from '../../assets/models/vehicles/sabre-turbo.glb?url
 const START = new THREE.Vector3(...zonePresentation.landing.respawn.position);
 const START_HEADING = zonePresentation.landing.respawn.heading || 0;
 const VISUAL_Y_OFFSET = -0.88;
+const BODY_VISUAL_LIFT = 0.08;
+const LIGHT_Y_OFFSET = VISUAL_Y_OFFSET + BODY_VISUAL_LIFT;
 const CONTACT_SHADOW_Y_OFFSET = -0.985;
 const DEFAULT_SURFACE = { id: 'road', drag: 1, dustColor: 0x6f6250, skidColor: 0x161410, skidMarks: true, roughnessFeedback: 0 };
 const SURFACE_IDS = ['road', 'avenue-road', 'plaza-road', 'security-road', 'stunt-road', 'dirt-road', 'bridge-road', 'grass', 'sand', 'shore', 'water'];
 const SOFT_SURFACES = new Set(['grass', 'sand', 'shore', 'dirt-road']);
+const WHEEL_ROOT_NAMES = new Set(['WheelFrontLeft', 'WheelFrontRight', 'WheelRearLeft', 'WheelRearRight']);
 
 export class Vehicle {
   constructor({ scene, physics, achievements, audio, world }) {
@@ -162,17 +165,17 @@ export class Vehicle {
     this.boostLights = [];
     for (const x of [-0.62, 0.62]) {
       const light = new THREE.SpotLight(0xfff0c4, 4.8, 26, Math.PI / 10, 0.45, 1.6);
-      light.position.set(x, 0.78 + VISUAL_Y_OFFSET, 2.86);
-      light.target.position.set(x, 0.32 + VISUAL_Y_OFFSET, 10);
+      light.position.set(x, 0.78 + LIGHT_Y_OFFSET, 2.86);
+      light.target.position.set(x, 0.32 + LIGHT_Y_OFFSET, 10);
       this.group.add(light, light.target);
     }
     for (const x of [-0.64, 0.64]) {
       const brake = new THREE.PointLight(0xff2b20, 0.35, 7, 2);
-      brake.position.set(x, 0.58 + VISUAL_Y_OFFSET, -2.62);
+      brake.position.set(x, 0.58 + LIGHT_Y_OFFSET, -2.62);
       const reverse = new THREE.PointLight(0xdff7ff, 0.0, 5, 2);
-      reverse.position.set(x * 0.72, 0.5 + VISUAL_Y_OFFSET, -2.66);
+      reverse.position.set(x * 0.72, 0.5 + LIGHT_Y_OFFSET, -2.66);
       const boost = new THREE.PointLight(0xff8c3a, 0.0, 10, 2);
-      boost.position.set(x * 0.55, 0.3 + VISUAL_Y_OFFSET, -2.9);
+      boost.position.set(x * 0.55, 0.3 + LIGHT_Y_OFFSET, -2.9);
       this.brakeLights.push(brake);
       this.reverseLights.push(reverse);
       this.boostLights.push(boost);
@@ -200,14 +203,14 @@ export class Vehicle {
     });
     glowMaterial.forceSinglePass = true;
     this.lightGlowSpecs = [
-      { id: 'headlight-left', type: 'headlight', color: 0xfff0c4, position: [-0.56, 0.62 + VISUAL_Y_OFFSET, 2.72], scale: [0.22, 0.12, 1], rotationY: 0 },
-      { id: 'headlight-right', type: 'headlight', color: 0xfff0c4, position: [0.56, 0.62 + VISUAL_Y_OFFSET, 2.72], scale: [0.22, 0.12, 1], rotationY: 0 },
-      { id: 'brake-left', type: 'brake', color: 0xff2b20, position: [-0.64, 0.57 + VISUAL_Y_OFFSET, -2.62], scale: [0.19, 0.12, 1], rotationY: Math.PI },
-      { id: 'brake-right', type: 'brake', color: 0xff2b20, position: [0.64, 0.57 + VISUAL_Y_OFFSET, -2.62], scale: [0.19, 0.12, 1], rotationY: Math.PI },
-      { id: 'reverse-left', type: 'reverse', color: 0xdff7ff, position: [-0.38, 0.5 + VISUAL_Y_OFFSET, -2.67], scale: [0.11, 0.075, 1], rotationY: Math.PI },
-      { id: 'reverse-right', type: 'reverse', color: 0xdff7ff, position: [0.38, 0.5 + VISUAL_Y_OFFSET, -2.67], scale: [0.11, 0.075, 1], rotationY: Math.PI },
-      { id: 'boost-left', type: 'boost', color: 0xff8c3a, position: [-0.42, 0.3 + VISUAL_Y_OFFSET, -2.9], scale: [0.16, 0.16, 1], rotationY: Math.PI },
-      { id: 'boost-right', type: 'boost', color: 0xff8c3a, position: [0.42, 0.3 + VISUAL_Y_OFFSET, -2.9], scale: [0.16, 0.16, 1], rotationY: Math.PI },
+      { id: 'headlight-left', type: 'headlight', color: 0xfff0c4, position: [-0.56, 0.62 + LIGHT_Y_OFFSET, 2.72], scale: [0.22, 0.12, 1], rotationY: 0 },
+      { id: 'headlight-right', type: 'headlight', color: 0xfff0c4, position: [0.56, 0.62 + LIGHT_Y_OFFSET, 2.72], scale: [0.22, 0.12, 1], rotationY: 0 },
+      { id: 'brake-left', type: 'brake', color: 0xff2b20, position: [-0.64, 0.57 + LIGHT_Y_OFFSET, -2.62], scale: [0.19, 0.12, 1], rotationY: Math.PI },
+      { id: 'brake-right', type: 'brake', color: 0xff2b20, position: [0.64, 0.57 + LIGHT_Y_OFFSET, -2.62], scale: [0.19, 0.12, 1], rotationY: Math.PI },
+      { id: 'reverse-left', type: 'reverse', color: 0xdff7ff, position: [-0.38, 0.5 + LIGHT_Y_OFFSET, -2.67], scale: [0.11, 0.075, 1], rotationY: Math.PI },
+      { id: 'reverse-right', type: 'reverse', color: 0xdff7ff, position: [0.38, 0.5 + LIGHT_Y_OFFSET, -2.67], scale: [0.11, 0.075, 1], rotationY: Math.PI },
+      { id: 'boost-left', type: 'boost', color: 0xff8c3a, position: [-0.42, 0.3 + LIGHT_Y_OFFSET, -2.9], scale: [0.16, 0.16, 1], rotationY: Math.PI },
+      { id: 'boost-right', type: 'boost', color: 0xff8c3a, position: [0.42, 0.3 + LIGHT_Y_OFFSET, -2.9], scale: [0.16, 0.16, 1], rotationY: Math.PI },
       { id: 'headlight-pool-left', type: 'headlightPool', color: 0x4a3d27, position: [-0.5, -0.79, 5.25], scale: [0.68, 3.25, 1], rotationX: -Math.PI / 2 },
       { id: 'headlight-pool-right', type: 'headlightPool', color: 0x4a3d27, position: [0.5, -0.79, 5.25], scale: [0.68, 3.25, 1], rotationX: -Math.PI / 2 }
     ];
@@ -320,6 +323,7 @@ export class Vehicle {
       shouldSkip: shouldKeepVehicleMeshSeparate
     });
     mergeVehicleWheelAssemblies(model);
+    applyBodyStance(model);
     model.traverse((object) => {
       if (object.isMesh && object.name.startsWith('VehicleBody_batch')) {
         object.castShadow = true;
@@ -606,7 +610,7 @@ export class Vehicle {
       brake: braking ? 1 : burnout ? 0.56 : 0.34,
       reverse: reversing ? 1 : 0,
       boost: boost ? 1.18 * pulse : wheelie ? 0.62 * pulse : 0,
-      headlightPool: boost ? 1.18 : wheelie ? 1.08 : 1
+      headlightPool: boost ? 0.58 * pulse : wheelie ? 0.38 * pulse : 0
     };
 
     this.lightGlowSpecs.forEach((spec, index) => {
@@ -1004,6 +1008,14 @@ function objectHasAncestorPrefix(object, prefix) {
     current = current.parent;
   }
   return false;
+}
+
+function applyBodyStance(model) {
+  for (const child of model.children) {
+    if (WHEEL_ROOT_NAMES.has(child.name)) continue;
+    child.position.y += BODY_VISUAL_LIFT;
+  }
+  model.userData.bodyVisualLift = BODY_VISUAL_LIFT;
 }
 
 function mergeVehicleWheelAssemblies(model) {
