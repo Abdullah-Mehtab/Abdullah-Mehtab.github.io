@@ -126,6 +126,7 @@ try {
   const securityScan = await exerciseSecurityScan(page);
   const routeReplay = await exerciseRouteReplay(page, routeReplaySegments);
   const forwardDriveProbe = await exerciseForwardDriveProbe(page, routeReplaySegments);
+  const vehicleGroundingMotion = await exerciseVehicleGroundingMotion(page);
   const circuitPreview = await previewCircuit(page);
   await screenshot(page, '06-circuit-target.png');
   const circuit = await finishCircuit(page, circuitPreview);
@@ -228,6 +229,7 @@ try {
     collectibles,
     securityScan,
     forwardDriveProbe,
+    vehicleGroundingMotion,
     vehicleLights,
     waterView,
     ...metrics
@@ -994,6 +996,191 @@ async function exerciseForwardDriveProbe(page, segments) {
       samples
     };
   }, segments);
+}
+
+async function exerciseVehicleGroundingMotion(page) {
+  const segment = routeReplaySegments.find((item) => item.id === 'coastal-loop' && item.index === 6)
+    || routeReplaySegments.find((item) => item.id === 'coastal-loop' && item.length > 64)
+    || routeReplaySegments[0];
+  await page.evaluate((roadSegment) => {
+    const game = window.__portfolioDrive.game;
+    game.ui.closePanel?.();
+    game.ui.closeMap?.();
+    game.ui.closeMenu?.();
+    game.startDriving();
+    if (!game.__verifyOriginalCameraUpdate) {
+      game.__verifyOriginalCameraUpdate = game.cameraRig.update.bind(game.cameraRig);
+      game.cameraRig.update = () => {};
+    }
+    for (const action of ['forward', 'boost', 'backward', 'brake', 'handbrake', 'left', 'right']) {
+      game.input.actions[action] = false;
+    }
+    game.input.joystick.x = 0;
+    game.input.joystick.y = 0;
+    game.input.pressed?.clear?.();
+  }, segment);
+  await resetVehicleGroundingProbe(page, segment);
+  await delay(1000);
+  await stageVehicleSideGroundingView(page);
+  const still = await sampleVehicleGroundingMotion(page, 'still');
+  await screenshot(page, 'vehicle-grounding-side-still.png');
+
+  await resetVehicleGroundingProbe(page, segment);
+  await page.evaluate(() => {
+    const game = window.__portfolioDrive.game;
+    game.input.actions.forward = true;
+  });
+  await delay(1100);
+  await stageVehicleSideGroundingView(page);
+  const forward = await sampleVehicleGroundingMotion(page, 'forward');
+  await screenshot(page, 'vehicle-grounding-side-forward.png');
+
+  await resetVehicleGroundingProbe(page, segment);
+  await page.evaluate(() => {
+    const game = window.__portfolioDrive.game;
+    game.input.actions.forward = true;
+    game.input.actions.boost = true;
+  });
+  await delay(850);
+  await stageVehicleSideGroundingView(page);
+  const boost = await sampleVehicleGroundingMotion(page, 'boost');
+  await screenshot(page, 'vehicle-grounding-side-boost.png');
+
+  await page.evaluate(() => {
+    const game = window.__portfolioDrive.game;
+    for (const action of ['forward', 'boost', 'backward', 'brake', 'handbrake', 'left', 'right']) {
+      game.input.actions[action] = false;
+    }
+    game.input.joystick.x = 0;
+    game.input.joystick.y = 0;
+    game.input.pressed?.clear?.();
+    if (game.__verifyOriginalCameraUpdate) {
+      game.cameraRig.update = game.__verifyOriginalCameraUpdate;
+      delete game.__verifyOriginalCameraUpdate;
+    }
+    window.__portfolioDrive.respawn('landing');
+  });
+
+  const samples = [still, forward, boost];
+  return {
+    samples,
+    screenshots: [
+      'vehicle-grounding-side-still.png',
+      'vehicle-grounding-side-forward.png',
+      'vehicle-grounding-side-boost.png'
+    ],
+    minWheelClearanceAboveRoad: Number(Math.min(...samples.map((sample) => sample.wheels.clearanceAboveRoad)).toFixed(4)),
+    minWheelDebugClearanceAboveRoad: Number(Math.min(...samples.flatMap((sample) => sample.wheelGrounding.map((wheel) => wheel.clearanceAboveRoad))).toFixed(4)),
+    minBodyClearanceAboveRoad: Number(Math.min(...samples.map((sample) => sample.bodyOnly.clearanceAboveRoad)).toFixed(4)),
+    maxSpeed: Number(Math.max(...samples.map((sample) => sample.speed)).toFixed(2))
+  };
+}
+
+async function resetVehicleGroundingProbe(page, segment) {
+  await page.evaluate((roadSegment) => {
+    const game = window.__portfolioDrive.game;
+    for (const action of ['forward', 'boost', 'backward', 'brake', 'handbrake', 'left', 'right']) {
+      game.input.actions[action] = false;
+    }
+    game.input.joystick.x = 0;
+    game.input.joystick.y = 0;
+    game.input.pressed?.clear?.();
+    const offset = Math.max(6, roadSegment.length / 2 - 7);
+    const start = {
+      x: roadSegment.cx - Math.sin(roadSegment.rotation) * offset,
+      y: 1.12,
+      z: roadSegment.cz - Math.cos(roadSegment.rotation) * offset
+    };
+    game.vehicle.respawn(start, roadSegment.rotation);
+  }, segment);
+  await delay(650);
+}
+
+async function stageVehicleSideGroundingView(page) {
+  await page.evaluate(() => {
+    const game = window.__portfolioDrive.game;
+    const position = game.vehicle.position;
+    const heading = game.vehicle.heading || 0;
+    const sideX = Math.cos(heading);
+    const sideZ = -Math.sin(heading);
+    const backX = -Math.sin(heading);
+    const backZ = -Math.cos(heading);
+    const cameraPosition = {
+      x: position.x + sideX * 8.2 + backX * 0.8,
+      y: position.y + 2.35,
+      z: position.z + sideZ * 8.2 + backZ * 0.8
+    };
+    const lookAt = {
+      x: position.x,
+      y: position.y + 0.28,
+      z: position.z
+    };
+    game.camera.position.set(cameraPosition.x, cameraPosition.y, cameraPosition.z);
+    game.camera.lookAt(lookAt.x, lookAt.y, lookAt.z);
+    game.camera.fov = 32;
+    game.camera.updateProjectionMatrix();
+    game.rendererSystem.render();
+  });
+}
+
+async function sampleVehicleGroundingMotion(page, label) {
+  return page.evaluate((sampleLabel) => {
+    const game = window.__portfolioDrive.game;
+    const roadY = game.world.roads?.roadGroup?.userData?.foundationMaxRoadY || 0;
+    const velocity = game.vehicle.body.linvel();
+    function matrixWorldY(matrix, x, y, z) {
+      const e = matrix.elements;
+      return e[1] * x + e[5] * y + e[9] * z + e[13];
+    }
+    function boundsFor(predicate) {
+      let minY = Infinity;
+      let maxY = -Infinity;
+      let meshes = 0;
+      game.vehicle.modelRoot.updateMatrixWorld(true);
+      game.vehicle.modelRoot.traverse((object) => {
+        if (!object.isMesh || !object.visible || !predicate(object)) return;
+        const positions = object.geometry?.attributes?.position;
+        if (!positions) return;
+        object.updateMatrixWorld(true);
+        meshes += 1;
+        for (let index = 0; index < positions.count; index += 1) {
+          const y = matrixWorldY(object.matrixWorld, positions.getX(index), positions.getY(index), positions.getZ(index));
+          minY = Math.min(minY, y);
+          maxY = Math.max(maxY, y);
+        }
+      });
+      return {
+        meshes,
+        minY: Number(minY.toFixed(4)),
+        maxY: Number(maxY.toFixed(4)),
+        clearanceAboveRoad: Number((minY - roadY).toFixed(4))
+      };
+    }
+    const position = game.vehicle.position;
+    return {
+      label: sampleLabel,
+      speed: Number(Math.hypot(velocity.x, velocity.z).toFixed(3)),
+      bodyY: Number(position.y.toFixed(4)),
+      position: {
+        x: Number(position.x.toFixed(2)),
+        z: Number(position.z.toFixed(2))
+      },
+      roadY: Number(roadY.toFixed(4)),
+      surface: game.world.getSurfaceInfo(position).id,
+      groundedWheels: game.vehicle.controller?.groundedWheels || 0,
+      bodyOnly: boundsFor((object) => (
+        !object.name.startsWith('WheelSpin')
+        && !object.name.startsWith('WheelFront')
+        && !/Wheel/i.test(object.name)
+      )),
+      wheels: boundsFor((object) => (
+        object.name.startsWith('WheelSpin')
+        || object.name.startsWith('WheelFront')
+        || /Wheel/i.test(object.name)
+      )),
+      wheelGrounding: game.vehicle.getWheelGroundingStats?.() || []
+    };
+  }, label);
 }
 
 async function exerciseSecurityScan(page) {
@@ -2314,6 +2501,7 @@ function assertVerification(result) {
       .join(', ');
     failures.push(`forward drive probe failed: halts=${result.forwardDriveProbe.halts}${events ? ` (${events})` : ''}`);
   }
+  assertVehicleGroundingMotion(result, failures);
   if (result.goalGate === 'gate-3r-vertical-slice') {
     assertGate3RVerticalSliceVerification(result, failures);
     if (failures.length) {
@@ -3112,6 +3300,39 @@ function assertVerification(result) {
   }
   if (failures.length) {
     throw new Error(`Play verification failed: ${failures.join('; ')}`);
+  }
+}
+
+function assertVehicleGroundingMotion(result, failures) {
+  const motion = result.vehicleGroundingMotion;
+  if (!motion || !Array.isArray(motion.samples) || motion.samples.length !== 3) {
+    failures.push('vehicle grounding motion probe missing');
+    return;
+  }
+  if ((motion.maxSpeed || 0) < 20) failures.push(`vehicle grounding motion probe failed: maxSpeed=${motion.maxSpeed || 0}`);
+  if (!Number.isFinite(motion.minWheelClearanceAboveRoad) || motion.minWheelClearanceAboveRoad < 0.008) {
+    failures.push(`vehicle grounding motion failed: wheel clearance=${motion.minWheelClearanceAboveRoad}`);
+  }
+  if (!Number.isFinite(motion.minWheelDebugClearanceAboveRoad) || motion.minWheelDebugClearanceAboveRoad < 0.008) {
+    failures.push(`vehicle grounding debug failed: wheel clearance=${motion.minWheelDebugClearanceAboveRoad}`);
+  }
+  if (!Number.isFinite(motion.minBodyClearanceAboveRoad) || motion.minBodyClearanceAboveRoad < 0.08) {
+    failures.push(`vehicle grounding motion failed: body clearance=${motion.minBodyClearanceAboveRoad}`);
+  }
+  const boostSample = motion.samples.find((sample) => sample.label === 'boost');
+  if (!boostSample || (boostSample.speed || 0) < 30) {
+    failures.push(`vehicle grounding boost probe failed: speed=${boostSample?.speed || 0}`);
+  }
+  const badSamples = motion.samples.filter((sample) => (
+    (sample.groundedWheels || 0) < 2
+    || sample.surface !== 'road'
+    || !Number.isFinite(sample.wheels?.clearanceAboveRoad)
+    || sample.wheels.clearanceAboveRoad < 0.008
+    || !Number.isFinite(sample.bodyOnly?.clearanceAboveRoad)
+    || sample.bodyOnly.clearanceAboveRoad < 0.08
+  ));
+  if (badSamples.length) {
+    failures.push(`vehicle grounding samples failed: ${badSamples.map((sample) => sample.label).join(', ')}`);
   }
 }
 

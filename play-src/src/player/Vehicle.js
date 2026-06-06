@@ -13,10 +13,23 @@ const VISUAL_Y_OFFSET = -0.88;
 const BODY_VISUAL_LIFT = 0.08;
 const LIGHT_Y_OFFSET = VISUAL_Y_OFFSET + BODY_VISUAL_LIFT;
 const CONTACT_SHADOW_Y_OFFSET = -0.985;
+const ROAD_VISUAL_CLEARANCE = 0.035;
+const ROAD_VISUAL_FALLBACK_Y = 0.066;
+const GRASS_VISUAL_Y = 0.062;
+const SAND_VISUAL_Y = 0.044;
+const WHEEL_DROOP_OFFSET_Y = -0.12;
+const WHEEL_MAX_EXTENSION_Y = -0.34;
+const WHEEL_MAX_COMPRESSION_Y = 0.18;
 const DEFAULT_SURFACE = { id: 'road', drag: 1, dustColor: 0x6f6250, skidColor: 0x161410, skidMarks: true, roughnessFeedback: 0 };
 const SURFACE_IDS = ['road', 'avenue-road', 'plaza-road', 'security-road', 'stunt-road', 'dirt-road', 'bridge-road', 'grass', 'sand', 'shore', 'water'];
 const SOFT_SURFACES = new Set(['grass', 'sand', 'shore', 'dirt-road']);
 const WHEEL_ROOT_NAMES = new Set(['WheelFrontLeft', 'WheelFrontRight', 'WheelRearLeft', 'WheelRearRight']);
+const WHEEL_VISUAL_SPECS = [
+  { index: 0, rootName: 'WheelFrontLeft' },
+  { index: 1, rootName: 'WheelFrontRight' },
+  { index: 2, rootName: 'WheelRearLeft' },
+  { index: 3, rootName: 'WheelRearRight' }
+];
 
 export class Vehicle {
   constructor({ scene, physics, achievements, audio, world }) {
@@ -33,6 +46,7 @@ export class Vehicle {
     this.group.add(this.modelRoot);
     this.wheels = [];
     this.frontWheels = [];
+    this.wheelVisuals = [];
     this.speed = 0;
     this.airTime = 0;
     this.lastBoostPad = null;
@@ -333,6 +347,7 @@ export class Vehicle {
     this.modelRoot.add(model);
     this.wheels = [];
     this.frontWheels = [];
+    this.wheelVisuals = [];
     model.traverse((object) => {
       if (object.name.startsWith('WheelSpin')) {
         this.wheels.push(object);
@@ -341,6 +356,7 @@ export class Vehicle {
         this.frontWheels.push(object);
       }
     });
+    this.captureWheelVisuals(model);
   }
 
   createFallbackModel() {
@@ -564,12 +580,88 @@ export class Vehicle {
   }
 
   updateWheelVisuals(dt) {
+    this.updateWheelSuspensionVisuals(dt);
     for (const wheel of this.wheels) {
       wheel.rotation.x += this.controller.speed * dt * 4.2;
     }
     for (const pivot of this.frontWheels) {
       pivot.rotation.y = this.controller.steering;
     }
+  }
+
+  captureWheelVisuals(model) {
+    model.updateMatrixWorld(true);
+    this.wheelVisuals = WHEEL_VISUAL_SPECS
+      .map((spec) => {
+        const root = model.getObjectByName(spec.rootName);
+        if (!root) return null;
+        return {
+          ...spec,
+          root,
+          baseY: root.position.y,
+          currentOffsetY: 0,
+          localBottomY: measureLocalBottomY(root)
+        };
+      })
+      .filter(Boolean);
+  }
+
+  updateWheelSuspensionVisuals(dt) {
+    if (!this.wheelVisuals.length) return;
+    this.group.updateMatrixWorld(true);
+    const surfaceY = this.getVisibleWheelSurfaceY();
+    const lerp = Math.min(1, dt * 28);
+    const wheelController = this.controller?.controller;
+
+    for (const visual of this.wheelVisuals) {
+      const root = visual.root;
+      if (!root?.parent) continue;
+      let targetOffsetY = WHEEL_DROOP_OFFSET_Y;
+      if (wheelController?.wheelIsInContact?.(visual.index)) {
+        const contact = wheelController.wheelContactPoint(visual.index);
+        const targetBottomY = Math.max(contact?.y ?? surfaceY, surfaceY) + ROAD_VISUAL_CLEARANCE;
+        const currentBottomY = wheelBottomWorldY(visual);
+        const parentYScale = Math.max(0.35, Math.abs(root.parent.matrixWorld.elements[5] || 1));
+        const offsetDeltaY = (targetBottomY - currentBottomY) / parentYScale;
+        targetOffsetY = THREE.MathUtils.clamp(
+          root.position.y - visual.baseY + offsetDeltaY,
+          WHEEL_MAX_EXTENSION_Y,
+          WHEEL_MAX_COMPRESSION_Y
+        );
+      }
+      visual.currentOffsetY += (targetOffsetY - visual.currentOffsetY) * lerp;
+      root.position.y = visual.baseY + visual.currentOffsetY;
+    }
+  }
+
+  getVisibleWheelSurfaceY() {
+    const surfaceId = getSurfaceEffectId(this.surface);
+    if (surfaceId === 'sand' || surfaceId === 'shore' || surfaceId === 'water') return SAND_VISUAL_Y;
+    if (surfaceId === 'grass') return GRASS_VISUAL_Y;
+    return this.world?.roads?.roadGroup?.userData?.foundationMaxRoadY ?? ROAD_VISUAL_FALLBACK_Y;
+  }
+
+  getWheelGroundingStats() {
+    const roadY = this.world?.roads?.roadGroup?.userData?.foundationMaxRoadY ?? ROAD_VISUAL_FALLBACK_Y;
+    const surfaceY = this.getVisibleWheelSurfaceY();
+    const wheelController = this.controller?.controller;
+    return this.wheelVisuals.map((visual) => {
+      const bottomY = wheelBottomWorldY(visual);
+      const contact = wheelController?.wheelContactPoint?.(visual.index) || null;
+      const hardPoint = wheelController?.wheelHardPoint?.(visual.index) || null;
+      return {
+        index: visual.index,
+        rootName: visual.rootName,
+        inContact: Boolean(wheelController?.wheelIsInContact?.(visual.index)),
+        suspensionLength: roundMetric(wheelController?.wheelSuspensionLength?.(visual.index)),
+        contactY: roundMetric(contact?.y),
+        hardPointY: roundMetric(hardPoint?.y),
+        bottomY: roundMetric(bottomY),
+        visualOffsetY: roundMetric(visual.root.position.y - visual.baseY),
+        clearanceAboveRoad: roundMetric(bottomY - roadY),
+        clearanceAboveSurface: roundMetric(bottomY - surfaceY)
+      };
+    });
   }
 
   updateVehicleLights(input, state) {
@@ -956,6 +1048,37 @@ export class Vehicle {
 
 function makeSurfaceCounter() {
   return Object.fromEntries(SURFACE_IDS.map((id) => [id, 0]));
+}
+
+function measureLocalBottomY(root) {
+  root.updateMatrixWorld(true);
+  const inverse = root.matrixWorld.clone().invert();
+  const vertex = new THREE.Vector3();
+  let minY = Infinity;
+  root.traverse((object) => {
+    if (!object.isMesh || !object.geometry?.attributes?.position) return;
+    const positions = object.geometry.attributes.position;
+    object.updateMatrixWorld(true);
+    for (let index = 0; index < positions.count; index += 1) {
+      vertex
+        .set(positions.getX(index), positions.getY(index), positions.getZ(index))
+        .applyMatrix4(object.matrixWorld)
+        .applyMatrix4(inverse);
+      minY = Math.min(minY, vertex.y);
+    }
+  });
+  return Number.isFinite(minY) ? minY : -0.34;
+}
+
+function wheelBottomWorldY(visual) {
+  if (!visual?.root) return 0;
+  const bottom = new THREE.Vector3(0, visual.localBottomY, 0);
+  visual.root.updateMatrixWorld(true);
+  return bottom.applyMatrix4(visual.root.matrixWorld).y;
+}
+
+function roundMetric(value) {
+  return Number.isFinite(value) ? Number(value.toFixed(4)) : null;
 }
 
 function normalizeSurface(surface) {
