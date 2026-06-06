@@ -4311,7 +4311,7 @@ function assertGate3RVerticalSliceVerification(result, failures) {
   if ((slice.staticBatches || 0) < 4) failures.push(`Gate 3R batching failed: staticBatches=${slice.staticBatches || 0}`);
   if ((start.launchPads || 0) !== 0) failures.push(`Gate 3R start failed: rejected launch slab built=${start.launchPads || 0}`);
   if ((start.planters || 0) !== 0) failures.push(`Gate 3R start failed: rejected planters built=${start.planters || 0}`);
-  if ((start.launchLights || 0) < 6) failures.push(`Gate 3R start failed: launchLights=${start.launchLights || 0}`);
+  if ((start.launchLights || 0) !== 0) failures.push(`Gate 3R start failed: removed launch start bars still built=${start.launchLights || 0}`);
   if ((start.burnoutScuffs || 0) < 6) failures.push(`Gate 3R start failed: burnoutScuffs=${start.burnoutScuffs || 0}`);
   if ((start.signs || 0) < 2) failures.push(`Gate 3R start failed: signs=${start.signs || 0}`);
   if ((start.lamps || 0) < 2) failures.push(`Gate 3R start failed: lamps=${start.lamps || 0}`);

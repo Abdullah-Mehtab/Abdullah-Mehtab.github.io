@@ -1068,13 +1068,6 @@ export class SetPieces {
 
     const markY = 0.137;
 
-    for (let index = 0; index < 6; index += 1) {
-      const [x, z] = local(-2.75 + index * 1.1, -2.05);
-      this.box(group, x, markY + 0.003, z, 0.58, 0.018, 0.16, index % 2 ? this.world.materials.glowBlue : this.world.materials.warmGlow, rotation, 'GATE3R_Start_Launch_Light');
-      this.recordGate3RPlacement('road-overlay', 'GATE3R_Start_Launch_Light', x, z, { allowRoad: true });
-      stats.launchLights += 1;
-    }
-
     const scuffMaterial = this.sliceOverlayMaterial(0x181a14, 0.12);
     for (let side = -1; side <= 1; side += 2) {
       for (let index = 0; index < 3; index += 1) {

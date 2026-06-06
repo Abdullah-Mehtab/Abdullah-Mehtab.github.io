@@ -186,9 +186,7 @@ export class Roads {
       if (path.hierarchy !== 'bridge') {
         edgeMarks += this.addFoundationLaneEdgeLines(path, lineY, renderBase + 2);
       }
-      if (usesFoundationCenterMarks(path)) {
-        centerMarks.push(...createFoundationCenterMarkSpecs(path, markY));
-      }
+      centerMarks.push(...createFoundationCenterMarkSpecs(path, markY));
       if (foundationRoadRank(path) >= 70) throughPriorityPaths += 1;
     }
 
@@ -1180,10 +1178,6 @@ function foundationRoadShoulderWidth(path) {
   if (path.hierarchy === 'bridge') return 0.34;
   if (path.hierarchy === 'security' || path.hierarchy === 'stunt') return 0.36;
   return 0.44;
-}
-
-function usesFoundationCenterMarks(path) {
-  return path.hierarchy === 'avenue';
 }
 
 function createFoundationCenterMarkSpecs(path, y) {
