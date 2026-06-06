@@ -10,6 +10,7 @@ import sabreTurboModelUrl from '../../assets/models/vehicles/sabre-turbo.glb?url
 const START = new THREE.Vector3(...zonePresentation.landing.respawn.position);
 const START_HEADING = zonePresentation.landing.respawn.heading || 0;
 const VISUAL_Y_OFFSET = -0.88;
+const CONTACT_SHADOW_Y_OFFSET = -0.985;
 const DEFAULT_SURFACE = { id: 'road', drag: 1, dustColor: 0x6f6250, skidColor: 0x161410, skidMarks: true, roughnessFeedback: 0 };
 const SURFACE_IDS = ['road', 'avenue-road', 'plaza-road', 'security-road', 'stunt-road', 'dirt-road', 'bridge-road', 'grass', 'sand', 'shore', 'water'];
 const SOFT_SURFACES = new Set(['grass', 'sand', 'shore', 'dirt-road']);
@@ -145,11 +146,11 @@ export class Vehicle {
   createContactShadow() {
     const shadow = new THREE.Mesh(
       new THREE.CircleGeometry(1.9, 28),
-      new THREE.MeshBasicMaterial({ color: 0x070b0c, transparent: true, opacity: 0.28, depthWrite: false })
+      new THREE.MeshBasicMaterial({ color: 0x070b0c, transparent: true, opacity: 0.12, depthWrite: false })
     );
     shadow.name = 'VehicleContactShadow';
     shadow.rotation.x = -Math.PI / 2;
-    shadow.position.set(0, -0.82, -0.15);
+    shadow.position.set(0, CONTACT_SHADOW_Y_OFFSET, -0.15);
     shadow.scale.set(0.82, 1.55, 1);
     shadow.renderOrder = 5;
     this.group.add(shadow);
