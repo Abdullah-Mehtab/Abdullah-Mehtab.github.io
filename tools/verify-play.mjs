@@ -1199,6 +1199,7 @@ async function exerciseVehicleBodyRoadClipping(page) {
   ];
   const samples = [];
   const screenshots = [];
+  const maskScreenshots = [];
 
   await page.evaluate(() => {
     const game = window.__portfolioDrive.game;
@@ -1225,6 +1226,9 @@ async function exerciseVehicleBodyRoadClipping(page) {
     await stageVehicleBodySideView(page);
     const sideName = `vehicle-body-road-${scenario.id}-side.png`;
     await screenshot(page, sideName);
+    const maskEvidence = await captureVehicleBodyRoadMaskSet(page, scenario.id);
+    sample.maskEvidence = maskEvidence.summary;
+    maskScreenshots.push(...maskEvidence.screenshots);
     samples.push(sample);
     screenshots.push(gameplayName, sideName);
   }
@@ -1255,11 +1259,345 @@ async function exerciseVehicleBodyRoadClipping(page) {
     },
     samples,
     screenshots,
+    maskScreenshots,
     minCriticalBodyClearance: Number(Math.min(...critical.map((sample) => sample.body.clearanceAboveRoad)).toFixed(4)),
     minCriticalPaintedBodyClearance: Number(Math.min(...critical.map((sample) => sample.paintedBody.clearanceAboveRoad)).toFixed(4)),
     minWheelClearance: Number(Math.min(...samples.map((sample) => sample.wheels.clearanceAboveRoad)).toFixed(4)),
-    maxAbsLateralOffset: Number(Math.max(...samples.map((sample) => Math.abs(sample.roadPlacement.lateralOffset))).toFixed(4))
+    maxAbsLateralOffset: Number(Math.max(...samples.map((sample) => Math.abs(sample.roadPlacement.lateralOffset))).toFixed(4)),
+    maxLowerBodyPixelLossRatio: Number(Math.max(...samples.map((sample) => sample.maskEvidence?.lowerBodyPixelLossRatio || 0)).toFixed(4)),
+    maxBodyPixelLossRatio: Number(Math.max(...samples.map((sample) => sample.maskEvidence?.bodyPixelLossRatio || 0)).toFixed(4)),
+    rootCauseCandidates: [...new Set(samples.map((sample) => sample.maskEvidence?.rootCause).filter(Boolean))]
   };
+}
+
+async function captureVehicleBodyRoadMaskSet(page, scenarioId) {
+  const modes = [
+    { id: 'car', label: 'car-only' },
+    { id: 'road', label: 'road-only' },
+    { id: 'road-car', label: 'road-car' },
+    { id: 'wheels', label: 'wheels-only' },
+    { id: 'terrain-road', label: 'terrain-road' }
+  ];
+  const metrics = {};
+  const screenshots = [];
+  const frame = await page.evaluate(captureVehicleBodyRoadFrame);
+
+  for (const mode of modes) {
+    await page.evaluate(restoreVehicleBodyRoadFrame, { frame, freezeMotion: true });
+    metrics[mode.id] = await page.evaluate(applyVehicleBodyRoadMask, mode.id);
+    const name = `vehicle-body-road-${scenarioId}-mask-${mode.label}.png`;
+    await screenshot(page, name);
+    screenshots.push(name);
+    await page.evaluate(restoreVehicleBodyRoadMask);
+  }
+  await page.evaluate(restoreVehicleBodyRoadFrame, { frame, freezeMotion: false });
+
+  return {
+    screenshots,
+    summary: summarizeVehicleBodyRoadMasks(metrics)
+  };
+}
+
+function captureVehicleBodyRoadFrame() {
+  const game = window.__portfolioDrive.game;
+  const body = game.vehicle.body;
+  const translation = body.translation();
+  const rotation = body.rotation();
+  const linvel = body.linvel();
+  const angvel = body.angvel();
+  return {
+    translation: { x: translation.x, y: translation.y, z: translation.z },
+    rotation: { x: rotation.x, y: rotation.y, z: rotation.z, w: rotation.w },
+    linvel: { x: linvel.x, y: linvel.y, z: linvel.z },
+    angvel: { x: angvel.x, y: angvel.y, z: angvel.z },
+    cameraPosition: {
+      x: game.camera.position.x,
+      y: game.camera.position.y,
+      z: game.camera.position.z
+    },
+    cameraQuaternion: {
+      x: game.camera.quaternion.x,
+      y: game.camera.quaternion.y,
+      z: game.camera.quaternion.z,
+      w: game.camera.quaternion.w
+    },
+    cameraFov: game.camera.fov,
+    cameraRigFrozen: Boolean(game.__verifyBodyCameraUpdate)
+  };
+}
+
+function restoreVehicleBodyRoadFrame({ frame, freezeMotion }) {
+  const game = window.__portfolioDrive.game;
+  game.vehicle.body.setTranslation(frame.translation, true);
+  game.vehicle.body.setRotation(frame.rotation, true);
+  game.vehicle.body.setLinvel(freezeMotion ? { x: 0, y: 0, z: 0 } : frame.linvel, true);
+  game.vehicle.body.setAngvel(freezeMotion ? { x: 0, y: 0, z: 0 } : frame.angvel, true);
+  game.vehicle.syncModel?.();
+  game.camera.position.set(frame.cameraPosition.x, frame.cameraPosition.y, frame.cameraPosition.z);
+  game.camera.quaternion.set(frame.cameraQuaternion.x, frame.cameraQuaternion.y, frame.cameraQuaternion.z, frame.cameraQuaternion.w);
+  game.camera.fov = frame.cameraFov;
+  game.camera.updateProjectionMatrix();
+  if (frame.cameraRigFrozen) game.cameraRig.update = () => {};
+  game.rendererSystem.render();
+}
+
+function summarizeVehicleBodyRoadMasks(metrics) {
+  const car = metrics.car || {};
+  const combined = metrics['road-car'] || {};
+  const wheels = metrics.wheels || {};
+  const bodyPixels = car.bodyPixels || 0;
+  const combinedBodyPixels = combined.bodyPixels || 0;
+  const lowerBodyPixels = car.lowerBodyPixels || 0;
+  const combinedLowerBodyPixels = combined.lowerBodyPixels || 0;
+  const wheelPixels = wheels.wheelPixels || car.wheelPixels || 0;
+  const combinedWheelPixels = combined.wheelPixels || 0;
+  const bodyPixelLoss = Math.max(0, bodyPixels - combinedBodyPixels);
+  const lowerBodyPixelLoss = Math.max(0, lowerBodyPixels - combinedLowerBodyPixels);
+  const wheelPixelLoss = Math.max(0, wheelPixels - combinedWheelPixels);
+  const bodyPixelLossRatio = bodyPixels > 0 ? bodyPixelLoss / bodyPixels : 0;
+  const lowerBodyPixelLossRatio = lowerBodyPixels > 0 ? lowerBodyPixelLoss / lowerBodyPixels : 0;
+  const wheelPixelLossRatio = wheelPixels > 0 ? wheelPixelLoss / wheelPixels : 0;
+  const roadRenderOcclusion = lowerBodyPixelLossRatio > 0.035 || bodyPixelLossRatio > 0.08;
+  const rootCause = roadRenderOcclusion
+    ? 'road-render-occlusion'
+    : bodyPixels <= 0 || lowerBodyPixels <= 0
+      ? 'mask-diagnostic-inconclusive'
+      : 'no-road-render-occlusion-detected';
+
+  return {
+    rootCause,
+    roadRenderOcclusion,
+    bodyPixels,
+    combinedBodyPixels,
+    bodyPixelLoss,
+    bodyPixelLossRatio: Number(bodyPixelLossRatio.toFixed(4)),
+    lowerBodyPixels,
+    combinedLowerBodyPixels,
+    lowerBodyPixelLoss,
+    lowerBodyPixelLossRatio: Number(lowerBodyPixelLossRatio.toFixed(4)),
+    wheelPixels,
+    combinedWheelPixels,
+    wheelPixelLoss,
+    wheelPixelLossRatio: Number(wheelPixelLossRatio.toFixed(4)),
+    carBodyBounds: car.bodyBounds || null,
+    combinedBodyBounds: combined.bodyBounds || null,
+    roadPixels: metrics.road?.roadPixels || 0,
+    combinedRoadPixels: combined.roadPixels || 0
+  };
+}
+
+function applyVehicleBodyRoadMask(mode) {
+  const game = window.__portfolioDrive.game;
+  const scene = game.scene;
+  const renderer = game.renderer;
+  const vehicleGroup = game.vehicle.group;
+  const roadGroup = game.world.roads?.roadGroup;
+  const MeshBasicMaterial = game.world.materials.roadLine.constructor;
+  const Color = game.world.materials.roadLine.color.constructor;
+  const materialCache = new Map();
+  const records = [];
+  const postprocessingEnabled = game.rendererSystem.postprocessingEnabled;
+  const background = scene.background;
+  const toneMappingExposure = renderer.toneMappingExposure;
+
+  function hasAncestor(object, ancestor) {
+    if (!ancestor) return false;
+    let current = object;
+    while (current) {
+      if (current === ancestor) return true;
+      current = current.parent;
+    }
+    return false;
+  }
+
+  function hasAncestorNamePrefix(object, prefix) {
+    let current = object;
+    while (current) {
+      if ((current.name || '').startsWith(prefix)) return true;
+      current = current.parent;
+    }
+    return false;
+  }
+
+  function isRenderable(object) {
+    return object.isMesh || object.isInstancedMesh || object.isPoints;
+  }
+
+  function isWheelObject(object) {
+    return hasAncestorNamePrefix(object, 'WheelSpin') || hasAncestorNamePrefix(object, 'WheelFront') || /Wheel/i.test(object.name || '');
+  }
+
+  function maskMaterial(color, source, side = source?.side ?? 0) {
+    const depthWrite = source?.depthWrite ?? true;
+    const depthTest = source?.depthTest ?? true;
+    const polygonOffset = source?.polygonOffset ?? false;
+    const polygonOffsetFactor = source?.polygonOffsetFactor ?? 0;
+    const polygonOffsetUnits = source?.polygonOffsetUnits ?? 0;
+    const key = `${color}:${side}:${depthWrite ? 1 : 0}:${depthTest ? 1 : 0}:${polygonOffset ? 1 : 0}:${polygonOffsetFactor}:${polygonOffsetUnits}`;
+    if (materialCache.has(key)) return materialCache.get(key);
+    const material = new MeshBasicMaterial({
+      color,
+      depthTest,
+      depthWrite,
+      side
+    });
+    material.polygonOffset = polygonOffset;
+    material.polygonOffsetFactor = polygonOffsetFactor;
+    material.polygonOffsetUnits = polygonOffsetUnits;
+    materialCache.set(key, material);
+    return material;
+  }
+
+  scene.traverse((object) => {
+    if (!isRenderable(object)) return;
+    const originalMaterial = Array.isArray(object.material) ? object.material[0] : object.material;
+    records.push({
+      object,
+      visible: object.visible,
+      material: object.material,
+      renderOrder: object.renderOrder,
+      frustumCulled: object.frustumCulled
+    });
+    const inVehicle = hasAncestor(object, vehicleGroup);
+    const inRoad = hasAncestor(object, roadGroup);
+    const inTerrain = hasAncestorNamePrefix(object, 'ToyIsland');
+    const wheel = inVehicle && isWheelObject(object);
+    const body = inVehicle && !wheel;
+    const showBody = (mode === 'car' || mode === 'road-car') && body;
+    const showWheel = (mode === 'car' || mode === 'road-car' || mode === 'wheels') && wheel;
+    const showRoad = (mode === 'road' || mode === 'road-car' || mode === 'terrain-road') && inRoad;
+    const showTerrain = mode === 'terrain-road' && inTerrain;
+    object.visible = showBody || showWheel || showRoad || showTerrain;
+    object.frustumCulled = false;
+    if (showBody) object.material = maskMaterial(0xff00ff, originalMaterial);
+    if (showWheel) object.material = maskMaterial(0xffff00, originalMaterial);
+    if (showRoad) object.material = maskMaterial(0x00ffff, originalMaterial, 2);
+    if (showTerrain) object.material = maskMaterial(0x00ff00, originalMaterial, 2);
+  });
+
+  game.__vehicleBodyRoadMaskState = {
+    records,
+    postprocessingEnabled,
+    background,
+    toneMappingExposure
+  };
+  game.rendererSystem.postprocessingEnabled = false;
+  scene.background = new Color(0x000000);
+  renderer.toneMappingExposure = 1;
+  renderer.render(scene, game.camera);
+
+  const gl = renderer.getContext();
+  const width = renderer.domElement.width;
+  const height = renderer.domElement.height;
+  const pixels = new Uint8Array(width * height * 4);
+  gl.readPixels(0, 0, width, height, gl.RGBA, gl.UNSIGNED_BYTE, pixels);
+
+  function samplePixels() {
+    const stats = {
+      mode,
+      width,
+      height,
+      bodyPixels: 0,
+      lowerBodyPixels: 0,
+      wheelPixels: 0,
+      roadPixels: 0,
+      terrainPixels: 0,
+      bodyBounds: null,
+      wheelBounds: null,
+      roadBounds: null
+    };
+    const bodyBounds = createBounds();
+    const wheelBounds = createBounds();
+    const roadBounds = createBounds();
+
+    for (let y = 0; y < height; y += 1) {
+      for (let x = 0; x < width; x += 1) {
+        const offset = (y * width + x) * 4;
+        const r = pixels[offset];
+        const g = pixels[offset + 1];
+        const b = pixels[offset + 2];
+        if (isBodyPixel(r, g, b)) {
+          stats.bodyPixels += 1;
+          updateBounds(bodyBounds, x, y);
+        } else if (isWheelPixel(r, g, b)) {
+          stats.wheelPixels += 1;
+          updateBounds(wheelBounds, x, y);
+        } else if (isRoadPixel(r, g, b)) {
+          stats.roadPixels += 1;
+          updateBounds(roadBounds, x, y);
+        } else if (isTerrainPixel(r, g, b)) {
+          stats.terrainPixels += 1;
+        }
+      }
+    }
+
+    stats.bodyBounds = finalizeBounds(bodyBounds);
+    stats.wheelBounds = finalizeBounds(wheelBounds);
+    stats.roadBounds = finalizeBounds(roadBounds);
+    if (stats.bodyBounds) {
+      const lowerLimit = Math.floor((stats.bodyBounds.minY + stats.bodyBounds.maxY) / 2);
+      for (let y = stats.bodyBounds.minY; y <= lowerLimit; y += 1) {
+        for (let x = stats.bodyBounds.minX; x <= stats.bodyBounds.maxX; x += 1) {
+          const offset = (y * width + x) * 4;
+          if (isBodyPixel(pixels[offset], pixels[offset + 1], pixels[offset + 2])) {
+            stats.lowerBodyPixels += 1;
+          }
+        }
+      }
+    }
+    return stats;
+  }
+
+  function createBounds() {
+    return { minX: Infinity, minY: Infinity, maxX: -Infinity, maxY: -Infinity };
+  }
+
+  function updateBounds(bounds, x, y) {
+    bounds.minX = Math.min(bounds.minX, x);
+    bounds.minY = Math.min(bounds.minY, y);
+    bounds.maxX = Math.max(bounds.maxX, x);
+    bounds.maxY = Math.max(bounds.maxY, y);
+  }
+
+  function finalizeBounds(bounds) {
+    if (!Number.isFinite(bounds.minX)) return null;
+    return bounds;
+  }
+
+  function isBodyPixel(r, g, b) {
+    return r > 140 && b > 130 && g < 115;
+  }
+
+  function isWheelPixel(r, g, b) {
+    return r > 140 && g > 120 && b < 120;
+  }
+
+  function isRoadPixel(r, g, b) {
+    return g > 120 && b > 120 && r < 120;
+  }
+
+  function isTerrainPixel(r, g, b) {
+    return g > 120 && r < 120 && b < 120;
+  }
+
+  return samplePixels();
+}
+
+function restoreVehicleBodyRoadMask() {
+  const game = window.__portfolioDrive.game;
+  const state = game.__vehicleBodyRoadMaskState;
+  if (!state) return;
+  for (const record of state.records) {
+    record.object.visible = record.visible;
+    record.object.material = record.material;
+    record.object.renderOrder = record.renderOrder;
+    record.object.frustumCulled = record.frustumCulled;
+  }
+  game.rendererSystem.postprocessingEnabled = state.postprocessingEnabled;
+  game.scene.background = state.background;
+  game.renderer.toneMappingExposure = state.toneMappingExposure;
+  delete game.__vehicleBodyRoadMaskState;
+  game.rendererSystem.render();
 }
 
 async function resetVehicleBodyRoadProbe(page, segment) {
@@ -1312,16 +1650,14 @@ async function stageVehicleBodySideView(page) {
     const heading = game.vehicle.heading || 0;
     const sideX = Math.cos(heading);
     const sideZ = -Math.sin(heading);
-    const backX = -Math.sin(heading);
-    const backZ = -Math.cos(heading);
     game.cameraRig.update = () => {};
     game.camera.position.set(
-      position.x + sideX * 9.4 + backX * 0.25,
-      position.y + 1.62,
-      position.z + sideZ * 9.4 + backZ * 0.25
+      position.x + sideX * 14.6,
+      position.y + 2.05,
+      position.z + sideZ * 14.6
     );
-    game.camera.lookAt(position.x, position.y - 0.02, position.z);
-    game.camera.fov = 28;
+    game.camera.lookAt(position.x, position.y + 0.08, position.z);
+    game.camera.fov = 34;
     game.camera.updateProjectionMatrix();
     game.rendererSystem.render();
   });
@@ -3580,6 +3916,9 @@ function assertVehicleBodyRoadClipping(result, failures) {
   if ((probe.screenshots?.length || 0) !== expectedIds.length * 2) {
     failures.push(`vehicle body-road clipping screenshots missing: ${probe.screenshots?.length || 0}/${expectedIds.length * 2}`);
   }
+  if ((probe.maskScreenshots?.length || 0) !== expectedIds.length * 5) {
+    failures.push(`vehicle body-road clipping mask screenshots missing: ${probe.maskScreenshots?.length || 0}/${expectedIds.length * 5}`);
+  }
 
   const laneFailures = probe.samples.filter((sample) => (
     !Number.isFinite(sample.roadPlacement?.lateralOffset)
@@ -3617,6 +3956,17 @@ function assertVehicleBodyRoadClipping(result, failures) {
   }
   if ((probe.minCriticalPaintedBodyClearance || 0) < 0.2) {
     failures.push(`vehicle body-road min painted clearance failed: ${probe.minCriticalPaintedBodyClearance}`);
+  }
+  const maskFailures = probe.samples.filter((sample) => (
+    criticalIds.has(sample.id)
+    && (
+      sample.maskEvidence?.roadRenderOcclusion
+      || (sample.maskEvidence?.lowerBodyPixelLossRatio || 0) > 0.035
+      || (sample.maskEvidence?.bodyPixelLossRatio || 0) > 0.08
+    )
+  ));
+  if (maskFailures.length) {
+    failures.push(`vehicle body-road mask occlusion failed: ${maskFailures.map((sample) => `${sample.id} lower=${sample.maskEvidence?.lowerBodyPixelLossRatio} body=${sample.maskEvidence?.bodyPixelLossRatio} cause=${sample.maskEvidence?.rootCause}`).join(', ')}`);
   }
 }
 

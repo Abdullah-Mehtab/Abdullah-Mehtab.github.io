@@ -27,6 +27,8 @@ const RIDE_HEIGHT_SPEED_FULL = 14;
 const RIDE_HEIGHT_RESPONSE = 14;
 const RIDE_HEIGHT_COMPRESSION_SCALE = 1.18;
 const RIDE_HEIGHT_WHEELIE_EXTRA_LIFT = 0.105;
+const VEHICLE_BODY_RENDER_ORDER = 8;
+const VEHICLE_GLASS_RENDER_ORDER = 9;
 const DEFAULT_SURFACE = { id: 'road', drag: 1, dustColor: 0x6f6250, skidColor: 0x161410, skidMarks: true, roughnessFeedback: 0 };
 const SURFACE_IDS = ['road', 'avenue-road', 'plaza-road', 'security-road', 'stunt-road', 'dirt-road', 'bridge-road', 'grass', 'sand', 'shore', 'water'];
 const SOFT_SURFACES = new Set(['grass', 'sand', 'shore', 'dirt-road']);
@@ -352,6 +354,9 @@ export class Vehicle {
         object.castShadow = true;
         object.receiveShadow = false;
       }
+      if (object.isMesh) {
+        object.renderOrder = object.material?.transparent ? VEHICLE_GLASS_RENDER_ORDER : VEHICLE_BODY_RENDER_ORDER;
+      }
     });
     this.modelRoot.add(model);
     this.wheels = [];
@@ -376,6 +381,7 @@ export class Vehicle {
     body.position.y = 0.45;
     body.castShadow = true;
     body.receiveShadow = true;
+    body.renderOrder = VEHICLE_BODY_RENDER_ORDER;
     this.modelRoot.add(body);
   }
 

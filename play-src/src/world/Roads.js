@@ -74,6 +74,9 @@ const FOUNDATION_ROAD_LAYER_STEP = 0.00016;
 const FOUNDATION_ROAD_EDGE_OFFSET_Y = -0.00004;
 const FOUNDATION_ROAD_LINE_OFFSET_Y = 0.00008;
 const FOUNDATION_ROAD_MARK_OFFSET_Y = 0.00012;
+const FOUNDATION_ROAD_RENDER_BASE = 1;
+const FOUNDATION_ROAD_RENDER_STEP = 0.08;
+const FOUNDATION_ROAD_CENTER_MARK_RENDER_ORDER = 2.1;
 
 export class Roads {
   constructor(world) {
@@ -155,7 +158,7 @@ export class Roads {
       const edgeY = surfaceY + FOUNDATION_ROAD_EDGE_OFFSET_Y;
       const lineY = surfaceY + FOUNDATION_ROAD_LINE_OFFSET_Y;
       const markY = surfaceY + FOUNDATION_ROAD_MARK_OFFSET_Y;
-      const renderBase = 4 + index * 4;
+      const renderBase = FOUNDATION_ROAD_RENDER_BASE + index * FOUNDATION_ROAD_RENDER_STEP;
       const edgeWidth = path.width + foundationRoadShoulderWidth(path) * 2;
       minRoadY = Math.min(minRoadY, edgeY);
       maxRoadY = Math.max(maxRoadY, markY);
@@ -321,13 +324,13 @@ export class Roads {
 
   addFoundationCenterMarkInstances(specs) {
     if (!specs.length) return;
-    const material = this.foundationRoadMaterialFromColor('#d9dccf', 0.48, 40, true);
+    const material = this.foundationRoadMaterialFromColor('#d9dccf', 0.48, FOUNDATION_ROAD_CENTER_MARK_RENDER_ORDER, true);
     const geometry = new THREE.PlaneGeometry(1, 1);
     geometry.rotateX(-Math.PI / 2);
     applyWhiteVertexColors(geometry);
     const mesh = new THREE.InstancedMesh(geometry, material, specs.length);
     mesh.name = 'ROAD_Foundation_Center_Marks';
-    mesh.renderOrder = 40;
+    mesh.renderOrder = FOUNDATION_ROAD_CENTER_MARK_RENDER_ORDER;
     mesh.frustumCulled = false;
     mesh.userData.batchLabel = 'foundation_center_marks';
     mesh.userData.roadPart = 'foundation_center_marks';
@@ -507,14 +510,12 @@ export class Roads {
       color: new THREE.Color(color),
       transparent: opacity < 1,
       opacity,
-      depthWrite: opacity >= 1,
+      depthWrite: false,
       depthTest: true,
       side: THREE.DoubleSide,
       vertexColors
     });
-    material.polygonOffset = true;
-    material.polygonOffsetFactor = -renderOrder;
-    material.polygonOffsetUnits = -renderOrder;
+    material.polygonOffset = false;
     this.materialCache.set(cacheKey, material);
     return material;
   }
