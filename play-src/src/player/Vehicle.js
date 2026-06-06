@@ -20,6 +20,13 @@ const SAND_VISUAL_Y = 0.044;
 const WHEEL_DROOP_OFFSET_Y = -0.12;
 const WHEEL_MAX_EXTENSION_Y = -0.34;
 const WHEEL_MAX_COMPRESSION_Y = 0.18;
+const RIDE_HEIGHT_REFERENCE_SUSPENSION = 0.18;
+const RIDE_HEIGHT_MAX_VISUAL_LIFT = 0.19;
+const RIDE_HEIGHT_SPEED_START = 2;
+const RIDE_HEIGHT_SPEED_FULL = 14;
+const RIDE_HEIGHT_RESPONSE = 14;
+const RIDE_HEIGHT_COMPRESSION_SCALE = 1.18;
+const RIDE_HEIGHT_WHEELIE_EXTRA_LIFT = 0.105;
 const DEFAULT_SURFACE = { id: 'road', drag: 1, dustColor: 0x6f6250, skidColor: 0x161410, skidMarks: true, roughnessFeedback: 0 };
 const SURFACE_IDS = ['road', 'avenue-road', 'plaza-road', 'security-road', 'stunt-road', 'dirt-road', 'bridge-road', 'grass', 'sand', 'shore', 'water'];
 const SOFT_SURFACES = new Set(['grass', 'sand', 'shore', 'dirt-road']);
@@ -72,6 +79,8 @@ export class Vehicle {
     };
     this.surfaceTrailDustCounter = makeSurfaceCounter();
     this.surfaceDragEvents = makeSurfaceCounter();
+    this.bodyVisualRideHeight = 0;
+    this.lastBodyVisualRideHeightTarget = 0;
     this.lastSurfaceDrag = { surface: DEFAULT_SURFACE.id, damp: 1, beforeSpeed: 0, afterSpeed: 0 };
     this.effectDummy = new THREE.Object3D();
     this.lightDummy = new THREE.Object3D();
@@ -567,15 +576,53 @@ export class Vehicle {
       ? (1 - landingAge / 0.28) * this.lastLandingIntensity * 0.012
       : 0;
     const totalAmount = amount + landingRumble;
+    const rideHeight = this.updateBodyVisualRideHeight(dt, state);
     this.modelRoot.position.set(
       0,
-      VISUAL_Y_OFFSET + Math.sin(this.visualRumbleTime * 35) * totalAmount,
+      VISUAL_Y_OFFSET + rideHeight + Math.sin(this.visualRumbleTime * 35) * totalAmount,
       0
     );
     this.modelRoot.rotation.set(
       Math.sin(this.visualRumbleTime * 22) * totalAmount * 0.18,
       0,
       Math.sin(this.visualRumbleTime * 29) * totalAmount * 0.12
+    );
+  }
+
+  updateBodyVisualRideHeight(dt, state = {}) {
+    const target = this.getBodyVisualRideHeightTarget(state);
+    this.lastBodyVisualRideHeightTarget = target;
+    if (dt <= 0) return this.bodyVisualRideHeight;
+    this.bodyVisualRideHeight += (target - this.bodyVisualRideHeight) * Math.min(1, dt * RIDE_HEIGHT_RESPONSE);
+    return this.bodyVisualRideHeight;
+  }
+
+  getBodyVisualRideHeightTarget(state = {}) {
+    const wheelController = this.controller?.controller;
+    if (!wheelController) return 0;
+
+    let compressionTotal = 0;
+    let contactCount = 0;
+    for (let index = 0; index < WHEEL_VISUAL_SPECS.length; index += 1) {
+      if (!wheelController.wheelIsInContact?.(index)) continue;
+      const length = wheelController.wheelSuspensionLength?.(index);
+      if (!Number.isFinite(length)) continue;
+      compressionTotal += Math.max(0, RIDE_HEIGHT_REFERENCE_SUSPENSION - length);
+      contactCount += 1;
+    }
+    if (!contactCount) return 0;
+
+    const speedFactor = THREE.MathUtils.smoothstep(
+      this.speed,
+      RIDE_HEIGHT_SPEED_START,
+      RIDE_HEIGHT_SPEED_FULL
+    );
+    const burnoutFactor = state.burnout ? 0.18 : 1;
+    const wheelieLift = state.wheelie ? RIDE_HEIGHT_WHEELIE_EXTRA_LIFT : 0;
+    return THREE.MathUtils.clamp(
+      (compressionTotal / contactCount) * RIDE_HEIGHT_COMPRESSION_SCALE * speedFactor * burnoutFactor + wheelieLift,
+      0,
+      RIDE_HEIGHT_MAX_VISUAL_LIFT
     );
   }
 
@@ -662,6 +709,13 @@ export class Vehicle {
         clearanceAboveSurface: roundMetric(bottomY - surfaceY)
       };
     });
+  }
+
+  getBodyVisualRideHeightStats() {
+    return {
+      current: roundMetric(this.bodyVisualRideHeight),
+      target: roundMetric(this.lastBodyVisualRideHeightTarget)
+    };
   }
 
   updateVehicleLights(input, state) {
@@ -1029,6 +1083,8 @@ export class Vehicle {
     };
     this.surfaceTrailDustCounter = makeSurfaceCounter();
     this.lastLandingIntensity = 0;
+    this.bodyVisualRideHeight = 0;
+    this.lastBodyVisualRideHeightTarget = 0;
     this.lastPosition.copy(position);
     this.syncModel();
   }

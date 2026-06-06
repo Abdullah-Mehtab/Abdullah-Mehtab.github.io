@@ -127,6 +127,7 @@ try {
   const routeReplay = await exerciseRouteReplay(page, routeReplaySegments);
   const forwardDriveProbe = await exerciseForwardDriveProbe(page, routeReplaySegments);
   const vehicleGroundingMotion = await exerciseVehicleGroundingMotion(page);
+  const vehicleBodyRoadClipping = await exerciseVehicleBodyRoadClipping(page);
   const circuitPreview = await previewCircuit(page);
   await screenshot(page, '06-circuit-target.png');
   const circuit = await finishCircuit(page, circuitPreview);
@@ -230,6 +231,7 @@ try {
     securityScan,
     forwardDriveProbe,
     vehicleGroundingMotion,
+    vehicleBodyRoadClipping,
     vehicleLights,
     waterView,
     ...metrics
@@ -1181,6 +1183,234 @@ async function sampleVehicleGroundingMotion(page, label) {
       wheelGrounding: game.vehicle.getWheelGroundingStats?.() || []
     };
   }, label);
+}
+
+async function exerciseVehicleBodyRoadClipping(page) {
+  const segment = routeReplaySegments.find((item) => item.id === 'coastal-loop' && item.index === 6)
+    || routeReplaySegments.find((item) => item.id === 'coastal-loop' && item.length > 64)
+    || routeReplaySegments[0];
+  const scenarios = [
+    { id: 'idle', steps: [{ ms: 900, actions: {} }] },
+    { id: 'driving', steps: [{ ms: 900, actions: { forward: true } }] },
+    { id: 'sprinting', steps: [{ ms: 760, actions: { forward: true, boost: true } }] },
+    { id: 'braking', steps: [{ ms: 750, actions: { forward: true } }, { ms: 500, actions: { forward: true, brake: true } }] },
+    { id: 'burnout', steps: [{ ms: 1150, actions: { forward: true, brake: true } }] },
+    { id: 'wheelie', steps: [{ ms: 1150, actions: { forward: true, brake: true } }, { ms: 620, actions: { forward: true } }] }
+  ];
+  const samples = [];
+  const screenshots = [];
+
+  await page.evaluate(() => {
+    const game = window.__portfolioDrive.game;
+    game.ui.closePanel?.();
+    game.ui.closeMap?.();
+    game.ui.closeMenu?.();
+    game.startDriving();
+    if (!game.__verifyBodyCameraUpdate) {
+      game.__verifyBodyCameraUpdate = game.cameraRig.update.bind(game.cameraRig);
+    }
+  });
+
+  for (const scenario of scenarios) {
+    await resetVehicleBodyRoadProbe(page, segment);
+    for (const step of scenario.steps) {
+      await setVehicleProbeActions(page, step.actions);
+      await delay(step.ms);
+    }
+    await setVehicleProbeActions(page, {});
+    const sample = await sampleVehicleBodyRoadClipping(page, scenario.id, segment);
+    await stageVehicleBodyGameplayView(page);
+    const gameplayName = `vehicle-body-road-${scenario.id}-gameplay.png`;
+    await screenshot(page, gameplayName);
+    await stageVehicleBodySideView(page);
+    const sideName = `vehicle-body-road-${scenario.id}-side.png`;
+    await screenshot(page, sideName);
+    samples.push(sample);
+    screenshots.push(gameplayName, sideName);
+  }
+
+  await page.evaluate(() => {
+    const game = window.__portfolioDrive.game;
+    for (const action of ['forward', 'boost', 'backward', 'brake', 'handbrake', 'left', 'right', 'jump']) {
+      game.input.actions[action] = false;
+    }
+    game.input.joystick.x = 0;
+    game.input.joystick.y = 0;
+    game.input.pressed?.clear?.();
+    if (game.__verifyBodyCameraUpdate) {
+      game.cameraRig.update = game.__verifyBodyCameraUpdate;
+      delete game.__verifyBodyCameraUpdate;
+    }
+    window.__portfolioDrive.respawn('landing');
+  });
+
+  const critical = samples.filter((sample) => ['driving', 'sprinting', 'braking', 'wheelie'].includes(sample.id));
+  return {
+    segment: {
+      id: segment.id,
+      index: segment.index,
+      width: segment.width,
+      length: Number(segment.length.toFixed(2)),
+      rotation: Number(segment.rotation.toFixed(4))
+    },
+    samples,
+    screenshots,
+    minCriticalBodyClearance: Number(Math.min(...critical.map((sample) => sample.body.clearanceAboveRoad)).toFixed(4)),
+    minCriticalPaintedBodyClearance: Number(Math.min(...critical.map((sample) => sample.paintedBody.clearanceAboveRoad)).toFixed(4)),
+    minWheelClearance: Number(Math.min(...samples.map((sample) => sample.wheels.clearanceAboveRoad)).toFixed(4)),
+    maxAbsLateralOffset: Number(Math.max(...samples.map((sample) => Math.abs(sample.roadPlacement.lateralOffset))).toFixed(4))
+  };
+}
+
+async function resetVehicleBodyRoadProbe(page, segment) {
+  await page.evaluate((roadSegment) => {
+    const game = window.__portfolioDrive.game;
+    if (game.__verifyBodyCameraUpdate) game.cameraRig.update = game.__verifyBodyCameraUpdate;
+    for (const action of ['forward', 'boost', 'backward', 'brake', 'handbrake', 'left', 'right', 'jump']) {
+      game.input.actions[action] = false;
+    }
+    game.input.joystick.x = 0;
+    game.input.joystick.y = 0;
+    game.input.pressed?.clear?.();
+    const offset = Math.max(6, roadSegment.length / 2 - 10);
+    const start = {
+      x: roadSegment.cx - Math.sin(roadSegment.rotation) * offset,
+      y: 1.12,
+      z: roadSegment.cz - Math.cos(roadSegment.rotation) * offset
+    };
+    game.vehicle.respawn(start, roadSegment.rotation);
+    game.vehicle.body.setLinvel({ x: 0, y: 0, z: 0 }, true);
+    game.vehicle.body.setAngvel({ x: 0, y: 0, z: 0 }, true);
+  }, segment);
+  await delay(700);
+}
+
+async function setVehicleProbeActions(page, actions) {
+  await page.evaluate((nextActions) => {
+    const game = window.__portfolioDrive.game;
+    for (const action of ['forward', 'boost', 'backward', 'brake', 'handbrake', 'left', 'right', 'jump']) {
+      game.input.actions[action] = Boolean(nextActions[action]);
+    }
+  }, actions);
+}
+
+async function stageVehicleBodyGameplayView(page) {
+  await page.evaluate(() => {
+    const game = window.__portfolioDrive.game;
+    if (game.__verifyBodyCameraUpdate) game.cameraRig.update = game.__verifyBodyCameraUpdate;
+    game.camera.fov = game.cameraRig.baseFov;
+    game.camera.updateProjectionMatrix();
+    game.rendererSystem.render();
+  });
+  await delay(250);
+}
+
+async function stageVehicleBodySideView(page) {
+  await page.evaluate(() => {
+    const game = window.__portfolioDrive.game;
+    const position = game.vehicle.position;
+    const heading = game.vehicle.heading || 0;
+    const sideX = Math.cos(heading);
+    const sideZ = -Math.sin(heading);
+    const backX = -Math.sin(heading);
+    const backZ = -Math.cos(heading);
+    game.cameraRig.update = () => {};
+    game.camera.position.set(
+      position.x + sideX * 9.4 + backX * 0.25,
+      position.y + 1.62,
+      position.z + sideZ * 9.4 + backZ * 0.25
+    );
+    game.camera.lookAt(position.x, position.y - 0.02, position.z);
+    game.camera.fov = 28;
+    game.camera.updateProjectionMatrix();
+    game.rendererSystem.render();
+  });
+}
+
+async function sampleVehicleBodyRoadClipping(page, label, segment) {
+  return page.evaluate(({ sampleLabel, roadSegment }) => {
+    const game = window.__portfolioDrive.game;
+    const roadY = game.world.roads?.roadGroup?.userData?.foundationMaxRoadY || 0;
+    const velocity = game.vehicle.body.linvel();
+    const position = game.vehicle.position;
+    const dx = position.x - roadSegment.cx;
+    const dz = position.z - roadSegment.cz;
+    const lateralOffset = Math.cos(roadSegment.rotation) * dx - Math.sin(roadSegment.rotation) * dz;
+    const longitudinalOffset = Math.sin(roadSegment.rotation) * dx + Math.cos(roadSegment.rotation) * dz;
+
+    function matrixWorldY(matrix, x, y, z) {
+      const e = matrix.elements;
+      return e[1] * x + e[5] * y + e[9] * z + e[13];
+    }
+
+    function boundsFor(predicate) {
+      let minY = Infinity;
+      let maxY = -Infinity;
+      let meshes = 0;
+      const names = [];
+      game.vehicle.modelRoot.updateMatrixWorld(true);
+      game.vehicle.modelRoot.traverse((object) => {
+        if (!object.isMesh || !object.visible || !predicate(object)) return;
+        const positions = object.geometry?.attributes?.position;
+        if (!positions) return;
+        object.updateMatrixWorld(true);
+        meshes += 1;
+        if (names.length < 12) names.push(object.name);
+        const stride = Math.max(1, Math.floor(positions.count / 240));
+        for (let index = 0; index < positions.count; index += stride) {
+          const y = matrixWorldY(object.matrixWorld, positions.getX(index), positions.getY(index), positions.getZ(index));
+          minY = Math.min(minY, y);
+          maxY = Math.max(maxY, y);
+        }
+      });
+      return {
+        meshes,
+        names,
+        minY: Number(minY.toFixed(4)),
+        maxY: Number(maxY.toFixed(4)),
+        clearanceAboveRoad: Number((minY - roadY).toFixed(4))
+      };
+    }
+
+    const isWheel = (object) => (
+      object.name.startsWith('WheelSpin')
+      || object.name.startsWith('WheelFront')
+      || /Wheel/i.test(object.name)
+    );
+    const isBody = (object) => !isWheel(object);
+    const isPaintedBody = (object) => {
+      if (isWheel(object)) return false;
+      const materials = Array.isArray(object.material) ? object.material : [object.material];
+      return materials.some((material) => {
+        const color = material?.color;
+        return color && color.r > 0.22 && color.g < 0.22 && color.b < 0.18;
+      });
+    };
+
+    return {
+      id: sampleLabel,
+      speed: Number(Math.hypot(velocity.x, velocity.z).toFixed(3)),
+      position: {
+        x: Number(position.x.toFixed(2)),
+        y: Number(position.y.toFixed(4)),
+        z: Number(position.z.toFixed(2))
+      },
+      surface: game.world.getSurfaceInfo(position).id,
+      roadY: Number(roadY.toFixed(4)),
+      groundedWheels: game.vehicle.controller?.groundedWheels || 0,
+      driveState: game.vehicle.controller?.driveState || null,
+      roadPlacement: {
+        lateralOffset: Number(lateralOffset.toFixed(4)),
+        longitudinalOffset: Number(longitudinalOffset.toFixed(4)),
+        halfWidth: Number((roadSegment.width / 2).toFixed(4))
+      },
+      body: boundsFor(isBody),
+      paintedBody: boundsFor(isPaintedBody),
+      wheels: boundsFor(isWheel),
+      wheelGrounding: game.vehicle.getWheelGroundingStats?.() || [],
+      bodyRideHeight: game.vehicle.getBodyVisualRideHeightStats?.() || null
+    };
+  }, { sampleLabel: label, roadSegment: segment });
 }
 
 async function exerciseSecurityScan(page) {
@@ -2502,6 +2732,7 @@ function assertVerification(result) {
     failures.push(`forward drive probe failed: halts=${result.forwardDriveProbe.halts}${events ? ` (${events})` : ''}`);
   }
   assertVehicleGroundingMotion(result, failures);
+  assertVehicleBodyRoadClipping(result, failures);
   if (result.goalGate === 'gate-3r-vertical-slice') {
     assertGate3RVerticalSliceVerification(result, failures);
     if (failures.length) {
@@ -3333,6 +3564,59 @@ function assertVehicleGroundingMotion(result, failures) {
   ));
   if (badSamples.length) {
     failures.push(`vehicle grounding samples failed: ${badSamples.map((sample) => sample.label).join(', ')}`);
+  }
+}
+
+function assertVehicleBodyRoadClipping(result, failures) {
+  const probe = result.vehicleBodyRoadClipping;
+  const expectedIds = ['idle', 'driving', 'sprinting', 'braking', 'burnout', 'wheelie'];
+  if (!probe || !Array.isArray(probe.samples)) {
+    failures.push('vehicle body-road clipping probe missing');
+    return;
+  }
+  const ids = new Set(probe.samples.map((sample) => sample.id));
+  const missing = expectedIds.filter((id) => !ids.has(id));
+  if (missing.length) failures.push(`vehicle body-road clipping probe missing states: ${missing.join(', ')}`);
+  if ((probe.screenshots?.length || 0) !== expectedIds.length * 2) {
+    failures.push(`vehicle body-road clipping screenshots missing: ${probe.screenshots?.length || 0}/${expectedIds.length * 2}`);
+  }
+
+  const laneFailures = probe.samples.filter((sample) => (
+    !Number.isFinite(sample.roadPlacement?.lateralOffset)
+    || Math.abs(sample.roadPlacement.lateralOffset) > Math.min(sample.roadPlacement.halfWidth * 0.58, 1.35)
+  ));
+  if (laneFailures.length) {
+    failures.push(`vehicle body-road clipping lane probe failed: ${laneFailures.map((sample) => `${sample.id}=${sample.roadPlacement?.lateralOffset}`).join(', ')}`);
+  }
+
+  const criticalIds = new Set(['driving', 'sprinting', 'braking', 'wheelie']);
+  const criticalFailures = probe.samples.filter((sample) => (
+    criticalIds.has(sample.id)
+    && (
+      !Number.isFinite(sample.body?.clearanceAboveRoad)
+      || sample.body.clearanceAboveRoad < 0.2
+      || !Number.isFinite(sample.paintedBody?.clearanceAboveRoad)
+      || sample.paintedBody.clearanceAboveRoad < 0.2
+    )
+  ));
+  if (criticalFailures.length) {
+    failures.push(`vehicle body-road clipping clearance failed: ${criticalFailures.map((sample) => `${sample.id} body=${sample.body?.clearanceAboveRoad} paint=${sample.paintedBody?.clearanceAboveRoad}`).join(', ')}`);
+  }
+
+  const wheelFailures = probe.samples.filter((sample) => (
+    !Number.isFinite(sample.wheels?.clearanceAboveRoad)
+    || sample.wheels.clearanceAboveRoad < 0.012
+    || (sample.groundedWheels || 0) < (sample.id === 'wheelie' ? 2 : 4)
+  ));
+  if (wheelFailures.length) {
+    failures.push(`vehicle body-road wheel probe failed: ${wheelFailures.map((sample) => `${sample.id} wheel=${sample.wheels?.clearanceAboveRoad} grounded=${sample.groundedWheels}`).join(', ')}`);
+  }
+
+  if ((probe.minCriticalBodyClearance || 0) < 0.2) {
+    failures.push(`vehicle body-road min body clearance failed: ${probe.minCriticalBodyClearance}`);
+  }
+  if ((probe.minCriticalPaintedBodyClearance || 0) < 0.2) {
+    failures.push(`vehicle body-road min painted clearance failed: ${probe.minCriticalPaintedBodyClearance}`);
   }
 }
 
