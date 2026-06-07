@@ -352,6 +352,26 @@ export class SetPieces {
         signs: 0
       }
     };
+    this.gate4b1Stats = {
+      enabled: false,
+      staticBatches: 0,
+      cv: {
+        pads: 0,
+        vaultPlinths: 0,
+        documentPages: 0,
+        signs: 0,
+        lamps: 0,
+        anchors: 0
+      },
+      behind: {
+        pads: 0,
+        workbenches: 0,
+        hologramPanels: 0,
+        signs: 0,
+        lamps: 0,
+        anchors: 0
+      }
+    };
     this.gate3rPlacementStats = {
       recorded: 0,
       intentionalRoadOverlays: 0,
@@ -371,8 +391,11 @@ export class SetPieces {
   build() {
     if (this.world.foundationReplacementMode) {
       this.createFoundationScaffold();
-      if (this.world.gate3rMode) {
+      if (this.world.gate3rMode || this.world.gate4b1Mode) {
         this.createGate3RVerticalSliceScaffold();
+      }
+      if (this.world.gate4b1Mode) {
+        this.createGate4B1SouthRunScaffold();
       }
       this.applyQuality();
       return;
@@ -584,6 +607,14 @@ export class SetPieces {
       byKind: { ...this.gate3rPlacementStats.byKind },
       byFootprintKind: { ...this.gate3rPlacementStats.byFootprintKind },
       entries: this.gate3rPlacementStats.entries.map((entry) => ({ ...entry }))
+    };
+  }
+
+  getGate4B1Stats() {
+    return {
+      ...this.gate4b1Stats,
+      cv: { ...this.gate4b1Stats.cv },
+      behind: { ...this.gate4b1Stats.behind }
     };
   }
 
@@ -901,6 +932,120 @@ export class SetPieces {
       )
     });
     this.world.scene.add(group);
+  }
+
+  createGate4B1SouthRunScaffold() {
+    this.gate4b1Stats.enabled = true;
+
+    const group = new THREE.Group();
+    group.name = 'GATE4B1_South_Run_CV_Behind';
+    this.createGate4B1CvVault(group);
+    this.createGate4B1BehindBuild(group);
+
+    this.gate4b1Stats.staticBatches = mergeStaticMeshesInGroup(group, {
+      namePrefix: 'GATE4B1_south_run',
+      cellSize: 48,
+      shouldSkip: (object) => object.name.endsWith('_Glow')
+    });
+    this.world.scene.add(group);
+  }
+
+  createGate4B1CvVault(group) {
+    const zone = findZone('cv');
+    const stats = this.gate4b1Stats.cv;
+    const rotation = zone.rotation || 0.12;
+    const anchor = { x: zone.position[0], z: -88.8, rotation };
+    const point = (right, forward) => this.gate4B1Point(anchor, right, forward);
+
+    this.gate3rPad(group, anchor.x, anchor.z, 14, 6.8, this.world.materials.paleStone, 0.132, 'GATE4B1_CV_Vault_Pad', rotation, 'gate4b1-cv-pad', 5.2);
+    stats.pads += 1;
+
+    const plinth = point(-2.3, -0.2);
+    this.box(group, plinth[0], 0.48, plinth[1], 4.9, 0.68, 2.2, this.world.materials.warmStone, rotation, 'GATE4B1_CV_Vault_Plinth');
+    this.box(group, plinth[0], 1.02, plinth[1] - 0.56, 3.6, 0.72, 0.18, this.world.materials.cable, rotation, 'GATE4B1_CV_Vault_Door');
+    this.box(group, plinth[0], 1.06, plinth[1] - 0.67, 2.9, 0.08, 0.05, this.world.materials.glowBlue, rotation, 'GATE4B1_CV_Vault_Status_Line');
+    this.recordGate3RPlacement('gate4b1-vault', 'GATE4B1_CV_Vault_Plinth', plinth[0], plinth[1], { minClearance: 4.2 });
+    stats.vaultPlinths += 1;
+
+    for (let index = 0; index < 6; index += 1) {
+      const side = index % 2 === 0 ? -1 : 1;
+      const page = point(2.2 + side * 1.1, -2.1 + index * 0.82);
+      this.box(group, page[0], 0.23 + index * 0.002, page[1], 0.68, 0.035, 0.94, this.world.materials.paleStone, rotation + side * 0.08, 'GATE4B1_CV_Document_Page');
+      this.recordGate3RPlacement('gate4b1-document', 'GATE4B1_CV_Document_Page', page[0], page[1], { minClearance: 3.8 });
+      stats.documentPages += 1;
+    }
+
+    const spine = point(4.7, 1.0);
+    this.box(group, spine[0], 0.96, spine[1], 0.78, 1.55, 0.64, this.world.materials.cable, rotation, 'GATE4B1_CV_Archive_Spine');
+    this.box(group, spine[0], 1.15, spine[1] - 0.35, 0.52, 0.1, 0.05, this.world.materials.glowBlue, rotation, 'GATE4B1_CV_Archive_Glow');
+    this.recordGate3RPlacement('gate4b1-anchor', 'GATE4B1_CV_Archive_Spine', spine[0], spine[1], { minClearance: 4.2 });
+    stats.anchors += 1;
+
+    const sign = point(-5.2, -2.2);
+    this.gate3rSign(group, 'CV VAULT', 'Documents', sign[0], sign[1], rotation - 0.24, 0xe6f3ff, 1.42, 'GATE4B1_CV_Sign', 4.4);
+    stats.signs += 1;
+
+    for (const [right, forward, color, name] of [
+      [-6.8, 3.1, 0xe6f3ff, 'GATE4B1_CV_Lamp_Left'],
+      [6.8, 3.1, 0x9ccfff, 'GATE4B1_CV_Lamp_Right']
+    ]) {
+      const lamp = point(right, forward);
+      this.gate3rLampFacingRoad(group, lamp[0], lamp[1], color, 2.45, name, 3.2);
+      stats.lamps += 1;
+    }
+  }
+
+  createGate4B1BehindBuild(group) {
+    const zone = findZone('behind');
+    const stats = this.gate4b1Stats.behind;
+    const rotation = zone.rotation || 0.08;
+    const anchor = { x: zone.position[0], z: -82.4, rotation };
+    const point = (right, forward) => this.gate4B1Point(anchor, right, forward);
+
+    this.gate3rPad(group, anchor.x, anchor.z, 15.6, 7.4, this.world.materials.stoneRoad, 0.132, 'GATE4B1_Behind_Workbench_Pad', rotation, 'gate4b1-behind-pad', 5.2);
+    stats.pads += 1;
+
+    const bench = point(-2.7, -0.6);
+    this.box(group, bench[0], 0.42, bench[1], 5.6, 0.42, 1.22, this.world.materials.wood, rotation, 'GATE4B1_Behind_Workbench');
+    this.box(group, bench[0] - Math.cos(rotation) * 2.3, 0.88, bench[1] + Math.sin(rotation) * 2.3, 0.16, 0.88, 1.08, this.world.materials.darkWood, rotation, 'GATE4B1_Behind_Workbench_Post_A');
+    this.box(group, bench[0] + Math.cos(rotation) * 2.3, 0.88, bench[1] - Math.sin(rotation) * 2.3, 0.16, 0.88, 1.08, this.world.materials.darkWood, rotation, 'GATE4B1_Behind_Workbench_Post_B');
+    this.recordGate3RPlacement('gate4b1-workbench', 'GATE4B1_Behind_Workbench', bench[0], bench[1], { minClearance: 4.6 });
+    stats.workbenches += 1;
+
+    for (let index = 0; index < 3; index += 1) {
+      const panel = point(3.0 + index * 2.0, -1.2 + index * 0.92);
+      const panelRotation = rotation - 0.12 + index * 0.06;
+      this.box(group, panel[0], 1.0, panel[1], 0.16, 1.45, 1.05, this.world.materials.cable, panelRotation, 'GATE4B1_Behind_Hologram_Panel');
+      this.box(group, panel[0], 1.02, panel[1] - 0.07, 0.18, 1.04, 0.76, this.world.materials.glowBlue, panelRotation, 'GATE4B1_Behind_Hologram_Glow');
+      this.recordGate3RPlacement('gate4b1-hologram', 'GATE4B1_Behind_Hologram_Panel', panel[0], panel[1], { minClearance: 4.4 });
+      stats.hologramPanels += 1;
+    }
+
+    const anchorPost = point(6.4, 2.6);
+    this.box(group, anchorPost[0], 1.1, anchorPost[1], 0.52, 1.7, 0.52, this.world.materials.cable, rotation, 'GATE4B1_Behind_Code_Totem');
+    this.box(group, anchorPost[0], 1.26, anchorPost[1] - 0.3, 0.42, 0.12, 0.05, this.world.materials.glow, rotation, 'GATE4B1_Behind_Code_Totem_Glow');
+    this.recordGate3RPlacement('gate4b1-anchor', 'GATE4B1_Behind_Code_Totem', anchorPost[0], anchorPost[1], { minClearance: 4.4 });
+    stats.anchors += 1;
+
+    const sign = point(-8.4, -3.0);
+    this.gate3rSign(group, 'BEHIND', 'Build notes', sign[0], sign[1], rotation + 0.24, 0x8fd3ff, 1.42, 'GATE4B1_Behind_Sign', 4.4);
+    stats.signs += 1;
+
+    for (const [right, forward, color, name] of [
+      [-7.1, 3.1, 0x8fd3ff, 'GATE4B1_Behind_Lamp_Left'],
+      [7.2, 3.0, 0x7cffb2, 'GATE4B1_Behind_Lamp_Right']
+    ]) {
+      const lamp = point(right, forward);
+      this.gate3rLampFacingRoad(group, lamp[0], lamp[1], color, 2.45, name, 3.2);
+      stats.lamps += 1;
+    }
+  }
+
+  gate4B1Point(anchor, right, forward) {
+    return [
+      anchor.x + Math.cos(anchor.rotation) * right + Math.sin(anchor.rotation) * forward,
+      anchor.z - Math.sin(anchor.rotation) * right + Math.cos(anchor.rotation) * forward
+    ];
   }
 
   distancePointToSegment2d(px, pz, ax, az, bx, bz) {

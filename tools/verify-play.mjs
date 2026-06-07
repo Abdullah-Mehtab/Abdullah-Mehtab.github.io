@@ -2519,6 +2519,7 @@ async function collectRuntimeMetrics(page, loadMs, gameplay, water, surfaces, su
       routeComposition: game.world.setPieces?.getRouteCompositionStats?.() || {},
       securityLab: game.world.setPieces?.getSecurityLabStats?.() || {},
       gate3rPlacement: game.world.setPieces?.getGate3RPlacementStats?.() || {},
+      gate4b1: game.world.setPieces?.getGate4B1Stats?.() || {},
       meadowComposition: game.world.setPieces?.getMeadowCompositionStats?.() || {},
       fieldBackdrops: game.world.setPieces?.getFieldBackdropStats?.() || {},
       launchField: game.world.setPieces?.getLaunchFieldStats?.() || {},
@@ -3255,6 +3256,13 @@ function assertVerification(result) {
   }
   assertVehicleGroundingMotion(result, failures);
   assertVehicleBodyRoadClipping(result, failures);
+  if (result.goalGate === 'gate-4b1-south-run') {
+    assertGate4B1SouthRunVerification(result, failures);
+    if (failures.length) {
+      throw new Error(`Play verification failed: ${failures.join('; ')}`);
+    }
+    return;
+  }
   if (result.goalGate === 'gate-3r-vertical-slice') {
     assertGate3RVerticalSliceVerification(result, failures);
     if (failures.length) {
@@ -4321,7 +4329,8 @@ function assertGate2RFoundationReplacementVerification(result, failures) {
   if ((result.mobile?.triangles || 0) > 125000) failures.push(`Gate 2R mobile triangle budget exceeded: ${result.mobile?.triangles || 0}`);
 }
 
-function assertGate3RVerticalSliceVerification(result, failures) {
+function assertGate3RVerticalSliceVerification(result, failures, options = {}) {
+  const expectedGoal = options.expectedGoal || 'gate-3r-vertical-slice';
   const blockout = result.blockout || {};
   const blockoutSetPieces = blockout.setPieces || {};
   const slice = result.verticalSlice || blockout.verticalSlice || {};
@@ -4332,7 +4341,7 @@ function assertGate3RVerticalSliceVerification(result, failures) {
   const security = slice.security || {};
   const placement = result.gate3rPlacement || {};
 
-  if (result.goalGate !== 'gate-3r-vertical-slice') {
+  if (result.goalGate !== expectedGoal) {
     failures.push(`Gate 3R probe failed: goalGate=${result.goalGate || 'none'}`);
   }
   if (!blockout.enabled) failures.push('Gate 3R probe failed: foundation mode inactive');
@@ -4533,6 +4542,45 @@ function assertGate3RVerticalSliceVerification(result, failures) {
   if (!result.mobile?.vehicleFrame?.inFrame) failures.push('Gate 3R mobile framing failed: vehicle focus is outside the viewport');
   if ((result.mobile?.vehicleFrame?.centerY || 0) > 0.84) {
     failures.push(`Gate 3R mobile framing failed: vehicle centerY=${result.mobile?.vehicleFrame?.centerY}`);
+  }
+}
+
+function assertGate4B1SouthRunVerification(result, failures) {
+  assertGate3RVerticalSliceVerification(result, failures, { expectedGoal: 'gate-4b1-south-run' });
+
+  const southRun = result.gate4b1 || {};
+  const cv = southRun.cv || {};
+  const behind = southRun.behind || {};
+  const placement = result.gate3rPlacement || {};
+
+  if (!southRun.enabled) failures.push('Gate 4-B1 failed: South Run scaffold inactive');
+  if ((southRun.staticBatches || 0) < 1) failures.push(`Gate 4-B1 batching failed: staticBatches=${southRun.staticBatches || 0}`);
+
+  if ((cv.pads || 0) !== 1) failures.push(`Gate 4-B1 CV failed: pads=${cv.pads || 0}`);
+  if ((cv.vaultPlinths || 0) < 1) failures.push(`Gate 4-B1 CV failed: vaultPlinths=${cv.vaultPlinths || 0}`);
+  if ((cv.documentPages || 0) < 6) failures.push(`Gate 4-B1 CV failed: documentPages=${cv.documentPages || 0}`);
+  if ((cv.signs || 0) !== 1) failures.push(`Gate 4-B1 CV failed: signs=${cv.signs || 0}`);
+  if ((cv.lamps || 0) !== 2) failures.push(`Gate 4-B1 CV failed: lamps=${cv.lamps || 0}`);
+  if ((cv.anchors || 0) < 1) failures.push(`Gate 4-B1 CV failed: anchors=${cv.anchors || 0}`);
+
+  if ((behind.pads || 0) !== 1) failures.push(`Gate 4-B1 Behind failed: pads=${behind.pads || 0}`);
+  if ((behind.workbenches || 0) < 1) failures.push(`Gate 4-B1 Behind failed: workbenches=${behind.workbenches || 0}`);
+  if ((behind.hologramPanels || 0) < 3) failures.push(`Gate 4-B1 Behind failed: hologramPanels=${behind.hologramPanels || 0}`);
+  if ((behind.signs || 0) !== 1) failures.push(`Gate 4-B1 Behind failed: signs=${behind.signs || 0}`);
+  if ((behind.lamps || 0) !== 2) failures.push(`Gate 4-B1 Behind failed: lamps=${behind.lamps || 0}`);
+  if ((behind.anchors || 0) < 1) failures.push(`Gate 4-B1 Behind failed: anchors=${behind.anchors || 0}`);
+
+  if ((placement.byFootprintKind?.['gate4b1-cv-pad'] || 0) !== 1) {
+    failures.push(`Gate 4-B1 placement failed: CV pad footprints=${placement.byFootprintKind?.['gate4b1-cv-pad'] || 0}`);
+  }
+  if ((placement.byFootprintKind?.['gate4b1-behind-pad'] || 0) !== 1) {
+    failures.push(`Gate 4-B1 placement failed: Behind pad footprints=${placement.byFootprintKind?.['gate4b1-behind-pad'] || 0}`);
+  }
+  if ((placement.byKind?.['gate4b1-document'] || 0) < 6) {
+    failures.push(`Gate 4-B1 placement failed: CV document placements=${placement.byKind?.['gate4b1-document'] || 0}`);
+  }
+  if ((placement.byKind?.['gate4b1-hologram'] || 0) < 3) {
+    failures.push(`Gate 4-B1 placement failed: Behind hologram placements=${placement.byKind?.['gate4b1-hologram'] || 0}`);
   }
 }
 
