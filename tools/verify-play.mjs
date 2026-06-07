@@ -2520,6 +2520,7 @@ async function collectRuntimeMetrics(page, loadMs, gameplay, water, surfaces, su
       securityLab: game.world.setPieces?.getSecurityLabStats?.() || {},
       gate3rPlacement: game.world.setPieces?.getGate3RPlacementStats?.() || {},
       gate4b1: game.world.setPieces?.getGate4B1Stats?.() || {},
+      gate4b2: game.world.setPieces?.getGate4B2Stats?.() || {},
       meadowComposition: game.world.setPieces?.getMeadowCompositionStats?.() || {},
       fieldBackdrops: game.world.setPieces?.getFieldBackdropStats?.() || {},
       launchField: game.world.setPieces?.getLaunchFieldStats?.() || {},
@@ -3256,6 +3257,13 @@ function assertVerification(result) {
   }
   assertVehicleGroundingMotion(result, failures);
   assertVehicleBodyRoadClipping(result, failures);
+  if (result.goalGate === 'gate-4b2-west-service') {
+    assertGate4B2WestServiceVerification(result, failures);
+    if (failures.length) {
+      throw new Error(`Play verification failed: ${failures.join('; ')}`);
+    }
+    return;
+  }
   if (result.goalGate === 'gate-4b1-south-run') {
     assertGate4B1SouthRunVerification(result, failures);
     if (failures.length) {
@@ -4545,8 +4553,8 @@ function assertGate3RVerticalSliceVerification(result, failures, options = {}) {
   }
 }
 
-function assertGate4B1SouthRunVerification(result, failures) {
-  assertGate3RVerticalSliceVerification(result, failures, { expectedGoal: 'gate-4b1-south-run' });
+function assertGate4B1SouthRunVerification(result, failures, options = {}) {
+  assertGate3RVerticalSliceVerification(result, failures, { expectedGoal: options.expectedGoal || 'gate-4b1-south-run' });
 
   const southRun = result.gate4b1 || {};
   const cv = southRun.cv || {};
@@ -4581,6 +4589,59 @@ function assertGate4B1SouthRunVerification(result, failures) {
   }
   if ((placement.byKind?.['gate4b1-hologram'] || 0) < 3) {
     failures.push(`Gate 4-B1 placement failed: Behind hologram placements=${placement.byKind?.['gate4b1-hologram'] || 0}`);
+  }
+}
+
+function assertGate4B2WestServiceVerification(result, failures) {
+  assertGate4B1SouthRunVerification(result, failures, { expectedGoal: 'gate-4b2-west-service' });
+
+  const westService = result.gate4b2 || {};
+  const skills = westService.skills || {};
+  const farm = westService.farm || {};
+  const placement = result.gate3rPlacement || {};
+
+  if (!westService.enabled) failures.push('Gate 4-B2 failed: West Service scaffold inactive');
+  if ((westService.staticBatches || 0) < 1) failures.push(`Gate 4-B2 batching failed: staticBatches=${westService.staticBatches || 0}`);
+
+  if ((skills.pads || 0) !== 1) failures.push(`Gate 4-B2 Skills failed: pads=${skills.pads || 0}`);
+  if ((skills.terminalSlabs || 0) !== 1) failures.push(`Gate 4-B2 Skills failed: terminalSlabs=${skills.terminalSlabs || 0}`);
+  if ((skills.codeNodes || 0) !== 7) failures.push(`Gate 4-B2 Skills failed: codeNodes=${skills.codeNodes || 0}`);
+  if ((skills.codeCards || 0) !== 6) failures.push(`Gate 4-B2 Skills failed: codeCards=${skills.codeCards || 0}`);
+  if ((skills.syncRings || 0) !== 1) failures.push(`Gate 4-B2 Skills failed: syncRings=${skills.syncRings || 0}`);
+  if ((skills.signalRibbons || 0) !== 3) failures.push(`Gate 4-B2 Skills failed: signalRibbons=${skills.signalRibbons || 0}`);
+  if ((skills.signs || 0) !== 1) failures.push(`Gate 4-B2 Skills failed: signs=${skills.signs || 0}`);
+  if ((skills.lamps || 0) !== 2) failures.push(`Gate 4-B2 Skills failed: lamps=${skills.lamps || 0}`);
+
+  if ((farm.pads || 0) !== 1) failures.push(`Gate 4-B2 Farm failed: pads=${farm.pads || 0}`);
+  if ((farm.farmRows || 0) !== 5) failures.push(`Gate 4-B2 Farm failed: farmRows=${farm.farmRows || 0}`);
+  if ((farm.fenceSegments || 0) !== 8) failures.push(`Gate 4-B2 Farm failed: fenceSegments=${farm.fenceSegments || 0}`);
+  if ((farm.anchors || 0) !== 1) failures.push(`Gate 4-B2 Farm failed: anchors=${farm.anchors || 0}`);
+  if ((farm.signs || 0) !== 1) failures.push(`Gate 4-B2 Farm failed: signs=${farm.signs || 0}`);
+  if ((farm.lamps || 0) !== 2) failures.push(`Gate 4-B2 Farm failed: lamps=${farm.lamps || 0}`);
+
+  if ((placement.byFootprintKind?.['gate4b2-skills-pad'] || 0) !== 1) {
+    failures.push(`Gate 4-B2 placement failed: Skills pad footprints=${placement.byFootprintKind?.['gate4b2-skills-pad'] || 0}`);
+  }
+  if ((placement.byFootprintKind?.['gate4b2-farm-pad'] || 0) !== 1) {
+    failures.push(`Gate 4-B2 placement failed: Farm pad footprints=${placement.byFootprintKind?.['gate4b2-farm-pad'] || 0}`);
+  }
+  if ((placement.byKind?.['gate4b2-skills-node'] || 0) !== 7) {
+    failures.push(`Gate 4-B2 placement failed: Skills node placements=${placement.byKind?.['gate4b2-skills-node'] || 0}`);
+  }
+  if ((placement.byKind?.['gate4b2-skills-card'] || 0) !== 6) {
+    failures.push(`Gate 4-B2 placement failed: Skills card placements=${placement.byKind?.['gate4b2-skills-card'] || 0}`);
+  }
+  if ((placement.byKind?.['gate4b2-skills-ribbon'] || 0) !== 3) {
+    failures.push(`Gate 4-B2 placement failed: Skills ribbon placements=${placement.byKind?.['gate4b2-skills-ribbon'] || 0}`);
+  }
+  if ((placement.byKind?.['gate4b2-farm-row'] || 0) !== 5) {
+    failures.push(`Gate 4-B2 placement failed: Farm row placements=${placement.byKind?.['gate4b2-farm-row'] || 0}`);
+  }
+  if ((placement.byKind?.['gate4b2-farm-fence'] || 0) !== 8) {
+    failures.push(`Gate 4-B2 placement failed: Farm fence placements=${placement.byKind?.['gate4b2-farm-fence'] || 0}`);
+  }
+  if ((result.blockout?.potatoPocketBuilt || false) !== false) {
+    failures.push('Gate 4-B2 failed: old PotatoFarm pocket was enabled');
   }
 }
 

@@ -561,8 +561,8 @@ export const zonePresentation = {
   },
   skills: {
     respawn: { position: [-94, 1.08, -58], heading: -2.63 },
-    camera: [-108, 10, -96],
-    target: [-86, 3, -76],
+    camera: [-116, 10, -106],
+    target: [-92, 3, -88],
     fov: 42,
   },
   awards: {
