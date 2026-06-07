@@ -2521,6 +2521,7 @@ async function collectRuntimeMetrics(page, loadMs, gameplay, water, surfaces, su
       gate3rPlacement: game.world.setPieces?.getGate3RPlacementStats?.() || {},
       gate4b1: game.world.setPieces?.getGate4B1Stats?.() || {},
       gate4b2: game.world.setPieces?.getGate4B2Stats?.() || {},
+      gate4b3: game.world.setPieces?.getGate4B3Stats?.() || {},
       meadowComposition: game.world.setPieces?.getMeadowCompositionStats?.() || {},
       fieldBackdrops: game.world.setPieces?.getFieldBackdropStats?.() || {},
       launchField: game.world.setPieces?.getLaunchFieldStats?.() || {},
@@ -3257,6 +3258,13 @@ function assertVerification(result) {
   }
   assertVehicleGroundingMotion(result, failures);
   assertVehicleBodyRoadClipping(result, failures);
+  if (result.goalGate === 'gate-4b3-data-pier-side') {
+    assertGate4B3DataPierSideVerification(result, failures);
+    if (failures.length) {
+      throw new Error(`Play verification failed: ${failures.join('; ')}`);
+    }
+    return;
+  }
   if (result.goalGate === 'gate-4b2-west-service') {
     assertGate4B2WestServiceVerification(result, failures);
     if (failures.length) {
@@ -4592,8 +4600,8 @@ function assertGate4B1SouthRunVerification(result, failures, options = {}) {
   }
 }
 
-function assertGate4B2WestServiceVerification(result, failures) {
-  assertGate4B1SouthRunVerification(result, failures, { expectedGoal: 'gate-4b2-west-service' });
+function assertGate4B2WestServiceVerification(result, failures, options = {}) {
+  assertGate4B1SouthRunVerification(result, failures, { expectedGoal: options.expectedGoal || 'gate-4b2-west-service' });
 
   const westService = result.gate4b2 || {};
   const skills = westService.skills || {};
@@ -4642,6 +4650,59 @@ function assertGate4B2WestServiceVerification(result, failures) {
   }
   if ((result.blockout?.potatoPocketBuilt || false) !== false) {
     failures.push('Gate 4-B2 failed: old PotatoFarm pocket was enabled');
+  }
+}
+
+function assertGate4B3DataPierSideVerification(result, failures) {
+  assertGate4B2WestServiceVerification(result, failures, { expectedGoal: 'gate-4b3-data-pier-side' });
+
+  const dataPierSide = result.gate4b3 || {};
+  const todo = dataPierSide.todo || {};
+  const dataPier = dataPierSide.dataPier || {};
+  const placement = result.gate3rPlacement || {};
+
+  if (!dataPierSide.enabled) failures.push('Gate 4-B3 failed: Data Pier Side scaffold inactive');
+  if ((dataPierSide.staticBatches || 0) < 1) failures.push(`Gate 4-B3 batching failed: staticBatches=${dataPierSide.staticBatches || 0}`);
+
+  if ((todo.pads || 0) !== 1) failures.push(`Gate 4-B3 Todo failed: pads=${todo.pads || 0}`);
+  if ((todo.taskBoards || 0) !== 1) failures.push(`Gate 4-B3 Todo failed: taskBoards=${todo.taskBoards || 0}`);
+  if ((todo.queueRails || 0) !== 4) failures.push(`Gate 4-B3 Todo failed: queueRails=${todo.queueRails || 0}`);
+  if ((todo.taskCards || 0) !== 7) failures.push(`Gate 4-B3 Todo failed: taskCards=${todo.taskCards || 0}`);
+  if ((todo.signs || 0) !== 1) failures.push(`Gate 4-B3 Todo failed: signs=${todo.signs || 0}`);
+  if ((todo.lamps || 0) !== 2) failures.push(`Gate 4-B3 Todo failed: lamps=${todo.lamps || 0}`);
+
+  if ((dataPier.rails || 0) !== 4) failures.push(`Gate 4-B3 Data Pier failed: rails=${dataPier.rails || 0}`);
+  if ((dataPier.beacons || 0) !== 3) failures.push(`Gate 4-B3 Data Pier failed: beacons=${dataPier.beacons || 0}`);
+  if ((dataPier.cargoStacks || 0) !== 2) failures.push(`Gate 4-B3 Data Pier failed: cargoStacks=${dataPier.cargoStacks || 0}`);
+  if ((dataPier.signs || 0) !== 1) failures.push(`Gate 4-B3 Data Pier failed: signs=${dataPier.signs || 0}`);
+  if ((dataPier.lamps || 0) !== 2) failures.push(`Gate 4-B3 Data Pier failed: lamps=${dataPier.lamps || 0}`);
+
+  if ((placement.byFootprintKind?.['gate4b3-todo-pad'] || 0) !== 1) {
+    failures.push(`Gate 4-B3 placement failed: Todo pad footprints=${placement.byFootprintKind?.['gate4b3-todo-pad'] || 0}`);
+  }
+  if ((placement.byFootprintKind?.['gate4b3-data-pier-pad'] || 0) !== 0) {
+    failures.push(`Gate 4-B3 placement failed: unapproved Data Pier pad footprints=${placement.byFootprintKind?.['gate4b3-data-pier-pad'] || 0}`);
+  }
+  if ((placement.byKind?.['gate4b3-todo-board'] || 0) !== 1) {
+    failures.push(`Gate 4-B3 placement failed: Todo board placements=${placement.byKind?.['gate4b3-todo-board'] || 0}`);
+  }
+  if ((placement.byKind?.['gate4b3-todo-rail'] || 0) !== 4) {
+    failures.push(`Gate 4-B3 placement failed: Todo rail placements=${placement.byKind?.['gate4b3-todo-rail'] || 0}`);
+  }
+  if ((placement.byKind?.['gate4b3-todo-card'] || 0) !== 7) {
+    failures.push(`Gate 4-B3 placement failed: Todo card placements=${placement.byKind?.['gate4b3-todo-card'] || 0}`);
+  }
+  if ((placement.byKind?.['gate4b3-pier-rail'] || 0) !== 4) {
+    failures.push(`Gate 4-B3 placement failed: Data Pier rail placements=${placement.byKind?.['gate4b3-pier-rail'] || 0}`);
+  }
+  if ((placement.byKind?.['gate4b3-pier-beacon'] || 0) !== 3) {
+    failures.push(`Gate 4-B3 placement failed: Data Pier beacon placements=${placement.byKind?.['gate4b3-pier-beacon'] || 0}`);
+  }
+  if ((placement.byKind?.['gate4b3-pier-cargo'] || 0) !== 2) {
+    failures.push(`Gate 4-B3 placement failed: Data Pier cargo placements=${placement.byKind?.['gate4b3-pier-cargo'] || 0}`);
+  }
+  if ((result.dataPier?.pads || 0) !== 0 || (result.todoYard?.pads || 0) !== 0) {
+    failures.push('Gate 4-B3 failed: old DataPier/TodoYard systems were enabled');
   }
 }
 

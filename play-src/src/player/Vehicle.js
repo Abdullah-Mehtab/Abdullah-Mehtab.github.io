@@ -26,6 +26,9 @@ const RIDE_HEIGHT_SPEED_START = 2;
 const RIDE_HEIGHT_SPEED_FULL = 14;
 const RIDE_HEIGHT_RESPONSE = 14;
 const RIDE_HEIGHT_COMPRESSION_SCALE = 1.45;
+const RIDE_HEIGHT_ROAD_SPEED_LIFT = 0.035;
+const RIDE_HEIGHT_ROAD_SPEED_LIFT_START = 36;
+const RIDE_HEIGHT_ROAD_SPEED_LIFT_FULL = 62;
 const RIDE_HEIGHT_WHEELIE_EXTRA_LIFT = 0.105;
 const VEHICLE_BODY_RENDER_ORDER = 8;
 const VEHICLE_GLASS_RENDER_ORDER = 9;
@@ -629,8 +632,12 @@ export class Vehicle {
     );
     const burnoutFactor = state.burnout ? 0.18 : 1;
     const wheelieLift = state.wheelie ? RIDE_HEIGHT_WHEELIE_EXTRA_LIFT : 0;
+    const surfaceId = getSurfaceEffectId(this.surface);
+    const roadSpeedLift = !state.burnout && !state.wheelie && (surfaceId === 'road' || surfaceId.endsWith('-road'))
+      ? THREE.MathUtils.smoothstep(this.speed, RIDE_HEIGHT_ROAD_SPEED_LIFT_START, RIDE_HEIGHT_ROAD_SPEED_LIFT_FULL) * RIDE_HEIGHT_ROAD_SPEED_LIFT
+      : 0;
     return THREE.MathUtils.clamp(
-      (compressionTotal / contactCount) * RIDE_HEIGHT_COMPRESSION_SCALE * speedFactor * burnoutFactor + wheelieLift,
+      (compressionTotal / contactCount) * RIDE_HEIGHT_COMPRESSION_SCALE * speedFactor * burnoutFactor + roadSpeedLift + wheelieLift,
       0,
       RIDE_HEIGHT_MAX_VISUAL_LIFT
     );

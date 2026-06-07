@@ -578,9 +578,9 @@ export const zonePresentation = {
     fov: 42,
   },
   todo: {
-    respawn: { position: [-128, 1.08, 50], heading: -2.68 },
-    camera: [-142, 9, 18],
-    target: [-120, 3, 12],
+    respawn: { position: [-112, 1.08, 10], heading: 0.24 },
+    camera: [-143, 10, 29],
+    target: [-124, 3, 19],
     fov: 42,
   },
   circuit: {
