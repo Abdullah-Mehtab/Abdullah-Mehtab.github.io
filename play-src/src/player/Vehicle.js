@@ -25,10 +25,12 @@ const RIDE_HEIGHT_MAX_VISUAL_LIFT = 0.19;
 const RIDE_HEIGHT_SPEED_START = 2;
 const RIDE_HEIGHT_SPEED_FULL = 14;
 const RIDE_HEIGHT_RESPONSE = 14;
-const RIDE_HEIGHT_COMPRESSION_SCALE = 1.18;
+const RIDE_HEIGHT_COMPRESSION_SCALE = 1.45;
 const RIDE_HEIGHT_WHEELIE_EXTRA_LIFT = 0.105;
 const VEHICLE_BODY_RENDER_ORDER = 8;
 const VEHICLE_GLASS_RENDER_ORDER = 9;
+const BALLAST_COLLIDER_LOCAL_Y = -0.58;
+const BALLAST_COLLIDER_INTERACTION_GROUPS = 0;
 const DEFAULT_SURFACE = { id: 'road', drag: 1, dustColor: 0x6f6250, skidColor: 0x161410, skidMarks: true, roughnessFeedback: 0 };
 const SURFACE_IDS = ['road', 'avenue-road', 'plaza-road', 'security-road', 'stunt-road', 'dirt-road', 'bridge-road', 'grass', 'sand', 'shore', 'water'];
 const SOFT_SURFACES = new Set(['grass', 'sand', 'shore', 'dirt-road']);
@@ -151,8 +153,10 @@ export class Vehicle {
       .cuboid(0.96, 0.16, 1.78)
       .setDensity(3.35)
       .setFriction(1.05)
-      .setRestitution(0);
-    ballast.setTranslation(0, -0.58, -0.12);
+      .setRestitution(0)
+      .setCollisionGroups(BALLAST_COLLIDER_INTERACTION_GROUPS)
+      .setSolverGroups(BALLAST_COLLIDER_INTERACTION_GROUPS);
+    ballast.setTranslation(0, BALLAST_COLLIDER_LOCAL_Y, -0.12);
     this.physics.world.createCollider(ballast, this.body);
     const roof = this.RAPIER.ColliderDesc
       .cuboid(0.64, 0.18, 0.62)

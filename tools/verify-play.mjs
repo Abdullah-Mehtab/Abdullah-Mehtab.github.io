@@ -126,6 +126,7 @@ try {
   const securityScan = await exerciseSecurityScan(page);
   const routeReplay = await exerciseRouteReplay(page, routeReplaySegments);
   const forwardDriveProbe = await exerciseForwardDriveProbe(page, routeReplaySegments);
+  const vehicleChassisGroundContact = await exerciseVehicleChassisGroundContact(page, routeReplaySegments);
   const vehicleGroundingMotion = await exerciseVehicleGroundingMotion(page);
   const vehicleBodyRoadClipping = await exerciseVehicleBodyRoadClipping(page);
   const circuitPreview = await previewCircuit(page);
@@ -230,6 +231,7 @@ try {
     collectibles,
     securityScan,
     forwardDriveProbe,
+    vehicleChassisGroundContact,
     vehicleGroundingMotion,
     vehicleBodyRoadClipping,
     vehicleLights,
@@ -995,6 +997,180 @@ async function exerciseForwardDriveProbe(page, segments) {
       events: haltEvents.slice(0, 8),
       minDistance: Number(Math.min(...samples.map((sample) => sample.distance)).toFixed(2)),
       maxDrop: Number(Math.max(...samples.map((sample) => sample.maxDrop)).toFixed(2)),
+      samples
+    };
+  }, segments);
+}
+
+async function exerciseVehicleChassisGroundContact(page, segments) {
+  return page.evaluate(async (probeSegments) => {
+    const delay = (ms) => new Promise((resolveDelay) => setTimeout(resolveDelay, ms));
+    const game = window.__portfolioDrive.game;
+    const input = game.input;
+    const colliderNames = ['main', 'ballast', 'roof'];
+    const shapeNames = {
+      0: 'ball',
+      1: 'cuboid',
+      2: 'capsule',
+      3: 'segment',
+      4: 'polyline',
+      5: 'triangle',
+      6: 'trimesh',
+      7: 'heightfield'
+    };
+    const samples = [];
+    const contactEvents = [];
+
+    const clearInput = () => {
+      input.actions.forward = false;
+      input.actions.backward = false;
+      input.actions.left = false;
+      input.actions.right = false;
+      input.actions.boost = false;
+      input.actions.handbrake = false;
+      input.actions.brake = false;
+      input.actions.jump = false;
+      input.joystick.x = 0;
+      input.joystick.y = 0;
+    };
+
+    const waitForGrounded = async () => {
+      for (let i = 0; i < 54; i += 1) {
+        if ((game.vehicle.controller?.groundedWheels || 0) >= 2) return true;
+        await delay(35);
+      }
+      return false;
+    };
+
+    const chassisContactRows = () => {
+      const rows = [];
+      const body = game.vehicle.body;
+      for (let index = 0; index < body.numColliders(); index += 1) {
+        const collider = body.collider(index);
+        game.physics.world.contactPairsWith(collider, (other) => {
+          const parent = other.parent?.();
+          if (parent && parent.handle === body.handle) return;
+          let solverContacts = 0;
+          let minDist = Infinity;
+          let maxFriction = 0;
+          game.physics.world.contactPair(collider, other, (manifold) => {
+            const count = manifold.numSolverContacts?.() || 0;
+            solverContacts += count;
+            for (let i = 0; i < count; i += 1) {
+              minDist = Math.min(minDist, manifold.solverContactDist(i));
+              maxFriction = Math.max(maxFriction, manifold.solverContactFriction(i));
+            }
+          });
+          if (solverContacts <= 0) return;
+          rows.push({
+            colliderIndex: index,
+            collider: colliderNames[index] || `collider-${index}`,
+            otherShape: shapeNames[other.shapeType?.()] || String(other.shapeType?.()),
+            otherFriction: Number(other.friction().toFixed(3)),
+            solverContacts,
+            minDist: Number(minDist.toFixed(5)),
+            maxFriction: Number(maxFriction.toFixed(3))
+          });
+        });
+      }
+      return rows;
+    };
+
+    const minWheelSuspensionLength = () => {
+      const controller = game.vehicle.controller?.controller;
+      let minLength = Infinity;
+      for (let index = 0; index < 4; index += 1) {
+        const length = controller?.wheelSuspensionLength?.(index);
+        if (Number.isFinite(length)) minLength = Math.min(minLength, length);
+      }
+      return Number.isFinite(minLength) ? Number(minLength.toFixed(4)) : null;
+    };
+
+    const ballastBottomY = () => {
+      const collider = game.vehicle.body.collider(1);
+      const half = collider?.halfExtents?.();
+      const center = collider?.translation?.();
+      if (!half || !center) return null;
+      return Number((center.y - half.y).toFixed(4));
+    };
+
+    for (const segment of probeSegments) {
+      clearInput();
+      const offset = Math.min(10, Math.max(4, segment.length * 0.24));
+      const heading = segment.rotation;
+      const start = {
+        x: segment.cx - Math.sin(heading) * offset,
+        y: 1.12,
+        z: segment.cz - Math.cos(heading) * offset
+      };
+      game.vehicle.respawn(start, heading);
+      await delay(160);
+      const grounded = await waitForGrounded();
+      input.actions.forward = true;
+      input.actions.boost = true;
+
+      let maxSpeed = 0;
+      let contactFrames = 0;
+      let ballastContactFrames = 0;
+      let minBallastBottomY = Infinity;
+      let minSuspensionLength = Infinity;
+      for (let frame = 0; frame < 36; frame += 1) {
+        await delay(40);
+        const position = game.vehicle.position.clone();
+        const velocity = game.vehicle.body.linvel();
+        const speed = Math.hypot(velocity.x, velocity.z);
+        const surface = game.world.getSurfaceInfo(position);
+        const contacts = chassisContactRows();
+        const currentBallastBottomY = ballastBottomY();
+        const currentSuspensionLength = minWheelSuspensionLength();
+
+        maxSpeed = Math.max(maxSpeed, speed);
+        if (Number.isFinite(currentBallastBottomY)) minBallastBottomY = Math.min(minBallastBottomY, currentBallastBottomY);
+        if (Number.isFinite(currentSuspensionLength)) minSuspensionLength = Math.min(minSuspensionLength, currentSuspensionLength);
+        if (contacts.length) contactFrames += 1;
+        if (contacts.some((contact) => contact.collider === 'ballast')) ballastContactFrames += 1;
+
+        if (frame > 6 && surface.id === 'road' && speed > 8 && contacts.length) {
+          contactEvents.push({
+            id: segment.id,
+            index: segment.index,
+            frame,
+            x: Number(position.x.toFixed(2)),
+            z: Number(position.z.toFixed(2)),
+            speed: Number(speed.toFixed(2)),
+            groundedWheels: game.vehicle.controller?.groundedWheels || 0,
+            minWheelSuspensionLength: currentSuspensionLength,
+            ballastBottomY: currentBallastBottomY,
+            contacts
+          });
+        }
+      }
+      input.actions.forward = false;
+      input.actions.boost = false;
+
+      samples.push({
+        id: segment.id,
+        index: segment.index,
+        grounded,
+        maxSpeed: Number(maxSpeed.toFixed(2)),
+        contactFrames,
+        ballastContactFrames,
+        minBallastBottomY: Number.isFinite(minBallastBottomY) ? Number(minBallastBottomY.toFixed(4)) : null,
+        minWheelSuspensionLength: Number.isFinite(minSuspensionLength) ? Number(minSuspensionLength.toFixed(4)) : null
+      });
+      await delay(80);
+    }
+
+    clearInput();
+    window.__portfolioDrive.respawn('landing');
+    return {
+      total: samples.length,
+      events: contactEvents.slice(0, 12),
+      eventCount: contactEvents.length,
+      contactSegments: samples.filter((sample) => sample.contactFrames > 0).length,
+      ballastContactSegments: samples.filter((sample) => sample.ballastContactFrames > 0).length,
+      minBallastBottomY: Number(Math.min(...samples.map((sample) => sample.minBallastBottomY ?? Infinity)).toFixed(4)),
+      minWheelSuspensionLength: Number(Math.min(...samples.map((sample) => sample.minWheelSuspensionLength ?? Infinity)).toFixed(4)),
       samples
     };
   }, segments);
@@ -3066,6 +3242,16 @@ function assertVerification(result) {
       .map((event) => `${event.id}[${event.index}]@${event.x},${event.z} drop=${event.drop}`)
       .join(', ');
     failures.push(`forward drive probe failed: halts=${result.forwardDriveProbe.halts}${events ? ` (${events})` : ''}`);
+  }
+  if (result.vehicleChassisGroundContact?.total !== routeReplaySegments.length) {
+    failures.push(`vehicle chassis contact probe count mismatch: ${result.vehicleChassisGroundContact?.total}/${routeReplaySegments.length}`);
+  }
+  if ((result.vehicleChassisGroundContact?.eventCount || 0) !== 0) {
+    const events = (result.vehicleChassisGroundContact.events || [])
+      .slice(0, 3)
+      .map((event) => `${event.id}[${event.index}] ${event.contacts.map((contact) => contact.collider).join('+')} bottom=${event.ballastBottomY}`)
+      .join(', ');
+    failures.push(`vehicle chassis contact probe failed: contacts=${result.vehicleChassisGroundContact.eventCount}${events ? ` (${events})` : ''}`);
   }
   assertVehicleGroundingMotion(result, failures);
   assertVehicleBodyRoadClipping(result, failures);

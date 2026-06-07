@@ -247,9 +247,6 @@ export class VehicleController {
       y: -angular.y * this.body.mass() * (handbrake ? 0.006 : Math.abs(rawSteer) < 0.08 ? 0.035 : 0.016),
       z: (-angular.z * 0.68 + up.x * 0.96) * pitchRollCorrection
     }, true);
-    if (!wheelie && this.speed > 5) {
-      this.body.applyImpulse({ x: 0, y: -Math.min(0.92, this.speed * 0.02) * this.body.mass(), z: 0 }, true);
-    }
   }
 
   applyAeroGrip(dt, handbrake = false) {
