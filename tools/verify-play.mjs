@@ -4324,16 +4324,16 @@ function assertGate3RVerticalSliceVerification(result, failures) {
   if ((fcc.hedges || 0) !== 0) failures.push(`Gate 3R FCC failed: rejected hedges built=${fcc.hedges || 0}`);
   if ((fcc.planters || 0) !== 0) failures.push(`Gate 3R FCC failed: rejected planters built=${fcc.planters || 0}`);
   if ((fcc.lamps || 0) < 2) failures.push(`Gate 3R FCC failed: lamps=${fcc.lamps || 0}`);
-  if ((fcc.identityFrames || 0) < 2) failures.push(`Gate 3R FCC failed: identityFrames=${fcc.identityFrames || 0}`);
+  if ((fcc.identityFrames || 0) !== 0) failures.push(`Gate 3R-B FCC failed: rejected frame strips built=${fcc.identityFrames || 0}`);
   if ((securityRoute.routeMarks || 0) !== 0) failures.push(`Gate 3R security route failed: rejected white route marks built=${securityRoute.routeMarks || 0}`);
   if ((securityRoute.warningBollards || 0) < 2) failures.push(`Gate 3R security route failed: warningBollards=${securityRoute.warningBollards || 0}`);
   if ((security.floorPads || 0) < 3) failures.push(`Gate 3R security lab failed: floorPads=${security.floorPads || 0}`);
   if ((security.serverBlocks || 0) < 4) failures.push(`Gate 3R security lab failed: serverBlocks=${security.serverBlocks || 0}`);
-  if ((security.cables || 0) < 4) failures.push(`Gate 3R security lab failed: cables=${security.cables || 0}`);
-  if ((security.beacons || 0) < 4) failures.push(`Gate 3R security lab failed: beacons=${security.beacons || 0}`);
-  if ((security.terminalRails || 0) < 4) failures.push(`Gate 3R security lab failed: terminalRails=${security.terminalRails || 0}`);
-  if ((security.warningBollards || 0) < 6) failures.push(`Gate 3R security lab failed: warningBollards=${security.warningBollards || 0}`);
-  if ((security.lightStrips || 0) < 5) failures.push(`Gate 3R security lab failed: lightStrips=${security.lightStrips || 0}`);
+  if ((security.cables || 0) !== 2) failures.push(`Gate 3R-B security lab failed: cables=${security.cables || 0}`);
+  if ((security.beacons || 0) !== 2) failures.push(`Gate 3R-B security lab failed: beacons=${security.beacons || 0}`);
+  if ((security.terminalRails || 0) !== 2) failures.push(`Gate 3R-B security lab failed: terminalRails=${security.terminalRails || 0}`);
+  if ((security.warningBollards || 0) !== 4) failures.push(`Gate 3R-B security lab failed: warningBollards=${security.warningBollards || 0}`);
+  if ((security.lightStrips || 0) !== 2) failures.push(`Gate 3R-B security lab failed: lightStrips=${security.lightStrips || 0}`);
 
   if (!Number.isFinite(result.p95FrameMs) || result.p95FrameMs <= 0 || result.p95FrameMs > 22) failures.push(`Gate 3R metrics failed: p95FrameMs=${result.p95FrameMs}`);
   if (!Number.isFinite(result.calls) || result.calls <= 0 || result.calls > 280) failures.push(`Gate 3R metrics failed: calls=${result.calls}`);

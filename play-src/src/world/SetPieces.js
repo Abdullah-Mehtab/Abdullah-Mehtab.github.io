@@ -1132,28 +1132,21 @@ export class SetPieces {
     };
 
     this.recordGate3RFootprintPlacement('protected-landmark', 'GATE3R_FCC_Protected_Model_Footprint', x, z, 22, 16, rotation, 4.5);
-    const walk = local(0, -10);
-    const step = local(0, -7.4);
-    this.gate3rPad(group, walk[0], walk[1], 10, 1.8, this.world.materials.paleStone, 0.13, 'GATE3R_FCC_Road_Parallel_Walk', rotation, 'fcc-walk', 4.5);
-    this.gate3rPad(group, step[0], step[1], 7.4, 1.6, this.world.materials.warmStone, 0.132, 'GATE3R_FCC_Entry_Step', rotation, 'fcc-walk', 4.5);
+    const forecourt = local(0, -9.4);
+    const entryWalk = local(0, -5.8);
+    this.gate3rPad(group, forecourt[0], forecourt[1], 15.4, 4.4, this.world.materials.paleStone, 0.13, 'GATE3R_FCC_Forecourt', rotation, 'fcc-walk', 4.5);
+    this.gate3rPad(group, entryWalk[0], entryWalk[1], 6.4, 2.8, this.world.materials.warmStone, 0.132, 'GATE3R_FCC_Entry_Walk', rotation, 'fcc-walk', 4.5);
     stats.plazaPads += 2;
 
-    const lampA = local(-16, -16);
-    const lampB = local(16, -18);
+    const lampA = local(-9.5, -14.6);
+    const lampB = local(9.5, -14.6);
     this.gate3rLampFacingRoad(group, lampA[0], lampA[1], 0x9ccfff, 2.9, 'GATE3R_FCC_Lamp_Left', 2.2);
     this.gate3rLampFacingRoad(group, lampB[0], lampB[1], 0x9ccfff, 2.9, 'GATE3R_FCC_Lamp_Right', 2.2);
     stats.lamps += 2;
 
-    const sign = local(-12, -16);
+    const sign = local(-12.4, -16.2);
     this.gate3rSign(group, 'FCCU S BLOCK', 'Education stop', sign[0], sign[1], rotation + 0.2, 0x9ccfff, 1.62, 'GATE3R_FCC_Identity_Sign', 3.8);
-    const frameA = local(-4.4, -10.8);
-    const frameB = local(4.4, -10.8);
-    this.box(group, frameA[0], 0.139, frameA[1], 5.2, 0.02, 0.14, this.world.materials.glowBlue, rotation, 'GATE3R_FCC_Frame_Left');
-    this.box(group, frameB[0], 0.139, frameB[1], 5.2, 0.02, 0.14, this.world.materials.warmGlow, rotation, 'GATE3R_FCC_Frame_Right');
-    this.recordGate3RPlacement('walk-overlay', 'GATE3R_FCC_Frame_Left', frameA[0], frameA[1], { allowRoad: true });
-    this.recordGate3RPlacement('walk-overlay', 'GATE3R_FCC_Frame_Right', frameB[0], frameB[1], { allowRoad: true });
     stats.signs += 1;
-    stats.identityFrames += 2;
   }
 
   createGate3RSecurityRoute(group) {
@@ -1186,34 +1179,34 @@ export class SetPieces {
       scan.z + sideZ * side + forwardZ * forward
     ];
 
-    this.gate3rPad(group, scan.x, scan.z, 13.2, 6.4, this.world.materials.securityRoad, 0.131, 'GATE3R_Security_Scanner_Lane', scan.rotation, 'security-pad', 8);
-    this.gate3rPad(group, ...point(12, -5), 4.2, 3.6, this.world.materials.stoneRoad, 0.132, 'GATE3R_Security_Server_Deck_A', scan.rotation, 'security-pad', 8);
-    this.gate3rPad(group, ...point(-14, 5), 4.2, 3.6, this.world.materials.stoneRoad, 0.132, 'GATE3R_Security_Server_Deck_B', scan.rotation, 'security-pad', 8);
+    this.gate3rPad(group, scan.x, scan.z, 12.4, 5.2, this.world.materials.securityRoad, 0.131, 'GATE3R_Security_Scanner_Lane', scan.rotation, 'security-pad', 8);
+    this.gate3rPad(group, ...point(10.8, -5.4), 5.2, 4.2, this.world.materials.stoneRoad, 0.132, 'GATE3R_Security_Server_Deck_A', scan.rotation, 'security-pad', 8);
+    this.gate3rPad(group, ...point(-10.8, 5.4), 5.2, 4.2, this.world.materials.stoneRoad, 0.132, 'GATE3R_Security_Server_Deck_B', scan.rotation, 'security-pad', 8);
     stats.floorPads += 3;
 
     this.securityScanWaveField(group, scan.x, scan.z, scan.rotation);
     this.createGate3RSecurityPackets(group, zone, scan);
 
-    for (let index = 0; index < 5; index += 1) {
-      const [x, z] = point(-3.0 + index * 1.5, -2.6 + (index % 2) * 0.34);
-      this.box(group, x, 0.139 + index * 0.0004, z, 0.66, 0.018, 0.16, index % 2 ? this.world.materials.glowPink : this.world.materials.glowBlue, scan.rotation, 'GATE3R_Security_Floor_Trace');
+    for (const forward of [-2.1, 2.1]) {
+      const [x, z] = point(0, forward);
+      this.box(group, x, 0.139, z, 5.6, 0.018, 0.14, this.world.materials.glowBlue, scan.rotation, 'GATE3R_Security_Scan_Threshold');
       stats.lightStrips += 1;
       this.securityLabStats.floorMarks += 1;
     }
 
     for (const side of [-1, 1]) {
-      const [railX, railZ] = point(side * 4.8, 0);
-      this.box(group, railX, 0.39, railZ, 0.16, 0.28, 3.2, this.world.materials.cable, scan.rotation, 'GATE3R_Security_Terminal_Rail');
-      this.box(group, railX - sideX * side * 0.55, 0.54, railZ - sideZ * side * 0.55, 0.1, 0.12, 2.9, this.world.materials.glowBlue, scan.rotation, 'GATE3R_Security_Terminal_Glow');
-      stats.terminalRails += 2;
-      this.securityLabStats.terminalRails += 2;
+      const [railX, railZ] = point(side * 4.35, 0);
+      this.box(group, railX, 0.34, railZ, 0.14, 0.22, 4.9, this.world.materials.cable, scan.rotation, 'GATE3R_Security_Lane_Rail');
+      this.recordGate3RPlacement('scanner-boundary', 'GATE3R_Security_Lane_Rail', railX, railZ, { minClearance: 2.2 });
+      stats.terminalRails += 1;
+      this.securityLabStats.terminalRails += 1;
     }
 
     for (const [side, forward, rot] of [
-      [12, -5, 0.22],
-      [10, 5, 0.08],
-      [-12, 5, -0.2],
-      [-16, 5, -0.1]
+      [9.6, -6.4, 0.16],
+      [12.5, -4.4, 0.08],
+      [-9.6, 6.4, -0.16],
+      [-12.5, 4.4, -0.08]
     ]) {
       const [rackX, rackZ] = point(side, forward);
       this.serverRack(group, rackX, rackZ, scan.rotation + rot);
@@ -1222,10 +1215,8 @@ export class SetPieces {
     }
 
     const cableRuns = [
-      [point(7.1, -2.3), point(5.8, -1.2), point(4.8, 0)],
-      [point(7.1, 2.2), point(5.8, 1.0), point(4.8, 0)],
-      [point(-7.1, -2.1), point(-5.8, -1.0), point(-4.8, 0)],
-      [point(-7.1, 2.35), point(-5.8, 1.1), point(-4.8, 0)]
+      [point(8.2, -5.4), point(6.3, -2.8), point(4.35, 0)],
+      [point(-8.2, 5.4), point(-6.3, 2.8), point(-4.35, 0)]
     ];
     for (const run of cableRuns) {
       this.cable(
@@ -1240,10 +1231,8 @@ export class SetPieces {
     }
 
     for (const [side, forward, color] of [
-      [16, -5, 0x68d8ff],
-      [14, 5, 0xff6d8d],
-      [-10, 5, 0x7cffb2],
-      [-14, 5, 0x68d8ff]
+      [15, -2, 0x68d8ff],
+      [-15, 2, 0x68d8ff]
     ]) {
       const [x, z] = point(side, forward);
       this.beacon(group, x, z, color);
@@ -1251,16 +1240,20 @@ export class SetPieces {
       stats.beacons += 1;
     }
 
-    for (let index = 0; index < 6; index += 1) {
-      const side = index % 2 ? -1 : 1;
-      const [x, z] = point(side * 5.7, -3.8 + index * 1.5);
+    for (const [side, forward] of [
+      [1, -3.2],
+      [-1, -3.2],
+      [1, 3.2],
+      [-1, 3.2]
+    ]) {
+      const [x, z] = point(side * 4.8, forward);
       this.cylinder(group, x, 0.5, z, 0.12, 0.92, this.world.materials.cable, 8, 'GATE3R_Security_Warning_Bollard');
-      this.box(group, x, 0.98, z, 0.32, 0.12, 0.12, index % 2 ? this.world.materials.glowPink : this.world.materials.glowBlue, scan.rotation, 'GATE3R_Security_Warning_Light');
-      this.recordGate3RPlacement('scanner-boundary', 'GATE3R_Security_Warning_Bollard', x, z, { allowRoad: true });
+      this.box(group, x, 0.98, z, 0.32, 0.12, 0.12, this.world.materials.glowBlue, scan.rotation, 'GATE3R_Security_Warning_Light');
+      this.recordGate3RPlacement('scanner-boundary', 'GATE3R_Security_Warning_Bollard', x, z, { minClearance: 2.2 });
       stats.warningBollards += 1;
     }
 
-    const sign = point(18, -5);
+    const sign = point(16, -7);
     this.gate3rSign(group, 'SECURITY SCAN', 'Hold in beam', sign[0], sign[1], scan.rotation - 0.95, 0x68d8ff, 1.56, 'GATE3R_Security_Scan_Sign', 2.8);
     stats.signs += 1;
   }
