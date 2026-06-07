@@ -543,8 +543,8 @@ export const zonePresentation = {
   },
   projects: {
     respawn: { position: [114, 1.08, -10], heading: 0.36 },
-    camera: [106, 9, 26],
-    target: [82, 3, -8],
+    camera: [104, 10, 8],
+    target: [80, 3, -20],
     fov: 42,
   },
   sentinel: {
@@ -555,8 +555,8 @@ export const zonePresentation = {
   },
   career: {
     respawn: { position: [114, 1.08, -10], heading: 1.4 },
-    camera: [144, 10, -36],
-    target: [128, 3, -42],
+    camera: [143, 10, -37],
+    target: [124, 3, -40],
     fov: 42,
   },
   skills: {
@@ -591,8 +591,8 @@ export const zonePresentation = {
   },
   contact: {
     respawn: { position: [104, 1.08, 46], heading: 2.36 },
-    camera: [140, 9, 40],
-    target: [124, 3, 28],
+    camera: [142, 10, 43],
+    target: [124, 3, 31],
     fov: 42,
   },
   behind: {

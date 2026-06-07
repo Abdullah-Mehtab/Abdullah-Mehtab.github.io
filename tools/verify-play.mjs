@@ -2522,6 +2522,7 @@ async function collectRuntimeMetrics(page, loadMs, gameplay, water, surfaces, su
       gate4b1: game.world.setPieces?.getGate4B1Stats?.() || {},
       gate4b2: game.world.setPieces?.getGate4B2Stats?.() || {},
       gate4b3: game.world.setPieces?.getGate4B3Stats?.() || {},
+      gate4b4: game.world.setPieces?.getGate4B4Stats?.() || {},
       meadowComposition: game.world.setPieces?.getMeadowCompositionStats?.() || {},
       fieldBackdrops: game.world.setPieces?.getFieldBackdropStats?.() || {},
       launchField: game.world.setPieces?.getLaunchFieldStats?.() || {},
@@ -3258,6 +3259,13 @@ function assertVerification(result) {
   }
   assertVehicleGroundingMotion(result, failures);
   assertVehicleBodyRoadClipping(result, failures);
+  if (result.goalGate === 'gate-4b4-east-side') {
+    assertGate4B4EastSideVerification(result, failures);
+    if (failures.length) {
+      throw new Error(`Play verification failed: ${failures.join('; ')}`);
+    }
+    return;
+  }
   if (result.goalGate === 'gate-4b3-data-pier-side') {
     assertGate4B3DataPierSideVerification(result, failures);
     if (failures.length) {
@@ -4653,8 +4661,8 @@ function assertGate4B2WestServiceVerification(result, failures, options = {}) {
   }
 }
 
-function assertGate4B3DataPierSideVerification(result, failures) {
-  assertGate4B2WestServiceVerification(result, failures, { expectedGoal: 'gate-4b3-data-pier-side' });
+function assertGate4B3DataPierSideVerification(result, failures, options = {}) {
+  assertGate4B2WestServiceVerification(result, failures, { expectedGoal: options.expectedGoal || 'gate-4b3-data-pier-side' });
 
   const dataPierSide = result.gate4b3 || {};
   const todo = dataPierSide.todo || {};
@@ -4703,6 +4711,85 @@ function assertGate4B3DataPierSideVerification(result, failures) {
   }
   if ((result.dataPier?.pads || 0) !== 0 || (result.todoYard?.pads || 0) !== 0) {
     failures.push('Gate 4-B3 failed: old DataPier/TodoYard systems were enabled');
+  }
+}
+
+function assertGate4B4EastSideVerification(result, failures) {
+  assertGate4B3DataPierSideVerification(result, failures, { expectedGoal: 'gate-4b4-east-side' });
+
+  const eastSide = result.gate4b4 || {};
+  const projects = eastSide.projects || {};
+  const career = eastSide.career || {};
+  const harbor = eastSide.harbor || {};
+  const placement = result.gate3rPlacement || {};
+
+  if (!eastSide.enabled) failures.push('Gate 4-B4 failed: East Side scaffold inactive');
+  if ((eastSide.staticBatches || 0) < 1) failures.push(`Gate 4-B4 batching failed: staticBatches=${eastSide.staticBatches || 0}`);
+
+  if ((projects.pads || 0) !== 1) failures.push(`Gate 4-B4 Projects failed: pads=${projects.pads || 0}`);
+  if ((projects.projectRacks || 0) !== 6) failures.push(`Gate 4-B4 Projects failed: projectRacks=${projects.projectRacks || 0}`);
+  if ((projects.assemblyRings || 0) !== 1) failures.push(`Gate 4-B4 Projects failed: assemblyRings=${projects.assemblyRings || 0}`);
+  if ((projects.sparkMarkers || 0) !== 6) failures.push(`Gate 4-B4 Projects failed: sparkMarkers=${projects.sparkMarkers || 0}`);
+  if ((projects.authoredAssets || 0) !== 1) failures.push(`Gate 4-B4 Projects failed: authoredAssets=${projects.authoredAssets || 0}`);
+  if ((projects.signs || 0) !== 1) failures.push(`Gate 4-B4 Projects failed: signs=${projects.signs || 0}`);
+  if ((projects.lamps || 0) !== 2) failures.push(`Gate 4-B4 Projects failed: lamps=${projects.lamps || 0}`);
+
+  if ((career.pads || 0) !== 1) failures.push(`Gate 4-B4 Career failed: pads=${career.pads || 0}`);
+  if ((career.officeBlocks || 0) !== 1) failures.push(`Gate 4-B4 Career failed: officeBlocks=${career.officeBlocks || 0}`);
+  if ((career.facadePanels || 0) !== 6) failures.push(`Gate 4-B4 Career failed: facadePanels=${career.facadePanels || 0}`);
+  if ((career.signalFrames || 0) !== 3) failures.push(`Gate 4-B4 Career failed: signalFrames=${career.signalFrames || 0}`);
+  if ((career.connectorMarks || 0) !== 5) failures.push(`Gate 4-B4 Career failed: connectorMarks=${career.connectorMarks || 0}`);
+  if ((career.signs || 0) !== 1) failures.push(`Gate 4-B4 Career failed: signs=${career.signs || 0}`);
+  if ((career.lamps || 0) !== 2) failures.push(`Gate 4-B4 Career failed: lamps=${career.lamps || 0}`);
+
+  if ((harbor.deckPads || 0) !== 1) failures.push(`Gate 4-B4 Harbor failed: deckPads=${harbor.deckPads || 0}`);
+  if ((harbor.signalMasts || 0) !== 1) failures.push(`Gate 4-B4 Harbor failed: signalMasts=${harbor.signalMasts || 0}`);
+  if ((harbor.contactTerminals || 0) !== 3) failures.push(`Gate 4-B4 Harbor failed: contactTerminals=${harbor.contactTerminals || 0}`);
+  if ((harbor.beacons || 0) !== 2) failures.push(`Gate 4-B4 Harbor failed: beacons=${harbor.beacons || 0}`);
+  if ((harbor.signs || 0) !== 1) failures.push(`Gate 4-B4 Harbor failed: signs=${harbor.signs || 0}`);
+  if ((harbor.lamps || 0) !== 2) failures.push(`Gate 4-B4 Harbor failed: lamps=${harbor.lamps || 0}`);
+
+  if ((placement.byFootprintKind?.['gate4b4-projects-pad'] || 0) !== 1) {
+    failures.push(`Gate 4-B4 placement failed: Projects pad footprints=${placement.byFootprintKind?.['gate4b4-projects-pad'] || 0}`);
+  }
+  if ((placement.byFootprintKind?.['gate4b4-career-pad'] || 0) !== 1) {
+    failures.push(`Gate 4-B4 placement failed: Career pad footprints=${placement.byFootprintKind?.['gate4b4-career-pad'] || 0}`);
+  }
+  if ((placement.byFootprintKind?.['gate4b4-harbor-deck'] || 0) !== 1) {
+    failures.push(`Gate 4-B4 placement failed: Harbor deck footprints=${placement.byFootprintKind?.['gate4b4-harbor-deck'] || 0}`);
+  }
+  if ((placement.byKind?.['gate4b4-projects-assembly'] || 0) !== 1) {
+    failures.push(`Gate 4-B4 placement failed: Projects assembly placements=${placement.byKind?.['gate4b4-projects-assembly'] || 0}`);
+  }
+  if ((placement.byKind?.['gate4b4-project-rack'] || 0) !== 6) {
+    failures.push(`Gate 4-B4 placement failed: Projects rack placements=${placement.byKind?.['gate4b4-project-rack'] || 0}`);
+  }
+  if ((placement.byKind?.['gate4b4-project-spark'] || 0) !== 6) {
+    failures.push(`Gate 4-B4 placement failed: Projects spark placements=${placement.byKind?.['gate4b4-project-spark'] || 0}`);
+  }
+  if ((placement.byKind?.['gate4b4-career-office'] || 0) !== 1) {
+    failures.push(`Gate 4-B4 placement failed: Career office placements=${placement.byKind?.['gate4b4-career-office'] || 0}`);
+  }
+  if ((placement.byKind?.['gate4b4-career-facade'] || 0) !== 6) {
+    failures.push(`Gate 4-B4 placement failed: Career facade placements=${placement.byKind?.['gate4b4-career-facade'] || 0}`);
+  }
+  if ((placement.byKind?.['gate4b4-career-frame'] || 0) !== 3) {
+    failures.push(`Gate 4-B4 placement failed: Career frame placements=${placement.byKind?.['gate4b4-career-frame'] || 0}`);
+  }
+  if ((placement.byKind?.['gate4b4-career-connector'] || 0) !== 5) {
+    failures.push(`Gate 4-B4 placement failed: Career connector placements=${placement.byKind?.['gate4b4-career-connector'] || 0}`);
+  }
+  if ((placement.byKind?.['gate4b4-harbor-mast'] || 0) !== 1) {
+    failures.push(`Gate 4-B4 placement failed: Harbor mast placements=${placement.byKind?.['gate4b4-harbor-mast'] || 0}`);
+  }
+  if ((placement.byKind?.['gate4b4-harbor-terminal'] || 0) !== 3) {
+    failures.push(`Gate 4-B4 placement failed: Harbor terminal placements=${placement.byKind?.['gate4b4-harbor-terminal'] || 0}`);
+  }
+  if ((placement.byKind?.['gate4b4-harbor-beacon'] || 0) !== 2) {
+    failures.push(`Gate 4-B4 placement failed: Harbor beacon placements=${placement.byKind?.['gate4b4-harbor-beacon'] || 0}`);
+  }
+  if ((result.harbor?.pads || 0) !== 0 || (result.careerOffice?.pads || 0) !== 0 || (result.projectsYard?.assemblyRings || 0) !== 0) {
+    failures.push('Gate 4-B4 failed: old Projects/Career/Harbor systems were enabled');
   }
 }
 

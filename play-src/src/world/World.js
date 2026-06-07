@@ -38,10 +38,11 @@ const ROAD_SURFACES = {
   bridge: { label: 'pier deck', forwardGrip: 0.96, sideGrip: 0.93, engineFactor: 0.96, topSpeedFactor: 0.88, dustColor: 0x7aa9a7, skidColor: 0x2e4d4b, audioId: 'bridge-road', roughnessFeedback: 0.34 }
 };
 
-const GOAL_GATE = 'gate-4b3-data-pier-side';
-const GATE4_B1_GATE_IDS = new Set(['gate-4b1-south-run', 'gate-4b2-west-service', 'gate-4b3-data-pier-side']);
-const GATE4_B2_GATE_IDS = new Set(['gate-4b2-west-service', 'gate-4b3-data-pier-side']);
-const GATE4_B3_GATE_IDS = new Set(['gate-4b3-data-pier-side']);
+const GOAL_GATE = 'gate-4b4-east-side';
+const GATE4_B1_GATE_IDS = new Set(['gate-4b1-south-run', 'gate-4b2-west-service', 'gate-4b3-data-pier-side', 'gate-4b4-east-side']);
+const GATE4_B2_GATE_IDS = new Set(['gate-4b2-west-service', 'gate-4b3-data-pier-side', 'gate-4b4-east-side']);
+const GATE4_B3_GATE_IDS = new Set(['gate-4b3-data-pier-side', 'gate-4b4-east-side']);
+const GATE4_B4_GATE_IDS = new Set(['gate-4b4-east-side']);
 const FOUNDATION_GATE_IDS = new Set(['gate-2r-foundation-replacement', 'gate-3r-vertical-slice', ...GATE4_B1_GATE_IDS]);
 const VERTICAL_SLICE_GATE_IDS = new Set(['gate-3-vertical-slice', 'gate-3r-vertical-slice', ...GATE4_B1_GATE_IDS]);
 
@@ -58,6 +59,7 @@ export class World {
     this.gate4b1Mode = GATE4_B1_GATE_IDS.has(GOAL_GATE);
     this.gate4b2Mode = GATE4_B2_GATE_IDS.has(GOAL_GATE);
     this.gate4b3Mode = GATE4_B3_GATE_IDS.has(GOAL_GATE);
+    this.gate4b4Mode = GATE4_B4_GATE_IDS.has(GOAL_GATE);
     this.blockoutMode = GOAL_GATE === 'gate-2-blockout' || this.verticalSliceMode || this.foundationReplacementMode;
     this.materials = createWorldMaterials();
     this.zones = [];
