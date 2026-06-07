@@ -443,6 +443,36 @@ export class SetPieces {
         lamps: 0
       }
     };
+    this.gate4b5Stats = {
+      enabled: false,
+      staticBatches: 0,
+      awards: {
+        pads: 0,
+        archiveSteps: 0,
+        trophyPlinths: 0,
+        goldAccents: 0,
+        authoredAssets: 0,
+        signs: 0,
+        lamps: 0
+      },
+      sentinel: {
+        pads: 0,
+        ridgeTowers: 0,
+        signalTotems: 0,
+        shardPanels: 0,
+        signs: 0,
+        lamps: 0
+      },
+      circuit: {
+        pads: 0,
+        startGates: 0,
+        laneCurbs: 0,
+        signalLights: 0,
+        authoredAssets: 0,
+        signs: 0,
+        lamps: 0
+      }
+    };
     this.gate3rPlacementStats = {
       recorded: 0,
       intentionalRoadOverlays: 0,
@@ -462,7 +492,7 @@ export class SetPieces {
   build() {
     if (this.world.foundationReplacementMode) {
       this.createFoundationScaffold();
-      if (this.world.gate3rMode || this.world.gate4b1Mode || this.world.gate4b2Mode || this.world.gate4b3Mode || this.world.gate4b4Mode) {
+      if (this.world.gate3rMode || this.world.gate4b1Mode || this.world.gate4b2Mode || this.world.gate4b3Mode || this.world.gate4b4Mode || this.world.gate4b5Mode) {
         this.createGate3RVerticalSliceScaffold();
       }
       if (this.world.gate4b1Mode) {
@@ -476,6 +506,9 @@ export class SetPieces {
       }
       if (this.world.gate4b4Mode) {
         this.createGate4B4EastSideScaffold();
+      }
+      if (this.world.gate4b5Mode) {
+        this.createGate4B5NorthRidgeScaffold();
       }
       this.applyQuality();
       return;
@@ -720,6 +753,15 @@ export class SetPieces {
       projects: { ...this.gate4b4Stats.projects },
       career: { ...this.gate4b4Stats.career },
       harbor: { ...this.gate4b4Stats.harbor }
+    };
+  }
+
+  getGate4B5Stats() {
+    return {
+      ...this.gate4b5Stats,
+      awards: { ...this.gate4b5Stats.awards },
+      sentinel: { ...this.gate4b5Stats.sentinel },
+      circuit: { ...this.gate4b5Stats.circuit }
     };
   }
 
@@ -1624,6 +1666,179 @@ export class SetPieces {
     ]) {
       const lamp = point(right, forward);
       this.gate3rLampFacingRoad(group, lamp[0], lamp[1], color, 2.5, name, 3.2);
+      stats.lamps += 1;
+    }
+  }
+
+  createGate4B5NorthRidgeScaffold() {
+    this.gate4b5Stats.enabled = true;
+
+    const group = new THREE.Group();
+    group.name = 'GATE4B5_North_Ridge_Awards_Sentinel_Circuit';
+    this.createGate4B5AwardsArchive(group);
+    this.createGate4B5SentinelRidge(group);
+    this.createGate4B5CircuitGate(group);
+
+    this.gate4b5Stats.staticBatches = mergeStaticMeshesInGroup(group, {
+      namePrefix: 'GATE4B5_north_ridge',
+      cellSize: 46,
+      shouldSkip: (object) => object.name.endsWith('_Glow')
+    });
+    this.world.scene.add(group);
+  }
+
+  createGate4B5AwardsArchive(group) {
+    const stats = this.gate4b5Stats.awards;
+    const anchor = { x: -69, z: 110, rotation: -0.18 };
+    const point = (right, forward) => this.gate4B1Point(anchor, right, forward);
+    const rotation = anchor.rotation;
+
+    this.gate3rPad(group, anchor.x, anchor.z, 14, 8, this.world.materials.paleStone, 0.132, 'GATE4B5_Awards_Archive_Garden_Pad', rotation, 'gate4b5-awards-pad', 5.2);
+    stats.pads += 1;
+
+    for (const [right, forward, width, y] of [
+      [0, -1.75, 6.2, 0.28],
+      [0, -0.75, 5.0, 0.4],
+      [0, 0.25, 3.8, 0.52]
+    ]) {
+      const step = point(right, forward);
+      this.box(group, step[0], y, step[1], width, 0.28, 0.72, this.world.materials.warmStone, rotation, 'GATE4B5_Awards_Archive_Step');
+      this.recordGate3RPlacement('gate4b5-awards-step', 'GATE4B5_Awards_Archive_Step', step[0], step[1], { minClearance: 4.4 });
+      stats.archiveSteps += 1;
+    }
+
+    const monument = point(0, 1.2);
+    if (this.addPolishAsset(group, 'EnvPolishAwardsMonument', monument[0], monument[1], rotation, 0.68)) {
+      stats.authoredAssets += 1;
+    }
+    this.recordGate3RPlacement('gate4b5-awards-monument', 'GATE4B5_Awards_Monument', monument[0], monument[1], { minClearance: 4.6 });
+
+    for (const [right, forward, scale] of [
+      [-3.8, 1.4, 0.82],
+      [3.8, 1.4, 0.82],
+      [0, 2.9, 0.72]
+    ]) {
+      const plinth = point(right, forward);
+      this.box(group, plinth[0], 0.48, plinth[1], 0.9 * scale, 0.58, 0.7 * scale, this.world.materials.warmStone, rotation, 'GATE4B5_Awards_Trophy_Plinth');
+      this.cylinder(group, plinth[0], 0.98, plinth[1], 0.16 * scale, 0.36, this.world.materials.gold, 8, 'GATE4B5_Awards_Trophy_Gold');
+      this.recordGate3RPlacement('gate4b5-awards-plinth', 'GATE4B5_Awards_Trophy_Plinth', plinth[0], plinth[1], { minClearance: 4.2 });
+      stats.trophyPlinths += 1;
+    }
+
+    for (const [right, forward] of [
+      [-5.2, 3.2],
+      [5.2, 3.2],
+      [0, 3.45]
+    ]) {
+      const accent = point(right, forward);
+      this.box(group, accent[0], 0.24, accent[1], 0.42, 0.08, 0.42, this.world.materials.warmGlow, rotation, 'GATE4B5_Awards_Gold_Accent_Glow');
+      this.recordGate3RPlacement('gate4b5-awards-accent', 'GATE4B5_Awards_Gold_Accent', accent[0], accent[1], { minClearance: 4.2 });
+      stats.goldAccents += 1;
+    }
+
+    const sign = point(-7, -4.2);
+    this.gate3rSign(group, 'AWARDS', 'Archive Steps', sign[0], sign[1], rotation - 0.26, 0xffdf8a, 1.34, 'GATE4B5_Awards_Sign', 4.0);
+    stats.signs += 1;
+    for (const [right, forward, color, name] of [
+      [-7, 3.2, 0xffdf8a, 'GATE4B5_Awards_Lamp_Left'],
+      [7, -3, 0xffc36a, 'GATE4B5_Awards_Lamp_Right']
+    ]) {
+      const lamp = point(right, forward);
+      this.gate3rLampFacingRoad(group, lamp[0], lamp[1], color, 2.32, name, 3.2);
+      stats.lamps += 1;
+    }
+  }
+
+  createGate4B5SentinelRidge(group) {
+    const stats = this.gate4b5Stats.sentinel;
+    const anchor = { x: 18, z: 128, rotation: -0.12 };
+    const point = (right, forward) => this.gate4B1Point(anchor, right, forward);
+    const rotation = anchor.rotation;
+
+    this.gate3rPad(group, anchor.x, anchor.z, 10, 6, this.world.materials.securityRoad, 0.132, 'GATE4B5_Sentinel_Ridge_Base_Pad', rotation, 'gate4b5-sentinel-pad', 5.2);
+    stats.pads += 1;
+
+    const tower = point(0, 0);
+    this.box(group, tower[0], 1.45, tower[1], 1.55, 2.45, 1.1, this.world.materials.cable, rotation, 'GATE4B5_Sentinel_Ridge_Tower');
+    this.box(group, tower[0], 2.84, tower[1], 1.8, 0.18, 1.35, this.world.materials.glowPink, rotation, 'GATE4B5_Sentinel_Ridge_Tower_Glow');
+    this.recordGate3RPlacement('gate4b5-sentinel-tower', 'GATE4B5_Sentinel_Ridge_Tower', tower[0], tower[1], { minClearance: 4.6 });
+    stats.ridgeTowers += 1;
+
+    const totem = point(0, 1.8);
+    if (this.addPolishAsset(group, 'EnvPolishSignalTotem', totem[0], totem[1], rotation - 0.08, 0.6)) {
+      stats.signalTotems += 1;
+    }
+    this.recordGate3RPlacement('gate4b5-sentinel-totem', 'GATE4B5_Sentinel_Signal_Totem', totem[0], totem[1], { minClearance: 4.6 });
+
+    for (const [right, forward, material] of [
+      [-3.2, 2.1, this.world.materials.glowBlue],
+      [3.2, 2.1, this.world.materials.glowPink]
+    ]) {
+      const shard = point(right, forward);
+      this.box(group, shard[0], 0.82, shard[1], 0.76, 1.05, 0.08, material, rotation + right * 0.03, 'GATE4B5_Sentinel_Shard_Panel_Glow');
+      this.recordGate3RPlacement('gate4b5-sentinel-shard', 'GATE4B5_Sentinel_Shard_Panel', shard[0], shard[1], { minClearance: 4.2 });
+      stats.shardPanels += 1;
+    }
+
+    const sign = point(-6, 3.2);
+    this.gate3rSign(group, 'SENTINEL', 'Cyber Ridge', sign[0], sign[1], rotation + 0.18, 0xff6d8d, 1.3, 'GATE4B5_Sentinel_Sign', 4.0);
+    stats.signs += 1;
+    for (const [right, forward, color, name] of [
+      [-6.5, 1.8, 0xff6d8d, 'GATE4B5_Sentinel_Lamp_Left'],
+      [6.3, -1.8, 0x68d8ff, 'GATE4B5_Sentinel_Lamp_Right']
+    ]) {
+      const lamp = point(right, forward);
+      this.gate3rLampFacingRoad(group, lamp[0], lamp[1], color, 2.36, name, 3.2);
+      stats.lamps += 1;
+    }
+  }
+
+  createGate4B5CircuitGate(group) {
+    const stats = this.gate4b5Stats.circuit;
+    const anchor = { x: 58, z: 80, rotation: -0.28 };
+    const point = (right, forward) => this.gate4B1Point(anchor, right, forward);
+    const rotation = anchor.rotation;
+
+    this.gate3rPad(group, anchor.x, anchor.z, 14, 8, this.world.materials.stuntRamp, 0.132, 'GATE4B5_Circuit_Start_Pocket_Pad', rotation, 'gate4b5-circuit-pad', 5.2);
+    stats.pads += 1;
+
+    const gate = point(0, 0);
+    if (this.addPolishAsset(group, 'EnvPolishCircuitGate', gate[0], gate[1], rotation, 0.66)) {
+      stats.authoredAssets += 1;
+    }
+    this.recordGate3RPlacement('gate4b5-circuit-gate', 'GATE4B5_Circuit_Start_Gate', gate[0], gate[1], { minClearance: 4.6 });
+    stats.startGates += 1;
+
+    for (const [right, forward, material] of [
+      [-5.2, 0.8, this.world.materials.paleStone],
+      [5.2, 0.8, this.world.materials.paleStone]
+    ]) {
+      const curb = point(right, forward);
+      this.box(group, curb[0], 0.26, curb[1], 0.42, 0.12, 3.2, material, rotation, 'GATE4B5_Circuit_Lane_Curb');
+      this.recordGate3RPlacement('gate4b5-circuit-curb', 'GATE4B5_Circuit_Lane_Curb', curb[0], curb[1], { minClearance: 4.2 });
+      stats.laneCurbs += 1;
+    }
+
+    for (const [right, forward, material] of [
+      [-2.8, 2.8, this.world.materials.glowPink],
+      [0, 3, this.world.materials.warmGlow],
+      [2.8, 2.8, this.world.materials.glowBlue]
+    ]) {
+      const light = point(right, forward);
+      this.box(group, light[0], 0.34, light[1], 0.48, 0.12, 0.48, material, rotation, 'GATE4B5_Circuit_Signal_Light_Glow');
+      this.recordGate3RPlacement('gate4b5-circuit-light', 'GATE4B5_Circuit_Signal_Light', light[0], light[1], { minClearance: 4.2 });
+      stats.signalLights += 1;
+    }
+
+    const sign = point(-7, -4);
+    this.gate3rSign(group, 'CIRCUIT', 'Checkpoint Run', sign[0], sign[1], rotation - 0.24, 0xff9b6d, 1.34, 'GATE4B5_Circuit_Sign', 4.0);
+    stats.signs += 1;
+    for (const [right, forward, color, name] of [
+      [-7, 3.2, 0xff9b6d, 'GATE4B5_Circuit_Lamp_Left'],
+      [5.8, -2.8, 0x68d8ff, 'GATE4B5_Circuit_Lamp_Right']
+    ]) {
+      const lamp = point(right, forward);
+      this.gate3rLampFacingRoad(group, lamp[0], lamp[1], color, 2.42, name, 3.2);
       stats.lamps += 1;
     }
   }

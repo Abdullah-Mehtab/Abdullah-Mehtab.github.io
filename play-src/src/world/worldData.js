@@ -549,8 +549,8 @@ export const zonePresentation = {
   },
   sentinel: {
     respawn: { position: [18, 1.08, 116], heading: -0.05 },
-    camera: [30, 16, 138],
-    target: [20, 7, 122],
+    camera: [34, 15, 142],
+    target: [18, 6, 128],
     fov: 42,
   },
   career: {
@@ -567,8 +567,8 @@ export const zonePresentation = {
   },
   awards: {
     respawn: { position: [-52, 1.08, 104], heading: 0.94 },
-    camera: [-92, 11, 126],
-    target: [-70, 4, 112],
+    camera: [-90, 10, 124],
+    target: [-69, 4, 110],
     fov: 42,
   },
   cv: {
@@ -585,8 +585,8 @@ export const zonePresentation = {
   },
   circuit: {
     respawn: { position: [70, 1.08, 92], heading: 0.42 },
-    camera: [88, 10, 104],
-    target: [72, 4, 82],
+    camera: [82, 10, 98],
+    target: [58, 4, 80],
     fov: 42,
   },
   contact: {

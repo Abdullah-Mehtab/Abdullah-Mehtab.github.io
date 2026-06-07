@@ -2523,6 +2523,7 @@ async function collectRuntimeMetrics(page, loadMs, gameplay, water, surfaces, su
       gate4b2: game.world.setPieces?.getGate4B2Stats?.() || {},
       gate4b3: game.world.setPieces?.getGate4B3Stats?.() || {},
       gate4b4: game.world.setPieces?.getGate4B4Stats?.() || {},
+      gate4b5: game.world.setPieces?.getGate4B5Stats?.() || {},
       meadowComposition: game.world.setPieces?.getMeadowCompositionStats?.() || {},
       fieldBackdrops: game.world.setPieces?.getFieldBackdropStats?.() || {},
       launchField: game.world.setPieces?.getLaunchFieldStats?.() || {},
@@ -3259,6 +3260,13 @@ function assertVerification(result) {
   }
   assertVehicleGroundingMotion(result, failures);
   assertVehicleBodyRoadClipping(result, failures);
+  if (result.goalGate === 'gate-4b5-north-ridge') {
+    assertGate4B5NorthRidgeVerification(result, failures);
+    if (failures.length) {
+      throw new Error(`Play verification failed: ${failures.join('; ')}`);
+    }
+    return;
+  }
   if (result.goalGate === 'gate-4b4-east-side') {
     assertGate4B4EastSideVerification(result, failures);
     if (failures.length) {
@@ -4714,8 +4722,8 @@ function assertGate4B3DataPierSideVerification(result, failures, options = {}) {
   }
 }
 
-function assertGate4B4EastSideVerification(result, failures) {
-  assertGate4B3DataPierSideVerification(result, failures, { expectedGoal: 'gate-4b4-east-side' });
+function assertGate4B4EastSideVerification(result, failures, options = {}) {
+  assertGate4B3DataPierSideVerification(result, failures, { expectedGoal: options.expectedGoal || 'gate-4b4-east-side' });
 
   const eastSide = result.gate4b4 || {};
   const projects = eastSide.projects || {};
@@ -4790,6 +4798,88 @@ function assertGate4B4EastSideVerification(result, failures) {
   }
   if ((result.harbor?.pads || 0) !== 0 || (result.careerOffice?.pads || 0) !== 0 || (result.projectsYard?.assemblyRings || 0) !== 0) {
     failures.push('Gate 4-B4 failed: old Projects/Career/Harbor systems were enabled');
+  }
+}
+
+function assertGate4B5NorthRidgeVerification(result, failures) {
+  assertGate4B4EastSideVerification(result, failures, { expectedGoal: 'gate-4b5-north-ridge' });
+
+  const northRidge = result.gate4b5 || {};
+  const awards = northRidge.awards || {};
+  const sentinel = northRidge.sentinel || {};
+  const circuit = northRidge.circuit || {};
+  const placement = result.gate3rPlacement || {};
+
+  if (!northRidge.enabled) failures.push('Gate 4-B5 failed: North Ridge scaffold inactive');
+  if ((northRidge.staticBatches || 0) < 1) failures.push(`Gate 4-B5 batching failed: staticBatches=${northRidge.staticBatches || 0}`);
+
+  if ((awards.pads || 0) !== 1) failures.push(`Gate 4-B5 Awards failed: pads=${awards.pads || 0}`);
+  if ((awards.archiveSteps || 0) !== 3) failures.push(`Gate 4-B5 Awards failed: archiveSteps=${awards.archiveSteps || 0}`);
+  if ((awards.trophyPlinths || 0) !== 3) failures.push(`Gate 4-B5 Awards failed: trophyPlinths=${awards.trophyPlinths || 0}`);
+  if ((awards.goldAccents || 0) !== 3) failures.push(`Gate 4-B5 Awards failed: goldAccents=${awards.goldAccents || 0}`);
+  if ((awards.authoredAssets || 0) !== 1) failures.push(`Gate 4-B5 Awards failed: authoredAssets=${awards.authoredAssets || 0}`);
+  if ((awards.signs || 0) !== 1) failures.push(`Gate 4-B5 Awards failed: signs=${awards.signs || 0}`);
+  if ((awards.lamps || 0) !== 2) failures.push(`Gate 4-B5 Awards failed: lamps=${awards.lamps || 0}`);
+
+  if ((sentinel.pads || 0) !== 1) failures.push(`Gate 4-B5 Sentinel failed: pads=${sentinel.pads || 0}`);
+  if ((sentinel.ridgeTowers || 0) !== 1) failures.push(`Gate 4-B5 Sentinel failed: ridgeTowers=${sentinel.ridgeTowers || 0}`);
+  if ((sentinel.signalTotems || 0) !== 1) failures.push(`Gate 4-B5 Sentinel failed: signalTotems=${sentinel.signalTotems || 0}`);
+  if ((sentinel.shardPanels || 0) !== 2) failures.push(`Gate 4-B5 Sentinel failed: shardPanels=${sentinel.shardPanels || 0}`);
+  if ((sentinel.signs || 0) !== 1) failures.push(`Gate 4-B5 Sentinel failed: signs=${sentinel.signs || 0}`);
+  if ((sentinel.lamps || 0) !== 2) failures.push(`Gate 4-B5 Sentinel failed: lamps=${sentinel.lamps || 0}`);
+
+  if ((circuit.pads || 0) !== 1) failures.push(`Gate 4-B5 Circuit failed: pads=${circuit.pads || 0}`);
+  if ((circuit.startGates || 0) !== 1) failures.push(`Gate 4-B5 Circuit failed: startGates=${circuit.startGates || 0}`);
+  if ((circuit.laneCurbs || 0) !== 2) failures.push(`Gate 4-B5 Circuit failed: laneCurbs=${circuit.laneCurbs || 0}`);
+  if ((circuit.signalLights || 0) !== 3) failures.push(`Gate 4-B5 Circuit failed: signalLights=${circuit.signalLights || 0}`);
+  if ((circuit.authoredAssets || 0) !== 1) failures.push(`Gate 4-B5 Circuit failed: authoredAssets=${circuit.authoredAssets || 0}`);
+  if ((circuit.signs || 0) !== 1) failures.push(`Gate 4-B5 Circuit failed: signs=${circuit.signs || 0}`);
+  if ((circuit.lamps || 0) !== 2) failures.push(`Gate 4-B5 Circuit failed: lamps=${circuit.lamps || 0}`);
+
+  if ((placement.byFootprintKind?.['gate4b5-awards-pad'] || 0) !== 1) {
+    failures.push(`Gate 4-B5 placement failed: Awards pad footprints=${placement.byFootprintKind?.['gate4b5-awards-pad'] || 0}`);
+  }
+  if ((placement.byFootprintKind?.['gate4b5-sentinel-pad'] || 0) !== 1) {
+    failures.push(`Gate 4-B5 placement failed: Sentinel pad footprints=${placement.byFootprintKind?.['gate4b5-sentinel-pad'] || 0}`);
+  }
+  if ((placement.byFootprintKind?.['gate4b5-circuit-pad'] || 0) !== 1) {
+    failures.push(`Gate 4-B5 placement failed: Circuit pad footprints=${placement.byFootprintKind?.['gate4b5-circuit-pad'] || 0}`);
+  }
+  if ((placement.byKind?.['gate4b5-awards-step'] || 0) !== 3) {
+    failures.push(`Gate 4-B5 placement failed: Awards step placements=${placement.byKind?.['gate4b5-awards-step'] || 0}`);
+  }
+  if ((placement.byKind?.['gate4b5-awards-plinth'] || 0) !== 3) {
+    failures.push(`Gate 4-B5 placement failed: Awards plinth placements=${placement.byKind?.['gate4b5-awards-plinth'] || 0}`);
+  }
+  if ((placement.byKind?.['gate4b5-awards-accent'] || 0) !== 3) {
+    failures.push(`Gate 4-B5 placement failed: Awards accent placements=${placement.byKind?.['gate4b5-awards-accent'] || 0}`);
+  }
+  if ((placement.byKind?.['gate4b5-awards-monument'] || 0) !== 1) {
+    failures.push(`Gate 4-B5 placement failed: Awards monument placements=${placement.byKind?.['gate4b5-awards-monument'] || 0}`);
+  }
+  if ((placement.byKind?.['gate4b5-sentinel-tower'] || 0) !== 1) {
+    failures.push(`Gate 4-B5 placement failed: Sentinel tower placements=${placement.byKind?.['gate4b5-sentinel-tower'] || 0}`);
+  }
+  if ((placement.byKind?.['gate4b5-sentinel-totem'] || 0) !== 1) {
+    failures.push(`Gate 4-B5 placement failed: Sentinel totem placements=${placement.byKind?.['gate4b5-sentinel-totem'] || 0}`);
+  }
+  if ((placement.byKind?.['gate4b5-sentinel-shard'] || 0) !== 2) {
+    failures.push(`Gate 4-B5 placement failed: Sentinel shard placements=${placement.byKind?.['gate4b5-sentinel-shard'] || 0}`);
+  }
+  if ((placement.byKind?.['gate4b5-circuit-gate'] || 0) !== 1) {
+    failures.push(`Gate 4-B5 placement failed: Circuit gate placements=${placement.byKind?.['gate4b5-circuit-gate'] || 0}`);
+  }
+  if ((placement.byKind?.['gate4b5-circuit-curb'] || 0) !== 2) {
+    failures.push(`Gate 4-B5 placement failed: Circuit curb placements=${placement.byKind?.['gate4b5-circuit-curb'] || 0}`);
+  }
+  if ((placement.byKind?.['gate4b5-circuit-light'] || 0) !== 3) {
+    failures.push(`Gate 4-B5 placement failed: Circuit light placements=${placement.byKind?.['gate4b5-circuit-light'] || 0}`);
+  }
+  if ((result.districtComposition?.awardsArchiveNodes || 0) !== 0 || (result.circuitStart?.pads || 0) !== 0) {
+    failures.push('Gate 4-B5 failed: old Awards/Circuit composition systems were enabled');
+  }
+  if ((result.stuntPark?.ramps || 0) !== 0 || (result.stuntPark?.boostPads || 0) !== 0 || (result.stuntPark?.gates || 0) !== 0) {
+    failures.push('Gate 4-B5 failed: old StuntPark physical systems were enabled');
   }
 }
 
