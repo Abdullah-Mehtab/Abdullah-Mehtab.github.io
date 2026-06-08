@@ -1343,9 +1343,8 @@ export class SetPieces {
     this.gate4b3Stats.enabled = true;
 
     const group = new THREE.Group();
-    group.name = 'GATE4B3_Data_Pier_Side_Todo_Pier';
+    group.name = 'GATE4B3_Todo_Land_Side_Correction';
     this.createGate4B3TodoBoard(group);
-    this.createGate4B3DataPier(group);
 
     this.gate4b3Stats.staticBatches = mergeStaticMeshesInGroup(group, {
       namePrefix: 'GATE4B3_data_pier_side',
@@ -1360,38 +1359,37 @@ export class SetPieces {
   }
 
   createGate4B3TodoBoard(group) {
-    const zone = findZone('todo');
     const stats = this.gate4b3Stats.todo;
-    const rotation = zone.rotation || 0.34;
-    const anchor = { x: -124, z: 19, rotation };
+    const rotation = 0.24;
+    const anchor = { x: -96, z: 8, rotation };
     const point = (right, forward) => this.gate4B1Point(anchor, right, forward);
 
-    this.gate3rPad(group, anchor.x, anchor.z, 12.5, 7, this.world.materials.warmStone, 0.132, 'GATE4B3_Todo_Board_Pad', rotation, 'gate4b3-todo-pad', 5.2);
+    this.gate3rPad(group, anchor.x, anchor.z, 8, 5, this.world.materials.warmStone, 0.132, 'GATE4B3_Todo_Board_Pad', rotation, 'gate4b3-todo-pad', 5.2);
     stats.pads += 1;
 
-    const board = point(-2, -0.2);
-    const boardFace = point(-2, -0.46);
-    this.box(group, board[0], 1.26, board[1], 4.8, 2.0, 0.28, this.world.materials.cable, rotation, 'GATE4B3_Todo_Task_Board');
-    this.box(group, boardFace[0], 1.34, boardFace[1], 4.12, 1.28, 0.08, this.world.materials.screen, rotation, 'GATE4B3_Todo_Task_Board_Glow');
+    const board = point(-1.2, -0.12);
+    const boardFace = point(-1.2, -0.34);
+    this.box(group, board[0], 0.98, board[1], 3.45, 1.28, 0.2, this.world.materials.cable, rotation, 'GATE4B3_Todo_Task_Board');
+    this.box(group, boardFace[0], 1.06, boardFace[1], 2.72, 0.72, 0.055, this.world.materials.screen, rotation, 'GATE4B3_Todo_Task_Board_Glow');
     this.recordGate3RPlacement('gate4b3-todo-board', 'GATE4B3_Todo_Task_Board', board[0], board[1], { minClearance: 4.2 });
     stats.taskBoards += 1;
 
     for (const [right, forward, width, depth, name] of [
-      [-5.2, 1.6, 0.16, 5.4, 'GATE4B3_Todo_Queue_Rail_Left'],
-      [4.2, 1.6, 0.16, 5.4, 'GATE4B3_Todo_Queue_Rail_Right'],
-      [-0.5, -1.1, 9.3, 0.14, 'GATE4B3_Todo_Queue_Rail_Front'],
-      [-0.5, 4.1, 9.0, 0.14, 'GATE4B3_Todo_Queue_Rail_Back']
+      [-3.4, 0.86, 0.1, 3.4, 'GATE4B3_Todo_Queue_Rail_Left'],
+      [2.4, 0.86, 0.1, 3.4, 'GATE4B3_Todo_Queue_Rail_Right'],
+      [-0.5, -0.95, 5.7, 0.1, 'GATE4B3_Todo_Queue_Rail_Front'],
+      [-0.5, 2.35, 5.5, 0.1, 'GATE4B3_Todo_Queue_Rail_Back']
     ]) {
       const rail = point(right, forward);
-      this.box(group, rail[0], 0.36, rail[1], width, 0.16, depth, this.world.materials.wood, rotation, name);
+      this.box(group, rail[0], 0.28, rail[1], width, 0.12, depth, this.world.materials.wood, rotation, name);
       this.recordGate3RPlacement('gate4b3-todo-rail', name, rail[0], rail[1], { minClearance: 4.0 });
       stats.queueRails += 1;
     }
 
     for (let index = 0; index < 7; index += 1) {
-      const card = point(-3 + index * 1.05, 2.2 + Math.sin(index * 0.7) * 0.35);
+      const card = point(-2.72 + index * 0.78, 1.45 + Math.sin(index * 0.7) * 0.16);
       const material = index % 2 ? this.world.materials.glowBlue : this.world.materials.glow;
-      const mesh = this.box(group, card[0], 1.78 + index * 0.018, card[1], 0.82, 0.46, 0.08, material, rotation + (index - 3) * 0.025, 'GATE4B3_Todo_Floating_Task_Card');
+      const mesh = this.box(group, card[0], 1.2 + index * 0.01, card[1], 0.5, 0.28, 0.05, material, rotation + (index - 3) * 0.014, 'GATE4B3_Todo_Floating_Task_Card');
       mesh.receiveShadow = false;
       this.animated.push({
         kind: 'float',
@@ -1405,75 +1403,9 @@ export class SetPieces {
       this.recordGate3RPlacement('gate4b3-todo-card', 'GATE4B3_Todo_Floating_Task_Card', card[0], card[1], { minClearance: 4.0 });
       stats.taskCards += 1;
     }
-
-    const sign = point(-5.6, -3.4);
-    this.gate3rSign(group, 'TODO', 'Task Board', sign[0], sign[1], rotation - 0.28, 0xd8ff92, 1.38, 'GATE4B3_Todo_Sign', 4.2);
-    stats.signs += 1;
-
-    for (const [right, forward, color, name] of [
-      [-6.5, 3.2, 0xd8ff92, 'GATE4B3_Todo_Lamp_Left'],
-      [6.2, 3.1, 0x92ffea, 'GATE4B3_Todo_Lamp_Right']
-    ]) {
-      const lamp = point(right, forward);
-      this.gate3rLampFacingRoad(group, lamp[0], lamp[1], color, 2.38, name, 3.2);
-      stats.lamps += 1;
-    }
   }
 
   createGate4B3DataPier(group) {
-    const stats = this.gate4b3Stats.dataPier;
-    const rotation = Math.atan2(-28, -8);
-    const anchor = { x: -128, z: 50, rotation };
-    const point = (right, forward) => this.gate4B1Point(anchor, right, forward);
-
-    for (const [right, forward, name] of [
-      [4.2, -7, 'GATE4B3_DataPier_Right_Rail_A'],
-      [4.2, -1, 'GATE4B3_DataPier_Right_Rail_B'],
-      [-4.2, -7, 'GATE4B3_DataPier_Left_Rail_A'],
-      [-4.2, -1, 'GATE4B3_DataPier_Left_Rail_B']
-    ]) {
-      const rail = point(right, forward);
-      this.box(group, rail[0], 0.92, rail[1], 0.14, 0.16, 5.2, this.world.materials.wood, rotation, name);
-      this.box(group, rail[0], 0.54, rail[1], 0.12, 0.1, 4.8, this.world.materials.darkWood, rotation, `${name}_Lower`);
-      this.recordGate3RPlacement('gate4b3-pier-rail', name, rail[0], rail[1], { minClearance: 2.2 });
-      stats.rails += 1;
-    }
-
-    for (const [index, right, forward] of [
-      [0, -7, -4],
-      [1, -9, -1],
-      [2, -6.8, 3]
-    ]) {
-      const beacon = point(right, forward);
-      this.cylinder(group, beacon[0], 0.92, beacon[1], 0.16, 1.5, this.world.materials.cable, 8, 'GATE4B3_DataPier_Beacon_Post');
-      this.box(group, beacon[0], 1.78, beacon[1], 0.54, 0.18, 0.54, index === 1 ? this.world.materials.glowBlue : this.world.materials.glow, rotation, 'GATE4B3_DataPier_Beacon_Glow');
-      this.recordGate3RPlacement('gate4b3-pier-beacon', 'GATE4B3_DataPier_Beacon_Post', beacon[0], beacon[1], { minClearance: 4.2 });
-      stats.beacons += 1;
-    }
-
-    for (const [right, forward, scale] of [
-      [7.5, -2, 1],
-      [9.5, 1, 0.82]
-    ]) {
-      const cargo = point(right, forward);
-      this.box(group, cargo[0], 0.36, cargo[1], 1.18 * scale, 0.62, 0.92 * scale, this.world.materials.wood, rotation + 0.08, 'GATE4B3_DataPier_Cargo_Stack');
-      this.box(group, cargo[0], 0.82, cargo[1], 0.88 * scale, 0.18, 0.72 * scale, this.world.materials.warmStone, rotation + 0.08, 'GATE4B3_DataPier_Cargo_Top');
-      this.recordGate3RPlacement('gate4b3-pier-cargo', 'GATE4B3_DataPier_Cargo_Stack', cargo[0], cargo[1], { minClearance: 4.2 });
-      stats.cargoStacks += 1;
-    }
-
-    const sign = point(-6.2, -8);
-    this.gate3rSign(group, 'DATA PIER', 'Signals', sign[0], sign[1], rotation + 0.4, 0x79ffc5, 1.36, 'GATE4B3_DataPier_Sign', 4.0);
-    stats.signs += 1;
-
-    for (const [right, forward, color, name] of [
-      [6, -8, 0x79ffc5, 'GATE4B3_DataPier_Lamp_Right'],
-      [-8, 4, 0x92ffea, 'GATE4B3_DataPier_Lamp_Left']
-    ]) {
-      const lamp = point(right, forward);
-      this.gate3rLampFacingRoad(group, lamp[0], lamp[1], color, 2.42, name, 3.2);
-      stats.lamps += 1;
-    }
   }
 
   createGate4B4EastSideScaffold() {
@@ -1495,14 +1427,14 @@ export class SetPieces {
 
   createGate4B4ProjectsYard(group) {
     const stats = this.gate4b4Stats.projects;
-    const anchor = { x: 80, z: -20, rotation: -0.34 };
+    const anchor = { x: 76, z: -28, rotation: -0.34 };
     const point = (right, forward) => this.gate4B1Point(anchor, right, forward);
     const rotation = anchor.rotation;
 
-    this.gate3rPad(group, anchor.x, anchor.z, 19, 13, this.world.materials.stoneRoad, 0.132, 'GATE4B4_Projects_Workshop_Pad', rotation, 'gate4b4-projects-pad', 5.2);
+    this.gate3rPad(group, anchor.x, anchor.z, 17, 10.5, this.world.materials.stoneRoad, 0.132, 'GATE4B4_Projects_Workshop_Pad', rotation, 'gate4b4-projects-pad', 5.2);
     stats.pads += 1;
 
-    const assembly = point(1.8, -0.2);
+    const assembly = point(1.2, -0.2);
     if (this.addPolishAsset(group, 'EnvPolishProjectForge', assembly[0], assembly[1], rotation - 0.18, 0.62)) {
       stats.authoredAssets += 1;
     }
@@ -1515,12 +1447,12 @@ export class SetPieces {
     stats.assemblyRings += 1;
 
     for (const [right, forward] of [
-      [-7.5, 4.9],
-      [-4.5, 5.35],
-      [-1.5, 5.55],
-      [1.5, 5.55],
-      [4.5, 5.3],
-      [7.5, 4.85]
+      [-6.2, 3.65],
+      [-3.72, 4.0],
+      [-1.24, 4.15],
+      [1.24, 4.15],
+      [3.72, 3.95],
+      [6.2, 3.58]
     ]) {
       const rack = point(right, forward);
       this.box(group, rack[0], 0.76, rack[1], 1.25, 1.16, 0.16, this.world.materials.cable, rotation, 'GATE4B4_Projects_Project_Rack');
@@ -1540,133 +1472,86 @@ export class SetPieces {
       stats.sparkMarkers += 1;
     }
 
-    const sign = point(-10.2, -4.6);
-    this.gate3rSign(group, 'PROJECTS', 'Build Yard', sign[0], sign[1], rotation - 0.32, 0xffcc66, 1.42, 'GATE4B4_Projects_Sign', 4.4);
-    stats.signs += 1;
-    for (const [right, forward, color, name] of [
-      [-9.2, 4.6, 0xffcc66, 'GATE4B4_Projects_Lamp_Left'],
-      [10.2, -5.3, 0x68d8ff, 'GATE4B4_Projects_Lamp_Right']
-    ]) {
-      const lamp = point(right, forward);
-      this.gate3rLampFacingRoad(group, lamp[0], lamp[1], color, 2.5, name, 3.2);
-      stats.lamps += 1;
-    }
   }
 
   createGate4B4CareerOffice(group) {
     const stats = this.gate4b4Stats.career;
-    const anchor = { x: 124, z: -40, rotation: -0.24 };
+    const anchor = { x: 116, z: -60, rotation: -0.24 };
     const point = (right, forward) => this.gate4B1Point(anchor, right, forward);
     const rotation = anchor.rotation;
 
-    this.gate3rPad(group, anchor.x, anchor.z, 13, 8, this.world.materials.warmStone, 0.132, 'GATE4B4_Career_Office_Pad', rotation, 'gate4b4-career-pad', 5.2);
+    this.gate3rPad(group, anchor.x, anchor.z, 12.5, 7, this.world.materials.warmStone, 0.132, 'GATE4B4_Career_Office_Pad', rotation, 'gate4b4-career-pad', 5.2);
     stats.pads += 1;
 
-    const office = point(0, 0);
-    this.box(group, office[0], 1.16, office[1], 5.8, 2.05, 2.05, this.world.materials.cable, rotation, 'GATE4B4_Career_Office_Block');
-    this.box(group, office[0], 2.26, office[1] + 1.04, 6.2, 0.18, 0.34, this.world.materials.wood, rotation, 'GATE4B4_Career_Roof_Lip');
-    this.recordGate3RPlacement('gate4b4-career-office', 'GATE4B4_Career_Office_Block', office[0], office[1], { minClearance: 4.8 });
+    const office = point(-0.6, -0.15);
+    this.box(group, office[0], 0.46, office[1], 5.7, 0.42, 1.55, this.world.materials.cable, rotation, 'GATE4B4_Career_Interview_Dais');
+    this.box(group, office[0], 0.78, office[1] - 0.62, 4.8, 0.16, 0.18, this.world.materials.glowPink, rotation, 'GATE4B4_Career_Dais_Signal_Line');
+    this.recordGate3RPlacement('gate4b4-career-office', 'GATE4B4_Career_Interview_Dais', office[0], office[1], { minClearance: 4.8 });
     stats.officeBlocks += 1;
 
     for (const [right, y, material] of [
-      [-2.0, 1.45, this.world.materials.glowBlue],
-      [0, 1.45, this.world.materials.glowPink],
-      [2.0, 1.45, this.world.materials.glowBlue],
-      [-2.0, 0.82, this.world.materials.screen],
-      [0, 0.82, this.world.materials.warmGlow],
-      [2.0, 0.82, this.world.materials.screen]
+      [-2.0, 1.04, this.world.materials.glowBlue],
+      [0, 1.08, this.world.materials.glowPink],
+      [2.0, 1.04, this.world.materials.glowBlue],
+      [-2.0, 0.68, this.world.materials.screen],
+      [0, 0.7, this.world.materials.warmGlow],
+      [2.0, 0.68, this.world.materials.screen]
     ]) {
-      const panel = point(right, -1.08);
-      this.box(group, panel[0], y, panel[1], 1.05, 0.34, 0.055, material, rotation, 'GATE4B4_Career_Facade_Panel');
+      const panel = point(right - 0.6, -1.12);
+      this.box(group, panel[0], y, panel[1], 0.78, 0.24, 0.05, material, rotation, 'GATE4B4_Career_Facade_Panel');
       this.recordGate3RPlacement('gate4b4-career-facade', 'GATE4B4_Career_Facade_Panel', panel[0], panel[1], { minClearance: 4.6 });
       stats.facadePanels += 1;
     }
 
     for (const [right, forward, material] of [
-      [-4.8, 2.6, this.world.materials.glowBlue],
-      [0, 3.05, this.world.materials.glowPink],
-      [4.8, 2.55, this.world.materials.warmGlow]
+      [-4.2, 2.15, this.world.materials.glowBlue],
+      [0, 2.48, this.world.materials.glowPink],
+      [4.2, 2.12, this.world.materials.warmGlow]
     ]) {
       const frame = point(right, forward);
-      this.box(group, frame[0], 1.1, frame[1], 0.18, 1.62, 1.08, this.world.materials.cable, rotation, 'GATE4B4_Career_Signal_Frame');
-      this.box(group, frame[0], 1.16, frame[1] - 0.05, 0.2, 1.04, 0.72, material, rotation, 'GATE4B4_Career_Signal_Frame_Glow');
+      this.box(group, frame[0], 0.98, frame[1], 0.14, 1.22, 0.82, this.world.materials.cable, rotation, 'GATE4B4_Career_Signal_Frame');
+      this.box(group, frame[0], 1.02, frame[1] - 0.05, 0.16, 0.76, 0.52, material, rotation, 'GATE4B4_Career_Signal_Frame_Glow');
       this.recordGate3RPlacement('gate4b4-career-frame', 'GATE4B4_Career_Signal_Frame', frame[0], frame[1], { minClearance: 4.6 });
       stats.signalFrames += 1;
-    }
-
-    for (const [x, z] of [
-      [114, -42],
-      [117, -43],
-      [120, -44],
-      [123, -45],
-      [126, -46]
-    ]) {
-      this.box(group, x, 0.155, z, 1.4, 0.035, 0.2, this.world.materials.paleStone, rotation, 'GATE4B4_Career_Connector_Slab');
-      this.recordGate3RPlacement('gate4b4-career-connector', 'GATE4B4_Career_Connector_Slab', x, z, { minClearance: 4.2 });
-      stats.connectorMarks += 1;
-    }
-
-    const sign = point(-6.4, -3.7);
-    this.gate3rSign(group, 'CAREER', 'Signal Office', sign[0], sign[1], rotation - 0.28, 0xb6a0ff, 1.38, 'GATE4B4_Career_Sign', 4.2);
-    stats.signs += 1;
-    for (const [right, forward, color, name] of [
-      [-7.2, 3.6, 0xb6a0ff, 'GATE4B4_Career_Lamp_Left'],
-      [7.4, -3.6, 0x68d8ff, 'GATE4B4_Career_Lamp_Right']
-    ]) {
-      const lamp = point(right, forward);
-      this.gate3rLampFacingRoad(group, lamp[0], lamp[1], color, 2.5, name, 3.2);
-      stats.lamps += 1;
     }
   }
 
   createGate4B4SignalHarbor(group) {
     const stats = this.gate4b4Stats.harbor;
-    const anchor = { x: 124, z: 31, rotation: -0.34 };
+    const anchor = { x: 122, z: 12, rotation: -0.34 };
     const point = (right, forward) => this.gate4B1Point(anchor, right, forward);
     const rotation = anchor.rotation;
 
-    this.gate3rPad(group, anchor.x, anchor.z, 16, 9, this.world.materials.paleStone, 0.132, 'GATE4B4_Harbor_Signal_Deck', rotation, 'gate4b4-harbor-deck', 4.8);
+    this.gate3rPad(group, anchor.x, anchor.z, 8, 5, this.world.materials.paleStone, 0.132, 'GATE4B4_Harbor_Signal_Deck', rotation, 'gate4b4-harbor-deck', 4.8);
     stats.deckPads += 1;
 
     const mast = point(0, 0);
-    this.cylinder(group, mast[0], 1.95, mast[1], 0.12, 3.55, this.world.materials.cable, 8, 'GATE4B4_Harbor_Signal_Mast');
-    this.box(group, mast[0], 3.72, mast[1], 1.35, 0.12, 0.16, this.world.materials.glowBlue, rotation, 'GATE4B4_Harbor_Signal_Mast_Glow');
+    this.cylinder(group, mast[0], 1.45, mast[1], 0.1, 2.55, this.world.materials.cable, 8, 'GATE4B4_Harbor_Signal_Mast');
+    this.box(group, mast[0], 2.68, mast[1], 1.05, 0.1, 0.14, this.world.materials.glowBlue, rotation, 'GATE4B4_Harbor_Signal_Mast_Glow');
     this.recordGate3RPlacement('gate4b4-harbor-mast', 'GATE4B4_Harbor_Signal_Mast', mast[0], mast[1], { minClearance: 4.8 });
     stats.signalMasts += 1;
 
     for (const [right, forward, material] of [
-      [-4.8, 3.2, this.world.materials.glowBlue],
-      [-0.6, 4.9, this.world.materials.warmGlow],
-      [3.7, 4.1, this.world.materials.glowPink]
+      [-2.8, 1.75, this.world.materials.glowBlue],
+      [-0.2, 2.35, this.world.materials.warmGlow],
+      [2.45, 1.85, this.world.materials.glowPink]
     ]) {
       const terminal = point(right, forward);
-      this.box(group, terminal[0], 0.86, terminal[1], 1.1, 1.28, 0.62, this.world.materials.cable, rotation, 'GATE4B4_Harbor_Contact_Terminal');
-      this.box(group, terminal[0], 1.02, terminal[1] - 0.23, 0.78, 0.48, 0.06, material, rotation, 'GATE4B4_Harbor_Contact_Terminal_Glow');
+      this.box(group, terminal[0], 0.62, terminal[1], 0.9, 0.82, 0.5, this.world.materials.cable, rotation, 'GATE4B4_Harbor_Contact_Terminal');
+      this.box(group, terminal[0], 0.74, terminal[1] - 0.18, 0.62, 0.34, 0.05, material, rotation, 'GATE4B4_Harbor_Contact_Terminal_Glow');
       this.recordGate3RPlacement('gate4b4-harbor-terminal', 'GATE4B4_Harbor_Contact_Terminal', terminal[0], terminal[1], { minClearance: 4.4 });
       stats.contactTerminals += 1;
     }
 
     for (const [right, forward, color] of [
-      [-2.6, 9.8, 0x78b7ff],
-      [6.2, 8.2, 0xffc36a]
+      [-2.2, 3.0, 0x78b7ff],
+      [3.0, 2.6, 0xffc36a]
     ]) {
       const beacon = point(right, forward);
       this.cylinder(group, beacon[0], 0.62, beacon[1], 0.12, 1.1, this.world.materials.cable, 8, 'GATE4B4_Harbor_Beacon_Post');
       this.box(group, beacon[0], 1.25, beacon[1], 0.42, 0.16, 0.42, color === 0x78b7ff ? this.world.materials.glowBlue : this.world.materials.warmGlow, rotation, 'GATE4B4_Harbor_Beacon_Glow');
       this.recordGate3RPlacement('gate4b4-harbor-beacon', 'GATE4B4_Harbor_Beacon_Post', beacon[0], beacon[1], { minClearance: 4.2 });
       stats.beacons += 1;
-    }
-
-    const sign = point(-7.8, -1.0);
-    this.gate3rSign(group, 'CONTACT', 'Signal Harbor', sign[0], sign[1], rotation - 0.32, 0x78b7ff, 1.36, 'GATE4B4_Harbor_Sign', 4.0);
-    stats.signs += 1;
-    for (const [right, forward, color, name] of [
-      [-8.2, 5.0, 0x78b7ff, 'GATE4B4_Harbor_Lamp_Left'],
-      [8.0, 1.2, 0xffc36a, 'GATE4B4_Harbor_Lamp_Right']
-    ]) {
-      const lamp = point(right, forward);
-      this.gate3rLampFacingRoad(group, lamp[0], lamp[1], color, 2.5, name, 3.2);
-      stats.lamps += 1;
     }
   }
 
@@ -1736,17 +1621,6 @@ export class SetPieces {
       stats.goldAccents += 1;
     }
 
-    const sign = point(-7, -4.2);
-    this.gate3rSign(group, 'AWARDS', 'Archive Steps', sign[0], sign[1], rotation - 0.26, 0xffdf8a, 1.34, 'GATE4B5_Awards_Sign', 4.0);
-    stats.signs += 1;
-    for (const [right, forward, color, name] of [
-      [-7, 3.2, 0xffdf8a, 'GATE4B5_Awards_Lamp_Left'],
-      [7, -3, 0xffc36a, 'GATE4B5_Awards_Lamp_Right']
-    ]) {
-      const lamp = point(right, forward);
-      this.gate3rLampFacingRoad(group, lamp[0], lamp[1], color, 2.32, name, 3.2);
-      stats.lamps += 1;
-    }
   }
 
   createGate4B5SentinelRidge(group) {
@@ -1759,8 +1633,10 @@ export class SetPieces {
     stats.pads += 1;
 
     const tower = point(0, 0);
-    this.box(group, tower[0], 1.45, tower[1], 1.55, 2.45, 1.1, this.world.materials.cable, rotation, 'GATE4B5_Sentinel_Ridge_Tower');
-    this.box(group, tower[0], 2.84, tower[1], 1.8, 0.18, 1.35, this.world.materials.glowPink, rotation, 'GATE4B5_Sentinel_Ridge_Tower_Glow');
+    this.box(group, tower[0] - Math.cos(rotation) * 0.62, 1.08, tower[1] + Math.sin(rotation) * 0.62, 0.16, 1.75, 0.16, this.world.materials.cable, rotation, 'GATE4B5_Sentinel_Ridge_Tower_Post_A');
+    this.box(group, tower[0] + Math.cos(rotation) * 0.62, 1.08, tower[1] - Math.sin(rotation) * 0.62, 0.16, 1.75, 0.16, this.world.materials.cable, rotation, 'GATE4B5_Sentinel_Ridge_Tower_Post_B');
+    this.box(group, tower[0], 1.92, tower[1], 1.58, 0.14, 0.16, this.world.materials.glowPink, rotation, 'GATE4B5_Sentinel_Ridge_Tower_Glow');
+    this.box(group, tower[0], 1.3, tower[1], 1.28, 0.08, 0.12, this.world.materials.glowBlue, rotation, 'GATE4B5_Sentinel_Ridge_Tower_Scanline');
     this.recordGate3RPlacement('gate4b5-sentinel-tower', 'GATE4B5_Sentinel_Ridge_Tower', tower[0], tower[1], { minClearance: 4.6 });
     stats.ridgeTowers += 1;
 
@@ -1780,17 +1656,6 @@ export class SetPieces {
       stats.shardPanels += 1;
     }
 
-    const sign = point(-6, 3.2);
-    this.gate3rSign(group, 'SENTINEL', 'Cyber Ridge', sign[0], sign[1], rotation + 0.18, 0xff6d8d, 1.3, 'GATE4B5_Sentinel_Sign', 4.0);
-    stats.signs += 1;
-    for (const [right, forward, color, name] of [
-      [-6.5, 1.8, 0xff6d8d, 'GATE4B5_Sentinel_Lamp_Left'],
-      [6.3, -1.8, 0x68d8ff, 'GATE4B5_Sentinel_Lamp_Right']
-    ]) {
-      const lamp = point(right, forward);
-      this.gate3rLampFacingRoad(group, lamp[0], lamp[1], color, 2.36, name, 3.2);
-      stats.lamps += 1;
-    }
   }
 
   createGate4B5CircuitGate(group) {
@@ -1830,17 +1695,6 @@ export class SetPieces {
       stats.signalLights += 1;
     }
 
-    const sign = point(-7, -4);
-    this.gate3rSign(group, 'CIRCUIT', 'Checkpoint Run', sign[0], sign[1], rotation - 0.24, 0xff9b6d, 1.34, 'GATE4B5_Circuit_Sign', 4.0);
-    stats.signs += 1;
-    for (const [right, forward, color, name] of [
-      [-7, 3.2, 0xff9b6d, 'GATE4B5_Circuit_Lamp_Left'],
-      [5.8, -2.8, 0x68d8ff, 'GATE4B5_Circuit_Lamp_Right']
-    ]) {
-      const lamp = point(right, forward);
-      this.gate3rLampFacingRoad(group, lamp[0], lamp[1], color, 2.42, name, 3.2);
-      stats.lamps += 1;
-    }
   }
 
   gate4B1Point(anchor, right, forward) {
@@ -5182,17 +5036,18 @@ export class SetPieces {
   addSign(group, title, subtitle, x, z, rotation, color, scale, name) {
     const sign = new THREE.Group();
     sign.name = name;
-    this.cylinder(sign, -1.12 * scale, 1.0, 0, 0.06, 2.0, this.world.materials.darkWood, 8, `${name}_PostLeft`);
-    this.cylinder(sign, 1.12 * scale, 1.0, 0, 0.06, 2.0, this.world.materials.darkWood, 8, `${name}_PostRight`);
+    const compactScale = scale * 0.78;
+    this.cylinder(sign, -0.96 * compactScale, 0.72, 0, 0.055, 1.44, this.world.materials.darkWood, 8, `${name}_PostLeft`);
+    this.cylinder(sign, 0.96 * compactScale, 0.72, 0, 0.055, 1.44, this.world.materials.darkWood, 8, `${name}_PostRight`);
     const { material, rect } = this.allocateSignPanel(title, subtitle, color);
-    const geometry = createSignBoardGeometry(2.65 * scale, 1.1 * scale, rect);
+    const geometry = createSignBoardGeometry(2.28 * compactScale, 0.86 * compactScale, rect);
     const front = new THREE.Mesh(geometry, material);
     front.name = `${name}_BoardFront`;
-    front.position.y = 1.9;
+    front.position.y = 1.32;
     front.position.z = 0.025;
     const back = new THREE.Mesh(geometry, material);
     back.name = `${name}_BoardBack`;
-    back.position.y = 1.9;
+    back.position.y = 1.32;
     back.position.z = -0.025;
     back.rotation.y = Math.PI;
     sign.add(front, back);

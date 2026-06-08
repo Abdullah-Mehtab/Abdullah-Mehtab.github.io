@@ -3260,6 +3260,13 @@ function assertVerification(result) {
   }
   assertVehicleGroundingMotion(result, failures);
   assertVehicleBodyRoadClipping(result, failures);
+  if (result.goalGate === 'gate-4br-composition-correction') {
+    assertGate4BRCompositionCorrectionVerification(result, failures);
+    if (failures.length) {
+      throw new Error(`Play verification failed: ${failures.join('; ')}`);
+    }
+    return;
+  }
   if (result.goalGate === 'gate-4b5-north-ridge') {
     assertGate4B5NorthRidgeVerification(result, failures);
     if (failures.length) {
@@ -4880,6 +4887,106 @@ function assertGate4B5NorthRidgeVerification(result, failures) {
   }
   if ((result.stuntPark?.ramps || 0) !== 0 || (result.stuntPark?.boostPads || 0) !== 0 || (result.stuntPark?.gates || 0) !== 0) {
     failures.push('Gate 4-B5 failed: old StuntPark physical systems were enabled');
+  }
+}
+
+function assertGate4BRCompositionCorrectionVerification(result, failures) {
+  assertGate4B2WestServiceVerification(result, failures, { expectedGoal: 'gate-4br-composition-correction' });
+
+  const dataPierSide = result.gate4b3 || {};
+  const todo = dataPierSide.todo || {};
+  const dataPier = dataPierSide.dataPier || {};
+  const eastSide = result.gate4b4 || {};
+  const projects = eastSide.projects || {};
+  const career = eastSide.career || {};
+  const harbor = eastSide.harbor || {};
+  const northRidge = result.gate4b5 || {};
+  const awards = northRidge.awards || {};
+  const sentinel = northRidge.sentinel || {};
+  const circuit = northRidge.circuit || {};
+  const placement = result.gate3rPlacement || {};
+
+  if (!dataPierSide.enabled) failures.push('Gate 4-BR failed: Todo side scaffold inactive');
+  if (!eastSide.enabled) failures.push('Gate 4-BR failed: East Side scaffold inactive');
+  if (!northRidge.enabled) failures.push('Gate 4-BR failed: North Ridge scaffold inactive');
+
+  if ((todo.pads || 0) !== 1) failures.push(`Gate 4-BR Todo failed: pads=${todo.pads || 0}`);
+  if ((todo.taskBoards || 0) !== 1) failures.push(`Gate 4-BR Todo failed: taskBoards=${todo.taskBoards || 0}`);
+  if ((todo.queueRails || 0) !== 4) failures.push(`Gate 4-BR Todo failed: queueRails=${todo.queueRails || 0}`);
+  if ((todo.taskCards || 0) !== 7) failures.push(`Gate 4-BR Todo failed: taskCards=${todo.taskCards || 0}`);
+  if ((todo.signs || 0) !== 0) failures.push(`Gate 4-BR Todo failed: rejected signs=${todo.signs || 0}`);
+  if ((todo.lamps || 0) !== 0) failures.push(`Gate 4-BR Todo failed: rejected lamps=${todo.lamps || 0}`);
+  if ((dataPier.rails || 0) !== 0) failures.push(`Gate 4-BR Data Pier failed: rejected rails=${dataPier.rails || 0}`);
+  if ((dataPier.beacons || 0) !== 0) failures.push(`Gate 4-BR Data Pier failed: rejected beacons=${dataPier.beacons || 0}`);
+  if ((dataPier.cargoStacks || 0) !== 0) failures.push(`Gate 4-BR Data Pier failed: rejected cargoStacks=${dataPier.cargoStacks || 0}`);
+  if ((dataPier.signs || 0) !== 0) failures.push(`Gate 4-BR Data Pier failed: rejected signs=${dataPier.signs || 0}`);
+  if ((dataPier.lamps || 0) !== 0) failures.push(`Gate 4-BR Data Pier failed: rejected lamps=${dataPier.lamps || 0}`);
+
+  if ((projects.pads || 0) !== 1) failures.push(`Gate 4-BR Projects failed: pads=${projects.pads || 0}`);
+  if ((projects.projectRacks || 0) !== 6) failures.push(`Gate 4-BR Projects failed: projectRacks=${projects.projectRacks || 0}`);
+  if ((projects.assemblyRings || 0) !== 1) failures.push(`Gate 4-BR Projects failed: assemblyRings=${projects.assemblyRings || 0}`);
+  if ((projects.sparkMarkers || 0) !== 6) failures.push(`Gate 4-BR Projects failed: sparkMarkers=${projects.sparkMarkers || 0}`);
+  if ((projects.authoredAssets || 0) !== 1) failures.push(`Gate 4-BR Projects failed: authoredAssets=${projects.authoredAssets || 0}`);
+  if ((projects.signs || 0) !== 0) failures.push(`Gate 4-BR Projects failed: rejected signs=${projects.signs || 0}`);
+  if ((projects.lamps || 0) !== 0) failures.push(`Gate 4-BR Projects failed: rejected lamps=${projects.lamps || 0}`);
+
+  if ((career.pads || 0) !== 1) failures.push(`Gate 4-BR Career failed: pads=${career.pads || 0}`);
+  if ((career.officeBlocks || 0) !== 1) failures.push(`Gate 4-BR Career failed: station blocks=${career.officeBlocks || 0}`);
+  if ((career.facadePanels || 0) !== 6) failures.push(`Gate 4-BR Career failed: facadePanels=${career.facadePanels || 0}`);
+  if ((career.signalFrames || 0) !== 3) failures.push(`Gate 4-BR Career failed: signalFrames=${career.signalFrames || 0}`);
+  if ((career.connectorMarks || 0) !== 0) failures.push(`Gate 4-BR Career failed: rejected connectorMarks=${career.connectorMarks || 0}`);
+  if ((career.signs || 0) !== 0) failures.push(`Gate 4-BR Career failed: rejected signs=${career.signs || 0}`);
+  if ((career.lamps || 0) !== 0) failures.push(`Gate 4-BR Career failed: rejected lamps=${career.lamps || 0}`);
+
+  if ((harbor.deckPads || 0) !== 1) failures.push(`Gate 4-BR Harbor failed: deckPads=${harbor.deckPads || 0}`);
+  if ((harbor.signalMasts || 0) !== 1) failures.push(`Gate 4-BR Harbor failed: signalMasts=${harbor.signalMasts || 0}`);
+  if ((harbor.contactTerminals || 0) !== 3) failures.push(`Gate 4-BR Harbor failed: contactTerminals=${harbor.contactTerminals || 0}`);
+  if ((harbor.beacons || 0) !== 2) failures.push(`Gate 4-BR Harbor failed: beacons=${harbor.beacons || 0}`);
+  if ((harbor.signs || 0) !== 0) failures.push(`Gate 4-BR Harbor failed: rejected signs=${harbor.signs || 0}`);
+  if ((harbor.lamps || 0) !== 0) failures.push(`Gate 4-BR Harbor failed: rejected lamps=${harbor.lamps || 0}`);
+
+  if ((awards.pads || 0) !== 1) failures.push(`Gate 4-BR Awards failed: pads=${awards.pads || 0}`);
+  if ((awards.archiveSteps || 0) !== 3) failures.push(`Gate 4-BR Awards failed: archiveSteps=${awards.archiveSteps || 0}`);
+  if ((awards.trophyPlinths || 0) !== 3) failures.push(`Gate 4-BR Awards failed: trophyPlinths=${awards.trophyPlinths || 0}`);
+  if ((awards.goldAccents || 0) !== 3) failures.push(`Gate 4-BR Awards failed: goldAccents=${awards.goldAccents || 0}`);
+  if ((awards.authoredAssets || 0) !== 1) failures.push(`Gate 4-BR Awards failed: authoredAssets=${awards.authoredAssets || 0}`);
+  if ((awards.signs || 0) !== 0) failures.push(`Gate 4-BR Awards failed: rejected signs=${awards.signs || 0}`);
+  if ((awards.lamps || 0) !== 0) failures.push(`Gate 4-BR Awards failed: rejected lamps=${awards.lamps || 0}`);
+
+  if ((sentinel.pads || 0) !== 1) failures.push(`Gate 4-BR Sentinel failed: pads=${sentinel.pads || 0}`);
+  if ((sentinel.ridgeTowers || 0) !== 1) failures.push(`Gate 4-BR Sentinel failed: ridgeTowers=${sentinel.ridgeTowers || 0}`);
+  if ((sentinel.signalTotems || 0) !== 1) failures.push(`Gate 4-BR Sentinel failed: signalTotems=${sentinel.signalTotems || 0}`);
+  if ((sentinel.shardPanels || 0) !== 2) failures.push(`Gate 4-BR Sentinel failed: shardPanels=${sentinel.shardPanels || 0}`);
+  if ((sentinel.signs || 0) !== 0) failures.push(`Gate 4-BR Sentinel failed: rejected signs=${sentinel.signs || 0}`);
+  if ((sentinel.lamps || 0) !== 0) failures.push(`Gate 4-BR Sentinel failed: rejected lamps=${sentinel.lamps || 0}`);
+
+  if ((circuit.pads || 0) !== 1) failures.push(`Gate 4-BR Circuit failed: pads=${circuit.pads || 0}`);
+  if ((circuit.startGates || 0) !== 1) failures.push(`Gate 4-BR Circuit failed: startGates=${circuit.startGates || 0}`);
+  if ((circuit.laneCurbs || 0) !== 2) failures.push(`Gate 4-BR Circuit failed: laneCurbs=${circuit.laneCurbs || 0}`);
+  if ((circuit.signalLights || 0) !== 3) failures.push(`Gate 4-BR Circuit failed: signalLights=${circuit.signalLights || 0}`);
+  if ((circuit.authoredAssets || 0) !== 1) failures.push(`Gate 4-BR Circuit failed: authoredAssets=${circuit.authoredAssets || 0}`);
+  if ((circuit.signs || 0) !== 0) failures.push(`Gate 4-BR Circuit failed: rejected signs=${circuit.signs || 0}`);
+  if ((circuit.lamps || 0) !== 0) failures.push(`Gate 4-BR Circuit failed: rejected lamps=${circuit.lamps || 0}`);
+
+  for (const kind of ['gate4b3-pier-rail', 'gate4b3-pier-beacon', 'gate4b3-pier-cargo', 'gate4b4-career-connector']) {
+    if ((placement.byKind?.[kind] || 0) !== 0) {
+      failures.push(`Gate 4-BR placement failed: rejected ${kind} placements=${placement.byKind?.[kind] || 0}`);
+    }
+  }
+  if ((placement.byFootprintKind?.['gate4b3-data-pier-pad'] || 0) !== 0) {
+    failures.push(`Gate 4-BR placement failed: rejected Data Pier pad footprints=${placement.byFootprintKind?.['gate4b3-data-pier-pad'] || 0}`);
+  }
+  if ((result.dataPier?.pads || 0) !== 0 || (result.todoYard?.pads || 0) !== 0) {
+    failures.push('Gate 4-BR failed: old DataPier/TodoYard systems were enabled');
+  }
+  if ((result.harbor?.pads || 0) !== 0 || (result.careerOffice?.pads || 0) !== 0 || (result.projectsYard?.assemblyRings || 0) !== 0) {
+    failures.push('Gate 4-BR failed: old Projects/Career/Harbor systems were enabled');
+  }
+  if ((result.districtComposition?.awardsArchiveNodes || 0) !== 0 || (result.circuitStart?.pads || 0) !== 0) {
+    failures.push('Gate 4-BR failed: old Awards/Circuit composition systems were enabled');
+  }
+  if ((result.stuntPark?.ramps || 0) !== 0 || (result.stuntPark?.boostPads || 0) !== 0 || (result.stuntPark?.gates || 0) !== 0) {
+    failures.push('Gate 4-BR failed: old StuntPark physical systems were enabled');
   }
 }
 
