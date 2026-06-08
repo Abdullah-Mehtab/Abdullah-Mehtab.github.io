@@ -3874,6 +3874,13 @@ function assertVerification(result) {
     }
     return;
   }
+  if (result.goalGate === 'gate-4c-b1-south-run-replacements') {
+    assertGate4CB1SouthRunReplacementVerification(result, failures);
+    if (failures.length) {
+      throw new Error(`Play verification failed: ${failures.join('; ')}`);
+    }
+    return;
+  }
   if (result.goalGate === 'gate-4b5-north-ridge') {
     assertGate4B5NorthRidgeVerification(result, failures);
     if (failures.length) {
@@ -5205,6 +5212,11 @@ function assertGate4B1SouthRunVerification(result, failures, options = {}) {
     allowedExtraColliderPrefixes: options.allowedExtraColliderPrefixes
   });
 
+  if (options.sourceSouthRun) {
+    assertGate4CB1SourceSouthRun(result, failures);
+    return;
+  }
+
   const southRun = result.gate4b1 || {};
   const cv = southRun.cv || {};
   const behind = southRun.behind || {};
@@ -5245,7 +5257,8 @@ function assertGate4B2WestServiceVerification(result, failures, options = {}) {
   assertGate4B1SouthRunVerification(result, failures, {
     expectedGoal: options.expectedGoal || 'gate-4b2-west-service',
     allowPrototypeStuntPark: options.allowPrototypeStuntPark,
-    allowedExtraColliderPrefixes: options.allowedExtraColliderPrefixes
+    allowedExtraColliderPrefixes: options.allowedExtraColliderPrefixes,
+    sourceSouthRun: options.sourceSouthRun
   });
 
   const westService = result.gate4b2 || {};
@@ -5528,7 +5541,8 @@ function assertGate4BRCompositionCorrectionVerification(result, failures, option
   assertGate4B2WestServiceVerification(result, failures, {
     expectedGoal: options.expectedGoal || 'gate-4br-composition-correction',
     allowPrototypeStuntPark: options.allowPrototypeStuntPark,
-    allowedExtraColliderPrefixes: options.allowedExtraColliderPrefixes
+    allowedExtraColliderPrefixes: options.allowedExtraColliderPrefixes,
+    sourceSouthRun: options.sourceSouthRun
   });
   assertStuntCoveDeleted(result, failures);
 
@@ -5626,6 +5640,75 @@ function assertGate4BRCompositionCorrectionVerification(result, failures, option
   }
   if (!options.allowPrototypeStuntPark && ((result.stuntPark?.ramps || 0) !== 0 || (result.stuntPark?.boostPads || 0) !== 0 || (result.stuntPark?.gates || 0) !== 0)) {
     failures.push('Gate 4-BR failed: old StuntPark physical systems were enabled');
+  }
+}
+
+function assertGate4CB1SouthRunReplacementVerification(result, failures) {
+  assertGate4BRCompositionCorrectionVerification(result, failures, {
+    expectedGoal: 'gate-4c-b1-south-run-replacements',
+    sourceSouthRun: true
+  });
+}
+
+function assertGate4CB1SourceSouthRun(result, failures) {
+  const southRun = result.gate4b1 || {};
+  const cv = southRun.cv || {};
+  const behind = southRun.behind || {};
+  const placement = result.gate3rPlacement || {};
+
+  if (!southRun.enabled) failures.push('Gate 4-C-B1 failed: South Run replacement inactive');
+  if ((southRun.staticBatches || 0) < 1) failures.push(`Gate 4-C-B1 batching failed: staticBatches=${southRun.staticBatches || 0}`);
+
+  if ((cv.pads || 0) !== 1) failures.push(`Gate 4-C-B1 CV failed: pads=${cv.pads || 0}`);
+  if ((cv.sourceAssets || 0) < 4) failures.push(`Gate 4-C-B1 CV failed: sourceAssets=${cv.sourceAssets || 0}`);
+  if ((cv.vaultShells || 0) !== 1) failures.push(`Gate 4-C-B1 CV failed: vaultShells=${cv.vaultShells || 0}`);
+  if ((cv.vaultDoors || 0) !== 1) failures.push(`Gate 4-C-B1 CV failed: vaultDoors=${cv.vaultDoors || 0}`);
+  if ((cv.documentSpines || 0) < 5) failures.push(`Gate 4-C-B1 CV failed: documentSpines=${cv.documentSpines || 0}`);
+  if ((cv.accessKiosks || 0) !== 1) failures.push(`Gate 4-C-B1 CV failed: accessKiosks=${cv.accessKiosks || 0}`);
+  if ((cv.pdfBeacons || 0) !== 1) failures.push(`Gate 4-C-B1 CV failed: pdfBeacons=${cv.pdfBeacons || 0}`);
+  if ((cv.groundInlays || 0) !== 1) failures.push(`Gate 4-C-B1 CV failed: groundInlays=${cv.groundInlays || 0}`);
+  if ((cv.signs || 0) !== 0) failures.push(`Gate 4-C-B1 CV failed: rejected signs=${cv.signs || 0}`);
+  if ((cv.lamps || 0) !== 0) failures.push(`Gate 4-C-B1 CV failed: rejected lamps=${cv.lamps || 0}`);
+
+  if ((behind.pads || 0) !== 1) failures.push(`Gate 4-C-B1 Behind failed: pads=${behind.pads || 0}`);
+  if ((behind.sourceAssets || 0) < 7) failures.push(`Gate 4-C-B1 Behind failed: sourceAssets=${behind.sourceAssets || 0}`);
+  if ((behind.garageShells || 0) !== 1) failures.push(`Gate 4-C-B1 Behind failed: garageShells=${behind.garageShells || 0}`);
+  if ((behind.workbenches || 0) !== 1) failures.push(`Gate 4-C-B1 Behind failed: workbenches=${behind.workbenches || 0}`);
+  if ((behind.toolWalls || 0) !== 3) failures.push(`Gate 4-C-B1 Behind failed: toolWalls=${behind.toolWalls || 0}`);
+  if ((behind.pipelinePanels || 0) < 4) failures.push(`Gate 4-C-B1 Behind failed: pipelinePanels=${behind.pipelinePanels || 0}`);
+  if ((behind.sourceTotems || 0) !== 1) failures.push(`Gate 4-C-B1 Behind failed: sourceTotems=${behind.sourceTotems || 0}`);
+  if ((behind.statusLights || 0) !== 4) failures.push(`Gate 4-C-B1 Behind failed: statusLights=${behind.statusLights || 0}`);
+  if ((behind.signs || 0) !== 0) failures.push(`Gate 4-C-B1 Behind failed: rejected signs=${behind.signs || 0}`);
+  if ((behind.lamps || 0) !== 0) failures.push(`Gate 4-C-B1 Behind failed: rejected lamps=${behind.lamps || 0}`);
+
+  if ((placement.byFootprintKind?.['gate4c-cv-footprint'] || 0) !== 1) {
+    failures.push(`Gate 4-C-B1 placement failed: CV footprints=${placement.byFootprintKind?.['gate4c-cv-footprint'] || 0}`);
+  }
+  if ((placement.byFootprintKind?.['gate4c-behind-footprint'] || 0) !== 1) {
+    failures.push(`Gate 4-C-B1 placement failed: Behind footprints=${placement.byFootprintKind?.['gate4c-behind-footprint'] || 0}`);
+  }
+  for (const [kind, expected] of [
+    ['gate4c-cv-vault-shell', 1],
+    ['gate4c-cv-vault-door', 1],
+    ['gate4c-cv-document-spine', 5],
+    ['gate4c-cv-access-kiosk', 1],
+    ['gate4c-cv-pdf-beacon', 1],
+    ['gate4c-cv-ground-inlay', 1],
+    ['gate4c-behind-garage-shell', 1],
+    ['gate4c-behind-workbench', 1],
+    ['gate4c-behind-tool-wall', 3],
+    ['gate4c-behind-pipeline-panel', 1],
+    ['gate4c-behind-source-totem', 1],
+    ['gate4c-behind-status-light', 4]
+  ]) {
+    if ((placement.byKind?.[kind] || 0) !== expected) {
+      failures.push(`Gate 4-C-B1 placement failed: ${kind}=${placement.byKind?.[kind] || 0}`);
+    }
+  }
+  for (const kind of ['gate4b1-document', 'gate4b1-hologram', 'gate4b1-vault', 'gate4b1-workbench']) {
+    if ((placement.byKind?.[kind] || 0) !== 0) {
+      failures.push(`Gate 4-C-B1 placement failed: rejected ${kind}=${placement.byKind?.[kind] || 0}`);
+    }
   }
 }
 
