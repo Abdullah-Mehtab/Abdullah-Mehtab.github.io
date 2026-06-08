@@ -3962,6 +3962,13 @@ function assertVerification(result) {
     }
     return;
   }
+  if (result.goalGate === 'gate-4d-b6-data-pier-compatibility-review') {
+    assertGate4DB6DataPierCompatibilityReviewVerification(result, failures);
+    if (failures.length) {
+      throw new Error(`Play verification failed: ${failures.join('; ')}`);
+    }
+    return;
+  }
   if (result.goalGate === 'gate-4b5-north-ridge') {
     assertGate4B5NorthRidgeVerification(result, failures);
     if (failures.length) {
@@ -5939,6 +5946,62 @@ function assertGate4DB5PotatoSentinelCircuitArchitectureVerification(result, fai
     sourceTodo: true,
     todoArchitecture: true
   });
+}
+
+function assertGate4DB6DataPierCompatibilityReviewVerification(result, failures) {
+  assertGate4BRCompositionCorrectionVerification(result, failures, {
+    expectedGoal: 'gate-4d-b6-data-pier-compatibility-review',
+    sourceSouthRun: true,
+    cvArchitecture: true,
+    behindArchitecture: true,
+    sourceGallerySide: true,
+    projectsArchitecture: true,
+    careerArchitecture: true,
+    sourceWestService: true,
+    skillsArchitecture: true,
+    farmArchitecture: true,
+    sourceHarbor: true,
+    harborArchitecture: true,
+    sourceNorthRidge: true,
+    awardsArchitecture: true,
+    sentinelArchitecture: true,
+    circuitArchitecture: true,
+    sourceTodo: true,
+    todoArchitecture: true
+  });
+
+  const dataPierZone = worldZones.find((zone) => zone.id === 'data-pier');
+  if (!dataPierZone) failures.push('Gate 4-D-B6 Data Pier compatibility failed: data-pier zone missing');
+
+  const presentation = result.zonePresentation?.samples?.find((sample) => sample.id === 'data-pier');
+  if (!presentation) {
+    failures.push('Gate 4-D-B6 Data Pier compatibility failed: data-pier presentation sample missing');
+  } else {
+    if (presentation.surface !== 'road') failures.push(`Gate 4-D-B6 Data Pier compatibility failed: respawn surface=${presentation.surface}`);
+    if (!Number.isFinite(presentation.cameraDistance) || presentation.cameraDistance <= 0) {
+      failures.push(`Gate 4-D-B6 Data Pier compatibility failed: cameraDistance=${presentation.cameraDistance}`);
+    }
+  }
+
+  const physicalStats = result.dataPier || {};
+  for (const [key, value] of Object.entries(physicalStats)) {
+    if ((value || 0) !== 0) failures.push(`Gate 4-D-B6 Data Pier compatibility failed: physical ${key}=${value || 0}`);
+  }
+
+  const dataPierSide = result.gate4b3?.dataPier || {};
+  for (const [key, value] of Object.entries(dataPierSide)) {
+    if ((value || 0) !== 0) failures.push(`Gate 4-D-B6 Data Pier compatibility failed: Gate 4-B3 physical ${key}=${value || 0}`);
+  }
+
+  const placement = result.gate3rPlacement || {};
+  for (const kind of ['gate4b3-pier-rail', 'gate4b3-pier-beacon', 'gate4b3-pier-cargo']) {
+    if ((placement.byKind?.[kind] || 0) !== 0) {
+      failures.push(`Gate 4-D-B6 Data Pier compatibility failed: rejected ${kind}=${placement.byKind?.[kind] || 0}`);
+    }
+  }
+  if ((placement.byFootprintKind?.['gate4b3-data-pier-pad'] || 0) !== 0) {
+    failures.push(`Gate 4-D-B6 Data Pier compatibility failed: rejected gate4b3-data-pier-pad=${placement.byFootprintKind?.['gate4b3-data-pier-pad'] || 0}`);
+  }
 }
 
 function assertAuthoredDistrictAsset(result, assetName, label, failures) {
