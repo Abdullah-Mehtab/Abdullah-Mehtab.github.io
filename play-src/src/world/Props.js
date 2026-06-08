@@ -72,7 +72,6 @@ export class Props {
     const projects = zone('projects');
     const contact = zone('contact');
     const cv = zone('cv');
-    const drift = zone('drift');
     const data = zone('data-pier');
     const potato = zone('potato');
     const placements = [
@@ -102,8 +101,6 @@ export class Props {
       ['EnvBench', contact[0] - 19, contact[2] - 8, -0.85, 0.86],
 
       ['EnvBench', cv[0] - 16, cv[2] + 10, 0.18, 0.84],
-      ['EnvCrate', drift[0] - 20, drift[2] + 14, 0.34, 0.84],
-      ['EnvBarrel', drift[0] + 18, drift[2] - 8, -0.22, 0.8],
       ['EnvCrate', data[0] - 10, data[2] + 8, 0.34, 0.84],
       ['EnvBarrel', data[0] + 4, data[2] - 10, -0.22, 0.8],
       ['EnvCrate', potato[0] + 16, potato[2] + 6, 0.34, 0.84],

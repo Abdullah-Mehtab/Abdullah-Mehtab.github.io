@@ -694,7 +694,6 @@ const ROUTE_LABEL_LAYOUT = {
   'fcc-walk': { dx: -8.2, dy: -0.4, priority: 'major', label: 'Campus' },
   'security-run': { dx: -5.2, dy: -2.2, priority: 'major', label: 'Scanner' },
   'cv-run': { dx: 5.4, dy: -2.8, priority: 'major', label: 'CV Run' },
-  'stunt-causeway': { dx: 4.8, dy: 4.2, priority: 'major', label: 'Stunt Link' },
   'farm-track': { dx: -6.8, dy: 5.4, priority: 'minor', label: 'Farm' },
   'sentinel-ridge': { dx: 3.8, dy: -5.2, priority: 'minor', label: 'Sentinel' },
   'career-link': { dx: 4.6, dy: -3.8, priority: 'minor', label: 'Career' },
@@ -790,7 +789,6 @@ function createMapLegend() {
     ['Avenue', '#ffdf8a'],
     ['Campus', '#9ccfff'],
     ['Security', '#68d8ff'],
-    ['Stunt', '#ff9b6d'],
     ['Circuit', '#ffffff']
   ];
   for (const [label, color] of items) {

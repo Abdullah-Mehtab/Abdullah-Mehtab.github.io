@@ -14,7 +14,6 @@ import { PotatoFarm } from './PotatoFarm.js';
 import { Props } from './Props.js';
 import { Roads } from './Roads.js';
 import { SetPieces } from './SetPieces.js';
-import { StuntPark } from './StuntPark.js';
 import { Terrain } from './Terrain.js';
 import { Water } from './Water.js';
 import { Zones } from './Zones.js';
@@ -33,22 +32,17 @@ const ROAD_SURFACES = {
   street: { label: 'street asphalt', forwardGrip: 1, sideGrip: 0.98, engineFactor: 1, topSpeedFactor: 1, dustColor: 0x6f6250, skidColor: 0x161410, audioId: 'road' },
   plaza: { label: 'plaza stone', forwardGrip: 0.94, sideGrip: 1.06, engineFactor: 0.96, topSpeedFactor: 0.9, dustColor: 0xb9a57a, skidColor: 0x5f584d, audioId: 'plaza-road', roughnessFeedback: 0.26 },
   security: { label: 'scanner asphalt', forwardGrip: 1.02, sideGrip: 0.92, engineFactor: 1.03, topSpeedFactor: 1.02, dustColor: 0x3a6b77, skidColor: 0x081014, audioId: 'security-road', roughnessFeedback: 0.18 },
-  stunt: { label: 'stunt asphalt', forwardGrip: 1.08, sideGrip: 0.9, engineFactor: 1.05, topSpeedFactor: 1.08, dustColor: 0xb87955, skidColor: 0x2a1712, audioId: 'stunt-road', roughnessFeedback: 0.16 },
   dirt: { label: 'farm dirt track', forwardGrip: 0.78, sideGrip: 0.58, engineFactor: 0.82, topSpeedFactor: 0.72, drag: 0.975, dustColor: 0xb2763c, skidColor: 0x6b4828, skidMarks: false, audioId: 'dirt-road', effectId: 'dirt-road', roughnessFeedback: 0.62 },
   bridge: { label: 'pier deck', forwardGrip: 0.96, sideGrip: 0.93, engineFactor: 0.96, topSpeedFactor: 0.88, dustColor: 0x7aa9a7, skidColor: 0x2e4d4b, audioId: 'bridge-road', roughnessFeedback: 0.34 }
 };
 
-const GOAL_GATE = 'gate-4b6r-full-stunt-playground';
+const GOAL_GATE = 'gate-4br-composition-correction';
 const GATE4_BR_GATE_ID = 'gate-4br-composition-correction';
-const GATE4_B6_GATE_ID = 'gate-4b6-stunt-cove';
-const GATE4_B6R_PROTOTYPE_GATE_ID = 'gate-4b6r-physics-prototype';
-const GATE4_B6R_FULL_GATE_ID = 'gate-4b6r-full-stunt-playground';
-const GATE4_B1_GATE_IDS = new Set(['gate-4b1-south-run', 'gate-4b2-west-service', 'gate-4b3-data-pier-side', 'gate-4b4-east-side', 'gate-4b5-north-ridge', GATE4_BR_GATE_ID, GATE4_B6_GATE_ID, GATE4_B6R_PROTOTYPE_GATE_ID, GATE4_B6R_FULL_GATE_ID]);
-const GATE4_B2_GATE_IDS = new Set(['gate-4b2-west-service', 'gate-4b3-data-pier-side', 'gate-4b4-east-side', 'gate-4b5-north-ridge', GATE4_BR_GATE_ID, GATE4_B6_GATE_ID, GATE4_B6R_PROTOTYPE_GATE_ID, GATE4_B6R_FULL_GATE_ID]);
-const GATE4_B3_GATE_IDS = new Set(['gate-4b3-data-pier-side', 'gate-4b4-east-side', 'gate-4b5-north-ridge', GATE4_BR_GATE_ID, GATE4_B6_GATE_ID, GATE4_B6R_PROTOTYPE_GATE_ID, GATE4_B6R_FULL_GATE_ID]);
-const GATE4_B4_GATE_IDS = new Set(['gate-4b4-east-side', 'gate-4b5-north-ridge', GATE4_BR_GATE_ID, GATE4_B6_GATE_ID, GATE4_B6R_PROTOTYPE_GATE_ID, GATE4_B6R_FULL_GATE_ID]);
-const GATE4_B5_GATE_IDS = new Set(['gate-4b5-north-ridge', GATE4_BR_GATE_ID, GATE4_B6_GATE_ID, GATE4_B6R_PROTOTYPE_GATE_ID, GATE4_B6R_FULL_GATE_ID]);
-const GATE4_B6_GATE_IDS = new Set([GATE4_B6_GATE_ID, GATE4_B6R_PROTOTYPE_GATE_ID, GATE4_B6R_FULL_GATE_ID]);
+const GATE4_B1_GATE_IDS = new Set(['gate-4b1-south-run', 'gate-4b2-west-service', 'gate-4b3-data-pier-side', 'gate-4b4-east-side', 'gate-4b5-north-ridge', GATE4_BR_GATE_ID]);
+const GATE4_B2_GATE_IDS = new Set(['gate-4b2-west-service', 'gate-4b3-data-pier-side', 'gate-4b4-east-side', 'gate-4b5-north-ridge', GATE4_BR_GATE_ID]);
+const GATE4_B3_GATE_IDS = new Set(['gate-4b3-data-pier-side', 'gate-4b4-east-side', 'gate-4b5-north-ridge', GATE4_BR_GATE_ID]);
+const GATE4_B4_GATE_IDS = new Set(['gate-4b4-east-side', 'gate-4b5-north-ridge', GATE4_BR_GATE_ID]);
+const GATE4_B5_GATE_IDS = new Set(['gate-4b5-north-ridge', GATE4_BR_GATE_ID]);
 const FOUNDATION_GATE_IDS = new Set(['gate-2r-foundation-replacement', 'gate-3r-vertical-slice', ...GATE4_B1_GATE_IDS]);
 const VERTICAL_SLICE_GATE_IDS = new Set(['gate-3-vertical-slice', 'gate-3r-vertical-slice', ...GATE4_B1_GATE_IDS]);
 
@@ -67,9 +61,9 @@ export class World {
     this.gate4b3Mode = GATE4_B3_GATE_IDS.has(GOAL_GATE);
     this.gate4b4Mode = GATE4_B4_GATE_IDS.has(GOAL_GATE);
     this.gate4b5Mode = GATE4_B5_GATE_IDS.has(GOAL_GATE);
-    this.gate4b6Mode = GATE4_B6_GATE_IDS.has(GOAL_GATE);
-    this.gate4b6rPrototypeMode = GOAL_GATE === GATE4_B6R_PROTOTYPE_GATE_ID;
-    this.gate4b6rFullMode = GOAL_GATE === GATE4_B6R_FULL_GATE_ID;
+    this.gate4b6Mode = false;
+    this.gate4b6rPrototypeMode = false;
+    this.gate4b6rFullMode = false;
     this.blockoutMode = GOAL_GATE === 'gate-2-blockout' || this.verticalSliceMode || this.foundationReplacementMode;
     this.materials = createWorldMaterials();
     this.zones = [];
@@ -113,7 +107,6 @@ export class World {
     this.water = new Water(this);
     this.roads = new Roads(this);
     this.zonesSystem = new Zones(this);
-    this.stuntPark = new StuntPark(this);
     this.setPieces = new SetPieces(this);
     this.props = this.blockoutMode ? null : new Props(this);
     this.foliage = this.blockoutMode ? null : new Foliage(this);
@@ -124,7 +117,6 @@ export class World {
     this.water.build();
     this.roads.build();
     this.zonesSystem.build();
-    this.stuntPark.build();
     this.setPieces.build();
     this.potatoFarm?.build();
     this.props?.build();
@@ -156,7 +148,6 @@ export class World {
     this.water?.applyQuality?.();
     this.roads?.applyQuality?.();
     this.foliage?.applyQuality?.();
-    this.stuntPark?.applyQuality?.();
     this.setPieces?.applyQuality?.();
     this.atmosphere?.applyQuality?.();
     this.onQualityChange?.(quality);
@@ -322,9 +313,6 @@ export class World {
     if (zone.id === 'landing') {
       return { position: zone.position.clone().add(new THREE.Vector3(4, 1.08, -16)), heading: 0.15 };
     }
-    if (zone.id === 'drift') {
-      return { position: zone.position.clone().add(new THREE.Vector3(-18, 1.08, -30)), heading: 0.18 };
-    }
     const distance = zone.id === 'education' ? 18 : zone.id === 'security' ? 15 : 10;
     const offset = new THREE.Vector3(Math.sin(zone.rotation || 0) * -distance, 1.08, Math.cos(zone.rotation || 0) * -distance);
     return {
@@ -446,7 +434,6 @@ export class World {
     this.potatoFarm?.update?.(dt, vehiclePosition);
     this.zonesSystem?.update?.(vehiclePosition);
     this.updateCircuitFeedback(dt);
-    this.stuntPark?.update?.(dt, elapsed, vehiclePosition);
     this.setPieces?.update?.(dt, elapsed, vehiclePosition);
     this.atmosphere?.update?.(dt, elapsed);
     this.updateCollectibles(dt, elapsed);

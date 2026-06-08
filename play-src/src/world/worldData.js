@@ -45,15 +45,6 @@ export const roadSurfaceProfiles = {
     audio: 'synth-asphalt',
     particle: 'scan-sparks',
   },
-  stunt: {
-    label: 'Stunt Rubber',
-    grip: 1.14,
-    drag: 0.97,
-    smoke: '#ffd9a8',
-    skid: '#42231b',
-    audio: 'rubber',
-    particle: 'rubber-fleck',
-  },
   dirt: {
     label: 'Packed Dirt',
     grip: 0.74,
@@ -81,7 +72,6 @@ export const districtFootprints = [
   { id: 'gallery-side', label: 'Gallery Side', center: [96, -16], size: [42, 34], color: '#ffcc66', kind: 'workshop' },
   { id: 'north-ridge', label: 'North Ridge', center: [34, 108], size: [54, 26], color: '#ff6d8d', kind: 'tower' },
   { id: 'west-service', label: 'West Service', center: [-72, -88], size: [42, 28], color: '#92ffea', kind: 'trail' },
-  { id: 'stunt-cove', label: 'Stunt Cove', center: [88, -104], size: [36, 26], color: '#ff9b6d', kind: 'driving' },
   { id: 'east-harbor', label: 'East Harbor', center: [116, 34], size: [34, 26], color: '#78b7ff', kind: 'harbor' },
   { id: 'data-pier', label: 'Data Pier', center: [-128, 38], size: [24, 22], color: '#79ffc5', kind: 'pier' },
 ];
@@ -146,20 +136,6 @@ export const roadPaths = [
     ],
   },
   {
-    id: 'stunt-service',
-    label: 'Stunt Cove Service',
-    hierarchy: 'stunt',
-    width: 4.0,
-    shoulder: 0.85,
-    color: '#3c2722',
-    points: [
-      [56, -100],
-      [84, -116],
-      [108, -94],
-      [98, -64],
-    ],
-  },
-  {
     id: 'farm-service',
     label: 'Farm Service',
     hierarchy: 'dirt',
@@ -189,7 +165,6 @@ export const routeThresholds = [
   { id: 'launch-entry', label: 'Launch', center: [0, -110], position: [0, 0.05, -110], rotation: 0.36, width: 10, depth: 7, color: '#7cffb2' },
   { id: 'campus-entry', label: 'Campus', center: [-100, 58], position: [-100, 0.05, 58], rotation: -0.72, width: 10, depth: 7, color: '#9ccfff' },
   { id: 'security-entry', label: 'Security', center: [-82, -34], position: [-82, 0.05, -34], rotation: -2.56, width: 10, depth: 7, color: '#68d8ff' },
-  { id: 'stunt-entry', label: 'Stunt', center: [84, -116], position: [84, 0.05, -116], rotation: 0.86, width: 10, depth: 7, color: '#ff9b6d' },
 ];
 
 export const roadSegments = roadPaths.flatMap((path) => pathToSegments(path));
@@ -466,22 +441,6 @@ export const worldZones = [
     actions: [{ label: 'Repository', href: 'https://github.com/Abdullah-Mehtab/Abdullah-Mehtab' }],
   },
   {
-    id: 'drift',
-    name: 'Stunt Yard',
-    kind: 'Driving',
-    title: 'Stunt Foundation',
-    districtId: 'stunt-cove',
-    position: [68, 0, -72],
-    rotation: -0.55,
-    radius: 11,
-    color: '#ff9b6d',
-    shape: 'rampyard',
-    achievement: 'ramp_yard',
-    accent: '#ff7a59',
-    summary: 'Stunt readiness yard staged inland from roads and shore.',
-    lines: ['A visual-only driving yard for slalom setup, start cues, score towers, and later approved stunt physics.'],
-  },
-  {
     id: 'data-pier',
     name: 'Data Pier',
     kind: 'Visitor Trail',
@@ -601,12 +560,6 @@ export const zonePresentation = {
     target: [35, 3, -76],
     fov: 42,
   },
-  drift: {
-    respawn: { position: [84, 1.08, -116], heading: 0.72 },
-    camera: [92, 11, -94],
-    target: [68, 3, -72],
-    fov: 42,
-  },
   'data-pier': {
     respawn: { position: [-128, 1.08, 50], heading: -2.35 },
     camera: [-152, 9, 62],
@@ -637,7 +590,6 @@ export const achievementDefinitions = [
   ['circuit_finish', 'Clean Circuit', 'Finish the island checkpoint circuit.'],
   ['contact_port', 'Signal Sent', 'Open the Contact Port.'],
   ['behind_build', 'Look Under The Hood', 'Open Behind The Build.'],
-  ['ramp_yard', 'Ramp Yard', 'Visit the driving yard.'],
   ['data_pier', 'Data Pier', 'Visit the data pier.'],
   ['potato_farm', 'Potato Patch', 'Visit the potato farm.'],
   ['potato_summon', 'Potato Summoner', 'Summon a blocky potato.'],

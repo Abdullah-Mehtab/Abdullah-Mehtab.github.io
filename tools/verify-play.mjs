@@ -654,25 +654,17 @@ async function sampleSurfaces(page, islandRadius) {
     const grassCandidates = [[32, 0], [-18, 112], [42, 8], [-22, -28], [106, 18]];
     const grass = grassCandidates.map(([x, z]) => sample(x, z)).find((id) => id === 'grass') || null;
     const road = midpointFor('avenue');
-    const plaza = midpointFor('plaza');
-    const security = midpointFor('security');
-    const stunt = midpointFor('stunt');
-    const dirt = midpointFor('dirt');
-    const bridge = midpointFor('bridge');
+    const roadProfiles = {};
+    for (const hierarchy of Array.from(new Set(paths.map((path) => path.hierarchy)))) {
+      roadProfiles[hierarchy] = sampleSurface(...midpointFor(hierarchy));
+    }
     return {
       road: sample(...road),
       grass,
       sand: sample(radius * 0.91, 0),
       shore: sample(radius * 0.985, 0),
       water: sample(radius * 1.025, 0),
-      roadProfiles: {
-        avenue: sampleSurface(...road),
-        plaza: sampleSurface(...plaza),
-        security: sampleSurface(...security),
-        stunt: sampleSurface(...stunt),
-        dirt: sampleSurface(...dirt),
-        bridge: sampleSurface(...bridge)
-      }
+      roadProfiles
     };
   }, { radius: islandRadius, paths: roadPaths });
 }
@@ -4254,7 +4246,8 @@ function assertVerification(result) {
   if (result.surfaces?.shore !== 'shore') failures.push(`surface probe failed: shore=${result.surfaces?.shore}`);
   if (result.surfaces?.water !== 'water') failures.push(`surface probe failed: water=${result.surfaces?.water}`);
   const roadProfiles = result.surfaces?.roadProfiles || {};
-  for (const hierarchy of ['avenue', 'plaza', 'security', 'stunt', 'dirt', 'bridge']) {
+  const expectedRoadHierarchies = Array.from(new Set(roadPaths.map((path) => path.hierarchy)));
+  for (const hierarchy of expectedRoadHierarchies) {
     const profile = roadProfiles[hierarchy];
     if (profile?.id !== 'road') failures.push(`road surface metadata failed: ${hierarchy} id=${profile?.id}`);
     if (profile?.roadHierarchy !== hierarchy) failures.push(`road surface metadata failed: ${hierarchy} hierarchy=${profile?.roadHierarchy}`);
@@ -4267,7 +4260,7 @@ function assertVerification(result) {
   }
   if ((roadProfiles.dirt?.drag || 1) >= 1) failures.push(`road surface metadata failed: dirt drag=${roadProfiles.dirt?.drag}`);
   if (roadProfiles.dirt?.skidMarks !== false) failures.push('road surface metadata failed: dirt skid marks should be disabled');
-  if ((roadProfiles.stunt?.topSpeedFactor || 0) <= (roadProfiles.plaza?.topSpeedFactor || 0)) {
+  if (roadProfiles.stunt && (roadProfiles.stunt.topSpeedFactor || 0) <= (roadProfiles.plaza?.topSpeedFactor || 0)) {
     failures.push(`road surface metadata failed: stunt speed ${roadProfiles.stunt?.topSpeedFactor} <= plaza ${roadProfiles.plaza?.topSpeedFactor}`);
   }
   if (new Set(Object.values(roadProfiles).map((profile) => profile?.audioId).filter(Boolean)).size < 5) {
@@ -4952,7 +4945,8 @@ function assertGate2RFoundationReplacementVerification(result, failures) {
   if (result.surfaces?.sand !== 'sand') failures.push(`Gate 2R surface failed: sand=${result.surfaces?.sand}`);
   if (result.surfaces?.shore !== 'shore') failures.push(`Gate 2R surface failed: shore=${result.surfaces?.shore}`);
   if (result.surfaces?.water !== 'water') failures.push(`Gate 2R surface failed: water=${result.surfaces?.water}`);
-  for (const hierarchy of ['avenue', 'plaza', 'security', 'stunt', 'dirt', 'bridge']) {
+  const expectedRoadHierarchies = Array.from(new Set(roadPaths.map((path) => path.hierarchy)));
+  for (const hierarchy of expectedRoadHierarchies) {
     const profile = result.surfaces?.roadProfiles?.[hierarchy];
     if (profile?.id !== 'road') failures.push(`Gate 2R road profile failed: ${hierarchy}=${profile?.id || 'missing'}`);
     if (profile?.roadHierarchy !== hierarchy) {
@@ -5142,7 +5136,8 @@ function assertGate3RVerticalSliceVerification(result, failures, options = {}) {
   if (result.surfaces?.sand !== 'sand') failures.push(`Gate 3R surface failed: sand=${result.surfaces?.sand}`);
   if (result.surfaces?.shore !== 'shore') failures.push(`Gate 3R surface failed: shore=${result.surfaces?.shore}`);
   if (result.surfaces?.water !== 'water') failures.push(`Gate 3R surface failed: water=${result.surfaces?.water}`);
-  for (const hierarchy of ['avenue', 'plaza', 'security', 'stunt', 'dirt', 'bridge']) {
+  const expectedRoadHierarchies = Array.from(new Set(roadPaths.map((path) => path.hierarchy)));
+  for (const hierarchy of expectedRoadHierarchies) {
     const profile = result.surfaces?.roadProfiles?.[hierarchy];
     if (profile?.id !== 'road') failures.push(`Gate 3R road profile failed: ${hierarchy}=${profile?.id || 'missing'}`);
     if (profile?.roadHierarchy !== hierarchy) failures.push(`Gate 3R road profile failed: ${hierarchy} hierarchy=${profile?.roadHierarchy || 'missing'}`);
@@ -5535,6 +5530,7 @@ function assertGate4BRCompositionCorrectionVerification(result, failures, option
     allowPrototypeStuntPark: options.allowPrototypeStuntPark,
     allowedExtraColliderPrefixes: options.allowedExtraColliderPrefixes
   });
+  assertStuntCoveDeleted(result, failures);
 
   const dataPierSide = result.gate4b3 || {};
   const todo = dataPierSide.todo || {};
@@ -5630,6 +5626,24 @@ function assertGate4BRCompositionCorrectionVerification(result, failures, option
   }
   if (!options.allowPrototypeStuntPark && ((result.stuntPark?.ramps || 0) !== 0 || (result.stuntPark?.boostPads || 0) !== 0 || (result.stuntPark?.gates || 0) !== 0)) {
     failures.push('Gate 4-BR failed: old StuntPark physical systems were enabled');
+  }
+}
+
+function assertStuntCoveDeleted(result, failures) {
+  if (worldZones.some((zone) => zone.id === 'drift' || zone.districtId === 'stunt-cove')) {
+    failures.push('Stunt Cove deletion failed: drift/stunt-cove zone still exists');
+  }
+  if (districtFootprints.some((district) => district.id === 'stunt-cove')) {
+    failures.push('Stunt Cove deletion failed: stunt-cove district still exists');
+  }
+  if (roadPaths.some((path) => path.id === 'stunt-service' || path.hierarchy === 'stunt')) {
+    failures.push('Stunt Cove deletion failed: stunt-service road still exists');
+  }
+  if ((result.gate4b6?.enabled || false)) {
+    failures.push('Stunt Cove deletion failed: Gate 4-B6 scaffold is enabled');
+  }
+  if ((result.stuntPark?.ramps || 0) !== 0 || (result.stuntPark?.boostPads || 0) !== 0 || (result.stuntPark?.gates || 0) !== 0 || (result.stuntPark?.fullPhysicalColliders || 0) !== 0) {
+    failures.push('Stunt Cove deletion failed: stunt park runtime objects or colliders are active');
   }
 }
 
@@ -5747,9 +5761,9 @@ function assertGate4B6RPhysicsPrototypeVerification(result, failures) {
   if ((miss.halts || 0) !== 0) failures.push(`Gate 4-B6R miss recovery failed: halts=${miss.halts || 0}`);
 }
 
-function assertGate4B6RFullPlaygroundVerification(result, failures) {
+function assertGate4B6RFullPlaygroundVerification(result, failures, options = {}) {
   assertGate4BRCompositionCorrectionVerification(result, failures, {
-    expectedGoal: 'gate-4b6r-full-stunt-playground',
+    expectedGoal: options.expectedGoal || 'gate-4b6r-full-stunt-playground',
     allowPrototypeStuntPark: true,
     allowedExtraColliderPrefixes: ['STUNTB6R_']
   });

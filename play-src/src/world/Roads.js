@@ -10,7 +10,6 @@ const ROAD_STYLE = {
   street: { shoulder: 0.72, curb: 0.18, line: 0xd9d6c7 },
   plaza: { shoulder: 0.74, curb: 0.22, line: 0xf3e7bd },
   security: { shoulder: 0.78, line: 0x68d8ff },
-  stunt: { shoulder: 0.9, curb: 0.22, line: 0xff9b6d },
   dirt: { shoulder: 1.15, line: 0x8d6338 },
   bridge: { shoulder: 0.82, curb: 0.18, line: 0xe8edf0 }
 };
@@ -22,7 +21,6 @@ const ROAD_SURFACE_PRIORITY = {
   plaza: 3,
   security: 3,
   dirt: 2,
-  stunt: 3,
   bridge: 4
 };
 
@@ -33,7 +31,6 @@ const ROAD_VISUAL_LAYER = {
   plaza: 1,
   security: 1,
   dirt: 0,
-  stunt: 1,
   bridge: 1
 };
 
@@ -64,7 +61,6 @@ const FOUNDATION_ROAD_DRAW_RANK = {
   'farm-service': 10,
   'pier-deck': 12,
   'security-spur': 20,
-  'stunt-service': 22,
   'campus-boulevard': 70,
   'coastal-loop': 90
 };
