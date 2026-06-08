@@ -435,6 +435,14 @@ export class SetPieces {
         assemblyRings: 0,
         sparkMarkers: 0,
         authoredAssets: 0,
+        sourceAssets: 0,
+        workshopShells: 0,
+        buildGantries: 0,
+        displayBays: 0,
+        testBenches: 0,
+        cableTrays: 0,
+        sparkEmitters: 0,
+        groundPlates: 0,
         signs: 0,
         lamps: 0
       },
@@ -444,6 +452,13 @@ export class SetPieces {
         facadePanels: 0,
         signalFrames: 0,
         connectorMarks: 0,
+        sourceAssets: 0,
+        buildingShells: 0,
+        glassFacades: 0,
+        entranceCanopies: 0,
+        experienceWalls: 0,
+        lobbyGlows: 0,
+        servicePaths: 0,
         signs: 0,
         lamps: 0
       },
@@ -1480,89 +1495,96 @@ export class SetPieces {
     const point = (right, forward) => this.gate4B1Point(anchor, right, forward);
     const rotation = anchor.rotation;
 
-    this.gate3rPad(group, anchor.x, anchor.z, 17, 10.5, this.world.materials.stoneRoad, 0.132, 'GATE4B4_Projects_Workshop_Pad', rotation, 'gate4b4-projects-pad', 5.2);
+    this.gate3rPad(group, anchor.x, anchor.z, 24, 16, this.world.materials.stoneRoad, 0.132, 'GATE4C_Projects_Foundry_Ground_Plate', rotation, 'gate4c-projects-footprint', 5.0);
     stats.pads += 1;
+    stats.groundPlates += 1;
 
-    const assembly = point(1.2, -0.2);
-    if (this.addPolishAsset(group, 'EnvPolishProjectForge', assembly[0], assembly[1], rotation - 0.18, 0.62)) {
-      stats.authoredAssets += 1;
-    }
-    const ring = new THREE.Mesh(new THREE.TorusGeometry(3.15, 0.045, 8, 48), this.world.materials.warmGlow);
-    ring.name = 'GATE4B4_Projects_Assembly_Ring';
-    ring.position.set(assembly[0], 0.24, assembly[1]);
-    ring.rotation.set(Math.PI * 0.5, 0, rotation);
-    group.add(ring);
-    this.recordGate3RPlacement('gate4b4-projects-assembly', 'GATE4B4_Projects_Assembly_Ring', assembly[0], assembly[1], { minClearance: 4.8 });
-    stats.assemblyRings += 1;
+    const placeSource = (assetName, kind, name, right, forward, assetRotation, scale, statName, minClearance = 5.0) => {
+      const position = point(right, forward);
+      if (this.addPolishAsset(group, assetName, position[0], position[1], assetRotation, scale)) {
+        this.recordGate3RPlacement(kind, name, position[0], position[1], { minClearance });
+        stats.sourceAssets += 1;
+        stats.authoredAssets += 1;
+        stats[statName] += 1;
+        return position;
+      }
+      return null;
+    };
 
-    for (const [right, forward] of [
-      [-6.2, 3.65],
-      [-3.72, 4.0],
-      [-1.24, 4.15],
-      [1.24, 4.15],
-      [3.72, 3.95],
-      [6.2, 3.58]
+    placeSource('EnvPolishProjectForge', 'gate4c-projects-workshop-shell', 'GATE4C_Projects_Foundry_Workshop_Shell', -2.8, 0.2, rotation, 1.05, 'workshopShells', 5.0);
+    placeSource('EnvPolishProjectGantry', 'gate4c-projects-build-gantry', 'GATE4C_Projects_Build_Gantry', 2.6, -0.4, rotation, 1.08, 'buildGantries', 5.0);
+    placeSource('EnvPolishProjectPartsCart', 'gate4c-projects-test-bench', 'GATE4C_Projects_Test_Bench', -6.4, -3.6, rotation + 0.08, 0.82, 'testBenches', 5.0);
+    placeSource('EnvPolishProjectCableReel', 'gate4c-projects-cable-tray', 'GATE4C_Projects_Cable_Tray', 6.8, -3.6, rotation - 0.12, 0.74, 'cableTrays', 5.0);
+
+    for (const [right, forward, name] of [
+      [-6.4, 4.6, 'GATE4C_Projects_Display_Bay_Left'],
+      [0, 5.35, 'GATE4C_Projects_Display_Bay_Center'],
+      [6.4, 4.6, 'GATE4C_Projects_Display_Bay_Right']
     ]) {
-      const rack = point(right, forward);
-      this.box(group, rack[0], 0.76, rack[1], 1.25, 1.16, 0.16, this.world.materials.cable, rotation, 'GATE4B4_Projects_Project_Rack');
-      this.box(group, rack[0], 0.82, rack[1] - 0.07, 0.82, 0.64, 0.05, this.world.materials.screen, rotation, 'GATE4B4_Projects_Project_Rack_Glow');
-      this.recordGate3RPlacement('gate4b4-project-rack', 'GATE4B4_Projects_Project_Rack', rack[0], rack[1], { minClearance: 4.6 });
+      placeSource('EnvPolishProjectDisplayRack', 'gate4c-projects-display-bay', name, right, forward, rotation, 0.76, 'displayBays', 5.0);
       stats.projectRacks += 1;
     }
 
-    for (let index = 0; index < 6; index += 1) {
-      const angle = (index / 6) * Math.PI * 2 + 0.18;
-      const spark = [
-        assembly[0] + Math.cos(angle) * 2.35,
-        assembly[1] + Math.sin(angle) * 2.35
-      ];
-      this.cylinder(group, spark[0], 0.48, spark[1], 0.055, 0.72, index % 2 ? this.world.materials.glowBlue : this.world.materials.warmGlow, 5, 'GATE4B4_Projects_Spark_Marker');
-      this.recordGate3RPlacement('gate4b4-project-spark', 'GATE4B4_Projects_Spark_Marker', spark[0], spark[1], { minClearance: 4.6 });
+    for (const [right, forward, material, name] of [
+      [-3.8, -2.0, this.world.materials.warmGlow, 'GATE4C_Projects_Spark_Emitter_A'],
+      [-1.4, -2.4, this.world.materials.glowBlue, 'GATE4C_Projects_Spark_Emitter_B'],
+      [1.1, -2.2, this.world.materials.warmGlow, 'GATE4C_Projects_Spark_Emitter_C'],
+      [3.5, -1.8, this.world.materials.glowBlue, 'GATE4C_Projects_Spark_Emitter_D']
+    ]) {
+      const spark = point(right, forward);
+      this.cylinder(group, spark[0], 0.38, spark[1], 0.055, 0.46, material, 5, name);
+      this.recordGate3RPlacement('gate4c-projects-spark-emitter', name, spark[0], spark[1], { minClearance: 5.0 });
+      stats.sparkEmitters += 1;
       stats.sparkMarkers += 1;
     }
 
+    stats.assemblyRings = stats.buildGantries;
   }
 
   createGate4B4CareerOffice(group) {
     const stats = this.gate4b4Stats.career;
-    const anchor = { x: 116, z: -60, rotation: -0.24 };
+    const anchor = { x: 82, z: -46, rotation: -0.24 };
     const point = (right, forward) => this.gate4B1Point(anchor, right, forward);
     const rotation = anchor.rotation;
 
-    this.gate3rPad(group, anchor.x, anchor.z, 12.5, 7, this.world.materials.warmStone, 0.132, 'GATE4B4_Career_Office_Pad', rotation, 'gate4b4-career-pad', 5.2);
+    this.gate3rPad(group, anchor.x, anchor.z, 22, 14, this.world.materials.warmStone, 0.132, 'GATE4C_Career_Software_House_Ground_Plate', rotation, 'gate4c-career-footprint', 5.0);
     stats.pads += 1;
 
-    const office = point(-0.6, -0.15);
-    this.box(group, office[0], 0.46, office[1], 5.7, 0.42, 1.55, this.world.materials.cable, rotation, 'GATE4B4_Career_Interview_Dais');
-    this.box(group, office[0], 0.78, office[1] - 0.62, 4.8, 0.16, 0.18, this.world.materials.glowPink, rotation, 'GATE4B4_Career_Dais_Signal_Line');
-    this.recordGate3RPlacement('gate4b4-career-office', 'GATE4B4_Career_Interview_Dais', office[0], office[1], { minClearance: 4.8 });
-    stats.officeBlocks += 1;
+    const placeSource = (assetName, kind, name, right, forward, assetRotation, scale, statName, minClearance = 5.0) => {
+      const position = point(right, forward);
+      if (this.addPolishAsset(group, assetName, position[0], position[1], assetRotation, scale)) {
+        this.recordGate3RPlacement(kind, name, position[0], position[1], { minClearance });
+        stats.sourceAssets += 1;
+        stats[statName] += 1;
+        return position;
+      }
+      return null;
+    };
 
-    for (const [right, y, material] of [
-      [-2.0, 1.04, this.world.materials.glowBlue],
-      [0, 1.08, this.world.materials.glowPink],
-      [2.0, 1.04, this.world.materials.glowBlue],
-      [-2.0, 0.68, this.world.materials.screen],
-      [0, 0.7, this.world.materials.warmGlow],
-      [2.0, 0.68, this.world.materials.screen]
-    ]) {
-      const panel = point(right - 0.6, -1.12);
-      this.box(group, panel[0], y, panel[1], 0.78, 0.24, 0.05, material, rotation, 'GATE4B4_Career_Facade_Panel');
-      this.recordGate3RPlacement('gate4b4-career-facade', 'GATE4B4_Career_Facade_Panel', panel[0], panel[1], { minClearance: 4.6 });
-      stats.facadePanels += 1;
-    }
+    placeSource('EnvPolishTerminalCanopy', 'gate4c-career-building-shell', 'GATE4C_Career_Software_House_Shell', -0.8, 0.4, rotation, 1.08, 'buildingShells', 5.0);
+    placeSource('EnvPolishCareerOffice', 'gate4c-career-glass-facade', 'GATE4C_Career_Glass_Facade', -4.8, -2.3, rotation, 1.18, 'glassFacades', 5.0);
+    placeSource('EnvPolishTerminalBank', 'gate4c-career-experience-wall', 'GATE4C_Career_Experience_Wall', 4.6, -2.1, rotation - 0.08, 0.74, 'experienceWalls', 5.0);
 
-    for (const [right, forward, material] of [
-      [-4.2, 2.15, this.world.materials.glowBlue],
-      [0, 2.48, this.world.materials.glowPink],
-      [4.2, 2.12, this.world.materials.warmGlow]
-    ]) {
-      const frame = point(right, forward);
-      this.box(group, frame[0], 0.98, frame[1], 0.14, 1.22, 0.82, this.world.materials.cable, rotation, 'GATE4B4_Career_Signal_Frame');
-      this.box(group, frame[0], 1.02, frame[1] - 0.05, 0.16, 0.76, 0.52, material, rotation, 'GATE4B4_Career_Signal_Frame_Glow');
-      this.recordGate3RPlacement('gate4b4-career-frame', 'GATE4B4_Career_Signal_Frame', frame[0], frame[1], { minClearance: 4.6 });
-      stats.signalFrames += 1;
-    }
+    const entrance = point(0.2, -5.2);
+    this.box(group, entrance[0], 1.18, entrance[1], 5.4, 0.28, 1.15, this.world.materials.cable, rotation, 'GATE4C_Career_Entrance_Canopy');
+    this.box(group, entrance[0], 1.0, entrance[1] - 0.48, 4.4, 0.08, 0.08, this.world.materials.glowBlue, rotation, 'GATE4C_Career_Entrance_Canopy_Glow');
+    this.recordGate3RPlacement('gate4c-career-entrance-canopy', 'GATE4C_Career_Entrance_Canopy', entrance[0], entrance[1], { minClearance: 5.0 });
+    stats.entranceCanopies += 1;
+
+    const lobby = point(0, -2.55);
+    this.box(group, lobby[0], 0.19, lobby[1], 7.4, 0.035, 2.15, this.world.materials.glowPink, rotation, 'GATE4C_Career_Lobby_Glow');
+    this.recordGate3RPlacement('gate4c-career-lobby-glow', 'GATE4C_Career_Lobby_Glow', lobby[0], lobby[1], { minClearance: 5.0 });
+    stats.lobbyGlows += 1;
+
+    const path = point(0, -6.15);
+    this.box(group, path[0], 0.154, path[1], 8.6, 0.018, 0.52, this.world.materials.paleStone, rotation, 'GATE4C_Career_Service_Path');
+    this.recordGate3RPlacement('gate4c-career-service-path', 'GATE4C_Career_Service_Path', path[0], path[1], { minClearance: 5.0 });
+    stats.servicePaths += 1;
+
+    stats.officeBlocks = stats.buildingShells;
+    stats.facadePanels = stats.glassFacades + stats.experienceWalls;
+    stats.signalFrames = stats.entranceCanopies + stats.lobbyGlows;
+    stats.connectorMarks = 0;
   }
 
   createGate4B4SignalHarbor(group) {

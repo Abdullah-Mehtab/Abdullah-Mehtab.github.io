@@ -3881,6 +3881,13 @@ function assertVerification(result) {
     }
     return;
   }
+  if (result.goalGate === 'gate-4c-b2-gallery-side-replacements') {
+    assertGate4CB2GallerySideReplacementVerification(result, failures);
+    if (failures.length) {
+      throw new Error(`Play verification failed: ${failures.join('; ')}`);
+    }
+    return;
+  }
   if (result.goalGate === 'gate-4b5-north-ridge') {
     assertGate4B5NorthRidgeVerification(result, failures);
     if (failures.length) {
@@ -5575,21 +5582,25 @@ function assertGate4BRCompositionCorrectionVerification(result, failures, option
   if ((dataPier.signs || 0) !== 0) failures.push(`Gate 4-BR Data Pier failed: rejected signs=${dataPier.signs || 0}`);
   if ((dataPier.lamps || 0) !== 0) failures.push(`Gate 4-BR Data Pier failed: rejected lamps=${dataPier.lamps || 0}`);
 
-  if ((projects.pads || 0) !== 1) failures.push(`Gate 4-BR Projects failed: pads=${projects.pads || 0}`);
-  if ((projects.projectRacks || 0) !== 6) failures.push(`Gate 4-BR Projects failed: projectRacks=${projects.projectRacks || 0}`);
-  if ((projects.assemblyRings || 0) !== 1) failures.push(`Gate 4-BR Projects failed: assemblyRings=${projects.assemblyRings || 0}`);
-  if ((projects.sparkMarkers || 0) !== 6) failures.push(`Gate 4-BR Projects failed: sparkMarkers=${projects.sparkMarkers || 0}`);
-  if ((projects.authoredAssets || 0) !== 1) failures.push(`Gate 4-BR Projects failed: authoredAssets=${projects.authoredAssets || 0}`);
-  if ((projects.signs || 0) !== 0) failures.push(`Gate 4-BR Projects failed: rejected signs=${projects.signs || 0}`);
-  if ((projects.lamps || 0) !== 0) failures.push(`Gate 4-BR Projects failed: rejected lamps=${projects.lamps || 0}`);
+  if (options.sourceGallerySide) {
+    assertGate4CB2SourceGallerySide(result, failures);
+  } else {
+    if ((projects.pads || 0) !== 1) failures.push(`Gate 4-BR Projects failed: pads=${projects.pads || 0}`);
+    if ((projects.projectRacks || 0) !== 6) failures.push(`Gate 4-BR Projects failed: projectRacks=${projects.projectRacks || 0}`);
+    if ((projects.assemblyRings || 0) !== 1) failures.push(`Gate 4-BR Projects failed: assemblyRings=${projects.assemblyRings || 0}`);
+    if ((projects.sparkMarkers || 0) !== 6) failures.push(`Gate 4-BR Projects failed: sparkMarkers=${projects.sparkMarkers || 0}`);
+    if ((projects.authoredAssets || 0) !== 1) failures.push(`Gate 4-BR Projects failed: authoredAssets=${projects.authoredAssets || 0}`);
+    if ((projects.signs || 0) !== 0) failures.push(`Gate 4-BR Projects failed: rejected signs=${projects.signs || 0}`);
+    if ((projects.lamps || 0) !== 0) failures.push(`Gate 4-BR Projects failed: rejected lamps=${projects.lamps || 0}`);
 
-  if ((career.pads || 0) !== 1) failures.push(`Gate 4-BR Career failed: pads=${career.pads || 0}`);
-  if ((career.officeBlocks || 0) !== 1) failures.push(`Gate 4-BR Career failed: station blocks=${career.officeBlocks || 0}`);
-  if ((career.facadePanels || 0) !== 6) failures.push(`Gate 4-BR Career failed: facadePanels=${career.facadePanels || 0}`);
-  if ((career.signalFrames || 0) !== 3) failures.push(`Gate 4-BR Career failed: signalFrames=${career.signalFrames || 0}`);
-  if ((career.connectorMarks || 0) !== 0) failures.push(`Gate 4-BR Career failed: rejected connectorMarks=${career.connectorMarks || 0}`);
-  if ((career.signs || 0) !== 0) failures.push(`Gate 4-BR Career failed: rejected signs=${career.signs || 0}`);
-  if ((career.lamps || 0) !== 0) failures.push(`Gate 4-BR Career failed: rejected lamps=${career.lamps || 0}`);
+    if ((career.pads || 0) !== 1) failures.push(`Gate 4-BR Career failed: pads=${career.pads || 0}`);
+    if ((career.officeBlocks || 0) !== 1) failures.push(`Gate 4-BR Career failed: station blocks=${career.officeBlocks || 0}`);
+    if ((career.facadePanels || 0) !== 6) failures.push(`Gate 4-BR Career failed: facadePanels=${career.facadePanels || 0}`);
+    if ((career.signalFrames || 0) !== 3) failures.push(`Gate 4-BR Career failed: signalFrames=${career.signalFrames || 0}`);
+    if ((career.connectorMarks || 0) !== 0) failures.push(`Gate 4-BR Career failed: rejected connectorMarks=${career.connectorMarks || 0}`);
+    if ((career.signs || 0) !== 0) failures.push(`Gate 4-BR Career failed: rejected signs=${career.signs || 0}`);
+    if ((career.lamps || 0) !== 0) failures.push(`Gate 4-BR Career failed: rejected lamps=${career.lamps || 0}`);
+  }
 
   if ((harbor.deckPads || 0) !== 1) failures.push(`Gate 4-BR Harbor failed: deckPads=${harbor.deckPads || 0}`);
   if ((harbor.signalMasts || 0) !== 1) failures.push(`Gate 4-BR Harbor failed: signalMasts=${harbor.signalMasts || 0}`);
@@ -5647,6 +5658,14 @@ function assertGate4CB1SouthRunReplacementVerification(result, failures) {
   assertGate4BRCompositionCorrectionVerification(result, failures, {
     expectedGoal: 'gate-4c-b1-south-run-replacements',
     sourceSouthRun: true
+  });
+}
+
+function assertGate4CB2GallerySideReplacementVerification(result, failures) {
+  assertGate4BRCompositionCorrectionVerification(result, failures, {
+    expectedGoal: 'gate-4c-b2-gallery-side-replacements',
+    sourceSouthRun: true,
+    sourceGallerySide: true
   });
 }
 
@@ -5708,6 +5727,68 @@ function assertGate4CB1SourceSouthRun(result, failures) {
   for (const kind of ['gate4b1-document', 'gate4b1-hologram', 'gate4b1-vault', 'gate4b1-workbench']) {
     if ((placement.byKind?.[kind] || 0) !== 0) {
       failures.push(`Gate 4-C-B1 placement failed: rejected ${kind}=${placement.byKind?.[kind] || 0}`);
+    }
+  }
+}
+
+function assertGate4CB2SourceGallerySide(result, failures) {
+  const eastSide = result.gate4b4 || {};
+  const projects = eastSide.projects || {};
+  const career = eastSide.career || {};
+  const placement = result.gate3rPlacement || {};
+
+  if (!eastSide.enabled) failures.push('Gate 4-C-B2 failed: East Side scaffold inactive');
+  if ((eastSide.staticBatches || 0) < 1) failures.push(`Gate 4-C-B2 batching failed: staticBatches=${eastSide.staticBatches || 0}`);
+
+  if ((projects.pads || 0) !== 1) failures.push(`Gate 4-C-B2 Projects failed: pads=${projects.pads || 0}`);
+  if ((projects.sourceAssets || 0) < 7) failures.push(`Gate 4-C-B2 Projects failed: sourceAssets=${projects.sourceAssets || 0}`);
+  if ((projects.authoredAssets || 0) < 7) failures.push(`Gate 4-C-B2 Projects failed: authoredAssets=${projects.authoredAssets || 0}`);
+  if ((projects.workshopShells || 0) !== 1) failures.push(`Gate 4-C-B2 Projects failed: workshopShells=${projects.workshopShells || 0}`);
+  if ((projects.buildGantries || 0) !== 1) failures.push(`Gate 4-C-B2 Projects failed: buildGantries=${projects.buildGantries || 0}`);
+  if ((projects.displayBays || 0) !== 3) failures.push(`Gate 4-C-B2 Projects failed: displayBays=${projects.displayBays || 0}`);
+  if ((projects.testBenches || 0) !== 1) failures.push(`Gate 4-C-B2 Projects failed: testBenches=${projects.testBenches || 0}`);
+  if ((projects.cableTrays || 0) !== 1) failures.push(`Gate 4-C-B2 Projects failed: cableTrays=${projects.cableTrays || 0}`);
+  if ((projects.sparkEmitters || 0) !== 4) failures.push(`Gate 4-C-B2 Projects failed: sparkEmitters=${projects.sparkEmitters || 0}`);
+  if ((projects.groundPlates || 0) !== 1) failures.push(`Gate 4-C-B2 Projects failed: groundPlates=${projects.groundPlates || 0}`);
+  if ((projects.signs || 0) !== 0) failures.push(`Gate 4-C-B2 Projects failed: rejected signs=${projects.signs || 0}`);
+  if ((projects.lamps || 0) !== 0) failures.push(`Gate 4-C-B2 Projects failed: rejected lamps=${projects.lamps || 0}`);
+
+  if ((career.pads || 0) !== 1) failures.push(`Gate 4-C-B2 Career failed: pads=${career.pads || 0}`);
+  if ((career.sourceAssets || 0) < 3) failures.push(`Gate 4-C-B2 Career failed: sourceAssets=${career.sourceAssets || 0}`);
+  if ((career.buildingShells || 0) !== 1) failures.push(`Gate 4-C-B2 Career failed: buildingShells=${career.buildingShells || 0}`);
+  if ((career.glassFacades || 0) !== 1) failures.push(`Gate 4-C-B2 Career failed: glassFacades=${career.glassFacades || 0}`);
+  if ((career.entranceCanopies || 0) !== 1) failures.push(`Gate 4-C-B2 Career failed: entranceCanopies=${career.entranceCanopies || 0}`);
+  if ((career.experienceWalls || 0) !== 1) failures.push(`Gate 4-C-B2 Career failed: experienceWalls=${career.experienceWalls || 0}`);
+  if ((career.lobbyGlows || 0) !== 1) failures.push(`Gate 4-C-B2 Career failed: lobbyGlows=${career.lobbyGlows || 0}`);
+  if ((career.servicePaths || 0) !== 1) failures.push(`Gate 4-C-B2 Career failed: servicePaths=${career.servicePaths || 0}`);
+  if ((career.connectorMarks || 0) !== 0) failures.push(`Gate 4-C-B2 Career failed: rejected connectorMarks=${career.connectorMarks || 0}`);
+  if ((career.signs || 0) !== 0) failures.push(`Gate 4-C-B2 Career failed: rejected signs=${career.signs || 0}`);
+  if ((career.lamps || 0) !== 0) failures.push(`Gate 4-C-B2 Career failed: rejected lamps=${career.lamps || 0}`);
+
+  for (const [kind, expected] of [
+    ['gate4c-projects-footprint', 1],
+    ['gate4c-projects-workshop-shell', 1],
+    ['gate4c-projects-build-gantry', 1],
+    ['gate4c-projects-display-bay', 3],
+    ['gate4c-projects-test-bench', 1],
+    ['gate4c-projects-cable-tray', 1],
+    ['gate4c-projects-spark-emitter', 4],
+    ['gate4c-career-footprint', 1],
+    ['gate4c-career-building-shell', 1],
+    ['gate4c-career-glass-facade', 1],
+    ['gate4c-career-experience-wall', 1],
+    ['gate4c-career-entrance-canopy', 1],
+    ['gate4c-career-lobby-glow', 1],
+    ['gate4c-career-service-path', 1]
+  ]) {
+    const source = kind.endsWith('footprint') ? placement.byFootprintKind : placement.byKind;
+    if ((source?.[kind] || 0) !== expected) {
+      failures.push(`Gate 4-C-B2 placement failed: ${kind}=${source?.[kind] || 0}`);
+    }
+  }
+  for (const kind of ['gate4b4-project-rack', 'gate4b4-project-spark', 'gate4b4-career-office', 'gate4b4-career-facade', 'gate4b4-career-frame', 'gate4b4-career-connector']) {
+    if ((placement.byKind?.[kind] || 0) !== 0) {
+      failures.push(`Gate 4-C-B2 placement failed: rejected ${kind}=${placement.byKind?.[kind] || 0}`);
     }
   }
 }
