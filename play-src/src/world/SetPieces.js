@@ -473,6 +473,24 @@ export class SetPieces {
         lamps: 0
       }
     };
+    this.gate4b6Stats = {
+      enabled: false,
+      staticBatches: 0,
+      pads: 0,
+      entryGates: 0,
+      laneCurbs: 0,
+      slalomCones: 0,
+      tireStacks: 0,
+      startLines: 0,
+      landingMarkers: 0,
+      scorePosts: 0,
+      arrowPanels: 0,
+      trackScuffs: 0,
+      authoredAssets: 0,
+      physicalColliders: 0,
+      signs: 0,
+      lamps: 0
+    };
     this.gate3rPlacementStats = {
       recorded: 0,
       intentionalRoadOverlays: 0,
@@ -492,7 +510,7 @@ export class SetPieces {
   build() {
     if (this.world.foundationReplacementMode) {
       this.createFoundationScaffold();
-      if (this.world.gate3rMode || this.world.gate4b1Mode || this.world.gate4b2Mode || this.world.gate4b3Mode || this.world.gate4b4Mode || this.world.gate4b5Mode) {
+      if (this.world.gate3rMode || this.world.gate4b1Mode || this.world.gate4b2Mode || this.world.gate4b3Mode || this.world.gate4b4Mode || this.world.gate4b5Mode || this.world.gate4b6Mode) {
         this.createGate3RVerticalSliceScaffold();
       }
       if (this.world.gate4b1Mode) {
@@ -509,6 +527,9 @@ export class SetPieces {
       }
       if (this.world.gate4b5Mode) {
         this.createGate4B5NorthRidgeScaffold();
+      }
+      if (this.world.gate4b6Mode) {
+        this.createGate4B6StuntCoveScaffold();
       }
       this.applyQuality();
       return;
@@ -763,6 +784,10 @@ export class SetPieces {
       sentinel: { ...this.gate4b5Stats.sentinel },
       circuit: { ...this.gate4b5Stats.circuit }
     };
+  }
+
+  getGate4B6Stats() {
+    return { ...this.gate4b6Stats };
   }
 
   getStartDioramaStats() {
@@ -1695,6 +1720,147 @@ export class SetPieces {
       stats.signalLights += 1;
     }
 
+  }
+
+  createGate4B6StuntCoveScaffold() {
+    this.gate4b6Stats.enabled = true;
+
+    const group = new THREE.Group();
+    group.name = 'GATE4B6_Stunt_Cove_Readiness_Yard';
+    this.createGate4B6ReadinessYard(group);
+
+    this.gate4b6Stats.staticBatches = mergeStaticMeshesInGroup(group, {
+      namePrefix: 'GATE4B6_stunt_cove',
+      cellSize: 34,
+      shouldSkip: (object) => object.name.endsWith('_Glow')
+    });
+    this.world.scene.add(group);
+  }
+
+  createGate4B6ReadinessYard(group) {
+    const stats = this.gate4b6Stats;
+    const anchor = { x: 68, z: -72, rotation: -0.55 };
+    const point = (right, forward) => this.gate4B1Point(anchor, right, forward);
+    const rotation = anchor.rotation;
+    const scuffMaterial = this.sliceOverlayMaterial(0x1b1511, 0.16);
+
+    this.gate3rPad(group, anchor.x, anchor.z, 16, 9, this.world.materials.stuntRamp, 0.132, 'GATE4B6_Stunt_Readiness_Pad', rotation, 'gate4b6-stunt-pad', 5.2);
+    stats.pads += 1;
+
+    const gate = point(0, -3.05);
+    if (this.addPolishAsset(group, 'EnvPolishStuntCheckpoint', gate[0], gate[1], rotation, 0.5)) {
+      stats.authoredAssets += 1;
+    } else {
+      this.box(group, gate[0] - Math.cos(rotation) * 2.15, 1.08, gate[1] + Math.sin(rotation) * 2.15, 0.16, 1.85, 0.16, this.world.materials.cable, rotation, 'GATE4B6_Stunt_Checkpoint_Post_A');
+      this.box(group, gate[0] + Math.cos(rotation) * 2.15, 1.08, gate[1] - Math.sin(rotation) * 2.15, 0.16, 1.85, 0.16, this.world.materials.cable, rotation, 'GATE4B6_Stunt_Checkpoint_Post_B');
+      this.box(group, gate[0], 1.82, gate[1], 4.4, 0.12, 0.18, this.world.materials.warmGlow, rotation, 'GATE4B6_Stunt_Checkpoint_Glow');
+    }
+    this.recordGate3RPlacement('gate4b6-stunt-gate', 'GATE4B6_Stunt_Checkpoint', gate[0], gate[1], { minClearance: 4.8 });
+    stats.entryGates += 1;
+
+    for (const [right, forward, width, depth] of [
+      [-6.7, 0, 0.34, 6.6],
+      [6.7, 0, 0.34, 6.6],
+      [0, -3.6, 10.8, 0.28],
+      [0, 3.6, 10.8, 0.28]
+    ]) {
+      const curb = point(right, forward);
+      this.box(group, curb[0], 0.245, curb[1], width, 0.12, depth, this.world.materials.warmStone, rotation, 'GATE4B6_Stunt_Lane_Curb');
+      this.recordGate3RPlacement('gate4b6-stunt-curb', 'GATE4B6_Stunt_Lane_Curb', curb[0], curb[1], { minClearance: 4.0 });
+      stats.laneCurbs += 1;
+    }
+
+    for (const right of [-2.6, 0, 2.6]) {
+      const startLine = point(right, -1.95);
+      this.box(group, startLine[0], 0.242, startLine[1], 1.18, 0.04, 0.2, this.world.materials.paleStone, rotation, 'GATE4B6_Stunt_Start_Line');
+      this.recordGate3RPlacement('gate4b6-stunt-startline', 'GATE4B6_Stunt_Start_Line', startLine[0], startLine[1], { minClearance: 4.0 });
+      stats.startLines += 1;
+    }
+
+    const coneGeometry = new THREE.ConeGeometry(0.18, 0.56, 5);
+    for (let index = 0; index < 8; index += 1) {
+      const right = -3.2 + index * 0.92;
+      const forward = index % 2 === 0 ? -0.25 : 1.0;
+      const cone = point(right, forward);
+      const mesh = new THREE.Mesh(coneGeometry, index % 2 ? this.world.materials.warmGlow : this.world.materials.glowBlue);
+      mesh.name = 'GATE4B6_Stunt_Slalom_Cone';
+      mesh.position.set(cone[0], 0.46, cone[1]);
+      mesh.rotation.y = rotation + index * 0.08;
+      mesh.receiveShadow = true;
+      group.add(mesh);
+      this.recordGate3RPlacement('gate4b6-stunt-cone', 'GATE4B6_Stunt_Slalom_Cone', cone[0], cone[1], { minClearance: 4.0 });
+      stats.slalomCones += 1;
+    }
+
+    for (const [right, forward] of [
+      [-5.65, -2.65],
+      [5.65, -2.65],
+      [-5.65, 2.65],
+      [5.65, 2.65]
+    ]) {
+      const stack = point(right, forward);
+      for (let layer = 0; layer < 3; layer += 1) {
+        this.cylinder(group, stack[0], 0.23 + layer * 0.12, stack[1], 0.36 - layer * 0.025, 0.1, this.world.materials.cable, 10, 'GATE4B6_Stunt_Tire_Stack');
+      }
+      this.recordGate3RPlacement('gate4b6-stunt-tire-stack', 'GATE4B6_Stunt_Tire_Stack', stack[0], stack[1], { minClearance: 4.0 });
+      stats.tireStacks += 1;
+    }
+
+    for (const right of [-3.3, -1.1, 1.1, 3.3]) {
+      const marker = point(right, 2.0);
+      this.box(group, marker[0], 0.244, marker[1], 1.05, 0.035, 0.36, this.world.materials.warmGlow, rotation, 'GATE4B6_Stunt_Landing_Marker_Glow');
+      this.recordGate3RPlacement('gate4b6-stunt-landing-marker', 'GATE4B6_Stunt_Landing_Marker', marker[0], marker[1], { minClearance: 4.0 });
+      stats.landingMarkers += 1;
+    }
+
+    for (const [right, forward, assetRotation] of [
+      [7.05, -2.15, 0.22],
+      [7.05, 2.35, -0.28]
+    ]) {
+      const tower = point(right, forward);
+      if (this.addPolishAsset(group, 'EnvPolishStuntScoreTower', tower[0], tower[1], rotation + assetRotation, 0.44)) {
+        stats.authoredAssets += 1;
+      } else {
+        this.box(group, tower[0], 0.82, tower[1], 0.64, 1.28, 0.34, this.world.materials.cable, rotation + assetRotation, 'GATE4B6_Stunt_Score_Post');
+        this.box(group, tower[0], 1.36, tower[1] - 0.13, 0.5, 0.18, 0.05, this.world.materials.glowPink, rotation + assetRotation, 'GATE4B6_Stunt_Score_Post_Glow');
+      }
+      this.recordGate3RPlacement('gate4b6-stunt-score-post', 'GATE4B6_Stunt_Score_Post', tower[0], tower[1], { minClearance: 4.0 });
+      stats.scorePosts += 1;
+    }
+
+    for (const [right, forward, assetRotation] of [
+      [-7.0, 0.3, 0.04],
+      [0.0, 3.92, Math.PI * 0.5]
+    ]) {
+      const arrow = point(right, forward);
+      if (this.addPolishAsset(group, 'EnvPolishStuntArrowFence', arrow[0], arrow[1], rotation + assetRotation, 0.42)) {
+        stats.authoredAssets += 1;
+      } else {
+        this.box(group, arrow[0], 0.54, arrow[1], 2.4, 0.18, 0.12, this.world.materials.wood, rotation + assetRotation, 'GATE4B6_Stunt_Arrow_Panel');
+        this.box(group, arrow[0], 0.7, arrow[1] - 0.04, 1.4, 0.08, 0.04, this.world.materials.glowBlue, rotation + assetRotation, 'GATE4B6_Stunt_Arrow_Panel_Glow');
+      }
+      this.recordGate3RPlacement('gate4b6-stunt-arrow-panel', 'GATE4B6_Stunt_Arrow_Panel', arrow[0], arrow[1], { minClearance: 4.0 });
+      stats.arrowPanels += 1;
+    }
+
+    for (let index = 0; index < 10; index += 1) {
+      const side = index % 2 === 0 ? -1 : 1;
+      const scuff = point(side * (1.0 + (index % 5) * 0.34), -0.1 + index * 0.34);
+      this.box(
+        group,
+        scuff[0],
+        0.246 + index * 0.0004,
+        scuff[1],
+        0.18 + (index % 3) * 0.035,
+        0.016,
+        1.35 + (index % 4) * 0.16,
+        scuffMaterial,
+        rotation + side * (0.1 + index * 0.008),
+        'GATE4B6_Stunt_Rubber_Scuff'
+      );
+      this.recordGate3RPlacement('gate4b6-stunt-scuff', 'GATE4B6_Stunt_Rubber_Scuff', scuff[0], scuff[1], { minClearance: 4.0 });
+      stats.trackScuffs += 1;
+    }
   }
 
   gate4B1Point(anchor, right, forward) {

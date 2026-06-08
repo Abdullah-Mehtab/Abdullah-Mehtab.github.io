@@ -2524,6 +2524,7 @@ async function collectRuntimeMetrics(page, loadMs, gameplay, water, surfaces, su
       gate4b3: game.world.setPieces?.getGate4B3Stats?.() || {},
       gate4b4: game.world.setPieces?.getGate4B4Stats?.() || {},
       gate4b5: game.world.setPieces?.getGate4B5Stats?.() || {},
+      gate4b6: game.world.setPieces?.getGate4B6Stats?.() || {},
       meadowComposition: game.world.setPieces?.getMeadowCompositionStats?.() || {},
       fieldBackdrops: game.world.setPieces?.getFieldBackdropStats?.() || {},
       launchField: game.world.setPieces?.getLaunchFieldStats?.() || {},
@@ -3260,6 +3261,13 @@ function assertVerification(result) {
   }
   assertVehicleGroundingMotion(result, failures);
   assertVehicleBodyRoadClipping(result, failures);
+  if (result.goalGate === 'gate-4b6-stunt-cove') {
+    assertGate4B6StuntCoveVerification(result, failures);
+    if (failures.length) {
+      throw new Error(`Play verification failed: ${failures.join('; ')}`);
+    }
+    return;
+  }
   if (result.goalGate === 'gate-4br-composition-correction') {
     assertGate4BRCompositionCorrectionVerification(result, failures);
     if (failures.length) {
@@ -4890,8 +4898,8 @@ function assertGate4B5NorthRidgeVerification(result, failures) {
   }
 }
 
-function assertGate4BRCompositionCorrectionVerification(result, failures) {
-  assertGate4B2WestServiceVerification(result, failures, { expectedGoal: 'gate-4br-composition-correction' });
+function assertGate4BRCompositionCorrectionVerification(result, failures, options = {}) {
+  assertGate4B2WestServiceVerification(result, failures, { expectedGoal: options.expectedGoal || 'gate-4br-composition-correction' });
 
   const dataPierSide = result.gate4b3 || {};
   const todo = dataPierSide.todo || {};
@@ -4987,6 +4995,60 @@ function assertGate4BRCompositionCorrectionVerification(result, failures) {
   }
   if ((result.stuntPark?.ramps || 0) !== 0 || (result.stuntPark?.boostPads || 0) !== 0 || (result.stuntPark?.gates || 0) !== 0) {
     failures.push('Gate 4-BR failed: old StuntPark physical systems were enabled');
+  }
+}
+
+function assertGate4B6StuntCoveVerification(result, failures) {
+  assertGate4BRCompositionCorrectionVerification(result, failures, { expectedGoal: 'gate-4b6-stunt-cove' });
+
+  const stuntCove = result.gate4b6 || {};
+  const placement = result.gate3rPlacement || {};
+  const placementKinds = placement.byKind || {};
+  const footprintKinds = placement.byFootprintKind || {};
+
+  if (!stuntCove.enabled) failures.push('Gate 4-B6 failed: Stunt Cove scaffold inactive');
+  if ((stuntCove.pads || 0) !== 1) failures.push(`Gate 4-B6 failed: pads=${stuntCove.pads || 0}`);
+  if ((stuntCove.entryGates || 0) !== 1) failures.push(`Gate 4-B6 failed: entryGates=${stuntCove.entryGates || 0}`);
+  if ((stuntCove.laneCurbs || 0) !== 4) failures.push(`Gate 4-B6 failed: laneCurbs=${stuntCove.laneCurbs || 0}`);
+  if ((stuntCove.slalomCones || 0) !== 8) failures.push(`Gate 4-B6 failed: slalomCones=${stuntCove.slalomCones || 0}`);
+  if ((stuntCove.tireStacks || 0) !== 4) failures.push(`Gate 4-B6 failed: tireStacks=${stuntCove.tireStacks || 0}`);
+  if ((stuntCove.startLines || 0) !== 3) failures.push(`Gate 4-B6 failed: startLines=${stuntCove.startLines || 0}`);
+  if ((stuntCove.landingMarkers || 0) !== 4) failures.push(`Gate 4-B6 failed: landingMarkers=${stuntCove.landingMarkers || 0}`);
+  if ((stuntCove.scorePosts || 0) !== 2) failures.push(`Gate 4-B6 failed: scorePosts=${stuntCove.scorePosts || 0}`);
+  if ((stuntCove.arrowPanels || 0) !== 2) failures.push(`Gate 4-B6 failed: arrowPanels=${stuntCove.arrowPanels || 0}`);
+  if ((stuntCove.trackScuffs || 0) !== 10) failures.push(`Gate 4-B6 failed: trackScuffs=${stuntCove.trackScuffs || 0}`);
+  if ((stuntCove.physicalColliders || 0) !== 0) failures.push(`Gate 4-B6 failed: physicalColliders=${stuntCove.physicalColliders || 0}`);
+  if ((stuntCove.signs || 0) !== 0 || (stuntCove.lamps || 0) !== 0) {
+    failures.push(`Gate 4-B6 failed: rejected signs/lamps signs=${stuntCove.signs || 0} lamps=${stuntCove.lamps || 0}`);
+  }
+
+  if ((footprintKinds['gate4b6-stunt-pad'] || 0) !== 1) {
+    failures.push(`Gate 4-B6 placement failed: pad footprints=${footprintKinds['gate4b6-stunt-pad'] || 0}`);
+  }
+  for (const [kind, expected] of [
+    ['gate4b6-stunt-gate', 1],
+    ['gate4b6-stunt-curb', 4],
+    ['gate4b6-stunt-startline', 3],
+    ['gate4b6-stunt-cone', 8],
+    ['gate4b6-stunt-tire-stack', 4],
+    ['gate4b6-stunt-landing-marker', 4],
+    ['gate4b6-stunt-score-post', 2],
+    ['gate4b6-stunt-arrow-panel', 2],
+    ['gate4b6-stunt-scuff', 10]
+  ]) {
+    if ((placementKinds[kind] || 0) !== expected) {
+      failures.push(`Gate 4-B6 placement failed: ${kind}=${placementKinds[kind] || 0}/${expected}`);
+    }
+  }
+
+  if ((placement.roadIntrusions || 0) !== 0) failures.push(`Gate 4-B6 placement failed: roadIntrusions=${placement.roadIntrusions || 0}`);
+  if ((placement.footprintIntrusions || 0) !== 0) failures.push(`Gate 4-B6 placement failed: footprintIntrusions=${placement.footprintIntrusions || 0}`);
+  if ((placement.shorelineFootprintIntrusions || 0) !== 0) {
+    failures.push(`Gate 4-B6 placement failed: shorelineFootprintIntrusions=${placement.shorelineFootprintIntrusions || 0}`);
+  }
+  if ((result.colliderCount || 0) !== 2) failures.push(`Gate 4-B6 failed: colliderCount=${result.colliderCount || 0}`);
+  if ((result.stuntPark?.ramps || 0) !== 0 || (result.stuntPark?.boostPads || 0) !== 0 || (result.stuntPark?.gates || 0) !== 0 || (result.stuntPark?.landingMarkers || 0) !== 0) {
+    failures.push('Gate 4-B6 failed: old StuntPark physical systems were enabled');
   }
 }
 
