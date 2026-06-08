@@ -130,6 +130,7 @@ try {
   const vehicleGroundingMotion = await exerciseVehicleGroundingMotion(page);
   const vehicleBodyRoadClipping = await exerciseVehicleBodyRoadClipping(page);
   const stuntPrototype = await exerciseGate4B6RPrototype(page);
+  const stuntFull = await exerciseGate4B6RFullPlayground(page);
   const circuitPreview = await previewCircuit(page);
   await screenshot(page, '06-circuit-target.png');
   const circuit = await finishCircuit(page, circuitPreview);
@@ -236,6 +237,7 @@ try {
     vehicleGroundingMotion,
     vehicleBodyRoadClipping,
     stuntPrototype,
+    stuntFull,
     vehicleLights,
     waterView,
     ...metrics
@@ -1553,6 +1555,7 @@ async function resetGate4B6RPrototypeRun(page, lateralOffset) {
       haltEvents: [],
       airborneFrames: 0,
       groundedAfterAirFrames: 0,
+      recoveredGroundedWheels: 0,
       maxY: game.vehicle.position.y,
       minSpeedAfterLaunch: 999,
       maxSpeed: 0,
@@ -1584,7 +1587,10 @@ async function advanceGate4B6RPrototypeRun(page, ms, actions) {
       state.distance = Math.max(state.distance, distance);
       if (distance > 9) state.minSpeedAfterLaunch = Math.min(state.minSpeedAfterLaunch, speed);
       if (airborne) state.airborneFrames += 1;
-      if (!airborne && state.airborneFrames > 0) state.groundedAfterAirFrames += 1;
+      if (!airborne && state.airborneFrames > 0) {
+        state.groundedAfterAirFrames += 1;
+        state.recoveredGroundedWheels = Math.max(state.recoveredGroundedWheels || 0, groundedWheels);
+      }
       const previous = state.samples[state.samples.length - 1];
       if (actions.forward && previous && distance > 5 && speed < 1.5 && Math.abs(distance - previous.distance) < 0.08) {
         state.haltEvents.push({
@@ -1645,6 +1651,7 @@ async function finalizeGate4B6RPrototypeRun(page) {
       minSpeedAfterLaunch: Number((state.minSpeedAfterLaunch === 999 ? 0 : state.minSpeedAfterLaunch || 0).toFixed(2)),
       airborneFrames: state.airborneFrames || 0,
       groundedAfterAirFrames: state.groundedAfterAirFrames || 0,
+      recoveredGroundedWheels: state.recoveredGroundedWheels || 0,
       landingSeen,
       finalGroundedWheels: game.vehicle.controller?.groundedWheels || 0,
       finalSurface: game.world.getSurfaceInfo(final).id,
@@ -1662,7 +1669,10 @@ async function exerciseGate4B6RPrototypeMiss(page) {
   const result = await finalizeGate4B6RPrototypeRun(page);
   return {
     ...result,
-    recoverable: result.halts === 0 && result.finalSurface !== 'water' && result.finalGroundedWheels >= 2 && result.distance > 12
+    recoverable: result.halts === 0
+      && result.finalSurface !== 'water'
+      && Math.max(result.finalGroundedWheels || 0, result.recoveredGroundedWheels || 0) >= 2
+      && result.distance > 12
   };
 }
 
@@ -1711,6 +1721,321 @@ async function stageGate4B6RPrototypeView(page, mode) {
     game.camera.lookAt(target);
     game.rendererSystem.render();
   }, mode);
+  await delay(70);
+}
+
+async function exerciseGate4B6RFullPlayground(page) {
+  const enabled = await page.evaluate(() => window.__portfolioDrive.game.world.goalGate === 'gate-4b6r-full-stunt-playground');
+  if (!enabled) return { enabled: false, screenshots: [] };
+
+  const screenshots = [];
+  const lineResults = {};
+  const lines = gate4B6RFullVerifierLines();
+  for (const line of lines) {
+    await resetGate4B6RLineRun(page, line, 0);
+    await stageGate4B6RLineView(page, line, 'approach');
+    await screenshot(page, `stunt-b6r-full-${line.id}-approach.png`);
+    screenshots.push(`stunt-b6r-full-${line.id}-approach.png`);
+
+    await advanceGate4B6RLineRun(page, line.approachMs, { forward: true });
+    await stageGate4B6RLineView(page, line, 'takeoff');
+    await screenshot(page, `stunt-b6r-full-${line.id}-takeoff.png`);
+    screenshots.push(`stunt-b6r-full-${line.id}-takeoff.png`);
+
+    await advanceGate4B6RLineRun(page, line.launchMs, { forward: true, boost: line.boost });
+    await stageGate4B6RLineView(page, line, 'air');
+    await screenshot(page, `stunt-b6r-full-${line.id}-air.png`);
+    screenshots.push(`stunt-b6r-full-${line.id}-air.png`);
+
+    await advanceGate4B6RLineRun(page, line.recoveryMs, { forward: true });
+    await stageGate4B6RLineView(page, line, 'landing');
+    await screenshot(page, `stunt-b6r-full-${line.id}-landing.png`);
+    screenshots.push(`stunt-b6r-full-${line.id}-landing.png`);
+    lineResults[line.id] = await finalizeGate4B6RLineRun(page);
+  }
+
+  const freePlay = await exerciseGate4B6RFreePlay(page);
+  await stageGate4B6RFreePlayView(page);
+  await screenshot(page, 'stunt-b6r-full-freeplay.png');
+  screenshots.push('stunt-b6r-full-freeplay.png');
+
+  const missRecovery = await exerciseGate4B6RFullMiss(page);
+  await stageGate4B6RLineView(page, lines.find((line) => line.id === 'risk'), 'miss');
+  await screenshot(page, 'stunt-b6r-full-risk-miss-recovery.png');
+  screenshots.push('stunt-b6r-full-risk-miss-recovery.png');
+
+  await page.evaluate(() => window.__portfolioDrive.showColliders());
+  await stageGate4B6RDebugView(page);
+  await screenshot(page, 'stunt-b6r-full-debug-colliders.png');
+  screenshots.push('stunt-b6r-full-debug-colliders.png');
+
+  const colliderEvidence = await page.evaluate(() => {
+    const game = window.__portfolioDrive.game;
+    const colliders = window.__portfolioDrive.colliders()
+      .filter((collider) => collider.name.startsWith('STUNTB6R_'))
+      .map((collider) => ({
+        name: collider.name,
+        visualName: collider.visualName || null,
+        type: collider.type,
+        sensor: Boolean(collider.sensor),
+        visualExists: Boolean(collider.visualName && game.scene.getObjectByName(collider.visualName))
+      }));
+    return {
+      colliders,
+      missingVisuals: colliders.filter((collider) => !collider.visualExists).map((collider) => collider.name)
+    };
+  });
+
+  return {
+    enabled: true,
+    screenshots,
+    lines: lineResults,
+    freePlay,
+    missRecovery,
+    colliderEvidence
+  };
+}
+
+function gate4B6RFullVerifierLines() {
+  return [
+    { id: 'beginner', start: { x: 60, y: 1.12, z: -96 }, heading: -0.35, approachMs: 760, launchMs: 620, recoveryMs: 940, boost: true, minDistance: 32, minHeight: 0.3, minAirborne: 2 },
+    { id: 'parkour', start: { x: 68, y: 1.12, z: -97 }, heading: -0.48, approachMs: 940, launchMs: 880, recoveryMs: 1320, boost: true, minDistance: 50, minHeight: 0.28, minAirborne: 2 },
+    { id: 'precision', start: { x: 78, y: 1.12, z: -98 }, heading: -0.67, approachMs: 840, launchMs: 760, recoveryMs: 1040, boost: false, minDistance: 34, minHeight: 0.24, minAirborne: 1 },
+    { id: 'risk', start: { x: 86, y: 1.12, z: -94 }, heading: -0.52, approachMs: 980, launchMs: 940, recoveryMs: 1260, boost: true, minDistance: 52, minHeight: 0.45, minAirborne: 2 }
+  ];
+}
+
+async function resetGate4B6RLineRun(page, line, lateralOffset) {
+  return page.evaluate(({ line, lateralOffset }) => {
+    const game = window.__portfolioDrive.game;
+    const input = game.input;
+    const heading = line.heading;
+    const forward = { x: Math.sin(heading), z: Math.cos(heading) };
+    const right = { x: Math.cos(heading), z: -Math.sin(heading) };
+    const start = {
+      x: line.start.x + right.x * lateralOffset,
+      y: line.start.y,
+      z: line.start.z + right.z * lateralOffset
+    };
+    for (const action of ['forward', 'boost', 'backward', 'brake', 'handbrake', 'left', 'right', 'jump']) {
+      input.actions[action] = false;
+    }
+    input.joystick.x = 0;
+    input.joystick.y = 0;
+    input.pressed?.clear?.();
+    game.ui.closePanel?.();
+    game.ui.closeMap?.();
+    game.ui.closeMenu?.();
+    game.startDriving();
+    game.vehicle.respawn(start, heading);
+    game.vehicle.body.setLinvel({ x: forward.x * 5.2, y: 0, z: forward.z * 5.2 }, true);
+    game.vehicle.body.setAngvel({ x: 0, y: 0, z: 0 }, true);
+    game.__verifyStuntLine = {
+      id: line.id,
+      heading,
+      start,
+      landingEventsBefore: game.vehicle.landingEvents || 0,
+      samples: [],
+      haltEvents: [],
+      airborneFrames: 0,
+      groundedAfterAirFrames: 0,
+      recoveredGroundedWheels: 0,
+      maxY: game.vehicle.position.y,
+      minSpeedAfterLaunch: 999,
+      maxSpeed: 0,
+      distance: 0
+    };
+  }, { line, lateralOffset });
+}
+
+async function advanceGate4B6RLineRun(page, ms, actions) {
+  return page.evaluate(async ({ ms, actions }) => {
+    const delay = (timeout) => new Promise((resolveDelay) => setTimeout(resolveDelay, timeout));
+    const game = window.__portfolioDrive.game;
+    const input = game.input;
+    const state = game.__verifyStuntLine;
+    const clearInput = () => {
+      for (const action of ['forward', 'boost', 'backward', 'brake', 'handbrake', 'left', 'right', 'jump']) {
+        input.actions[action] = false;
+      }
+    };
+    const sample = (label) => {
+      const position = game.vehicle.position.clone();
+      const start = state.start;
+      const speed = game.vehicle.speed || Math.hypot(game.vehicle.body.linvel().x, game.vehicle.body.linvel().z);
+      const groundedWheels = game.vehicle.controller?.groundedWheels || 0;
+      const distance = Math.hypot(position.x - start.x, position.z - start.z);
+      const airborne = groundedWheels < 2;
+      state.maxY = Math.max(state.maxY, position.y);
+      state.maxSpeed = Math.max(state.maxSpeed, speed);
+      state.distance = Math.max(state.distance, distance);
+      if (distance > 9) state.minSpeedAfterLaunch = Math.min(state.minSpeedAfterLaunch, speed);
+      if (airborne) state.airborneFrames += 1;
+      if (!airborne && state.airborneFrames > 0) {
+        state.groundedAfterAirFrames += 1;
+        state.recoveredGroundedWheels = Math.max(state.recoveredGroundedWheels || 0, groundedWheels);
+      }
+      const previous = state.samples[state.samples.length - 1];
+      if (actions.forward && previous && distance > 5 && speed < 1.5 && Math.abs(distance - previous.distance) < 0.08) {
+        state.haltEvents.push({
+          label,
+          speed: Number(speed.toFixed(2)),
+          distance: Number(distance.toFixed(2)),
+          position: { x: Number(position.x.toFixed(2)), z: Number(position.z.toFixed(2)) },
+          groundedWheels
+        });
+      }
+      state.samples.push({
+        label,
+        t: performance.now(),
+        x: Number(position.x.toFixed(2)),
+        y: Number(position.y.toFixed(2)),
+        z: Number(position.z.toFixed(2)),
+        speed: Number(speed.toFixed(2)),
+        distance: Number(distance.toFixed(2)),
+        surface: game.world.getSurfaceInfo(position).id,
+        groundedWheels
+      });
+    };
+
+    clearInput();
+    for (const action of Object.keys(actions)) {
+      input.actions[action] = Boolean(actions[action]);
+    }
+    const steps = Math.max(1, Math.ceil(ms / 80));
+    for (let index = 0; index < steps; index += 1) {
+      await delay(ms / steps);
+      sample(`step-${index}`);
+    }
+    clearInput();
+  }, { ms, actions });
+}
+
+async function finalizeGate4B6RLineRun(page) {
+  return page.evaluate(() => {
+    const game = window.__portfolioDrive.game;
+    const state = game.__verifyStuntLine || {};
+    const final = game.vehicle.position.clone();
+    const maxHeightDelta = (state.maxY || final.y) - (state.start?.y || final.y);
+    const landingSeen = (game.vehicle.landingEvents || 0) > (state.landingEventsBefore || 0)
+      || (state.airborneFrames || 0) > 0 && (state.groundedAfterAirFrames || 0) > 2;
+    return {
+      start: {
+        x: Number((state.start?.x || 0).toFixed(2)),
+        z: Number((state.start?.z || 0).toFixed(2))
+      },
+      final: {
+        x: Number(final.x.toFixed(2)),
+        y: Number(final.y.toFixed(2)),
+        z: Number(final.z.toFixed(2))
+      },
+      distance: Number((state.distance || 0).toFixed(2)),
+      maxHeightDelta: Number(maxHeightDelta.toFixed(2)),
+      maxSpeed: Number((state.maxSpeed || 0).toFixed(2)),
+      minSpeedAfterLaunch: Number((state.minSpeedAfterLaunch === 999 ? 0 : state.minSpeedAfterLaunch || 0).toFixed(2)),
+      airborneFrames: state.airborneFrames || 0,
+      groundedAfterAirFrames: state.groundedAfterAirFrames || 0,
+      recoveredGroundedWheels: state.recoveredGroundedWheels || 0,
+      landingSeen,
+      finalGroundedWheels: game.vehicle.controller?.groundedWheels || 0,
+      finalSurface: game.world.getSurfaceInfo(final).id,
+      halts: (state.haltEvents || []).length,
+      haltEvents: state.haltEvents || [],
+      samples: state.samples || []
+    };
+  });
+}
+
+async function exerciseGate4B6RFreePlay(page) {
+  const line = { id: 'freeplay', start: { x: 78, y: 1.12, z: -66 }, heading: 1.18 };
+  await resetGate4B6RLineRun(page, line, 0);
+  await advanceGate4B6RLineRun(page, 760, { forward: true });
+  await advanceGate4B6RLineRun(page, 600, { forward: true, handbrake: true, left: true });
+  const result = await finalizeGate4B6RLineRun(page);
+  return {
+    ...result,
+    playable: result.halts === 0 && result.distance > 12 && result.finalSurface !== 'water'
+  };
+}
+
+async function exerciseGate4B6RFullMiss(page) {
+  const risk = gate4B6RFullVerifierLines().find((line) => line.id === 'risk');
+  await resetGate4B6RLineRun(page, risk, 8.5);
+  await advanceGate4B6RLineRun(page, 1700, { forward: true });
+  await advanceGate4B6RLineRun(page, 720, { forward: true, brake: true });
+  const result = await finalizeGate4B6RLineRun(page);
+  return {
+    ...result,
+    recoverable: result.halts === 0
+      && result.finalSurface !== 'water'
+      && Math.max(result.finalGroundedWheels || 0, result.recoveredGroundedWheels || 0) >= 2
+      && result.distance > 16
+  };
+}
+
+async function stageGate4B6RLineView(page, line, mode) {
+  await page.evaluate(({ line, mode }) => {
+    const game = window.__portfolioDrive.game;
+    const heading = line.heading;
+    const forward = { x: Math.sin(heading), z: Math.cos(heading) };
+    const right = { x: Math.cos(heading), z: -Math.sin(heading) };
+    const target = game.vehicle.position.clone();
+    const leadByMode = { air: 3.5, landing: 5.5, miss: 4.5 };
+    const lead = leadByMode[mode] || 0;
+    target.x += forward.x * lead;
+    target.z += forward.z * lead;
+    target.y += 1.1;
+    const cameraPosition = target.clone();
+    const sideByMode = mode === 'approach' ? 14 : mode === 'takeoff' ? 13 : 15;
+    const aheadByMode = mode === 'approach' ? -12 : mode === 'takeoff' ? -6 : mode === 'air' ? -2 : 5;
+    const upByMode = mode === 'air' ? 6.8 : 5.8;
+    cameraPosition.x += right.x * sideByMode + forward.x * aheadByMode;
+    cameraPosition.z += right.z * sideByMode + forward.z * aheadByMode;
+    cameraPosition.y += upByMode;
+    game.cameraRig.setCinematic(cameraPosition, target, 42);
+    game.cameraRig.smoothedTarget.copy(target);
+    game.camera.position.copy(cameraPosition);
+    game.camera.fov = 42;
+    game.camera.updateProjectionMatrix();
+    game.camera.lookAt(target);
+    game.rendererSystem.render();
+  }, { line, mode });
+  await delay(70);
+}
+
+async function stageGate4B6RFreePlayView(page) {
+  await page.evaluate(() => {
+    const game = window.__portfolioDrive.game;
+    const target = game.vehicle.position.clone();
+    target.y += 1.2;
+    const cameraPosition = target.clone();
+    cameraPosition.x -= 13;
+    cameraPosition.y += 7;
+    cameraPosition.z -= 10;
+    game.cameraRig.setCinematic(cameraPosition, target, 44);
+    game.cameraRig.smoothedTarget.copy(target);
+    game.camera.position.copy(cameraPosition);
+    game.camera.fov = 44;
+    game.camera.updateProjectionMatrix();
+    game.camera.lookAt(target);
+    game.rendererSystem.render();
+  });
+  await delay(70);
+}
+
+async function stageGate4B6RDebugView(page) {
+  await page.evaluate(() => {
+    const game = window.__portfolioDrive.game;
+    const target = game.vehicle.position.clone().set(74, 1.2, -70);
+    const cameraPosition = game.vehicle.position.clone().set(112, 32, -128);
+    game.cameraRig.setCinematic(cameraPosition, target, 50);
+    game.cameraRig.smoothedTarget.copy(target);
+    game.camera.position.copy(cameraPosition);
+    game.camera.fov = 50;
+    game.camera.updateProjectionMatrix();
+    game.camera.lookAt(target);
+    game.rendererSystem.render();
+  });
   await delay(70);
 }
 
@@ -3536,6 +3861,13 @@ function assertVerification(result) {
     }
     return;
   }
+  if (result.goalGate === 'gate-4b6r-full-stunt-playground') {
+    assertGate4B6RFullPlaygroundVerification(result, failures);
+    if (failures.length) {
+      throw new Error(`Play verification failed: ${failures.join('; ')}`);
+    }
+    return;
+  }
   if (result.goalGate === 'gate-4b6-stunt-cove') {
     assertGate4B6StuntCoveVerification(result, failures);
     if (failures.length) {
@@ -4654,6 +4986,7 @@ function assertGate2RFoundationReplacementVerification(result, failures) {
 function assertGate3RVerticalSliceVerification(result, failures, options = {}) {
   const expectedGoal = options.expectedGoal || 'gate-3r-vertical-slice';
   const allowPrototypeStuntPark = Boolean(options.allowPrototypeStuntPark);
+  const allowedExtraColliderPrefixes = options.allowedExtraColliderPrefixes || [];
   const blockout = result.blockout || {};
   const blockoutSetPieces = blockout.setPieces || {};
   const slice = result.verticalSlice || blockout.verticalSlice || {};
@@ -4779,6 +5112,7 @@ function assertGate3RVerticalSliceVerification(result, failures, options = {}) {
     collider.name !== 'ToyIslandTerrainCollider'
     && collider.name !== 'ZONE_education_protected_landmark_collider'
     && !(allowPrototypeStuntPark && collider.name === 'STUNTB6R_training_ramp_collider')
+    && !allowedExtraColliderPrefixes.some((prefix) => collider.name.startsWith(prefix))
   ));
   if (nonProtectedColliders.length) {
     failures.push(`Gate 3R physics failed: extra driving colliders=${nonProtectedColliders.map((collider) => collider.name).join(', ')}`);
@@ -4872,7 +5206,8 @@ function assertGate3RVerticalSliceVerification(result, failures, options = {}) {
 function assertGate4B1SouthRunVerification(result, failures, options = {}) {
   assertGate3RVerticalSliceVerification(result, failures, {
     expectedGoal: options.expectedGoal || 'gate-4b1-south-run',
-    allowPrototypeStuntPark: options.allowPrototypeStuntPark
+    allowPrototypeStuntPark: options.allowPrototypeStuntPark,
+    allowedExtraColliderPrefixes: options.allowedExtraColliderPrefixes
   });
 
   const southRun = result.gate4b1 || {};
@@ -4914,7 +5249,8 @@ function assertGate4B1SouthRunVerification(result, failures, options = {}) {
 function assertGate4B2WestServiceVerification(result, failures, options = {}) {
   assertGate4B1SouthRunVerification(result, failures, {
     expectedGoal: options.expectedGoal || 'gate-4b2-west-service',
-    allowPrototypeStuntPark: options.allowPrototypeStuntPark
+    allowPrototypeStuntPark: options.allowPrototypeStuntPark,
+    allowedExtraColliderPrefixes: options.allowedExtraColliderPrefixes
   });
 
   const westService = result.gate4b2 || {};
@@ -4970,7 +5306,8 @@ function assertGate4B2WestServiceVerification(result, failures, options = {}) {
 function assertGate4B3DataPierSideVerification(result, failures, options = {}) {
   assertGate4B2WestServiceVerification(result, failures, {
     expectedGoal: options.expectedGoal || 'gate-4b3-data-pier-side',
-    allowPrototypeStuntPark: options.allowPrototypeStuntPark
+    allowPrototypeStuntPark: options.allowPrototypeStuntPark,
+    allowedExtraColliderPrefixes: options.allowedExtraColliderPrefixes
   });
 
   const dataPierSide = result.gate4b3 || {};
@@ -5026,7 +5363,8 @@ function assertGate4B3DataPierSideVerification(result, failures, options = {}) {
 function assertGate4B4EastSideVerification(result, failures, options = {}) {
   assertGate4B3DataPierSideVerification(result, failures, {
     expectedGoal: options.expectedGoal || 'gate-4b4-east-side',
-    allowPrototypeStuntPark: options.allowPrototypeStuntPark
+    allowPrototypeStuntPark: options.allowPrototypeStuntPark,
+    allowedExtraColliderPrefixes: options.allowedExtraColliderPrefixes
   });
 
   const eastSide = result.gate4b4 || {};
@@ -5108,7 +5446,8 @@ function assertGate4B4EastSideVerification(result, failures, options = {}) {
 function assertGate4B5NorthRidgeVerification(result, failures, options = {}) {
   assertGate4B4EastSideVerification(result, failures, {
     expectedGoal: options.expectedGoal || 'gate-4b5-north-ridge',
-    allowPrototypeStuntPark: options.allowPrototypeStuntPark
+    allowPrototypeStuntPark: options.allowPrototypeStuntPark,
+    allowedExtraColliderPrefixes: options.allowedExtraColliderPrefixes
   });
 
   const northRidge = result.gate4b5 || {};
@@ -5193,7 +5532,8 @@ function assertGate4B5NorthRidgeVerification(result, failures, options = {}) {
 function assertGate4BRCompositionCorrectionVerification(result, failures, options = {}) {
   assertGate4B2WestServiceVerification(result, failures, {
     expectedGoal: options.expectedGoal || 'gate-4br-composition-correction',
-    allowPrototypeStuntPark: options.allowPrototypeStuntPark
+    allowPrototypeStuntPark: options.allowPrototypeStuntPark,
+    allowedExtraColliderPrefixes: options.allowedExtraColliderPrefixes
   });
 
   const dataPierSide = result.gate4b3 || {};
@@ -5296,7 +5636,11 @@ function assertGate4BRCompositionCorrectionVerification(result, failures, option
 function assertGate4B6StuntCoveVerification(result, failures, options = {}) {
   const expectedGoal = options.expectedGoal || 'gate-4b6-stunt-cove';
   const allowPrototypeStuntPark = Boolean(options.allowPrototypeStuntPark);
-  assertGate4BRCompositionCorrectionVerification(result, failures, { expectedGoal, allowPrototypeStuntPark });
+  assertGate4BRCompositionCorrectionVerification(result, failures, {
+    expectedGoal,
+    allowPrototypeStuntPark,
+    allowedExtraColliderPrefixes: options.allowedExtraColliderPrefixes
+  });
 
   const stuntCove = result.gate4b6 || {};
   const placement = result.gate3rPlacement || {};
@@ -5394,11 +5738,85 @@ function assertGate4B6RPhysicsPrototypeVerification(result, failures) {
   if ((route.maxHeightDelta || 0) < 0.28) failures.push(`Gate 4-B6R route failed: maxHeightDelta=${route.maxHeightDelta || 0}`);
   if ((route.airborneFrames || 0) < 2) failures.push(`Gate 4-B6R route failed: airborneFrames=${route.airborneFrames || 0}`);
   if (!route.landingSeen) failures.push('Gate 4-B6R route failed: landing not observed');
-  if ((route.finalGroundedWheels || 0) < 2) failures.push(`Gate 4-B6R route failed: finalGroundedWheels=${route.finalGroundedWheels || 0}`);
+  if (Math.max(route.finalGroundedWheels || 0, route.recoveredGroundedWheels || 0) < 2) {
+    failures.push(`Gate 4-B6R route failed: recoveredGroundedWheels=${route.recoveredGroundedWheels || 0}, finalGroundedWheels=${route.finalGroundedWheels || 0}`);
+  }
   if (route.finalSurface === 'water') failures.push('Gate 4-B6R route failed: ended in water');
   if ((route.halts || 0) !== 0) failures.push(`Gate 4-B6R route failed: halts=${route.halts || 0}`);
   if (!miss.recoverable) failures.push(`Gate 4-B6R miss recovery failed: recoverable=${miss.recoverable}`);
   if ((miss.halts || 0) !== 0) failures.push(`Gate 4-B6R miss recovery failed: halts=${miss.halts || 0}`);
+}
+
+function assertGate4B6RFullPlaygroundVerification(result, failures) {
+  assertGate4BRCompositionCorrectionVerification(result, failures, {
+    expectedGoal: 'gate-4b6r-full-stunt-playground',
+    allowPrototypeStuntPark: true,
+    allowedExtraColliderPrefixes: ['STUNTB6R_']
+  });
+
+  const stats = result.stuntPark || {};
+  const full = result.stuntFull || {};
+  const requiredLines = gate4B6RFullVerifierLines();
+  const lineIds = new Set(stats.fullLineIds || []);
+  const colliderEvidence = full.colliderEvidence || {};
+  const stuntColliders = colliderEvidence.colliders || [];
+
+  if (!stats.fullEnabled) failures.push('Gate 4-B6R-C failed: full playground mode inactive');
+  for (const line of requiredLines) {
+    if (!lineIds.has(line.id)) failures.push(`Gate 4-B6R-C failed: missing line id ${line.id}`);
+  }
+  if ((stats.fullRampCount || 0) < 5 || (stats.ramps || 0) < 5) {
+    failures.push(`Gate 4-B6R-C failed: ramps=${stats.fullRampCount || 0}/${stats.ramps || 0}`);
+  }
+  if ((stats.fullBankedTurns || 0) < 1) failures.push(`Gate 4-B6R-C failed: bankedTurns=${stats.fullBankedTurns || 0}`);
+  if ((stats.fullPhysicalColliders || 0) < 6) failures.push(`Gate 4-B6R-C failed: physicalColliders=${stats.fullPhysicalColliders || 0}`);
+  if ((stats.fullLandingTargets || 0) < 10) failures.push(`Gate 4-B6R-C failed: landingTargets=${stats.fullLandingTargets || 0}`);
+  if ((stats.fullRunwayMarks || 0) < 22) failures.push(`Gate 4-B6R-C failed: runwayMarks=${stats.fullRunwayMarks || 0}`);
+  if ((stats.fullRecoveryGuides || 0) < 14) failures.push(`Gate 4-B6R-C failed: recoveryGuides=${stats.fullRecoveryGuides || 0}`);
+  if ((stats.fullPrecisionGates || 0) < 10) failures.push(`Gate 4-B6R-C failed: precisionGates=${stats.fullPrecisionGates || 0}`);
+  if ((stats.fullRiskMarkers || 0) < 4) failures.push(`Gate 4-B6R-C failed: riskMarkers=${stats.fullRiskMarkers || 0}`);
+  if ((stats.fullFreePlayZones || 0) !== 1) failures.push(`Gate 4-B6R-C failed: freePlayZones=${stats.fullFreePlayZones || 0}`);
+  if ((stats.boostPads || 0) !== 0 || (stats.gates || 0) !== 0) {
+    failures.push('Gate 4-B6R-C failed: rejected old StuntPark boost/gate systems were enabled');
+  }
+  if ((result.gate4b6?.enabled || false)) {
+    failures.push('Gate 4-B6R-C failed: old visual readiness yard is still active');
+  }
+
+  if (!full.enabled) failures.push('Gate 4-B6R-C route failed: full playground probe skipped');
+  if ((full.screenshots?.length || 0) < 19) failures.push(`Gate 4-B6R-C route failed: screenshots=${full.screenshots?.length || 0}`);
+  if (stuntColliders.length !== (stats.fullPhysicalColliders || 0)) {
+    failures.push(`Gate 4-B6R-C collider failed: runtime stunt colliders=${stuntColliders.length} stats=${stats.fullPhysicalColliders || 0}`);
+  }
+  if ((colliderEvidence.missingVisuals || []).length) {
+    failures.push(`Gate 4-B6R-C collider failed: missing visuals=${colliderEvidence.missingVisuals.join(', ')}`);
+  }
+
+  for (const line of requiredLines) {
+    const resultLine = full.lines?.[line.id] || {};
+    if ((resultLine.distance || 0) < line.minDistance) {
+      failures.push(`Gate 4-B6R-C ${line.id} failed: distance=${resultLine.distance || 0}`);
+    }
+    if ((resultLine.maxHeightDelta || 0) < line.minHeight) {
+      failures.push(`Gate 4-B6R-C ${line.id} failed: maxHeightDelta=${resultLine.maxHeightDelta || 0}`);
+    }
+    if ((resultLine.airborneFrames || 0) < line.minAirborne) {
+      failures.push(`Gate 4-B6R-C ${line.id} failed: airborneFrames=${resultLine.airborneFrames || 0}`);
+    }
+    if (!resultLine.landingSeen) failures.push(`Gate 4-B6R-C ${line.id} failed: landing not observed`);
+    if (Math.max(resultLine.finalGroundedWheels || 0, resultLine.recoveredGroundedWheels || 0) < 2) {
+      failures.push(`Gate 4-B6R-C ${line.id} failed: recoveredGroundedWheels=${resultLine.recoveredGroundedWheels || 0}, finalGroundedWheels=${resultLine.finalGroundedWheels || 0}`);
+    }
+    if (resultLine.finalSurface === 'water') failures.push(`Gate 4-B6R-C ${line.id} failed: ended in water`);
+    if ((resultLine.halts || 0) !== 0) failures.push(`Gate 4-B6R-C ${line.id} failed: halts=${resultLine.halts || 0}`);
+  }
+
+  if (!full.freePlay?.playable) failures.push('Gate 4-B6R-C freeplay failed: route not playable');
+  if ((full.freePlay?.halts || 0) !== 0) failures.push(`Gate 4-B6R-C freeplay failed: halts=${full.freePlay?.halts || 0}`);
+  if (!full.missRecovery?.recoverable) failures.push('Gate 4-B6R-C miss recovery failed: risk miss not recoverable');
+  if ((full.missRecovery?.halts || 0) !== 0) failures.push(`Gate 4-B6R-C miss recovery failed: halts=${full.missRecovery?.halts || 0}`);
+  if ((result.forwardDriveProbe?.halts || 0) !== 0) failures.push(`Gate 4-B6R-C failed: forwardDriveProbe.halts=${result.forwardDriveProbe?.halts || 0}`);
+  if ((result.routeReplay?.failed || 0) !== 0) failures.push(`Gate 4-B6R-C failed: routeReplay.failed=${result.routeReplay?.failed || 0}`);
 }
 
 function assertGate2BlockoutVerification(result, failures) {

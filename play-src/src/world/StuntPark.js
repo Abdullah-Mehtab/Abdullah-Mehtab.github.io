@@ -32,6 +32,10 @@ export class StuntPark {
 
   build() {
     this.stats = this.createStats();
+    if (this.world.gate4b6rFullMode) {
+      this.createGate4B6RFullPlayground();
+      return;
+    }
     if (this.world.gate4b6rPrototypeMode) {
       this.createGate4B6RPrototype();
       return;
@@ -98,7 +102,18 @@ export class StuntPark {
       prototypeRunwayMarks: 0,
       prototypeRecoveryGuides: 0,
       prototypeDebugMarkers: 0,
-      prototypeLine: null
+      prototypeLine: null,
+      fullEnabled: false,
+      fullLineIds: [],
+      fullRampCount: 0,
+      fullBankedTurns: 0,
+      fullPhysicalColliders: 0,
+      fullLandingTargets: 0,
+      fullRunwayMarks: 0,
+      fullRecoveryGuides: 0,
+      fullPrecisionGates: 0,
+      fullRiskMarkers: 0,
+      fullFreePlayZones: 0
     };
   }
 
@@ -137,6 +152,189 @@ export class StuntPark {
     ]);
 
     this.world.scene.add(group);
+  }
+
+  createGate4B6RFullPlayground() {
+    const group = new THREE.Group();
+    group.name = 'STUNTB6R_Full_Playground';
+    const lines = gate4B6RFullLines();
+
+    this.stats.fullEnabled = true;
+    this.stats.fullLineIds = lines.map((line) => line.id);
+    for (const line of lines) {
+      this.addGate4B6RFullRunwayMarks(group, line);
+      for (const ramp of line.ramps) {
+        this.addGate4B6RPlaygroundRamp(line.id, ramp);
+      }
+      for (const bank of line.banks || []) {
+        this.addGate4B6RPlaygroundBank(line.id, bank);
+      }
+      for (const landing of line.landings || []) {
+        this.addGate4B6RFullLandingTarget(group, line, landing);
+      }
+      this.addGate4B6RFullRecoveryGuides(group, line);
+      if (line.id === 'precision') {
+        this.addGate4B6RPrecisionGates(group, line);
+      }
+      if (line.id === 'risk') {
+        this.addGate4B6RRiskMarkers(group, line);
+      }
+    }
+
+    this.addGate4B6RFreePlayLoop(group);
+    this.world.scene.add(group);
+  }
+
+  addGate4B6RPlaygroundRamp(lineId, ramp) {
+    const rampShape = createRampShape(ramp.width, ramp.length, ramp.height);
+    const mesh = new THREE.Mesh(rampShape.geometry, this.world.materials.stuntRamp);
+    mesh.name = `STUNTB6R_${lineId}_${ramp.id}_ramp`;
+    mesh.position.set(ramp.x, ramp.y, ramp.z);
+    mesh.rotation.y = ramp.rotation;
+    mesh.castShadow = true;
+    mesh.receiveShadow = true;
+    this.world.scene.add(mesh);
+
+    this.world.ramps.push({ id: `b6r-${lineId}-${ramp.id}`, position: new THREE.Vector3(ramp.x, 0, ramp.z), radius: Math.max(9, ramp.length * 0.75), triggered: false });
+    this.world.physics.createFixedTrimesh([ramp.x, ramp.y, ramp.z], rampShape.vertices, rampShape.indices, {
+      debugName: `STUNTB6R_${lineId}_${ramp.id}_ramp_collider`,
+      visualName: `STUNTB6R_${lineId}_${ramp.id}_ramp`,
+      rotation: [0, ramp.rotation, 0],
+      friction: 0.95,
+      restitution: 0.02
+    });
+    this.stats.ramps += 1;
+    this.stats.fullRampCount += 1;
+    this.stats.fullPhysicalColliders += 1;
+  }
+
+  addGate4B6RPlaygroundBank(lineId, bank) {
+    const bankShape = createRampShape(bank.width, bank.length, bank.height);
+    const mesh = new THREE.Mesh(bankShape.geometry, this.world.materials.warmStone);
+    mesh.name = `STUNTB6R_${lineId}_${bank.id}_bank`;
+    mesh.position.set(bank.x, bank.y, bank.z);
+    mesh.rotation.y = bank.rotation;
+    mesh.castShadow = true;
+    mesh.receiveShadow = true;
+    this.world.scene.add(mesh);
+
+    this.world.physics.createFixedTrimesh([bank.x, bank.y, bank.z], bankShape.vertices, bankShape.indices, {
+      debugName: `STUNTB6R_${lineId}_${bank.id}_bank_collider`,
+      visualName: `STUNTB6R_${lineId}_${bank.id}_bank`,
+      rotation: [0, bank.rotation, 0],
+      friction: 0.98,
+      restitution: 0.01
+    });
+    this.stats.fullBankedTurns += 1;
+    this.stats.fullPhysicalColliders += 1;
+  }
+
+  addGate4B6RFullRunwayMarks(group, line) {
+    const forward = gate4B6RForward(line.heading);
+    const right = gate4B6RRight(line.heading);
+    const material = new THREE.MeshBasicMaterial({ color: line.color, transparent: true, opacity: 0.36, depthWrite: false });
+    for (let index = 0; index < line.runwayMarks; index += 1) {
+      const side = index % 2 === 0 ? -1 : 1;
+      const ahead = index * 3.4;
+      const mark = new THREE.Mesh(new THREE.BoxGeometry(0.38, 0.026, 1.5), material);
+      mark.name = `STUNTB6R_${line.id}_runway_mark`;
+      mark.position.set(line.start.x + forward.x * ahead + right.x * side * 2.8, 0.254, line.start.z + forward.z * ahead + right.z * side * 2.8);
+      mark.rotation.y = line.heading;
+      group.add(mark);
+      this.stats.fullRunwayMarks += 1;
+    }
+  }
+
+  addGate4B6RFullLandingTarget(group, line, landing) {
+    const material = new THREE.MeshBasicMaterial({ color: landing.color || 0x243a37, transparent: true, opacity: 0.44, depthWrite: false });
+    const base = new THREE.Mesh(new THREE.BoxGeometry(landing.width, 0.024, landing.depth), material);
+    base.name = `STUNTB6R_${line.id}_${landing.id}_landing_target`;
+    base.position.set(landing.x, 0.248, landing.z);
+    base.rotation.y = landing.rotation;
+    group.add(base);
+
+    const aimMaterial = new THREE.MeshBasicMaterial({ color: line.color, transparent: true, opacity: 0.55, depthWrite: false });
+    const point = gate4B6RPoint(landing, landing.rotation);
+    for (const side of [-1, 1]) {
+      const target = point(side * Math.min(4.2, landing.width * 0.24), -1.4);
+      const aim = new THREE.Mesh(new THREE.BoxGeometry(Math.min(4.2, landing.width * 0.28), 0.028, 0.26), aimMaterial);
+      aim.name = `STUNTB6R_${line.id}_${landing.id}_landing_aim`;
+      aim.position.set(target.x, 0.258, target.z);
+      aim.rotation.y = landing.rotation;
+      group.add(aim);
+      this.stats.fullLandingTargets += 1;
+    }
+  }
+
+  addGate4B6RFullRecoveryGuides(group, line) {
+    const material = new THREE.MeshBasicMaterial({ color: line.color, transparent: true, opacity: 0.44, depthWrite: false });
+    const point = gate4B6RPoint(line.recovery, line.recovery.rotation);
+    for (let index = 0; index < line.recovery.count; index += 1) {
+      const guide = new THREE.Mesh(new THREE.BoxGeometry(3.2, 0.026, 0.32), material);
+      guide.name = `STUNTB6R_${line.id}_recovery_chevron`;
+      const target = point(-1.2 + index * 1.05, index * 3.4);
+      guide.position.set(target.x, 0.256, target.z);
+      guide.rotation.y = line.recovery.rotation + 0.42;
+      group.add(guide);
+      this.stats.fullRecoveryGuides += 1;
+    }
+  }
+
+  addGate4B6RPrecisionGates(group, line) {
+    const material = new THREE.MeshStandardMaterial({ color: 0xf7f0d0, roughness: 0.8, metalness: 0.02 });
+    const point = gate4B6RPoint(line.start, line.heading);
+    for (let index = 0; index < 5; index += 1) {
+      const ahead = 4 + index * 4.1;
+      const laneHalf = 3.3 - Math.min(1.15, index * 0.22);
+      for (const side of [-1, 1]) {
+        const target = point(side * laneHalf, ahead);
+        const post = new THREE.Mesh(new THREE.CylinderGeometry(0.08, 0.1, 0.92, 8), material);
+        post.name = 'STUNTB6R_precision_gate_post';
+        post.position.set(target.x, 0.62, target.z);
+        post.rotation.y = line.heading;
+        post.castShadow = true;
+        post.receiveShadow = true;
+        group.add(post);
+        this.stats.fullPrecisionGates += 1;
+      }
+    }
+  }
+
+  addGate4B6RRiskMarkers(group, line) {
+    const material = new THREE.MeshBasicMaterial({ color: 0xff6d8d, transparent: true, opacity: 0.6, depthWrite: false });
+    const point = gate4B6RPoint(line.start, line.heading);
+    for (let index = 0; index < 4; index += 1) {
+      const target = point((index % 2 ? 1 : -1) * 4.7, 7 + index * 3.2);
+      const marker = new THREE.Mesh(new THREE.BoxGeometry(0.7, 0.04, 2.2), material);
+      marker.name = 'STUNTB6R_risk_commit_marker';
+      marker.position.set(target.x, 0.262, target.z);
+      marker.rotation.y = line.heading;
+      group.add(marker);
+      this.stats.fullRiskMarkers += 1;
+    }
+  }
+
+  addGate4B6RFreePlayLoop(group) {
+    const center = { x: 70, z: -58, rotation: -0.42 };
+    const baseMaterial = new THREE.MeshBasicMaterial({ color: 0x1c2926, transparent: true, opacity: 0.5, depthWrite: false });
+    const loop = new THREE.Mesh(makePatchGeometry(30, 18, 461), baseMaterial);
+    loop.name = 'STUNTB6R_freeplay_rubber_loop';
+    loop.position.set(center.x, 0.24, center.z);
+    loop.rotation.y = center.rotation;
+    group.add(loop);
+    this.stats.fullFreePlayZones += 1;
+
+    const scuffMaterial = new THREE.MeshBasicMaterial({ color: 0x0b0f0d, transparent: true, opacity: 0.22, depthWrite: false });
+    for (let index = 0; index < 14; index += 1) {
+      const angle = index * 0.44;
+      const radius = 4.4 + (index % 4) * 0.9;
+      const scuff = new THREE.Mesh(new THREE.BoxGeometry(0.28, 0.02, 2.6 + (index % 3) * 0.4), scuffMaterial);
+      scuff.name = 'STUNTB6R_freeplay_rubber_scuff';
+      scuff.position.set(center.x + Math.cos(angle) * radius, 0.264, center.z + Math.sin(angle) * radius);
+      scuff.rotation.y = angle + Math.PI * 0.5;
+      group.add(scuff);
+      this.stats.trackScuffs += 1;
+    }
   }
 
   addGate4B6RTrainingRamp(ramp) {
@@ -794,6 +992,89 @@ export class StuntPark {
     group.add(asset);
     return true;
   }
+}
+
+function gate4B6RFullLines() {
+  return [
+    {
+      id: 'beginner',
+      color: 0x7cffb2,
+      start: { x: 60, z: -96 },
+      heading: -0.35,
+      runwayMarks: 5,
+      ramps: [
+        { id: 'low', x: 54, z: -78, y: 0.28, rotation: -0.35, width: 10, length: 13, height: 0.9 }
+      ],
+      landings: [
+        { id: 'wide', x: 49, z: -64, rotation: -0.35, width: 16, depth: 12, color: 0x243a37 }
+      ],
+      recovery: { x: 42, z: -54, rotation: 0.85, count: 3 }
+    },
+    {
+      id: 'parkour',
+      color: 0xffc36a,
+      start: { x: 68, z: -97 },
+      heading: -0.48,
+      runwayMarks: 6,
+      ramps: [
+        { id: 'entry', x: 58, z: -78, y: 0.26, rotation: -0.48, width: 9, length: 12, height: 0.82 },
+        { id: 'drop', x: 48, z: -52, y: 0.26, rotation: -0.48, width: 8, length: 10, height: 0.66 }
+      ],
+      banks: [
+        { id: 'turn', x: 40, z: -38, y: 0.22, rotation: 0.72, width: 13, length: 10, height: 0.48 }
+      ],
+      landings: [
+        { id: 'table', x: 54, z: -65, rotation: -0.48, width: 15, depth: 10, color: 0x2c332c },
+        { id: 'exit', x: 42, z: -39, rotation: -0.48, width: 14, depth: 9, color: 0x2f352a }
+      ],
+      recovery: { x: 34, z: -28, rotation: 0.62, count: 4 }
+    },
+    {
+      id: 'precision',
+      color: 0x9df7ff,
+      start: { x: 78, z: -98 },
+      heading: -0.67,
+      runwayMarks: 5,
+      ramps: [
+        { id: 'narrow', x: 62, z: -78, y: 0.26, rotation: -0.67, width: 7.2, length: 11, height: 0.72 }
+      ],
+      landings: [
+        { id: 'needle', x: 52, z: -62, rotation: -0.67, width: 12, depth: 10, color: 0x1e3636 }
+      ],
+      recovery: { x: 44, z: -50, rotation: 0.55, count: 3 }
+    },
+    {
+      id: 'risk',
+      color: 0xff6d8d,
+      start: { x: 86, z: -94 },
+      heading: -0.52,
+      runwayMarks: 6,
+      ramps: [
+        { id: 'commit', x: 70, z: -66, y: 0.3, rotation: -0.52, width: 11, length: 15, height: 1.35 }
+      ],
+      landings: [
+        { id: 'long', x: 60, z: -46, rotation: -0.52, width: 18, depth: 14, color: 0x342626 }
+      ],
+      recovery: { x: 50, z: -32, rotation: 0.48, count: 4 }
+    }
+  ];
+}
+
+function gate4B6RForward(heading) {
+  return { x: Math.sin(heading), z: Math.cos(heading) };
+}
+
+function gate4B6RRight(heading) {
+  return { x: Math.cos(heading), z: -Math.sin(heading) };
+}
+
+function gate4B6RPoint(center, heading) {
+  const forward = gate4B6RForward(heading);
+  const right = gate4B6RRight(heading);
+  return (side, ahead) => ({
+    x: center.x + right.x * side + forward.x * ahead,
+    z: center.z + right.z * side + forward.z * ahead
+  });
 }
 
 function createRampShape(width, length, height) {

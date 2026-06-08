@@ -528,7 +528,7 @@ export class SetPieces {
       if (this.world.gate4b5Mode) {
         this.createGate4B5NorthRidgeScaffold();
       }
-      if (this.world.gate4b6Mode) {
+      if (this.world.gate4b6Mode && !this.world.gate4b6rFullMode) {
         this.createGate4B6StuntCoveScaffold();
       }
       this.applyQuality();
