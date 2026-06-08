@@ -475,7 +475,9 @@ export class SetPieces {
         signalFrames: 0,
         connectorMarks: 0,
         sourceAssets: 0,
+        architectureAssets: 0,
         buildingShells: 0,
+        softwareHouseBuildings: 0,
         glassFacades: 0,
         entranceCanopies: 0,
         experienceWalls: 0,
@@ -512,7 +514,9 @@ export class SetPieces {
         goldAccents: 0,
         authoredAssets: 0,
         sourceAssets: 0,
+        architectureAssets: 0,
         galleryBases: 0,
+        museumHalls: 0,
         plaqueWalls: 0,
         certificateFrames: 0,
         ceremonialSteps: 0,
@@ -1637,7 +1641,7 @@ export class SetPieces {
     const point = (right, forward) => this.gate4B1Point(anchor, right, forward);
     const rotation = anchor.rotation;
 
-    this.gate3rPad(group, anchor.x, anchor.z, 22, 14, this.world.materials.warmStone, 0.132, 'GATE4C_Career_Software_House_Ground_Plate', rotation, 'gate4c-career-footprint', 5.0);
+    this.gate3rPad(group, anchor.x, anchor.z, 22, 14, this.world.materials.warmStone, 0.132, 'GATE4D_Career_Software_House_Campus_Plate', rotation, 'gate4d-career-footprint', 5.0);
     stats.pads += 1;
 
     const placeSource = (assetName, kind, name, right, forward, assetRotation, scale, statName, minClearance = 5.0) => {
@@ -1651,28 +1655,23 @@ export class SetPieces {
       return null;
     };
 
-    placeSource('EnvPolishTerminalCanopy', 'gate4c-career-building-shell', 'GATE4C_Career_Software_House_Shell', -0.8, 0.4, rotation, 1.08, 'buildingShells', 5.0);
-    placeSource('EnvPolishCareerOffice', 'gate4c-career-glass-facade', 'GATE4C_Career_Glass_Facade', -4.8, -2.3, rotation, 1.18, 'glassFacades', 5.0);
-    placeSource('EnvPolishTerminalBank', 'gate4c-career-experience-wall', 'GATE4C_Career_Experience_Wall', 4.6, -2.1, rotation - 0.08, 0.74, 'experienceWalls', 5.0);
+    placeSource('EnvPolishCareerSoftwareHouse', 'gate4d-career-software-house', 'GATE4D_Career_Software_House_Architecture', 0, 0.25, rotation, 1.0, 'softwareHouseBuildings', 5.0);
+    if (stats.softwareHouseBuildings > 0) {
+      stats.architectureAssets += 1;
+      stats.buildingShells += 1;
+      stats.glassFacades += 1;
+      stats.entranceCanopies += 1;
+      stats.experienceWalls += 1;
+      stats.lobbyGlows += 1;
+    }
 
-    const entrance = point(0.2, -5.2);
-    this.box(group, entrance[0], 1.18, entrance[1], 5.4, 0.28, 1.15, this.world.materials.cable, rotation, 'GATE4C_Career_Entrance_Canopy');
-    this.box(group, entrance[0], 1.0, entrance[1] - 0.48, 4.4, 0.08, 0.08, this.world.materials.glowBlue, rotation, 'GATE4C_Career_Entrance_Canopy_Glow');
-    this.recordGate3RPlacement('gate4c-career-entrance-canopy', 'GATE4C_Career_Entrance_Canopy', entrance[0], entrance[1], { minClearance: 5.0 });
-    stats.entranceCanopies += 1;
-
-    const lobby = point(0, -2.55);
-    this.box(group, lobby[0], 0.19, lobby[1], 7.4, 0.035, 2.15, this.world.materials.glowPink, rotation, 'GATE4C_Career_Lobby_Glow');
-    this.recordGate3RPlacement('gate4c-career-lobby-glow', 'GATE4C_Career_Lobby_Glow', lobby[0], lobby[1], { minClearance: 5.0 });
-    stats.lobbyGlows += 1;
-
-    const path = point(0, -6.15);
-    this.box(group, path[0], 0.154, path[1], 8.6, 0.018, 0.52, this.world.materials.paleStone, rotation, 'GATE4C_Career_Service_Path');
-    this.recordGate3RPlacement('gate4c-career-service-path', 'GATE4C_Career_Service_Path', path[0], path[1], { minClearance: 5.0 });
+    const path = point(0, -7.25);
+    this.box(group, path[0], 0.154, path[1], 7.8, 0.018, 0.42, this.world.materials.paleStone, rotation, 'GATE4D_Career_Campus_Entry_Axis');
+    this.recordGate3RPlacement('gate4d-career-entry-axis', 'GATE4D_Career_Campus_Entry_Axis', path[0], path[1], { minClearance: 5.0 });
     stats.servicePaths += 1;
 
     stats.officeBlocks = stats.buildingShells;
-    stats.facadePanels = stats.glassFacades + stats.experienceWalls;
+    stats.facadePanels = 1;
     stats.signalFrames = stats.entranceCanopies + stats.lobbyGlows;
     stats.connectorMarks = 0;
   }
@@ -1787,68 +1786,25 @@ export class SetPieces {
     const point = (right, forward) => this.gate4B1Point(anchor, right, forward);
     const rotation = anchor.rotation;
 
-    this.gate3rPad(group, anchor.x, anchor.z, 18, 11, this.world.materials.paleStone, 0.132, 'GATE4C_Awards_Gallery_Base', rotation, 'gate4c-awards-footprint', 5.2);
+    this.gate3rPad(group, anchor.x, anchor.z, 18, 11, this.world.materials.paleStone, 0.132, 'GATE4D_Awards_Museum_Hall_Ceremonial_Ground', rotation, 'gate4d-awards-footprint', 5.2);
     stats.pads += 1;
     stats.galleryBases += 1;
 
-    for (const [right, forward, width, y] of [
-      [0, -3.3, 8.1, 0.24],
-      [0, -2.25, 6.7, 0.35],
-      [0, -1.2, 5.3, 0.46]
-    ]) {
-      const step = point(right, forward);
-      this.box(group, step[0], y, step[1], width, 0.22, 0.8, this.world.materials.warmStone, rotation, 'GATE4C_Awards_Ceremonial_Step');
-      this.recordGate3RPlacement('gate4c-awards-ceremonial-step', 'GATE4C_Awards_Ceremonial_Step', step[0], step[1], { minClearance: 4.8 });
-      stats.archiveSteps += 1;
-      stats.ceremonialSteps += 1;
-    }
-
-    const plaqueWall = point(0, 2.2);
-    this.box(group, plaqueWall[0], 1.04, plaqueWall[1], 7.2, 1.72, 0.28, this.world.materials.darkWood, rotation, 'GATE4C_Awards_Plaque_Wall');
-    this.recordGate3RPlacement('gate4c-awards-plaque-wall', 'GATE4C_Awards_Plaque_Wall', plaqueWall[0], plaqueWall[1], { minClearance: 4.8 });
-    stats.plaqueWalls += 1;
-
-    for (const [right, y, material] of [
-      [-2.45, 1.06, this.world.materials.paleStone],
-      [0, 1.32, this.world.materials.gold],
-      [2.45, 1.06, this.world.materials.paleStone]
-    ]) {
-      const frame = point(right, 2.42);
-      this.box(group, frame[0], y, frame[1], 1.26, 0.62, 0.08, material, rotation, 'GATE4C_Awards_Certificate_Frame');
-      this.recordGate3RPlacement('gate4c-awards-certificate-frame', 'GATE4C_Awards_Certificate_Frame', frame[0], frame[1], { minClearance: 4.8 });
-      stats.certificateFrames += 1;
-    }
-
-    const monument = point(0, -0.05);
-    if (this.addPolishAsset(group, 'EnvPolishAwardsMonument', monument[0], monument[1], rotation, 0.72)) {
+    const museum = point(0, 0.05);
+    if (this.addPolishAsset(group, 'EnvPolishAwardsMuseumHall', museum[0], museum[1], rotation, 1.0)) {
       stats.authoredAssets += 1;
       stats.sourceAssets += 1;
+      stats.architectureAssets += 1;
+      stats.museumHalls += 1;
+      stats.plaqueWalls += 1;
+      stats.trophyPlinths += 3;
+      stats.goldAccents += 3;
+      stats.warmAccents += 3;
+      stats.certificateFrames += 6;
+      stats.archiveSteps += 4;
+      stats.ceremonialSteps += 4;
     }
-    this.recordGate3RPlacement('gate4c-awards-monument', 'GATE4C_Awards_Monument', monument[0], monument[1], { minClearance: 4.8 });
-
-    for (const [right, forward, scale] of [
-      [-5.4, 0.9, 0.82],
-      [5.4, 0.9, 0.82],
-      [0, 3.85, 0.72]
-    ]) {
-      const plinth = point(right, forward);
-      this.box(group, plinth[0], 0.44, plinth[1], 0.94 * scale, 0.52, 0.74 * scale, this.world.materials.warmStone, rotation, 'GATE4C_Awards_Trophy_Plinth');
-      this.cylinder(group, plinth[0], 0.92, plinth[1], 0.16 * scale, 0.34, this.world.materials.gold, 8, 'GATE4C_Awards_Trophy_Gold');
-      this.recordGate3RPlacement('gate4c-awards-trophy-plinth', 'GATE4C_Awards_Trophy_Plinth', plinth[0], plinth[1], { minClearance: 4.8 });
-      stats.trophyPlinths += 1;
-    }
-
-    for (const [right, forward] of [
-      [-6.8, 3.7],
-      [6.8, 3.7],
-      [0, 4.65]
-    ]) {
-      const accent = point(right, forward);
-      this.box(group, accent[0], 0.24, accent[1], 0.42, 0.08, 0.42, this.world.materials.warmGlow, rotation, 'GATE4C_Awards_Warm_Accent');
-      this.recordGate3RPlacement('gate4c-awards-warm-accent', 'GATE4C_Awards_Warm_Accent', accent[0], accent[1], { minClearance: 4.8 });
-      stats.goldAccents += 1;
-      stats.warmAccents += 1;
-    }
+    this.recordGate3RPlacement('gate4d-awards-museum-hall', 'GATE4D_Awards_Museum_Hall_Architecture', museum[0], museum[1], { minClearance: 4.8 });
 
     stats.signs = 0;
     stats.lamps = 0;
