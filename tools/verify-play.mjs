@@ -47,6 +47,7 @@ const authoredDistrictAssets = [
   'EnvPolishCareerSoftwareHouse',
   'EnvPolishAwardsMuseumHall',
   'EnvPolishTodoBoard',
+  'EnvPolishTodoPlanningStudio',
   'EnvPolishDocumentArcade',
   'EnvPolishTerminalCanopy',
   'EnvPolishQueueMarquee',
@@ -55,6 +56,7 @@ const authoredDistrictAssets = [
   'EnvPolishBuildWorkbench',
   'EnvPolishFarmIrrigator',
   'EnvPolishHarborSignal',
+  'EnvPolishSignalHarborCommunicationsStation',
   'EnvPolishDistrictGateway',
   'EnvPolishRouteLantern',
   'EnvPolishBuildCrateStack',
@@ -3943,6 +3945,13 @@ function assertVerification(result) {
     }
     return;
   }
+  if (result.goalGate === 'gate-4d-b4-harbor-todo-architecture') {
+    assertGate4DB4HarborTodoArchitectureVerification(result, failures);
+    if (failures.length) {
+      throw new Error(`Play verification failed: ${failures.join('; ')}`);
+    }
+    return;
+  }
   if (result.goalGate === 'gate-4b5-north-ridge') {
     assertGate4B5NorthRidgeVerification(result, failures);
     if (failures.length) {
@@ -5645,7 +5654,9 @@ function assertGate4BRCompositionCorrectionVerification(result, failures, option
   if (!northRidge.enabled) failures.push('Gate 4-BR failed: North Ridge scaffold inactive');
 
   if (options.sourceTodo) {
-    assertGate4CB6SourceTodoPlanningStudio(result, failures);
+    assertGate4CB6SourceTodoPlanningStudio(result, failures, {
+      todoArchitecture: options.todoArchitecture
+    });
   } else {
     if ((todo.pads || 0) !== 1) failures.push(`Gate 4-BR Todo failed: pads=${todo.pads || 0}`);
     if ((todo.taskBoards || 0) !== 1) failures.push(`Gate 4-BR Todo failed: taskBoards=${todo.taskBoards || 0}`);
@@ -5684,7 +5695,9 @@ function assertGate4BRCompositionCorrectionVerification(result, failures, option
   }
 
   if (options.sourceHarbor) {
-    assertGate4CB4SourceSignalHarbor(result, failures);
+    assertGate4CB4SourceSignalHarbor(result, failures, {
+      harborArchitecture: options.harborArchitecture
+    });
   } else {
     if ((harbor.deckPads || 0) !== 1) failures.push(`Gate 4-BR Harbor failed: deckPads=${harbor.deckPads || 0}`);
     if ((harbor.signalMasts || 0) !== 1) failures.push(`Gate 4-BR Harbor failed: signalMasts=${harbor.signalMasts || 0}`);
@@ -5847,6 +5860,26 @@ function assertGate4DB3SkillsBehindArchitectureVerification(result, failures) {
     sourceNorthRidge: true,
     awardsArchitecture: true,
     sourceTodo: true
+  });
+}
+
+function assertGate4DB4HarborTodoArchitectureVerification(result, failures) {
+  assertGate4BRCompositionCorrectionVerification(result, failures, {
+    expectedGoal: 'gate-4d-b4-harbor-todo-architecture',
+    sourceSouthRun: true,
+    cvArchitecture: true,
+    behindArchitecture: true,
+    sourceGallerySide: true,
+    projectsArchitecture: true,
+    careerArchitecture: true,
+    sourceWestService: true,
+    skillsArchitecture: true,
+    sourceHarbor: true,
+    harborArchitecture: true,
+    sourceNorthRidge: true,
+    awardsArchitecture: true,
+    sourceTodo: true,
+    todoArchitecture: true
   });
 }
 
@@ -6088,6 +6121,59 @@ function assertGate4DSkillsDataCenter(result, failures) {
   if ((skills.lamps || 0) !== 0) failures.push(`Gate 4-D-B3 Skills failed: rejected lamps=${skills.lamps || 0}`);
 }
 
+function assertGate4DSignalHarborCommunicationsStation(result, failures) {
+  const harbor = result.gate4b4?.harbor || {};
+
+  assertAuthoredDistrictAsset(result, 'EnvPolishSignalHarborCommunicationsStation', 'Gate 4-D-B4 Signal Harbor architecture', failures);
+  if ((harbor.deckPads || 0) !== 1) failures.push(`Gate 4-D-B4 Harbor failed: deckPads=${harbor.deckPads || 0}`);
+  if ((harbor.sourceAssets || 0) < 1) failures.push(`Gate 4-D-B4 Harbor failed: sourceAssets=${harbor.sourceAssets || 0}`);
+  if ((harbor.authoredAssets || 0) < 1) failures.push(`Gate 4-D-B4 Harbor failed: authoredAssets=${harbor.authoredAssets || 0}`);
+  if ((harbor.architectureAssets || 0) !== 1) failures.push(`Gate 4-D-B4 Harbor failed: architectureAssets=${harbor.architectureAssets || 0}`);
+  if ((harbor.communicationsStations || 0) !== 1) failures.push(`Gate 4-D-B4 Harbor failed: communicationsStations=${harbor.communicationsStations || 0}`);
+  if ((harbor.operationsHalls || 0) !== 1) failures.push(`Gate 4-D-B4 Harbor failed: operationsHalls=${harbor.operationsHalls || 0}`);
+  if ((harbor.glassRelayRooms || 0) !== 1) failures.push(`Gate 4-D-B4 Harbor failed: glassRelayRooms=${harbor.glassRelayRooms || 0}`);
+  if ((harbor.antennaServiceWings || 0) !== 1) failures.push(`Gate 4-D-B4 Harbor failed: antennaServiceWings=${harbor.antennaServiceWings || 0}`);
+  if ((harbor.signalMasts || 0) !== 1) failures.push(`Gate 4-D-B4 Harbor failed: signalMasts=${harbor.signalMasts || 0}`);
+  if ((harbor.relayMasts || 0) !== 1) failures.push(`Gate 4-D-B4 Harbor failed: relayMasts=${harbor.relayMasts || 0}`);
+  if ((harbor.contactTerminals || 0) !== 3) failures.push(`Gate 4-D-B4 Harbor failed: contactTerminals=${harbor.contactTerminals || 0}`);
+  if ((harbor.githubTerminals || 0) !== 1) failures.push(`Gate 4-D-B4 Harbor failed: githubTerminals=${harbor.githubTerminals || 0}`);
+  if ((harbor.linkedinTerminals || 0) !== 1) failures.push(`Gate 4-D-B4 Harbor failed: linkedinTerminals=${harbor.linkedinTerminals || 0}`);
+  if ((harbor.emailTerminals || 0) !== 1) failures.push(`Gate 4-D-B4 Harbor failed: emailTerminals=${harbor.emailTerminals || 0}`);
+  if ((harbor.beacons || 0) !== 2) failures.push(`Gate 4-D-B4 Harbor failed: beacons=${harbor.beacons || 0}`);
+  if ((harbor.beaconPulses || 0) !== 2) failures.push(`Gate 4-D-B4 Harbor failed: beaconPulses=${harbor.beaconPulses || 0}`);
+  if ((harbor.deckSeams || 0) !== 0) failures.push(`Gate 4-D-B4 Harbor failed: rejected deckSeams=${harbor.deckSeams || 0}`);
+  if ((harbor.deckEdges || 0) !== 0) failures.push(`Gate 4-D-B4 Harbor failed: rejected deckEdges=${harbor.deckEdges || 0}`);
+  if ((harbor.signs || 0) !== 0) failures.push(`Gate 4-D-B4 Harbor failed: rejected signs=${harbor.signs || 0}`);
+  if ((harbor.lamps || 0) !== 0) failures.push(`Gate 4-D-B4 Harbor failed: rejected lamps=${harbor.lamps || 0}`);
+}
+
+function assertGate4DTodoPlanningStudio(result, failures) {
+  const todo = result.gate4b3?.todo || {};
+
+  assertAuthoredDistrictAsset(result, 'EnvPolishTodoPlanningStudio', 'Gate 4-D-B4 Todo architecture', failures);
+  if ((todo.pads || 0) !== 1) failures.push(`Gate 4-D-B4 Todo failed: pads=${todo.pads || 0}`);
+  if ((todo.sourceAssets || 0) < 1) failures.push(`Gate 4-D-B4 Todo failed: sourceAssets=${todo.sourceAssets || 0}`);
+  if ((todo.authoredAssets || 0) < 1) failures.push(`Gate 4-D-B4 Todo failed: authoredAssets=${todo.authoredAssets || 0}`);
+  if ((todo.architectureAssets || 0) !== 1) failures.push(`Gate 4-D-B4 Todo failed: architectureAssets=${todo.architectureAssets || 0}`);
+  if ((todo.planningStudios || 0) !== 1) failures.push(`Gate 4-D-B4 Todo failed: planningStudios=${todo.planningStudios || 0}`);
+  if ((todo.studioBuildings || 0) !== 1) failures.push(`Gate 4-D-B4 Todo failed: studioBuildings=${todo.studioBuildings || 0}`);
+  if ((todo.planningWalls || 0) !== 1) failures.push(`Gate 4-D-B4 Todo failed: planningWalls=${todo.planningWalls || 0}`);
+  if ((todo.glassWorkrooms || 0) !== 1) failures.push(`Gate 4-D-B4 Todo failed: glassWorkrooms=${todo.glassWorkrooms || 0}`);
+  if ((todo.scheduleTowers || 0) !== 1) failures.push(`Gate 4-D-B4 Todo failed: scheduleTowers=${todo.scheduleTowers || 0}`);
+  if ((todo.boardWalls || 0) !== 1) failures.push(`Gate 4-D-B4 Todo failed: boardWalls=${todo.boardWalls || 0}`);
+  if ((todo.studioDesks || 0) !== 1) failures.push(`Gate 4-D-B4 Todo failed: studioDesks=${todo.studioDesks || 0}`);
+  if ((todo.reviewLanes || 0) !== 3) failures.push(`Gate 4-D-B4 Todo failed: reviewLanes=${todo.reviewLanes || 0}`);
+  if ((todo.taskCrates || 0) !== 1) failures.push(`Gate 4-D-B4 Todo failed: taskCrates=${todo.taskCrates || 0}`);
+  if ((todo.statusPips || 0) !== 6) failures.push(`Gate 4-D-B4 Todo failed: statusPips=${todo.statusPips || 0}`);
+  if ((todo.containedCardStacks || 0) !== 2) failures.push(`Gate 4-D-B4 Todo failed: containedCardStacks=${todo.containedCardStacks || 0}`);
+  if ((todo.groundInlays || 0) !== 3) failures.push(`Gate 4-D-B4 Todo failed: groundInlays=${todo.groundInlays || 0}`);
+  if ((todo.taskBoards || 0) !== 1) failures.push(`Gate 4-D-B4 Todo failed: taskBoards=${todo.taskBoards || 0}`);
+  if ((todo.queueRails || 0) !== 3) failures.push(`Gate 4-D-B4 Todo failed: review-lane queueRails=${todo.queueRails || 0}`);
+  if ((todo.taskCards || 0) !== 8) failures.push(`Gate 4-D-B4 Todo failed: contained taskCards=${todo.taskCards || 0}`);
+  if ((todo.signs || 0) !== 0) failures.push(`Gate 4-D-B4 Todo failed: rejected signs=${todo.signs || 0}`);
+  if ((todo.lamps || 0) !== 0) failures.push(`Gate 4-D-B4 Todo failed: rejected lamps=${todo.lamps || 0}`);
+}
+
 function assertGate4CB2SourceGallerySide(result, failures, options = {}) {
   const eastSide = result.gate4b4 || {};
   const projects = eastSide.projects || {};
@@ -6304,7 +6390,7 @@ function assertGate4CB3SourceWestService(result, failures, options = {}) {
   }
 }
 
-function assertGate4CB4SourceSignalHarbor(result, failures) {
+function assertGate4CB4SourceSignalHarbor(result, failures, options = {}) {
   const eastSide = result.gate4b4 || {};
   const harbor = eastSide.harbor || {};
   const placement = result.gate3rPlacement || {};
@@ -6312,42 +6398,67 @@ function assertGate4CB4SourceSignalHarbor(result, failures) {
   if (!eastSide.enabled) failures.push('Gate 4-C-B4 failed: East Side scaffold inactive');
   if ((eastSide.staticBatches || 0) < 1) failures.push(`Gate 4-C-B4 batching failed: staticBatches=${eastSide.staticBatches || 0}`);
 
-  if ((harbor.deckPads || 0) !== 1) failures.push(`Gate 4-C-B4 Harbor failed: deckPads=${harbor.deckPads || 0}`);
-  if ((harbor.sourceAssets || 0) < 4) failures.push(`Gate 4-C-B4 Harbor failed: sourceAssets=${harbor.sourceAssets || 0}`);
-  if ((harbor.deckPlatforms || 0) !== 1) failures.push(`Gate 4-C-B4 Harbor failed: deckPlatforms=${harbor.deckPlatforms || 0}`);
-  if ((harbor.deckSeams || 0) !== 5) failures.push(`Gate 4-C-B4 Harbor failed: deckSeams=${harbor.deckSeams || 0}`);
-  if ((harbor.deckEdges || 0) !== 4) failures.push(`Gate 4-C-B4 Harbor failed: deckEdges=${harbor.deckEdges || 0}`);
-  if ((harbor.signalMasts || 0) !== 1) failures.push(`Gate 4-C-B4 Harbor failed: signalMasts=${harbor.signalMasts || 0}`);
-  if ((harbor.relayMasts || 0) !== 1) failures.push(`Gate 4-C-B4 Harbor failed: relayMasts=${harbor.relayMasts || 0}`);
-  if ((harbor.contactTerminals || 0) !== 3) failures.push(`Gate 4-C-B4 Harbor failed: contactTerminals=${harbor.contactTerminals || 0}`);
-  if ((harbor.githubTerminals || 0) !== 1) failures.push(`Gate 4-C-B4 Harbor failed: githubTerminals=${harbor.githubTerminals || 0}`);
-  if ((harbor.linkedinTerminals || 0) !== 1) failures.push(`Gate 4-C-B4 Harbor failed: linkedinTerminals=${harbor.linkedinTerminals || 0}`);
-  if ((harbor.emailTerminals || 0) !== 1) failures.push(`Gate 4-C-B4 Harbor failed: emailTerminals=${harbor.emailTerminals || 0}`);
-  if ((harbor.beacons || 0) !== 2) failures.push(`Gate 4-C-B4 Harbor failed: beacons=${harbor.beacons || 0}`);
-  if ((harbor.beaconPulses || 0) !== 2) failures.push(`Gate 4-C-B4 Harbor failed: beaconPulses=${harbor.beaconPulses || 0}`);
-  if ((harbor.signs || 0) !== 0) failures.push(`Gate 4-C-B4 Harbor failed: rejected signs=${harbor.signs || 0}`);
-  if ((harbor.lamps || 0) !== 0) failures.push(`Gate 4-C-B4 Harbor failed: rejected lamps=${harbor.lamps || 0}`);
+  if (options.harborArchitecture) {
+    assertGate4DSignalHarborCommunicationsStation(result, failures);
+  } else {
+    if ((harbor.deckPads || 0) !== 1) failures.push(`Gate 4-C-B4 Harbor failed: deckPads=${harbor.deckPads || 0}`);
+    if ((harbor.sourceAssets || 0) < 4) failures.push(`Gate 4-C-B4 Harbor failed: sourceAssets=${harbor.sourceAssets || 0}`);
+    if ((harbor.deckPlatforms || 0) !== 1) failures.push(`Gate 4-C-B4 Harbor failed: deckPlatforms=${harbor.deckPlatforms || 0}`);
+    if ((harbor.deckSeams || 0) !== 5) failures.push(`Gate 4-C-B4 Harbor failed: deckSeams=${harbor.deckSeams || 0}`);
+    if ((harbor.deckEdges || 0) !== 4) failures.push(`Gate 4-C-B4 Harbor failed: deckEdges=${harbor.deckEdges || 0}`);
+    if ((harbor.signalMasts || 0) !== 1) failures.push(`Gate 4-C-B4 Harbor failed: signalMasts=${harbor.signalMasts || 0}`);
+    if ((harbor.relayMasts || 0) !== 1) failures.push(`Gate 4-C-B4 Harbor failed: relayMasts=${harbor.relayMasts || 0}`);
+    if ((harbor.contactTerminals || 0) !== 3) failures.push(`Gate 4-C-B4 Harbor failed: contactTerminals=${harbor.contactTerminals || 0}`);
+    if ((harbor.githubTerminals || 0) !== 1) failures.push(`Gate 4-C-B4 Harbor failed: githubTerminals=${harbor.githubTerminals || 0}`);
+    if ((harbor.linkedinTerminals || 0) !== 1) failures.push(`Gate 4-C-B4 Harbor failed: linkedinTerminals=${harbor.linkedinTerminals || 0}`);
+    if ((harbor.emailTerminals || 0) !== 1) failures.push(`Gate 4-C-B4 Harbor failed: emailTerminals=${harbor.emailTerminals || 0}`);
+    if ((harbor.beacons || 0) !== 2) failures.push(`Gate 4-C-B4 Harbor failed: beacons=${harbor.beacons || 0}`);
+    if ((harbor.beaconPulses || 0) !== 2) failures.push(`Gate 4-C-B4 Harbor failed: beaconPulses=${harbor.beaconPulses || 0}`);
+    if ((harbor.signs || 0) !== 0) failures.push(`Gate 4-C-B4 Harbor failed: rejected signs=${harbor.signs || 0}`);
+    if ((harbor.lamps || 0) !== 0) failures.push(`Gate 4-C-B4 Harbor failed: rejected lamps=${harbor.lamps || 0}`);
+  }
 
-  for (const [kind, expected] of [
-    ['gate4c-harbor-footprint', 1],
-    ['gate4c-harbor-deck-seam', 5],
-    ['gate4c-harbor-deck-edge', 4],
-    ['gate4c-harbor-signal-mast', 1],
-    ['gate4c-harbor-terminal-github', 1],
-    ['gate4c-harbor-terminal-linkedin', 1],
-    ['gate4c-harbor-terminal-email', 1],
-    ['gate4c-harbor-beacon-pulse', 2]
-  ]) {
+  const expectedPlacements = options.harborArchitecture
+    ? [
+      ['gate4d-harbor-footprint', 1],
+      ['gate4d-harbor-communications-station', 1]
+    ]
+    : [
+      ['gate4c-harbor-footprint', 1],
+      ['gate4c-harbor-deck-seam', 5],
+      ['gate4c-harbor-deck-edge', 4],
+      ['gate4c-harbor-signal-mast', 1],
+      ['gate4c-harbor-terminal-github', 1],
+      ['gate4c-harbor-terminal-linkedin', 1],
+      ['gate4c-harbor-terminal-email', 1],
+      ['gate4c-harbor-beacon-pulse', 2]
+    ];
+  for (const [kind, expected] of expectedPlacements) {
     const source = kind.endsWith('footprint') ? placement.byFootprintKind : placement.byKind;
     if ((source?.[kind] || 0) !== expected) {
       failures.push(`Gate 4-C-B4 placement failed: ${kind}=${source?.[kind] || 0}`);
     }
   }
 
-  for (const kind of ['gate4b4-harbor-mast', 'gate4b4-harbor-terminal', 'gate4b4-harbor-beacon']) {
+  const rejectedKinds = ['gate4b4-harbor-mast', 'gate4b4-harbor-terminal', 'gate4b4-harbor-beacon'];
+  if (options.harborArchitecture) {
+    rejectedKinds.push(
+      'gate4c-harbor-deck-seam',
+      'gate4c-harbor-deck-edge',
+      'gate4c-harbor-signal-mast',
+      'gate4c-harbor-terminal-github',
+      'gate4c-harbor-terminal-linkedin',
+      'gate4c-harbor-terminal-email',
+      'gate4c-harbor-beacon-pulse'
+    );
+  }
+  for (const kind of rejectedKinds) {
     if ((placement.byKind?.[kind] || 0) !== 0) {
       failures.push(`Gate 4-C-B4 placement failed: rejected ${kind}=${placement.byKind?.[kind] || 0}`);
     }
+  }
+  if (options.harborArchitecture && (placement.byFootprintKind?.['gate4c-harbor-footprint'] || 0) !== 0) {
+    failures.push(`Gate 4-C-B4 placement failed: rejected gate4c-harbor-footprint=${placement.byFootprintKind?.['gate4c-harbor-footprint'] || 0}`);
   }
   if ((placement.byFootprintKind?.['gate4b4-harbor-deck'] || 0) !== 0) {
     failures.push(`Gate 4-C-B4 placement failed: rejected gate4b4-harbor-deck=${placement.byFootprintKind?.['gate4b4-harbor-deck'] || 0}`);
@@ -6480,7 +6591,7 @@ function assertGate4CB5SourceNorthRidge(result, failures, options = {}) {
   }
 }
 
-function assertGate4CB6SourceTodoPlanningStudio(result, failures) {
+function assertGate4CB6SourceTodoPlanningStudio(result, failures, options = {}) {
   const dataPierSide = result.gate4b3 || {};
   const todo = dataPierSide.todo || {};
   const dataPier = dataPierSide.dataPier || {};
@@ -6489,55 +6600,81 @@ function assertGate4CB6SourceTodoPlanningStudio(result, failures) {
   if (!dataPierSide.enabled) failures.push('Gate 4-C-B6 failed: Todo Planning Studio inactive');
   if ((dataPierSide.staticBatches || 0) < 1) failures.push(`Gate 4-C-B6 batching failed: staticBatches=${dataPierSide.staticBatches || 0}`);
 
-  if ((todo.pads || 0) !== 1) failures.push(`Gate 4-C-B6 Todo failed: pads=${todo.pads || 0}`);
-  if ((todo.sourceAssets || 0) < 5) failures.push(`Gate 4-C-B6 Todo failed: sourceAssets=${todo.sourceAssets || 0}`);
-  if ((todo.boardWalls || 0) !== 1) failures.push(`Gate 4-C-B6 Todo failed: boardWalls=${todo.boardWalls || 0}`);
-  if ((todo.studioDesks || 0) !== 1) failures.push(`Gate 4-C-B6 Todo failed: studioDesks=${todo.studioDesks || 0}`);
-  if ((todo.reviewLanes || 0) !== 3) failures.push(`Gate 4-C-B6 Todo failed: reviewLanes=${todo.reviewLanes || 0}`);
-  if ((todo.taskCrates || 0) !== 1) failures.push(`Gate 4-C-B6 Todo failed: taskCrates=${todo.taskCrates || 0}`);
-  if ((todo.statusPips || 0) !== 6) failures.push(`Gate 4-C-B6 Todo failed: statusPips=${todo.statusPips || 0}`);
-  if ((todo.containedCardStacks || 0) !== 2) failures.push(`Gate 4-C-B6 Todo failed: containedCardStacks=${todo.containedCardStacks || 0}`);
-  if ((todo.groundInlays || 0) !== 3) failures.push(`Gate 4-C-B6 Todo failed: groundInlays=${todo.groundInlays || 0}`);
-  if ((todo.taskBoards || 0) !== 1) failures.push(`Gate 4-C-B6 Todo failed: taskBoards=${todo.taskBoards || 0}`);
-  if ((todo.queueRails || 0) !== 3) failures.push(`Gate 4-C-B6 Todo failed: review-lane queueRails=${todo.queueRails || 0}`);
-  if ((todo.taskCards || 0) !== 8) failures.push(`Gate 4-C-B6 Todo failed: contained taskCards=${todo.taskCards || 0}`);
-  if ((todo.signs || 0) !== 0) failures.push(`Gate 4-C-B6 Todo failed: rejected signs=${todo.signs || 0}`);
-  if ((todo.lamps || 0) !== 0) failures.push(`Gate 4-C-B6 Todo failed: rejected lamps=${todo.lamps || 0}`);
+  if (options.todoArchitecture) {
+    assertGate4DTodoPlanningStudio(result, failures);
+  } else {
+    if ((todo.pads || 0) !== 1) failures.push(`Gate 4-C-B6 Todo failed: pads=${todo.pads || 0}`);
+    if ((todo.sourceAssets || 0) < 5) failures.push(`Gate 4-C-B6 Todo failed: sourceAssets=${todo.sourceAssets || 0}`);
+    if ((todo.boardWalls || 0) !== 1) failures.push(`Gate 4-C-B6 Todo failed: boardWalls=${todo.boardWalls || 0}`);
+    if ((todo.studioDesks || 0) !== 1) failures.push(`Gate 4-C-B6 Todo failed: studioDesks=${todo.studioDesks || 0}`);
+    if ((todo.reviewLanes || 0) !== 3) failures.push(`Gate 4-C-B6 Todo failed: reviewLanes=${todo.reviewLanes || 0}`);
+    if ((todo.taskCrates || 0) !== 1) failures.push(`Gate 4-C-B6 Todo failed: taskCrates=${todo.taskCrates || 0}`);
+    if ((todo.statusPips || 0) !== 6) failures.push(`Gate 4-C-B6 Todo failed: statusPips=${todo.statusPips || 0}`);
+    if ((todo.containedCardStacks || 0) !== 2) failures.push(`Gate 4-C-B6 Todo failed: containedCardStacks=${todo.containedCardStacks || 0}`);
+    if ((todo.groundInlays || 0) !== 3) failures.push(`Gate 4-C-B6 Todo failed: groundInlays=${todo.groundInlays || 0}`);
+    if ((todo.taskBoards || 0) !== 1) failures.push(`Gate 4-C-B6 Todo failed: taskBoards=${todo.taskBoards || 0}`);
+    if ((todo.queueRails || 0) !== 3) failures.push(`Gate 4-C-B6 Todo failed: review-lane queueRails=${todo.queueRails || 0}`);
+    if ((todo.taskCards || 0) !== 8) failures.push(`Gate 4-C-B6 Todo failed: contained taskCards=${todo.taskCards || 0}`);
+    if ((todo.signs || 0) !== 0) failures.push(`Gate 4-C-B6 Todo failed: rejected signs=${todo.signs || 0}`);
+    if ((todo.lamps || 0) !== 0) failures.push(`Gate 4-C-B6 Todo failed: rejected lamps=${todo.lamps || 0}`);
+  }
 
   for (const [key, value] of Object.entries(dataPier)) {
     if ((value || 0) !== 0) failures.push(`Gate 4-C-B6 Data Pier compatibility failed: physical ${key}=${value || 0}`);
   }
 
-  for (const [kind, expected] of [
-    ['gate4c-todo-footprint', 1],
-    ['gate4c-todo-board-wall', 1],
-    ['gate4c-todo-studio-desk', 1],
-    ['gate4c-todo-kanban-cards', 2],
-    ['gate4c-todo-task-crate', 1],
-    ['gate4c-todo-review-lane', 3],
-    ['gate4c-todo-status-pip', 6],
-    ['gate4c-todo-ground-inlay', 3]
-  ]) {
+  const expectedPlacements = options.todoArchitecture
+    ? [
+      ['gate4d-todo-footprint', 1],
+      ['gate4d-todo-planning-studio', 1]
+    ]
+    : [
+      ['gate4c-todo-footprint', 1],
+      ['gate4c-todo-board-wall', 1],
+      ['gate4c-todo-studio-desk', 1],
+      ['gate4c-todo-kanban-cards', 2],
+      ['gate4c-todo-task-crate', 1],
+      ['gate4c-todo-review-lane', 3],
+      ['gate4c-todo-status-pip', 6],
+      ['gate4c-todo-ground-inlay', 3]
+    ];
+  for (const [kind, expected] of expectedPlacements) {
     const source = kind.endsWith('footprint') ? placement.byFootprintKind : placement.byKind;
     if ((source?.[kind] || 0) !== expected) {
       failures.push(`Gate 4-C-B6 placement failed: ${kind}=${source?.[kind] || 0}`);
     }
   }
 
-  for (const kind of [
+  const rejectedKinds = [
     'gate4b3-todo-board',
     'gate4b3-todo-rail',
     'gate4b3-todo-card',
     'gate4b3-pier-rail',
     'gate4b3-pier-beacon',
     'gate4b3-pier-cargo'
-  ]) {
+  ];
+  if (options.todoArchitecture) {
+    rejectedKinds.push(
+      'gate4c-todo-board-wall',
+      'gate4c-todo-studio-desk',
+      'gate4c-todo-kanban-cards',
+      'gate4c-todo-task-crate',
+      'gate4c-todo-review-lane',
+      'gate4c-todo-status-pip',
+      'gate4c-todo-ground-inlay'
+    );
+  }
+  for (const kind of rejectedKinds) {
     if ((placement.byKind?.[kind] || 0) !== 0) {
       failures.push(`Gate 4-C-B6 placement failed: rejected ${kind}=${placement.byKind?.[kind] || 0}`);
     }
   }
 
-  for (const kind of ['gate4b3-todo-pad', 'gate4b3-data-pier-pad']) {
+  const rejectedFootprints = ['gate4b3-todo-pad', 'gate4b3-data-pier-pad'];
+  if (options.todoArchitecture) {
+    rejectedFootprints.push('gate4c-todo-footprint');
+  }
+  for (const kind of rejectedFootprints) {
     if ((placement.byFootprintKind?.[kind] || 0) !== 0) {
       failures.push(`Gate 4-C-B6 footprint failed: rejected ${kind}=${placement.byFootprintKind?.[kind] || 0}`);
     }

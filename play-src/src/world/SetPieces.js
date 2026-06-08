@@ -443,6 +443,13 @@ export class SetPieces {
         queueRails: 0,
         taskCards: 0,
         sourceAssets: 0,
+        authoredAssets: 0,
+        architectureAssets: 0,
+        planningStudios: 0,
+        studioBuildings: 0,
+        planningWalls: 0,
+        glassWorkrooms: 0,
+        scheduleTowers: 0,
         boardWalls: 0,
         studioDesks: 0,
         reviewLanes: 0,
@@ -515,6 +522,12 @@ export class SetPieces {
         linkedinTerminals: 0,
         emailTerminals: 0,
         beaconPulses: 0,
+        authoredAssets: 0,
+        architectureAssets: 0,
+        communicationsStations: 0,
+        operationsHalls: 0,
+        glassRelayRooms: 0,
+        antennaServiceWings: 0,
         signs: 0,
         lamps: 0
       }
@@ -1435,64 +1448,32 @@ export class SetPieces {
     const stats = this.gate4b3Stats.todo;
     const zone = findZone('todo');
     const rotation = zone.rotation || 0.24;
+    const buildingRotation = rotation + Math.PI / 2;
     const anchor = { x: zone.position[0], z: zone.position[2], rotation };
     const point = (right, forward) => this.gate4B1Point(anchor, right, forward);
 
-    this.gate3rPad(group, anchor.x, anchor.z, 18, 10, this.world.materials.warmStone, 0.132, 'GATE4C_Todo_Planning_Studio_Floor', rotation, 'gate4c-todo-footprint', 5.0);
+    this.gate3rPad(group, anchor.x, anchor.z, 17.4, 10.4, this.world.materials.warmStone, 0.132, 'GATE4D_Todo_Planning_Studio_Service_Court', buildingRotation, 'gate4d-todo-footprint', 5.0);
     stats.pads += 1;
 
-    const placeSource = (assetName, kind, name, right, forward, assetRotation, scale, statName, minClearance = 4.8) => {
-      const position = point(right, forward);
-      if (this.addPolishAsset(group, assetName, position[0], position[1], assetRotation, scale)) {
-        this.recordGate3RPlacement(kind, name, position[0], position[1], { minClearance });
-        stats.sourceAssets += 1;
-        stats[statName] += 1;
-        return position;
-      }
-      return null;
-    };
-
-    placeSource('EnvPolishQueueMarquee', 'gate4c-todo-board-wall', 'GATE4C_Todo_Planning_Board_Wall', 0, 1.85, rotation, 0.86, 'boardWalls', 4.8);
-    placeSource('EnvPolishTerminalBank', 'gate4c-todo-studio-desk', 'GATE4C_Todo_Workstation_Desk', 0.2, -3.25, rotation + Math.PI, 0.48, 'studioDesks', 4.8);
-    placeSource('EnvPolishTodoBoard', 'gate4c-todo-kanban-cards', 'GATE4C_Todo_Contained_Kanban_Board', -5.15, -0.75, rotation + 0.04, 0.72, 'containedCardStacks', 4.8);
-    placeSource('EnvPolishTodoCardStack', 'gate4c-todo-kanban-cards', 'GATE4C_Todo_Contained_Card_Stack_A', 4.85, -0.85, rotation - 0.06, 0.66, 'containedCardStacks', 4.8);
-    placeSource('EnvPolishBuildCrateStack', 'gate4c-todo-task-crate', 'GATE4C_Todo_Task_Crate_Stack', 6.65, 2.55, rotation + 0.16, 0.58, 'taskCrates', 4.8);
-
-    for (const [right, forward, width, material, name] of [
-      [-5.2, -4.55, 3.6, this.world.materials.glowPink, 'GATE4C_Todo_Review_Lane_Backlog'],
-      [0, -4.8, 4.1, this.world.materials.glowBlue, 'GATE4C_Todo_Review_Lane_Doing'],
-      [5.2, -4.55, 3.6, this.world.materials.warmGlow, 'GATE4C_Todo_Review_Lane_Done']
-    ]) {
-      const lane = point(right, forward);
-      this.box(group, lane[0], 0.17, lane[1], width, 0.035, 0.1, material, rotation, name);
-      this.recordGate3RPlacement('gate4c-todo-review-lane', name, lane[0], lane[1], { minClearance: 4.8 });
-      stats.reviewLanes += 1;
-      stats.queueRails += 1;
-    }
-
-    for (const [right, forward, material, name] of [
-      [-6.6, 3.85, this.world.materials.glowPink, 'GATE4C_Todo_Status_Pip_Backlog'],
-      [-4.95, 3.85, this.world.materials.glowBlue, 'GATE4C_Todo_Status_Pip_Doing'],
-      [-3.3, 3.85, this.world.materials.warmGlow, 'GATE4C_Todo_Status_Pip_Done'],
-      [3.3, 3.85, this.world.materials.glowPink, 'GATE4C_Todo_Status_Pip_Idea'],
-      [4.95, 3.85, this.world.materials.glowBlue, 'GATE4C_Todo_Status_Pip_Test'],
-      [6.6, 3.85, this.world.materials.warmGlow, 'GATE4C_Todo_Status_Pip_Ship']
-    ]) {
-      const pip = point(right, forward);
-      this.cylinder(group, pip[0], 0.2, pip[1], 0.26, 0.06, material, 14, name);
-      this.recordGate3RPlacement('gate4c-todo-status-pip', name, pip[0], pip[1], { minClearance: 4.8 });
-      stats.statusPips += 1;
-    }
-
-    for (const [right, forward, width, name] of [
-      [-4.6, -2.35, 3.2, 'GATE4C_Todo_Ground_Inlay_Backlog'],
-      [0, -2.6, 4.2, 'GATE4C_Todo_Ground_Inlay_Doing'],
-      [4.6, -2.35, 3.2, 'GATE4C_Todo_Ground_Inlay_Done']
-    ]) {
-      const inlay = point(right, forward);
-      this.box(group, inlay[0], 0.158, inlay[1], width, 0.018, 0.08, this.world.materials.paleStone, rotation, name);
-      this.recordGate3RPlacement('gate4c-todo-ground-inlay', name, inlay[0], inlay[1], { minClearance: 4.8 });
-      stats.groundInlays += 1;
+    const studio = point(0, 0.05);
+    if (this.addPolishAsset(group, 'EnvPolishTodoPlanningStudio', studio[0], studio[1], buildingRotation, 1.0)) {
+      this.recordGate3RPlacement('gate4d-todo-planning-studio', 'GATE4D_Todo_Planning_Studio_Architecture', studio[0], studio[1], { minClearance: 5.0 });
+      stats.sourceAssets += 1;
+      stats.authoredAssets += 1;
+      stats.architectureAssets += 1;
+      stats.planningStudios += 1;
+      stats.studioBuildings += 1;
+      stats.planningWalls += 1;
+      stats.glassWorkrooms += 1;
+      stats.scheduleTowers += 1;
+      stats.boardWalls += 1;
+      stats.studioDesks += 1;
+      stats.reviewLanes += 3;
+      stats.taskCrates += 1;
+      stats.statusPips += 6;
+      stats.containedCardStacks += 2;
+      stats.groundInlays += 3;
+      stats.queueRails += 3;
     }
 
     stats.taskBoards = stats.boardWalls;
@@ -1596,81 +1577,29 @@ export class SetPieces {
     const point = (right, forward) => this.gate4B1Point(anchor, right, forward);
     const rotation = anchor.rotation;
 
-    this.gate3rPad(group, anchor.x, anchor.z, 18, 10, this.world.materials.paleStone, 0.132, 'GATE4C_Harbor_Relay_Deck', rotation, 'gate4c-harbor-footprint', 4.8);
+    const deck = point(1, 3);
+    this.gate3rPad(group, deck[0], deck[1], 18.2, 10.6, this.world.materials.paleStone, 0.132, 'GATE4D_Signal_Harbor_Communications_Service_Deck', rotation, 'gate4d-harbor-footprint', 4.8);
     stats.deckPads += 1;
     stats.deckPlatforms += 1;
 
-    for (const [forward, width, name] of [
-      [-4.2, 15.8, 'GATE4C_Harbor_Deck_Seam_A'],
-      [-2.1, 15.8, 'GATE4C_Harbor_Deck_Seam_B'],
-      [0, 15.8, 'GATE4C_Harbor_Deck_Seam_C'],
-      [2.1, 15.8, 'GATE4C_Harbor_Deck_Seam_D'],
-      [4.2, 15.8, 'GATE4C_Harbor_Deck_Seam_E']
-    ]) {
-      const seam = point(0, forward);
-      this.box(group, seam[0], 0.154, seam[1], width, 0.018, 0.08, this.world.materials.warmStone, rotation, name);
-      this.recordGate3RPlacement('gate4c-harbor-deck-seam', name, seam[0], seam[1], { minClearance: 4.8 });
-      stats.deckSeams += 1;
-    }
-
-    for (const [right, forward, width, depth, name] of [
-      [0, -5.05, 17.8, 0.16, 'GATE4C_Harbor_Deck_Edge_Front'],
-      [0, 5.05, 17.8, 0.16, 'GATE4C_Harbor_Deck_Edge_Back'],
-      [-9.05, 0, 0.16, 9.8, 'GATE4C_Harbor_Deck_Edge_Left'],
-      [9.05, 0, 0.16, 9.8, 'GATE4C_Harbor_Deck_Edge_Right']
-    ]) {
-      const edge = point(right, forward);
-      this.box(group, edge[0], 0.18, edge[1], width, 0.08, depth, this.world.materials.darkWood, rotation, name);
-      this.recordGate3RPlacement('gate4c-harbor-deck-edge', name, edge[0], edge[1], { minClearance: 4.8 });
-      stats.deckEdges += 1;
-    }
-
-    const placeSource = (assetName, kind, name, right, forward, assetRotation, scale, statName, minClearance = 4.8) => {
-      const position = point(right, forward);
-      if (this.addPolishAsset(group, assetName, position[0], position[1], assetRotation, scale)) {
-        this.recordGate3RPlacement(kind, name, position[0], position[1], { minClearance });
-        stats.sourceAssets += 1;
-        stats[statName] += 1;
-        return position;
-      }
-      return null;
-    };
-
-    const mast = placeSource('EnvPolishHarborSignal', 'gate4c-harbor-signal-mast', 'GATE4C_Harbor_Relay_Mast', 0, 2.35, rotation, 0.92, 'relayMasts', 4.8);
-    if (mast) {
+    const station = point(1, 3.05);
+    if (this.addPolishAsset(group, 'EnvPolishSignalHarborCommunicationsStation', station[0], station[1], rotation, 1.0)) {
+      this.recordGate3RPlacement('gate4d-harbor-communications-station', 'GATE4D_Signal_Harbor_Communications_Station_Architecture', station[0], station[1], { minClearance: 4.8 });
+      stats.sourceAssets += 1;
+      stats.authoredAssets += 1;
+      stats.architectureAssets += 1;
+      stats.communicationsStations += 1;
+      stats.operationsHalls += 1;
+      stats.glassRelayRooms += 1;
+      stats.antennaServiceWings += 1;
       stats.signalMasts += 1;
-    }
-
-    for (const [right, forward, material, kind, name, statName] of [
-      [-5.4, -2.2, this.world.materials.glowBlue, 'gate4c-harbor-terminal-github', 'GATE4C_Harbor_Github_Terminal', 'githubTerminals'],
-      [0, -2.85, this.world.materials.warmGlow, 'gate4c-harbor-terminal-linkedin', 'GATE4C_Harbor_Linkedin_Terminal', 'linkedinTerminals'],
-      [5.4, -2.2, this.world.materials.glowPink, 'gate4c-harbor-terminal-email', 'GATE4C_Harbor_Email_Terminal', 'emailTerminals']
-    ]) {
-      const terminal = placeSource('EnvPolishTerminalBank', kind, name, right, forward, rotation, 0.46, statName, 4.8);
-      if (terminal) {
-        this.box(group, terminal[0], 0.96, terminal[1] - 0.4, 1.2, 0.08, 0.08, material, rotation, `${name}_Accent`);
-        stats.contactTerminals += 1;
-      }
-    }
-
-    for (const [right, forward, color, name] of [
-      [-4.9, 3.15, this.world.materials.glowBlue, 'GATE4C_Harbor_Left_Beacon_Pulse'],
-      [4.9, 3.15, this.world.materials.warmGlow, 'GATE4C_Harbor_Right_Beacon_Pulse']
-    ]) {
-      const beacon = point(right, forward);
-      this.cylinder(group, beacon[0], 0.2, beacon[1], 0.34, 0.05, color, 18, name);
-      const ring = new THREE.Mesh(
-        new THREE.RingGeometry(0.46, 0.54, 24),
-        new THREE.MeshBasicMaterial({ color: color.color?.getHex?.() || 0x78b7ff, transparent: true, opacity: 0.32, side: THREE.DoubleSide, depthWrite: false })
-      );
-      ring.name = `${name}_Ring`;
-      ring.position.set(beacon[0], 0.32, beacon[1]);
-      ring.rotation.x = -Math.PI / 2;
-      ring.renderOrder = 42;
-      group.add(ring);
-      this.recordGate3RPlacement('gate4c-harbor-beacon-pulse', name, beacon[0], beacon[1], { minClearance: 4.8 });
-      stats.beacons += 1;
-      stats.beaconPulses += 1;
+      stats.relayMasts += 1;
+      stats.contactTerminals += 3;
+      stats.githubTerminals += 1;
+      stats.linkedinTerminals += 1;
+      stats.emailTerminals += 1;
+      stats.beacons += 2;
+      stats.beaconPulses += 2;
     }
 
     stats.signs = 0;
