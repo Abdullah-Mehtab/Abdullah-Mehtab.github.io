@@ -3895,6 +3895,13 @@ function assertVerification(result) {
     }
     return;
   }
+  if (result.goalGate === 'gate-4c-b4-signal-harbor-replacement') {
+    assertGate4CB4SignalHarborReplacementVerification(result, failures);
+    if (failures.length) {
+      throw new Error(`Play verification failed: ${failures.join('; ')}`);
+    }
+    return;
+  }
   if (result.goalGate === 'gate-4b5-north-ridge') {
     assertGate4B5NorthRidgeVerification(result, failures);
     if (failures.length) {
@@ -5616,12 +5623,16 @@ function assertGate4BRCompositionCorrectionVerification(result, failures, option
     if ((career.lamps || 0) !== 0) failures.push(`Gate 4-BR Career failed: rejected lamps=${career.lamps || 0}`);
   }
 
-  if ((harbor.deckPads || 0) !== 1) failures.push(`Gate 4-BR Harbor failed: deckPads=${harbor.deckPads || 0}`);
-  if ((harbor.signalMasts || 0) !== 1) failures.push(`Gate 4-BR Harbor failed: signalMasts=${harbor.signalMasts || 0}`);
-  if ((harbor.contactTerminals || 0) !== 3) failures.push(`Gate 4-BR Harbor failed: contactTerminals=${harbor.contactTerminals || 0}`);
-  if ((harbor.beacons || 0) !== 2) failures.push(`Gate 4-BR Harbor failed: beacons=${harbor.beacons || 0}`);
-  if ((harbor.signs || 0) !== 0) failures.push(`Gate 4-BR Harbor failed: rejected signs=${harbor.signs || 0}`);
-  if ((harbor.lamps || 0) !== 0) failures.push(`Gate 4-BR Harbor failed: rejected lamps=${harbor.lamps || 0}`);
+  if (options.sourceHarbor) {
+    assertGate4CB4SourceSignalHarbor(result, failures);
+  } else {
+    if ((harbor.deckPads || 0) !== 1) failures.push(`Gate 4-BR Harbor failed: deckPads=${harbor.deckPads || 0}`);
+    if ((harbor.signalMasts || 0) !== 1) failures.push(`Gate 4-BR Harbor failed: signalMasts=${harbor.signalMasts || 0}`);
+    if ((harbor.contactTerminals || 0) !== 3) failures.push(`Gate 4-BR Harbor failed: contactTerminals=${harbor.contactTerminals || 0}`);
+    if ((harbor.beacons || 0) !== 2) failures.push(`Gate 4-BR Harbor failed: beacons=${harbor.beacons || 0}`);
+    if ((harbor.signs || 0) !== 0) failures.push(`Gate 4-BR Harbor failed: rejected signs=${harbor.signs || 0}`);
+    if ((harbor.lamps || 0) !== 0) failures.push(`Gate 4-BR Harbor failed: rejected lamps=${harbor.lamps || 0}`);
+  }
 
   if ((awards.pads || 0) !== 1) failures.push(`Gate 4-BR Awards failed: pads=${awards.pads || 0}`);
   if ((awards.archiveSteps || 0) !== 3) failures.push(`Gate 4-BR Awards failed: archiveSteps=${awards.archiveSteps || 0}`);
@@ -5689,6 +5700,16 @@ function assertGate4CB3WestServiceReplacementVerification(result, failures) {
     sourceSouthRun: true,
     sourceGallerySide: true,
     sourceWestService: true
+  });
+}
+
+function assertGate4CB4SignalHarborReplacementVerification(result, failures) {
+  assertGate4BRCompositionCorrectionVerification(result, failures, {
+    expectedGoal: 'gate-4c-b4-signal-harbor-replacement',
+    sourceSouthRun: true,
+    sourceGallerySide: true,
+    sourceWestService: true,
+    sourceHarbor: true
   });
 }
 
@@ -5889,6 +5910,56 @@ function assertGate4CB3SourceWestService(result, failures) {
     if ((placement.byFootprintKind?.[kind] || 0) !== 0) {
       failures.push(`Gate 4-C-B3 placement failed: rejected ${kind}=${placement.byFootprintKind?.[kind] || 0}`);
     }
+  }
+}
+
+function assertGate4CB4SourceSignalHarbor(result, failures) {
+  const eastSide = result.gate4b4 || {};
+  const harbor = eastSide.harbor || {};
+  const placement = result.gate3rPlacement || {};
+
+  if (!eastSide.enabled) failures.push('Gate 4-C-B4 failed: East Side scaffold inactive');
+  if ((eastSide.staticBatches || 0) < 1) failures.push(`Gate 4-C-B4 batching failed: staticBatches=${eastSide.staticBatches || 0}`);
+
+  if ((harbor.deckPads || 0) !== 1) failures.push(`Gate 4-C-B4 Harbor failed: deckPads=${harbor.deckPads || 0}`);
+  if ((harbor.sourceAssets || 0) < 4) failures.push(`Gate 4-C-B4 Harbor failed: sourceAssets=${harbor.sourceAssets || 0}`);
+  if ((harbor.deckPlatforms || 0) !== 1) failures.push(`Gate 4-C-B4 Harbor failed: deckPlatforms=${harbor.deckPlatforms || 0}`);
+  if ((harbor.deckSeams || 0) !== 5) failures.push(`Gate 4-C-B4 Harbor failed: deckSeams=${harbor.deckSeams || 0}`);
+  if ((harbor.deckEdges || 0) !== 4) failures.push(`Gate 4-C-B4 Harbor failed: deckEdges=${harbor.deckEdges || 0}`);
+  if ((harbor.signalMasts || 0) !== 1) failures.push(`Gate 4-C-B4 Harbor failed: signalMasts=${harbor.signalMasts || 0}`);
+  if ((harbor.relayMasts || 0) !== 1) failures.push(`Gate 4-C-B4 Harbor failed: relayMasts=${harbor.relayMasts || 0}`);
+  if ((harbor.contactTerminals || 0) !== 3) failures.push(`Gate 4-C-B4 Harbor failed: contactTerminals=${harbor.contactTerminals || 0}`);
+  if ((harbor.githubTerminals || 0) !== 1) failures.push(`Gate 4-C-B4 Harbor failed: githubTerminals=${harbor.githubTerminals || 0}`);
+  if ((harbor.linkedinTerminals || 0) !== 1) failures.push(`Gate 4-C-B4 Harbor failed: linkedinTerminals=${harbor.linkedinTerminals || 0}`);
+  if ((harbor.emailTerminals || 0) !== 1) failures.push(`Gate 4-C-B4 Harbor failed: emailTerminals=${harbor.emailTerminals || 0}`);
+  if ((harbor.beacons || 0) !== 2) failures.push(`Gate 4-C-B4 Harbor failed: beacons=${harbor.beacons || 0}`);
+  if ((harbor.beaconPulses || 0) !== 2) failures.push(`Gate 4-C-B4 Harbor failed: beaconPulses=${harbor.beaconPulses || 0}`);
+  if ((harbor.signs || 0) !== 0) failures.push(`Gate 4-C-B4 Harbor failed: rejected signs=${harbor.signs || 0}`);
+  if ((harbor.lamps || 0) !== 0) failures.push(`Gate 4-C-B4 Harbor failed: rejected lamps=${harbor.lamps || 0}`);
+
+  for (const [kind, expected] of [
+    ['gate4c-harbor-footprint', 1],
+    ['gate4c-harbor-deck-seam', 5],
+    ['gate4c-harbor-deck-edge', 4],
+    ['gate4c-harbor-signal-mast', 1],
+    ['gate4c-harbor-terminal-github', 1],
+    ['gate4c-harbor-terminal-linkedin', 1],
+    ['gate4c-harbor-terminal-email', 1],
+    ['gate4c-harbor-beacon-pulse', 2]
+  ]) {
+    const source = kind.endsWith('footprint') ? placement.byFootprintKind : placement.byKind;
+    if ((source?.[kind] || 0) !== expected) {
+      failures.push(`Gate 4-C-B4 placement failed: ${kind}=${source?.[kind] || 0}`);
+    }
+  }
+
+  for (const kind of ['gate4b4-harbor-mast', 'gate4b4-harbor-terminal', 'gate4b4-harbor-beacon']) {
+    if ((placement.byKind?.[kind] || 0) !== 0) {
+      failures.push(`Gate 4-C-B4 placement failed: rejected ${kind}=${placement.byKind?.[kind] || 0}`);
+    }
+  }
+  if ((placement.byFootprintKind?.['gate4b4-harbor-deck'] || 0) !== 0) {
+    failures.push(`Gate 4-C-B4 placement failed: rejected gate4b4-harbor-deck=${placement.byFootprintKind?.['gate4b4-harbor-deck'] || 0}`);
   }
 }
 

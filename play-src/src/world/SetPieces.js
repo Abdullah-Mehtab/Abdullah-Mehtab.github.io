@@ -481,6 +481,15 @@ export class SetPieces {
         signalMasts: 0,
         contactTerminals: 0,
         beacons: 0,
+        sourceAssets: 0,
+        deckPlatforms: 0,
+        deckSeams: 0,
+        deckEdges: 0,
+        relayMasts: 0,
+        githubTerminals: 0,
+        linkedinTerminals: 0,
+        emailTerminals: 0,
+        beaconPulses: 0,
         signs: 0,
         lamps: 0
       }
@@ -1621,41 +1630,89 @@ export class SetPieces {
 
   createGate4B4SignalHarbor(group) {
     const stats = this.gate4b4Stats.harbor;
-    const anchor = { x: 122, z: 12, rotation: -0.34 };
+    const anchor = { x: 127, z: 13, rotation: -0.34 };
     const point = (right, forward) => this.gate4B1Point(anchor, right, forward);
     const rotation = anchor.rotation;
 
-    this.gate3rPad(group, anchor.x, anchor.z, 8, 5, this.world.materials.paleStone, 0.132, 'GATE4B4_Harbor_Signal_Deck', rotation, 'gate4b4-harbor-deck', 4.8);
+    this.gate3rPad(group, anchor.x, anchor.z, 18, 10, this.world.materials.paleStone, 0.132, 'GATE4C_Harbor_Relay_Deck', rotation, 'gate4c-harbor-footprint', 4.8);
     stats.deckPads += 1;
+    stats.deckPlatforms += 1;
 
-    const mast = point(0, 0);
-    this.cylinder(group, mast[0], 1.45, mast[1], 0.1, 2.55, this.world.materials.cable, 8, 'GATE4B4_Harbor_Signal_Mast');
-    this.box(group, mast[0], 2.68, mast[1], 1.05, 0.1, 0.14, this.world.materials.glowBlue, rotation, 'GATE4B4_Harbor_Signal_Mast_Glow');
-    this.recordGate3RPlacement('gate4b4-harbor-mast', 'GATE4B4_Harbor_Signal_Mast', mast[0], mast[1], { minClearance: 4.8 });
-    stats.signalMasts += 1;
-
-    for (const [right, forward, material] of [
-      [-2.8, 1.75, this.world.materials.glowBlue],
-      [-0.2, 2.35, this.world.materials.warmGlow],
-      [2.45, 1.85, this.world.materials.glowPink]
+    for (const [forward, width, name] of [
+      [-4.2, 15.8, 'GATE4C_Harbor_Deck_Seam_A'],
+      [-2.1, 15.8, 'GATE4C_Harbor_Deck_Seam_B'],
+      [0, 15.8, 'GATE4C_Harbor_Deck_Seam_C'],
+      [2.1, 15.8, 'GATE4C_Harbor_Deck_Seam_D'],
+      [4.2, 15.8, 'GATE4C_Harbor_Deck_Seam_E']
     ]) {
-      const terminal = point(right, forward);
-      this.box(group, terminal[0], 0.62, terminal[1], 0.9, 0.82, 0.5, this.world.materials.cable, rotation, 'GATE4B4_Harbor_Contact_Terminal');
-      this.box(group, terminal[0], 0.74, terminal[1] - 0.18, 0.62, 0.34, 0.05, material, rotation, 'GATE4B4_Harbor_Contact_Terminal_Glow');
-      this.recordGate3RPlacement('gate4b4-harbor-terminal', 'GATE4B4_Harbor_Contact_Terminal', terminal[0], terminal[1], { minClearance: 4.4 });
-      stats.contactTerminals += 1;
+      const seam = point(0, forward);
+      this.box(group, seam[0], 0.154, seam[1], width, 0.018, 0.08, this.world.materials.warmStone, rotation, name);
+      this.recordGate3RPlacement('gate4c-harbor-deck-seam', name, seam[0], seam[1], { minClearance: 4.8 });
+      stats.deckSeams += 1;
     }
 
-    for (const [right, forward, color] of [
-      [-2.2, 3.0, 0x78b7ff],
-      [3.0, 2.6, 0xffc36a]
+    for (const [right, forward, width, depth, name] of [
+      [0, -5.05, 17.8, 0.16, 'GATE4C_Harbor_Deck_Edge_Front'],
+      [0, 5.05, 17.8, 0.16, 'GATE4C_Harbor_Deck_Edge_Back'],
+      [-9.05, 0, 0.16, 9.8, 'GATE4C_Harbor_Deck_Edge_Left'],
+      [9.05, 0, 0.16, 9.8, 'GATE4C_Harbor_Deck_Edge_Right']
+    ]) {
+      const edge = point(right, forward);
+      this.box(group, edge[0], 0.18, edge[1], width, 0.08, depth, this.world.materials.darkWood, rotation, name);
+      this.recordGate3RPlacement('gate4c-harbor-deck-edge', name, edge[0], edge[1], { minClearance: 4.8 });
+      stats.deckEdges += 1;
+    }
+
+    const placeSource = (assetName, kind, name, right, forward, assetRotation, scale, statName, minClearance = 4.8) => {
+      const position = point(right, forward);
+      if (this.addPolishAsset(group, assetName, position[0], position[1], assetRotation, scale)) {
+        this.recordGate3RPlacement(kind, name, position[0], position[1], { minClearance });
+        stats.sourceAssets += 1;
+        stats[statName] += 1;
+        return position;
+      }
+      return null;
+    };
+
+    const mast = placeSource('EnvPolishHarborSignal', 'gate4c-harbor-signal-mast', 'GATE4C_Harbor_Relay_Mast', 0, 2.35, rotation, 0.92, 'relayMasts', 4.8);
+    if (mast) {
+      stats.signalMasts += 1;
+    }
+
+    for (const [right, forward, material, kind, name, statName] of [
+      [-5.4, -2.2, this.world.materials.glowBlue, 'gate4c-harbor-terminal-github', 'GATE4C_Harbor_Github_Terminal', 'githubTerminals'],
+      [0, -2.85, this.world.materials.warmGlow, 'gate4c-harbor-terminal-linkedin', 'GATE4C_Harbor_Linkedin_Terminal', 'linkedinTerminals'],
+      [5.4, -2.2, this.world.materials.glowPink, 'gate4c-harbor-terminal-email', 'GATE4C_Harbor_Email_Terminal', 'emailTerminals']
+    ]) {
+      const terminal = placeSource('EnvPolishTerminalBank', kind, name, right, forward, rotation, 0.46, statName, 4.8);
+      if (terminal) {
+        this.box(group, terminal[0], 0.96, terminal[1] - 0.4, 1.2, 0.08, 0.08, material, rotation, `${name}_Accent`);
+        stats.contactTerminals += 1;
+      }
+    }
+
+    for (const [right, forward, color, name] of [
+      [-4.9, 3.15, this.world.materials.glowBlue, 'GATE4C_Harbor_Left_Beacon_Pulse'],
+      [4.9, 3.15, this.world.materials.warmGlow, 'GATE4C_Harbor_Right_Beacon_Pulse']
     ]) {
       const beacon = point(right, forward);
-      this.cylinder(group, beacon[0], 0.62, beacon[1], 0.12, 1.1, this.world.materials.cable, 8, 'GATE4B4_Harbor_Beacon_Post');
-      this.box(group, beacon[0], 1.25, beacon[1], 0.42, 0.16, 0.42, color === 0x78b7ff ? this.world.materials.glowBlue : this.world.materials.warmGlow, rotation, 'GATE4B4_Harbor_Beacon_Glow');
-      this.recordGate3RPlacement('gate4b4-harbor-beacon', 'GATE4B4_Harbor_Beacon_Post', beacon[0], beacon[1], { minClearance: 4.2 });
+      this.cylinder(group, beacon[0], 0.2, beacon[1], 0.34, 0.05, color, 18, name);
+      const ring = new THREE.Mesh(
+        new THREE.RingGeometry(0.46, 0.54, 24),
+        new THREE.MeshBasicMaterial({ color: color.color?.getHex?.() || 0x78b7ff, transparent: true, opacity: 0.32, side: THREE.DoubleSide, depthWrite: false })
+      );
+      ring.name = `${name}_Ring`;
+      ring.position.set(beacon[0], 0.32, beacon[1]);
+      ring.rotation.x = -Math.PI / 2;
+      ring.renderOrder = 42;
+      group.add(ring);
+      this.recordGate3RPlacement('gate4c-harbor-beacon-pulse', name, beacon[0], beacon[1], { minClearance: 4.8 });
       stats.beacons += 1;
+      stats.beaconPulses += 1;
     }
+
+    stats.signs = 0;
+    stats.lamps = 0;
   }
 
   createGate4B5NorthRidgeScaffold() {

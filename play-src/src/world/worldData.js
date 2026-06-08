@@ -405,7 +405,7 @@ export const worldZones = [
     kind: 'Links',
     title: 'Signal Harbor',
     districtId: 'east-harbor',
-    position: [122, 0, 12],
+    position: [127, 0, 13],
     rotation: -0.34,
     radius: 9,
     color: '#78b7ff',
@@ -550,8 +550,8 @@ export const zonePresentation = {
   },
   contact: {
     respawn: { position: [104, 1.08, 46], heading: 2.36 },
-    camera: [137, 10, 20],
-    target: [122, 3, 12],
+    camera: [111, 10, 1],
+    target: [127, 3, 13],
     fov: 42,
   },
   behind: {
