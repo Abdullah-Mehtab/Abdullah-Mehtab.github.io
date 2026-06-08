@@ -129,6 +129,7 @@ try {
   const vehicleChassisGroundContact = await exerciseVehicleChassisGroundContact(page, routeReplaySegments);
   const vehicleGroundingMotion = await exerciseVehicleGroundingMotion(page);
   const vehicleBodyRoadClipping = await exerciseVehicleBodyRoadClipping(page);
+  const stuntPrototype = await exerciseGate4B6RPrototype(page);
   const circuitPreview = await previewCircuit(page);
   await screenshot(page, '06-circuit-target.png');
   const circuit = await finishCircuit(page, circuitPreview);
@@ -234,6 +235,7 @@ try {
     vehicleChassisGroundContact,
     vehicleGroundingMotion,
     vehicleBodyRoadClipping,
+    stuntPrototype,
     vehicleLights,
     waterView,
     ...metrics
@@ -1444,6 +1446,272 @@ async function exerciseVehicleBodyRoadClipping(page) {
     maxBodyPixelLossRatio: Number(Math.max(...samples.map((sample) => sample.maskEvidence?.bodyPixelLossRatio || 0)).toFixed(4)),
     rootCauseCandidates: [...new Set(samples.map((sample) => sample.maskEvidence?.rootCause).filter(Boolean))]
   };
+}
+
+async function exerciseGate4B6RPrototype(page) {
+  const enabled = await page.evaluate(() => window.__portfolioDrive.game.world.goalGate === 'gate-4b6r-physics-prototype');
+  if (!enabled) return { enabled: false, screenshots: [] };
+
+  const screenshots = [];
+  await resetGate4B6RPrototypeRun(page, 0);
+  await stageGate4B6RPrototypeView(page, 'approach');
+  await screenshot(page, 'stunt-b6r-approach.png');
+  screenshots.push('stunt-b6r-approach.png');
+
+  await advanceGate4B6RPrototypeRun(page, 760, { forward: true });
+  await stageGate4B6RPrototypeView(page, 'takeoff');
+  await screenshot(page, 'stunt-b6r-takeoff.png');
+  screenshots.push('stunt-b6r-takeoff.png');
+
+  await advanceGate4B6RPrototypeRun(page, 620, { forward: true, boost: true });
+  await stageGate4B6RPrototypeView(page, 'airtime');
+  await screenshot(page, 'stunt-b6r-airtime.png');
+  screenshots.push('stunt-b6r-airtime.png');
+
+  await advanceGate4B6RPrototypeRun(page, 940, { forward: true });
+  await stageGate4B6RPrototypeView(page, 'landing');
+  await screenshot(page, 'stunt-b6r-landing.png');
+  screenshots.push('stunt-b6r-landing.png');
+
+  await advanceGate4B6RPrototypeRun(page, 760, { forward: true });
+  await stageGate4B6RPrototypeView(page, 'recovery');
+  await screenshot(page, 'stunt-b6r-recovery.png');
+  screenshots.push('stunt-b6r-recovery.png');
+
+  const route = await finalizeGate4B6RPrototypeRun(page);
+  const missRecovery = await exerciseGate4B6RPrototypeMiss(page);
+  await stageGate4B6RPrototypeView(page, 'failed-recovery');
+  await screenshot(page, 'stunt-b6r-failed-recovery.png');
+  screenshots.push('stunt-b6r-failed-recovery.png');
+
+  await page.evaluate(() => window.__portfolioDrive.showColliders());
+  await stageGate4B6RPrototypeView(page, 'debug');
+  await screenshot(page, 'stunt-b6r-debug-colliders.png');
+  screenshots.push('stunt-b6r-debug-colliders.png');
+
+  const colliderEvidence = await page.evaluate(() => {
+    const game = window.__portfolioDrive.game;
+    const colliders = window.__portfolioDrive.colliders();
+    const rampCollider = colliders.find((collider) => collider.name === 'STUNTB6R_training_ramp_collider');
+    const summarize = (collider) => collider ? {
+      name: collider.name,
+      visualName: collider.visualName || null,
+      type: collider.type,
+      sensor: Boolean(collider.sensor)
+    } : null;
+    return {
+      rampVisualExists: Boolean(game.scene.getObjectByName('STUNTB6R_training_ramp')),
+      rampCollider: summarize(rampCollider),
+      allColliders: colliders.map((collider) => ({
+        name: collider.name,
+        visualName: collider.visualName || null,
+        type: collider.type,
+        sensor: Boolean(collider.sensor)
+      }))
+    };
+  });
+
+  return {
+    enabled: true,
+    screenshots,
+    route,
+    missRecovery,
+    colliderEvidence
+  };
+}
+
+async function resetGate4B6RPrototypeRun(page, lateralOffset) {
+  return page.evaluate((offset) => {
+    const game = window.__portfolioDrive.game;
+    const input = game.input;
+    const heading = -0.35;
+    const forward = { x: Math.sin(heading), z: Math.cos(heading) };
+    const right = { x: Math.cos(heading), z: -Math.sin(heading) };
+    const start = { x: 60 + right.x * offset, y: 1.12, z: -96 + right.z * offset };
+    const clearInput = () => {
+      for (const action of ['forward', 'boost', 'backward', 'brake', 'handbrake', 'left', 'right', 'jump']) {
+        input.actions[action] = false;
+      }
+      input.joystick.x = 0;
+      input.joystick.y = 0;
+      input.pressed?.clear?.();
+    };
+    clearInput();
+    game.ui.closePanel?.();
+    game.ui.closeMap?.();
+    game.ui.closeMenu?.();
+    game.startDriving();
+    game.vehicle.respawn(start, heading);
+    game.vehicle.body.setLinvel({ x: forward.x * 4.5, y: 0, z: forward.z * 4.5 }, true);
+    game.vehicle.body.setAngvel({ x: 0, y: 0, z: 0 }, true);
+    game.__verifyStuntPrototype = {
+      heading,
+      start,
+      lateralOffset: offset,
+      landingEventsBefore: game.vehicle.landingEvents || 0,
+      samples: [],
+      haltEvents: [],
+      airborneFrames: 0,
+      groundedAfterAirFrames: 0,
+      maxY: game.vehicle.position.y,
+      minSpeedAfterLaunch: 999,
+      maxSpeed: 0,
+      distance: 0
+    };
+  }, lateralOffset);
+}
+
+async function advanceGate4B6RPrototypeRun(page, ms, actions) {
+  return page.evaluate(async ({ ms, actions }) => {
+    const delay = (timeout) => new Promise((resolveDelay) => setTimeout(resolveDelay, timeout));
+    const game = window.__portfolioDrive.game;
+    const input = game.input;
+    const state = game.__verifyStuntPrototype;
+    const clearInput = () => {
+      for (const action of ['forward', 'boost', 'backward', 'brake', 'handbrake', 'left', 'right', 'jump']) {
+        input.actions[action] = false;
+      }
+    };
+    const sample = (label) => {
+      const position = game.vehicle.position.clone();
+      const start = state.start;
+      const speed = game.vehicle.speed || Math.hypot(game.vehicle.body.linvel().x, game.vehicle.body.linvel().z);
+      const groundedWheels = game.vehicle.controller?.groundedWheels || 0;
+      const airborne = groundedWheels < 2;
+      const distance = Math.hypot(position.x - start.x, position.z - start.z);
+      state.maxY = Math.max(state.maxY, position.y);
+      state.maxSpeed = Math.max(state.maxSpeed, speed);
+      state.distance = Math.max(state.distance, distance);
+      if (distance > 9) state.minSpeedAfterLaunch = Math.min(state.minSpeedAfterLaunch, speed);
+      if (airborne) state.airborneFrames += 1;
+      if (!airborne && state.airborneFrames > 0) state.groundedAfterAirFrames += 1;
+      const previous = state.samples[state.samples.length - 1];
+      if (actions.forward && previous && distance > 5 && speed < 1.5 && Math.abs(distance - previous.distance) < 0.08) {
+        state.haltEvents.push({
+          label,
+          speed: Number(speed.toFixed(2)),
+          distance: Number(distance.toFixed(2)),
+          position: { x: Number(position.x.toFixed(2)), z: Number(position.z.toFixed(2)) },
+          groundedWheels
+        });
+      }
+      state.samples.push({
+        label,
+        t: performance.now(),
+        x: Number(position.x.toFixed(2)),
+        y: Number(position.y.toFixed(2)),
+        z: Number(position.z.toFixed(2)),
+        speed: Number(speed.toFixed(2)),
+        distance: Number(distance.toFixed(2)),
+        surface: game.world.getSurfaceInfo(position).id,
+        groundedWheels
+      });
+    };
+
+    clearInput();
+    for (const action of Object.keys(actions)) {
+      input.actions[action] = Boolean(actions[action]);
+    }
+    const steps = Math.max(1, Math.ceil(ms / 80));
+    for (let index = 0; index < steps; index += 1) {
+      await delay(ms / steps);
+      sample(`step-${index}`);
+    }
+    clearInput();
+  }, { ms, actions });
+}
+
+async function finalizeGate4B6RPrototypeRun(page) {
+  return page.evaluate(() => {
+    const game = window.__portfolioDrive.game;
+    const state = game.__verifyStuntPrototype || {};
+    const final = game.vehicle.position.clone();
+    const maxHeightDelta = (state.maxY || final.y) - (state.start?.y || final.y);
+    const landingSeen = (game.vehicle.landingEvents || 0) > (state.landingEventsBefore || 0)
+      || (state.airborneFrames || 0) > 0 && (state.groundedAfterAirFrames || 0) > 2;
+    return {
+      start: {
+        x: Number((state.start?.x || 0).toFixed(2)),
+        z: Number((state.start?.z || 0).toFixed(2))
+      },
+      final: {
+        x: Number(final.x.toFixed(2)),
+        y: Number(final.y.toFixed(2)),
+        z: Number(final.z.toFixed(2))
+      },
+      distance: Number((state.distance || 0).toFixed(2)),
+      maxHeightDelta: Number(maxHeightDelta.toFixed(2)),
+      maxSpeed: Number((state.maxSpeed || 0).toFixed(2)),
+      minSpeedAfterLaunch: Number((state.minSpeedAfterLaunch === 999 ? 0 : state.minSpeedAfterLaunch || 0).toFixed(2)),
+      airborneFrames: state.airborneFrames || 0,
+      groundedAfterAirFrames: state.groundedAfterAirFrames || 0,
+      landingSeen,
+      finalGroundedWheels: game.vehicle.controller?.groundedWheels || 0,
+      finalSurface: game.world.getSurfaceInfo(final).id,
+      halts: (state.haltEvents || []).length,
+      haltEvents: state.haltEvents || [],
+      samples: state.samples || []
+    };
+  });
+}
+
+async function exerciseGate4B6RPrototypeMiss(page) {
+  await resetGate4B6RPrototypeRun(page, 7.2);
+  await advanceGate4B6RPrototypeRun(page, 1900, { forward: true });
+  await advanceGate4B6RPrototypeRun(page, 700, { forward: true, brake: true });
+  const result = await finalizeGate4B6RPrototypeRun(page);
+  return {
+    ...result,
+    recoverable: result.halts === 0 && result.finalSurface !== 'water' && result.finalGroundedWheels >= 2 && result.distance > 12
+  };
+}
+
+async function stageGate4B6RPrototypeView(page, mode) {
+  await page.evaluate((viewMode) => {
+    const game = window.__portfolioDrive.game;
+    const heading = -0.35;
+    const forward = { x: Math.sin(heading), z: Math.cos(heading) };
+    const right = { x: Math.cos(heading), z: -Math.sin(heading) };
+    const target = game.vehicle.position.clone();
+    const leadByMode = {
+      airtime: 2.5,
+      landing: 4.5,
+      recovery: 5.5,
+      'failed-recovery': 5.5
+    };
+    const lead = leadByMode[viewMode] || 0;
+    target.x += forward.x * lead;
+    target.z += forward.z * lead;
+    target.y += 1.1;
+    const cameraPosition = target.clone();
+    const moveCamera = (side, ahead, up) => {
+      cameraPosition.x += right.x * side + forward.x * ahead;
+      cameraPosition.z += right.z * side + forward.z * ahead;
+      cameraPosition.y += up;
+    };
+    if (viewMode === 'debug') {
+      target.set(52, 1.2, -72);
+      cameraPosition.set(78, 18, -104);
+    } else if (viewMode === 'approach') {
+      moveCamera(13, -11, 6.6);
+    } else if (viewMode === 'takeoff') {
+      moveCamera(12, -6, 5.2);
+    } else if (viewMode === 'airtime') {
+      moveCamera(15, -3, 6.2);
+    } else if (viewMode === 'landing') {
+      moveCamera(14, 3, 5.4);
+    } else {
+      moveCamera(14, 7, 6.2);
+    }
+    game.cameraRig.setCinematic(cameraPosition, target, 42);
+    game.cameraRig.smoothedTarget.copy(target);
+    game.camera.position.copy(cameraPosition);
+    game.camera.fov = 42;
+    game.camera.updateProjectionMatrix();
+    game.camera.lookAt(target);
+    game.rendererSystem.render();
+  }, mode);
+  await delay(70);
 }
 
 async function captureVehicleBodyRoadMaskSet(page, scenarioId) {
@@ -3261,6 +3529,13 @@ function assertVerification(result) {
   }
   assertVehicleGroundingMotion(result, failures);
   assertVehicleBodyRoadClipping(result, failures);
+  if (result.goalGate === 'gate-4b6r-physics-prototype') {
+    assertGate4B6RPhysicsPrototypeVerification(result, failures);
+    if (failures.length) {
+      throw new Error(`Play verification failed: ${failures.join('; ')}`);
+    }
+    return;
+  }
   if (result.goalGate === 'gate-4b6-stunt-cove') {
     assertGate4B6StuntCoveVerification(result, failures);
     if (failures.length) {
@@ -4378,6 +4653,7 @@ function assertGate2RFoundationReplacementVerification(result, failures) {
 
 function assertGate3RVerticalSliceVerification(result, failures, options = {}) {
   const expectedGoal = options.expectedGoal || 'gate-3r-vertical-slice';
+  const allowPrototypeStuntPark = Boolean(options.allowPrototypeStuntPark);
   const blockout = result.blockout || {};
   const blockoutSetPieces = blockout.setPieces || {};
   const slice = result.verticalSlice || blockout.verticalSlice || {};
@@ -4442,9 +4718,9 @@ function assertGate3RVerticalSliceVerification(result, failures, options = {}) {
   if ((result.roadTopology?.maxRoadWidth || 99) > 5.2) failures.push(`Gate 3R road width failed: maxRoadWidth=${result.roadTopology?.maxRoadWidth}`);
   if ((result.surfacePanels?.hardscapePanels || 0) !== 0) failures.push(`Gate 3R scaffold failed: hardscape panels built=${result.surfacePanels?.hardscapePanels || 0}`);
   if ((result.districtComposition?.pads || 0) !== 0) failures.push(`Gate 3R district dressing failed: unrelated pads built=${result.districtComposition?.pads || 0}`);
-  if ((result.stuntPark?.ramps || 0) !== 0) failures.push(`Gate 3R stunt failed: rejected ramps built=${result.stuntPark?.ramps || 0}`);
-  if ((result.stuntPark?.boostPads || 0) !== 0) failures.push(`Gate 3R stunt failed: rejected boost pads built=${result.stuntPark?.boostPads || 0}`);
-  if ((result.stuntPark?.landingMarkers || 0) !== 0) failures.push(`Gate 3R stunt failed: rejected landing markers built=${result.stuntPark?.landingMarkers || 0}`);
+  if (!allowPrototypeStuntPark && (result.stuntPark?.ramps || 0) !== 0) failures.push(`Gate 3R stunt failed: rejected ramps built=${result.stuntPark?.ramps || 0}`);
+  if (!allowPrototypeStuntPark && (result.stuntPark?.boostPads || 0) !== 0) failures.push(`Gate 3R stunt failed: rejected boost pads built=${result.stuntPark?.boostPads || 0}`);
+  if (!allowPrototypeStuntPark && (result.stuntPark?.landingMarkers || 0) !== 0) failures.push(`Gate 3R stunt failed: rejected landing markers built=${result.stuntPark?.landingMarkers || 0}`);
   if ((result.stuntPark?.circuitTargetRings || 0) !== 0) failures.push(`Gate 3R stunt failed: circuit target rings built=${result.stuntPark?.circuitTargetRings || 0}`);
   if ((result.stuntPark?.circuitTargetArrows || 0) !== 0) failures.push(`Gate 3R stunt failed: circuit target arrows built=${result.stuntPark?.circuitTargetArrows || 0}`);
   if ((result.collectibles?.total || 0) !== 0) failures.push(`Gate 3R collectibles failed: data shards built=${result.collectibles?.total || 0}`);
@@ -4502,6 +4778,7 @@ function assertGate3RVerticalSliceVerification(result, failures, options = {}) {
   const nonProtectedColliders = colliderSummary.filter((collider) => (
     collider.name !== 'ToyIslandTerrainCollider'
     && collider.name !== 'ZONE_education_protected_landmark_collider'
+    && !(allowPrototypeStuntPark && collider.name === 'STUNTB6R_training_ramp_collider')
   ));
   if (nonProtectedColliders.length) {
     failures.push(`Gate 3R physics failed: extra driving colliders=${nonProtectedColliders.map((collider) => collider.name).join(', ')}`);
@@ -4593,7 +4870,10 @@ function assertGate3RVerticalSliceVerification(result, failures, options = {}) {
 }
 
 function assertGate4B1SouthRunVerification(result, failures, options = {}) {
-  assertGate3RVerticalSliceVerification(result, failures, { expectedGoal: options.expectedGoal || 'gate-4b1-south-run' });
+  assertGate3RVerticalSliceVerification(result, failures, {
+    expectedGoal: options.expectedGoal || 'gate-4b1-south-run',
+    allowPrototypeStuntPark: options.allowPrototypeStuntPark
+  });
 
   const southRun = result.gate4b1 || {};
   const cv = southRun.cv || {};
@@ -4632,7 +4912,10 @@ function assertGate4B1SouthRunVerification(result, failures, options = {}) {
 }
 
 function assertGate4B2WestServiceVerification(result, failures, options = {}) {
-  assertGate4B1SouthRunVerification(result, failures, { expectedGoal: options.expectedGoal || 'gate-4b2-west-service' });
+  assertGate4B1SouthRunVerification(result, failures, {
+    expectedGoal: options.expectedGoal || 'gate-4b2-west-service',
+    allowPrototypeStuntPark: options.allowPrototypeStuntPark
+  });
 
   const westService = result.gate4b2 || {};
   const skills = westService.skills || {};
@@ -4685,7 +4968,10 @@ function assertGate4B2WestServiceVerification(result, failures, options = {}) {
 }
 
 function assertGate4B3DataPierSideVerification(result, failures, options = {}) {
-  assertGate4B2WestServiceVerification(result, failures, { expectedGoal: options.expectedGoal || 'gate-4b3-data-pier-side' });
+  assertGate4B2WestServiceVerification(result, failures, {
+    expectedGoal: options.expectedGoal || 'gate-4b3-data-pier-side',
+    allowPrototypeStuntPark: options.allowPrototypeStuntPark
+  });
 
   const dataPierSide = result.gate4b3 || {};
   const todo = dataPierSide.todo || {};
@@ -4738,7 +5024,10 @@ function assertGate4B3DataPierSideVerification(result, failures, options = {}) {
 }
 
 function assertGate4B4EastSideVerification(result, failures, options = {}) {
-  assertGate4B3DataPierSideVerification(result, failures, { expectedGoal: options.expectedGoal || 'gate-4b4-east-side' });
+  assertGate4B3DataPierSideVerification(result, failures, {
+    expectedGoal: options.expectedGoal || 'gate-4b4-east-side',
+    allowPrototypeStuntPark: options.allowPrototypeStuntPark
+  });
 
   const eastSide = result.gate4b4 || {};
   const projects = eastSide.projects || {};
@@ -4816,8 +5105,11 @@ function assertGate4B4EastSideVerification(result, failures, options = {}) {
   }
 }
 
-function assertGate4B5NorthRidgeVerification(result, failures) {
-  assertGate4B4EastSideVerification(result, failures, { expectedGoal: 'gate-4b5-north-ridge' });
+function assertGate4B5NorthRidgeVerification(result, failures, options = {}) {
+  assertGate4B4EastSideVerification(result, failures, {
+    expectedGoal: options.expectedGoal || 'gate-4b5-north-ridge',
+    allowPrototypeStuntPark: options.allowPrototypeStuntPark
+  });
 
   const northRidge = result.gate4b5 || {};
   const awards = northRidge.awards || {};
@@ -4899,7 +5191,10 @@ function assertGate4B5NorthRidgeVerification(result, failures) {
 }
 
 function assertGate4BRCompositionCorrectionVerification(result, failures, options = {}) {
-  assertGate4B2WestServiceVerification(result, failures, { expectedGoal: options.expectedGoal || 'gate-4br-composition-correction' });
+  assertGate4B2WestServiceVerification(result, failures, {
+    expectedGoal: options.expectedGoal || 'gate-4br-composition-correction',
+    allowPrototypeStuntPark: options.allowPrototypeStuntPark
+  });
 
   const dataPierSide = result.gate4b3 || {};
   const todo = dataPierSide.todo || {};
@@ -4993,13 +5288,15 @@ function assertGate4BRCompositionCorrectionVerification(result, failures, option
   if ((result.districtComposition?.awardsArchiveNodes || 0) !== 0 || (result.circuitStart?.pads || 0) !== 0) {
     failures.push('Gate 4-BR failed: old Awards/Circuit composition systems were enabled');
   }
-  if ((result.stuntPark?.ramps || 0) !== 0 || (result.stuntPark?.boostPads || 0) !== 0 || (result.stuntPark?.gates || 0) !== 0) {
+  if (!options.allowPrototypeStuntPark && ((result.stuntPark?.ramps || 0) !== 0 || (result.stuntPark?.boostPads || 0) !== 0 || (result.stuntPark?.gates || 0) !== 0)) {
     failures.push('Gate 4-BR failed: old StuntPark physical systems were enabled');
   }
 }
 
-function assertGate4B6StuntCoveVerification(result, failures) {
-  assertGate4BRCompositionCorrectionVerification(result, failures, { expectedGoal: 'gate-4b6-stunt-cove' });
+function assertGate4B6StuntCoveVerification(result, failures, options = {}) {
+  const expectedGoal = options.expectedGoal || 'gate-4b6-stunt-cove';
+  const allowPrototypeStuntPark = Boolean(options.allowPrototypeStuntPark);
+  assertGate4BRCompositionCorrectionVerification(result, failures, { expectedGoal, allowPrototypeStuntPark });
 
   const stuntCove = result.gate4b6 || {};
   const placement = result.gate3rPlacement || {};
@@ -5046,10 +5343,62 @@ function assertGate4B6StuntCoveVerification(result, failures) {
   if ((placement.shorelineFootprintIntrusions || 0) !== 0) {
     failures.push(`Gate 4-B6 placement failed: shorelineFootprintIntrusions=${placement.shorelineFootprintIntrusions || 0}`);
   }
-  if ((result.colliderCount || 0) !== 2) failures.push(`Gate 4-B6 failed: colliderCount=${result.colliderCount || 0}`);
-  if ((result.stuntPark?.ramps || 0) !== 0 || (result.stuntPark?.boostPads || 0) !== 0 || (result.stuntPark?.gates || 0) !== 0 || (result.stuntPark?.landingMarkers || 0) !== 0) {
+  if (!allowPrototypeStuntPark && (result.colliderCount || 0) !== 2) failures.push(`Gate 4-B6 failed: colliderCount=${result.colliderCount || 0}`);
+  if (allowPrototypeStuntPark && (result.colliderCount || 0) < 3) failures.push(`Gate 4-B6R failed: colliderCount=${result.colliderCount || 0}`);
+  if (!allowPrototypeStuntPark && ((result.stuntPark?.ramps || 0) !== 0 || (result.stuntPark?.boostPads || 0) !== 0 || (result.stuntPark?.gates || 0) !== 0 || (result.stuntPark?.landingMarkers || 0) !== 0)) {
     failures.push('Gate 4-B6 failed: old StuntPark physical systems were enabled');
   }
+}
+
+function assertGate4B6RPhysicsPrototypeVerification(result, failures) {
+  assertGate4B6StuntCoveVerification(result, failures, {
+    expectedGoal: 'gate-4b6r-physics-prototype',
+    allowPrototypeStuntPark: true
+  });
+
+  const stats = result.stuntPark || {};
+  const prototype = result.stuntPrototype || {};
+  const route = prototype.route || {};
+  const miss = prototype.missRecovery || {};
+  const colliderEvidence = prototype.colliderEvidence || {};
+  const colliderSummary = result.colliderAudit?.summary || [];
+  const rampCollider = colliderSummary.find((collider) => collider.name === 'STUNTB6R_training_ramp_collider');
+
+  if (!stats.prototypeEnabled) failures.push('Gate 4-B6R prototype failed: prototype mode inactive');
+  if (stats.prototypeLine !== 'beginner-loop') failures.push(`Gate 4-B6R prototype failed: line=${stats.prototypeLine || 'none'}`);
+  if ((stats.prototypeRamps || 0) !== 1 || (stats.ramps || 0) !== 1) {
+    failures.push(`Gate 4-B6R prototype failed: ramps=${stats.prototypeRamps || 0}/${stats.ramps || 0}`);
+  }
+  if ((stats.prototypePhysicalColliders || 0) !== 1) {
+    failures.push(`Gate 4-B6R prototype failed: physicalColliders=${stats.prototypePhysicalColliders || 0}`);
+  }
+  if ((stats.prototypeLandingTargets || 0) < 2) failures.push(`Gate 4-B6R prototype failed: landingTargets=${stats.prototypeLandingTargets || 0}`);
+  if ((stats.prototypeRunwayMarks || 0) < 4) failures.push(`Gate 4-B6R prototype failed: runwayMarks=${stats.prototypeRunwayMarks || 0}`);
+  if ((stats.prototypeRecoveryGuides || 0) < 3) failures.push(`Gate 4-B6R prototype failed: recoveryGuides=${stats.prototypeRecoveryGuides || 0}`);
+  if ((stats.boostPads || 0) !== 0 || (stats.gates || 0) !== 0 || (stats.landingMarkers || 0) !== 0) {
+    failures.push('Gate 4-B6R prototype failed: rejected old StuntPark systems were enabled');
+  }
+
+  if (!prototype.enabled) failures.push('Gate 4-B6R route failed: prototype probe skipped');
+  if ((prototype.screenshots?.length || 0) < 7) {
+    failures.push(`Gate 4-B6R route failed: screenshots=${prototype.screenshots?.length || 0}`);
+  }
+  if (!colliderEvidence.rampVisualExists) failures.push('Gate 4-B6R collider failed: ramp visual missing');
+  if (!colliderEvidence.rampCollider) failures.push('Gate 4-B6R collider failed: ramp collider missing from runtime evidence');
+  if (!rampCollider || rampCollider.visualName !== 'STUNTB6R_training_ramp' || !rampCollider.visualExists) {
+    failures.push('Gate 4-B6R collider failed: named ramp collider has no matching visible mesh');
+  }
+
+  if ((route.distance || 0) < 24) failures.push(`Gate 4-B6R route failed: distance=${route.distance || 0}`);
+  if ((route.maxSpeed || 0) < 16) failures.push(`Gate 4-B6R route failed: maxSpeed=${route.maxSpeed || 0}`);
+  if ((route.maxHeightDelta || 0) < 0.28) failures.push(`Gate 4-B6R route failed: maxHeightDelta=${route.maxHeightDelta || 0}`);
+  if ((route.airborneFrames || 0) < 2) failures.push(`Gate 4-B6R route failed: airborneFrames=${route.airborneFrames || 0}`);
+  if (!route.landingSeen) failures.push('Gate 4-B6R route failed: landing not observed');
+  if ((route.finalGroundedWheels || 0) < 2) failures.push(`Gate 4-B6R route failed: finalGroundedWheels=${route.finalGroundedWheels || 0}`);
+  if (route.finalSurface === 'water') failures.push('Gate 4-B6R route failed: ended in water');
+  if ((route.halts || 0) !== 0) failures.push(`Gate 4-B6R route failed: halts=${route.halts || 0}`);
+  if (!miss.recoverable) failures.push(`Gate 4-B6R miss recovery failed: recoverable=${miss.recoverable}`);
+  if ((miss.halts || 0) !== 0) failures.push(`Gate 4-B6R miss recovery failed: halts=${miss.halts || 0}`);
 }
 
 function assertGate2BlockoutVerification(result, failures) {

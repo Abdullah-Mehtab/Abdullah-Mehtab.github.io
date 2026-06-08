@@ -32,6 +32,10 @@ export class StuntPark {
 
   build() {
     this.stats = this.createStats();
+    if (this.world.gate4b6rPrototypeMode) {
+      this.createGate4B6RPrototype();
+      return;
+    }
     if (this.world.foundationReplacementMode) {
       return;
     }
@@ -86,12 +90,140 @@ export class StuntPark {
       checkpointPulseSamples: 0,
       maxCheckpointPulse: 0,
       yardDressingVisible: true,
-      yardDressingRadius: 0
+      yardDressingRadius: 0,
+      prototypeEnabled: false,
+      prototypeRamps: 0,
+      prototypePhysicalColliders: 0,
+      prototypeLandingTargets: 0,
+      prototypeRunwayMarks: 0,
+      prototypeRecoveryGuides: 0,
+      prototypeDebugMarkers: 0,
+      prototypeLine: null
     };
   }
 
   getStats() {
     return { ...this.stats };
+  }
+
+  createGate4B6RPrototype() {
+    const group = new THREE.Group();
+    group.name = 'STUNTB6R_BeginnerLoop_Prototype';
+    const heading = -0.35;
+    const forward = { x: Math.sin(heading), z: Math.cos(heading) };
+    const right = { x: Math.cos(heading), z: -Math.sin(heading) };
+    const point = (center, side, ahead) => ({
+      x: center.x + right.x * side + forward.x * ahead,
+      z: center.z + right.z * side + forward.z * ahead
+    });
+
+    this.stats.prototypeEnabled = true;
+    this.stats.prototypeLine = 'beginner-loop';
+
+    const runwayStart = { x: 60, z: -96 };
+    const ramp = { id: 'training-ramp', x: 54, z: -78, y: 0.28, rotation: heading, width: 10, length: 13, height: 0.9 };
+    const landing = { x: 49, z: -64, rotation: heading, width: 16, depth: 12 };
+    const recovery = { x: 42, z: -54, rotation: 0.85 };
+
+    this.addGate4B6RRunwayMarks(group, runwayStart, heading);
+    this.addGate4B6RTrainingRamp(ramp);
+    this.addGate4B6RLandingTarget(group, landing, point);
+    this.addGate4B6RRecoveryGuides(group, recovery);
+    this.addGate4B6RDebugMarkers(group, [
+      { name: 'STUNTB6R_Debug_Approach', x: runwayStart.x, z: runwayStart.z, color: 0x68d8ff },
+      { name: 'STUNTB6R_Debug_Takeoff', x: ramp.x + forward.x * ramp.length * 0.48, z: ramp.z + forward.z * ramp.length * 0.48, color: 0xfff0a0 },
+      { name: 'STUNTB6R_Debug_Landing', x: landing.x, z: landing.z, color: 0x7cffb2 },
+      { name: 'STUNTB6R_Debug_Recovery', x: recovery.x, z: recovery.z, color: 0xff9b6d }
+    ]);
+
+    this.world.scene.add(group);
+  }
+
+  addGate4B6RTrainingRamp(ramp) {
+    const rampShape = createRampShape(ramp.width, ramp.length, ramp.height);
+    const mesh = new THREE.Mesh(rampShape.geometry, this.world.materials.stuntRamp);
+    mesh.name = 'STUNTB6R_training_ramp';
+    mesh.position.set(ramp.x, ramp.y, ramp.z);
+    mesh.rotation.y = ramp.rotation;
+    mesh.castShadow = true;
+    mesh.receiveShadow = true;
+    this.world.scene.add(mesh);
+
+    this.world.ramps.push({ id: 'b6r-training-ramp', position: new THREE.Vector3(ramp.x, 0, ramp.z), radius: 11, triggered: false });
+    this.world.physics.createFixedTrimesh([ramp.x, ramp.y, ramp.z], rampShape.vertices, rampShape.indices, {
+      debugName: 'STUNTB6R_training_ramp_collider',
+      visualName: 'STUNTB6R_training_ramp',
+      rotation: [0, ramp.rotation, 0],
+      friction: 0.94,
+      restitution: 0.02
+    });
+    this.stats.ramps += 1;
+    this.stats.prototypeRamps += 1;
+    this.stats.prototypePhysicalColliders += 1;
+  }
+
+  addGate4B6RRunwayMarks(group, start, heading) {
+    const forward = { x: Math.sin(heading), z: Math.cos(heading) };
+    const right = { x: Math.cos(heading), z: -Math.sin(heading) };
+    const markMaterial = new THREE.MeshBasicMaterial({ color: 0xffe0a3, transparent: true, opacity: 0.42, depthWrite: false });
+    for (let index = 0; index < 4; index += 1) {
+      const side = index % 2 === 0 ? -1 : 1;
+      const distance = index * 3.1;
+      const mark = new THREE.Mesh(new THREE.BoxGeometry(0.42, 0.028, 1.65), markMaterial);
+      mark.name = 'STUNTB6R_runway_speed_mark';
+      mark.position.set(start.x + forward.x * distance + right.x * side * 2.8, 0.252, start.z + forward.z * distance + right.z * side * 2.8);
+      mark.rotation.y = heading;
+      group.add(mark);
+      this.stats.prototypeRunwayMarks += 1;
+    }
+  }
+
+  addGate4B6RLandingTarget(group, landing, point) {
+    const baseMaterial = new THREE.MeshBasicMaterial({ color: 0x243a37, transparent: true, opacity: 0.5, depthWrite: false });
+    const base = new THREE.Mesh(new THREE.BoxGeometry(landing.width, 0.024, landing.depth), baseMaterial);
+    base.name = 'STUNTB6R_training_landing_target';
+    base.position.set(landing.x, 0.248, landing.z);
+    base.rotation.y = landing.rotation;
+    group.add(base);
+
+    const aimMaterial = new THREE.MeshBasicMaterial({ color: 0x7cffb2, transparent: true, opacity: 0.58, depthWrite: false });
+    for (const side of [-1, 1]) {
+      const target = point(landing, side * 3.2, -1.6);
+      const aim = new THREE.Mesh(new THREE.BoxGeometry(3.8, 0.028, 0.28), aimMaterial);
+      aim.name = 'STUNTB6R_landing_aim_mark';
+      aim.position.set(target.x, 0.258, target.z);
+      aim.rotation.y = landing.rotation;
+      group.add(aim);
+      this.stats.prototypeLandingTargets += 1;
+    }
+  }
+
+  addGate4B6RRecoveryGuides(group, recovery) {
+    const guideMaterial = new THREE.MeshBasicMaterial({ color: 0xffc36a, transparent: true, opacity: 0.46, depthWrite: false });
+    const forward = { x: Math.sin(recovery.rotation), z: Math.cos(recovery.rotation) };
+    const right = { x: Math.cos(recovery.rotation), z: -Math.sin(recovery.rotation) };
+    for (let index = 0; index < 3; index += 1) {
+      const guide = new THREE.Mesh(new THREE.BoxGeometry(3.4, 0.026, 0.32), guideMaterial);
+      guide.name = 'STUNTB6R_recovery_chevron';
+      const ahead = index * 3.6;
+      const side = -1.2 + index * 1.2;
+      guide.position.set(recovery.x + forward.x * ahead + right.x * side, 0.256, recovery.z + forward.z * ahead + right.z * side);
+      guide.rotation.y = recovery.rotation + 0.42;
+      group.add(guide);
+      this.stats.prototypeRecoveryGuides += 1;
+    }
+  }
+
+  addGate4B6RDebugMarkers(group, markers) {
+    const markerGeometry = new THREE.CylinderGeometry(0.2, 0.2, 0.08, 10);
+    for (const marker of markers) {
+      const material = new THREE.MeshBasicMaterial({ color: marker.color, transparent: true, opacity: 0.58, depthWrite: false });
+      const mesh = new THREE.Mesh(markerGeometry, material);
+      mesh.name = marker.name;
+      mesh.position.set(marker.x, 0.34, marker.z);
+      group.add(mesh);
+      this.stats.prototypeDebugMarkers += 1;
+    }
   }
 
   createYardDressing() {
