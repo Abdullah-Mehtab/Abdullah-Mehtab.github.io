@@ -36,10 +36,11 @@ const ROAD_SURFACES = {
   bridge: { label: 'pier deck', forwardGrip: 0.96, sideGrip: 0.93, engineFactor: 0.96, topSpeedFactor: 0.88, dustColor: 0x7aa9a7, skidColor: 0x2e4d4b, audioId: 'bridge-road', roughnessFeedback: 0.34 }
 };
 
-const GOAL_GATE = 'gate-4c-b2-gallery-side-replacements';
+const GOAL_GATE = 'gate-4c-b3-west-service-replacements';
 const GATE4_C_B1_GATE_ID = 'gate-4c-b1-south-run-replacements';
 const GATE4_C_B2_GATE_ID = 'gate-4c-b2-gallery-side-replacements';
-const GATE4_C_GATE_IDS = [GATE4_C_B1_GATE_ID, GATE4_C_B2_GATE_ID];
+const GATE4_C_B3_GATE_ID = 'gate-4c-b3-west-service-replacements';
+const GATE4_C_GATE_IDS = [GATE4_C_B1_GATE_ID, GATE4_C_B2_GATE_ID, GATE4_C_B3_GATE_ID];
 const GATE4_BR_GATE_ID = 'gate-4br-composition-correction';
 const GATE4_B1_GATE_IDS = new Set(['gate-4b1-south-run', 'gate-4b2-west-service', 'gate-4b3-data-pier-side', 'gate-4b4-east-side', 'gate-4b5-north-ridge', GATE4_BR_GATE_ID, ...GATE4_C_GATE_IDS]);
 const GATE4_B2_GATE_IDS = new Set(['gate-4b2-west-service', 'gate-4b3-data-pier-side', 'gate-4b4-east-side', 'gate-4b5-north-ridge', GATE4_BR_GATE_ID, ...GATE4_C_GATE_IDS]);

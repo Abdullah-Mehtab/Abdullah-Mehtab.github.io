@@ -3888,6 +3888,13 @@ function assertVerification(result) {
     }
     return;
   }
+  if (result.goalGate === 'gate-4c-b3-west-service-replacements') {
+    assertGate4CB3WestServiceReplacementVerification(result, failures);
+    if (failures.length) {
+      throw new Error(`Play verification failed: ${failures.join('; ')}`);
+    }
+    return;
+  }
   if (result.goalGate === 'gate-4b5-north-ridge') {
     assertGate4B5NorthRidgeVerification(result, failures);
     if (failures.length) {
@@ -5276,42 +5283,46 @@ function assertGate4B2WestServiceVerification(result, failures, options = {}) {
   if (!westService.enabled) failures.push('Gate 4-B2 failed: West Service scaffold inactive');
   if ((westService.staticBatches || 0) < 1) failures.push(`Gate 4-B2 batching failed: staticBatches=${westService.staticBatches || 0}`);
 
-  if ((skills.pads || 0) !== 1) failures.push(`Gate 4-B2 Skills failed: pads=${skills.pads || 0}`);
-  if ((skills.terminalSlabs || 0) !== 1) failures.push(`Gate 4-B2 Skills failed: terminalSlabs=${skills.terminalSlabs || 0}`);
-  if ((skills.codeNodes || 0) !== 7) failures.push(`Gate 4-B2 Skills failed: codeNodes=${skills.codeNodes || 0}`);
-  if ((skills.codeCards || 0) !== 6) failures.push(`Gate 4-B2 Skills failed: codeCards=${skills.codeCards || 0}`);
-  if ((skills.syncRings || 0) !== 1) failures.push(`Gate 4-B2 Skills failed: syncRings=${skills.syncRings || 0}`);
-  if ((skills.signalRibbons || 0) !== 3) failures.push(`Gate 4-B2 Skills failed: signalRibbons=${skills.signalRibbons || 0}`);
-  if ((skills.signs || 0) !== 1) failures.push(`Gate 4-B2 Skills failed: signs=${skills.signs || 0}`);
-  if ((skills.lamps || 0) !== 2) failures.push(`Gate 4-B2 Skills failed: lamps=${skills.lamps || 0}`);
+  if (options.sourceWestService) {
+    assertGate4CB3SourceWestService(result, failures);
+  } else {
+    if ((skills.pads || 0) !== 1) failures.push(`Gate 4-B2 Skills failed: pads=${skills.pads || 0}`);
+    if ((skills.terminalSlabs || 0) !== 1) failures.push(`Gate 4-B2 Skills failed: terminalSlabs=${skills.terminalSlabs || 0}`);
+    if ((skills.codeNodes || 0) !== 7) failures.push(`Gate 4-B2 Skills failed: codeNodes=${skills.codeNodes || 0}`);
+    if ((skills.codeCards || 0) !== 6) failures.push(`Gate 4-B2 Skills failed: codeCards=${skills.codeCards || 0}`);
+    if ((skills.syncRings || 0) !== 1) failures.push(`Gate 4-B2 Skills failed: syncRings=${skills.syncRings || 0}`);
+    if ((skills.signalRibbons || 0) !== 3) failures.push(`Gate 4-B2 Skills failed: signalRibbons=${skills.signalRibbons || 0}`);
+    if ((skills.signs || 0) !== 1) failures.push(`Gate 4-B2 Skills failed: signs=${skills.signs || 0}`);
+    if ((skills.lamps || 0) !== 2) failures.push(`Gate 4-B2 Skills failed: lamps=${skills.lamps || 0}`);
 
-  if ((farm.pads || 0) !== 1) failures.push(`Gate 4-B2 Farm failed: pads=${farm.pads || 0}`);
-  if ((farm.farmRows || 0) !== 5) failures.push(`Gate 4-B2 Farm failed: farmRows=${farm.farmRows || 0}`);
-  if ((farm.fenceSegments || 0) !== 8) failures.push(`Gate 4-B2 Farm failed: fenceSegments=${farm.fenceSegments || 0}`);
-  if ((farm.anchors || 0) !== 1) failures.push(`Gate 4-B2 Farm failed: anchors=${farm.anchors || 0}`);
-  if ((farm.signs || 0) !== 1) failures.push(`Gate 4-B2 Farm failed: signs=${farm.signs || 0}`);
-  if ((farm.lamps || 0) !== 2) failures.push(`Gate 4-B2 Farm failed: lamps=${farm.lamps || 0}`);
+    if ((farm.pads || 0) !== 1) failures.push(`Gate 4-B2 Farm failed: pads=${farm.pads || 0}`);
+    if ((farm.farmRows || 0) !== 5) failures.push(`Gate 4-B2 Farm failed: farmRows=${farm.farmRows || 0}`);
+    if ((farm.fenceSegments || 0) !== 8) failures.push(`Gate 4-B2 Farm failed: fenceSegments=${farm.fenceSegments || 0}`);
+    if ((farm.anchors || 0) !== 1) failures.push(`Gate 4-B2 Farm failed: anchors=${farm.anchors || 0}`);
+    if ((farm.signs || 0) !== 1) failures.push(`Gate 4-B2 Farm failed: signs=${farm.signs || 0}`);
+    if ((farm.lamps || 0) !== 2) failures.push(`Gate 4-B2 Farm failed: lamps=${farm.lamps || 0}`);
 
-  if ((placement.byFootprintKind?.['gate4b2-skills-pad'] || 0) !== 1) {
-    failures.push(`Gate 4-B2 placement failed: Skills pad footprints=${placement.byFootprintKind?.['gate4b2-skills-pad'] || 0}`);
-  }
-  if ((placement.byFootprintKind?.['gate4b2-farm-pad'] || 0) !== 1) {
-    failures.push(`Gate 4-B2 placement failed: Farm pad footprints=${placement.byFootprintKind?.['gate4b2-farm-pad'] || 0}`);
-  }
-  if ((placement.byKind?.['gate4b2-skills-node'] || 0) !== 7) {
-    failures.push(`Gate 4-B2 placement failed: Skills node placements=${placement.byKind?.['gate4b2-skills-node'] || 0}`);
-  }
-  if ((placement.byKind?.['gate4b2-skills-card'] || 0) !== 6) {
-    failures.push(`Gate 4-B2 placement failed: Skills card placements=${placement.byKind?.['gate4b2-skills-card'] || 0}`);
-  }
-  if ((placement.byKind?.['gate4b2-skills-ribbon'] || 0) !== 3) {
-    failures.push(`Gate 4-B2 placement failed: Skills ribbon placements=${placement.byKind?.['gate4b2-skills-ribbon'] || 0}`);
-  }
-  if ((placement.byKind?.['gate4b2-farm-row'] || 0) !== 5) {
-    failures.push(`Gate 4-B2 placement failed: Farm row placements=${placement.byKind?.['gate4b2-farm-row'] || 0}`);
-  }
-  if ((placement.byKind?.['gate4b2-farm-fence'] || 0) !== 8) {
-    failures.push(`Gate 4-B2 placement failed: Farm fence placements=${placement.byKind?.['gate4b2-farm-fence'] || 0}`);
+    if ((placement.byFootprintKind?.['gate4b2-skills-pad'] || 0) !== 1) {
+      failures.push(`Gate 4-B2 placement failed: Skills pad footprints=${placement.byFootprintKind?.['gate4b2-skills-pad'] || 0}`);
+    }
+    if ((placement.byFootprintKind?.['gate4b2-farm-pad'] || 0) !== 1) {
+      failures.push(`Gate 4-B2 placement failed: Farm pad footprints=${placement.byFootprintKind?.['gate4b2-farm-pad'] || 0}`);
+    }
+    if ((placement.byKind?.['gate4b2-skills-node'] || 0) !== 7) {
+      failures.push(`Gate 4-B2 placement failed: Skills node placements=${placement.byKind?.['gate4b2-skills-node'] || 0}`);
+    }
+    if ((placement.byKind?.['gate4b2-skills-card'] || 0) !== 6) {
+      failures.push(`Gate 4-B2 placement failed: Skills card placements=${placement.byKind?.['gate4b2-skills-card'] || 0}`);
+    }
+    if ((placement.byKind?.['gate4b2-skills-ribbon'] || 0) !== 3) {
+      failures.push(`Gate 4-B2 placement failed: Skills ribbon placements=${placement.byKind?.['gate4b2-skills-ribbon'] || 0}`);
+    }
+    if ((placement.byKind?.['gate4b2-farm-row'] || 0) !== 5) {
+      failures.push(`Gate 4-B2 placement failed: Farm row placements=${placement.byKind?.['gate4b2-farm-row'] || 0}`);
+    }
+    if ((placement.byKind?.['gate4b2-farm-fence'] || 0) !== 8) {
+      failures.push(`Gate 4-B2 placement failed: Farm fence placements=${placement.byKind?.['gate4b2-farm-fence'] || 0}`);
+    }
   }
   if ((result.blockout?.potatoPocketBuilt || false) !== false) {
     failures.push('Gate 4-B2 failed: old PotatoFarm pocket was enabled');
@@ -5322,7 +5333,9 @@ function assertGate4B3DataPierSideVerification(result, failures, options = {}) {
   assertGate4B2WestServiceVerification(result, failures, {
     expectedGoal: options.expectedGoal || 'gate-4b3-data-pier-side',
     allowPrototypeStuntPark: options.allowPrototypeStuntPark,
-    allowedExtraColliderPrefixes: options.allowedExtraColliderPrefixes
+    allowedExtraColliderPrefixes: options.allowedExtraColliderPrefixes,
+    sourceSouthRun: options.sourceSouthRun,
+    sourceWestService: options.sourceWestService
   });
 
   const dataPierSide = result.gate4b3 || {};
@@ -5549,7 +5562,8 @@ function assertGate4BRCompositionCorrectionVerification(result, failures, option
     expectedGoal: options.expectedGoal || 'gate-4br-composition-correction',
     allowPrototypeStuntPark: options.allowPrototypeStuntPark,
     allowedExtraColliderPrefixes: options.allowedExtraColliderPrefixes,
-    sourceSouthRun: options.sourceSouthRun
+    sourceSouthRun: options.sourceSouthRun,
+    sourceWestService: options.sourceWestService
   });
   assertStuntCoveDeleted(result, failures);
 
@@ -5666,6 +5680,15 @@ function assertGate4CB2GallerySideReplacementVerification(result, failures) {
     expectedGoal: 'gate-4c-b2-gallery-side-replacements',
     sourceSouthRun: true,
     sourceGallerySide: true
+  });
+}
+
+function assertGate4CB3WestServiceReplacementVerification(result, failures) {
+  assertGate4BRCompositionCorrectionVerification(result, failures, {
+    expectedGoal: 'gate-4c-b3-west-service-replacements',
+    sourceSouthRun: true,
+    sourceGallerySide: true,
+    sourceWestService: true
   });
 }
 
@@ -5789,6 +5812,82 @@ function assertGate4CB2SourceGallerySide(result, failures) {
   for (const kind of ['gate4b4-project-rack', 'gate4b4-project-spark', 'gate4b4-career-office', 'gate4b4-career-facade', 'gate4b4-career-frame', 'gate4b4-career-connector']) {
     if ((placement.byKind?.[kind] || 0) !== 0) {
       failures.push(`Gate 4-C-B2 placement failed: rejected ${kind}=${placement.byKind?.[kind] || 0}`);
+    }
+  }
+}
+
+function assertGate4CB3SourceWestService(result, failures) {
+  const westService = result.gate4b2 || {};
+  const skills = westService.skills || {};
+  const farm = westService.farm || {};
+  const placement = result.gate3rPlacement || {};
+
+  if (!westService.enabled) failures.push('Gate 4-C-B3 failed: West Service replacement inactive');
+  if ((westService.staticBatches || 0) < 1) failures.push(`Gate 4-C-B3 batching failed: staticBatches=${westService.staticBatches || 0}`);
+
+  if ((skills.pads || 0) !== 1) failures.push(`Gate 4-C-B3 Skills failed: pads=${skills.pads || 0}`);
+  if ((skills.sourceAssets || 0) < 5) failures.push(`Gate 4-C-B3 Skills failed: sourceAssets=${skills.sourceAssets || 0}`);
+  if ((skills.dataHallShells || 0) !== 1) failures.push(`Gate 4-C-B3 Skills failed: dataHallShells=${skills.dataHallShells || 0}`);
+  if ((skills.commandTerminals || 0) !== 1) failures.push(`Gate 4-C-B3 Skills failed: commandTerminals=${skills.commandTerminals || 0}`);
+  if ((skills.frontendRacks || 0) !== 1) failures.push(`Gate 4-C-B3 Skills failed: frontendRacks=${skills.frontendRacks || 0}`);
+  if ((skills.backendRacks || 0) !== 1) failures.push(`Gate 4-C-B3 Skills failed: backendRacks=${skills.backendRacks || 0}`);
+  if ((skills.securityRacks || 0) !== 1) failures.push(`Gate 4-C-B3 Skills failed: securityRacks=${skills.securityRacks || 0}`);
+  if ((skills.statusRings || 0) !== 1) failures.push(`Gate 4-C-B3 Skills failed: statusRings=${skills.statusRings || 0}`);
+  if ((skills.cableFloors || 0) !== 3) failures.push(`Gate 4-C-B3 Skills failed: cableFloors=${skills.cableFloors || 0}`);
+  if ((skills.signs || 0) !== 0) failures.push(`Gate 4-C-B3 Skills failed: rejected signs=${skills.signs || 0}`);
+  if ((skills.lamps || 0) !== 0) failures.push(`Gate 4-C-B3 Skills failed: rejected lamps=${skills.lamps || 0}`);
+
+  if ((farm.pads || 0) !== 1) failures.push(`Gate 4-C-B3 Potato failed: pads=${farm.pads || 0}`);
+  if ((farm.sourceAssets || 0) < 1) failures.push(`Gate 4-C-B3 Potato failed: sourceAssets=${farm.sourceAssets || 0}`);
+  if ((farm.farmRows || 0) !== 5) failures.push(`Gate 4-C-B3 Potato failed: farmRows=${farm.farmRows || 0}`);
+  if ((farm.irrigationRuns || 0) !== 1) failures.push(`Gate 4-C-B3 Potato failed: irrigationRuns=${farm.irrigationRuns || 0}`);
+  if ((farm.counterStands || 0) !== 1) failures.push(`Gate 4-C-B3 Potato failed: counterStands=${farm.counterStands || 0}`);
+  if ((farm.summonPatches || 0) !== 1) failures.push(`Gate 4-C-B3 Potato failed: summonPatches=${farm.summonPatches || 0}`);
+  if ((farm.fenceVisuals || 0) !== 4) failures.push(`Gate 4-C-B3 Potato failed: fenceVisuals=${farm.fenceVisuals || 0}`);
+  if ((farm.crates || 0) !== 3) failures.push(`Gate 4-C-B3 Potato failed: crates=${farm.crates || 0}`);
+  if ((farm.signs || 0) !== 0) failures.push(`Gate 4-C-B3 Potato failed: rejected signs=${farm.signs || 0}`);
+  if ((farm.lamps || 0) !== 0) failures.push(`Gate 4-C-B3 Potato failed: rejected lamps=${farm.lamps || 0}`);
+
+  for (const [kind, expected] of [
+    ['gate4c-skills-footprint', 1],
+    ['gate4c-skills-data-hall-shell', 1],
+    ['gate4c-skills-command-terminal', 1],
+    ['gate4c-skills-rack-frontend', 1],
+    ['gate4c-skills-rack-backend', 1],
+    ['gate4c-skills-rack-security', 1],
+    ['gate4c-skills-status-ring', 1],
+    ['gate4c-skills-cable-floor', 3],
+    ['gate4c-potato-footprint', 1],
+    ['gate4c-potato-row', 5],
+    ['gate4c-potato-irrigation', 1],
+    ['gate4c-potato-counter-stand', 1],
+    ['gate4c-potato-summon-patch', 1],
+    ['gate4c-potato-fence-visual', 4],
+    ['gate4c-potato-crate', 3]
+  ]) {
+    const source = kind.endsWith('footprint') ? placement.byFootprintKind : placement.byKind;
+    if ((source?.[kind] || 0) !== expected) {
+      failures.push(`Gate 4-C-B3 placement failed: ${kind}=${source?.[kind] || 0}`);
+    }
+  }
+
+  for (const kind of [
+    'gate4b2-skills-terminal',
+    'gate4b2-skills-node',
+    'gate4b2-skills-card',
+    'gate4b2-skills-ring',
+    'gate4b2-skills-ribbon',
+    'gate4b2-farm-row',
+    'gate4b2-farm-fence',
+    'gate4b2-farm-anchor'
+  ]) {
+    if ((placement.byKind?.[kind] || 0) !== 0) {
+      failures.push(`Gate 4-C-B3 placement failed: rejected ${kind}=${placement.byKind?.[kind] || 0}`);
+    }
+  }
+  for (const kind of ['gate4b2-skills-pad', 'gate4b2-farm-pad']) {
+    if ((placement.byFootprintKind?.[kind] || 0) !== 0) {
+      failures.push(`Gate 4-C-B3 placement failed: rejected ${kind}=${placement.byFootprintKind?.[kind] || 0}`);
     }
   }
 }

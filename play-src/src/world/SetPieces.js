@@ -395,6 +395,14 @@ export class SetPieces {
         codeCards: 0,
         syncRings: 0,
         signalRibbons: 0,
+        sourceAssets: 0,
+        dataHallShells: 0,
+        commandTerminals: 0,
+        frontendRacks: 0,
+        backendRacks: 0,
+        securityRacks: 0,
+        statusRings: 0,
+        cableFloors: 0,
         signs: 0,
         lamps: 0
       },
@@ -402,6 +410,12 @@ export class SetPieces {
         pads: 0,
         farmRows: 0,
         fenceSegments: 0,
+        sourceAssets: 0,
+        irrigationRuns: 0,
+        counterStands: 0,
+        summonPatches: 0,
+        fenceVisuals: 0,
+        crates: 0,
         signs: 0,
         lamps: 0,
         anchors: 0
@@ -1269,48 +1283,38 @@ export class SetPieces {
   }
 
   createGate4B2SkillsTerminal(group) {
-    const zone = findZone('skills');
     const stats = this.gate4b2Stats.skills;
-    const rotation = zone.rotation || 0.24;
-    const anchor = { x: -92, z: -88, rotation };
+    const anchor = { x: -94, z: -84, rotation: 0.24 };
+    const rotation = anchor.rotation;
     const point = (right, forward) => this.gate4B1Point(anchor, right, forward);
 
-    this.gate3rPad(group, anchor.x, anchor.z, 14.2, 8.4, this.world.materials.securityRoad, 0.132, 'GATE4B2_Skills_Terminal_Pad', rotation, 'gate4b2-skills-pad', 5.2);
+    this.gate3rPad(group, anchor.x, anchor.z, 22, 13, this.world.materials.securityRoad, 0.132, 'GATE4C_Skills_Data_Hall_Floor', rotation, 'gate4c-skills-footprint', 5.0);
     stats.pads += 1;
 
-    const terminal = point(-2.4, -0.3);
-    this.box(group, terminal[0], 0.62, terminal[1], 4.2, 0.9, 1.8, this.world.materials.cable, rotation, 'GATE4B2_Skills_Terminal_Slab');
-    this.box(group, terminal[0], 1.13, terminal[1] - 0.64, 3.4, 0.08, 0.08, this.world.materials.glowBlue, rotation, 'GATE4B2_Skills_Terminal_Scanline');
-    this.recordGate3RPlacement('gate4b2-skills-terminal', 'GATE4B2_Skills_Terminal_Slab', terminal[0], terminal[1], { minClearance: 4.4 });
-    stats.terminalSlabs += 1;
+    const placeSource = (assetName, kind, name, right, forward, assetRotation, scale, statName, minClearance = 5.0) => {
+      const position = point(right, forward);
+      if (this.addPolishAsset(group, assetName, position[0], position[1], assetRotation, scale)) {
+        this.recordGate3RPlacement(kind, name, position[0], position[1], { minClearance });
+        stats.sourceAssets += 1;
+        stats[statName] += 1;
+        return position;
+      }
+      return null;
+    };
 
-    for (let index = 0; index < 7; index += 1) {
-      const right = -5.1 + index * 1.7;
-      const forward = 1.8 + Math.sin(index * 0.9) * 0.55;
-      const node = point(right, forward);
-      const height = 0.9 + (index % 3) * 0.18;
-      this.box(group, node[0], 0.28 + height * 0.5, node[1], 0.32, height, 0.32, this.world.materials.cable, rotation, 'GATE4B2_Skills_Code_Node');
-      this.box(group, node[0], 0.82 + height, node[1] - 0.12, 0.42, 0.08, 0.08, index % 2 ? this.world.materials.glow : this.world.materials.glowBlue, rotation, 'GATE4B2_Skills_Code_Node_Glow');
-      this.recordGate3RPlacement('gate4b2-skills-node', 'GATE4B2_Skills_Code_Node', node[0], node[1], { minClearance: 4.0 });
-      stats.codeNodes += 1;
-    }
-
-    for (let index = 0; index < 6; index += 1) {
-      const card = point(-4.2 + index * 1.72, -2.7 + index * 0.42);
-      const cardRotation = rotation - 0.18 + index * 0.035;
-      this.box(group, card[0], 1.12, card[1], 0.12, 1.15, 0.82, this.world.materials.screen, cardRotation, 'GATE4B2_Skills_Code_Card');
-      this.box(group, card[0], 1.14, card[1] - 0.05, 0.14, 0.78, 0.5, index % 2 ? this.world.materials.glowBlue : this.world.materials.glow, cardRotation, 'GATE4B2_Skills_Code_Card_Glow');
-      this.recordGate3RPlacement('gate4b2-skills-card', 'GATE4B2_Skills_Code_Card', card[0], card[1], { minClearance: 4.0 });
-      stats.codeCards += 1;
-    }
+    placeSource('EnvPolishTerminalCanopy', 'gate4c-skills-data-hall-shell', 'GATE4C_Skills_Data_Hall_Shell', 0, 0.4, rotation, 0.86, 'dataHallShells', 5.0);
+    placeSource('EnvPolishTerminalBank', 'gate4c-skills-command-terminal', 'GATE4C_Skills_Command_Terminal', 0, -3.8, rotation + Math.PI, 0.62, 'commandTerminals', 5.0);
+    placeSource('EnvPolishSkillsArray', 'gate4c-skills-rack-frontend', 'GATE4C_Skills_Frontend_Rack', -6.35, 2.1, rotation - 0.08, 0.72, 'frontendRacks', 5.0);
+    placeSource('EnvPolishSkillsArray', 'gate4c-skills-rack-backend', 'GATE4C_Skills_Backend_Rack', 0, 2.75, rotation, 0.76, 'backendRacks', 5.0);
+    placeSource('EnvPolishSkillsArray', 'gate4c-skills-rack-security', 'GATE4C_Skills_Security_Rack', 6.35, 2.1, rotation + 0.08, 0.72, 'securityRacks', 5.0);
 
     const ring = new THREE.Mesh(
-      new THREE.RingGeometry(1.2, 1.36, 6),
+      new THREE.RingGeometry(1.55, 1.72, 24),
       new THREE.MeshBasicMaterial({ color: 0x92ffea, transparent: true, opacity: 0.38, side: THREE.DoubleSide, depthWrite: false })
     );
-    ring.name = 'GATE4B2_Skills_Sync_Ring';
-    const ringPoint = point(2.9, -0.3);
-    ring.position.set(ringPoint[0], 2.22, ringPoint[1]);
+    ring.name = 'GATE4C_Skills_Status_Ring';
+    const ringPoint = point(0, -1.1);
+    ring.position.set(ringPoint[0], 1.82, ringPoint[1]);
     ring.rotation.y = rotation;
     ring.renderOrder = 44;
     group.add(ring);
@@ -1324,76 +1328,104 @@ export class SetPieces {
       opacityRange: 0.1,
       rotationSpeed: 0.32
     });
-    this.recordGate3RPlacement('gate4b2-skills-ring', 'GATE4B2_Skills_Sync_Ring', ringPoint[0], ringPoint[1], { minClearance: 4.0 });
+    this.recordGate3RPlacement('gate4c-skills-status-ring', 'GATE4C_Skills_Status_Ring', ringPoint[0], ringPoint[1], { minClearance: 5.0 });
+    stats.statusRings += 1;
     stats.syncRings += 1;
 
-    for (let index = 0; index < 3; index += 1) {
-      const ribbon = point(-3.0 + index * 3.0, 3.4 + index * 0.28);
-      this.box(group, ribbon[0], 1.92 + index * 0.12, ribbon[1], 3.2, 0.08, 0.08, index % 2 ? this.world.materials.glowBlue : this.world.materials.glow, rotation, 'GATE4B2_Skills_Signal_Ribbon');
-      this.recordGate3RPlacement('gate4b2-skills-ribbon', 'GATE4B2_Skills_Signal_Ribbon', ribbon[0], ribbon[1], { minClearance: 4.0 });
+    for (const [right, forward, width, material, name] of [
+      [-4.8, -5.25, 6.0, this.world.materials.glowBlue, 'GATE4C_Skills_Cable_Floor_Frontend'],
+      [0, -5.6, 7.2, this.world.materials.glow, 'GATE4C_Skills_Cable_Floor_Backend'],
+      [4.8, -5.25, 6.0, this.world.materials.glowPink, 'GATE4C_Skills_Cable_Floor_Security']
+    ]) {
+      const cable = point(right, forward);
+      this.box(group, cable[0], 0.17, cable[1], width, 0.035, 0.09, material, rotation, name);
+      this.recordGate3RPlacement('gate4c-skills-cable-floor', name, cable[0], cable[1], { minClearance: 5.0 });
+      stats.cableFloors += 1;
       stats.signalRibbons += 1;
     }
 
-    const sign = point(-7.3, -3.8);
-    this.gate3rSign(group, 'STACK', 'Skills Terminal', sign[0], sign[1], rotation - 0.32, 0x92ffea, 1.42, 'GATE4B2_Skills_Sign', 4.4);
-    stats.signs += 1;
-
-    for (const [right, forward, color, name] of [
-      [-7.8, 3.6, 0x92ffea, 'GATE4B2_Skills_Lamp_Left'],
-      [7.6, 3.4, 0xb6a0ff, 'GATE4B2_Skills_Lamp_Right']
-    ]) {
-      const lamp = point(right, forward);
-      this.gate3rLampFacingRoad(group, lamp[0], lamp[1], color, 2.45, name, 3.2);
-      stats.lamps += 1;
-    }
+    stats.terminalSlabs = stats.commandTerminals;
+    stats.codeNodes = stats.frontendRacks + stats.backendRacks + stats.securityRacks;
+    stats.codeCards = 0;
+    stats.signs = 0;
+    stats.lamps = 0;
   }
 
   createGate4B2PotatoFarm(group) {
-    const zone = findZone('potato');
     const stats = this.gate4b2Stats.farm;
-    const rotation = zone.rotation || 0.18;
-    const anchor = { x: -20, z: -130, rotation };
+    const anchor = { x: -14, z: -129, rotation: 0.18 };
+    const rotation = anchor.rotation;
     const point = (right, forward) => this.gate4B1Point(anchor, right, forward);
 
-    this.gate3rPad(group, anchor.x, anchor.z, 20, 9, this.world.materials.dirtRoad, 0.13, 'GATE4B2_Farm_Field_Pad', rotation, 'gate4b2-farm-pad', 5.2);
+    this.gate3rPad(group, anchor.x, anchor.z, 22, 13, this.world.materials.dirtRoad, 0.13, 'GATE4C_Potato_Farm_Counter_Ground', rotation, 'gate4c-potato-footprint', 5.0);
     stats.pads += 1;
 
-    for (let index = 0; index < 5; index += 1) {
-      const row = point(-6.2 + index * 3.1, -0.2 + Math.sin(index * 0.8) * 0.28);
-      this.box(group, row[0], 0.22, row[1], 0.86, 0.08, 6.9, this.world.materials.crop, rotation, 'GATE4B2_Farm_Crop_Row');
-      this.box(group, row[0], 0.185, row[1] + 0.2, 1.14, 0.04, 6.5, this.world.materials.warmStone, rotation, 'GATE4B2_Farm_Soil_Row');
-      this.recordGate3RPlacement('gate4b2-farm-row', 'GATE4B2_Farm_Crop_Row', row[0], row[1], { minClearance: 4.0 });
+    const placeSource = (assetName, kind, name, right, forward, assetRotation, scale, statName, minClearance = 5.0) => {
+      const position = point(right, forward);
+      if (this.addPolishAsset(group, assetName, position[0], position[1], assetRotation, scale)) {
+        this.recordGate3RPlacement(kind, name, position[0], position[1], { minClearance });
+        stats.sourceAssets += 1;
+        stats[statName] += 1;
+        return position;
+      }
+      return null;
+    };
+
+    for (const [right, width, name] of [
+      [-6.8, 1.0, 'GATE4C_Potato_Crop_Row_A'],
+      [-3.4, 1.0, 'GATE4C_Potato_Crop_Row_B'],
+      [0, 1.0, 'GATE4C_Potato_Crop_Row_C'],
+      [3.4, 1.0, 'GATE4C_Potato_Crop_Row_D'],
+      [6.8, 1.0, 'GATE4C_Potato_Crop_Row_E']
+    ]) {
+      const row = point(right, 0.4);
+      this.box(group, row[0], 0.22, row[1], width, 0.08, 7.2, this.world.materials.crop, rotation, name);
+      this.box(group, row[0], 0.185, row[1] + 0.2, width + 0.35, 0.04, 6.8, this.world.materials.warmStone, rotation, `${name}_Soil`);
+      this.recordGate3RPlacement('gate4c-potato-row', name, row[0], row[1], { minClearance: 5.0 });
       stats.farmRows += 1;
     }
 
-    for (let index = 0; index < 4; index += 1) {
-      const back = point(-7.0 + index * 4.7, -4.4);
-      const front = point(-7.0 + index * 4.7, 4.4);
-      this.gate4B2FarmFenceSegment(group, back[0], back[1], rotation, 'GATE4B2_Farm_Back_Fence');
-      this.gate4B2FarmFenceSegment(group, front[0], front[1], rotation, 'GATE4B2_Farm_Front_Fence');
-      this.recordGate3RPlacement('gate4b2-farm-fence', 'GATE4B2_Farm_Back_Fence', back[0], back[1], { minClearance: 4.0 });
-      this.recordGate3RPlacement('gate4b2-farm-fence', 'GATE4B2_Farm_Front_Fence', front[0], front[1], { minClearance: 4.0 });
-      stats.fenceSegments += 2;
-    }
+    placeSource('EnvPolishFarmIrrigator', 'gate4c-potato-irrigation', 'GATE4C_Potato_Irrigation_Rig', 0, -3.6, rotation, 0.86, 'irrigationRuns', 5.0);
 
-    const trough = point(7.2, -2.4);
-    this.box(group, trough[0], 0.42, trough[1], 3.2, 0.5, 0.78, this.world.materials.wood, rotation, 'GATE4B2_Farm_Irrigation_Trough');
-    this.box(group, trough[0], 0.73, trough[1] - 0.15, 2.6, 0.06, 0.12, this.world.materials.glow, rotation, 'GATE4B2_Farm_Irrigation_Glow');
-    this.recordGate3RPlacement('gate4b2-farm-anchor', 'GATE4B2_Farm_Irrigation_Trough', trough[0], trough[1], { minClearance: 4.0 });
-    stats.anchors += 1;
+    const stand = point(-7.1, -3.95);
+    this.box(group, stand[0], 0.58, stand[1], 3.4, 0.62, 1.55, this.world.materials.wood, rotation, 'GATE4C_Potato_Counter_Stand');
+    this.box(group, stand[0], 1.08, stand[1] - 0.48, 3.2, 0.16, 0.18, this.world.materials.glow, rotation, 'GATE4C_Potato_Counter_Status');
+    this.recordGate3RPlacement('gate4c-potato-counter-stand', 'GATE4C_Potato_Counter_Stand', stand[0], stand[1], { minClearance: 5.0 });
+    stats.counterStands += 1;
 
-    const sign = point(-8.2, -5.8);
-    this.gate3rSign(group, 'FARM', 'Potato Patch', sign[0], sign[1], rotation + 0.3, 0xc79b56, 1.38, 'GATE4B2_Farm_Sign', 4.4);
-    stats.signs += 1;
+    const summon = point(7.35, -3.7);
+    this.cylinder(group, summon[0], 0.18, summon[1], 1.15, 0.06, this.world.materials.warmStone, 24, 'GATE4C_Potato_Summon_Patch');
+    this.cylinder(group, summon[0], 0.23, summon[1], 0.42, 0.08, this.world.materials.glow, 18, 'GATE4C_Potato_Summon_Glow');
+    this.recordGate3RPlacement('gate4c-potato-summon-patch', 'GATE4C_Potato_Summon_Patch', summon[0], summon[1], { minClearance: 5.0 });
+    stats.summonPatches += 1;
 
-    for (const [right, forward, color, name] of [
-      [-9.5, 4.8, 0xc79b56, 'GATE4B2_Farm_Lamp_Left'],
-      [9.4, 4.6, 0xd1ff78, 'GATE4B2_Farm_Lamp_Right']
+    for (const [right, forward, width, depth, name] of [
+      [-8.9, 4.55, 3.6, 0.12, 'GATE4C_Potato_Fence_Visual_Left'],
+      [8.9, 4.55, 3.6, 0.12, 'GATE4C_Potato_Fence_Visual_Right'],
+      [0, 5.15, 12.8, 0.12, 'GATE4C_Potato_Fence_Visual_Back'],
+      [0, -5.15, 12.8, 0.12, 'GATE4C_Potato_Fence_Visual_Front']
     ]) {
-      const lamp = point(right, forward);
-      this.gate3rLampFacingRoad(group, lamp[0], lamp[1], color, 2.35, name, 3.2);
-      stats.lamps += 1;
+      const fence = point(right, forward);
+      this.box(group, fence[0], 0.38, fence[1], width, 0.16, depth, this.world.materials.darkWood, rotation, name);
+      this.recordGate3RPlacement('gate4c-potato-fence-visual', name, fence[0], fence[1], { minClearance: 5.0 });
+      stats.fenceVisuals += 1;
+      stats.fenceSegments += 1;
     }
+
+    for (const [right, forward, name] of [
+      [-9.2, -1.25, 'GATE4C_Potato_Crate_A'],
+      [-8.2, -0.45, 'GATE4C_Potato_Crate_B'],
+      [-9.75, 0.05, 'GATE4C_Potato_Crate_C']
+    ]) {
+      const crate = point(right, forward);
+      this.box(group, crate[0], 0.38, crate[1], 0.78, 0.54, 0.68, this.world.materials.wood, rotation + 0.08, name);
+      this.recordGate3RPlacement('gate4c-potato-crate', name, crate[0], crate[1], { minClearance: 5.0 });
+      stats.crates += 1;
+    }
+
+    stats.anchors = stats.irrigationRuns + stats.counterStands;
+    stats.signs = 0;
+    stats.lamps = 0;
   }
 
   gate4B2FarmFenceSegment(group, x, z, rotation, name) {
