@@ -128,6 +128,23 @@ export class SetPieces {
       visibleTotal: 0,
       motionSamples: 0
     };
+    this.gate4dLifeItems = [];
+    this.gate4dLifeStats = {
+      enabled: false,
+      activeLandmarks: 0,
+      windowGlows: 0,
+      terminalPulses: 0,
+      gallerySweeps: 0,
+      signalPulses: 0,
+      containedMotions: 0,
+      visibleTotal: 0,
+      visibleWindowGlows: 0,
+      visibleTerminalPulses: 0,
+      visibleGallerySweeps: 0,
+      visibleSignalPulses: 0,
+      visibleContainedMotions: 0,
+      motionSamples: 0
+    };
     this.approachStats = {
       clusters: 0,
       signs: 0,
@@ -657,6 +674,9 @@ export class SetPieces {
       if (this.world.gate4b5Mode) {
         this.createGate4B5NorthRidgeScaffold();
       }
+      if (this.world.gate4dLifeMode) {
+        this.createGate4DLifeInteractionPass();
+      }
       this.applyQuality();
       return;
     }
@@ -714,6 +734,10 @@ export class SetPieces {
       }
       if (item.kind === 'todoYardLife') {
         this.updateTodoYardLife(item, elapsed);
+        continue;
+      }
+      if (item.kind === 'gate4dLife') {
+        this.updateGate4DLifeItem(item, elapsed);
         continue;
       }
       if (item.instanceMesh) {
@@ -799,6 +823,7 @@ export class SetPieces {
     this.applyLifeLimit('terminalPulses', limits.terminalPulses);
     this.applyLifeLimit('districtSignals', limits.districtSignals);
     this.applyDistrictAmbienceLimit(limits.districtMotes);
+    this.applyGate4DLifeQuality();
     this.applyQualityGroups();
     this.updateDistrictDressingVisibility();
     this.updateBroadSetPieceVisibility();
@@ -855,6 +880,10 @@ export class SetPieces {
 
   getLifeStats() {
     return { ...this.lifeStats };
+  }
+
+  getGate4DLifeStats() {
+    return { ...this.gate4dLifeStats };
   }
 
   getQualityStats() {
@@ -1693,6 +1722,225 @@ export class SetPieces {
 
     stats.signs = 0;
     stats.lamps = 0;
+  }
+
+  createGate4DLifeInteractionPass() {
+    this.gate4dLifeStats.enabled = true;
+    const group = new THREE.Group();
+    group.name = 'GATE4D_Life_Interaction_Pass';
+    const anchors = [
+      { id: 'cv', x: -36, z: -88, rotation: 0.12, color: 0xe6f3ff, kind: 'archive' },
+      { id: 'behind', x: 35, z: -76, rotation: 0.08, color: 0xa8a6ff, kind: 'garage' },
+      { id: 'skills', x: -94, z: -84, rotation: 0.24, color: 0x92ffea, kind: 'terminal' },
+      { id: 'potato', x: -14, z: -129, rotation: 0.18, color: 0xc79b56, kind: 'farm' },
+      { id: 'todo', x: -96, z: 4, rotation: 0.24 + Math.PI / 2, color: 0xd8ff92, kind: 'planning' },
+      { id: 'projects', x: 76, z: -28, rotation: -0.34, color: 0xffcc66, kind: 'foundry' },
+      { id: 'career', x: 82, z: -46, rotation: -0.24, color: 0xb6a0ff, kind: 'office' },
+      { id: 'contact', x: 127, z: 13, rotation: -0.34, color: 0x78b7ff, kind: 'signal' },
+      { id: 'awards', x: -58, z: 116, rotation: -0.18, color: 0xffdf8a, kind: 'museum' },
+      { id: 'sentinel', x: 10, z: 129, rotation: -0.12, color: 0xff6d8d, kind: 'soc' },
+      { id: 'circuit', x: 58, z: 76, rotation: -0.28, color: 0xff9b6d, kind: 'time-trial' }
+    ];
+    this.gate4dLifeStats.activeLandmarks = anchors.length;
+
+    for (const anchor of anchors) {
+      this.addGate4DLifeWindowGlow(group, anchor, 0, -2.4, 2.35, 4.4, anchor.kind === 'signal' ? 0.16 : 0.18, 'primary');
+      this.addGate4DLifeTerminalPulse(group, anchor, 4.2, -4.4, 1.35, 'primary');
+    }
+
+    this.addGate4DLifeGallerySweep(group, anchors.find((item) => item.id === 'cv'), 0, -1.9, 2.75, 5.6, 'primary');
+    this.addGate4DLifeGallerySweep(group, anchors.find((item) => item.id === 'awards'), 0, -2.0, 2.45, 5.2, 'primary');
+    this.addGate4DLifeGallerySweep(group, anchors.find((item) => item.id === 'projects'), -1.4, -2.4, 2.65, 4.8, 'secondary');
+
+    this.addGate4DLifeSignalPulse(group, anchors.find((item) => item.id === 'contact'), 0.8, 3.1, 4.8, 3.2, 'primary');
+    this.addGate4DLifeSignalPulse(group, anchors.find((item) => item.id === 'sentinel'), 0, 1.7, 6.0, 2.7, 'primary');
+    this.addGate4DLifeSignalPulse(group, anchors.find((item) => item.id === 'circuit'), 0, 2.8, 3.4, 2.4, 'primary');
+
+    this.addGate4DLifeContainedMotions(group, anchors.find((item) => item.id === 'todo'), [
+      [-3.6, -2.6, 1.78, 0.78],
+      [-1.5, -2.2, 1.92, 0.72],
+      [0.6, -1.8, 1.7, 0.68],
+      [2.7, -1.2, 1.86, 0.64],
+      [4.8, -0.7, 1.66, 0.6]
+    ], 'primary');
+    this.addGate4DLifeContainedMotions(group, anchors.find((item) => item.id === 'projects'), [
+      [-3.8, 2.7, 2.1, 0.68],
+      [-1.2, 3.0, 2.28, 0.62],
+      [1.4, 2.5, 2.02, 0.58],
+      [3.8, 2.0, 2.22, 0.55]
+    ], 'secondary');
+    this.addGate4DLifeContainedMotions(group, anchors.find((item) => item.id === 'cv'), [
+      [-3.1, 2.8, 1.9, 0.64],
+      [-0.6, 3.0, 2.08, 0.58],
+      [1.9, 2.7, 1.82, 0.54]
+    ], 'secondary');
+
+    this.world.scene.add(group);
+  }
+
+  gate4DLifePoint(anchor, right, forward) {
+    return [
+      anchor.x + Math.cos(anchor.rotation) * right + Math.sin(anchor.rotation) * forward,
+      anchor.z - Math.sin(anchor.rotation) * right + Math.cos(anchor.rotation) * forward
+    ];
+  }
+
+  addGate4DLifeWindowGlow(group, anchor, right, forward, y, width, opacity, tier) {
+    if (!anchor) return null;
+    const [x, z] = this.gate4DLifePoint(anchor, right, forward);
+    const material = this.gate4DLifeMaterial(anchor.color, opacity);
+    const mesh = new THREE.Mesh(new THREE.BoxGeometry(width, 0.34, 0.045), material);
+    mesh.name = `GATE4D_Life_WindowGlow_${anchor.id}`;
+    mesh.position.set(x, y, z);
+    mesh.rotation.y = anchor.rotation;
+    mesh.renderOrder = 30;
+    group.add(mesh);
+    this.recordGate3RPlacement('gate4d-life-window-glow', mesh.name, x, z, { minClearance: 4.0 });
+    this.registerGate4DLifeItem({ mesh, role: 'windowGlows', tier, baseOpacity: opacity, opacityRange: 0.06, speed: 0.72, phase: this.gate4dLifeItems.length * 0.47, baseY: y, baseScale: 1, range: 0.028 });
+    return mesh;
+  }
+
+  addGate4DLifeTerminalPulse(group, anchor, right, forward, scale, tier) {
+    if (!anchor) return null;
+    const [x, z] = this.gate4DLifePoint(anchor, right, forward);
+    const material = this.gate4DLifeMaterial(anchor.color, 0.22);
+    material.side = THREE.DoubleSide;
+    const mesh = new THREE.Mesh(new THREE.RingGeometry(0.8, 1.08, 6), material);
+    mesh.name = `GATE4D_Life_TerminalPulse_${anchor.id}`;
+    mesh.position.set(x, 0.255, z);
+    mesh.rotation.x = -Math.PI / 2;
+    mesh.rotation.z = anchor.rotation;
+    mesh.scale.setScalar(scale);
+    mesh.renderOrder = 42;
+    group.add(mesh);
+    this.recordGate3RPlacement('gate4d-life-terminal-pulse', mesh.name, x, z, { minClearance: 3.8 });
+    this.registerGate4DLifeItem({ mesh, role: 'terminalPulses', tier, baseOpacity: 0.18, opacityRange: 0.08, speed: 0.95, phase: this.gate4dLifeItems.length * 0.51, baseScale: scale, range: 0.11, rotationSpeed: 0.28 });
+    return mesh;
+  }
+
+  addGate4DLifeGallerySweep(group, anchor, right, forward, y, width, tier) {
+    if (!anchor) return null;
+    const [x, z] = this.gate4DLifePoint(anchor, right, forward);
+    const material = this.gate4DLifeMaterial(anchor.color, 0.24);
+    const mesh = new THREE.Mesh(new THREE.BoxGeometry(width, 0.09, 0.05), material);
+    mesh.name = `GATE4D_Life_GallerySweep_${anchor.id}`;
+    mesh.position.set(x, y, z);
+    mesh.rotation.y = anchor.rotation;
+    mesh.renderOrder = 31;
+    group.add(mesh);
+    this.recordGate3RPlacement('gate4d-life-gallery-sweep', mesh.name, x, z, { minClearance: 4.0 });
+    this.registerGate4DLifeItem({ mesh, role: 'gallerySweeps', tier, baseOpacity: 0.16, opacityRange: 0.1, speed: 0.58, phase: this.gate4dLifeItems.length * 0.63, baseY: y, baseScale: 1, range: 0.075 });
+    return mesh;
+  }
+
+  addGate4DLifeSignalPulse(group, anchor, right, forward, y, scale, tier) {
+    if (!anchor) return null;
+    const [x, z] = this.gate4DLifePoint(anchor, right, forward);
+    const material = this.gate4DLifeMaterial(anchor.color, 0.2);
+    material.side = THREE.DoubleSide;
+    const mesh = new THREE.Mesh(new THREE.RingGeometry(0.92, 1.18, 28), material);
+    mesh.name = `GATE4D_Life_SignalPulse_${anchor.id}`;
+    mesh.position.set(x, y, z);
+    mesh.rotation.x = -Math.PI / 2;
+    mesh.rotation.z = anchor.rotation;
+    mesh.scale.setScalar(scale);
+    mesh.renderOrder = 43;
+    group.add(mesh);
+    this.recordGate3RPlacement('gate4d-life-signal-pulse', mesh.name, x, z, { minClearance: 4.0 });
+    this.registerGate4DLifeItem({ mesh, role: 'signalPulses', tier, baseOpacity: 0.16, opacityRange: 0.09, speed: 0.7, phase: this.gate4dLifeItems.length * 0.41, baseScale: scale, range: 0.13, rotationSpeed: 0.2 });
+    return mesh;
+  }
+
+  addGate4DLifeContainedMotions(group, anchor, specs, tier) {
+    if (!anchor) return;
+    for (let index = 0; index < specs.length; index += 1) {
+      const [right, forward, y, scale] = specs[index];
+      const [x, z] = this.gate4DLifePoint(anchor, right, forward);
+      const material = this.gate4DLifeMaterial(anchor.color, 0.44);
+      const mesh = new THREE.Mesh(new THREE.BoxGeometry(0.82 * scale, 0.48 * scale, 0.045), material);
+      mesh.name = `GATE4D_Life_ContainedMotion_${anchor.id}_${index}`;
+      mesh.position.set(x, y, z);
+      mesh.rotation.y = anchor.rotation + (index - specs.length * 0.5) * 0.06;
+      mesh.renderOrder = 33;
+      group.add(mesh);
+      this.recordGate3RPlacement('gate4d-life-contained-motion', mesh.name, x, z, { minClearance: 3.8 });
+      this.registerGate4DLifeItem({
+        mesh,
+        role: 'containedMotions',
+        tier,
+        baseOpacity: 0.34,
+        opacityRange: 0.1,
+        speed: 0.54 + index * 0.05,
+        phase: this.gate4dLifeItems.length * 0.55,
+        baseY: y,
+        bob: 0.16,
+        baseRotation: mesh.rotation.y,
+        rotationRange: 0.08,
+        baseScale: 1,
+        range: 0.03
+      });
+    }
+  }
+
+  gate4DLifeMaterial(color, opacity) {
+    return new THREE.MeshBasicMaterial({
+      color,
+      transparent: true,
+      opacity,
+      depthWrite: false,
+      blending: THREE.AdditiveBlending
+    });
+  }
+
+  registerGate4DLifeItem(item) {
+    item.kind = 'gate4dLife';
+    item.active = true;
+    this.gate4dLifeItems.push(item);
+    this.animated.push(item);
+    this.gate4dLifeStats[item.role] += 1;
+  }
+
+  updateGate4DLifeItem(item, elapsed) {
+    if (item.active === false || item.mesh.visible === false) return;
+    const phase = elapsed * item.speed + item.phase;
+    if (item.role === 'containedMotions') {
+      item.mesh.position.y = item.baseY + Math.sin(phase) * item.bob;
+      item.mesh.rotation.y = item.baseRotation + Math.sin(phase * 0.8) * item.rotationRange;
+      const scale = item.baseScale + Math.sin(phase * 1.3) * item.range;
+      item.mesh.scale.setScalar(scale);
+    } else if (item.role === 'windowGlows' || item.role === 'gallerySweeps') {
+      const scale = item.baseScale + Math.sin(phase * 1.2) * item.range;
+      item.mesh.scale.set(1 + scale * 0.04, 1, 1);
+      item.mesh.position.y = item.baseY + Math.sin(phase * 0.7) * 0.025;
+    } else {
+      const scale = item.baseScale + Math.sin(phase) * item.range;
+      item.mesh.scale.setScalar(scale);
+      item.mesh.rotation.z += item.rotationSpeed * 0.016;
+    }
+    item.mesh.material.opacity = item.baseOpacity + Math.sin(phase) * item.opacityRange;
+    this.gate4dLifeStats.motionSamples += 1;
+  }
+
+  applyGate4DLifeQuality() {
+    const quality = this.world.landscapeQuality;
+    const visibleStats = {
+      visibleTotal: 0,
+      visibleWindowGlows: 0,
+      visibleTerminalPulses: 0,
+      visibleGallerySweeps: 0,
+      visibleSignalPulses: 0,
+      visibleContainedMotions: 0
+    };
+    for (const item of this.gate4dLifeItems) {
+      const visible = quality !== 'low' || item.tier === 'primary';
+      item.active = visible;
+      item.mesh.visible = visible;
+      if (!visible) continue;
+      visibleStats.visibleTotal += 1;
+      const statName = `visible${item.role[0].toUpperCase()}${item.role.slice(1)}`;
+      visibleStats[statName] += 1;
+    }
+    Object.assign(this.gate4dLifeStats, visibleStats);
   }
 
   gate4B1Point(anchor, right, forward) {

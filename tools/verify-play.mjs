@@ -146,6 +146,7 @@ try {
   await screenshot(page, '06-circuit-target.png');
   const circuit = await finishCircuit(page, circuitPreview);
   const worldLife = await sampleWorldLife(page);
+  const gate4dLife = await sampleGate4DLife(page);
   await showWhisperForScreenshot(page);
   await screenshot(page, '07-world-whisper.png');
   await page.evaluate(() => window.__portfolioDrive.game.ui.updateWhisper(null));
@@ -222,7 +223,7 @@ try {
   await screenshot(page, 'debug-colliders.png');
 
   const activeSnapshots = { driving: drivingStressMetrics, surfaceFeedback: surfaceStressMetrics };
-  const metrics = await collectRuntimeMetrics(page, loadMs, gameplay, water, surfaces, surfaceFeedback, routeReplay, circuit, worldLife, activeSnapshots);
+  const metrics = await collectRuntimeMetrics(page, loadMs, gameplay, water, surfaces, surfaceFeedback, routeReplay, circuit, worldLife, gate4dLife, activeSnapshots);
   const highQuality = await captureHighQuality(browser);
   const highDpiDesktop = await captureHighDpiDesktop(browser);
   const mobile = await captureMobile(browser);
@@ -2846,6 +2847,104 @@ async function sampleWorldLife(page) {
   });
 }
 
+async function sampleGate4DLife(page) {
+  return page.evaluate(async () => {
+    const delay = (ms) => new Promise((resolveDelay) => setTimeout(resolveDelay, ms));
+    const game = window.__portfolioDrive.game;
+    const scene = game.scene;
+    const stats = () => game.world.setPieces?.getGate4DLifeStats?.() || {};
+    const objects = findGate4DLifeObjects();
+    const before = {
+      stats: stats(),
+      matrices: objects.map((object) => matrixSnapshot(object)),
+      opacities: objects.map((object) => object.material?.opacity ?? 0)
+    };
+    await delay(760);
+    const after = {
+      stats: stats(),
+      matrices: objects.map((object) => matrixSnapshot(object)),
+      opacities: objects.map((object) => object.material?.opacity ?? 0)
+    };
+    const medium = stats();
+    game.world.setLandscapeQuality('low');
+    await delay(360);
+    const low = stats();
+    game.world.setLandscapeQuality('medium');
+    await delay(360);
+    const restored = stats();
+    return {
+      counts: medium,
+      objects: roleCounts(objects),
+      sampleNames: objects.slice(0, 16).map((object) => object.name),
+      animated: matrixDeltaList(before.matrices, after.matrices) > 0.001,
+      opacityAnimated: arrayMaxDelta(before.opacities, after.opacities) > 0.005,
+      motionAdvanced: (after.stats.motionSamples || 0) > (before.stats.motionSamples || 0),
+      quality: {
+        low,
+        restored,
+        lowReduced: (low.visibleTotal || 0) < (medium.visibleTotal || 0),
+        restoredMatchesMedium: (restored.visibleTotal || 0) === (medium.visibleTotal || 0)
+      }
+    };
+
+    function findGate4DLifeObjects() {
+      const found = [];
+      scene.traverse((object) => {
+        if (!object.isMesh || !/^GATE4D_Life_/.test(object.name || '')) return;
+        found.push(object);
+      });
+      return found;
+    }
+
+    function roleCounts(items) {
+      const counts = {
+        windowGlows: 0,
+        terminalPulses: 0,
+        gallerySweeps: 0,
+        signalPulses: 0,
+        containedMotions: 0,
+        total: items.length
+      };
+      for (const object of items) {
+        if (object.name.includes('WindowGlow')) counts.windowGlows += 1;
+        if (object.name.includes('TerminalPulse')) counts.terminalPulses += 1;
+        if (object.name.includes('GallerySweep')) counts.gallerySweeps += 1;
+        if (object.name.includes('SignalPulse')) counts.signalPulses += 1;
+        if (object.name.includes('ContainedMotion')) counts.containedMotions += 1;
+      }
+      return counts;
+    }
+
+    function matrixSnapshot(object) {
+      object.updateMatrixWorld(true);
+      return Array.from(object.matrixWorld.elements);
+    }
+
+    function matrixDeltaList(beforeValues, afterValues) {
+      const length = Math.min(beforeValues.length, afterValues.length);
+      let total = 0;
+      for (let item = 0; item < length; item += 1) {
+        const beforeMatrix = beforeValues[item] || [];
+        const afterMatrix = afterValues[item] || [];
+        const matrixLength = Math.min(beforeMatrix.length, afterMatrix.length);
+        for (let index = 0; index < matrixLength; index += 1) {
+          total += Math.abs((afterMatrix[index] || 0) - (beforeMatrix[index] || 0));
+        }
+      }
+      return total;
+    }
+
+    function arrayMaxDelta(beforeValues, afterValues) {
+      const length = Math.min(beforeValues.length, afterValues.length);
+      let max = 0;
+      for (let index = 0; index < length; index += 1) {
+        max = Math.max(max, Math.abs((afterValues[index] || 0) - (beforeValues[index] || 0)));
+      }
+      return max;
+    }
+  });
+}
+
 async function exerciseCollectibles(page) {
   return page.evaluate(async () => {
     const delay = (ms) => new Promise((resolveDelay) => setTimeout(resolveDelay, ms));
@@ -3021,7 +3120,7 @@ async function sampleRenderSnapshot(page) {
   });
 }
 
-async function collectRuntimeMetrics(page, loadMs, gameplay, water, surfaces, surfaceFeedback, routeReplay, circuit, worldLife, activeSnapshots) {
+async function collectRuntimeMetrics(page, loadMs, gameplay, water, surfaces, surfaceFeedback, routeReplay, circuit, worldLife, gate4dLife, activeSnapshots) {
   const runtime = await page.evaluate(async (expectedAssets) => {
     const frameDeltas = [];
     await new Promise((resolveFrames) => {
@@ -3106,6 +3205,7 @@ async function collectRuntimeMetrics(page, loadMs, gameplay, water, surfaces, su
       terrainRelief: game.world.terrain?.getReliefStats?.() || {},
       shoreline: game.world.terrain?.getShorelineStats?.() || {},
       setPieceQuality: game.world.setPieces?.getQualityStats?.() || {},
+      gate4dLifeRuntime: game.world.setPieces?.getGate4DLifeStats?.() || {},
       startDiorama: game.world.setPieces?.getStartDioramaStats?.() || {},
       polishMaterials: game.world.setPieces?.getPolishMaterialStats?.() || {},
       districtVisibility: game.world.setPieces?.getDistrictVisibilityStats?.() || {},
@@ -3388,6 +3488,7 @@ async function collectRuntimeMetrics(page, loadMs, gameplay, water, surfaces, su
     routeReplay,
     circuit,
     worldLife,
+    gate4dLife,
     activeSnapshots,
     ...runtime
   };
@@ -3964,6 +4065,13 @@ function assertVerification(result) {
   }
   if (result.goalGate === 'gate-4d-b6-data-pier-compatibility-review') {
     assertGate4DB6DataPierCompatibilityReviewVerification(result, failures);
+    if (failures.length) {
+      throw new Error(`Play verification failed: ${failures.join('; ')}`);
+    }
+    return;
+  }
+  if (result.goalGate === 'gate-4d-d-life-interaction-pass') {
+    assertGate4DDLifeInteractionPassVerification(result, failures);
     if (failures.length) {
       throw new Error(`Play verification failed: ${failures.join('; ')}`);
     }
@@ -5948,9 +6056,9 @@ function assertGate4DB5PotatoSentinelCircuitArchitectureVerification(result, fai
   });
 }
 
-function assertGate4DB6DataPierCompatibilityReviewVerification(result, failures) {
+function assertGate4DB6DataPierCompatibilityReviewVerification(result, failures, expectedGoal = 'gate-4d-b6-data-pier-compatibility-review') {
   assertGate4BRCompositionCorrectionVerification(result, failures, {
-    expectedGoal: 'gate-4d-b6-data-pier-compatibility-review',
+    expectedGoal,
     sourceSouthRun: true,
     cvArchitecture: true,
     behindArchitecture: true,
@@ -6002,6 +6110,52 @@ function assertGate4DB6DataPierCompatibilityReviewVerification(result, failures)
   if ((placement.byFootprintKind?.['gate4b3-data-pier-pad'] || 0) !== 0) {
     failures.push(`Gate 4-D-B6 Data Pier compatibility failed: rejected gate4b3-data-pier-pad=${placement.byFootprintKind?.['gate4b3-data-pier-pad'] || 0}`);
   }
+}
+
+function assertGate4DDLifeInteractionPassVerification(result, failures) {
+  assertGate4DB6DataPierCompatibilityReviewVerification(result, failures, 'gate-4d-d-life-interaction-pass');
+
+  const life = result.gate4dLife?.counts || {};
+  const objectCounts = result.gate4dLife?.objects || {};
+  if (!life.enabled) failures.push('Gate 4-D-D life failed: pass not enabled');
+  if ((life.activeLandmarks || 0) !== 11) failures.push(`Gate 4-D-D life failed: activeLandmarks=${life.activeLandmarks || 0}/11`);
+  if ((life.windowGlows || 0) < 11) failures.push(`Gate 4-D-D life failed: windowGlows=${life.windowGlows || 0}`);
+  if ((life.terminalPulses || 0) < 11) failures.push(`Gate 4-D-D life failed: terminalPulses=${life.terminalPulses || 0}`);
+  if ((life.gallerySweeps || 0) < 3) failures.push(`Gate 4-D-D life failed: gallerySweeps=${life.gallerySweeps || 0}`);
+  if ((life.signalPulses || 0) < 3) failures.push(`Gate 4-D-D life failed: signalPulses=${life.signalPulses || 0}`);
+  if ((life.containedMotions || 0) < 12) failures.push(`Gate 4-D-D life failed: containedMotions=${life.containedMotions || 0}`);
+  if ((life.visibleTotal || 0) < 40) failures.push(`Gate 4-D-D life failed: visibleTotal=${life.visibleTotal || 0}`);
+  if ((objectCounts.total || 0) !== ((life.windowGlows || 0) + (life.terminalPulses || 0) + (life.gallerySweeps || 0) + (life.signalPulses || 0) + (life.containedMotions || 0))) {
+    failures.push(`Gate 4-D-D life failed: object count mismatch ${objectCounts.total || 0}`);
+  }
+  if (!result.gate4dLife?.animated) failures.push('Gate 4-D-D life failed: transform animation not observed');
+  if (!result.gate4dLife?.opacityAnimated) failures.push('Gate 4-D-D life failed: opacity animation not observed');
+  if (!result.gate4dLife?.motionAdvanced) failures.push('Gate 4-D-D life failed: motionSamples did not advance');
+  if (!result.gate4dLife?.quality?.lowReduced) failures.push('Gate 4-D-D life failed: low quality did not reduce visible effects');
+  if (!result.gate4dLife?.quality?.restoredMatchesMedium) failures.push('Gate 4-D-D life failed: medium quality did not restore visible effects');
+  if ((result.gate4dLife?.quality?.low?.visibleTotal || 0) >= (life.visibleTotal || Infinity)) {
+    failures.push(`Gate 4-D-D life failed: low visibleTotal=${result.gate4dLife?.quality?.low?.visibleTotal || 0}, medium=${life.visibleTotal || 0}`);
+  }
+  if ((result.gate4dLifeRuntime?.visibleTotal || 0) !== (life.visibleTotal || 0)) {
+    failures.push(`Gate 4-D-D life failed: runtime visibleTotal=${result.gate4dLifeRuntime?.visibleTotal || 0}, sampled=${life.visibleTotal || 0}`);
+  }
+
+  const placement = result.gate3rPlacement || {};
+  for (const [kind, minimum] of [
+    ['gate4d-life-window-glow', 11],
+    ['gate4d-life-terminal-pulse', 11],
+    ['gate4d-life-gallery-sweep', 3],
+    ['gate4d-life-signal-pulse', 3],
+    ['gate4d-life-contained-motion', 12]
+  ]) {
+    if ((placement.byKind?.[kind] || 0) < minimum) {
+      failures.push(`Gate 4-D-D placement failed: ${kind}=${placement.byKind?.[kind] || 0}/${minimum}`);
+    }
+  }
+  if ((placement.roadIntrusions || 0) !== 0) failures.push(`Gate 4-D-D placement failed: roadIntrusions=${placement.roadIntrusions || 0}`);
+  if ((placement.footprintIntrusions || 0) !== 0) failures.push(`Gate 4-D-D placement failed: footprintIntrusions=${placement.footprintIntrusions || 0}`);
+  if ((placement.shorelineFootprintIntrusions || 0) !== 0) failures.push(`Gate 4-D-D placement failed: shorelineFootprintIntrusions=${placement.shorelineFootprintIntrusions || 0}`);
+  if ((result.colliderCount || 0) !== 2) failures.push(`Gate 4-D-D failed: unexpected collider count=${result.colliderCount || 0}`);
 }
 
 function assertAuthoredDistrictAsset(result, assetName, label, failures) {
