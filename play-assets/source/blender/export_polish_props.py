@@ -39,6 +39,8 @@ def main():
     create_cv_archive_spine(mats)
     create_cv_records_archive(mats)
     create_skills_array(mats)
+    create_skills_data_center(mats)
+    create_behind_engineering_garage(mats)
     create_career_office(mats)
     create_awards_monument(mats)
     create_career_software_house(mats)
@@ -569,6 +571,78 @@ def create_skills_array(mats):
         cube(f"SkillsArray_Pillar_{i}", group, (x, 1.12 + i * 0.08, 0), (0.46, 1.95 + i * 0.16, 0.46), mats["dark"], bevel=0.025)
         cube(f"SkillsArray_Screen_{i}", group, (x, 1.18 + i * 0.08, -0.27), (0.34, 1.22, 0.06), [mats["screen"], mats["mint"], mats["purple"], mats["aqua"], mats["screen"]][i], bevel=0.006)
     cube("SkillsArray_CableRun", group, (0, 0.44, 0.76), (4.4, 0.12, 0.16), mats["rope"], bevel=0.015)
+
+
+def create_skills_data_center(mats):
+    group = root("EnvPolishSkillsDataCenter")
+    cube("SkillsDataCenter_ServiceCourt", group, (0, 0.09, -0.34), (16.8, 0.18, 9.6), mats["stone_shadow"], bevel=0.055)
+    cube("SkillsDataCenter_ServerHall", group, (-1.05, 2.0, 0.38), (10.6, 3.8, 5.0), mats["dark"], bevel=0.048)
+    cube("SkillsDataCenter_CommandRoom", group, (4.9, 1.58, -0.16), (3.4, 2.9, 4.15), mats["glass"], bevel=0.035)
+    cube("SkillsDataCenter_CoolingPlant", group, (-6.35, 1.28, 0.78), (2.8, 2.36, 4.25), mats["stone"], bevel=0.04)
+    cube("SkillsDataCenter_RoofSlab", group, (-0.85, 3.98, 0.32), (12.2, 0.34, 5.7), mats["stone"], bevel=0.035)
+    cube("SkillsDataCenter_RoofSpine", group, (-0.85, 4.34, -1.95), (12.8, 0.22, 0.36), mats["aqua"], bevel=0.018)
+    cube("SkillsDataCenter_EntryCanopy", group, (0.2, 2.1, -3.35), (5.6, 0.28, 1.25), mats["dark"], bevel=0.026)
+    for index, z in enumerate([-4.05, -3.62, -3.19]):
+        cube(f"SkillsDataCenter_EntryStep_{index}", group, (0.2, 0.17 + index * 0.05, z), (5.4 - index * 0.66, 0.13, 0.38), mats["paper"], bevel=0.023)
+    for row, y in enumerate([0.98, 1.56, 2.14, 2.72]):
+        cube(f"SkillsDataCenter_RackBand_{row}", group, (-1.25, y + 0.28, -2.1), (9.6, 0.07, 0.08), mats["aqua"], bevel=0.004)
+        for col, x in enumerate([-4.65, -3.45, -2.25, -1.05, 0.15, 1.35, 2.55]):
+            material = [mats["screen"], mats["mint"], mats["purple"], mats["aqua"]][(row + col) % 4]
+            cube(f"SkillsDataCenter_RackLight_{row}_{col}", group, (x, y, -2.18), (0.52, 0.34, 0.07), material, bevel=0.005)
+    for index, x in enumerate([3.7, 4.45, 5.2, 5.95]):
+        cube(f"SkillsDataCenter_CommandMullion_{index}", group, (x, 1.7, -2.1), (0.08, 2.55, 0.08), mats["screen"], bevel=0.004)
+    for row, y in enumerate([1.02, 1.64, 2.26]):
+        cube(f"SkillsDataCenter_CommandLine_{row}", group, (4.92, y, -2.16), (2.55, 0.06, 0.07), [mats["screen"], mats["mint"], mats["purple"]][row], bevel=0.004)
+    for index, x in enumerate([-7.05, -6.35, -5.65]):
+        cube(f"SkillsDataCenter_CoolingTower_{index}", group, (x, 2.7, -0.7 + index * 0.62), (0.58, 2.25, 0.58), mats["stone_shadow"], bevel=0.04)
+        cube(f"SkillsDataCenter_CoolingGlow_{index}", group, (x, 3.62, -1.02 + index * 0.62), (0.42, 0.08, 0.08), mats["mint"], bevel=0.004)
+    for index, x in enumerate([-4.6, -1.6, 1.4]):
+        cube(f"SkillsDataCenter_RoofUnit_{index}", group, (x, 4.62, 0.82), (1.26, 0.48, 0.88), mats["stone_shadow"], bevel=0.026)
+        cube(f"SkillsDataCenter_RoofUnitGlow_{index}", group, (x, 4.8, 0.36), (0.86, 0.08, 0.08), [mats["screen"], mats["mint"], mats["aqua"]][index], bevel=0.004)
+    for index, x in enumerate([-4.2, -1.4, 1.4, 4.2]):
+        cube(f"SkillsDataCenter_CableTrench_{index}", group, (x, 0.22, -3.28), (1.6, 0.08, 1.15), mats["aqua" if index % 2 else "screen"], bevel=0.006)
+    cube("SkillsDataCenter_StatusSpine", group, (6.65, 2.28, 0.88), (0.18, 3.2, 2.8), mats["dark"], bevel=0.018)
+    for index, y in enumerate([1.05, 1.55, 2.05, 2.55, 3.05]):
+        cube(f"SkillsDataCenter_StatusPulse_{index}", group, (6.55, y, -0.22 + (index % 2) * 0.52), (0.08, 0.08, 1.35), [mats["screen"], mats["mint"], mats["purple"], mats["screen"], mats["aqua"]][index], bevel=0.003)
+
+
+def create_behind_engineering_garage(mats):
+    group = root("EnvPolishBehindEngineeringGarage")
+    cube("BehindEngineeringGarage_ServiceYard", group, (0, 0.09, -0.18), (17.8, 0.18, 10.2), mats["stone"], bevel=0.055)
+    cube("BehindEngineeringGarage_MainBay", group, (-0.7, 2.03, 0.42), (10.9, 3.85, 5.2), mats["stone_shadow"], bevel=0.05)
+    cube("BehindEngineeringGarage_PrototypeWing", group, (5.85, 1.52, 0.48), (3.55, 2.85, 4.65), mats["dark"], bevel=0.04)
+    cube("BehindEngineeringGarage_ToolWallWing", group, (-6.35, 1.42, 0.68), (3.05, 2.65, 4.45), mats["wood"], bevel=0.04)
+    cube("BehindEngineeringGarage_RoofDeck", group, (-0.55, 4.04, 0.32), (13.2, 0.34, 5.88), mats["dark"], bevel=0.034)
+    cube("BehindEngineeringGarage_RoofVentLine", group, (-0.55, 4.35, -2.18), (12.2, 0.18, 0.34), mats["amber"], bevel=0.014)
+    cube("BehindEngineeringGarage_OpenBayDoor", group, (-1.2, 1.42, -2.45), (4.1, 2.62, 0.18), mats["dark"], bevel=0.03)
+    cube("BehindEngineeringGarage_BayInteriorGlow", group, (-1.2, 1.4, -2.56), (3.25, 1.82, 0.06), mats["screen"], bevel=0.006)
+    for index, y in enumerate([0.72, 1.02, 1.32, 1.62, 1.92, 2.22]):
+        cube(f"BehindEngineeringGarage_RollupDoorSlat_{index}", group, (-1.2, y, -2.62), (3.36, 0.055, 0.08), mats["paper"], bevel=0.003)
+    cube("BehindEngineeringGarage_BaySafetyStripe_Left", group, (-3.24, 1.45, -2.62), (0.16, 2.34, 0.08), mats["amber"], bevel=0.006)
+    cube("BehindEngineeringGarage_BaySafetyStripe_Right", group, (0.84, 1.45, -2.62), (0.16, 2.34, 0.08), mats["amber"], bevel=0.006)
+    cube("BehindEngineeringGarage_ServiceDoor", group, (3.35, 1.18, -2.44), (1.22, 2.05, 0.12), mats["wood"], bevel=0.018)
+    for index, z in enumerate([-4.28, -3.82, -3.36]):
+        cube(f"BehindEngineeringGarage_EntryStep_{index}", group, (-1.2, 0.17 + index * 0.05, z), (6.0 - index * 0.7, 0.13, 0.4), mats["paper"], bevel=0.024)
+    for row, y in enumerate([1.02, 1.64, 2.26]):
+        cube(f"BehindEngineeringGarage_ToolRail_{row}", group, (-6.42, y, -1.72), (0.08, 0.08, 2.7), mats["rope"], bevel=0.004)
+        for col, z in enumerate([-2.42, -1.52, -0.62, 0.28, 1.18]):
+            cube(f"BehindEngineeringGarage_Tool_{row}_{col}", group, (-6.52, y + 0.08, z), (0.07, 0.34, 0.38), [mats["amber"], mats["screen"], mats["paper"], mats["mint"], mats["aqua"]][col], bevel=0.004)
+    cube("BehindEngineeringGarage_PrototypeLift", group, (4.75, 0.55, -0.82), (3.3, 0.42, 2.15), mats["stone"], bevel=0.035)
+    cube("BehindEngineeringGarage_PrototypeBlock", group, (4.75, 1.12, -0.82), (2.15, 0.74, 1.28), mats["amber"], bevel=0.035)
+    for index, x in enumerate([3.0, 6.5]):
+        cube(f"BehindEngineeringGarage_LiftGuide_{index}", group, (x, 1.16, -2.28), (0.16, 1.58, 0.12), mats["screen"], bevel=0.006)
+    for index, x in enumerate([2.2, 7.2]):
+        cube(f"BehindEngineeringGarage_GantryPost_{index}", group, (x, 2.12, 2.45), (0.22, 3.55, 0.22), mats["dark"], bevel=0.012)
+    cube("BehindEngineeringGarage_GantryBeam", group, (4.7, 3.82, 2.45), (5.35, 0.24, 0.3), mats["dark"], bevel=0.02)
+    cube("BehindEngineeringGarage_HoistCable", group, (4.1, 2.72, 2.15), (0.12, 1.62, 0.12), mats["rope"], bevel=0.006)
+    cube("BehindEngineeringGarage_HoistHook", group, (4.1, 1.78, 2.04), (0.48, 0.34, 0.34), mats["amber"], bevel=0.018)
+    cube("BehindEngineeringGarage_PipelineBoard", group, (-1.0, 2.18, 2.88), (6.8, 2.15, 0.18), mats["dark"], bevel=0.026)
+    for index, y in enumerate([1.42, 1.82, 2.22, 2.62]):
+        cube(f"BehindEngineeringGarage_PipelineTrace_{index}", group, (-1.0 + (index % 2) * 0.42, y, 2.72), (4.9 - index * 0.38, 0.06, 0.07), [mats["screen"], mats["mint"], mats["purple"], mats["amber"]][index], bevel=0.004)
+    for index, x in enumerate([-4.8, -2.6, -0.4, 1.8]):
+        cube(f"BehindEngineeringGarage_RoofVent_{index}", group, (x, 4.56, 0.86 + (index % 2) * 0.46), (1.0, 0.42, 0.72), mats["stone_shadow"], bevel=0.024)
+    for index, x in enumerate([-4.7, -3.35, -2.0, -0.65, 0.7]):
+        cube(f"BehindEngineeringGarage_BayWindow_{index}", group, (x, 2.82, -2.32), (0.8, 0.44, 0.08), [mats["glass"], mats["screen"], mats["mint"], mats["glass"], mats["aqua"]][index], bevel=0.006)
 
 
 def create_career_office(mats):

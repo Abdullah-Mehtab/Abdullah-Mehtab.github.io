@@ -379,6 +379,10 @@ export class SetPieces {
         workbenches: 0,
         hologramPanels: 0,
         sourceAssets: 0,
+        authoredAssets: 0,
+        architectureAssets: 0,
+        engineeringGarages: 0,
+        garageBays: 0,
         garageShells: 0,
         toolWalls: 0,
         pipelinePanels: 0,
@@ -400,6 +404,11 @@ export class SetPieces {
         syncRings: 0,
         signalRibbons: 0,
         sourceAssets: 0,
+        authoredAssets: 0,
+        architectureAssets: 0,
+        dataCenterBuildings: 0,
+        serverHalls: 0,
+        coolingPlants: 0,
         dataHallShells: 0,
         commandTerminals: 0,
         frontendRacks: 0,
@@ -1245,46 +1254,24 @@ export class SetPieces {
     const anchor = { x: 35, z: -76, rotation };
     const point = (right, forward) => this.gate4B1Point(anchor, right, forward);
 
-    this.gate3rPad(group, anchor.x, anchor.z, 22, 14, this.world.materials.stoneRoad, 0.132, 'GATE4C_Behind_Build_Garage_Floor', rotation, 'gate4c-behind-footprint', 5.0);
+    this.gate3rPad(group, anchor.x, anchor.z, 23, 15, this.world.materials.stoneRoad, 0.132, 'GATE4D_Behind_Engineering_Garage_Service_Court', rotation, 'gate4d-behind-footprint', 5.0);
     stats.pads += 1;
 
-    const placeSource = (assetName, kind, name, right, forward, assetRotation, scale, statName, minClearance = 4.6) => {
-      const position = point(right, forward);
-      if (this.addPolishAsset(group, assetName, position[0], position[1], assetRotation, scale)) {
-        this.recordGate3RPlacement(kind, name, position[0], position[1], { minClearance });
-        stats.sourceAssets += 1;
-        stats[statName] += 1;
-        return position;
-      }
-      return null;
-    };
-
-    placeSource('EnvPolishWorkshopCanopy', 'gate4c-behind-garage-shell', 'GATE4C_Behind_Garage_Shell', -1.4, 0.2, rotation, 0.86, 'garageShells', 5.2);
-    placeSource('EnvPolishBuildWorkbench', 'gate4c-behind-workbench', 'GATE4C_Behind_Build_Workbench', -4.5, -1.9, rotation + 0.04, 0.82, 'workbenches', 5.0);
-    placeSource('EnvPolishTerminalBank', 'gate4c-behind-pipeline-panel', 'GATE4C_Behind_Pipeline_Terminal_Bank', 4.2, -2.0, rotation - 0.08, 0.62, 'pipelinePanels', 5.0);
-
-    for (const [right, forward, name] of [
-      [-6.3, 4.0, 'GATE4C_Behind_Tool_Rail_Left'],
-      [0, 4.65, 'GATE4C_Behind_Tool_Rail_Center'],
-      [6.3, 4.0, 'GATE4C_Behind_Tool_Rail_Right']
-    ]) {
-      placeSource('EnvPolishWorkshopProcessRail', 'gate4c-behind-tool-wall', name, right, forward, rotation, 0.78, 'toolWalls', 5.0);
+    const garage = point(0, 0.05);
+    if (this.addPolishAsset(group, 'EnvPolishBehindEngineeringGarage', garage[0], garage[1], rotation, 1.0)) {
+      this.recordGate3RPlacement('gate4d-behind-engineering-garage', 'GATE4D_Behind_Engineering_Garage_Architecture', garage[0], garage[1], { minClearance: 5.0 });
+      stats.sourceAssets += 1;
+      stats.authoredAssets += 1;
+      stats.architectureAssets += 1;
+      stats.engineeringGarages += 1;
+      stats.garageShells += 1;
+      stats.garageBays += 1;
+      stats.workbenches += 1;
+      stats.toolWalls += 3;
       stats.pipelinePanels += 1;
-      stats.hologramPanels += 1;
-    }
-
-    placeSource('EnvPolishBuildCrateStack', 'gate4c-behind-source-totem', 'GATE4C_Behind_Source_Totem', 7.4, 1.9, rotation + 0.18, 0.72, 'sourceTotems', 5.0);
-
-    for (const [right, forward, color, name] of [
-      [-7.6, -4.5, this.world.materials.glowBlue, 'GATE4C_Behind_Status_Light_A'],
-      [-2.2, -4.95, this.world.materials.glow, 'GATE4C_Behind_Status_Light_B'],
-      [2.2, -4.95, this.world.materials.glowBlue, 'GATE4C_Behind_Status_Light_C'],
-      [7.6, -4.5, this.world.materials.glow, 'GATE4C_Behind_Status_Light_D']
-    ]) {
-      const statusLight = point(right, forward);
-      this.box(group, statusLight[0], 0.28, statusLight[1], 0.52, 0.16, 0.28, color, rotation, name);
-      this.recordGate3RPlacement('gate4c-behind-status-light', name, statusLight[0], statusLight[1], { minClearance: 4.8 });
-      stats.statusLights += 1;
+      stats.hologramPanels += 4;
+      stats.sourceTotems += 1;
+      stats.statusLights += 4;
     }
 
     stats.anchors = stats.sourceTotems;
@@ -1312,60 +1299,27 @@ export class SetPieces {
     const rotation = anchor.rotation;
     const point = (right, forward) => this.gate4B1Point(anchor, right, forward);
 
-    this.gate3rPad(group, anchor.x, anchor.z, 22, 13, this.world.materials.securityRoad, 0.132, 'GATE4C_Skills_Data_Hall_Floor', rotation, 'gate4c-skills-footprint', 5.0);
+    this.gate3rPad(group, anchor.x, anchor.z, 22, 13, this.world.materials.securityRoad, 0.132, 'GATE4D_Skills_Data_Center_Service_Court', rotation, 'gate4d-skills-footprint', 5.0);
     stats.pads += 1;
 
-    const placeSource = (assetName, kind, name, right, forward, assetRotation, scale, statName, minClearance = 5.0) => {
-      const position = point(right, forward);
-      if (this.addPolishAsset(group, assetName, position[0], position[1], assetRotation, scale)) {
-        this.recordGate3RPlacement(kind, name, position[0], position[1], { minClearance });
-        stats.sourceAssets += 1;
-        stats[statName] += 1;
-        return position;
-      }
-      return null;
-    };
-
-    placeSource('EnvPolishTerminalCanopy', 'gate4c-skills-data-hall-shell', 'GATE4C_Skills_Data_Hall_Shell', 0, 0.4, rotation, 0.86, 'dataHallShells', 5.0);
-    placeSource('EnvPolishTerminalBank', 'gate4c-skills-command-terminal', 'GATE4C_Skills_Command_Terminal', 0, -3.8, rotation + Math.PI, 0.62, 'commandTerminals', 5.0);
-    placeSource('EnvPolishSkillsArray', 'gate4c-skills-rack-frontend', 'GATE4C_Skills_Frontend_Rack', -6.35, 2.1, rotation - 0.08, 0.72, 'frontendRacks', 5.0);
-    placeSource('EnvPolishSkillsArray', 'gate4c-skills-rack-backend', 'GATE4C_Skills_Backend_Rack', 0, 2.75, rotation, 0.76, 'backendRacks', 5.0);
-    placeSource('EnvPolishSkillsArray', 'gate4c-skills-rack-security', 'GATE4C_Skills_Security_Rack', 6.35, 2.1, rotation + 0.08, 0.72, 'securityRacks', 5.0);
-
-    const ring = new THREE.Mesh(
-      new THREE.RingGeometry(1.55, 1.72, 24),
-      new THREE.MeshBasicMaterial({ color: 0x92ffea, transparent: true, opacity: 0.38, side: THREE.DoubleSide, depthWrite: false })
-    );
-    ring.name = 'GATE4C_Skills_Status_Ring';
-    const ringPoint = point(0, -1.1);
-    ring.position.set(ringPoint[0], 1.82, ringPoint[1]);
-    ring.rotation.y = rotation;
-    ring.renderOrder = 44;
-    group.add(ring);
-    this.animated.push({
-      kind: 'ring',
-      mesh: ring,
-      speed: 0.5,
-      baseOpacity: 0.26,
-      pulse: 1.35,
-      phase: 0.2,
-      opacityRange: 0.1,
-      rotationSpeed: 0.32
-    });
-    this.recordGate3RPlacement('gate4c-skills-status-ring', 'GATE4C_Skills_Status_Ring', ringPoint[0], ringPoint[1], { minClearance: 5.0 });
-    stats.statusRings += 1;
-    stats.syncRings += 1;
-
-    for (const [right, forward, width, material, name] of [
-      [-4.8, -5.25, 6.0, this.world.materials.glowBlue, 'GATE4C_Skills_Cable_Floor_Frontend'],
-      [0, -5.6, 7.2, this.world.materials.glow, 'GATE4C_Skills_Cable_Floor_Backend'],
-      [4.8, -5.25, 6.0, this.world.materials.glowPink, 'GATE4C_Skills_Cable_Floor_Security']
-    ]) {
-      const cable = point(right, forward);
-      this.box(group, cable[0], 0.17, cable[1], width, 0.035, 0.09, material, rotation, name);
-      this.recordGate3RPlacement('gate4c-skills-cable-floor', name, cable[0], cable[1], { minClearance: 5.0 });
-      stats.cableFloors += 1;
-      stats.signalRibbons += 1;
+    const dataCenter = point(0, 0.05);
+    if (this.addPolishAsset(group, 'EnvPolishSkillsDataCenter', dataCenter[0], dataCenter[1], rotation, 1.0)) {
+      this.recordGate3RPlacement('gate4d-skills-data-center', 'GATE4D_Skills_Data_Center_Architecture', dataCenter[0], dataCenter[1], { minClearance: 5.0 });
+      stats.sourceAssets += 1;
+      stats.authoredAssets += 1;
+      stats.architectureAssets += 1;
+      stats.dataCenterBuildings += 1;
+      stats.serverHalls += 1;
+      stats.coolingPlants += 1;
+      stats.dataHallShells += 1;
+      stats.commandTerminals += 1;
+      stats.frontendRacks += 1;
+      stats.backendRacks += 1;
+      stats.securityRacks += 1;
+      stats.statusRings += 1;
+      stats.syncRings += 1;
+      stats.cableFloors += 4;
+      stats.signalRibbons += 4;
     }
 
     stats.terminalSlabs = stats.commandTerminals;
