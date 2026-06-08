@@ -429,6 +429,14 @@ export class SetPieces {
         taskBoards: 0,
         queueRails: 0,
         taskCards: 0,
+        sourceAssets: 0,
+        boardWalls: 0,
+        studioDesks: 0,
+        reviewLanes: 0,
+        taskCrates: 0,
+        statusPips: 0,
+        containedCardStacks: 0,
+        groundInlays: 0,
         signs: 0,
         lamps: 0
       },
@@ -1467,15 +1475,14 @@ export class SetPieces {
     this.gate4b3Stats.enabled = true;
 
     const group = new THREE.Group();
-    group.name = 'GATE4B3_Todo_Land_Side_Correction';
+    group.name = 'GATE4C_B6_Todo_Planning_Studio';
     this.createGate4B3TodoBoard(group);
 
     this.gate4b3Stats.staticBatches = mergeStaticMeshesInGroup(group, {
-      namePrefix: 'GATE4B3_data_pier_side',
+      namePrefix: 'GATE4C_B6_todo_planning_studio',
       cellSize: 48,
       shouldSkip: (object) => (
         object.name.endsWith('_Glow')
-        || object.name.includes('Floating')
         || object.material?.transparent
       )
     });
@@ -1484,49 +1491,72 @@ export class SetPieces {
 
   createGate4B3TodoBoard(group) {
     const stats = this.gate4b3Stats.todo;
-    const rotation = 0.24;
-    const anchor = { x: -96, z: 8, rotation };
+    const zone = findZone('todo');
+    const rotation = zone.rotation || 0.24;
+    const anchor = { x: zone.position[0], z: zone.position[2], rotation };
     const point = (right, forward) => this.gate4B1Point(anchor, right, forward);
 
-    this.gate3rPad(group, anchor.x, anchor.z, 8, 5, this.world.materials.warmStone, 0.132, 'GATE4B3_Todo_Board_Pad', rotation, 'gate4b3-todo-pad', 5.2);
+    this.gate3rPad(group, anchor.x, anchor.z, 18, 10, this.world.materials.warmStone, 0.132, 'GATE4C_Todo_Planning_Studio_Floor', rotation, 'gate4c-todo-footprint', 5.0);
     stats.pads += 1;
 
-    const board = point(-1.2, -0.12);
-    const boardFace = point(-1.2, -0.34);
-    this.box(group, board[0], 0.98, board[1], 3.45, 1.28, 0.2, this.world.materials.cable, rotation, 'GATE4B3_Todo_Task_Board');
-    this.box(group, boardFace[0], 1.06, boardFace[1], 2.72, 0.72, 0.055, this.world.materials.screen, rotation, 'GATE4B3_Todo_Task_Board_Glow');
-    this.recordGate3RPlacement('gate4b3-todo-board', 'GATE4B3_Todo_Task_Board', board[0], board[1], { minClearance: 4.2 });
-    stats.taskBoards += 1;
+    const placeSource = (assetName, kind, name, right, forward, assetRotation, scale, statName, minClearance = 4.8) => {
+      const position = point(right, forward);
+      if (this.addPolishAsset(group, assetName, position[0], position[1], assetRotation, scale)) {
+        this.recordGate3RPlacement(kind, name, position[0], position[1], { minClearance });
+        stats.sourceAssets += 1;
+        stats[statName] += 1;
+        return position;
+      }
+      return null;
+    };
 
-    for (const [right, forward, width, depth, name] of [
-      [-3.4, 0.86, 0.1, 3.4, 'GATE4B3_Todo_Queue_Rail_Left'],
-      [2.4, 0.86, 0.1, 3.4, 'GATE4B3_Todo_Queue_Rail_Right'],
-      [-0.5, -0.95, 5.7, 0.1, 'GATE4B3_Todo_Queue_Rail_Front'],
-      [-0.5, 2.35, 5.5, 0.1, 'GATE4B3_Todo_Queue_Rail_Back']
+    placeSource('EnvPolishQueueMarquee', 'gate4c-todo-board-wall', 'GATE4C_Todo_Planning_Board_Wall', 0, 1.85, rotation, 0.86, 'boardWalls', 4.8);
+    placeSource('EnvPolishTerminalBank', 'gate4c-todo-studio-desk', 'GATE4C_Todo_Workstation_Desk', 0.2, -3.25, rotation + Math.PI, 0.48, 'studioDesks', 4.8);
+    placeSource('EnvPolishTodoBoard', 'gate4c-todo-kanban-cards', 'GATE4C_Todo_Contained_Kanban_Board', -5.15, -0.75, rotation + 0.04, 0.72, 'containedCardStacks', 4.8);
+    placeSource('EnvPolishTodoCardStack', 'gate4c-todo-kanban-cards', 'GATE4C_Todo_Contained_Card_Stack_A', 4.85, -0.85, rotation - 0.06, 0.66, 'containedCardStacks', 4.8);
+    placeSource('EnvPolishBuildCrateStack', 'gate4c-todo-task-crate', 'GATE4C_Todo_Task_Crate_Stack', 6.65, 2.55, rotation + 0.16, 0.58, 'taskCrates', 4.8);
+
+    for (const [right, forward, width, material, name] of [
+      [-5.2, -4.55, 3.6, this.world.materials.glowPink, 'GATE4C_Todo_Review_Lane_Backlog'],
+      [0, -4.8, 4.1, this.world.materials.glowBlue, 'GATE4C_Todo_Review_Lane_Doing'],
+      [5.2, -4.55, 3.6, this.world.materials.warmGlow, 'GATE4C_Todo_Review_Lane_Done']
     ]) {
-      const rail = point(right, forward);
-      this.box(group, rail[0], 0.28, rail[1], width, 0.12, depth, this.world.materials.wood, rotation, name);
-      this.recordGate3RPlacement('gate4b3-todo-rail', name, rail[0], rail[1], { minClearance: 4.0 });
+      const lane = point(right, forward);
+      this.box(group, lane[0], 0.17, lane[1], width, 0.035, 0.1, material, rotation, name);
+      this.recordGate3RPlacement('gate4c-todo-review-lane', name, lane[0], lane[1], { minClearance: 4.8 });
+      stats.reviewLanes += 1;
       stats.queueRails += 1;
     }
 
-    for (let index = 0; index < 7; index += 1) {
-      const card = point(-2.72 + index * 0.78, 1.45 + Math.sin(index * 0.7) * 0.16);
-      const material = index % 2 ? this.world.materials.glowBlue : this.world.materials.glow;
-      const mesh = this.box(group, card[0], 1.2 + index * 0.01, card[1], 0.5, 0.28, 0.05, material, rotation + (index - 3) * 0.014, 'GATE4B3_Todo_Floating_Task_Card');
-      mesh.receiveShadow = false;
-      this.animated.push({
-        kind: 'float',
-        mesh,
-        baseY: mesh.position.y,
-        speed: 0.9 + index * 0.07,
-        phase: index * 0.63,
-        range: 0.08,
-        rotationSpeed: 0.08
-      });
-      this.recordGate3RPlacement('gate4b3-todo-card', 'GATE4B3_Todo_Floating_Task_Card', card[0], card[1], { minClearance: 4.0 });
-      stats.taskCards += 1;
+    for (const [right, forward, material, name] of [
+      [-6.6, 3.85, this.world.materials.glowPink, 'GATE4C_Todo_Status_Pip_Backlog'],
+      [-4.95, 3.85, this.world.materials.glowBlue, 'GATE4C_Todo_Status_Pip_Doing'],
+      [-3.3, 3.85, this.world.materials.warmGlow, 'GATE4C_Todo_Status_Pip_Done'],
+      [3.3, 3.85, this.world.materials.glowPink, 'GATE4C_Todo_Status_Pip_Idea'],
+      [4.95, 3.85, this.world.materials.glowBlue, 'GATE4C_Todo_Status_Pip_Test'],
+      [6.6, 3.85, this.world.materials.warmGlow, 'GATE4C_Todo_Status_Pip_Ship']
+    ]) {
+      const pip = point(right, forward);
+      this.cylinder(group, pip[0], 0.2, pip[1], 0.26, 0.06, material, 14, name);
+      this.recordGate3RPlacement('gate4c-todo-status-pip', name, pip[0], pip[1], { minClearance: 4.8 });
+      stats.statusPips += 1;
     }
+
+    for (const [right, forward, width, name] of [
+      [-4.6, -2.35, 3.2, 'GATE4C_Todo_Ground_Inlay_Backlog'],
+      [0, -2.6, 4.2, 'GATE4C_Todo_Ground_Inlay_Doing'],
+      [4.6, -2.35, 3.2, 'GATE4C_Todo_Ground_Inlay_Done']
+    ]) {
+      const inlay = point(right, forward);
+      this.box(group, inlay[0], 0.158, inlay[1], width, 0.018, 0.08, this.world.materials.paleStone, rotation, name);
+      this.recordGate3RPlacement('gate4c-todo-ground-inlay', name, inlay[0], inlay[1], { minClearance: 4.8 });
+      stats.groundInlays += 1;
+    }
+
+    stats.taskBoards = stats.boardWalls;
+    stats.taskCards = stats.containedCardStacks + stats.statusPips;
+    stats.signs = 0;
+    stats.lamps = 0;
   }
 
   createGate4B3DataPier(group) {

@@ -3909,6 +3909,13 @@ function assertVerification(result) {
     }
     return;
   }
+  if (result.goalGate === 'gate-4c-b6-todo-planning-studio') {
+    assertGate4CB6TodoPlanningStudioVerification(result, failures);
+    if (failures.length) {
+      throw new Error(`Play verification failed: ${failures.join('; ')}`);
+    }
+    return;
+  }
   if (result.goalGate === 'gate-4b5-north-ridge') {
     assertGate4B5NorthRidgeVerification(result, failures);
     if (failures.length) {
@@ -5598,12 +5605,16 @@ function assertGate4BRCompositionCorrectionVerification(result, failures, option
   if (!eastSide.enabled) failures.push('Gate 4-BR failed: East Side scaffold inactive');
   if (!northRidge.enabled) failures.push('Gate 4-BR failed: North Ridge scaffold inactive');
 
-  if ((todo.pads || 0) !== 1) failures.push(`Gate 4-BR Todo failed: pads=${todo.pads || 0}`);
-  if ((todo.taskBoards || 0) !== 1) failures.push(`Gate 4-BR Todo failed: taskBoards=${todo.taskBoards || 0}`);
-  if ((todo.queueRails || 0) !== 4) failures.push(`Gate 4-BR Todo failed: queueRails=${todo.queueRails || 0}`);
-  if ((todo.taskCards || 0) !== 7) failures.push(`Gate 4-BR Todo failed: taskCards=${todo.taskCards || 0}`);
-  if ((todo.signs || 0) !== 0) failures.push(`Gate 4-BR Todo failed: rejected signs=${todo.signs || 0}`);
-  if ((todo.lamps || 0) !== 0) failures.push(`Gate 4-BR Todo failed: rejected lamps=${todo.lamps || 0}`);
+  if (options.sourceTodo) {
+    assertGate4CB6SourceTodoPlanningStudio(result, failures);
+  } else {
+    if ((todo.pads || 0) !== 1) failures.push(`Gate 4-BR Todo failed: pads=${todo.pads || 0}`);
+    if ((todo.taskBoards || 0) !== 1) failures.push(`Gate 4-BR Todo failed: taskBoards=${todo.taskBoards || 0}`);
+    if ((todo.queueRails || 0) !== 4) failures.push(`Gate 4-BR Todo failed: queueRails=${todo.queueRails || 0}`);
+    if ((todo.taskCards || 0) !== 7) failures.push(`Gate 4-BR Todo failed: taskCards=${todo.taskCards || 0}`);
+    if ((todo.signs || 0) !== 0) failures.push(`Gate 4-BR Todo failed: rejected signs=${todo.signs || 0}`);
+    if ((todo.lamps || 0) !== 0) failures.push(`Gate 4-BR Todo failed: rejected lamps=${todo.lamps || 0}`);
+  }
   if ((dataPier.rails || 0) !== 0) failures.push(`Gate 4-BR Data Pier failed: rejected rails=${dataPier.rails || 0}`);
   if ((dataPier.beacons || 0) !== 0) failures.push(`Gate 4-BR Data Pier failed: rejected beacons=${dataPier.beacons || 0}`);
   if ((dataPier.cargoStacks || 0) !== 0) failures.push(`Gate 4-BR Data Pier failed: rejected cargoStacks=${dataPier.cargoStacks || 0}`);
@@ -5732,6 +5743,18 @@ function assertGate4CB5NorthRidgeReplacementVerification(result, failures) {
     sourceWestService: true,
     sourceHarbor: true,
     sourceNorthRidge: true
+  });
+}
+
+function assertGate4CB6TodoPlanningStudioVerification(result, failures) {
+  assertGate4BRCompositionCorrectionVerification(result, failures, {
+    expectedGoal: 'gate-4c-b6-todo-planning-studio',
+    sourceSouthRun: true,
+    sourceGallerySide: true,
+    sourceWestService: true,
+    sourceHarbor: true,
+    sourceNorthRidge: true,
+    sourceTodo: true
   });
 }
 
@@ -6080,6 +6103,70 @@ function assertGate4CB5SourceNorthRidge(result, failures) {
   for (const kind of ['gate4b5-awards-pad', 'gate4b5-sentinel-pad', 'gate4b5-circuit-pad']) {
     if ((placement.byFootprintKind?.[kind] || 0) !== 0) {
       failures.push(`Gate 4-C-B5 footprint failed: rejected ${kind}=${placement.byFootprintKind?.[kind] || 0}`);
+    }
+  }
+}
+
+function assertGate4CB6SourceTodoPlanningStudio(result, failures) {
+  const dataPierSide = result.gate4b3 || {};
+  const todo = dataPierSide.todo || {};
+  const dataPier = dataPierSide.dataPier || {};
+  const placement = result.gate3rPlacement || {};
+
+  if (!dataPierSide.enabled) failures.push('Gate 4-C-B6 failed: Todo Planning Studio inactive');
+  if ((dataPierSide.staticBatches || 0) < 1) failures.push(`Gate 4-C-B6 batching failed: staticBatches=${dataPierSide.staticBatches || 0}`);
+
+  if ((todo.pads || 0) !== 1) failures.push(`Gate 4-C-B6 Todo failed: pads=${todo.pads || 0}`);
+  if ((todo.sourceAssets || 0) < 5) failures.push(`Gate 4-C-B6 Todo failed: sourceAssets=${todo.sourceAssets || 0}`);
+  if ((todo.boardWalls || 0) !== 1) failures.push(`Gate 4-C-B6 Todo failed: boardWalls=${todo.boardWalls || 0}`);
+  if ((todo.studioDesks || 0) !== 1) failures.push(`Gate 4-C-B6 Todo failed: studioDesks=${todo.studioDesks || 0}`);
+  if ((todo.reviewLanes || 0) !== 3) failures.push(`Gate 4-C-B6 Todo failed: reviewLanes=${todo.reviewLanes || 0}`);
+  if ((todo.taskCrates || 0) !== 1) failures.push(`Gate 4-C-B6 Todo failed: taskCrates=${todo.taskCrates || 0}`);
+  if ((todo.statusPips || 0) !== 6) failures.push(`Gate 4-C-B6 Todo failed: statusPips=${todo.statusPips || 0}`);
+  if ((todo.containedCardStacks || 0) !== 2) failures.push(`Gate 4-C-B6 Todo failed: containedCardStacks=${todo.containedCardStacks || 0}`);
+  if ((todo.groundInlays || 0) !== 3) failures.push(`Gate 4-C-B6 Todo failed: groundInlays=${todo.groundInlays || 0}`);
+  if ((todo.taskBoards || 0) !== 1) failures.push(`Gate 4-C-B6 Todo failed: taskBoards=${todo.taskBoards || 0}`);
+  if ((todo.queueRails || 0) !== 3) failures.push(`Gate 4-C-B6 Todo failed: review-lane queueRails=${todo.queueRails || 0}`);
+  if ((todo.taskCards || 0) !== 8) failures.push(`Gate 4-C-B6 Todo failed: contained taskCards=${todo.taskCards || 0}`);
+  if ((todo.signs || 0) !== 0) failures.push(`Gate 4-C-B6 Todo failed: rejected signs=${todo.signs || 0}`);
+  if ((todo.lamps || 0) !== 0) failures.push(`Gate 4-C-B6 Todo failed: rejected lamps=${todo.lamps || 0}`);
+
+  for (const [key, value] of Object.entries(dataPier)) {
+    if ((value || 0) !== 0) failures.push(`Gate 4-C-B6 Data Pier compatibility failed: physical ${key}=${value || 0}`);
+  }
+
+  for (const [kind, expected] of [
+    ['gate4c-todo-footprint', 1],
+    ['gate4c-todo-board-wall', 1],
+    ['gate4c-todo-studio-desk', 1],
+    ['gate4c-todo-kanban-cards', 2],
+    ['gate4c-todo-task-crate', 1],
+    ['gate4c-todo-review-lane', 3],
+    ['gate4c-todo-status-pip', 6],
+    ['gate4c-todo-ground-inlay', 3]
+  ]) {
+    const source = kind.endsWith('footprint') ? placement.byFootprintKind : placement.byKind;
+    if ((source?.[kind] || 0) !== expected) {
+      failures.push(`Gate 4-C-B6 placement failed: ${kind}=${source?.[kind] || 0}`);
+    }
+  }
+
+  for (const kind of [
+    'gate4b3-todo-board',
+    'gate4b3-todo-rail',
+    'gate4b3-todo-card',
+    'gate4b3-pier-rail',
+    'gate4b3-pier-beacon',
+    'gate4b3-pier-cargo'
+  ]) {
+    if ((placement.byKind?.[kind] || 0) !== 0) {
+      failures.push(`Gate 4-C-B6 placement failed: rejected ${kind}=${placement.byKind?.[kind] || 0}`);
+    }
+  }
+
+  for (const kind of ['gate4b3-todo-pad', 'gate4b3-data-pier-pad']) {
+    if ((placement.byFootprintKind?.[kind] || 0) !== 0) {
+      failures.push(`Gate 4-C-B6 footprint failed: rejected ${kind}=${placement.byFootprintKind?.[kind] || 0}`);
     }
   }
 }
