@@ -3902,6 +3902,13 @@ function assertVerification(result) {
     }
     return;
   }
+  if (result.goalGate === 'gate-4c-b5-north-ridge-replacements') {
+    assertGate4CB5NorthRidgeReplacementVerification(result, failures);
+    if (failures.length) {
+      throw new Error(`Play verification failed: ${failures.join('; ')}`);
+    }
+    return;
+  }
   if (result.goalGate === 'gate-4b5-north-ridge') {
     assertGate4B5NorthRidgeVerification(result, failures);
     if (failures.length) {
@@ -5634,28 +5641,32 @@ function assertGate4BRCompositionCorrectionVerification(result, failures, option
     if ((harbor.lamps || 0) !== 0) failures.push(`Gate 4-BR Harbor failed: rejected lamps=${harbor.lamps || 0}`);
   }
 
-  if ((awards.pads || 0) !== 1) failures.push(`Gate 4-BR Awards failed: pads=${awards.pads || 0}`);
-  if ((awards.archiveSteps || 0) !== 3) failures.push(`Gate 4-BR Awards failed: archiveSteps=${awards.archiveSteps || 0}`);
-  if ((awards.trophyPlinths || 0) !== 3) failures.push(`Gate 4-BR Awards failed: trophyPlinths=${awards.trophyPlinths || 0}`);
-  if ((awards.goldAccents || 0) !== 3) failures.push(`Gate 4-BR Awards failed: goldAccents=${awards.goldAccents || 0}`);
-  if ((awards.authoredAssets || 0) !== 1) failures.push(`Gate 4-BR Awards failed: authoredAssets=${awards.authoredAssets || 0}`);
-  if ((awards.signs || 0) !== 0) failures.push(`Gate 4-BR Awards failed: rejected signs=${awards.signs || 0}`);
-  if ((awards.lamps || 0) !== 0) failures.push(`Gate 4-BR Awards failed: rejected lamps=${awards.lamps || 0}`);
+  if (options.sourceNorthRidge) {
+    assertGate4CB5SourceNorthRidge(result, failures);
+  } else {
+    if ((awards.pads || 0) !== 1) failures.push(`Gate 4-BR Awards failed: pads=${awards.pads || 0}`);
+    if ((awards.archiveSteps || 0) !== 3) failures.push(`Gate 4-BR Awards failed: archiveSteps=${awards.archiveSteps || 0}`);
+    if ((awards.trophyPlinths || 0) !== 3) failures.push(`Gate 4-BR Awards failed: trophyPlinths=${awards.trophyPlinths || 0}`);
+    if ((awards.goldAccents || 0) !== 3) failures.push(`Gate 4-BR Awards failed: goldAccents=${awards.goldAccents || 0}`);
+    if ((awards.authoredAssets || 0) !== 1) failures.push(`Gate 4-BR Awards failed: authoredAssets=${awards.authoredAssets || 0}`);
+    if ((awards.signs || 0) !== 0) failures.push(`Gate 4-BR Awards failed: rejected signs=${awards.signs || 0}`);
+    if ((awards.lamps || 0) !== 0) failures.push(`Gate 4-BR Awards failed: rejected lamps=${awards.lamps || 0}`);
 
-  if ((sentinel.pads || 0) !== 1) failures.push(`Gate 4-BR Sentinel failed: pads=${sentinel.pads || 0}`);
-  if ((sentinel.ridgeTowers || 0) !== 1) failures.push(`Gate 4-BR Sentinel failed: ridgeTowers=${sentinel.ridgeTowers || 0}`);
-  if ((sentinel.signalTotems || 0) !== 1) failures.push(`Gate 4-BR Sentinel failed: signalTotems=${sentinel.signalTotems || 0}`);
-  if ((sentinel.shardPanels || 0) !== 2) failures.push(`Gate 4-BR Sentinel failed: shardPanels=${sentinel.shardPanels || 0}`);
-  if ((sentinel.signs || 0) !== 0) failures.push(`Gate 4-BR Sentinel failed: rejected signs=${sentinel.signs || 0}`);
-  if ((sentinel.lamps || 0) !== 0) failures.push(`Gate 4-BR Sentinel failed: rejected lamps=${sentinel.lamps || 0}`);
+    if ((sentinel.pads || 0) !== 1) failures.push(`Gate 4-BR Sentinel failed: pads=${sentinel.pads || 0}`);
+    if ((sentinel.ridgeTowers || 0) !== 1) failures.push(`Gate 4-BR Sentinel failed: ridgeTowers=${sentinel.ridgeTowers || 0}`);
+    if ((sentinel.signalTotems || 0) !== 1) failures.push(`Gate 4-BR Sentinel failed: signalTotems=${sentinel.signalTotems || 0}`);
+    if ((sentinel.shardPanels || 0) !== 2) failures.push(`Gate 4-BR Sentinel failed: shardPanels=${sentinel.shardPanels || 0}`);
+    if ((sentinel.signs || 0) !== 0) failures.push(`Gate 4-BR Sentinel failed: rejected signs=${sentinel.signs || 0}`);
+    if ((sentinel.lamps || 0) !== 0) failures.push(`Gate 4-BR Sentinel failed: rejected lamps=${sentinel.lamps || 0}`);
 
-  if ((circuit.pads || 0) !== 1) failures.push(`Gate 4-BR Circuit failed: pads=${circuit.pads || 0}`);
-  if ((circuit.startGates || 0) !== 1) failures.push(`Gate 4-BR Circuit failed: startGates=${circuit.startGates || 0}`);
-  if ((circuit.laneCurbs || 0) !== 2) failures.push(`Gate 4-BR Circuit failed: laneCurbs=${circuit.laneCurbs || 0}`);
-  if ((circuit.signalLights || 0) !== 3) failures.push(`Gate 4-BR Circuit failed: signalLights=${circuit.signalLights || 0}`);
-  if ((circuit.authoredAssets || 0) !== 1) failures.push(`Gate 4-BR Circuit failed: authoredAssets=${circuit.authoredAssets || 0}`);
-  if ((circuit.signs || 0) !== 0) failures.push(`Gate 4-BR Circuit failed: rejected signs=${circuit.signs || 0}`);
-  if ((circuit.lamps || 0) !== 0) failures.push(`Gate 4-BR Circuit failed: rejected lamps=${circuit.lamps || 0}`);
+    if ((circuit.pads || 0) !== 1) failures.push(`Gate 4-BR Circuit failed: pads=${circuit.pads || 0}`);
+    if ((circuit.startGates || 0) !== 1) failures.push(`Gate 4-BR Circuit failed: startGates=${circuit.startGates || 0}`);
+    if ((circuit.laneCurbs || 0) !== 2) failures.push(`Gate 4-BR Circuit failed: laneCurbs=${circuit.laneCurbs || 0}`);
+    if ((circuit.signalLights || 0) !== 3) failures.push(`Gate 4-BR Circuit failed: signalLights=${circuit.signalLights || 0}`);
+    if ((circuit.authoredAssets || 0) !== 1) failures.push(`Gate 4-BR Circuit failed: authoredAssets=${circuit.authoredAssets || 0}`);
+    if ((circuit.signs || 0) !== 0) failures.push(`Gate 4-BR Circuit failed: rejected signs=${circuit.signs || 0}`);
+    if ((circuit.lamps || 0) !== 0) failures.push(`Gate 4-BR Circuit failed: rejected lamps=${circuit.lamps || 0}`);
+  }
 
   for (const kind of ['gate4b3-pier-rail', 'gate4b3-pier-beacon', 'gate4b3-pier-cargo', 'gate4b4-career-connector']) {
     if ((placement.byKind?.[kind] || 0) !== 0) {
@@ -5710,6 +5721,17 @@ function assertGate4CB4SignalHarborReplacementVerification(result, failures) {
     sourceGallerySide: true,
     sourceWestService: true,
     sourceHarbor: true
+  });
+}
+
+function assertGate4CB5NorthRidgeReplacementVerification(result, failures) {
+  assertGate4BRCompositionCorrectionVerification(result, failures, {
+    expectedGoal: 'gate-4c-b5-north-ridge-replacements',
+    sourceSouthRun: true,
+    sourceGallerySide: true,
+    sourceWestService: true,
+    sourceHarbor: true,
+    sourceNorthRidge: true
   });
 }
 
@@ -5960,6 +5982,105 @@ function assertGate4CB4SourceSignalHarbor(result, failures) {
   }
   if ((placement.byFootprintKind?.['gate4b4-harbor-deck'] || 0) !== 0) {
     failures.push(`Gate 4-C-B4 placement failed: rejected gate4b4-harbor-deck=${placement.byFootprintKind?.['gate4b4-harbor-deck'] || 0}`);
+  }
+}
+
+function assertGate4CB5SourceNorthRidge(result, failures) {
+  const northRidge = result.gate4b5 || {};
+  const awards = northRidge.awards || {};
+  const sentinel = northRidge.sentinel || {};
+  const circuit = northRidge.circuit || {};
+  const placement = result.gate3rPlacement || {};
+
+  if (!northRidge.enabled) failures.push('Gate 4-C-B5 failed: North Ridge scaffold inactive');
+  if ((northRidge.staticBatches || 0) < 1) failures.push(`Gate 4-C-B5 batching failed: staticBatches=${northRidge.staticBatches || 0}`);
+
+  if ((awards.pads || 0) !== 1) failures.push(`Gate 4-C-B5 Awards failed: pads=${awards.pads || 0}`);
+  if ((awards.sourceAssets || 0) < 1) failures.push(`Gate 4-C-B5 Awards failed: sourceAssets=${awards.sourceAssets || 0}`);
+  if ((awards.galleryBases || 0) !== 1) failures.push(`Gate 4-C-B5 Awards failed: galleryBases=${awards.galleryBases || 0}`);
+  if ((awards.plaqueWalls || 0) !== 1) failures.push(`Gate 4-C-B5 Awards failed: plaqueWalls=${awards.plaqueWalls || 0}`);
+  if ((awards.certificateFrames || 0) !== 3) failures.push(`Gate 4-C-B5 Awards failed: certificateFrames=${awards.certificateFrames || 0}`);
+  if ((awards.ceremonialSteps || 0) !== 3) failures.push(`Gate 4-C-B5 Awards failed: ceremonialSteps=${awards.ceremonialSteps || 0}`);
+  if ((awards.trophyPlinths || 0) !== 3) failures.push(`Gate 4-C-B5 Awards failed: trophyPlinths=${awards.trophyPlinths || 0}`);
+  if ((awards.warmAccents || 0) !== 3) failures.push(`Gate 4-C-B5 Awards failed: warmAccents=${awards.warmAccents || 0}`);
+  if ((awards.signs || 0) !== 0) failures.push(`Gate 4-C-B5 Awards failed: rejected signs=${awards.signs || 0}`);
+  if ((awards.lamps || 0) !== 0) failures.push(`Gate 4-C-B5 Awards failed: rejected lamps=${awards.lamps || 0}`);
+
+  if ((sentinel.pads || 0) !== 1) failures.push(`Gate 4-C-B5 Sentinel failed: pads=${sentinel.pads || 0}`);
+  if ((sentinel.sourceAssets || 0) < 1) failures.push(`Gate 4-C-B5 Sentinel failed: sourceAssets=${sentinel.sourceAssets || 0}`);
+  if ((sentinel.groundPlates || 0) !== 1) failures.push(`Gate 4-C-B5 Sentinel failed: groundPlates=${sentinel.groundPlates || 0}`);
+  if ((sentinel.towerBases || 0) !== 1) failures.push(`Gate 4-C-B5 Sentinel failed: towerBases=${sentinel.towerBases || 0}`);
+  if ((sentinel.scannerCrowns || 0) !== 1) failures.push(`Gate 4-C-B5 Sentinel failed: scannerCrowns=${sentinel.scannerCrowns || 0}`);
+  if ((sentinel.alertWalls || 0) !== 1) failures.push(`Gate 4-C-B5 Sentinel failed: alertWalls=${sentinel.alertWalls || 0}`);
+  if ((sentinel.packetShardPanels || 0) !== 2) failures.push(`Gate 4-C-B5 Sentinel failed: packetShardPanels=${sentinel.packetShardPanels || 0}`);
+  if ((sentinel.signs || 0) !== 0) failures.push(`Gate 4-C-B5 Sentinel failed: rejected signs=${sentinel.signs || 0}`);
+  if ((sentinel.lamps || 0) !== 0) failures.push(`Gate 4-C-B5 Sentinel failed: rejected lamps=${sentinel.lamps || 0}`);
+
+  if ((circuit.pads || 0) !== 1) failures.push(`Gate 4-C-B5 Circuit failed: pads=${circuit.pads || 0}`);
+  if ((circuit.sourceAssets || 0) < 1) failures.push(`Gate 4-C-B5 Circuit failed: sourceAssets=${circuit.sourceAssets || 0}`);
+  if ((circuit.startGantries || 0) !== 1) failures.push(`Gate 4-C-B5 Circuit failed: startGantries=${circuit.startGantries || 0}`);
+  if ((circuit.timingBooths || 0) !== 1) failures.push(`Gate 4-C-B5 Circuit failed: timingBooths=${circuit.timingBooths || 0}`);
+  if ((circuit.startLights || 0) !== 3) failures.push(`Gate 4-C-B5 Circuit failed: startLights=${circuit.startLights || 0}`);
+  if ((circuit.checkpointMarkers || 0) !== 1) failures.push(`Gate 4-C-B5 Circuit failed: checkpointMarkers=${circuit.checkpointMarkers || 0}`);
+  if ((circuit.routeArrows || 0) !== 2) failures.push(`Gate 4-C-B5 Circuit failed: routeArrows=${circuit.routeArrows || 0}`);
+  if ((circuit.pocketCurbVisuals || 0) !== 2) failures.push(`Gate 4-C-B5 Circuit failed: pocketCurbVisuals=${circuit.pocketCurbVisuals || 0}`);
+  if ((circuit.signs || 0) !== 0) failures.push(`Gate 4-C-B5 Circuit failed: rejected signs=${circuit.signs || 0}`);
+  if ((circuit.lamps || 0) !== 0) failures.push(`Gate 4-C-B5 Circuit failed: rejected lamps=${circuit.lamps || 0}`);
+
+  for (const [kind, expected] of [
+    ['gate4c-awards-footprint', 1],
+    ['gate4c-sentinel-footprint', 1],
+    ['gate4c-circuit-footprint', 1]
+  ]) {
+    if ((placement.byFootprintKind?.[kind] || 0) !== expected) {
+      failures.push(`Gate 4-C-B5 footprint failed: ${kind}=${placement.byFootprintKind?.[kind] || 0}`);
+    }
+  }
+
+  for (const [kind, expected] of [
+    ['gate4c-awards-ceremonial-step', 3],
+    ['gate4c-awards-plaque-wall', 1],
+    ['gate4c-awards-certificate-frame', 3],
+    ['gate4c-awards-monument', 1],
+    ['gate4c-awards-trophy-plinth', 3],
+    ['gate4c-awards-warm-accent', 3],
+    ['gate4c-sentinel-tower-base', 1],
+    ['gate4c-sentinel-scanner-crown', 1],
+    ['gate4c-sentinel-alert-wall', 1],
+    ['gate4c-sentinel-packet-shard-panel', 2],
+    ['gate4c-circuit-start-gantry', 1],
+    ['gate4c-circuit-timing-booth', 1],
+    ['gate4c-circuit-pocket-curb', 2],
+    ['gate4c-circuit-start-light', 3],
+    ['gate4c-circuit-checkpoint-marker', 1],
+    ['gate4c-circuit-route-arrow', 2]
+  ]) {
+    if ((placement.byKind?.[kind] || 0) !== expected) {
+      failures.push(`Gate 4-C-B5 placement failed: ${kind}=${placement.byKind?.[kind] || 0}`);
+    }
+  }
+
+  for (const kind of [
+    'gate4b5-awards-step',
+    'gate4b5-awards-plinth',
+    'gate4b5-awards-accent',
+    'gate4b5-awards-monument',
+    'gate4b5-sentinel-tower',
+    'gate4b5-sentinel-totem',
+    'gate4b5-sentinel-shard',
+    'gate4b5-circuit-gate',
+    'gate4b5-circuit-curb',
+    'gate4b5-circuit-light'
+  ]) {
+    if ((placement.byKind?.[kind] || 0) !== 0) {
+      failures.push(`Gate 4-C-B5 placement failed: rejected ${kind}=${placement.byKind?.[kind] || 0}`);
+    }
+  }
+
+  for (const kind of ['gate4b5-awards-pad', 'gate4b5-sentinel-pad', 'gate4b5-circuit-pad']) {
+    if ((placement.byFootprintKind?.[kind] || 0) !== 0) {
+      failures.push(`Gate 4-C-B5 footprint failed: rejected ${kind}=${placement.byFootprintKind?.[kind] || 0}`);
+    }
   }
 }
 

@@ -273,7 +273,7 @@ export const worldZones = [
     kind: 'Final Year Project',
     title: 'Cyber Sentinel Ridge',
     districtId: 'north-ridge',
-    position: [20, 0, 122],
+    position: [20, 0, 129],
     rotation: -0.12,
     radius: 11,
     color: '#ff6d8d',
@@ -324,7 +324,7 @@ export const worldZones = [
     kind: 'Certificates',
     title: 'Awards Archive',
     districtId: 'fcc-campus',
-    position: [-70, 0, 112],
+    position: [-58, 0, 116],
     rotation: -0.18,
     radius: 8,
     color: '#ffdf8a',
@@ -385,7 +385,7 @@ export const worldZones = [
     kind: 'Time Trial',
     title: 'Circuit Start',
     districtId: 'north-ridge',
-    position: [72, 0, 82],
+    position: [58, 0, 76],
     rotation: -0.28,
     radius: 12,
     color: '#ff9b6d',
@@ -508,8 +508,8 @@ export const zonePresentation = {
   },
   sentinel: {
     respawn: { position: [18, 1.08, 116], heading: -0.05 },
-    camera: [34, 15, 142],
-    target: [18, 6, 128],
+    camera: [36, 15, 143],
+    target: [20, 6, 129],
     fov: 42,
   },
   career: {
@@ -526,8 +526,8 @@ export const zonePresentation = {
   },
   awards: {
     respawn: { position: [-52, 1.08, 104], heading: 0.94 },
-    camera: [-90, 10, 124],
-    target: [-69, 4, 110],
+    camera: [-80, 10, 130],
+    target: [-58, 4, 116],
     fov: 42,
   },
   cv: {
@@ -545,7 +545,7 @@ export const zonePresentation = {
   circuit: {
     respawn: { position: [70, 1.08, 92], heading: 0.42 },
     camera: [82, 10, 98],
-    target: [58, 4, 80],
+    target: [58, 4, 76],
     fov: 42,
   },
   contact: {
