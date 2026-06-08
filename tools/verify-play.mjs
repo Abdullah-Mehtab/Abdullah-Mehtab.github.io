@@ -31,12 +31,14 @@ const authoredDistrictAssets = [
   'EnvPolishProjectDisplayRack',
   'EnvPolishProjectPartsCart',
   'EnvPolishProjectCableReel',
+  'EnvPolishProjectsFoundryBuilding',
   'EnvPolishCampusFountain',
   'EnvPolishCampusNoticeBoard',
   'EnvPolishCampusWalkwayPavilion',
   'EnvPolishCampusStudyBench',
   'EnvPolishCvVault',
   'EnvPolishCvArchiveSpine',
+  'EnvPolishCvRecordsArchive',
   'EnvPolishSkillsArray',
   'EnvPolishCareerOffice',
   'EnvPolishAwardsMonument',
@@ -3925,6 +3927,13 @@ function assertVerification(result) {
     }
     return;
   }
+  if (result.goalGate === 'gate-4d-b2-projects-cv-architecture') {
+    assertGate4DB2ProjectsCvArchitectureVerification(result, failures);
+    if (failures.length) {
+      throw new Error(`Play verification failed: ${failures.join('; ')}`);
+    }
+    return;
+  }
   if (result.goalGate === 'gate-4b5-north-ridge') {
     assertGate4B5NorthRidgeVerification(result, failures);
     if (failures.length) {
@@ -5257,7 +5266,9 @@ function assertGate4B1SouthRunVerification(result, failures, options = {}) {
   });
 
   if (options.sourceSouthRun) {
-    assertGate4CB1SourceSouthRun(result, failures);
+    assertGate4CB1SourceSouthRun(result, failures, {
+      cvArchitecture: options.cvArchitecture
+    });
     return;
   }
 
@@ -5302,7 +5313,8 @@ function assertGate4B2WestServiceVerification(result, failures, options = {}) {
     expectedGoal: options.expectedGoal || 'gate-4b2-west-service',
     allowPrototypeStuntPark: options.allowPrototypeStuntPark,
     allowedExtraColliderPrefixes: options.allowedExtraColliderPrefixes,
-    sourceSouthRun: options.sourceSouthRun
+    sourceSouthRun: options.sourceSouthRun,
+    cvArchitecture: options.cvArchitecture
   });
 
   const westService = result.gate4b2 || {};
@@ -5365,6 +5377,7 @@ function assertGate4B3DataPierSideVerification(result, failures, options = {}) {
     allowPrototypeStuntPark: options.allowPrototypeStuntPark,
     allowedExtraColliderPrefixes: options.allowedExtraColliderPrefixes,
     sourceSouthRun: options.sourceSouthRun,
+    cvArchitecture: options.cvArchitecture,
     sourceWestService: options.sourceWestService
   });
 
@@ -5593,6 +5606,7 @@ function assertGate4BRCompositionCorrectionVerification(result, failures, option
     allowPrototypeStuntPark: options.allowPrototypeStuntPark,
     allowedExtraColliderPrefixes: options.allowedExtraColliderPrefixes,
     sourceSouthRun: options.sourceSouthRun,
+    cvArchitecture: options.cvArchitecture,
     sourceWestService: options.sourceWestService
   });
   assertStuntCoveDeleted(result, failures);
@@ -5632,6 +5646,7 @@ function assertGate4BRCompositionCorrectionVerification(result, failures, option
 
   if (options.sourceGallerySide) {
     assertGate4CB2SourceGallerySide(result, failures, {
+      projectsArchitecture: options.projectsArchitecture,
       careerArchitecture: options.careerArchitecture
     });
   } else {
@@ -5785,6 +5800,22 @@ function assertGate4DB1CareerAwardsArchitectureVerification(result, failures) {
   });
 }
 
+function assertGate4DB2ProjectsCvArchitectureVerification(result, failures) {
+  assertGate4BRCompositionCorrectionVerification(result, failures, {
+    expectedGoal: 'gate-4d-b2-projects-cv-architecture',
+    sourceSouthRun: true,
+    cvArchitecture: true,
+    sourceGallerySide: true,
+    projectsArchitecture: true,
+    careerArchitecture: true,
+    sourceWestService: true,
+    sourceHarbor: true,
+    sourceNorthRidge: true,
+    awardsArchitecture: true,
+    sourceTodo: true
+  });
+}
+
 function assertAuthoredDistrictAsset(result, assetName, label, failures) {
   const asset = (result.authoredDistrictAssets || []).find((entry) => entry.name === assetName);
   if (!asset?.template) failures.push(`${label} failed: ${assetName} template was not loaded`);
@@ -5829,7 +5860,28 @@ function assertGate4DAwardsMuseumHall(result, failures) {
   if ((awards.lamps || 0) !== 0) failures.push(`Gate 4-D-B1 Awards failed: rejected lamps=${awards.lamps || 0}`);
 }
 
-function assertGate4CB1SourceSouthRun(result, failures) {
+function assertGate4DCvRecordsArchive(result, failures) {
+  const cv = result.gate4b1?.cv || {};
+
+  assertAuthoredDistrictAsset(result, 'EnvPolishCvRecordsArchive', 'Gate 4-D-B2 CV architecture', failures);
+  if ((cv.pads || 0) !== 1) failures.push(`Gate 4-D-B2 CV failed: pads=${cv.pads || 0}`);
+  if ((cv.sourceAssets || 0) < 1) failures.push(`Gate 4-D-B2 CV failed: sourceAssets=${cv.sourceAssets || 0}`);
+  if ((cv.authoredAssets || 0) < 1) failures.push(`Gate 4-D-B2 CV failed: authoredAssets=${cv.authoredAssets || 0}`);
+  if ((cv.architectureAssets || 0) !== 1) failures.push(`Gate 4-D-B2 CV failed: architectureAssets=${cv.architectureAssets || 0}`);
+  if ((cv.recordsArchiveBuildings || 0) !== 1) failures.push(`Gate 4-D-B2 CV failed: recordsArchiveBuildings=${cv.recordsArchiveBuildings || 0}`);
+  if ((cv.archiveHalls || 0) !== 1) failures.push(`Gate 4-D-B2 CV failed: archiveHalls=${cv.archiveHalls || 0}`);
+  if ((cv.vaultShells || 0) !== 1) failures.push(`Gate 4-D-B2 CV failed: vaultShells=${cv.vaultShells || 0}`);
+  if ((cv.vaultDoors || 0) !== 1) failures.push(`Gate 4-D-B2 CV failed: vaultDoors=${cv.vaultDoors || 0}`);
+  if ((cv.documentSpines || 0) < 8) failures.push(`Gate 4-D-B2 CV failed: documentSpines=${cv.documentSpines || 0}`);
+  if ((cv.documentPages || 0) < 8) failures.push(`Gate 4-D-B2 CV failed: documentPages=${cv.documentPages || 0}`);
+  if ((cv.accessKiosks || 0) !== 1) failures.push(`Gate 4-D-B2 CV failed: accessKiosks=${cv.accessKiosks || 0}`);
+  if ((cv.pdfBeacons || 0) !== 1) failures.push(`Gate 4-D-B2 CV failed: pdfBeacons=${cv.pdfBeacons || 0}`);
+  if ((cv.groundInlays || 0) !== 1) failures.push(`Gate 4-D-B2 CV failed: groundInlays=${cv.groundInlays || 0}`);
+  if ((cv.signs || 0) !== 0) failures.push(`Gate 4-D-B2 CV failed: rejected signs=${cv.signs || 0}`);
+  if ((cv.lamps || 0) !== 0) failures.push(`Gate 4-D-B2 CV failed: rejected lamps=${cv.lamps || 0}`);
+}
+
+function assertGate4CB1SourceSouthRun(result, failures, options = {}) {
   const southRun = result.gate4b1 || {};
   const cv = southRun.cv || {};
   const behind = southRun.behind || {};
@@ -5838,16 +5890,20 @@ function assertGate4CB1SourceSouthRun(result, failures) {
   if (!southRun.enabled) failures.push('Gate 4-C-B1 failed: South Run replacement inactive');
   if ((southRun.staticBatches || 0) < 1) failures.push(`Gate 4-C-B1 batching failed: staticBatches=${southRun.staticBatches || 0}`);
 
-  if ((cv.pads || 0) !== 1) failures.push(`Gate 4-C-B1 CV failed: pads=${cv.pads || 0}`);
-  if ((cv.sourceAssets || 0) < 4) failures.push(`Gate 4-C-B1 CV failed: sourceAssets=${cv.sourceAssets || 0}`);
-  if ((cv.vaultShells || 0) !== 1) failures.push(`Gate 4-C-B1 CV failed: vaultShells=${cv.vaultShells || 0}`);
-  if ((cv.vaultDoors || 0) !== 1) failures.push(`Gate 4-C-B1 CV failed: vaultDoors=${cv.vaultDoors || 0}`);
-  if ((cv.documentSpines || 0) < 5) failures.push(`Gate 4-C-B1 CV failed: documentSpines=${cv.documentSpines || 0}`);
-  if ((cv.accessKiosks || 0) !== 1) failures.push(`Gate 4-C-B1 CV failed: accessKiosks=${cv.accessKiosks || 0}`);
-  if ((cv.pdfBeacons || 0) !== 1) failures.push(`Gate 4-C-B1 CV failed: pdfBeacons=${cv.pdfBeacons || 0}`);
-  if ((cv.groundInlays || 0) !== 1) failures.push(`Gate 4-C-B1 CV failed: groundInlays=${cv.groundInlays || 0}`);
-  if ((cv.signs || 0) !== 0) failures.push(`Gate 4-C-B1 CV failed: rejected signs=${cv.signs || 0}`);
-  if ((cv.lamps || 0) !== 0) failures.push(`Gate 4-C-B1 CV failed: rejected lamps=${cv.lamps || 0}`);
+  if (options.cvArchitecture) {
+    assertGate4DCvRecordsArchive(result, failures);
+  } else {
+    if ((cv.pads || 0) !== 1) failures.push(`Gate 4-C-B1 CV failed: pads=${cv.pads || 0}`);
+    if ((cv.sourceAssets || 0) < 4) failures.push(`Gate 4-C-B1 CV failed: sourceAssets=${cv.sourceAssets || 0}`);
+    if ((cv.vaultShells || 0) !== 1) failures.push(`Gate 4-C-B1 CV failed: vaultShells=${cv.vaultShells || 0}`);
+    if ((cv.vaultDoors || 0) !== 1) failures.push(`Gate 4-C-B1 CV failed: vaultDoors=${cv.vaultDoors || 0}`);
+    if ((cv.documentSpines || 0) < 5) failures.push(`Gate 4-C-B1 CV failed: documentSpines=${cv.documentSpines || 0}`);
+    if ((cv.accessKiosks || 0) !== 1) failures.push(`Gate 4-C-B1 CV failed: accessKiosks=${cv.accessKiosks || 0}`);
+    if ((cv.pdfBeacons || 0) !== 1) failures.push(`Gate 4-C-B1 CV failed: pdfBeacons=${cv.pdfBeacons || 0}`);
+    if ((cv.groundInlays || 0) !== 1) failures.push(`Gate 4-C-B1 CV failed: groundInlays=${cv.groundInlays || 0}`);
+    if ((cv.signs || 0) !== 0) failures.push(`Gate 4-C-B1 CV failed: rejected signs=${cv.signs || 0}`);
+    if ((cv.lamps || 0) !== 0) failures.push(`Gate 4-C-B1 CV failed: rejected lamps=${cv.lamps || 0}`);
+  }
 
   if ((behind.pads || 0) !== 1) failures.push(`Gate 4-C-B1 Behind failed: pads=${behind.pads || 0}`);
   if ((behind.sourceAssets || 0) < 7) failures.push(`Gate 4-C-B1 Behind failed: sourceAssets=${behind.sourceAssets || 0}`);
@@ -5860,35 +5916,77 @@ function assertGate4CB1SourceSouthRun(result, failures) {
   if ((behind.signs || 0) !== 0) failures.push(`Gate 4-C-B1 Behind failed: rejected signs=${behind.signs || 0}`);
   if ((behind.lamps || 0) !== 0) failures.push(`Gate 4-C-B1 Behind failed: rejected lamps=${behind.lamps || 0}`);
 
-  if ((placement.byFootprintKind?.['gate4c-cv-footprint'] || 0) !== 1) {
-    failures.push(`Gate 4-C-B1 placement failed: CV footprints=${placement.byFootprintKind?.['gate4c-cv-footprint'] || 0}`);
+  const expectedFootprints = [
+    options.cvArchitecture ? ['gate4d-cv-footprint', 1] : ['gate4c-cv-footprint', 1],
+    ['gate4c-behind-footprint', 1]
+  ];
+  for (const [kind, expected] of expectedFootprints) {
+    if ((placement.byFootprintKind?.[kind] || 0) !== expected) {
+      failures.push(`Gate 4-C-B1 placement failed: ${kind}=${placement.byFootprintKind?.[kind] || 0}`);
+    }
   }
-  if ((placement.byFootprintKind?.['gate4c-behind-footprint'] || 0) !== 1) {
-    failures.push(`Gate 4-C-B1 placement failed: Behind footprints=${placement.byFootprintKind?.['gate4c-behind-footprint'] || 0}`);
-  }
-  for (const [kind, expected] of [
-    ['gate4c-cv-vault-shell', 1],
-    ['gate4c-cv-vault-door', 1],
-    ['gate4c-cv-document-spine', 5],
-    ['gate4c-cv-access-kiosk', 1],
-    ['gate4c-cv-pdf-beacon', 1],
-    ['gate4c-cv-ground-inlay', 1],
+
+  const expectedPlacements = [
     ['gate4c-behind-garage-shell', 1],
     ['gate4c-behind-workbench', 1],
     ['gate4c-behind-tool-wall', 3],
     ['gate4c-behind-pipeline-panel', 1],
     ['gate4c-behind-source-totem', 1],
     ['gate4c-behind-status-light', 4]
-  ]) {
+  ];
+  if (options.cvArchitecture) {
+    expectedPlacements.unshift(['gate4d-cv-records-archive', 1]);
+  } else {
+    expectedPlacements.unshift(
+      ['gate4c-cv-vault-shell', 1],
+      ['gate4c-cv-vault-door', 1],
+      ['gate4c-cv-document-spine', 5],
+      ['gate4c-cv-access-kiosk', 1],
+      ['gate4c-cv-pdf-beacon', 1],
+      ['gate4c-cv-ground-inlay', 1]
+    );
+  }
+  for (const [kind, expected] of expectedPlacements) {
     if ((placement.byKind?.[kind] || 0) !== expected) {
       failures.push(`Gate 4-C-B1 placement failed: ${kind}=${placement.byKind?.[kind] || 0}`);
     }
   }
-  for (const kind of ['gate4b1-document', 'gate4b1-hologram', 'gate4b1-vault', 'gate4b1-workbench']) {
+  const rejectedKinds = ['gate4b1-document', 'gate4b1-hologram', 'gate4b1-vault', 'gate4b1-workbench'];
+  if (options.cvArchitecture) {
+    rejectedKinds.push(
+      'gate4c-cv-vault-shell',
+      'gate4c-cv-vault-door',
+      'gate4c-cv-document-spine',
+      'gate4c-cv-access-kiosk',
+      'gate4c-cv-pdf-beacon',
+      'gate4c-cv-ground-inlay'
+    );
+  }
+  for (const kind of rejectedKinds) {
     if ((placement.byKind?.[kind] || 0) !== 0) {
       failures.push(`Gate 4-C-B1 placement failed: rejected ${kind}=${placement.byKind?.[kind] || 0}`);
     }
   }
+}
+
+function assertGate4DProjectsFoundryBuilding(result, failures) {
+  const projects = result.gate4b4?.projects || {};
+
+  assertAuthoredDistrictAsset(result, 'EnvPolishProjectsFoundryBuilding', 'Gate 4-D-B2 Projects architecture', failures);
+  if ((projects.pads || 0) !== 1) failures.push(`Gate 4-D-B2 Projects failed: pads=${projects.pads || 0}`);
+  if ((projects.sourceAssets || 0) < 1) failures.push(`Gate 4-D-B2 Projects failed: sourceAssets=${projects.sourceAssets || 0}`);
+  if ((projects.authoredAssets || 0) < 1) failures.push(`Gate 4-D-B2 Projects failed: authoredAssets=${projects.authoredAssets || 0}`);
+  if ((projects.architectureAssets || 0) !== 1) failures.push(`Gate 4-D-B2 Projects failed: architectureAssets=${projects.architectureAssets || 0}`);
+  if ((projects.foundryBuildings || 0) !== 1) failures.push(`Gate 4-D-B2 Projects failed: foundryBuildings=${projects.foundryBuildings || 0}`);
+  if ((projects.workshopShells || 0) !== 1) failures.push(`Gate 4-D-B2 Projects failed: workshopShells=${projects.workshopShells || 0}`);
+  if ((projects.buildGantries || 0) !== 1) failures.push(`Gate 4-D-B2 Projects failed: buildGantries=${projects.buildGantries || 0}`);
+  if ((projects.displayBays || 0) < 3) failures.push(`Gate 4-D-B2 Projects failed: displayBays=${projects.displayBays || 0}`);
+  if ((projects.testBenches || 0) !== 1) failures.push(`Gate 4-D-B2 Projects failed: testBenches=${projects.testBenches || 0}`);
+  if ((projects.cableTrays || 0) !== 1) failures.push(`Gate 4-D-B2 Projects failed: cableTrays=${projects.cableTrays || 0}`);
+  if ((projects.groundPlates || 0) !== 1) failures.push(`Gate 4-D-B2 Projects failed: groundPlates=${projects.groundPlates || 0}`);
+  if ((projects.sparkEmitters || 0) !== 0) failures.push(`Gate 4-D-B2 Projects failed: rejected loose sparkEmitters=${projects.sparkEmitters || 0}`);
+  if ((projects.signs || 0) !== 0) failures.push(`Gate 4-D-B2 Projects failed: rejected signs=${projects.signs || 0}`);
+  if ((projects.lamps || 0) !== 0) failures.push(`Gate 4-D-B2 Projects failed: rejected lamps=${projects.lamps || 0}`);
 }
 
 function assertGate4CB2SourceGallerySide(result, failures, options = {}) {
@@ -5900,18 +5998,22 @@ function assertGate4CB2SourceGallerySide(result, failures, options = {}) {
   if (!eastSide.enabled) failures.push('Gate 4-C-B2 failed: East Side scaffold inactive');
   if ((eastSide.staticBatches || 0) < 1) failures.push(`Gate 4-C-B2 batching failed: staticBatches=${eastSide.staticBatches || 0}`);
 
-  if ((projects.pads || 0) !== 1) failures.push(`Gate 4-C-B2 Projects failed: pads=${projects.pads || 0}`);
-  if ((projects.sourceAssets || 0) < 7) failures.push(`Gate 4-C-B2 Projects failed: sourceAssets=${projects.sourceAssets || 0}`);
-  if ((projects.authoredAssets || 0) < 7) failures.push(`Gate 4-C-B2 Projects failed: authoredAssets=${projects.authoredAssets || 0}`);
-  if ((projects.workshopShells || 0) !== 1) failures.push(`Gate 4-C-B2 Projects failed: workshopShells=${projects.workshopShells || 0}`);
-  if ((projects.buildGantries || 0) !== 1) failures.push(`Gate 4-C-B2 Projects failed: buildGantries=${projects.buildGantries || 0}`);
-  if ((projects.displayBays || 0) !== 3) failures.push(`Gate 4-C-B2 Projects failed: displayBays=${projects.displayBays || 0}`);
-  if ((projects.testBenches || 0) !== 1) failures.push(`Gate 4-C-B2 Projects failed: testBenches=${projects.testBenches || 0}`);
-  if ((projects.cableTrays || 0) !== 1) failures.push(`Gate 4-C-B2 Projects failed: cableTrays=${projects.cableTrays || 0}`);
-  if ((projects.sparkEmitters || 0) !== 4) failures.push(`Gate 4-C-B2 Projects failed: sparkEmitters=${projects.sparkEmitters || 0}`);
-  if ((projects.groundPlates || 0) !== 1) failures.push(`Gate 4-C-B2 Projects failed: groundPlates=${projects.groundPlates || 0}`);
-  if ((projects.signs || 0) !== 0) failures.push(`Gate 4-C-B2 Projects failed: rejected signs=${projects.signs || 0}`);
-  if ((projects.lamps || 0) !== 0) failures.push(`Gate 4-C-B2 Projects failed: rejected lamps=${projects.lamps || 0}`);
+  if (options.projectsArchitecture) {
+    assertGate4DProjectsFoundryBuilding(result, failures);
+  } else {
+    if ((projects.pads || 0) !== 1) failures.push(`Gate 4-C-B2 Projects failed: pads=${projects.pads || 0}`);
+    if ((projects.sourceAssets || 0) < 7) failures.push(`Gate 4-C-B2 Projects failed: sourceAssets=${projects.sourceAssets || 0}`);
+    if ((projects.authoredAssets || 0) < 7) failures.push(`Gate 4-C-B2 Projects failed: authoredAssets=${projects.authoredAssets || 0}`);
+    if ((projects.workshopShells || 0) !== 1) failures.push(`Gate 4-C-B2 Projects failed: workshopShells=${projects.workshopShells || 0}`);
+    if ((projects.buildGantries || 0) !== 1) failures.push(`Gate 4-C-B2 Projects failed: buildGantries=${projects.buildGantries || 0}`);
+    if ((projects.displayBays || 0) !== 3) failures.push(`Gate 4-C-B2 Projects failed: displayBays=${projects.displayBays || 0}`);
+    if ((projects.testBenches || 0) !== 1) failures.push(`Gate 4-C-B2 Projects failed: testBenches=${projects.testBenches || 0}`);
+    if ((projects.cableTrays || 0) !== 1) failures.push(`Gate 4-C-B2 Projects failed: cableTrays=${projects.cableTrays || 0}`);
+    if ((projects.sparkEmitters || 0) !== 4) failures.push(`Gate 4-C-B2 Projects failed: sparkEmitters=${projects.sparkEmitters || 0}`);
+    if ((projects.groundPlates || 0) !== 1) failures.push(`Gate 4-C-B2 Projects failed: groundPlates=${projects.groundPlates || 0}`);
+    if ((projects.signs || 0) !== 0) failures.push(`Gate 4-C-B2 Projects failed: rejected signs=${projects.signs || 0}`);
+    if ((projects.lamps || 0) !== 0) failures.push(`Gate 4-C-B2 Projects failed: rejected lamps=${projects.lamps || 0}`);
+  }
 
   if (options.careerArchitecture) {
     assertGate4DCareerSoftwareHouse(result, failures);
@@ -5929,15 +6031,23 @@ function assertGate4CB2SourceGallerySide(result, failures, options = {}) {
     if ((career.lamps || 0) !== 0) failures.push(`Gate 4-C-B2 Career failed: rejected lamps=${career.lamps || 0}`);
   }
 
-  const expectedPlacements = [
-    ['gate4c-projects-footprint', 1],
-    ['gate4c-projects-workshop-shell', 1],
-    ['gate4c-projects-build-gantry', 1],
-    ['gate4c-projects-display-bay', 3],
-    ['gate4c-projects-test-bench', 1],
-    ['gate4c-projects-cable-tray', 1],
-    ['gate4c-projects-spark-emitter', 4]
-  ];
+  const expectedPlacements = [];
+  if (options.projectsArchitecture) {
+    expectedPlacements.push(
+      ['gate4d-projects-footprint', 1],
+      ['gate4d-projects-foundry-building', 1]
+    );
+  } else {
+    expectedPlacements.push(
+      ['gate4c-projects-footprint', 1],
+      ['gate4c-projects-workshop-shell', 1],
+      ['gate4c-projects-build-gantry', 1],
+      ['gate4c-projects-display-bay', 3],
+      ['gate4c-projects-test-bench', 1],
+      ['gate4c-projects-cable-tray', 1],
+      ['gate4c-projects-spark-emitter', 4]
+    );
+  }
   if (options.careerArchitecture) {
     expectedPlacements.push(
       ['gate4d-career-footprint', 1],
@@ -5962,6 +6072,16 @@ function assertGate4CB2SourceGallerySide(result, failures, options = {}) {
     }
   }
   const rejectedKinds = ['gate4b4-project-rack', 'gate4b4-project-spark', 'gate4b4-career-office', 'gate4b4-career-facade', 'gate4b4-career-frame', 'gate4b4-career-connector'];
+  if (options.projectsArchitecture) {
+    rejectedKinds.push(
+      'gate4c-projects-workshop-shell',
+      'gate4c-projects-build-gantry',
+      'gate4c-projects-display-bay',
+      'gate4c-projects-test-bench',
+      'gate4c-projects-cable-tray',
+      'gate4c-projects-spark-emitter'
+    );
+  }
   if (options.careerArchitecture) {
     rejectedKinds.push(
       'gate4c-career-building-shell',

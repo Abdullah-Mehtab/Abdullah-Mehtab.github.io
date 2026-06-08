@@ -360,6 +360,10 @@ export class SetPieces {
         vaultPlinths: 0,
         documentPages: 0,
         sourceAssets: 0,
+        authoredAssets: 0,
+        architectureAssets: 0,
+        recordsArchiveBuildings: 0,
+        archiveHalls: 0,
         vaultShells: 0,
         vaultDoors: 0,
         documentSpines: 0,
@@ -458,6 +462,8 @@ export class SetPieces {
         sparkMarkers: 0,
         authoredAssets: 0,
         sourceAssets: 0,
+        architectureAssets: 0,
+        foundryBuildings: 0,
         workshopShells: 0,
         buildGantries: 0,
         displayBays: 0,
@@ -1208,49 +1214,27 @@ export class SetPieces {
     const anchor = { x: -36, z: -88, rotation };
     const point = (right, forward) => this.gate4B1Point(anchor, right, forward);
 
-    this.gate3rPad(group, anchor.x, anchor.z, 18, 10, this.world.materials.paleStone, 0.132, 'GATE4C_CV_Records_Vault_Inlay', rotation, 'gate4c-cv-footprint', 5.0);
+    this.gate3rPad(group, anchor.x, anchor.z, 18, 10, this.world.materials.paleStone, 0.132, 'GATE4D_CV_Records_Archive_Civic_Plate', rotation, 'gate4d-cv-footprint', 5.0);
     stats.pads += 1;
 
-    const inlayA = point(0, -4.42);
-    this.box(group, inlayA[0], 0.156, inlayA[1], 12.2, 0.018, 0.09, this.world.materials.glowBlue, rotation, 'GATE4C_CV_Ground_Inlay_Entry');
-    this.recordGate3RPlacement('gate4c-cv-ground-inlay', 'GATE4C_CV_Ground_Inlay_Entry', inlayA[0], inlayA[1], { minClearance: 4.4 });
-    stats.groundInlays += 1;
-
-    const placeSource = (assetName, kind, name, right, forward, assetRotation, scale, statName, minClearance = 4.0) => {
-      const position = point(right, forward);
-      if (this.addPolishAsset(group, assetName, position[0], position[1], assetRotation, scale)) {
-        this.recordGate3RPlacement(kind, name, position[0], position[1], { minClearance });
-        stats.sourceAssets += 1;
-        stats[statName] += 1;
-        return position;
-      }
-      return null;
-    };
-
-    placeSource('EnvPolishCvArchiveSpine', 'gate4c-cv-vault-shell', 'GATE4C_CV_Records_Archive_Shell', 0, 0.62, rotation + Math.PI, 0.72, 'vaultShells', 4.6);
-    placeSource('EnvPolishCvVault', 'gate4c-cv-vault-door', 'GATE4C_CV_Document_Vault_Door', -4.9, -1.5, rotation + Math.PI, 0.82, 'vaultDoors', 4.2);
-    placeSource('EnvPolishDocumentArcade', 'gate4c-cv-document-spine', 'GATE4C_CV_Document_Spine_Arcade', 4.4, -1.2, rotation + Math.PI, 0.62, 'documentSpines', 4.2);
-    placeSource('EnvPolishTerminalBank', 'gate4c-cv-access-kiosk', 'GATE4C_CV_Access_Kiosk', 0.2, -3.7, rotation + Math.PI, 0.42, 'accessKiosks', 4.2);
-
-    const beacon = point(6.9, 2.9);
-    this.box(group, beacon[0], 0.58, beacon[1], 0.82, 0.88, 0.28, this.world.materials.paleStone, rotation - 0.08, 'GATE4C_CV_Pdf_Beacon');
-    this.box(group, beacon[0], 1.05, beacon[1] - 0.12, 0.62, 0.08, 0.06, this.world.materials.glowBlue, rotation - 0.08, 'GATE4C_CV_Pdf_Beacon_Glow');
-    this.recordGate3RPlacement('gate4c-cv-pdf-beacon', 'GATE4C_CV_Pdf_Beacon', beacon[0], beacon[1], { minClearance: 4.4 });
-    stats.pdfBeacons += 1;
-
-    for (const documentSpine of [
-      point(-6.6, 1.7),
-      point(-6.0, 2.7),
-      point(6.0, 1.7),
-      point(6.6, 2.7)
-    ]) {
-      this.box(group, documentSpine[0], 0.76, documentSpine[1], 0.32, 1.08, 0.18, this.world.materials.paleStone, rotation + 0.05, 'GATE4C_CV_Folio_Spine');
-      this.recordGate3RPlacement('gate4c-cv-document-spine', 'GATE4C_CV_Folio_Spine', documentSpine[0], documentSpine[1], { minClearance: 4.0 });
-      stats.documentSpines += 1;
-      stats.documentPages += 1;
+    const archive = point(0, 0.1);
+    if (this.addPolishAsset(group, 'EnvPolishCvRecordsArchive', archive[0], archive[1], rotation + Math.PI, 1.0)) {
+      this.recordGate3RPlacement('gate4d-cv-records-archive', 'GATE4D_CV_Records_Archive_Architecture', archive[0], archive[1], { minClearance: 4.8 });
+      stats.sourceAssets += 1;
+      stats.authoredAssets += 1;
+      stats.architectureAssets += 1;
+      stats.recordsArchiveBuildings += 1;
+      stats.archiveHalls += 1;
+      stats.vaultShells += 1;
+      stats.vaultDoors += 1;
+      stats.documentSpines += 8;
+      stats.documentPages += 8;
+      stats.accessKiosks += 1;
+      stats.pdfBeacons += 1;
+      stats.groundInlays += 1;
     }
 
-    stats.vaultPlinths = stats.vaultShells;
+    stats.vaultPlinths = stats.recordsArchiveBuildings;
     stats.anchors = stats.accessKiosks + stats.pdfBeacons;
   }
 
@@ -1589,50 +1573,26 @@ export class SetPieces {
     const point = (right, forward) => this.gate4B1Point(anchor, right, forward);
     const rotation = anchor.rotation;
 
-    this.gate3rPad(group, anchor.x, anchor.z, 24, 16, this.world.materials.stoneRoad, 0.132, 'GATE4C_Projects_Foundry_Ground_Plate', rotation, 'gate4c-projects-footprint', 5.0);
+    this.gate3rPad(group, anchor.x, anchor.z, 24, 16, this.world.materials.stoneRoad, 0.132, 'GATE4D_Projects_Foundry_Workshop_Plate', rotation, 'gate4d-projects-footprint', 5.0);
     stats.pads += 1;
     stats.groundPlates += 1;
 
-    const placeSource = (assetName, kind, name, right, forward, assetRotation, scale, statName, minClearance = 5.0) => {
-      const position = point(right, forward);
-      if (this.addPolishAsset(group, assetName, position[0], position[1], assetRotation, scale)) {
-        this.recordGate3RPlacement(kind, name, position[0], position[1], { minClearance });
-        stats.sourceAssets += 1;
-        stats.authoredAssets += 1;
-        stats[statName] += 1;
-        return position;
-      }
-      return null;
-    };
-
-    placeSource('EnvPolishProjectForge', 'gate4c-projects-workshop-shell', 'GATE4C_Projects_Foundry_Workshop_Shell', -2.8, 0.2, rotation, 1.05, 'workshopShells', 5.0);
-    placeSource('EnvPolishProjectGantry', 'gate4c-projects-build-gantry', 'GATE4C_Projects_Build_Gantry', 2.6, -0.4, rotation, 1.08, 'buildGantries', 5.0);
-    placeSource('EnvPolishProjectPartsCart', 'gate4c-projects-test-bench', 'GATE4C_Projects_Test_Bench', -6.4, -3.6, rotation + 0.08, 0.82, 'testBenches', 5.0);
-    placeSource('EnvPolishProjectCableReel', 'gate4c-projects-cable-tray', 'GATE4C_Projects_Cable_Tray', 6.8, -3.6, rotation - 0.12, 0.74, 'cableTrays', 5.0);
-
-    for (const [right, forward, name] of [
-      [-6.4, 4.6, 'GATE4C_Projects_Display_Bay_Left'],
-      [0, 5.35, 'GATE4C_Projects_Display_Bay_Center'],
-      [6.4, 4.6, 'GATE4C_Projects_Display_Bay_Right']
-    ]) {
-      placeSource('EnvPolishProjectDisplayRack', 'gate4c-projects-display-bay', name, right, forward, rotation, 0.76, 'displayBays', 5.0);
-      stats.projectRacks += 1;
+    const foundry = point(0, 0);
+    if (this.addPolishAsset(group, 'EnvPolishProjectsFoundryBuilding', foundry[0], foundry[1], rotation, 1.0)) {
+      this.recordGate3RPlacement('gate4d-projects-foundry-building', 'GATE4D_Projects_Foundry_Building_Architecture', foundry[0], foundry[1], { minClearance: 5.0 });
+      stats.sourceAssets += 1;
+      stats.authoredAssets += 1;
+      stats.architectureAssets += 1;
+      stats.foundryBuildings += 1;
+      stats.workshopShells += 1;
+      stats.buildGantries += 1;
+      stats.displayBays += 3;
+      stats.testBenches += 1;
+      stats.cableTrays += 1;
+      stats.projectRacks += 3;
     }
 
-    for (const [right, forward, material, name] of [
-      [-3.8, -2.0, this.world.materials.warmGlow, 'GATE4C_Projects_Spark_Emitter_A'],
-      [-1.4, -2.4, this.world.materials.glowBlue, 'GATE4C_Projects_Spark_Emitter_B'],
-      [1.1, -2.2, this.world.materials.warmGlow, 'GATE4C_Projects_Spark_Emitter_C'],
-      [3.5, -1.8, this.world.materials.glowBlue, 'GATE4C_Projects_Spark_Emitter_D']
-    ]) {
-      const spark = point(right, forward);
-      this.cylinder(group, spark[0], 0.38, spark[1], 0.055, 0.46, material, 5, name);
-      this.recordGate3RPlacement('gate4c-projects-spark-emitter', name, spark[0], spark[1], { minClearance: 5.0 });
-      stats.sparkEmitters += 1;
-      stats.sparkMarkers += 1;
-    }
-
-    stats.assemblyRings = stats.buildGantries;
+    stats.assemblyRings = stats.foundryBuildings;
   }
 
   createGate4B4CareerOffice(group) {

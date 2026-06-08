@@ -30,12 +30,14 @@ def main():
     create_project_display_rack(mats)
     create_project_parts_cart(mats)
     create_project_cable_reel(mats)
+    create_projects_foundry_building(mats)
     create_campus_fountain(mats)
     create_campus_notice_board(mats)
     create_campus_walkway_pavilion(mats)
     create_campus_study_bench(mats)
     create_cv_vault(mats)
     create_cv_archive_spine(mats)
+    create_cv_records_archive(mats)
     create_skills_array(mats)
     create_career_office(mats)
     create_awards_monument(mats)
@@ -378,6 +380,44 @@ def create_project_cable_reel(mats):
     cube("ProjectCableReel_LooseCableB", group, (1.18, 0.18, -1.55), (1.4, 0.1, 0.12), mats["rope"], rot=(0, -0.42, 0), bevel=0.014)
 
 
+def create_projects_foundry_building(mats):
+    group = root("EnvPolishProjectsFoundryBuilding")
+    cube("ProjectsFoundry_ServiceYard", group, (0, 0.09, -0.28), (17.6, 0.18, 10.8), mats["stone_shadow"], bevel=0.055)
+    cube("ProjectsFoundry_MainHall", group, (-1.05, 2.22, 0.28), (10.8, 4.18, 5.7), mats["wood"], bevel=0.052)
+    cube("ProjectsFoundry_FabricationBay", group, (5.55, 1.64, 0.34), (4.65, 3.08, 5.24), mats["dark"], bevel=0.045)
+    cube("ProjectsFoundry_SideWorkshop", group, (-6.28, 1.38, 0.82), (3.15, 2.58, 4.4), mats["stone"], bevel=0.045)
+    cube("ProjectsFoundry_RoofMonitor", group, (-1.02, 4.56, 0.12), (12.8, 0.42, 6.26), mats["dark"], bevel=0.04)
+    cube("ProjectsFoundry_RoofLantern", group, (0.2, 5.12, -0.55), (6.4, 0.78, 1.15), mats["glass"], bevel=0.028)
+    cube("ProjectsFoundry_EntryCanopy", group, (-2.0, 2.42, -3.72), (5.9, 0.34, 1.4), mats["dark"], bevel=0.03)
+    for index, z in enumerate([-5.05, -4.58, -4.11]):
+        cube(f"ProjectsFoundry_EntryStep_{index}", group, (-2.0, 0.18 + index * 0.05, z), (5.8 - index * 0.74, 0.14, 0.42), mats["paper"], bevel=0.024)
+    for row, y in enumerate([1.1, 1.78, 2.46, 3.14]):
+        cube(f"ProjectsFoundry_FloorBand_{row}", group, (-1.16, y + 0.34, -2.64), (10.25, 0.08, 0.08), mats["dark"], bevel=0.004)
+        for col, x in enumerate([-5.15, -3.85, -2.55, -1.25, 0.05, 1.35, 2.65, 3.95]):
+            mat_key = "screen" if (row + col) % 3 == 0 else "glass"
+            cube(f"ProjectsFoundry_ProjectWindow_{row}_{col}", group, (x, y, -2.72), (0.76, 0.42, 0.07), mats[mat_key], bevel=0.007)
+    cube("ProjectsFoundry_BuildFloor", group, (2.6, 0.32, -0.76), (6.1, 0.22, 3.25), mats["stone"], bevel=0.035)
+    cube("ProjectsFoundry_BuildTable", group, (2.42, 0.84, -0.88), (3.9, 0.48, 1.55), mats["stone_shadow"], bevel=0.035)
+    for index, x in enumerate([0.95, 2.42, 3.88]):
+        cube(f"ProjectsFoundry_Artifact_{index}", group, (x, 1.28, -0.94 + (index % 2) * 0.42), (0.72, 0.64, 0.48), [mats["screen"], mats["amber"], mats["mint"]][index], bevel=0.03)
+    for x in [4.4, 5.4, 6.4]:
+        cube("ProjectsFoundry_BayMullion", group, (x, 1.88, -2.68), (0.1, 2.65, 0.08), mats["screen"], bevel=0.004)
+    for y in [1.0, 1.68, 2.36, 3.04]:
+        cube("ProjectsFoundry_BayLine", group, (5.4, y, -2.74), (2.8, 0.06, 0.07), mats["aqua"], bevel=0.004)
+    for x in [-7.25, -6.28, -5.3]:
+        for y in [0.98, 1.58, 2.18]:
+            cube("ProjectsFoundry_ToolWindow", group, (x, y, -1.84), (0.42, 0.36, 0.07), mats["amber"], bevel=0.006)
+    for x in [-6.8, -4.95, 5.25, 6.95]:
+        cube("ProjectsFoundry_ServiceRack", group, (x, 0.95, 3.45), (0.82, 1.32, 0.42), mats["dark"], bevel=0.025)
+        cube("ProjectsFoundry_ServiceRackGlow", group, (x, 1.34, 3.2), (0.56, 0.08, 0.07), mats["mint"], bevel=0.004)
+    for x in [-2.8, 0, 2.8]:
+        cube("ProjectsFoundry_CranePost", group, (x, 2.18, 2.72), (0.2, 3.65, 0.2), mats["dark"], bevel=0.012)
+    cube("ProjectsFoundry_CraneBeam", group, (0, 3.9, 2.72), (7.25, 0.24, 0.32), mats["dark"], bevel=0.024)
+    cube("ProjectsFoundry_CraneHook", group, (1.65, 2.62, 2.48), (0.26, 1.65, 0.18), mats["rope"], bevel=0.006)
+    cube("ProjectsFoundry_LoadBlock", group, (1.65, 1.48, 2.12), (1.28, 0.68, 0.72), mats["amber"], bevel=0.035)
+    cube("ProjectsFoundry_HeaderGlow", group, (-2.0, 2.18, -4.48), (4.8, 0.09, 0.08), mats["screen"], bevel=0.006)
+
+
 def create_campus_fountain(mats):
     group = root("EnvPolishCampusFountain")
     cube("CampusFountain_Base", group, (0, 0.14, 0), (4.6, 0.28, 4.6), mats["stone"], bevel=0.08)
@@ -476,6 +516,50 @@ def create_cv_archive_spine(mats):
     for x in [-4.1, 4.1]:
         cube("CvArchiveSpine_SideBench", group, (x, 0.68, -0.72), (1.72, 0.22, 0.58), mats["wood"], bevel=0.025)
     cube("CvArchiveSpine_FloorTrace", group, (0, 0.31, -2.48), (8.4, 0.06, 0.08), mats["screen"], bevel=0.004)
+
+
+def create_cv_records_archive(mats):
+    group = root("EnvPolishCvRecordsArchive")
+    cube("CvRecordsArchive_Plaza", group, (0, 0.09, -0.34), (15.8, 0.18, 9.2), mats["paper"], bevel=0.055)
+    cube("CvRecordsArchive_MainHall", group, (-0.6, 2.05, 0.35), (10.6, 3.9, 4.95), mats["stone"], bevel=0.05)
+    cube("CvRecordsArchive_ShelfWing", group, (5.25, 1.7, 0.52), (3.65, 3.2, 4.65), mats["stone_shadow"], bevel=0.045)
+    cube("CvRecordsArchive_CertificateWing", group, (-5.95, 1.48, 0.68), (2.7, 2.8, 4.25), mats["stone_shadow"], bevel=0.045)
+    cube("CvRecordsArchive_RoofSlab", group, (-0.45, 4.08, 0.24), (12.9, 0.36, 5.8), mats["wood"], bevel=0.04)
+    cube("CvRecordsArchive_RoofArchiveBox", group, (0.95, 4.58, 0.18), (5.8, 0.62, 2.3), mats["stone_shadow"], bevel=0.035)
+    cube("CvRecordsArchive_SecureDoor", group, (-0.6, 1.36, -2.34), (2.25, 2.42, 0.16), mats["dark"], bevel=0.035)
+    cube("CvRecordsArchive_DoorGlow", group, (-0.6, 1.58, -2.48), (1.62, 1.62, 0.06), mats["screen"], bevel=0.008)
+    cube("CvRecordsArchive_DoorHandle", group, (0.42, 1.42, -2.54), (0.16, 0.62, 0.08), mats["gold"], bevel=0.01)
+    for index, z in enumerate([-4.58, -4.14, -3.7]):
+        cube(f"CvRecordsArchive_EntryStep_{index}", group, (-0.6, 0.17 + index * 0.052, z), (5.6 - index * 0.64, 0.13, 0.38), mats["stone"], bevel=0.024)
+    for row, y in enumerate([1.08, 1.72, 2.36, 3.0]):
+        cube(f"CvRecordsArchive_FacadeBand_{row}", group, (-0.65, y + 0.3, -2.18), (9.9, 0.075, 0.08), mats["wood"], bevel=0.004)
+        for col, x in enumerate([-4.1, -2.9, 1.7, 2.9, 4.1]):
+            mat_key = "paper" if col < 2 else "glass"
+            cube(f"CvRecordsArchive_FacadeRecord_{row}_{col}", group, (x, y, -2.25), (0.7, 0.42, 0.07), mats[mat_key], bevel=0.006)
+    for x in [4.3, 5.05, 5.8, 6.55]:
+        for y in [1.0, 1.58, 2.16, 2.74]:
+            cube("CvRecordsArchive_ShelfFile", group, (x, y, -1.72), (0.38, 0.34, 0.07), mats["paper" if y < 2 else "foam"], bevel=0.004)
+    for index, x in enumerate([-6.58, -5.95, -5.32]):
+        for y in [1.08, 1.82, 2.56]:
+            cube(f"CvRecordsArchive_Certificate_{index}", group, (x, y, -1.64), (0.42, 0.52, 0.07), mats["gold" if index == 1 else "paper"], bevel=0.006)
+    for row, y in enumerate([1.08, 1.72, 2.36, 3.0]):
+        cube(f"CvRecordsArchive_BackShelfBand_{row}", group, (-0.35, y + 0.28, 2.88), (10.2, 0.08, 0.08), mats["wood"], bevel=0.004)
+        for col, x in enumerate([-4.62, -3.42, -2.22, -1.02, 0.18, 1.38, 2.58, 3.78, 4.98]):
+            material = [mats["paper"], mats["foam"], mats["screen"], mats["paper"], mats["gold"], mats["paper"], mats["mint"], mats["paper"], mats["foam"]][col]
+            cube(f"CvRecordsArchive_BackRecord_{row}_{col}", group, (x, y, 3.02), (0.62, 0.38, 0.07), material, bevel=0.006)
+    for side, x in [(-1, -7.18), (1, 7.18)]:
+        cube(f"CvRecordsArchive_SideFacade_{side}", group, (x, 2.02, 0.25), (0.08, 3.2, 3.72), mats["stone_shadow"], bevel=0.012)
+        for z in [-1.1, 0.05, 1.2]:
+            for y in [1.16, 1.86, 2.56]:
+                cube(f"CvRecordsArchive_SideRecord_{side}_{z}_{y}", group, (x + side * 0.05, y, z), (0.06, 0.42, 0.62), mats["glass" if y > 2 else "paper"], bevel=0.004)
+    cube("CvRecordsArchive_AccessKiosk", group, (3.05, 0.78, -3.52), (1.25, 1.18, 0.72), mats["dark"], bevel=0.035)
+    cube("CvRecordsArchive_KioskScreen", group, (3.05, 1.18, -3.9), (0.86, 0.46, 0.06), mats["mint"], bevel=0.006)
+    cube("CvRecordsArchive_PdfBeacon", group, (4.4, 1.42, -3.45), (0.5, 1.6, 0.5), mats["screen"], bevel=0.04)
+    for x in [-4.7, -3.35, 2.3, 3.65]:
+        cube("CvRecordsArchive_FrontColumn", group, (x, 1.72, -2.26), (0.26, 3.16, 0.26), mats["dark"], bevel=0.018)
+    for x in [-6.9, 6.9]:
+        cube("CvRecordsArchive_SideArchiveLight", group, (x, 2.55, -1.28), (0.18, 0.58, 0.14), mats["amber"], bevel=0.014)
+    cube("CvRecordsArchive_HeaderGlow", group, (-0.6, 3.7, -2.48), (7.4, 0.09, 0.08), mats["mint"], bevel=0.006)
 
 
 def create_skills_array(mats):
