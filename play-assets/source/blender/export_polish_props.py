@@ -52,11 +52,14 @@ def main():
     create_queue_marquee(mats)
     create_process_crane(mats)
     create_circuit_gate(mats)
+    create_circuit_time_trial_gate(mats)
     create_stunt_checkpoint(mats)
     create_stunt_score_tower(mats)
     create_stunt_arrow_fence(mats)
     create_build_workbench(mats)
     create_farm_irrigator(mats)
+    create_potato_farm_stand(mats)
+    create_sentinel_soc_tower(mats)
     create_harbor_signal(mats)
     create_signal_harbor_communications_station(mats)
     create_harbor_pier(mats)
@@ -853,6 +856,38 @@ def create_circuit_gate(mats):
     cube("CircuitGate_Glow", group, (0, 3.86, -0.28), (4.2, 0.08, 0.08), mats["amber"], bevel=0.006)
 
 
+def create_circuit_time_trial_gate(mats):
+    group = root("EnvPolishCircuitTimeTrialGate")
+    cube("CircuitTimeTrial_ServiceCourt", group, (0, 0.08, -0.12), (19.2, 0.16, 11.2), mats["stone_shadow"], bevel=0.055)
+    cube("CircuitTimeTrial_LaunchLane", group, (0, 0.18, -1.05), (15.4, 0.08, 3.25), mats["rubber"], bevel=0.025)
+    cube("CircuitTimeTrial_StartStripe", group, (0, 0.24, -2.55), (12.7, 0.045, 0.22), mats["paper"], bevel=0.006)
+    cube("CircuitTimeTrial_CheckStripe", group, (0, 0.26, -2.12), (12.2, 0.045, 0.16), mats["amber"], bevel=0.006)
+    for index, x in enumerate([-6.2, -3.1, 0, 3.1, 6.2]):
+        cube(f"CircuitTimeTrial_GridMark_{index}", group, (x, 0.28, -0.7), (0.18, 0.045, 1.7), mats["paper"], bevel=0.004)
+    for x in [-6.2, 6.2]:
+        cube("CircuitTimeTrial_GantryFoot", group, (x, 0.32, -1.72), (1.0, 0.46, 1.0), mats["stone"], bevel=0.04)
+        cube("CircuitTimeTrial_GantryPost", group, (x, 2.22, -1.72), (0.38, 3.58, 0.38), mats["dark"], bevel=0.025)
+        cube("CircuitTimeTrial_PostGlow", group, (x, 2.24, -2.02), (0.09, 2.8, 0.06), mats["amber"], bevel=0.004)
+    cube("CircuitTimeTrial_GantryHeader", group, (0, 3.96, -1.72), (13.9, 0.5, 0.58), mats["dark"], bevel=0.035)
+    for index, x in enumerate([-5.6, -4.2, -2.8, -1.4, 0, 1.4, 2.8, 4.2, 5.6]):
+        cube(f"CircuitTimeTrial_HeaderTile_{index}", group, (x, 3.66, -2.08), (0.9, 0.38, 0.07), mats["paper" if index % 2 else "rubber"], bevel=0.004)
+    for index, x in enumerate([-2.0, 0, 2.0]):
+        cube(f"CircuitTimeTrial_StartLamp_{index}", group, (x, 3.18, -2.14), (0.56, 0.36, 0.08), [mats["pink"], mats["amber"], mats["mint"]][index], bevel=0.012)
+    cube("CircuitTimeTrial_TimingControlRoom", group, (-6.3, 1.35, 2.35), (3.4, 2.36, 3.2), mats["stone"], bevel=0.045)
+    cube("CircuitTimeTrial_ControlGlass", group, (-6.3, 1.6, 0.72), (2.36, 1.08, 0.1), mats["glass"], bevel=0.014)
+    cube("CircuitTimeTrial_ControlScreen", group, (-6.3, 1.64, 0.62), (1.62, 0.62, 0.07), mats["screen"], bevel=0.006)
+    cube("CircuitTimeTrial_ControlRoof", group, (-6.3, 2.68, 2.35), (3.85, 0.28, 3.62), mats["wood"], bevel=0.03)
+    cube("CircuitTimeTrial_TimePylon", group, (6.15, 1.64, 2.35), (1.32, 2.92, 1.18), mats["dark"], bevel=0.035)
+    for index, y in enumerate([0.92, 1.42, 1.92, 2.42]):
+        cube(f"CircuitTimeTrial_TimePylonLine_{index}", group, (6.15, y, 1.73), (0.86, 0.08, 0.07), [mats["mint"], mats["amber"], mats["screen"], mats["pink"]][index], bevel=0.004)
+    for index, x in enumerate([-4.2, -2.1, 2.1, 4.2]):
+        cube(f"CircuitTimeTrial_LaneBeacon_{index}", group, (x, 0.46, 2.72), (0.46, 0.26, 0.46), [mats["amber"], mats["mint"], mats["amber"], mats["mint"]][index], bevel=0.015)
+    for index, x in enumerate([-7.8, 7.8]):
+        cube(f"CircuitTimeTrial_Curb_{index}", group, (x, 0.28, -0.1), (0.32, 0.16, 5.9), mats["paper"], bevel=0.014)
+    for index, x in enumerate([-2.8, 2.8]):
+        cube(f"CircuitTimeTrial_RouteArrow_{index}", group, (x, 0.32, 4.1), (1.72, 0.08, 0.34), mats["amber" if index == 0 else "mint"], rot=(0, 0.18 if index == 0 else -0.18, 0), bevel=0.006)
+
+
 def create_stunt_checkpoint(mats):
     group = root("EnvPolishStuntCheckpoint")
     cube("StuntCheckpoint_LeftBase", group, (-3.1, 0.2, 0), (0.9, 0.4, 0.9), mats["rubber"], bevel=0.04)
@@ -932,6 +967,61 @@ def create_farm_irrigator(mats):
     for x in [-2.2, -1.1, 0, 1.1, 2.2]:
         cube("FarmIrrigator_Spray", group, (x, 1.28, -0.12), (0.08, 0.64, 0.08), mats["glass"], bevel=0.004)
         cube("FarmIrrigator_Crop", group, (x, 0.45, 0.58), (0.28, 0.72, 0.28), mats["crop"], bevel=0.012)
+
+
+def create_potato_farm_stand(mats):
+    group = root("EnvPolishPotatoFarmStand")
+    cube("PotatoFarmStand_Court", group, (0, 0.08, 0), (21.2, 0.16, 12.4), mats["stone"], bevel=0.055)
+    cube("PotatoFarmStand_SoilPocket", group, (4.85, 0.18, 0.58), (8.4, 0.08, 7.2), mats["rope"], bevel=0.025)
+    for index, x in enumerate([1.8, 3.35, 4.9, 6.45, 8.0]):
+        cube(f"PotatoFarmStand_CropRow_{index}", group, (x, 0.33, 0.58), (0.72, 0.18, 6.5), mats["crop"], bevel=0.018)
+        cube(f"PotatoFarmStand_RowSoil_{index}", group, (x, 0.24, 0.58), (0.98, 0.08, 6.78), mats["wood"], bevel=0.012)
+    cube("PotatoFarmStand_GreenhouseBody", group, (-4.2, 1.42, 0.82), (6.8, 2.56, 5.2), mats["glass"], bevel=0.045)
+    cube("PotatoFarmStand_GreenhouseRearWall", group, (-4.2, 1.4, 3.45), (6.95, 2.36, 0.24), mats["stone_shadow"], bevel=0.025)
+    cube("PotatoFarmStand_GreenhouseRoofRidge", group, (-4.2, 2.94, 0.82), (7.15, 0.32, 0.46), mats["wood"], bevel=0.03)
+    for index, x in enumerate([-7.1, -5.6, -4.1, -2.6, -1.1]):
+        cube(f"PotatoFarmStand_GreenhouseRib_{index}", group, (x, 2.76, 0.82), (0.12, 0.62, 5.35), mats["foam"], bevel=0.008)
+    cube("PotatoFarmStand_ProduceCounter", group, (-4.2, 0.78, -3.42), (6.55, 0.9, 1.36), mats["wood"], bevel=0.04)
+    cube("PotatoFarmStand_CounterCanopy", group, (-4.2, 1.62, -3.62), (7.2, 0.28, 1.76), mats["stone_shadow"], bevel=0.03)
+    for index, x in enumerate([-6.3, -4.85, -3.4, -1.95]):
+        cube(f"PotatoFarmStand_ProduceBin_{index}", group, (x, 1.18, -4.28), (0.92, 0.46, 0.6), [mats["crop"], mats["amber"], mats["paper"], mats["crop"]][index], bevel=0.025)
+    cube("PotatoFarmStand_IrrigationTank", group, (8.55, 1.05, -2.78), (1.3, 1.48, 1.12), mats["aqua"], bevel=0.08)
+    cube("PotatoFarmStand_IrrigationPump", group, (8.55, 0.44, -1.72), (1.76, 0.58, 0.92), mats["stone_shadow"], bevel=0.035)
+    cube("PotatoFarmStand_IrrigationBoom", group, (5.15, 1.82, -2.22), (7.2, 0.13, 0.13), mats["rope"], bevel=0.012)
+    for index, x in enumerate([2.4, 3.8, 5.2, 6.6, 8.0]):
+        cube(f"PotatoFarmStand_SprayLine_{index}", group, (x, 1.46, -2.22), (0.08, 0.6, 0.08), mats["glass"], bevel=0.004)
+    for index, x in enumerate([-9.2, -6.1, -3.0, 0.1, 3.2, 6.3, 9.4]):
+        cube(f"PotatoFarmStand_FencePost_{index}", group, (x, 0.68, 5.55), (0.16, 1.08, 0.16), mats["dark"], bevel=0.014)
+    cube("PotatoFarmStand_BackFenceRail", group, (0.1, 0.88, 5.55), (18.8, 0.12, 0.12), mats["wood"], bevel=0.012)
+    cube("PotatoFarmStand_EntryStep_A", group, (-4.2, 0.18, -5.12), (6.2, 0.12, 0.42), mats["paper"], bevel=0.018)
+    cube("PotatoFarmStand_EntryStep_B", group, (-4.2, 0.26, -5.58), (5.2, 0.12, 0.38), mats["paper"], bevel=0.018)
+    for index, x in enumerate([6.75, 7.9, 9.05]):
+        cube(f"PotatoFarmStand_StorageCrate_{index}", group, (x, 0.58, 3.92), (0.9, 0.72, 0.86), [mats["wood"], mats["stone_shadow"], mats["wood"]][index], bevel=0.028)
+
+
+def create_sentinel_soc_tower(mats):
+    group = root("EnvPolishSentinelSocTower")
+    cube("SentinelSoc_ServicePlate", group, (0, 0.08, 0), (18.4, 0.16, 12.0), mats["security"] if "security" in mats else mats["stone_shadow"], bevel=0.055)
+    cube("SentinelSoc_OperationsHall", group, (-2.0, 1.58, 0.75), (8.8, 2.9, 5.35), mats["dark"], bevel=0.048)
+    cube("SentinelSoc_GlassOpsRoom", group, (3.65, 1.56, -0.25), (3.1, 2.56, 4.25), mats["glass"], bevel=0.038)
+    cube("SentinelSoc_TowerCore", group, (-6.55, 3.02, 0.8), (2.15, 5.6, 2.05), mats["stone_shadow"], bevel=0.04)
+    cube("SentinelSoc_TowerCrown", group, (-6.55, 5.98, 0.8), (3.2, 0.58, 2.8), mats["dark"], bevel=0.035)
+    cube("SentinelSoc_CrownScanLine", group, (-6.55, 6.18, -0.76), (2.55, 0.1, 0.08), mats["pink"], bevel=0.006)
+    for index, y in enumerate([1.3, 1.82, 2.34, 2.86, 3.38, 3.9, 4.42, 4.94]):
+        cube(f"SentinelSoc_TowerTrace_{index}", group, (-7.68, y, -0.28), (0.08, 0.34, 0.72), [mats["screen"], mats["mint"], mats["pink"], mats["aqua"]][index % 4], bevel=0.004)
+    cube("SentinelSoc_AlertWall", group, (0.45, 2.0, -2.35), (6.4, 2.1, 0.18), mats["rubber"], bevel=0.028)
+    cube("SentinelSoc_AlertScreen", group, (0.45, 2.05, -2.48), (5.28, 1.38, 0.08), mats["pink"], bevel=0.006)
+    for index, x in enumerate([-1.65, -0.55, 0.55, 1.65]):
+        cube(f"SentinelSoc_ServerRack_{index}", group, (x, 1.05, 3.18), (0.78, 1.62, 0.74), mats["stone_shadow"], bevel=0.02)
+        cube(f"SentinelSoc_RackGlow_{index}", group, (x, 1.42, 2.76), (0.52, 0.08, 0.07), [mats["screen"], mats["mint"], mats["aqua"], mats["pink"]][index], bevel=0.004)
+    cube("SentinelSoc_EntryCanopy", group, (1.3, 1.86, -4.02), (5.7, 0.26, 1.0), mats["dark"], bevel=0.024)
+    for index, z in enumerate([-4.78, -4.34, -3.9]):
+        cube(f"SentinelSoc_EntryStep_{index}", group, (1.3, 0.17 + index * 0.05, z), (5.35 - index * 0.64, 0.13, 0.38), mats["paper"], bevel=0.02)
+    for index, x in enumerate([-4.65, -3.62, 4.8, 5.82]):
+        cube(f"SentinelSoc_PacketShardPanel_{index}", group, (x, 1.22 + (index % 2) * 0.3, 3.88), (0.78, 1.08, 0.1), [mats["screen"], mats["mint"], mats["pink"], mats["aqua"]][index], rot=(0, 0, 0.08 - index * 0.04), bevel=0.012)
+    for index, x in enumerate([-8.25, 8.25]):
+        cube(f"SentinelSoc_PerimeterPylon_{index}", group, (x, 1.1, -3.0), (0.36, 1.88, 0.36), mats["dark"], bevel=0.018)
+        cube(f"SentinelSoc_PerimeterGlow_{index}", group, (x, 1.8, -3.22), (0.2, 0.64, 0.07), mats["mint"], bevel=0.004)
 
 
 def create_harbor_signal(mats):

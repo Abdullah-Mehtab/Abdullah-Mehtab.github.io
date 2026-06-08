@@ -273,7 +273,7 @@ export const worldZones = [
     kind: 'Final Year Project',
     title: 'Cyber Sentinel Ridge',
     districtId: 'north-ridge',
-    position: [20, 0, 129],
+    position: [10, 0, 129],
     rotation: -0.12,
     radius: 11,
     color: '#ff6d8d',
@@ -508,8 +508,8 @@ export const zonePresentation = {
   },
   sentinel: {
     respawn: { position: [18, 1.08, 116], heading: -0.05 },
-    camera: [36, 15, 143],
-    target: [20, 6, 129],
+    camera: [28, 14, 143],
+    target: [10, 6, 129],
     fov: 42,
   },
   career: {

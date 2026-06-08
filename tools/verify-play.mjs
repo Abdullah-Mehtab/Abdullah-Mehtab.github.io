@@ -53,8 +53,11 @@ const authoredDistrictAssets = [
   'EnvPolishQueueMarquee',
   'EnvPolishProcessCrane',
   'EnvPolishCircuitGate',
+  'EnvPolishCircuitTimeTrialGate',
   'EnvPolishBuildWorkbench',
   'EnvPolishFarmIrrigator',
+  'EnvPolishPotatoFarmStand',
+  'EnvPolishSentinelSocTower',
   'EnvPolishHarborSignal',
   'EnvPolishSignalHarborCommunicationsStation',
   'EnvPolishDistrictGateway',
@@ -3952,6 +3955,13 @@ function assertVerification(result) {
     }
     return;
   }
+  if (result.goalGate === 'gate-4d-b5-potato-sentinel-circuit-architecture') {
+    assertGate4DB5PotatoSentinelCircuitArchitectureVerification(result, failures);
+    if (failures.length) {
+      throw new Error(`Play verification failed: ${failures.join('; ')}`);
+    }
+    return;
+  }
   if (result.goalGate === 'gate-4b5-north-ridge') {
     assertGate4B5NorthRidgeVerification(result, failures);
     if (failures.length) {
@@ -5347,7 +5357,8 @@ function assertGate4B2WestServiceVerification(result, failures, options = {}) {
 
   if (options.sourceWestService) {
     assertGate4CB3SourceWestService(result, failures, {
-      skillsArchitecture: options.skillsArchitecture
+      skillsArchitecture: options.skillsArchitecture,
+      farmArchitecture: options.farmArchitecture
     });
   } else {
     if ((skills.pads || 0) !== 1) failures.push(`Gate 4-B2 Skills failed: pads=${skills.pads || 0}`);
@@ -5401,7 +5412,9 @@ function assertGate4B3DataPierSideVerification(result, failures, options = {}) {
     sourceSouthRun: options.sourceSouthRun,
     cvArchitecture: options.cvArchitecture,
     behindArchitecture: options.behindArchitecture,
-    sourceWestService: options.sourceWestService
+    sourceWestService: options.sourceWestService,
+    skillsArchitecture: options.skillsArchitecture,
+    farmArchitecture: options.farmArchitecture
   });
 
   const dataPierSide = result.gate4b3 || {};
@@ -5458,7 +5471,13 @@ function assertGate4B4EastSideVerification(result, failures, options = {}) {
   assertGate4B3DataPierSideVerification(result, failures, {
     expectedGoal: options.expectedGoal || 'gate-4b4-east-side',
     allowPrototypeStuntPark: options.allowPrototypeStuntPark,
-    allowedExtraColliderPrefixes: options.allowedExtraColliderPrefixes
+    allowedExtraColliderPrefixes: options.allowedExtraColliderPrefixes,
+    sourceSouthRun: options.sourceSouthRun,
+    cvArchitecture: options.cvArchitecture,
+    behindArchitecture: options.behindArchitecture,
+    sourceWestService: options.sourceWestService,
+    skillsArchitecture: options.skillsArchitecture,
+    farmArchitecture: options.farmArchitecture
   });
 
   const eastSide = result.gate4b4 || {};
@@ -5541,7 +5560,20 @@ function assertGate4B5NorthRidgeVerification(result, failures, options = {}) {
   assertGate4B4EastSideVerification(result, failures, {
     expectedGoal: options.expectedGoal || 'gate-4b5-north-ridge',
     allowPrototypeStuntPark: options.allowPrototypeStuntPark,
-    allowedExtraColliderPrefixes: options.allowedExtraColliderPrefixes
+    allowedExtraColliderPrefixes: options.allowedExtraColliderPrefixes,
+    sourceSouthRun: options.sourceSouthRun,
+    cvArchitecture: options.cvArchitecture,
+    behindArchitecture: options.behindArchitecture,
+    sourceWestService: options.sourceWestService,
+    skillsArchitecture: options.skillsArchitecture,
+    farmArchitecture: options.farmArchitecture,
+    sourceGallerySide: options.sourceGallerySide,
+    projectsArchitecture: options.projectsArchitecture,
+    careerArchitecture: options.careerArchitecture,
+    sourceHarbor: options.sourceHarbor,
+    harborArchitecture: options.harborArchitecture,
+    sourceTodo: options.sourceTodo,
+    todoArchitecture: options.todoArchitecture
   });
 
   const northRidge = result.gate4b5 || {};
@@ -5632,7 +5664,8 @@ function assertGate4BRCompositionCorrectionVerification(result, failures, option
     cvArchitecture: options.cvArchitecture,
     behindArchitecture: options.behindArchitecture,
     sourceWestService: options.sourceWestService,
-    skillsArchitecture: options.skillsArchitecture
+    skillsArchitecture: options.skillsArchitecture,
+    farmArchitecture: options.farmArchitecture
   });
   assertStuntCoveDeleted(result, failures);
 
@@ -5709,7 +5742,9 @@ function assertGate4BRCompositionCorrectionVerification(result, failures, option
 
   if (options.sourceNorthRidge) {
     assertGate4CB5SourceNorthRidge(result, failures, {
-      awardsArchitecture: options.awardsArchitecture
+      awardsArchitecture: options.awardsArchitecture,
+      sentinelArchitecture: options.sentinelArchitecture,
+      circuitArchitecture: options.circuitArchitecture
     });
   } else {
     if ((awards.pads || 0) !== 1) failures.push(`Gate 4-BR Awards failed: pads=${awards.pads || 0}`);
@@ -5878,6 +5913,29 @@ function assertGate4DB4HarborTodoArchitectureVerification(result, failures) {
     harborArchitecture: true,
     sourceNorthRidge: true,
     awardsArchitecture: true,
+    sourceTodo: true,
+    todoArchitecture: true
+  });
+}
+
+function assertGate4DB5PotatoSentinelCircuitArchitectureVerification(result, failures) {
+  assertGate4BRCompositionCorrectionVerification(result, failures, {
+    expectedGoal: 'gate-4d-b5-potato-sentinel-circuit-architecture',
+    sourceSouthRun: true,
+    cvArchitecture: true,
+    behindArchitecture: true,
+    sourceGallerySide: true,
+    projectsArchitecture: true,
+    careerArchitecture: true,
+    sourceWestService: true,
+    skillsArchitecture: true,
+    farmArchitecture: true,
+    sourceHarbor: true,
+    harborArchitecture: true,
+    sourceNorthRidge: true,
+    awardsArchitecture: true,
+    sentinelArchitecture: true,
+    circuitArchitecture: true,
     sourceTodo: true,
     todoArchitecture: true
   });
@@ -6174,6 +6232,67 @@ function assertGate4DTodoPlanningStudio(result, failures) {
   if ((todo.lamps || 0) !== 0) failures.push(`Gate 4-D-B4 Todo failed: rejected lamps=${todo.lamps || 0}`);
 }
 
+function assertGate4DPotatoFarmStand(result, failures) {
+  const farm = result.gate4b2?.farm || {};
+
+  assertAuthoredDistrictAsset(result, 'EnvPolishPotatoFarmStand', 'Gate 4-D-B5 Potato architecture', failures);
+  if ((farm.pads || 0) !== 1) failures.push(`Gate 4-D-B5 Potato failed: pads=${farm.pads || 0}`);
+  if ((farm.sourceAssets || 0) < 1) failures.push(`Gate 4-D-B5 Potato failed: sourceAssets=${farm.sourceAssets || 0}`);
+  if ((farm.authoredAssets || 0) < 1) failures.push(`Gate 4-D-B5 Potato failed: authoredAssets=${farm.authoredAssets || 0}`);
+  if ((farm.architectureAssets || 0) !== 1) failures.push(`Gate 4-D-B5 Potato failed: architectureAssets=${farm.architectureAssets || 0}`);
+  if ((farm.farmStandBuildings || 0) !== 1) failures.push(`Gate 4-D-B5 Potato failed: farmStandBuildings=${farm.farmStandBuildings || 0}`);
+  if ((farm.greenhouseBodies || 0) !== 1) failures.push(`Gate 4-D-B5 Potato failed: greenhouseBodies=${farm.greenhouseBodies || 0}`);
+  if ((farm.produceCounters || 0) !== 1) failures.push(`Gate 4-D-B5 Potato failed: produceCounters=${farm.produceCounters || 0}`);
+  if ((farm.integratedCropRows || 0) < 5) failures.push(`Gate 4-D-B5 Potato failed: integratedCropRows=${farm.integratedCropRows || 0}`);
+  if ((farm.irrigationTanks || 0) !== 1) failures.push(`Gate 4-D-B5 Potato failed: irrigationTanks=${farm.irrigationTanks || 0}`);
+  if ((farm.irrigationRuns || 0) !== 1) failures.push(`Gate 4-D-B5 Potato failed: irrigationRuns=${farm.irrigationRuns || 0}`);
+  if ((farm.counterStands || 0) !== 1) failures.push(`Gate 4-D-B5 Potato failed: counterStands=${farm.counterStands || 0}`);
+  if ((farm.summonPatches || 0) !== 0) failures.push(`Gate 4-D-B5 Potato failed: rejected summonPatches=${farm.summonPatches || 0}`);
+  if ((farm.signs || 0) !== 0) failures.push(`Gate 4-D-B5 Potato failed: rejected signs=${farm.signs || 0}`);
+  if ((farm.lamps || 0) !== 0) failures.push(`Gate 4-D-B5 Potato failed: rejected lamps=${farm.lamps || 0}`);
+}
+
+function assertGate4DSentinelSocTower(result, failures) {
+  const sentinel = result.gate4b5?.sentinel || {};
+
+  assertAuthoredDistrictAsset(result, 'EnvPolishSentinelSocTower', 'Gate 4-D-B5 Sentinel architecture', failures);
+  if ((sentinel.pads || 0) !== 1) failures.push(`Gate 4-D-B5 Sentinel failed: pads=${sentinel.pads || 0}`);
+  if ((sentinel.sourceAssets || 0) < 1) failures.push(`Gate 4-D-B5 Sentinel failed: sourceAssets=${sentinel.sourceAssets || 0}`);
+  if ((sentinel.authoredAssets || 0) < 1) failures.push(`Gate 4-D-B5 Sentinel failed: authoredAssets=${sentinel.authoredAssets || 0}`);
+  if ((sentinel.architectureAssets || 0) !== 1) failures.push(`Gate 4-D-B5 Sentinel failed: architectureAssets=${sentinel.architectureAssets || 0}`);
+  if ((sentinel.socTowers || 0) !== 1) failures.push(`Gate 4-D-B5 Sentinel failed: socTowers=${sentinel.socTowers || 0}`);
+  if ((sentinel.operationsHalls || 0) !== 1) failures.push(`Gate 4-D-B5 Sentinel failed: operationsHalls=${sentinel.operationsHalls || 0}`);
+  if ((sentinel.glassOpsRooms || 0) !== 1) failures.push(`Gate 4-D-B5 Sentinel failed: glassOpsRooms=${sentinel.glassOpsRooms || 0}`);
+  if ((sentinel.towerBases || 0) !== 1) failures.push(`Gate 4-D-B5 Sentinel failed: towerBases=${sentinel.towerBases || 0}`);
+  if ((sentinel.scannerCrowns || 0) !== 1) failures.push(`Gate 4-D-B5 Sentinel failed: scannerCrowns=${sentinel.scannerCrowns || 0}`);
+  if ((sentinel.alertWalls || 0) !== 1) failures.push(`Gate 4-D-B5 Sentinel failed: alertWalls=${sentinel.alertWalls || 0}`);
+  if ((sentinel.serverRacks || 0) < 4) failures.push(`Gate 4-D-B5 Sentinel failed: serverRacks=${sentinel.serverRacks || 0}`);
+  if ((sentinel.packetShardPanels || 0) < 4) failures.push(`Gate 4-D-B5 Sentinel failed: packetShardPanels=${sentinel.packetShardPanels || 0}`);
+  if ((sentinel.signalTotems || 0) !== 0) failures.push(`Gate 4-D-B5 Sentinel failed: rejected signalTotems=${sentinel.signalTotems || 0}`);
+  if ((sentinel.signs || 0) !== 0) failures.push(`Gate 4-D-B5 Sentinel failed: rejected signs=${sentinel.signs || 0}`);
+  if ((sentinel.lamps || 0) !== 0) failures.push(`Gate 4-D-B5 Sentinel failed: rejected lamps=${sentinel.lamps || 0}`);
+}
+
+function assertGate4DCircuitTimeTrialGate(result, failures) {
+  const circuit = result.gate4b5?.circuit || {};
+
+  assertAuthoredDistrictAsset(result, 'EnvPolishCircuitTimeTrialGate', 'Gate 4-D-B5 Circuit architecture', failures);
+  if ((circuit.pads || 0) !== 1) failures.push(`Gate 4-D-B5 Circuit failed: pads=${circuit.pads || 0}`);
+  if ((circuit.sourceAssets || 0) < 1) failures.push(`Gate 4-D-B5 Circuit failed: sourceAssets=${circuit.sourceAssets || 0}`);
+  if ((circuit.authoredAssets || 0) < 1) failures.push(`Gate 4-D-B5 Circuit failed: authoredAssets=${circuit.authoredAssets || 0}`);
+  if ((circuit.architectureAssets || 0) !== 1) failures.push(`Gate 4-D-B5 Circuit failed: architectureAssets=${circuit.architectureAssets || 0}`);
+  if ((circuit.timeTrialGates || 0) !== 1) failures.push(`Gate 4-D-B5 Circuit failed: timeTrialGates=${circuit.timeTrialGates || 0}`);
+  if ((circuit.launchLanes || 0) !== 1) failures.push(`Gate 4-D-B5 Circuit failed: launchLanes=${circuit.launchLanes || 0}`);
+  if ((circuit.startGantries || 0) !== 1) failures.push(`Gate 4-D-B5 Circuit failed: startGantries=${circuit.startGantries || 0}`);
+  if ((circuit.timingControlRooms || 0) !== 1) failures.push(`Gate 4-D-B5 Circuit failed: timingControlRooms=${circuit.timingControlRooms || 0}`);
+  if ((circuit.timingBooths || 0) !== 1) failures.push(`Gate 4-D-B5 Circuit failed: timingBooths=${circuit.timingBooths || 0}`);
+  if ((circuit.startLights || 0) !== 3) failures.push(`Gate 4-D-B5 Circuit failed: startLights=${circuit.startLights || 0}`);
+  if ((circuit.checkpointMarkers || 0) !== 1) failures.push(`Gate 4-D-B5 Circuit failed: checkpointMarkers=${circuit.checkpointMarkers || 0}`);
+  if ((circuit.routeArrows || 0) !== 2) failures.push(`Gate 4-D-B5 Circuit failed: routeArrows=${circuit.routeArrows || 0}`);
+  if ((circuit.signs || 0) !== 0) failures.push(`Gate 4-D-B5 Circuit failed: rejected signs=${circuit.signs || 0}`);
+  if ((circuit.lamps || 0) !== 0) failures.push(`Gate 4-D-B5 Circuit failed: rejected lamps=${circuit.lamps || 0}`);
+}
+
 function assertGate4CB2SourceGallerySide(result, failures, options = {}) {
   const eastSide = result.gate4b4 || {};
   const projects = eastSide.projects || {};
@@ -6309,26 +6428,35 @@ function assertGate4CB3SourceWestService(result, failures, options = {}) {
     if ((skills.lamps || 0) !== 0) failures.push(`Gate 4-C-B3 Skills failed: rejected lamps=${skills.lamps || 0}`);
   }
 
-  if ((farm.pads || 0) !== 1) failures.push(`Gate 4-C-B3 Potato failed: pads=${farm.pads || 0}`);
-  if ((farm.sourceAssets || 0) < 1) failures.push(`Gate 4-C-B3 Potato failed: sourceAssets=${farm.sourceAssets || 0}`);
-  if ((farm.farmRows || 0) !== 5) failures.push(`Gate 4-C-B3 Potato failed: farmRows=${farm.farmRows || 0}`);
-  if ((farm.irrigationRuns || 0) !== 1) failures.push(`Gate 4-C-B3 Potato failed: irrigationRuns=${farm.irrigationRuns || 0}`);
-  if ((farm.counterStands || 0) !== 1) failures.push(`Gate 4-C-B3 Potato failed: counterStands=${farm.counterStands || 0}`);
-  if ((farm.summonPatches || 0) !== 1) failures.push(`Gate 4-C-B3 Potato failed: summonPatches=${farm.summonPatches || 0}`);
-  if ((farm.fenceVisuals || 0) !== 4) failures.push(`Gate 4-C-B3 Potato failed: fenceVisuals=${farm.fenceVisuals || 0}`);
-  if ((farm.crates || 0) !== 3) failures.push(`Gate 4-C-B3 Potato failed: crates=${farm.crates || 0}`);
-  if ((farm.signs || 0) !== 0) failures.push(`Gate 4-C-B3 Potato failed: rejected signs=${farm.signs || 0}`);
-  if ((farm.lamps || 0) !== 0) failures.push(`Gate 4-C-B3 Potato failed: rejected lamps=${farm.lamps || 0}`);
+  if (options.farmArchitecture) {
+    assertGate4DPotatoFarmStand(result, failures);
+  } else {
+    if ((farm.pads || 0) !== 1) failures.push(`Gate 4-C-B3 Potato failed: pads=${farm.pads || 0}`);
+    if ((farm.sourceAssets || 0) < 1) failures.push(`Gate 4-C-B3 Potato failed: sourceAssets=${farm.sourceAssets || 0}`);
+    if ((farm.farmRows || 0) !== 5) failures.push(`Gate 4-C-B3 Potato failed: farmRows=${farm.farmRows || 0}`);
+    if ((farm.irrigationRuns || 0) !== 1) failures.push(`Gate 4-C-B3 Potato failed: irrigationRuns=${farm.irrigationRuns || 0}`);
+    if ((farm.counterStands || 0) !== 1) failures.push(`Gate 4-C-B3 Potato failed: counterStands=${farm.counterStands || 0}`);
+    if ((farm.summonPatches || 0) !== 1) failures.push(`Gate 4-C-B3 Potato failed: summonPatches=${farm.summonPatches || 0}`);
+    if ((farm.fenceVisuals || 0) !== 4) failures.push(`Gate 4-C-B3 Potato failed: fenceVisuals=${farm.fenceVisuals || 0}`);
+    if ((farm.crates || 0) !== 3) failures.push(`Gate 4-C-B3 Potato failed: crates=${farm.crates || 0}`);
+    if ((farm.signs || 0) !== 0) failures.push(`Gate 4-C-B3 Potato failed: rejected signs=${farm.signs || 0}`);
+    if ((farm.lamps || 0) !== 0) failures.push(`Gate 4-C-B3 Potato failed: rejected lamps=${farm.lamps || 0}`);
+  }
 
-  const expectedPlacements = [
-    ['gate4c-potato-footprint', 1],
-    ['gate4c-potato-row', 5],
-    ['gate4c-potato-irrigation', 1],
-    ['gate4c-potato-counter-stand', 1],
-    ['gate4c-potato-summon-patch', 1],
-    ['gate4c-potato-fence-visual', 4],
-    ['gate4c-potato-crate', 3]
-  ];
+  const expectedPlacements = options.farmArchitecture
+    ? [
+      ['gate4d-potato-footprint', 1],
+      ['gate4d-potato-farm-stand', 1]
+    ]
+    : [
+      ['gate4c-potato-footprint', 1],
+      ['gate4c-potato-row', 5],
+      ['gate4c-potato-irrigation', 1],
+      ['gate4c-potato-counter-stand', 1],
+      ['gate4c-potato-summon-patch', 1],
+      ['gate4c-potato-fence-visual', 4],
+      ['gate4c-potato-crate', 3]
+    ];
   if (options.skillsArchitecture) {
     expectedPlacements.unshift(
       ['gate4d-skills-footprint', 1],
@@ -6374,6 +6502,16 @@ function assertGate4CB3SourceWestService(result, failures, options = {}) {
       'gate4c-skills-cable-floor'
     );
   }
+  if (options.farmArchitecture) {
+    rejectedKinds.push(
+      'gate4c-potato-row',
+      'gate4c-potato-irrigation',
+      'gate4c-potato-counter-stand',
+      'gate4c-potato-summon-patch',
+      'gate4c-potato-fence-visual',
+      'gate4c-potato-crate'
+    );
+  }
   for (const kind of rejectedKinds) {
     if ((placement.byKind?.[kind] || 0) !== 0) {
       failures.push(`Gate 4-C-B3 placement failed: rejected ${kind}=${placement.byKind?.[kind] || 0}`);
@@ -6382,6 +6520,9 @@ function assertGate4CB3SourceWestService(result, failures, options = {}) {
   const rejectedFootprintKinds = ['gate4b2-skills-pad', 'gate4b2-farm-pad'];
   if (options.skillsArchitecture) {
     rejectedFootprintKinds.push('gate4c-skills-footprint');
+  }
+  if (options.farmArchitecture) {
+    rejectedFootprintKinds.push('gate4c-potato-footprint');
   }
   for (const kind of rejectedFootprintKinds) {
     if ((placement.byFootprintKind?.[kind] || 0) !== 0) {
@@ -6490,30 +6631,38 @@ function assertGate4CB5SourceNorthRidge(result, failures, options = {}) {
     if ((awards.lamps || 0) !== 0) failures.push(`Gate 4-C-B5 Awards failed: rejected lamps=${awards.lamps || 0}`);
   }
 
-  if ((sentinel.pads || 0) !== 1) failures.push(`Gate 4-C-B5 Sentinel failed: pads=${sentinel.pads || 0}`);
-  if ((sentinel.sourceAssets || 0) < 1) failures.push(`Gate 4-C-B5 Sentinel failed: sourceAssets=${sentinel.sourceAssets || 0}`);
-  if ((sentinel.groundPlates || 0) !== 1) failures.push(`Gate 4-C-B5 Sentinel failed: groundPlates=${sentinel.groundPlates || 0}`);
-  if ((sentinel.towerBases || 0) !== 1) failures.push(`Gate 4-C-B5 Sentinel failed: towerBases=${sentinel.towerBases || 0}`);
-  if ((sentinel.scannerCrowns || 0) !== 1) failures.push(`Gate 4-C-B5 Sentinel failed: scannerCrowns=${sentinel.scannerCrowns || 0}`);
-  if ((sentinel.alertWalls || 0) !== 1) failures.push(`Gate 4-C-B5 Sentinel failed: alertWalls=${sentinel.alertWalls || 0}`);
-  if ((sentinel.packetShardPanels || 0) !== 2) failures.push(`Gate 4-C-B5 Sentinel failed: packetShardPanels=${sentinel.packetShardPanels || 0}`);
-  if ((sentinel.signs || 0) !== 0) failures.push(`Gate 4-C-B5 Sentinel failed: rejected signs=${sentinel.signs || 0}`);
-  if ((sentinel.lamps || 0) !== 0) failures.push(`Gate 4-C-B5 Sentinel failed: rejected lamps=${sentinel.lamps || 0}`);
+  if (options.sentinelArchitecture) {
+    assertGate4DSentinelSocTower(result, failures);
+  } else {
+    if ((sentinel.pads || 0) !== 1) failures.push(`Gate 4-C-B5 Sentinel failed: pads=${sentinel.pads || 0}`);
+    if ((sentinel.sourceAssets || 0) < 1) failures.push(`Gate 4-C-B5 Sentinel failed: sourceAssets=${sentinel.sourceAssets || 0}`);
+    if ((sentinel.groundPlates || 0) !== 1) failures.push(`Gate 4-C-B5 Sentinel failed: groundPlates=${sentinel.groundPlates || 0}`);
+    if ((sentinel.towerBases || 0) !== 1) failures.push(`Gate 4-C-B5 Sentinel failed: towerBases=${sentinel.towerBases || 0}`);
+    if ((sentinel.scannerCrowns || 0) !== 1) failures.push(`Gate 4-C-B5 Sentinel failed: scannerCrowns=${sentinel.scannerCrowns || 0}`);
+    if ((sentinel.alertWalls || 0) !== 1) failures.push(`Gate 4-C-B5 Sentinel failed: alertWalls=${sentinel.alertWalls || 0}`);
+    if ((sentinel.packetShardPanels || 0) !== 2) failures.push(`Gate 4-C-B5 Sentinel failed: packetShardPanels=${sentinel.packetShardPanels || 0}`);
+    if ((sentinel.signs || 0) !== 0) failures.push(`Gate 4-C-B5 Sentinel failed: rejected signs=${sentinel.signs || 0}`);
+    if ((sentinel.lamps || 0) !== 0) failures.push(`Gate 4-C-B5 Sentinel failed: rejected lamps=${sentinel.lamps || 0}`);
+  }
 
-  if ((circuit.pads || 0) !== 1) failures.push(`Gate 4-C-B5 Circuit failed: pads=${circuit.pads || 0}`);
-  if ((circuit.sourceAssets || 0) < 1) failures.push(`Gate 4-C-B5 Circuit failed: sourceAssets=${circuit.sourceAssets || 0}`);
-  if ((circuit.startGantries || 0) !== 1) failures.push(`Gate 4-C-B5 Circuit failed: startGantries=${circuit.startGantries || 0}`);
-  if ((circuit.timingBooths || 0) !== 1) failures.push(`Gate 4-C-B5 Circuit failed: timingBooths=${circuit.timingBooths || 0}`);
-  if ((circuit.startLights || 0) !== 3) failures.push(`Gate 4-C-B5 Circuit failed: startLights=${circuit.startLights || 0}`);
-  if ((circuit.checkpointMarkers || 0) !== 1) failures.push(`Gate 4-C-B5 Circuit failed: checkpointMarkers=${circuit.checkpointMarkers || 0}`);
-  if ((circuit.routeArrows || 0) !== 2) failures.push(`Gate 4-C-B5 Circuit failed: routeArrows=${circuit.routeArrows || 0}`);
-  if ((circuit.pocketCurbVisuals || 0) !== 2) failures.push(`Gate 4-C-B5 Circuit failed: pocketCurbVisuals=${circuit.pocketCurbVisuals || 0}`);
-  if ((circuit.signs || 0) !== 0) failures.push(`Gate 4-C-B5 Circuit failed: rejected signs=${circuit.signs || 0}`);
-  if ((circuit.lamps || 0) !== 0) failures.push(`Gate 4-C-B5 Circuit failed: rejected lamps=${circuit.lamps || 0}`);
+  if (options.circuitArchitecture) {
+    assertGate4DCircuitTimeTrialGate(result, failures);
+  } else {
+    if ((circuit.pads || 0) !== 1) failures.push(`Gate 4-C-B5 Circuit failed: pads=${circuit.pads || 0}`);
+    if ((circuit.sourceAssets || 0) < 1) failures.push(`Gate 4-C-B5 Circuit failed: sourceAssets=${circuit.sourceAssets || 0}`);
+    if ((circuit.startGantries || 0) !== 1) failures.push(`Gate 4-C-B5 Circuit failed: startGantries=${circuit.startGantries || 0}`);
+    if ((circuit.timingBooths || 0) !== 1) failures.push(`Gate 4-C-B5 Circuit failed: timingBooths=${circuit.timingBooths || 0}`);
+    if ((circuit.startLights || 0) !== 3) failures.push(`Gate 4-C-B5 Circuit failed: startLights=${circuit.startLights || 0}`);
+    if ((circuit.checkpointMarkers || 0) !== 1) failures.push(`Gate 4-C-B5 Circuit failed: checkpointMarkers=${circuit.checkpointMarkers || 0}`);
+    if ((circuit.routeArrows || 0) !== 2) failures.push(`Gate 4-C-B5 Circuit failed: routeArrows=${circuit.routeArrows || 0}`);
+    if ((circuit.pocketCurbVisuals || 0) !== 2) failures.push(`Gate 4-C-B5 Circuit failed: pocketCurbVisuals=${circuit.pocketCurbVisuals || 0}`);
+    if ((circuit.signs || 0) !== 0) failures.push(`Gate 4-C-B5 Circuit failed: rejected signs=${circuit.signs || 0}`);
+    if ((circuit.lamps || 0) !== 0) failures.push(`Gate 4-C-B5 Circuit failed: rejected lamps=${circuit.lamps || 0}`);
+  }
 
   const expectedFootprints = [
-    ['gate4c-sentinel-footprint', 1],
-    ['gate4c-circuit-footprint', 1]
+    options.sentinelArchitecture ? ['gate4d-sentinel-footprint', 1] : ['gate4c-sentinel-footprint', 1],
+    options.circuitArchitecture ? ['gate4d-circuit-footprint', 1] : ['gate4c-circuit-footprint', 1]
   ];
   expectedFootprints.unshift(options.awardsArchitecture ? ['gate4d-awards-footprint', 1] : ['gate4c-awards-footprint', 1]);
   for (const [kind, expected] of expectedFootprints) {
@@ -6522,18 +6671,29 @@ function assertGate4CB5SourceNorthRidge(result, failures, options = {}) {
     }
   }
 
-  const expectedPlacements = [
-    ['gate4c-sentinel-tower-base', 1],
-    ['gate4c-sentinel-scanner-crown', 1],
-    ['gate4c-sentinel-alert-wall', 1],
-    ['gate4c-sentinel-packet-shard-panel', 2],
-    ['gate4c-circuit-start-gantry', 1],
-    ['gate4c-circuit-timing-booth', 1],
-    ['gate4c-circuit-pocket-curb', 2],
-    ['gate4c-circuit-start-light', 3],
-    ['gate4c-circuit-checkpoint-marker', 1],
-    ['gate4c-circuit-route-arrow', 2]
-  ];
+  const expectedPlacements = [];
+  if (options.sentinelArchitecture) {
+    expectedPlacements.push(['gate4d-sentinel-soc-tower', 1]);
+  } else {
+    expectedPlacements.push(
+      ['gate4c-sentinel-tower-base', 1],
+      ['gate4c-sentinel-scanner-crown', 1],
+      ['gate4c-sentinel-alert-wall', 1],
+      ['gate4c-sentinel-packet-shard-panel', 2]
+    );
+  }
+  if (options.circuitArchitecture) {
+    expectedPlacements.push(['gate4d-circuit-time-trial-gate', 1]);
+  } else {
+    expectedPlacements.push(
+      ['gate4c-circuit-start-gantry', 1],
+      ['gate4c-circuit-timing-booth', 1],
+      ['gate4c-circuit-pocket-curb', 2],
+      ['gate4c-circuit-start-light', 3],
+      ['gate4c-circuit-checkpoint-marker', 1],
+      ['gate4c-circuit-route-arrow', 2]
+    );
+  }
   if (options.awardsArchitecture) {
     expectedPlacements.unshift(['gate4d-awards-museum-hall', 1]);
   } else {
@@ -6574,6 +6734,24 @@ function assertGate4CB5SourceNorthRidge(result, failures, options = {}) {
       'gate4c-awards-warm-accent'
     );
   }
+  if (options.sentinelArchitecture) {
+    rejectedKinds.push(
+      'gate4c-sentinel-tower-base',
+      'gate4c-sentinel-scanner-crown',
+      'gate4c-sentinel-alert-wall',
+      'gate4c-sentinel-packet-shard-panel'
+    );
+  }
+  if (options.circuitArchitecture) {
+    rejectedKinds.push(
+      'gate4c-circuit-start-gantry',
+      'gate4c-circuit-timing-booth',
+      'gate4c-circuit-pocket-curb',
+      'gate4c-circuit-start-light',
+      'gate4c-circuit-checkpoint-marker',
+      'gate4c-circuit-route-arrow'
+    );
+  }
   for (const kind of rejectedKinds) {
     if ((placement.byKind?.[kind] || 0) !== 0) {
       failures.push(`Gate 4-C-B5 placement failed: rejected ${kind}=${placement.byKind?.[kind] || 0}`);
@@ -6583,6 +6761,12 @@ function assertGate4CB5SourceNorthRidge(result, failures, options = {}) {
   const rejectedFootprints = ['gate4b5-awards-pad', 'gate4b5-sentinel-pad', 'gate4b5-circuit-pad'];
   if (options.awardsArchitecture) {
     rejectedFootprints.push('gate4c-awards-footprint');
+  }
+  if (options.sentinelArchitecture) {
+    rejectedFootprints.push('gate4c-sentinel-footprint');
+  }
+  if (options.circuitArchitecture) {
+    rejectedFootprints.push('gate4c-circuit-footprint');
   }
   for (const kind of rejectedFootprints) {
     if ((placement.byFootprintKind?.[kind] || 0) !== 0) {

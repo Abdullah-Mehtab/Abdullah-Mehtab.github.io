@@ -424,6 +424,13 @@ export class SetPieces {
         farmRows: 0,
         fenceSegments: 0,
         sourceAssets: 0,
+        authoredAssets: 0,
+        architectureAssets: 0,
+        farmStandBuildings: 0,
+        greenhouseBodies: 0,
+        produceCounters: 0,
+        integratedCropRows: 0,
+        irrigationTanks: 0,
         irrigationRuns: 0,
         counterStands: 0,
         summonPatches: 0,
@@ -558,6 +565,13 @@ export class SetPieces {
         signalTotems: 0,
         shardPanels: 0,
         sourceAssets: 0,
+        authoredAssets: 0,
+        architectureAssets: 0,
+        socTowers: 0,
+        operationsHalls: 0,
+        glassOpsRooms: 0,
+        serverRacks: 0,
+        perimeterPylons: 0,
         groundPlates: 0,
         towerBases: 0,
         scannerCrowns: 0,
@@ -573,6 +587,11 @@ export class SetPieces {
         signalLights: 0,
         authoredAssets: 0,
         sourceAssets: 0,
+        architectureAssets: 0,
+        timeTrialGates: 0,
+        launchLanes: 0,
+        timingControlRooms: 0,
+        timePylons: 0,
         startGantries: 0,
         timingBooths: 0,
         startLights: 0,
@@ -1348,70 +1367,26 @@ export class SetPieces {
     const rotation = anchor.rotation;
     const point = (right, forward) => this.gate4B1Point(anchor, right, forward);
 
-    this.gate3rPad(group, anchor.x, anchor.z, 22, 13, this.world.materials.dirtRoad, 0.13, 'GATE4C_Potato_Farm_Counter_Ground', rotation, 'gate4c-potato-footprint', 5.0);
+    this.gate3rPad(group, anchor.x, anchor.z, 21.2, 12.4, this.world.materials.dirtRoad, 0.13, 'GATE4D_Potato_Farm_Stand_Service_Court', rotation, 'gate4d-potato-footprint', 5.0);
     stats.pads += 1;
 
-    const placeSource = (assetName, kind, name, right, forward, assetRotation, scale, statName, minClearance = 5.0) => {
-      const position = point(right, forward);
-      if (this.addPolishAsset(group, assetName, position[0], position[1], assetRotation, scale)) {
-        this.recordGate3RPlacement(kind, name, position[0], position[1], { minClearance });
-        stats.sourceAssets += 1;
-        stats[statName] += 1;
-        return position;
-      }
-      return null;
-    };
-
-    for (const [right, width, name] of [
-      [-6.8, 1.0, 'GATE4C_Potato_Crop_Row_A'],
-      [-3.4, 1.0, 'GATE4C_Potato_Crop_Row_B'],
-      [0, 1.0, 'GATE4C_Potato_Crop_Row_C'],
-      [3.4, 1.0, 'GATE4C_Potato_Crop_Row_D'],
-      [6.8, 1.0, 'GATE4C_Potato_Crop_Row_E']
-    ]) {
-      const row = point(right, 0.4);
-      this.box(group, row[0], 0.22, row[1], width, 0.08, 7.2, this.world.materials.crop, rotation, name);
-      this.box(group, row[0], 0.185, row[1] + 0.2, width + 0.35, 0.04, 6.8, this.world.materials.warmStone, rotation, `${name}_Soil`);
-      this.recordGate3RPlacement('gate4c-potato-row', name, row[0], row[1], { minClearance: 5.0 });
-      stats.farmRows += 1;
-    }
-
-    placeSource('EnvPolishFarmIrrigator', 'gate4c-potato-irrigation', 'GATE4C_Potato_Irrigation_Rig', 0, -3.6, rotation, 0.86, 'irrigationRuns', 5.0);
-
-    const stand = point(-7.1, -3.95);
-    this.box(group, stand[0], 0.58, stand[1], 3.4, 0.62, 1.55, this.world.materials.wood, rotation, 'GATE4C_Potato_Counter_Stand');
-    this.box(group, stand[0], 1.08, stand[1] - 0.48, 3.2, 0.16, 0.18, this.world.materials.glow, rotation, 'GATE4C_Potato_Counter_Status');
-    this.recordGate3RPlacement('gate4c-potato-counter-stand', 'GATE4C_Potato_Counter_Stand', stand[0], stand[1], { minClearance: 5.0 });
-    stats.counterStands += 1;
-
-    const summon = point(7.35, -3.7);
-    this.cylinder(group, summon[0], 0.18, summon[1], 1.15, 0.06, this.world.materials.warmStone, 24, 'GATE4C_Potato_Summon_Patch');
-    this.cylinder(group, summon[0], 0.23, summon[1], 0.42, 0.08, this.world.materials.glow, 18, 'GATE4C_Potato_Summon_Glow');
-    this.recordGate3RPlacement('gate4c-potato-summon-patch', 'GATE4C_Potato_Summon_Patch', summon[0], summon[1], { minClearance: 5.0 });
-    stats.summonPatches += 1;
-
-    for (const [right, forward, width, depth, name] of [
-      [-8.9, 4.55, 3.6, 0.12, 'GATE4C_Potato_Fence_Visual_Left'],
-      [8.9, 4.55, 3.6, 0.12, 'GATE4C_Potato_Fence_Visual_Right'],
-      [0, 5.15, 12.8, 0.12, 'GATE4C_Potato_Fence_Visual_Back'],
-      [0, -5.15, 12.8, 0.12, 'GATE4C_Potato_Fence_Visual_Front']
-    ]) {
-      const fence = point(right, forward);
-      this.box(group, fence[0], 0.38, fence[1], width, 0.16, depth, this.world.materials.darkWood, rotation, name);
-      this.recordGate3RPlacement('gate4c-potato-fence-visual', name, fence[0], fence[1], { minClearance: 5.0 });
+    const farmStand = point(0, 0);
+    if (this.addPolishAsset(group, 'EnvPolishPotatoFarmStand', farmStand[0], farmStand[1], rotation, 1.0)) {
+      this.recordGate3RPlacement('gate4d-potato-farm-stand', 'GATE4D_Potato_Farm_Stand_Architecture', farmStand[0], farmStand[1], { minClearance: 5.0 });
+      stats.sourceAssets += 1;
+      stats.authoredAssets += 1;
+      stats.architectureAssets += 1;
+      stats.farmStandBuildings += 1;
+      stats.greenhouseBodies += 1;
+      stats.produceCounters += 1;
+      stats.integratedCropRows += 5;
+      stats.farmRows += 5;
+      stats.irrigationTanks += 1;
+      stats.irrigationRuns += 1;
+      stats.counterStands += 1;
       stats.fenceVisuals += 1;
       stats.fenceSegments += 1;
-    }
-
-    for (const [right, forward, name] of [
-      [-9.2, -1.25, 'GATE4C_Potato_Crate_A'],
-      [-8.2, -0.45, 'GATE4C_Potato_Crate_B'],
-      [-9.75, 0.05, 'GATE4C_Potato_Crate_C']
-    ]) {
-      const crate = point(right, forward);
-      this.box(group, crate[0], 0.38, crate[1], 0.78, 0.54, 0.68, this.world.materials.wood, rotation + 0.08, name);
-      this.recordGate3RPlacement('gate4c-potato-crate', name, crate[0], crate[1], { minClearance: 5.0 });
-      stats.crates += 1;
+      stats.crates += 3;
     }
 
     stats.anchors = stats.irrigationRuns + stats.counterStands;
@@ -1655,46 +1630,31 @@ export class SetPieces {
 
   createGate4B5SentinelRidge(group) {
     const stats = this.gate4b5Stats.sentinel;
-    const anchor = { x: 20, z: 129, rotation: -0.12 };
+    const anchor = { x: 10, z: 129, rotation: -0.12 };
     const point = (right, forward) => this.gate4B1Point(anchor, right, forward);
     const rotation = anchor.rotation;
 
-    this.gate3rPad(group, anchor.x, anchor.z, 16, 10, this.world.materials.securityRoad, 0.132, 'GATE4C_Sentinel_Ridge_Ground_Plate', rotation, 'gate4c-sentinel-footprint', 5.2);
+    this.gate3rPad(group, anchor.x, anchor.z, 18.4, 12, this.world.materials.securityRoad, 0.132, 'GATE4D_Sentinel_SOC_Tower_Service_Plate', rotation, 'gate4d-sentinel-footprint', 5.2);
     stats.pads += 1;
     stats.groundPlates += 1;
 
-    const tower = point(0, 0);
-    this.box(group, tower[0], 0.42, tower[1], 2.2, 0.64, 1.55, this.world.materials.cable, rotation, 'GATE4C_Sentinel_SOC_Tower_Base');
-    this.box(group, tower[0] - Math.cos(rotation) * 0.72, 1.85, tower[1] + Math.sin(rotation) * 0.72, 0.18, 2.65, 0.18, this.world.materials.cable, rotation, 'GATE4C_Sentinel_SOC_Tower_Post_A');
-    this.box(group, tower[0] + Math.cos(rotation) * 0.72, 1.85, tower[1] - Math.sin(rotation) * 0.72, 0.18, 2.65, 0.18, this.world.materials.cable, rotation, 'GATE4C_Sentinel_SOC_Tower_Post_B');
-    this.box(group, tower[0], 3.08, tower[1], 2.2, 0.18, 0.24, this.world.materials.glowPink, rotation, 'GATE4C_Sentinel_Scanner_Crown_Glow');
-    this.recordGate3RPlacement('gate4c-sentinel-tower-base', 'GATE4C_Sentinel_SOC_Tower_Base', tower[0], tower[1], { minClearance: 4.8 });
-    stats.ridgeTowers += 1;
-    stats.towerBases += 1;
-
-    const crown = point(0, 1.95);
-    if (this.addPolishAsset(group, 'EnvPolishSignalTotem', crown[0], crown[1], rotation - 0.08, 0.68)) {
+    const socTower = point(0, 0);
+    if (this.addPolishAsset(group, 'EnvPolishSentinelSocTower', socTower[0], socTower[1], rotation, 1.0)) {
+      this.recordGate3RPlacement('gate4d-sentinel-soc-tower', 'GATE4D_Sentinel_SOC_Tower_Architecture', socTower[0], socTower[1], { minClearance: 5.0 });
       stats.sourceAssets += 1;
-      stats.signalTotems += 1;
-    }
-    this.recordGate3RPlacement('gate4c-sentinel-scanner-crown', 'GATE4C_Sentinel_Scanner_Crown', crown[0], crown[1], { minClearance: 4.8 });
-    stats.scannerCrowns += 1;
-
-    const alert = point(-4.55, 0.95);
-    this.box(group, alert[0], 1.02, alert[1], 2.45, 1.36, 0.16, this.world.materials.cable, rotation + 0.08, 'GATE4C_Sentinel_Alert_Wall');
-    this.box(group, alert[0], 1.06, alert[1] - 0.1, 1.78, 0.72, 0.07, this.world.materials.glowPink, rotation + 0.08, 'GATE4C_Sentinel_Alert_Wall_Glow');
-    this.recordGate3RPlacement('gate4c-sentinel-alert-wall', 'GATE4C_Sentinel_Alert_Wall', alert[0], alert[1], { minClearance: 4.8 });
-    stats.alertWalls += 1;
-
-    for (const [right, forward, material] of [
-      [-5.3, 3.5, this.world.materials.glowBlue],
-      [4.7, 3.2, this.world.materials.glowPink]
-    ]) {
-      const shard = point(right, forward);
-      this.box(group, shard[0], 0.88, shard[1], 0.8, 1.1, 0.08, material, rotation + right * 0.025, 'GATE4C_Sentinel_Packet_Shard_Panel');
-      this.recordGate3RPlacement('gate4c-sentinel-packet-shard-panel', 'GATE4C_Sentinel_Packet_Shard_Panel', shard[0], shard[1], { minClearance: 4.8 });
-      stats.shardPanels += 1;
-      stats.packetShardPanels += 1;
+      stats.authoredAssets += 1;
+      stats.architectureAssets += 1;
+      stats.socTowers += 1;
+      stats.ridgeTowers += 1;
+      stats.operationsHalls += 1;
+      stats.glassOpsRooms += 1;
+      stats.towerBases += 1;
+      stats.scannerCrowns += 1;
+      stats.alertWalls += 1;
+      stats.serverRacks += 4;
+      stats.shardPanels += 4;
+      stats.packetShardPanels += 4;
+      stats.perimeterPylons += 2;
     }
 
     stats.signs = 0;
@@ -1707,60 +1667,28 @@ export class SetPieces {
     const point = (right, forward) => this.gate4B1Point(anchor, right, forward);
     const rotation = anchor.rotation;
 
-    this.gate3rPad(group, anchor.x, anchor.z, 20, 12, this.world.materials.stuntRamp, 0.132, 'GATE4C_Circuit_Time_Trial_Pocket', rotation, 'gate4c-circuit-footprint', 5.2);
+    this.gate3rPad(group, anchor.x, anchor.z, 19.2, 11.2, this.world.materials.stuntRamp, 0.132, 'GATE4D_Circuit_Time_Trial_Service_Court', rotation, 'gate4d-circuit-footprint', 5.2);
     stats.pads += 1;
 
-    const gate = point(0, 0.8);
-    if (this.addPolishAsset(group, 'EnvPolishCircuitGate', gate[0], gate[1], rotation, 0.72)) {
+    const gate = point(0, 0);
+    if (this.addPolishAsset(group, 'EnvPolishCircuitTimeTrialGate', gate[0], gate[1], rotation, 1.0)) {
+      this.recordGate3RPlacement('gate4d-circuit-time-trial-gate', 'GATE4D_Circuit_Time_Trial_Gate_Architecture', gate[0], gate[1], { minClearance: 5.0 });
       stats.authoredAssets += 1;
       stats.sourceAssets += 1;
-    }
-    this.recordGate3RPlacement('gate4c-circuit-start-gantry', 'GATE4C_Circuit_Start_Gantry', gate[0], gate[1], { minClearance: 4.8 });
-    stats.startGates += 1;
-    stats.startGantries += 1;
-
-    const booth = point(-6.2, -2.8);
-    this.box(group, booth[0], 0.78, booth[1], 2.2, 1.32, 1.5, this.world.materials.cable, rotation, 'GATE4C_Circuit_Timing_Booth');
-    this.box(group, booth[0], 1.02, booth[1] - 0.28, 1.42, 0.54, 0.08, this.world.materials.glowBlue, rotation, 'GATE4C_Circuit_Timing_Booth_Display');
-    this.recordGate3RPlacement('gate4c-circuit-timing-booth', 'GATE4C_Circuit_Timing_Booth', booth[0], booth[1], { minClearance: 4.8 });
-    stats.timingBooths += 1;
-
-    for (const [right, forward, material] of [
-      [-7.4, 0.4, this.world.materials.paleStone],
-      [7.4, 0.4, this.world.materials.paleStone]
-    ]) {
-      const curb = point(right, forward);
-      this.box(group, curb[0], 0.24, curb[1], 0.42, 0.12, 4.2, material, rotation, 'GATE4C_Circuit_Pocket_Curb_Visual');
-      this.recordGate3RPlacement('gate4c-circuit-pocket-curb', 'GATE4C_Circuit_Pocket_Curb_Visual', curb[0], curb[1], { minClearance: 4.8 });
-      stats.laneCurbs += 1;
-      stats.pocketCurbVisuals += 1;
-    }
-
-    for (const [right, forward, material] of [
-      [-2.8, 3.2, this.world.materials.glowPink],
-      [0, 3.45, this.world.materials.warmGlow],
-      [2.8, 3.2, this.world.materials.glowBlue]
-    ]) {
-      const light = point(right, forward);
-      this.box(group, light[0], 0.34, light[1], 0.48, 0.12, 0.48, material, rotation, 'GATE4C_Circuit_Start_Light');
-      this.recordGate3RPlacement('gate4c-circuit-start-light', 'GATE4C_Circuit_Start_Light', light[0], light[1], { minClearance: 4.8 });
-      stats.signalLights += 1;
-      stats.startLights += 1;
-    }
-
-    const marker = point(0, 4.8);
-    this.cylinder(group, marker[0], 0.22, marker[1], 0.38, 0.06, this.world.materials.warmGlow, 16, 'GATE4C_Circuit_Checkpoint_Marker');
-    this.recordGate3RPlacement('gate4c-circuit-checkpoint-marker', 'GATE4C_Circuit_Checkpoint_Marker', marker[0], marker[1], { minClearance: 4.8 });
-    stats.checkpointMarkers += 1;
-
-    for (const [right, forward, material] of [
-      [-3.6, -4.1, this.world.materials.paleStone],
-      [3.6, -4.1, this.world.materials.warmGlow]
-    ]) {
-      const arrow = point(right, forward);
-      this.box(group, arrow[0], 0.2, arrow[1], 1.2, 0.08, 0.34, material, rotation - 0.22, 'GATE4C_Circuit_Route_Arrow');
-      this.recordGate3RPlacement('gate4c-circuit-route-arrow', 'GATE4C_Circuit_Route_Arrow', arrow[0], arrow[1], { minClearance: 4.8 });
-      stats.routeArrows += 1;
+      stats.architectureAssets += 1;
+      stats.timeTrialGates += 1;
+      stats.launchLanes += 1;
+      stats.startGates += 1;
+      stats.startGantries += 1;
+      stats.timingControlRooms += 1;
+      stats.timingBooths += 1;
+      stats.timePylons += 1;
+      stats.signalLights += 3;
+      stats.startLights += 3;
+      stats.checkpointMarkers += 1;
+      stats.routeArrows += 2;
+      stats.laneCurbs += 2;
+      stats.pocketCurbVisuals += 2;
     }
 
     stats.signs = 0;
