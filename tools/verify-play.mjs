@@ -4127,6 +4127,13 @@ function assertVerification(result) {
     }
     return;
   }
+  if (result.goalGate === 'gate-4e-k-circuit-time-trial-readability-pass') {
+    assertGate4EKCircuitTimeTrialReadabilityVerification(result, failures);
+    if (failures.length) {
+      throw new Error(`Play verification failed: ${failures.join('; ')}`);
+    }
+    return;
+  }
   if (result.goalGate === 'gate-4b5-north-ridge') {
     assertGate4B5NorthRidgeVerification(result, failures);
     if (failures.length) {
@@ -5447,7 +5454,8 @@ function assertGate3RVerticalSliceVerification(result, failures, options = {}) {
     || result.goalGate === 'gate-4e-g-cybersecurity-craft-pass'
     || result.goalGate === 'gate-4e-h-projects-foundry-readability-pass'
     || result.goalGate === 'gate-4e-i-behind-engineering-scale-pass'
-    || result.goalGate === 'gate-4e-j-signal-harbor-broadcast-pass';
+    || result.goalGate === 'gate-4e-j-signal-harbor-broadcast-pass'
+    || result.goalGate === 'gate-4e-k-circuit-time-trial-readability-pass';
   const highQualityTriangleBudget = gate4eExpandedArchitecture ? 330000 : 210000;
   if ((result.highQuality?.triangles || 0) > highQualityTriangleBudget) failures.push(`Gate 3R high quality triangle budget exceeded: ${result.highQuality?.triangles || 0}`);
   if (!result.mobile?.ready || (result.mobile?.canvasSample || 0) <= 0) failures.push('Gate 3R mobile probe failed: canvas did not render');
@@ -6393,6 +6401,36 @@ function assertGate4EJSignalHarborBroadcastVerification(result, failures) {
   if ((harbor.routeFacades || 0) < 1) failures.push(`Gate 4-E-J Harbor failed: routeFacades=${harbor.routeFacades || 0}/1`);
   if ((harbor.signalCrowns || 0) < 1) failures.push(`Gate 4-E-J Harbor failed: signalCrowns=${harbor.signalCrowns || 0}/1`);
   if ((harbor.contactTerminalRooms || 0) < 1) failures.push(`Gate 4-E-J Harbor failed: contactTerminalRooms=${harbor.contactTerminalRooms || 0}/1`);
+}
+
+function assertGate4EKCircuitTimeTrialReadabilityVerification(result, failures) {
+  assertGate4EFRouteCompositionVerification(result, failures, 'gate-4e-k-circuit-time-trial-readability-pass');
+  assertAuthoredDistrictAsset(result, 'EnvPolishSecurityOperationsGate', 'Gate 4-E-G Security operations architecture', failures);
+  assertGate4DSentinelSocTower(result, failures);
+  assertGate4DProjectsFoundryBuilding(result, failures);
+  assertGate4DBehindEngineeringGarage(result, failures);
+  assertGate4DSignalHarborCommunicationsStation(result, failures);
+  assertGate4DCircuitTimeTrialGate(result, failures);
+
+  const security = result.securityLab || {};
+  const sentinel = result.gate4b5?.sentinel || {};
+  const projects = result.gate4b4?.projects || {};
+  const behind = result.gate4b1?.behind || {};
+  const harbor = result.gate4b4?.harbor || {};
+  const circuit = result.gate4b5?.circuit || {};
+
+  if ((security.operationsGates || 0) < 1) failures.push(`Gate 4-E-K Security carry-forward failed: operationsGates=${security.operationsGates || 0}/1`);
+  if ((sentinel.shieldGateFrames || 0) < 1) failures.push(`Gate 4-E-K Sentinel carry-forward failed: shieldGateFrames=${sentinel.shieldGateFrames || 0}/1`);
+  if ((projects.publicGalleries || 0) < 1) failures.push(`Gate 4-E-K Projects carry-forward failed: publicGalleries=${projects.publicGalleries || 0}/1`);
+  if ((behind.diagnosticsTowers || 0) < 1) failures.push(`Gate 4-E-K Behind carry-forward failed: diagnosticsTowers=${behind.diagnosticsTowers || 0}/1`);
+  if ((harbor.broadcastTowers || 0) < 1) failures.push(`Gate 4-E-K Harbor carry-forward failed: broadcastTowers=${harbor.broadcastTowers || 0}/1`);
+  if ((harbor.dishArrays || 0) < 1) failures.push(`Gate 4-E-K Harbor carry-forward failed: dishArrays=${harbor.dishArrays || 0}/1`);
+  if ((circuit.raceControlTowers || 0) < 1) failures.push(`Gate 4-E-K Circuit failed: raceControlTowers=${circuit.raceControlTowers || 0}/1`);
+  if ((circuit.scoreboards || 0) < 1) failures.push(`Gate 4-E-K Circuit failed: scoreboards=${circuit.scoreboards || 0}/1`);
+  if ((circuit.grandstands || 0) < 1) failures.push(`Gate 4-E-K Circuit failed: grandstands=${circuit.grandstands || 0}/1`);
+  if ((circuit.timingFacades || 0) < 1) failures.push(`Gate 4-E-K Circuit failed: timingFacades=${circuit.timingFacades || 0}/1`);
+  if ((circuit.checkpointCrowns || 0) < 1) failures.push(`Gate 4-E-K Circuit failed: checkpointCrowns=${circuit.checkpointCrowns || 0}/1`);
+  if ((circuit.pitWallFacades || 0) < 1) failures.push(`Gate 4-E-K Circuit failed: pitWallFacades=${circuit.pitWallFacades || 0}/1`);
 }
 
 function assertAuthoredDistrictAsset(result, assetName, label, failures) {

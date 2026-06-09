@@ -654,6 +654,12 @@ export class SetPieces {
         timePylons: 0,
         startGantries: 0,
         timingBooths: 0,
+        raceControlTowers: 0,
+        scoreboards: 0,
+        grandstands: 0,
+        timingFacades: 0,
+        checkpointCrowns: 0,
+        pitWallFacades: 0,
         startLights: 0,
         checkpointMarkers: 0,
         routeArrows: 0,
@@ -1793,6 +1799,12 @@ export class SetPieces {
       stats.timingControlRooms += 1;
       stats.timingBooths += 1;
       stats.timePylons += 1;
+      stats.raceControlTowers += 1;
+      stats.scoreboards += 1;
+      stats.grandstands += 1;
+      stats.timingFacades += 1;
+      stats.checkpointCrowns += 1;
+      stats.pitWallFacades += 1;
       stats.signalLights += 3;
       stats.startLights += 3;
       stats.checkpointMarkers += 1;
