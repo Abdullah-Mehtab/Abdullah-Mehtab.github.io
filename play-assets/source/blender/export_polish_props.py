@@ -391,11 +391,20 @@ def create_projects_foundry_building(mats):
     group = root("EnvPolishProjectsFoundryBuilding")
     cube("ProjectsFoundry_ServiceYard", group, (0, 0.09, -0.28), (17.6, 0.18, 10.8), mats["stone_shadow"], bevel=0.055)
     cube("ProjectsFoundry_MainHall", group, (-1.05, 2.22, 0.28), (10.8, 4.18, 5.7), mats["wood"], bevel=0.052)
+    cube("ProjectsFoundry_UpperAssemblyHall", group, (-1.05, 4.72, 0.24), (9.4, 1.52, 4.62), mats["wood"], bevel=0.044)
     cube("ProjectsFoundry_FabricationBay", group, (5.55, 1.64, 0.34), (4.65, 3.08, 5.24), mats["dark"], bevel=0.045)
+    cube("ProjectsFoundry_FabricationStack", group, (5.82, 4.24, 0.52), (2.22, 4.1, 3.34), mats["dark"], bevel=0.034)
     cube("ProjectsFoundry_SideWorkshop", group, (-6.28, 1.38, 0.82), (3.15, 2.58, 4.4), mats["stone"], bevel=0.045)
+    cube("ProjectsFoundry_MaterialArchiveWing", group, (-6.46, 3.42, 0.82), (2.05, 3.7, 3.5), mats["stone"], bevel=0.034)
     cube("ProjectsFoundry_RoofMonitor", group, (-1.02, 4.56, 0.12), (12.8, 0.42, 6.26), mats["dark"], bevel=0.04)
     cube("ProjectsFoundry_RoofLantern", group, (0.2, 5.12, -0.55), (6.4, 0.78, 1.15), mats["glass"], bevel=0.028)
+    cube("ProjectsFoundry_SawtoothRoofLine", group, (-1.05, 5.78, -0.56), (9.8, 0.28, 3.9), mats["stone_shadow"], bevel=0.026)
+    for index, x in enumerate([-4.8, -3.0, -1.2, 0.6, 2.4, 4.2]):
+        cube(f"ProjectsFoundry_SawtoothGlass_{index}", group, (x, 5.98, -2.2), (1.12, 0.1, 0.08), mats["glass"], bevel=0.005)
     cube("ProjectsFoundry_EntryCanopy", group, (-2.0, 2.42, -3.72), (5.9, 0.34, 1.4), mats["dark"], bevel=0.03)
+    cube("ProjectsFoundry_FrontForgePortal", group, (-2.0, 1.74, -3.52), (4.72, 2.8, 0.18), mats["dark"], bevel=0.026)
+    cube("ProjectsFoundry_FurnaceMouth", group, (-2.0, 1.34, -3.64), (2.8, 1.34, 0.08), mats["amber"], bevel=0.018)
+    cube("ProjectsFoundry_FurnaceCore", group, (-2.0, 1.36, -3.7), (1.82, 0.84, 0.06), mats["screen"], bevel=0.008)
     for index, z in enumerate([-5.05, -4.58, -4.11]):
         cube(f"ProjectsFoundry_EntryStep_{index}", group, (-2.0, 0.18 + index * 0.05, z), (5.8 - index * 0.74, 0.14, 0.42), mats["paper"], bevel=0.024)
     for row, y in enumerate([1.1, 1.78, 2.46, 3.14]):
@@ -420,6 +429,8 @@ def create_projects_foundry_building(mats):
     for x in [-2.8, 0, 2.8]:
         cube("ProjectsFoundry_CranePost", group, (x, 2.18, 2.72), (0.2, 3.65, 0.2), mats["dark"], bevel=0.012)
     cube("ProjectsFoundry_CraneBeam", group, (0, 3.9, 2.72), (7.25, 0.24, 0.32), mats["dark"], bevel=0.024)
+    cube("ProjectsFoundry_OverheadCraneRail", group, (0, 5.38, 2.74), (10.4, 0.18, 0.26), mats["wood"], bevel=0.012)
+    cube("ProjectsFoundry_OverheadCraneGlow", group, (0, 5.16, 2.5), (8.9, 0.08, 0.07), mats["amber"], bevel=0.004)
     cube("ProjectsFoundry_CraneHook", group, (1.65, 2.62, 2.48), (0.26, 1.65, 0.18), mats["rope"], bevel=0.006)
     cube("ProjectsFoundry_LoadBlock", group, (1.65, 1.48, 2.12), (1.28, 0.68, 0.72), mats["amber"], bevel=0.035)
     cube("ProjectsFoundry_HeaderGlow", group, (-2.0, 2.18, -4.48), (4.8, 0.09, 0.08), mats["screen"], bevel=0.006)
@@ -427,6 +438,9 @@ def create_projects_foundry_building(mats):
     cube("ProjectsFoundry_MakerTowerCap", group, (-5.45, 7.62, 1.15), (1.55, 0.32, 1.58), mats["dark"], bevel=0.03)
     cube("ProjectsFoundry_CompileStack", group, (4.95, 5.55, 1.45), (1.0, 2.65, 1.0), mats["dark"], bevel=0.035)
     cube("ProjectsFoundry_CompileBeacon", group, (4.95, 7.05, 1.45), (0.66, 0.36, 0.66), mats["mint"], bevel=0.045)
+    cube("ProjectsFoundry_FurnaceChimney", group, (2.75, 6.48, 1.74), (1.18, 5.6, 1.18), mats["dark"], bevel=0.03)
+    cube("ProjectsFoundry_FurnaceChimneyCap", group, (2.75, 9.42, 1.74), (1.72, 0.34, 1.72), mats["amber"], bevel=0.024)
+    cube("ProjectsFoundry_HotMetalVent", group, (2.75, 7.98, 0.9), (1.05, 0.12, 0.08), mats["screen"], bevel=0.004)
     for index, y in enumerate([4.92, 5.38, 5.84, 6.3]):
         cube(f"ProjectsFoundry_TowerSignal_{index}", group, (-6.04, y, 0.46), (0.08, 0.08, 0.72), [mats["screen"], mats["amber"], mats["mint"], mats["aqua"]][index], bevel=0.003)
     cube("ProjectsFoundry_TestBridge", group, (0.3, 4.94, 2.92), (9.2, 0.18, 0.34), mats["rope"], bevel=0.012)
@@ -739,12 +753,17 @@ def create_career_software_house(mats):
     group = root("EnvPolishCareerSoftwareHouse")
     cube("CareerSoftwareHouse_Plaza", group, (0, 0.09, -0.35), (14.6, 0.18, 8.4), mats["stone"], bevel=0.055)
     cube("CareerSoftwareHouse_MainBlock", group, (-1.15, 2.15, 0.45), (9.2, 4.1, 4.85), mats["stone_shadow"], bevel=0.05)
+    cube("CareerSoftwareHouse_UpperDeliveryFloor", group, (-1.16, 4.68, 0.42), (8.55, 1.52, 4.12), mats["stone_shadow"], bevel=0.042)
     cube("CareerSoftwareHouse_GlassAtrium", group, (3.95, 1.86, -0.12), (3.5, 3.45, 4.1), mats["dark"], bevel=0.04)
+    cube("CareerSoftwareHouse_TallAtriumStack", group, (4.08, 4.28, -0.12), (2.48, 3.75, 3.38), mats["dark"], bevel=0.032)
     cube("CareerSoftwareHouse_SideStudio", group, (-5.42, 1.42, 0.92), (2.25, 2.65, 4.25), mats["stone"], bevel=0.045)
+    cube("CareerSoftwareHouse_CollaborationWing", group, (-5.65, 3.55, 0.88), (2.05, 3.76, 3.44), mats["stone"], bevel=0.034)
     cube("CareerSoftwareHouse_RoofSlab", group, (-0.74, 4.36, 0.35), (12.3, 0.34, 5.45), mats["wood"], bevel=0.04)
     cube("CareerSoftwareHouse_RoofLip", group, (-0.74, 4.62, -2.42), (12.9, 0.24, 0.36), mats["dark"], bevel=0.025)
     cube("CareerSoftwareHouse_LobbyGlass", group, (0.15, 1.12, -2.34), (3.15, 1.95, 0.12), mats["glass"], bevel=0.012)
     cube("CareerSoftwareHouse_EntryCanopy", group, (0.15, 2.28, -3.1), (4.65, 0.26, 1.35), mats["dark"], bevel=0.03)
+    cube("CareerSoftwareHouse_ReceptionPortal", group, (0.15, 1.78, -3.72), (5.36, 2.82, 0.18), mats["dark"], bevel=0.022)
+    cube("CareerSoftwareHouse_ReceptionGlass", group, (0.15, 1.72, -3.84), (3.45, 1.86, 0.08), mats["glass"], bevel=0.008)
     cube("CareerSoftwareHouse_EntryGlow", group, (0.15, 2.12, -3.8), (3.7, 0.08, 0.08), mats["screen"], bevel=0.006)
     for index, z in enumerate([-4.25, -3.78, -3.31]):
         cube(f"CareerSoftwareHouse_EntryStep_{index}", group, (0.15, 0.18 + index * 0.05, z), (4.9 - index * 0.7, 0.14, 0.42), mats["paper"], bevel=0.025)
@@ -771,9 +790,15 @@ def create_career_software_house(mats):
     cube("CareerSoftwareHouse_ProductTowerCap", group, (-4.7, 7.22, 1.18), (1.86, 0.32, 1.72), mats["dark"], bevel=0.028)
     cube("CareerSoftwareHouse_PeopleOpsTower", group, (2.85, 5.64, 1.26), (1.35, 2.38, 1.28), mats["stone"], bevel=0.035)
     cube("CareerSoftwareHouse_Skywalk", group, (-0.9, 5.28, 1.26), (6.05, 0.34, 0.56), mats["glass"], bevel=0.018)
+    cube("CareerSoftwareHouse_SkywalkLowerRail", group, (-0.9, 5.04, 0.88), (6.35, 0.12, 0.08), mats["screen"], bevel=0.004)
+    cube("CareerSoftwareHouse_RoofBoardroom", group, (-0.9, 6.02, -0.98), (4.7, 1.36, 1.28), mats["glass"], bevel=0.02)
+    cube("CareerSoftwareHouse_BoardroomCap", group, (-0.9, 6.82, -0.98), (5.18, 0.28, 1.64), mats["dark"], bevel=0.018)
     cube("CareerSoftwareHouse_RooftopCourt", group, (-0.88, 5.08, -0.95), (5.4, 0.14, 1.05), mats["paper"], bevel=0.016)
     for index, x in enumerate([-3.3, -1.65, 0, 1.65, 3.3]):
         cube(f"CareerSoftwareHouse_RooftopTeamPod_{index}", group, (x, 5.42, -0.95), (0.62, 0.42, 0.48), [mats["screen"], mats["mint"], mats["paper"], mats["purple"], mats["aqua"]][index], bevel=0.022)
+    for index, x in enumerate([-4.8, -3.2, -1.6, 0, 1.6, 3.2, 4.8]):
+        cube(f"CareerSoftwareHouse_FacadeFin_{index}", group, (x, 3.18, -2.36), (0.12, 3.2, 0.08), mats["screen" if index % 2 else "mint"], bevel=0.004)
+    cube("CareerSoftwareHouse_CampusSpine", group, (-0.55, 5.86, 2.74), (9.8, 0.18, 0.3), mats["wood"], bevel=0.012)
     for index, y in enumerate([4.9, 5.34, 5.78, 6.22]):
         cube(f"CareerSoftwareHouse_TowerWindow_{index}", group, (-5.38, y, 0.5), (0.08, 0.08, 0.66), [mats["screen"], mats["mint"], mats["glass"], mats["purple"]][index], bevel=0.003)
         cube(f"CareerSoftwareHouse_OpsTowerWindow_{index}", group, (2.24, y, 0.58), (0.08, 0.08, 0.58), [mats["mint"], mats["screen"], mats["aqua"], mats["glass"]][index], bevel=0.003)

@@ -514,8 +514,8 @@ export const zonePresentation = {
   },
   career: {
     respawn: { position: [114, 1.08, -10], heading: 1.4 },
-    camera: [135, 10, -58],
-    target: [116, 3, -60],
+    camera: [134, 12, -82],
+    target: [116, 4, -60],
     fov: 42,
   },
   skills: {
