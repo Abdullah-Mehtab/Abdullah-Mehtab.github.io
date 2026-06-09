@@ -608,6 +608,29 @@ def create_cv_records_archive(mats):
     cube("CvRecordsArchive_RightDigitalHall", group, (6.2, 3.98, 0.72), (2.35, 2.0, 3.7), mats["glass"], bevel=0.02)
     cube("CvRecordsArchive_LeftHallCap", group, (-6.2, 5.12, 0.72), (2.72, 0.28, 4.05), mats["wood"], bevel=0.022)
     cube("CvRecordsArchive_RightHallCap", group, (6.2, 5.12, 0.72), (2.72, 0.28, 4.05), mats["wood"], bevel=0.022)
+    cube("CvRecordsArchive_VaultStack", group, (-0.6, 6.34, 0.68), (6.8, 2.5, 3.9), mats["stone_shadow"], bevel=0.034)
+    cube("CvRecordsArchive_VaultCrown", group, (-0.6, 7.78, 0.68), (7.55, 0.34, 4.45), mats["wood"], bevel=0.026)
+    cube("CvRecordsArchive_ProtectedGlassCore", group, (-0.6, 6.28, -1.48), (4.3, 1.72, 0.08), mats["glass"], bevel=0.008)
+    cube("CvRecordsArchive_RecordsBridge", group, (-0.6, 5.86, 2.94), (12.7, 0.2, 0.32), mats["gold"], bevel=0.008)
+    for row, y in enumerate([5.52, 6.12, 6.72]):
+        cube(f"CvRecordsArchive_UpperLedgerBand_{row}", group, (-0.6, y, -1.32), (5.8, 0.075, 0.08), mats["gold"], bevel=0.004)
+        for col, x in enumerate([-2.75, -1.35, 0.05, 1.45, 2.85]):
+            cube(f"CvRecordsArchive_UpperLedgerCard_{row}_{col}", group, (x, y - 0.2, -1.4), (0.74, 0.34, 0.07), [mats["paper"], mats["foam"], mats["screen"], mats["gold"], mats["paper"]][(row + col) % 5], bevel=0.005)
+    for row, y in enumerate([5.52, 6.12, 6.72]):
+        cube(f"CvRecordsArchive_RearLedgerBand_{row}", group, (-0.6, y, 2.74), (5.8, 0.075, 0.08), mats["gold"], bevel=0.004)
+        for col, x in enumerate([-2.75, -1.35, 0.05, 1.45, 2.85]):
+            cube(f"CvRecordsArchive_RearLedgerCard_{row}_{col}", group, (x, y - 0.2, 2.82), (0.74, 0.34, 0.07), [mats["paper"], mats["foam"], mats["screen"], mats["gold"], mats["paper"]][(row + col + 2) % 5], bevel=0.005)
+    cube("CvRecordsArchive_RearVaultSeal", group, (-0.6, 6.06, 2.9), (1.1, 1.1, 0.06), mats["mint"], bevel=0.02)
+    cube("CvRecordsArchive_UpperVaultDoor", group, (-0.6, 5.92, -1.5), (1.72, 1.44, 0.06), mats["dark"], bevel=0.014)
+    cube("CvRecordsArchive_UpperVaultSeal", group, (-0.6, 6.06, -1.56), (0.72, 0.72, 0.045), mats["mint"], bevel=0.018)
+    for side, x in [(-1, -7.78), (1, 7.78)]:
+        cube(f"CvRecordsArchive_SecureStack_{side}", group, (x, 4.72, 0.68), (1.08, 4.7, 3.2), mats["stone_shadow"], bevel=0.03)
+        cube(f"CvRecordsArchive_SecureStackCap_{side}", group, (x, 7.18, 0.68), (1.5, 0.3, 3.7), mats["wood"], bevel=0.022)
+        for index, y in enumerate([3.64, 4.24, 4.84, 5.44, 6.04]):
+            cube(f"CvRecordsArchive_SecureStackRecord_{side}_{index}", group, (x - side * 0.58, y, -0.78), (0.08, 0.08, 1.36), [mats["paper"], mats["screen"], mats["gold"], mats["foam"], mats["mint"]][index], bevel=0.003)
+    for index, x in enumerate([-3.2, -1.6, 0, 1.6, 3.2]):
+        cube(f"CvRecordsArchive_RoofLedger_{index}", group, (x, 8.06 + (index % 2) * 0.12, -0.58), (0.78, 0.12, 3.6), mats["paper" if index % 2 else "foam"], rot=(0, 0, 0.06 - index * 0.025), bevel=0.006)
+    cube("CvRecordsArchive_DocumentStairAxis", group, (-0.6, 0.34, -5.16), (7.9, 0.08, 0.52), mats["screen"], bevel=0.006)
     for side, x in [(-1, -6.2), (1, 6.2)]:
         for y in [3.54, 4.18]:
             cube(f"CvRecordsArchive_UpperGallery_{side}_{y}", group, (x, y, -1.36), (1.58, 0.42, 0.08), mats["paper" if side < 0 else "screen"], bevel=0.006)
@@ -733,6 +756,19 @@ def create_behind_engineering_garage(mats):
     cube("BehindEngineeringGarage_SourceControlTower", group, (-4.55, 6.02, 1.18), (1.22, 2.9, 1.18), mats["dark"], bevel=0.03)
     cube("BehindEngineeringGarage_SourceControlCap", group, (-4.55, 7.58, 1.18), (1.66, 0.3, 1.52), mats["screen"], bevel=0.024)
     cube("BehindEngineeringGarage_AssemblyBridge", group, (-0.2, 5.72, 2.82), (8.6, 0.2, 0.32), mats["amber"], bevel=0.01)
+    cube("BehindEngineeringGarage_AssemblyCathedral", group, (-0.65, 6.05, 0.44), (7.8, 2.85, 3.42), mats["stone_shadow"], bevel=0.032)
+    cube("BehindEngineeringGarage_ControlRoomStack", group, (3.72, 5.72, -0.98), (2.2, 3.55, 2.3), mats["glass"], bevel=0.026)
+    cube("BehindEngineeringGarage_ControlRoomCap", group, (3.72, 7.66, -0.98), (2.72, 0.28, 2.74), mats["wood"], bevel=0.02)
+    cube("BehindEngineeringGarage_SourceSpireCore", group, (-4.55, 8.92, 1.18), (0.7, 2.65, 0.7), mats["dark"], bevel=0.02)
+    cube("BehindEngineeringGarage_SourceSpireCap", group, (-4.55, 10.34, 1.18), (1.08, 0.2, 1.08), mats["screen"], bevel=0.016)
+    cube("BehindEngineeringGarage_TestRigDeck", group, (4.9, 3.15, -3.18), (4.8, 0.22, 1.05), mats["dark"], bevel=0.018)
+    cube("BehindEngineeringGarage_TestRigGlow", group, (4.9, 3.32, -3.78), (3.82, 0.08, 0.07), mats["amber"], bevel=0.004)
+    for index, x in enumerate([-5.8, -3.0, -0.2, 2.6, 5.4]):
+        cube(f"BehindEngineeringGarage_RoofTruss_{index}", group, (x, 7.88, 0.74), (0.16, 0.24, 4.25), mats["amber"], rot=(0, 0, -0.12 + index * 0.06), bevel=0.006)
+    for index, x in enumerate([-5.8, -3.0, -0.2, 2.6, 5.4]):
+        cube(f"BehindEngineeringGarage_ControlPulse_{index}", group, (x, 6.72, -2.34), (0.7, 0.08, 0.07), [mats["screen"], mats["mint"], mats["purple"], mats["amber"], mats["aqua"]][index], bevel=0.003)
+    for index, x in enumerate([-3.2, -1.6, 0, 1.6, 3.2]):
+        cube(f"BehindEngineeringGarage_ServiceMezzanine_{index}", group, (x, 4.72, 3.04), (0.8, 0.18, 0.24), mats["screen" if index % 2 else "amber"], bevel=0.004)
     for index, x in enumerate([-2.8, -1.6, -0.4, 0.8]):
         cube(f"BehindEngineeringGarage_LoftTrace_{index}", group, (x, 5.36, -1.52), (0.62, 0.08, 0.07), [mats["screen"], mats["mint"], mats["purple"], mats["amber"]][index], bevel=0.003)
     for index, y in enumerate([5.08, 5.58, 6.08, 6.58]):
