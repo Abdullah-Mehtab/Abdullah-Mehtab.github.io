@@ -4091,6 +4091,13 @@ function assertVerification(result) {
     }
     return;
   }
+  if (result.goalGate === 'gate-4e-f-route-composition-pass') {
+    assertGate4EFRouteCompositionVerification(result, failures);
+    if (failures.length) {
+      throw new Error(`Play verification failed: ${failures.join('; ')}`);
+    }
+    return;
+  }
   if (result.goalGate === 'gate-4b5-north-ridge') {
     assertGate4B5NorthRidgeVerification(result, failures);
     if (failures.length) {
@@ -5406,7 +5413,8 @@ function assertGate3RVerticalSliceVerification(result, failures, options = {}) {
   if (!result.highQuality?.ready || (result.highQuality?.canvasSample || 0) <= 0) failures.push('Gate 3R high quality probe failed: canvas did not render');
   if ((result.highQuality?.calls || 0) > 300) failures.push(`Gate 3R high quality draw-call budget exceeded: ${result.highQuality?.calls || 0}`);
   const gate4eExpandedArchitecture = result.goalGate === 'gate-4e-c-monumental-scale-pass'
-    || result.goalGate === 'gate-4e-d-site-integration-life-pass';
+    || result.goalGate === 'gate-4e-d-site-integration-life-pass'
+    || result.goalGate === 'gate-4e-f-route-composition-pass';
   const highQualityTriangleBudget = gate4eExpandedArchitecture ? 330000 : 210000;
   if ((result.highQuality?.triangles || 0) > highQualityTriangleBudget) failures.push(`Gate 3R high quality triangle budget exceeded: ${result.highQuality?.triangles || 0}`);
   if (!result.mobile?.ready || (result.mobile?.canvasSample || 0) <= 0) failures.push('Gate 3R mobile probe failed: canvas did not render');
@@ -6213,8 +6221,8 @@ function assertGate4ELandmarkScalePassVerification(result, failures, expectedGoa
   }
 }
 
-function assertGate4EDSiteIntegrationLifePassVerification(result, failures) {
-  assertGate4ELandmarkScalePassVerification(result, failures, 'gate-4e-d-site-integration-life-pass');
+function assertGate4EDSiteIntegrationLifePassVerification(result, failures, expectedGoal = 'gate-4e-d-site-integration-life-pass') {
+  assertGate4ELandmarkScalePassVerification(result, failures, expectedGoal);
 
   const life = result.gate4dLife?.counts || {};
   const placement = result.gate3rPlacement || {};
@@ -6224,6 +6232,34 @@ function assertGate4EDSiteIntegrationLifePassVerification(result, failures) {
   if ((placement.byKind?.['gate4d-life-contained-motion'] || 0) < 24) {
     failures.push(`Gate 4-E-D placement failed: contained motions=${placement.byKind?.['gate4d-life-contained-motion'] || 0}/24`);
   }
+}
+
+function assertGate4EFRouteCompositionVerification(result, failures) {
+  assertGate4EDSiteIntegrationLifePassVerification(result, failures, 'gate-4e-f-route-composition-pass');
+
+  const route = result.routeComposition || {};
+  const placement = result.gate3rPlacement || {};
+  const byKind = placement.byKind || {};
+  const byFootprintKind = placement.byFootprintKind || {};
+
+  if ((route.gate4eRouteAnchors || 0) < 16) failures.push(`Gate 4-E-F route composition failed: gate4eRouteAnchors=${route.gate4eRouteAnchors || 0}/16`);
+  if ((route.authoredAssets || 0) < 16) failures.push(`Gate 4-E-F route composition failed: authoredAssets=${route.authoredAssets || 0}/16`);
+  if ((route.vistaKits || 0) < 4) failures.push(`Gate 4-E-F route composition failed: vistaKits=${route.vistaKits || 0}/4`);
+  if ((route.routeStoryMarkers || 0) < 3) failures.push(`Gate 4-E-F route composition failed: routeStoryMarkers=${route.routeStoryMarkers || 0}/3`);
+  if ((route.plazaEdgeKits || 0) < 3) failures.push(`Gate 4-E-F route composition failed: plazaEdgeKits=${route.plazaEdgeKits || 0}/3`);
+  if ((route.bollardRuns || 0) < 2) failures.push(`Gate 4-E-F route composition failed: bollardRuns=${route.bollardRuns || 0}/2`);
+  if ((route.splitterIslands || 0) < 2) failures.push(`Gate 4-E-F route composition failed: splitterIslands=${route.splitterIslands || 0}/2`);
+  if ((route.coastalLoopStaging || 0) < 8) failures.push(`Gate 4-E-F route composition failed: coastalLoopStaging=${route.coastalLoopStaging || 0}/8`);
+  if ((route.guideTiles || 0) !== 0) failures.push(`Gate 4-E-F route composition failed: guideTiles=${route.guideTiles || 0}`);
+  if ((byKind['gate4e-route-composition'] || 0) < 16) {
+    failures.push(`Gate 4-E-F placement failed: route composition placements=${byKind['gate4e-route-composition'] || 0}/16`);
+  }
+  if ((byFootprintKind['gate4e-route-composition-footprint'] || 0) < 16) {
+    failures.push(`Gate 4-E-F placement failed: route composition footprints=${byFootprintKind['gate4e-route-composition-footprint'] || 0}/16`);
+  }
+  if ((placement.roadIntrusions || 0) !== 0) failures.push(`Gate 4-E-F placement failed: roadIntrusions=${placement.roadIntrusions || 0}`);
+  if ((placement.footprintIntrusions || 0) !== 0) failures.push(`Gate 4-E-F placement failed: footprintIntrusions=${placement.footprintIntrusions || 0}`);
+  if ((placement.shorelineFootprintIntrusions || 0) !== 0) failures.push(`Gate 4-E-F placement failed: shorelineFootprintIntrusions=${placement.shorelineFootprintIntrusions || 0}`);
 }
 
 function assertAuthoredDistrictAsset(result, assetName, label, failures) {

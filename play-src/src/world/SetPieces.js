@@ -180,7 +180,10 @@ export class SetPieces {
       coastalLoopStaging: 0,
       eastVistaAnchors: 0,
       authoredAssets: 0,
-      guideTiles: 0
+      guideTiles: 0,
+      gate4eRouteAnchors: 0,
+      routeLanterns: 0,
+      signalSpires: 0
     };
     this.meadowCompositionStats = {
       pockets: 0,
@@ -689,6 +692,9 @@ export class SetPieces {
       }
       if (this.world.gate4dLifeMode) {
         this.createGate4DLifeInteractionPass();
+      }
+      if (this.world.gate4eRouteCompositionMode) {
+        this.createGate4ERouteCompositionPass();
       }
       this.applyQuality();
       return;
@@ -1746,6 +1752,84 @@ export class SetPieces {
 
     stats.signs = 0;
     stats.lamps = 0;
+  }
+
+  createGate4ERouteCompositionPass() {
+    const group = new THREE.Group();
+    group.name = 'GATE4E_Route_Composition_Pass';
+
+    const placements = [
+      { name: 'Launch_Run_Left_Frame', asset: 'EnvPolishRouteVistaKit', path: 'coastal-loop', segment: 0, t: 0.42, lateral: -8.6, scale: 0.72, stat: 'vistaKits', footprint: [4.8, 3.4] },
+      { name: 'Campus_Boulevard_South_Story', asset: 'EnvPolishRouteStoryMarker', path: 'campus-boulevard', segment: 1, t: 0.48, lateral: -8.2, scale: 0.68, stat: 'routeStoryMarkers', footprint: [3.4, 2.8] },
+      { name: 'Campus_Boulevard_FCC_Approach_Edge', asset: 'EnvPolishPlazaEdgeKit', path: 'campus-boulevard', segment: 3, t: 0.58, lateral: 8.6, scale: 0.72, stat: 'plazaEdgeKits', footprint: [5.2, 2.8] },
+      { name: 'Security_Spur_Entry_Vista', asset: 'EnvPolishRouteVistaKit', path: 'security-spur', segment: 0, t: 0.52, lateral: -8.2, scale: 0.7, stat: 'vistaKits', footprint: [4.8, 3.4] },
+      { name: 'Security_Spur_Exit_Bollards', asset: 'EnvPolishChevronBollardRun', path: 'security-spur', segment: 1, t: 0.52, lateral: -8.0, scale: 0.66, stat: 'bollardRuns', footprint: [5.8, 2.2] },
+      { name: 'Security_Spur_Field_Story', asset: 'EnvPolishRouteStoryMarker', path: 'security-spur', segment: 1, t: 0.78, lateral: -8.4, scale: 0.66, stat: 'routeStoryMarkers', footprint: [3.4, 2.8] },
+      { name: 'Gallery_Run_Splitter_Frame', asset: 'EnvPolishRouteSplitterIsland', path: 'coastal-loop', segment: 1, t: 0.45, lateral: -8.8, scale: 0.7, stat: 'splitterIslands', footprint: [4.4, 3.2] },
+      { name: 'Gallery_Run_Plaza_Edge', asset: 'EnvPolishPlazaEdgeKit', path: 'coastal-loop', segment: 2, t: 0.48, lateral: -9.0, scale: 0.7, stat: 'plazaEdgeKits', footprint: [5.2, 2.8] },
+      { name: 'Harbor_Approach_Vista', asset: 'EnvPolishRouteVistaKit', path: 'coastal-loop', segment: 3, t: 0.62, lateral: -8.7, scale: 0.68, stat: 'vistaKits', footprint: [4.8, 3.4] },
+      { name: 'North_Ridge_Signal_Spire', asset: 'EnvPolishSignalSpire', path: 'coastal-loop', segment: 5, t: 0.45, lateral: -8.8, scale: 0.5, stat: 'signalSpires', footprint: [3.2, 3.2] },
+      { name: 'Awards_Ridge_Story_Marker', asset: 'EnvPolishRouteStoryMarker', path: 'coastal-loop', segment: 6, t: 0.52, lateral: -8.6, scale: 0.66, stat: 'routeStoryMarkers', footprint: [3.4, 2.8] },
+      { name: 'FCC_West_Loop_Splitter', asset: 'EnvPolishRouteSplitterIsland', path: 'coastal-loop', segment: 8, t: 0.42, lateral: -9.2, scale: 0.66, stat: 'splitterIslands', footprint: [4.4, 3.2] },
+      { name: 'South_Run_Vista', asset: 'EnvPolishRouteVistaKit', path: 'coastal-loop', segment: 10, t: 0.5, lateral: 8.4, scale: 0.68, stat: 'vistaKits', footprint: [4.8, 3.4] },
+      { name: 'Behind_Run_Bollard_Frame', asset: 'EnvPolishChevronBollardRun', path: 'coastal-loop', segment: 11, t: 0.48, lateral: 9.2, scale: 0.66, stat: 'bollardRuns', footprint: [5.8, 2.2] },
+      { name: 'Farm_Service_Lantern', asset: 'EnvPolishRouteLantern', path: 'farm-service', segment: 0, t: 0.44, lateral: 9.5, scale: 0.62, stat: 'routeLanterns', footprint: [2.2, 2.2] },
+      { name: 'Farm_Service_Plaza_Edge', asset: 'EnvPolishPlazaEdgeKit', path: 'farm-service', segment: 0, t: 0.72, lateral: 9.5, scale: 0.66, stat: 'plazaEdgeKits', footprint: [5.2, 2.8] }
+    ];
+
+    for (const spec of placements) this.addGate4ERouteCompositionAsset(group, spec);
+
+    mergeStaticMeshesInGroup(group, {
+      namePrefix: 'GATE4E_route_composition',
+      cellSize: 72
+    });
+    group.userData.routeCompositionStats = { ...this.routeCompositionStats };
+    this.registerQualityGroup(group, 'secondary');
+    this.registerBroadSetPieceBatches('routeComposition', group, 'GATE4E_route_composition', 'routeCompositionRadius');
+    this.world.scene.add(group);
+  }
+
+  addGate4ERouteCompositionAsset(group, spec) {
+    const point = this.routeCompositionPoint(spec.path, spec.segment, spec.t, spec.lateral);
+    if (!point) return false;
+    const rotation = point.rotation + (spec.rotationOffset || 0);
+    const placed = this.addRouteCompositionAsset(group, spec.asset, point.x, point.z, rotation, spec.scale, spec.stat);
+    if (!placed) return false;
+
+    this.routeCompositionStats.gate4eRouteAnchors += 1;
+    if (spec.path === 'coastal-loop') this.routeCompositionStats.coastalLoopStaging += 1;
+    this.recordGate3RPlacement('gate4e-route-composition', `GATE4E_${spec.name}`, point.x, point.z, { minClearance: spec.minClearance || 3.6 });
+    if (spec.footprint) {
+      const [width, depth] = spec.footprint;
+      this.recordGate3RFootprintPlacement(
+        'gate4e-route-composition-footprint',
+        `GATE4E_${spec.name}_Footprint`,
+        point.x,
+        point.z,
+        width * spec.scale,
+        depth * spec.scale,
+        rotation,
+        spec.footprintClearance || 2.7
+      );
+    }
+    return true;
+  }
+
+  routeCompositionPoint(pathId, segmentIndex, t, lateral) {
+    const path = findPath(pathId);
+    const points = path.points || [];
+    const segmentCount = path.closed ? points.length : points.length - 1;
+    if (segmentCount <= 0) return null;
+    const index = THREE.MathUtils.clamp(Math.floor(segmentIndex), 0, segmentCount - 1);
+    const [ax, az] = points[index];
+    const [bx, bz] = points[(index + 1) % points.length];
+    const progress = THREE.MathUtils.clamp(t, 0, 1);
+    const dx = bx - ax;
+    const dz = bz - az;
+    const rotation = Math.atan2(dx, dz);
+    const x = ax + dx * progress + Math.cos(rotation) * lateral;
+    const z = az + dz * progress - Math.sin(rotation) * lateral;
+    return { x, z, rotation };
   }
 
   createGate4DLifeInteractionPass() {
