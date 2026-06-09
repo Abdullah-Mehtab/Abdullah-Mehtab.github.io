@@ -532,14 +532,14 @@ export const zonePresentation = {
   },
   cv: {
     respawn: { position: [-52, 1.08, -98], heading: 2.94 },
-    camera: [-40, 9, -106],
-    target: [-36, 3, -96],
+    camera: [-58, 13, -116],
+    target: [-36, 4, -90],
     fov: 42,
   },
   todo: {
     respawn: { position: [-111.2, 1.08, 11.7], heading: 0.24 },
-    camera: [-116, 10, 10],
-    target: [-96, 3, 8],
+    camera: [-126, 13, 24],
+    target: [-96, 4, 4],
     fov: 42,
   },
   circuit: {

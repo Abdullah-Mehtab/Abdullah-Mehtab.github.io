@@ -6196,6 +6196,12 @@ function assertGate4ELandmarkScalePassVerification(result, failures) {
   if (result.mobileSavedPreference?.quality !== 'high') {
     failures.push(`Gate 4-E explicit mobile high quality failed: quality=${result.mobileSavedPreference?.quality || 'none'}`);
   }
+  const tightPresentationShots = (result.zonePresentation?.samples || [])
+    .filter((sample) => sample.id !== 'data-pier' && sample.cameraDistance < 18)
+    .map((sample) => `${sample.id}:${sample.cameraDistance}`);
+  if (tightPresentationShots.length) {
+    failures.push(`Gate 4-E composition failed: presentation camera too close=${tightPresentationShots.join(', ')}`);
+  }
 }
 
 function assertAuthoredDistrictAsset(result, assetName, label, failures) {
