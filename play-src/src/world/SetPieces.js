@@ -529,6 +529,13 @@ export class SetPieces {
         testBenches: 0,
         cableTrays: 0,
         sparkEmitters: 0,
+        forgePortals: 0,
+        furnaceChimneys: 0,
+        sawtoothRoofs: 0,
+        craneBridges: 0,
+        publicGalleries: 0,
+        routeFacades: 0,
+        warmFacadeBands: 0,
         groundPlates: 0,
         signs: 0,
         lamps: 0
@@ -1561,6 +1568,13 @@ export class SetPieces {
       stats.testBenches += 1;
       stats.cableTrays += 1;
       stats.projectRacks += 3;
+      stats.forgePortals += 1;
+      stats.furnaceChimneys += 1;
+      stats.sawtoothRoofs += 1;
+      stats.craneBridges += 1;
+      stats.publicGalleries += 1;
+      stats.routeFacades += 1;
+      stats.warmFacadeBands += 6;
     }
 
     stats.assemblyRings = stats.foundryBuildings;

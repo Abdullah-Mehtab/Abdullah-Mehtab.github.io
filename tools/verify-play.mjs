@@ -4106,6 +4106,13 @@ function assertVerification(result) {
     }
     return;
   }
+  if (result.goalGate === 'gate-4e-h-projects-foundry-readability-pass') {
+    assertGate4EHProjectsFoundryReadabilityVerification(result, failures);
+    if (failures.length) {
+      throw new Error(`Play verification failed: ${failures.join('; ')}`);
+    }
+    return;
+  }
   if (result.goalGate === 'gate-4b5-north-ridge') {
     assertGate4B5NorthRidgeVerification(result, failures);
     if (failures.length) {
@@ -5423,7 +5430,8 @@ function assertGate3RVerticalSliceVerification(result, failures, options = {}) {
   const gate4eExpandedArchitecture = result.goalGate === 'gate-4e-c-monumental-scale-pass'
     || result.goalGate === 'gate-4e-d-site-integration-life-pass'
     || result.goalGate === 'gate-4e-f-route-composition-pass'
-    || result.goalGate === 'gate-4e-g-cybersecurity-craft-pass';
+    || result.goalGate === 'gate-4e-g-cybersecurity-craft-pass'
+    || result.goalGate === 'gate-4e-h-projects-foundry-readability-pass';
   const highQualityTriangleBudget = gate4eExpandedArchitecture ? 330000 : 210000;
   if ((result.highQuality?.triangles || 0) > highQualityTriangleBudget) failures.push(`Gate 3R high quality triangle budget exceeded: ${result.highQuality?.triangles || 0}`);
   if (!result.mobile?.ready || (result.mobile?.canvasSample || 0) <= 0) failures.push('Gate 3R mobile probe failed: canvas did not render');
@@ -6286,6 +6294,28 @@ function assertGate4EGCybersecurityCraftVerification(result, failures) {
   if ((sentinel.threatIntelMasts || 0) < 1) failures.push(`Gate 4-E-G Sentinel failed: threatIntelMasts=${sentinel.threatIntelMasts || 0}/1`);
   if ((sentinel.blueTeamBridges || 0) < 1) failures.push(`Gate 4-E-G Sentinel failed: blueTeamBridges=${sentinel.blueTeamBridges || 0}/1`);
   if ((sentinel.commandCatwalks || 0) < 1) failures.push(`Gate 4-E-G Sentinel failed: commandCatwalks=${sentinel.commandCatwalks || 0}/1`);
+}
+
+function assertGate4EHProjectsFoundryReadabilityVerification(result, failures) {
+  assertGate4EFRouteCompositionVerification(result, failures, 'gate-4e-h-projects-foundry-readability-pass');
+  assertAuthoredDistrictAsset(result, 'EnvPolishSecurityOperationsGate', 'Gate 4-E-G Security operations architecture', failures);
+  assertGate4DSentinelSocTower(result, failures);
+  assertGate4DProjectsFoundryBuilding(result, failures);
+
+  const security = result.securityLab || {};
+  const sentinel = result.gate4b5?.sentinel || {};
+  const projects = result.gate4b4?.projects || {};
+
+  if ((security.sourceAssets || 0) < 1) failures.push(`Gate 4-E-H Security carry-forward failed: sourceAssets=${security.sourceAssets || 0}/1`);
+  if ((security.operationsGates || 0) < 1) failures.push(`Gate 4-E-H Security carry-forward failed: operationsGates=${security.operationsGates || 0}/1`);
+  if ((sentinel.shieldGateFrames || 0) < 1) failures.push(`Gate 4-E-H Sentinel carry-forward failed: shieldGateFrames=${sentinel.shieldGateFrames || 0}/1`);
+  if ((projects.forgePortals || 0) < 1) failures.push(`Gate 4-E-H Projects failed: forgePortals=${projects.forgePortals || 0}/1`);
+  if ((projects.furnaceChimneys || 0) < 1) failures.push(`Gate 4-E-H Projects failed: furnaceChimneys=${projects.furnaceChimneys || 0}/1`);
+  if ((projects.sawtoothRoofs || 0) < 1) failures.push(`Gate 4-E-H Projects failed: sawtoothRoofs=${projects.sawtoothRoofs || 0}/1`);
+  if ((projects.craneBridges || 0) < 1) failures.push(`Gate 4-E-H Projects failed: craneBridges=${projects.craneBridges || 0}/1`);
+  if ((projects.publicGalleries || 0) < 1) failures.push(`Gate 4-E-H Projects failed: publicGalleries=${projects.publicGalleries || 0}/1`);
+  if ((projects.routeFacades || 0) < 1) failures.push(`Gate 4-E-H Projects failed: routeFacades=${projects.routeFacades || 0}/1`);
+  if ((projects.warmFacadeBands || 0) < 6) failures.push(`Gate 4-E-H Projects failed: warmFacadeBands=${projects.warmFacadeBands || 0}/6`);
 }
 
 function assertAuthoredDistrictAsset(result, assetName, label, failures) {
