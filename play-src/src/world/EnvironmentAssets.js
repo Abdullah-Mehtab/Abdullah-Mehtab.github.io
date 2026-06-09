@@ -2,6 +2,7 @@
 // ABOUTME: Keeps the FCC/S-block landmark available while the island terrain is generated in code.
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 import * as THREE from 'three';
+import environmentUrl from '../../assets/models/environment/play-environment.glb?url';
 import runtimePropsUrl from '../../assets/models/world/runtime-props.glb?url';
 import polishPropsUrl from '../../assets/models/world/polish-props.glb?url';
 import { mergeStaticMeshesInGroup } from './StaticBatching.js';
@@ -10,6 +11,8 @@ export async function loadEnvironmentAssets() {
   const loader = new GLTFLoader();
   const packs = new Map();
   const templates = new Map();
+
+  await loadPack(loader, 'baseEnvironment', environmentUrl, packs, templates);
 
   await Promise.all([
     loadPack(loader, 'runtimeProps', runtimePropsUrl, packs, templates),

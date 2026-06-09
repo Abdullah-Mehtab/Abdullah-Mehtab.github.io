@@ -2283,6 +2283,11 @@ export class SetPieces {
     this.gate3rPad(group, ...point(-10.8, 5.4), 5.2, 4.2, this.world.materials.stoneRoad, 0.132, 'GATE3R_Security_Server_Deck_B', scan.rotation, 'security-pad', 8);
     stats.floorPads += 3;
 
+    const [labX, labZ] = point(0, 7.8);
+    if (this.addPolishAsset(group, 'EnvSecurityGate', labX, labZ, scan.rotation, 1.05)) {
+      this.recordGate3RPlacement('security-operations-gate', 'GATE4E_Security_Operations_Gate_Architecture', labX, labZ, { minClearance: 5.0 });
+    }
+
     this.securityScanWaveField(group, scan.x, scan.z, scan.rotation);
     this.createGate3RSecurityPackets(group, zone, scan);
 
