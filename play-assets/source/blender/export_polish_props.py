@@ -1156,6 +1156,24 @@ def create_todo_planning_studio(mats):
         for row, y in enumerate([1.06, 1.58, 2.1]):
             material = [mats["paper"], mats["mint"], mats["purple"], mats["amber"], mats["aqua"], mats["foam"]][(column + row) % 6]
             cube(f"TodoPlanningStudio_KanbanCard_{column}_{row}", group, (x, y, -2.34), (0.62, 0.34, 0.07), material, bevel=0.005)
+    cube("TodoPlanningStudio_RouteKanbanAtrium", group, (0.0, 2.42, -4.28), (8.82, 3.12, 0.14), mats["dark"], bevel=0.032)
+    cube("TodoPlanningStudio_RouteKanbanGlass", group, (0.0, 2.38, -4.38), (8.18, 2.48, 0.08), mats["glass"], bevel=0.012)
+    cube("TodoPlanningStudio_RouteKanbanHeader", group, (0.0, 3.96, -4.44), (8.62, 0.3, 0.08), mats["wood"], bevel=0.01)
+    cube("TodoPlanningStudio_RouteKanbanFooter", group, (0.0, 0.78, -4.44), (8.52, 0.2, 0.08), mats["stone_shadow"], bevel=0.01)
+    for index, x in enumerate([-2.76, 0.0, 2.76]):
+        cube(f"TodoPlanningStudio_RouteKanbanColumn_{index}", group, (x, 2.36, -4.51), (2.34, 2.2, 0.06), [mats["screen"], mats["mint"], mats["purple"]][index], bevel=0.006)
+        cube(f"TodoPlanningStudio_RouteKanbanColumnHeader_{index}", group, (x, 3.36, -4.58), (1.72, 0.2, 0.06), [mats["paper"], mats["amber"], mats["aqua"]][index], bevel=0.004)
+        for row, y in enumerate([1.36, 1.86, 2.36, 2.86]):
+            card_material = [mats["paper"], mats["foam"], mats["amber"], mats["mint"], mats["aqua"], mats["purple"]][(index * 2 + row) % 6]
+            cube(f"TodoPlanningStudio_RouteKanbanTask_{index}_{row}", group, (x, y, -4.62), (1.52, 0.28, 0.06), card_material, bevel=0.004)
+    cylinder("TodoPlanningStudio_PlanningClockDisk", group, (0.0, 4.72, -4.54), 0.58, 0.08, mats["amber"], vertices=20, bevel=0.01)
+    cube("TodoPlanningStudio_PlanningClockHandVertical", group, (0.0, 4.72, -4.62), (0.06, 0.78, 0.05), mats["dark"], bevel=0.003)
+    cube("TodoPlanningStudio_PlanningClockHandHorizontal", group, (0.0, 4.72, -4.63), (0.74, 0.06, 0.05), mats["dark"], bevel=0.003)
+    cube("TodoPlanningStudio_SprintReviewCanopy", group, (0.0, 4.28, -4.08), (9.72, 0.28, 0.74), mats["stone_shadow"], bevel=0.018)
+    cube("TodoPlanningStudio_SprintReviewCanopyGlow", group, (0.0, 4.13, -4.48), (8.2, 0.08, 0.06), mats["mint"], bevel=0.004)
+    cube("TodoPlanningStudio_DeliveryLaneTower", group, (7.44, 3.16, -3.62), (0.88, 4.65, 1.08), mats["stone_shadow"], bevel=0.026)
+    for index, y in enumerate([1.34, 1.9, 2.46, 3.02, 3.58, 4.14]):
+        cube(f"TodoPlanningStudio_DeliveryLanePulse_{index}", group, (7.0, y, -4.18), (0.08, 0.12, 0.62), [mats["screen"], mats["paper"], mats["amber"], mats["mint"], mats["aqua"], mats["purple"]][index], bevel=0.003)
     for index, x in enumerate([-4.2, -1.35, 1.5]):
         cube(f"TodoPlanningStudio_ReviewTable_{index}", group, (x, 0.72, -0.78), (2.2, 0.22, 0.82), mats["stone_shadow"], bevel=0.025)
         cube(f"TodoPlanningStudio_ReviewLane_{index}", group, (x, 0.94, -0.78), (1.7, 0.08, 0.08), [mats["purple"], mats["screen"], mats["amber"]][index], bevel=0.004)

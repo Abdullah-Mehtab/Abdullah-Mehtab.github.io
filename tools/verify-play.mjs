@@ -4190,6 +4190,13 @@ function assertVerification(result) {
     }
     return;
   }
+  if (result.goalGate === 'gate-4e-t-todo-planning-studio-readability-pass') {
+    assertGate4ETTodoPlanningStudioReadabilityVerification(result, failures);
+    if (failures.length) {
+      throw new Error(`Play verification failed: ${failures.join('; ')}`);
+    }
+    return;
+  }
   if (result.goalGate === 'gate-4b5-north-ridge') {
     assertGate4B5NorthRidgeVerification(result, failures);
     if (failures.length) {
@@ -5309,7 +5316,8 @@ function isGate4EExpandedArchitectureGate(goalGate) {
     || goalGate === 'gate-4e-p-skills-data-center-readability-pass'
     || goalGate === 'gate-4e-q-cv-records-archive-readability-pass'
     || goalGate === 'gate-4e-r-career-software-campus-readability-pass'
-    || goalGate === 'gate-4e-s-circuit-race-control-readability-pass';
+    || goalGate === 'gate-4e-s-circuit-race-control-readability-pass'
+    || goalGate === 'gate-4e-t-todo-planning-studio-readability-pass';
 }
 
 function assertGate3RVerticalSliceVerification(result, failures, options = {}) {
@@ -5323,7 +5331,8 @@ function assertGate3RVerticalSliceVerification(result, failures, options = {}) {
     || result.goalGate === 'gate-4e-p-skills-data-center-readability-pass'
     || result.goalGate === 'gate-4e-q-cv-records-archive-readability-pass'
     || result.goalGate === 'gate-4e-r-career-software-campus-readability-pass'
-    || result.goalGate === 'gate-4e-s-circuit-race-control-readability-pass';
+    || result.goalGate === 'gate-4e-s-circuit-race-control-readability-pass'
+    || result.goalGate === 'gate-4e-t-todo-planning-studio-readability-pass';
   const blockout = result.blockout || {};
   const blockoutSetPieces = blockout.setPieces || {};
   const slice = result.verticalSlice || blockout.verticalSlice || {};
@@ -6645,8 +6654,8 @@ function assertGate4ERCareerSoftwareCampusReadabilityVerification(result, failur
   if ((career.lamps || 0) !== 0) failures.push(`Gate 4-E-R Career failed: rejected lamps=${career.lamps || 0}`);
 }
 
-function assertGate4ESCircuitRaceControlReadabilityVerification(result, failures) {
-  assertGate4ERCareerSoftwareCampusReadabilityVerification(result, failures, 'gate-4e-s-circuit-race-control-readability-pass');
+function assertGate4ESCircuitRaceControlReadabilityVerification(result, failures, expectedGoal = 'gate-4e-s-circuit-race-control-readability-pass') {
+  assertGate4ERCareerSoftwareCampusReadabilityVerification(result, failures, expectedGoal);
   assertGate4DCircuitTimeTrialGate(result, failures);
 
   const circuit = result.gate4b5?.circuit || {};
@@ -6658,6 +6667,20 @@ function assertGate4ESCircuitRaceControlReadabilityVerification(result, failures
   if ((circuit.checkeredTimingPanels || 0) < 12) failures.push(`Gate 4-E-S Circuit failed: checkeredTimingPanels=${circuit.checkeredTimingPanels || 0}/12`);
   if ((circuit.signs || 0) !== 0) failures.push(`Gate 4-E-S Circuit failed: rejected signs=${circuit.signs || 0}`);
   if ((circuit.lamps || 0) !== 0) failures.push(`Gate 4-E-S Circuit failed: rejected lamps=${circuit.lamps || 0}`);
+}
+
+function assertGate4ETTodoPlanningStudioReadabilityVerification(result, failures) {
+  assertGate4ESCircuitRaceControlReadabilityVerification(result, failures, 'gate-4e-t-todo-planning-studio-readability-pass');
+  assertGate4DTodoPlanningStudio(result, failures);
+
+  const todo = result.gate4b3?.todo || {};
+  if ((todo.routeKanbanAtriums || 0) < 1) failures.push(`Gate 4-E-T Todo failed: routeKanbanAtriums=${todo.routeKanbanAtriums || 0}/1`);
+  if ((todo.routeKanbanColumns || 0) < 3) failures.push(`Gate 4-E-T Todo failed: routeKanbanColumns=${todo.routeKanbanColumns || 0}/3`);
+  if ((todo.planningClockDisks || 0) < 1) failures.push(`Gate 4-E-T Todo failed: planningClockDisks=${todo.planningClockDisks || 0}/1`);
+  if ((todo.sprintReviewCanopies || 0) < 1) failures.push(`Gate 4-E-T Todo failed: sprintReviewCanopies=${todo.sprintReviewCanopies || 0}/1`);
+  if ((todo.deliveryLaneTowers || 0) < 1) failures.push(`Gate 4-E-T Todo failed: deliveryLaneTowers=${todo.deliveryLaneTowers || 0}/1`);
+  if ((todo.signs || 0) !== 0) failures.push(`Gate 4-E-T Todo failed: rejected signs=${todo.signs || 0}`);
+  if ((todo.lamps || 0) !== 0) failures.push(`Gate 4-E-T Todo failed: rejected lamps=${todo.lamps || 0}`);
 }
 
 function assertAuthoredDistrictAsset(result, assetName, label, failures) {

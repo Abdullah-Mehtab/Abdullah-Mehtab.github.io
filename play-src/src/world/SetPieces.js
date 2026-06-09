@@ -527,6 +527,11 @@ export class SetPieces {
         statusPips: 0,
         containedCardStacks: 0,
         groundInlays: 0,
+        routeKanbanAtriums: 0,
+        routeKanbanColumns: 0,
+        planningClockDisks: 0,
+        sprintReviewCanopies: 0,
+        deliveryLaneTowers: 0,
         signs: 0,
         lamps: 0
       },
@@ -1596,6 +1601,11 @@ export class SetPieces {
       stats.statusPips += 6;
       stats.containedCardStacks += 2;
       stats.groundInlays += 3;
+      stats.routeKanbanAtriums += 1;
+      stats.routeKanbanColumns += 3;
+      stats.planningClockDisks += 1;
+      stats.sprintReviewCanopies += 1;
+      stats.deliveryLaneTowers += 1;
       stats.queueRails += 3;
     }
 
