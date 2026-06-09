@@ -656,12 +656,22 @@ def create_behind_engineering_garage(mats):
     group = root("EnvPolishBehindEngineeringGarage")
     cube("BehindEngineeringGarage_ServiceYard", group, (0, 0.09, -0.18), (17.8, 0.18, 10.2), mats["stone"], bevel=0.055)
     cube("BehindEngineeringGarage_MainBay", group, (-0.7, 2.03, 0.42), (10.9, 3.85, 5.2), mats["stone_shadow"], bevel=0.05)
+    cube("BehindEngineeringGarage_UpperAssemblyHall", group, (-0.88, 4.48, 0.36), (8.9, 1.72, 4.18), mats["stone_shadow"], bevel=0.04)
     cube("BehindEngineeringGarage_PrototypeWing", group, (5.85, 1.52, 0.48), (3.55, 2.85, 4.65), mats["dark"], bevel=0.04)
+    cube("BehindEngineeringGarage_PrototypeTower", group, (5.92, 3.6, 0.52), (2.28, 3.72, 3.44), mats["dark"], bevel=0.035)
     cube("BehindEngineeringGarage_ToolWallWing", group, (-6.35, 1.42, 0.68), (3.05, 2.65, 4.45), mats["wood"], bevel=0.04)
+    cube("BehindEngineeringGarage_ToolArchiveTower", group, (-6.52, 3.28, 0.62), (1.82, 3.62, 3.58), mats["wood"], bevel=0.035)
     cube("BehindEngineeringGarage_RoofDeck", group, (-0.55, 4.04, 0.32), (13.2, 0.34, 5.88), mats["dark"], bevel=0.034)
     cube("BehindEngineeringGarage_RoofVentLine", group, (-0.55, 4.35, -2.18), (12.2, 0.18, 0.34), mats["amber"], bevel=0.014)
+    for index, x in enumerate([-4.9, -2.45, 0, 2.45, 4.9]):
+        cube(f"BehindEngineeringGarage_SawtoothRoof_{index}", group, (x, 5.44, -0.92), (1.62, 0.5, 3.2), mats["stone"], rot=(0, 0, 0.16 if index % 2 else -0.16), bevel=0.022)
+        cube(f"BehindEngineeringGarage_SawtoothGlass_{index}", group, (x, 5.55, -2.38), (1.16, 0.12, 0.08), mats["glass"], bevel=0.006)
     cube("BehindEngineeringGarage_OpenBayDoor", group, (-1.2, 1.42, -2.45), (4.1, 2.62, 0.18), mats["dark"], bevel=0.03)
     cube("BehindEngineeringGarage_BayInteriorGlow", group, (-1.2, 1.4, -2.56), (3.25, 1.82, 0.06), mats["screen"], bevel=0.006)
+    cube("BehindEngineeringGarage_LeftBayDoor", group, (-4.95, 1.36, -2.44), (1.72, 2.48, 0.16), mats["dark"], bevel=0.022)
+    cube("BehindEngineeringGarage_RightBayDoor", group, (2.45, 1.36, -2.44), (1.72, 2.48, 0.16), mats["dark"], bevel=0.022)
+    cube("BehindEngineeringGarage_LeftBayGlow", group, (-4.95, 1.54, -2.55), (1.14, 1.28, 0.06), mats["aqua"], bevel=0.006)
+    cube("BehindEngineeringGarage_RightBayGlow", group, (2.45, 1.54, -2.55), (1.14, 1.28, 0.06), mats["amber"], bevel=0.006)
     for index, y in enumerate([0.72, 1.02, 1.32, 1.62, 1.92, 2.22]):
         cube(f"BehindEngineeringGarage_RollupDoorSlat_{index}", group, (-1.2, y, -2.62), (3.36, 0.055, 0.08), mats["paper"], bevel=0.003)
     cube("BehindEngineeringGarage_BaySafetyStripe_Left", group, (-3.24, 1.45, -2.62), (0.16, 2.34, 0.08), mats["amber"], bevel=0.006)
@@ -695,8 +705,14 @@ def create_behind_engineering_garage(mats):
     cube("BehindEngineeringGarage_CraneTrolley", group, (1.8, 6.82, 2.34), (1.1, 0.44, 0.5), mats["stone_shadow"], bevel=0.025)
     cube("BehindEngineeringGarage_CraneCable", group, (1.8, 5.64, 2.18), (0.12, 2.0, 0.12), mats["rope"], bevel=0.004)
     cube("BehindEngineeringGarage_DiagnosticsLoft", group, (-1.3, 5.28, -0.82), (4.8, 1.72, 1.32), mats["glass"], bevel=0.025)
+    cube("BehindEngineeringGarage_DiagnosticsRoof", group, (-1.3, 6.28, -0.82), (5.3, 0.24, 1.56), mats["wood"], bevel=0.022)
+    cube("BehindEngineeringGarage_SourceControlTower", group, (-4.55, 6.02, 1.18), (1.22, 2.9, 1.18), mats["dark"], bevel=0.03)
+    cube("BehindEngineeringGarage_SourceControlCap", group, (-4.55, 7.58, 1.18), (1.66, 0.3, 1.52), mats["screen"], bevel=0.024)
+    cube("BehindEngineeringGarage_AssemblyBridge", group, (-0.2, 5.72, 2.82), (8.6, 0.2, 0.32), mats["amber"], bevel=0.01)
     for index, x in enumerate([-2.8, -1.6, -0.4, 0.8]):
         cube(f"BehindEngineeringGarage_LoftTrace_{index}", group, (x, 5.36, -1.52), (0.62, 0.08, 0.07), [mats["screen"], mats["mint"], mats["purple"], mats["amber"]][index], bevel=0.003)
+    for index, y in enumerate([5.08, 5.58, 6.08, 6.58]):
+        cube(f"BehindEngineeringGarage_SourceTrace_{index}", group, (-5.18, y, 0.56), (0.08, 0.08, 0.72), [mats["screen"], mats["mint"], mats["purple"], mats["aqua"]][index], bevel=0.003)
 
 
 def create_career_office(mats):
@@ -1174,10 +1190,15 @@ def create_signal_harbor_communications_station(mats):
     group = root("EnvPolishSignalHarborCommunicationsStation")
     cube("SignalHarbor_ServiceDeck", group, (0, 0.09, -0.18), (18.2, 0.18, 10.6), mats["stone"], bevel=0.055)
     cube("SignalHarbor_OperationsHall", group, (-1.55, 1.84, 0.38), (9.4, 3.42, 4.8), mats["stone_shadow"], bevel=0.052)
+    cube("SignalHarbor_UpperCommsFloor", group, (-1.62, 3.92, 0.42), (8.2, 1.38, 3.72), mats["stone_shadow"], bevel=0.04)
     cube("SignalHarbor_GlassRelayRoom", group, (4.78, 1.44, -0.08), (3.38, 2.62, 3.92), mats["glass"], bevel=0.038)
+    cube("SignalHarbor_GlassRelayStack", group, (4.82, 3.36, -0.08), (2.55, 1.72, 3.42), mats["glass"], bevel=0.032)
     cube("SignalHarbor_AntennaServiceWing", group, (-6.65, 1.26, 0.66), (2.7, 2.3, 4.28), mats["dark"], bevel=0.04)
+    cube("SignalHarbor_AntennaArchiveTower", group, (-6.82, 3.42, 0.66), (1.72, 3.6, 3.5), mats["dark"], bevel=0.034)
     cube("SignalHarbor_RoofDeck", group, (-1.3, 3.68, 0.25), (11.7, 0.36, 5.58), mats["wood"], bevel=0.034)
+    cube("SignalHarbor_UpperRoofDeck", group, (-1.4, 4.72, 0.22), (9.4, 0.28, 4.18), mats["wood"], bevel=0.028)
     cube("SignalHarbor_RoofSignalRail", group, (-1.3, 3.98, -2.0), (12.4, 0.18, 0.32), mats["mint"], bevel=0.014)
+    cube("SignalHarbor_UpperSignalRail", group, (-1.4, 5.02, -1.48), (8.5, 0.14, 0.18), mats["screen"], bevel=0.008)
     cube("SignalHarbor_EntryCanopy", group, (-0.25, 2.04, -3.22), (5.7, 0.26, 1.08), mats["dark"], bevel=0.024)
     for index, z in enumerate([-3.98, -3.54, -3.1]):
         cube(f"SignalHarbor_EntryStep_{index}", group, (-0.25, 0.17 + index * 0.05, z), (5.4 - index * 0.66, 0.13, 0.38), mats["paper"], bevel=0.023)
@@ -1201,8 +1222,14 @@ def create_signal_harbor_communications_station(mats):
     cube("SignalHarbor_MessageTowerCap", group, (-5.65, 6.72, 1.18), (1.54, 0.3, 1.54), mats["mint"], bevel=0.024)
     cube("SignalHarbor_BroadcastBridge", group, (-0.9, 4.56, 2.74), (8.6, 0.2, 0.32), mats["screen"], bevel=0.01)
     cube("SignalHarbor_TallRelayMast", group, (6.95, 7.15, 1.05), (0.18, 3.1, 0.18), mats["dark"], bevel=0.008)
+    cube("SignalHarbor_DeepSpaceMast", group, (-2.2, 7.25, 1.65), (0.18, 4.2, 0.18), mats["dark"], bevel=0.008)
+    cube("SignalHarbor_DeepSpaceArray", group, (-2.2, 8.75, 1.65), (3.8, 0.12, 0.12), mats["mint"], bevel=0.006)
+    cone("SignalHarbor_DeepSpaceDish", group, (-3.85, 7.95, 1.25), 1.08, 0.34, mats["foam"], vertices=18, rot=(math.pi / 2, 0.0, 0.48))
+    cube("SignalHarbor_HarborBeaconSpine", group, (0.4, 5.9, 2.72), (5.6, 0.16, 0.22), mats["aqua"], bevel=0.008)
     for index, y in enumerate([5.9, 6.55, 7.2, 7.85]):
         cube(f"SignalHarbor_TallRelayBar_{index}", group, (6.95, y, 1.05), (2.2 - index * 0.22, 0.08, 0.08), [mats["mint"], mats["screen"], mats["aqua"], mats["amber"]][index], bevel=0.004)
+    for index, y in enumerate([6.25, 6.95, 7.65, 8.35]):
+        cube(f"SignalHarbor_DeepSpaceTick_{index}", group, (-2.2, y, 1.65), (1.8 - index * 0.16, 0.07, 0.07), [mats["screen"], mats["mint"], mats["aqua"], mats["amber"]][index], bevel=0.004)
 
 
 def create_harbor_pier(mats):

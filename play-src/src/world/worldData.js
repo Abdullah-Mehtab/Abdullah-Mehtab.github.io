@@ -550,14 +550,14 @@ export const zonePresentation = {
   },
   contact: {
     respawn: { position: [104, 1.08, 46], heading: 2.36 },
-    camera: [111, 10, 1],
-    target: [127, 3, 13],
+    camera: [99, 11, -10],
+    target: [127, 4, 13],
     fov: 42,
   },
   behind: {
     respawn: { position: [0, 1.08, -110], heading: -2.8 },
-    camera: [50, 10, -94],
-    target: [35, 3, -76],
+    camera: [62, 12, -108],
+    target: [35, 4, -76],
     fov: 42,
   },
   'data-pier': {
