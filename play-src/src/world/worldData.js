@@ -496,8 +496,8 @@ export const zonePresentation = {
   },
   security: {
     respawn: { position: [-94, 1.08, -58], heading: -2.63 },
-    camera: [-146, 14, -35],
-    target: [-119, 4, -54],
+    camera: [-84, 13, -24],
+    target: [-119, 4, -53],
     fov: 44,
   },
   projects: {

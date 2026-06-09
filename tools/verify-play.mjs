@@ -4155,6 +4155,13 @@ function assertVerification(result) {
     }
     return;
   }
+  if (result.goalGate === 'gate-4e-o-security-operations-readability-pass') {
+    assertGate4EOSecurityOperationsReadabilityVerification(result, failures);
+    if (failures.length) {
+      throw new Error(`Play verification failed: ${failures.join('; ')}`);
+    }
+    return;
+  }
   if (result.goalGate === 'gate-4b5-north-ridge') {
     assertGate4B5NorthRidgeVerification(result, failures);
     if (failures.length) {
@@ -5269,7 +5276,8 @@ function isGate4EExpandedArchitectureGate(goalGate) {
     || goalGate === 'gate-4e-k-circuit-time-trial-readability-pass'
     || goalGate === 'gate-4e-l-potato-greenhouse-readability-pass'
     || goalGate === 'gate-4e-m-protected-fcc-visibility-pass'
-    || goalGate === 'gate-4e-n-sentinel-soc-silhouette-pass';
+    || goalGate === 'gate-4e-n-sentinel-soc-silhouette-pass'
+    || goalGate === 'gate-4e-o-security-operations-readability-pass';
 }
 
 function assertGate3RVerticalSliceVerification(result, failures, options = {}) {
@@ -5278,7 +5286,8 @@ function assertGate3RVerticalSliceVerification(result, failures, options = {}) {
   const allowedExtraColliderPrefixes = options.allowedExtraColliderPrefixes || [];
   const gate4eExpandedArchitecture = isGate4EExpandedArchitectureGate(result.goalGate);
   const allowProtectedFccExactAtDistance = result.goalGate === 'gate-4e-m-protected-fcc-visibility-pass'
-    || result.goalGate === 'gate-4e-n-sentinel-soc-silhouette-pass';
+    || result.goalGate === 'gate-4e-n-sentinel-soc-silhouette-pass'
+    || result.goalGate === 'gate-4e-o-security-operations-readability-pass';
   const blockout = result.blockout || {};
   const blockoutSetPieces = blockout.setPieces || {};
   const slice = result.verticalSlice || blockout.verticalSlice || {};
@@ -6524,14 +6533,32 @@ function assertGate4EMProtectedFccVisibilityVerification(result, failures, expec
   }
 }
 
-function assertGate4ENSentinelSocSilhouetteVerification(result, failures) {
-  assertGate4EMProtectedFccVisibilityVerification(result, failures, 'gate-4e-n-sentinel-soc-silhouette-pass');
+function assertGate4ENSentinelSocSilhouetteVerification(result, failures, expectedGoal = 'gate-4e-n-sentinel-soc-silhouette-pass') {
+  assertGate4EMProtectedFccVisibilityVerification(result, failures, expectedGoal);
 
   const sentinel = result.gate4b5?.sentinel || {};
   if ((sentinel.routeShieldAtriums || 0) < 1) failures.push(`Gate 4-E-N Sentinel failed: routeShieldAtriums=${sentinel.routeShieldAtriums || 0}/1`);
   if ((sentinel.incidentResponseHalls || 0) < 1) failures.push(`Gate 4-E-N Sentinel failed: incidentResponseHalls=${sentinel.incidentResponseHalls || 0}/1`);
   if ((sentinel.scannerBridges || 0) < 1) failures.push(`Gate 4-E-N Sentinel failed: scannerBridges=${sentinel.scannerBridges || 0}/1`);
   if ((sentinel.overwatchDecks || 0) < 1) failures.push(`Gate 4-E-N Sentinel failed: overwatchDecks=${sentinel.overwatchDecks || 0}/1`);
+}
+
+function assertGate4EOSecurityOperationsReadabilityVerification(result, failures) {
+  assertGate4ENSentinelSocSilhouetteVerification(result, failures, 'gate-4e-o-security-operations-readability-pass');
+
+  const security = result.securityLab || {};
+  if ((security.sourceAssets || 0) < 1) failures.push(`Gate 4-E-O Security failed: sourceAssets=${security.sourceAssets || 0}/1`);
+  if ((security.operationsGates || 0) < 1) failures.push(`Gate 4-E-O Security failed: operationsGates=${security.operationsGates || 0}/1`);
+  if ((security.routeShieldAtriums || 0) < 1) failures.push(`Gate 4-E-O Security failed: routeShieldAtriums=${security.routeShieldAtriums || 0}/1`);
+  if ((security.incidentResponseHalls || 0) < 1) failures.push(`Gate 4-E-O Security failed: incidentResponseHalls=${security.incidentResponseHalls || 0}/1`);
+  if ((security.scannerBridges || 0) < 1) failures.push(`Gate 4-E-O Security failed: scannerBridges=${security.scannerBridges || 0}/1`);
+  if ((security.commandDecks || 0) < 1) failures.push(`Gate 4-E-O Security failed: commandDecks=${security.commandDecks || 0}/1`);
+  if (!result.securityScan?.active?.active || (result.securityScan?.active?.stats?.visibleScanWaves || 0) < 1) {
+    failures.push('Gate 4-E-O Security failed: active scan state was not visible');
+  }
+  if (!result.securityScan?.complete?.complete || !result.securityScan?.complete?.panelVisible) {
+    failures.push('Gate 4-E-O Security failed: scan completion/panel behavior regressed');
+  }
 }
 
 function assertAuthoredDistrictAsset(result, assetName, label, failures) {

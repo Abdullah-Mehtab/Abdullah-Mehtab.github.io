@@ -36,7 +36,7 @@ const ROAD_SURFACES = {
   bridge: { label: 'pier deck', forwardGrip: 0.96, sideGrip: 0.93, engineFactor: 0.96, topSpeedFactor: 0.88, dustColor: 0x7aa9a7, skidColor: 0x2e4d4b, audioId: 'bridge-road', roughnessFeedback: 0.34 }
 };
 
-const GOAL_GATE = 'gate-4e-n-sentinel-soc-silhouette-pass';
+const GOAL_GATE = 'gate-4e-o-security-operations-readability-pass';
 const GATE4_C_B1_GATE_ID = 'gate-4c-b1-south-run-replacements';
 const GATE4_C_B2_GATE_ID = 'gate-4c-b2-gallery-side-replacements';
 const GATE4_C_B3_GATE_ID = 'gate-4c-b3-west-service-replacements';
@@ -62,7 +62,8 @@ const GATE4_E_K_GATE_ID = 'gate-4e-k-circuit-time-trial-readability-pass';
 const GATE4_E_L_GATE_ID = 'gate-4e-l-potato-greenhouse-readability-pass';
 const GATE4_E_M_GATE_ID = 'gate-4e-m-protected-fcc-visibility-pass';
 const GATE4_E_N_GATE_ID = 'gate-4e-n-sentinel-soc-silhouette-pass';
-const GATE4_D_GATE_IDS = [GATE4_D_B1_GATE_ID, GATE4_D_B2_GATE_ID, GATE4_D_B3_GATE_ID, GATE4_D_B4_GATE_ID, GATE4_D_B5_GATE_ID, GATE4_D_B6_GATE_ID, GATE4_D_D_GATE_ID, GATE4_E_C_GATE_ID, GATE4_E_D_GATE_ID, GATE4_E_F_GATE_ID, GATE4_E_G_GATE_ID, GATE4_E_H_GATE_ID, GATE4_E_I_GATE_ID, GATE4_E_J_GATE_ID, GATE4_E_K_GATE_ID, GATE4_E_L_GATE_ID, GATE4_E_M_GATE_ID, GATE4_E_N_GATE_ID];
+const GATE4_E_O_GATE_ID = 'gate-4e-o-security-operations-readability-pass';
+const GATE4_D_GATE_IDS = [GATE4_D_B1_GATE_ID, GATE4_D_B2_GATE_ID, GATE4_D_B3_GATE_ID, GATE4_D_B4_GATE_ID, GATE4_D_B5_GATE_ID, GATE4_D_B6_GATE_ID, GATE4_D_D_GATE_ID, GATE4_E_C_GATE_ID, GATE4_E_D_GATE_ID, GATE4_E_F_GATE_ID, GATE4_E_G_GATE_ID, GATE4_E_H_GATE_ID, GATE4_E_I_GATE_ID, GATE4_E_J_GATE_ID, GATE4_E_K_GATE_ID, GATE4_E_L_GATE_ID, GATE4_E_M_GATE_ID, GATE4_E_N_GATE_ID, GATE4_E_O_GATE_ID];
 const GATE4_BR_GATE_ID = 'gate-4br-composition-correction';
 const GATE4_B1_GATE_IDS = new Set(['gate-4b1-south-run', 'gate-4b2-west-service', 'gate-4b3-data-pier-side', 'gate-4b4-east-side', 'gate-4b5-north-ridge', GATE4_BR_GATE_ID, ...GATE4_C_GATE_IDS, ...GATE4_D_GATE_IDS]);
 const GATE4_B2_GATE_IDS = new Set(['gate-4b2-west-service', 'gate-4b3-data-pier-side', 'gate-4b4-east-side', 'gate-4b5-north-ridge', GATE4_BR_GATE_ID, ...GATE4_C_GATE_IDS, ...GATE4_D_GATE_IDS]);
@@ -90,9 +91,9 @@ export class World {
     this.gate4b6Mode = false;
     this.gate4b6rPrototypeMode = false;
     this.gate4b6rFullMode = false;
-    this.gate4dLifeMode = GOAL_GATE === GATE4_D_D_GATE_ID || GOAL_GATE === GATE4_E_C_GATE_ID || GOAL_GATE === GATE4_E_D_GATE_ID || GOAL_GATE === GATE4_E_F_GATE_ID || GOAL_GATE === GATE4_E_G_GATE_ID || GOAL_GATE === GATE4_E_H_GATE_ID || GOAL_GATE === GATE4_E_I_GATE_ID || GOAL_GATE === GATE4_E_J_GATE_ID || GOAL_GATE === GATE4_E_K_GATE_ID || GOAL_GATE === GATE4_E_L_GATE_ID || GOAL_GATE === GATE4_E_M_GATE_ID || GOAL_GATE === GATE4_E_N_GATE_ID;
-    this.gate4eRouteCompositionMode = GOAL_GATE === GATE4_E_F_GATE_ID || GOAL_GATE === GATE4_E_G_GATE_ID || GOAL_GATE === GATE4_E_H_GATE_ID || GOAL_GATE === GATE4_E_I_GATE_ID || GOAL_GATE === GATE4_E_J_GATE_ID || GOAL_GATE === GATE4_E_K_GATE_ID || GOAL_GATE === GATE4_E_L_GATE_ID || GOAL_GATE === GATE4_E_M_GATE_ID || GOAL_GATE === GATE4_E_N_GATE_ID;
-    this.gate4eCybersecurityCraftMode = GOAL_GATE === GATE4_E_G_GATE_ID || GOAL_GATE === GATE4_E_H_GATE_ID || GOAL_GATE === GATE4_E_I_GATE_ID || GOAL_GATE === GATE4_E_J_GATE_ID || GOAL_GATE === GATE4_E_K_GATE_ID || GOAL_GATE === GATE4_E_L_GATE_ID || GOAL_GATE === GATE4_E_M_GATE_ID || GOAL_GATE === GATE4_E_N_GATE_ID;
+    this.gate4dLifeMode = GOAL_GATE === GATE4_D_D_GATE_ID || GOAL_GATE === GATE4_E_C_GATE_ID || GOAL_GATE === GATE4_E_D_GATE_ID || GOAL_GATE === GATE4_E_F_GATE_ID || GOAL_GATE === GATE4_E_G_GATE_ID || GOAL_GATE === GATE4_E_H_GATE_ID || GOAL_GATE === GATE4_E_I_GATE_ID || GOAL_GATE === GATE4_E_J_GATE_ID || GOAL_GATE === GATE4_E_K_GATE_ID || GOAL_GATE === GATE4_E_L_GATE_ID || GOAL_GATE === GATE4_E_M_GATE_ID || GOAL_GATE === GATE4_E_N_GATE_ID || GOAL_GATE === GATE4_E_O_GATE_ID;
+    this.gate4eRouteCompositionMode = GOAL_GATE === GATE4_E_F_GATE_ID || GOAL_GATE === GATE4_E_G_GATE_ID || GOAL_GATE === GATE4_E_H_GATE_ID || GOAL_GATE === GATE4_E_I_GATE_ID || GOAL_GATE === GATE4_E_J_GATE_ID || GOAL_GATE === GATE4_E_K_GATE_ID || GOAL_GATE === GATE4_E_L_GATE_ID || GOAL_GATE === GATE4_E_M_GATE_ID || GOAL_GATE === GATE4_E_N_GATE_ID || GOAL_GATE === GATE4_E_O_GATE_ID;
+    this.gate4eCybersecurityCraftMode = GOAL_GATE === GATE4_E_G_GATE_ID || GOAL_GATE === GATE4_E_H_GATE_ID || GOAL_GATE === GATE4_E_I_GATE_ID || GOAL_GATE === GATE4_E_J_GATE_ID || GOAL_GATE === GATE4_E_K_GATE_ID || GOAL_GATE === GATE4_E_L_GATE_ID || GOAL_GATE === GATE4_E_M_GATE_ID || GOAL_GATE === GATE4_E_N_GATE_ID || GOAL_GATE === GATE4_E_O_GATE_ID;
     this.blockoutMode = GOAL_GATE === 'gate-2-blockout' || this.verticalSliceMode || this.foundationReplacementMode;
     this.materials = createWorldMaterials();
     this.zones = [];

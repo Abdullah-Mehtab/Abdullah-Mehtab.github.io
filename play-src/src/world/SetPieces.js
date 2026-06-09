@@ -64,6 +64,10 @@ export class SetPieces {
       sourceAssets: 0,
       architectureAssets: 0,
       operationsGates: 0,
+      routeShieldAtriums: 0,
+      incidentResponseHalls: 0,
+      scannerBridges: 0,
+      commandDecks: 0,
       cableRuns: 0,
       terminalRails: 0
     };
@@ -2444,20 +2448,37 @@ export class SetPieces {
       scan.x + sideX * side + forwardX * forward,
       scan.z + sideZ * side + forwardZ * forward
     ];
+    const architectureMode = this.world.gate4eCybersecurityCraftMode;
 
     this.gate3rPad(group, scan.x, scan.z, 12.4, 5.2, this.world.materials.securityRoad, 0.131, 'GATE3R_Security_Scanner_Lane', scan.rotation, 'security-pad', 8);
-    this.gate3rPad(group, ...point(10.8, -5.4), 5.2, 4.2, this.world.materials.stoneRoad, 0.132, 'GATE3R_Security_Server_Deck_A', scan.rotation, 'security-pad', 8);
-    this.gate3rPad(group, ...point(-10.8, 5.4), 5.2, 4.2, this.world.materials.stoneRoad, 0.132, 'GATE3R_Security_Server_Deck_B', scan.rotation, 'security-pad', 8);
+    const serviceDecks = architectureMode
+      ? [
+          [5.7, 4.6, 3.8, 3.2, 'GATE4E_Security_Left_Service_Shoulder'],
+          [-5.7, 4.6, 3.8, 3.2, 'GATE4E_Security_Right_Service_Shoulder']
+        ]
+      : [
+          [10.8, -5.4, 5.2, 4.2, 'GATE3R_Security_Server_Deck_A'],
+          [-10.8, 5.4, 5.2, 4.2, 'GATE3R_Security_Server_Deck_B']
+        ];
+    for (const [side, forward, width, depth, name] of serviceDecks) {
+      this.gate3rPad(group, ...point(side, forward), width, depth, this.world.materials.stoneRoad, 0.132, name, scan.rotation, 'security-pad', 8);
+    }
     stats.floorPads += 3;
 
-    const [labX, labZ] = point(0, 7.8);
-    const gateAsset = this.world.gate4eCybersecurityCraftMode ? 'EnvPolishSecurityOperationsGate' : 'EnvSecurityGate';
-    if (this.addPolishAsset(group, gateAsset, labX, labZ, scan.rotation, this.world.gate4eCybersecurityCraftMode ? 1.02 : 1.05)) {
+    const [labX, labZ] = point(0, architectureMode ? 8.6 : 7.8);
+    const gateAsset = architectureMode ? 'EnvPolishSecurityOperationsGate' : 'EnvSecurityGate';
+    if (this.addPolishAsset(group, gateAsset, labX, labZ, scan.rotation, architectureMode ? 1.08 : 1.05)) {
       this.recordGate3RPlacement('security-operations-gate', 'GATE4E_Security_Operations_Gate_Architecture', labX, labZ, { minClearance: 5.0 });
       this.securityLabStats.authoredAssets += 1;
       this.securityLabStats.architectureAssets += 1;
       this.securityLabStats.operationsGates += 1;
-      if (gateAsset === 'EnvPolishSecurityOperationsGate') this.securityLabStats.sourceAssets += 1;
+      if (gateAsset === 'EnvPolishSecurityOperationsGate') {
+        this.securityLabStats.sourceAssets += 1;
+        this.securityLabStats.routeShieldAtriums += 1;
+        this.securityLabStats.incidentResponseHalls += 1;
+        this.securityLabStats.scannerBridges += 1;
+        this.securityLabStats.commandDecks += 1;
+      }
     }
 
     this.securityScanWaveField(group, scan.x, scan.z, scan.rotation);
@@ -2478,22 +2499,40 @@ export class SetPieces {
       this.securityLabStats.terminalRails += 1;
     }
 
-    for (const [side, forward, rot] of [
-      [9.6, -6.4, 0.16],
-      [12.5, -4.4, 0.08],
-      [-9.6, 6.4, -0.16],
-      [-12.5, 4.4, -0.08]
-    ]) {
+    const serverCores = architectureMode
+      ? [
+          [-5.9, 5.2, -0.04],
+          [-4.1, 6.0, -0.02],
+          [4.1, 6.0, 0.02],
+          [5.9, 5.2, 0.04]
+        ]
+      : [
+          [9.6, -6.4, 0.16],
+          [12.5, -4.4, 0.08],
+          [-9.6, 6.4, -0.16],
+          [-12.5, 4.4, -0.08]
+        ];
+    for (const [side, forward, rot] of serverCores) {
       const [rackX, rackZ] = point(side, forward);
-      this.serverRack(group, rackX, rackZ, scan.rotation + rot);
+      if (architectureMode) {
+        this.box(group, rackX, 0.88, rackZ, 0.64, 1.52, 0.74, this.world.materials.cable, scan.rotation + rot, 'GATE4E_Security_Integrated_Server_Core');
+        this.box(group, rackX, 1.19, rackZ, 0.68, 0.12, 0.78, this.world.materials.glowBlue, scan.rotation + rot, 'GATE4E_Security_Integrated_Server_Status');
+      } else {
+        this.serverRack(group, rackX, rackZ, scan.rotation + rot);
+      }
       this.recordGate3RPlacement('security-rack', 'GATE3R_Security_Server_Rack', rackX, rackZ, { minClearance: 2.2 });
       stats.serverBlocks += 1;
     }
 
-    const cableRuns = [
-      [point(8.2, -5.4), point(6.3, -2.8), point(4.35, 0)],
-      [point(-8.2, 5.4), point(-6.3, 2.8), point(-4.35, 0)]
-    ];
+    const cableRuns = architectureMode
+      ? [
+          [point(4.9, 4.6), point(4.2, 2.2), point(4.35, 0)],
+          [point(-4.9, 4.6), point(-4.2, 2.2), point(-4.35, 0)]
+        ]
+      : [
+          [point(8.2, -5.4), point(6.3, -2.8), point(4.35, 0)],
+          [point(-8.2, 5.4), point(-6.3, 2.8), point(-4.35, 0)]
+        ];
     for (const run of cableRuns) {
       this.cable(
         group,
@@ -2506,10 +2545,16 @@ export class SetPieces {
       this.securityLabStats.cableRuns += 1;
     }
 
-    for (const [side, forward, color] of [
-      [15, -2, 0x68d8ff],
-      [-15, 2, 0x68d8ff]
-    ]) {
+    const beacons = architectureMode
+      ? [
+          [5.9, -2.8, 0x68d8ff],
+          [-5.9, -2.8, 0x68d8ff]
+        ]
+      : [
+          [15, -2, 0x68d8ff],
+          [-15, 2, 0x68d8ff]
+        ];
+    for (const [side, forward, color] of beacons) {
       const [x, z] = point(side, forward);
       this.beacon(group, x, z, color);
       this.recordGate3RPlacement('security-beacon', 'GATE3R_Security_Beacon', x, z, { minClearance: 2.2 });
@@ -2529,8 +2574,8 @@ export class SetPieces {
       stats.warningBollards += 1;
     }
 
-    const sign = point(16, -7);
-    this.gate3rSign(group, 'SECURITY SCAN', 'Hold in beam', sign[0], sign[1], scan.rotation - 0.95, 0x68d8ff, 1.56, 'GATE3R_Security_Scan_Sign', 2.8);
+    const sign = point(architectureMode ? -7.8 : 16, architectureMode ? -3.8 : -7);
+    this.gate3rSign(group, 'SECURITY SCAN', 'Hold in beam', sign[0], sign[1], scan.rotation - (architectureMode ? 0.18 : 0.95), 0x68d8ff, architectureMode ? 1.36 : 1.56, 'GATE3R_Security_Scan_Sign', 2.8);
     stats.signs += 1;
   }
 
