@@ -4120,6 +4120,13 @@ function assertVerification(result) {
     }
     return;
   }
+  if (result.goalGate === 'gate-4e-j-signal-harbor-broadcast-pass') {
+    assertGate4EJSignalHarborBroadcastVerification(result, failures);
+    if (failures.length) {
+      throw new Error(`Play verification failed: ${failures.join('; ')}`);
+    }
+    return;
+  }
   if (result.goalGate === 'gate-4b5-north-ridge') {
     assertGate4B5NorthRidgeVerification(result, failures);
     if (failures.length) {
@@ -5439,7 +5446,8 @@ function assertGate3RVerticalSliceVerification(result, failures, options = {}) {
     || result.goalGate === 'gate-4e-f-route-composition-pass'
     || result.goalGate === 'gate-4e-g-cybersecurity-craft-pass'
     || result.goalGate === 'gate-4e-h-projects-foundry-readability-pass'
-    || result.goalGate === 'gate-4e-i-behind-engineering-scale-pass';
+    || result.goalGate === 'gate-4e-i-behind-engineering-scale-pass'
+    || result.goalGate === 'gate-4e-j-signal-harbor-broadcast-pass';
   const highQualityTriangleBudget = gate4eExpandedArchitecture ? 330000 : 210000;
   if ((result.highQuality?.triangles || 0) > highQualityTriangleBudget) failures.push(`Gate 3R high quality triangle budget exceeded: ${result.highQuality?.triangles || 0}`);
   if (!result.mobile?.ready || (result.mobile?.canvasSample || 0) <= 0) failures.push('Gate 3R mobile probe failed: canvas did not render');
@@ -6353,6 +6361,38 @@ function assertGate4EIBehindEngineeringScaleVerification(result, failures) {
   if ((behind.engineeringLofts || 0) < 1) failures.push(`Gate 4-E-I Behind failed: engineeringLofts=${behind.engineeringLofts || 0}/1`);
   if ((behind.routeFacades || 0) < 1) failures.push(`Gate 4-E-I Behind failed: routeFacades=${behind.routeFacades || 0}/1`);
   if ((behind.sourceSpires || 0) < 1) failures.push(`Gate 4-E-I Behind failed: sourceSpires=${behind.sourceSpires || 0}/1`);
+}
+
+function assertGate4EJSignalHarborBroadcastVerification(result, failures) {
+  assertGate4EFRouteCompositionVerification(result, failures, 'gate-4e-j-signal-harbor-broadcast-pass');
+  assertAuthoredDistrictAsset(result, 'EnvPolishSecurityOperationsGate', 'Gate 4-E-G Security operations architecture', failures);
+  assertGate4DSentinelSocTower(result, failures);
+  assertGate4DProjectsFoundryBuilding(result, failures);
+  assertGate4DBehindEngineeringGarage(result, failures);
+  assertGate4DSignalHarborCommunicationsStation(result, failures);
+
+  const security = result.securityLab || {};
+  const sentinel = result.gate4b5?.sentinel || {};
+  const projects = result.gate4b4?.projects || {};
+  const behind = result.gate4b1?.behind || {};
+  const harbor = result.gate4b4?.harbor || {};
+
+  if ((security.sourceAssets || 0) < 1) failures.push(`Gate 4-E-J Security carry-forward failed: sourceAssets=${security.sourceAssets || 0}/1`);
+  if ((security.operationsGates || 0) < 1) failures.push(`Gate 4-E-J Security carry-forward failed: operationsGates=${security.operationsGates || 0}/1`);
+  if ((sentinel.shieldGateFrames || 0) < 1) failures.push(`Gate 4-E-J Sentinel carry-forward failed: shieldGateFrames=${sentinel.shieldGateFrames || 0}/1`);
+  if ((projects.forgePortals || 0) < 1) failures.push(`Gate 4-E-J Projects carry-forward failed: forgePortals=${projects.forgePortals || 0}/1`);
+  if ((projects.furnaceChimneys || 0) < 1) failures.push(`Gate 4-E-J Projects carry-forward failed: furnaceChimneys=${projects.furnaceChimneys || 0}/1`);
+  if ((projects.publicGalleries || 0) < 1) failures.push(`Gate 4-E-J Projects carry-forward failed: publicGalleries=${projects.publicGalleries || 0}/1`);
+  if ((projects.routeFacades || 0) < 1) failures.push(`Gate 4-E-J Projects carry-forward failed: routeFacades=${projects.routeFacades || 0}/1`);
+  if ((projects.warmFacadeBands || 0) < 6) failures.push(`Gate 4-E-J Projects carry-forward failed: warmFacadeBands=${projects.warmFacadeBands || 0}/6`);
+  if ((behind.diagnosticsTowers || 0) < 1) failures.push(`Gate 4-E-J Behind carry-forward failed: diagnosticsTowers=${behind.diagnosticsTowers || 0}/1`);
+  if ((behind.sideServiceFacades || 0) < 1) failures.push(`Gate 4-E-J Behind carry-forward failed: sideServiceFacades=${behind.sideServiceFacades || 0}/1`);
+  if ((harbor.broadcastTowers || 0) < 1) failures.push(`Gate 4-E-J Harbor failed: broadcastTowers=${harbor.broadcastTowers || 0}/1`);
+  if ((harbor.dishArrays || 0) < 1) failures.push(`Gate 4-E-J Harbor failed: dishArrays=${harbor.dishArrays || 0}/1`);
+  if ((harbor.sideServiceFacades || 0) < 1) failures.push(`Gate 4-E-J Harbor failed: sideServiceFacades=${harbor.sideServiceFacades || 0}/1`);
+  if ((harbor.routeFacades || 0) < 1) failures.push(`Gate 4-E-J Harbor failed: routeFacades=${harbor.routeFacades || 0}/1`);
+  if ((harbor.signalCrowns || 0) < 1) failures.push(`Gate 4-E-J Harbor failed: signalCrowns=${harbor.signalCrowns || 0}/1`);
+  if ((harbor.contactTerminalRooms || 0) < 1) failures.push(`Gate 4-E-J Harbor failed: contactTerminalRooms=${harbor.contactTerminalRooms || 0}/1`);
 }
 
 function assertAuthoredDistrictAsset(result, assetName, label, failures) {

@@ -585,6 +585,12 @@ export class SetPieces {
         operationsHalls: 0,
         glassRelayRooms: 0,
         antennaServiceWings: 0,
+        broadcastTowers: 0,
+        dishArrays: 0,
+        sideServiceFacades: 0,
+        routeFacades: 0,
+        signalCrowns: 0,
+        contactTerminalRooms: 0,
         signs: 0,
         lamps: 0
       }
@@ -1658,6 +1664,12 @@ export class SetPieces {
       stats.operationsHalls += 1;
       stats.glassRelayRooms += 1;
       stats.antennaServiceWings += 1;
+      stats.broadcastTowers += 1;
+      stats.dishArrays += 1;
+      stats.sideServiceFacades += 1;
+      stats.routeFacades += 1;
+      stats.signalCrowns += 1;
+      stats.contactTerminalRooms += 1;
       stats.signalMasts += 1;
       stats.relayMasts += 1;
       stats.contactTerminals += 3;
