@@ -4134,6 +4134,13 @@ function assertVerification(result) {
     }
     return;
   }
+  if (result.goalGate === 'gate-4e-l-potato-greenhouse-readability-pass') {
+    assertGate4ELPotatoGreenhouseReadabilityVerification(result, failures);
+    if (failures.length) {
+      throw new Error(`Play verification failed: ${failures.join('; ')}`);
+    }
+    return;
+  }
   if (result.goalGate === 'gate-4b5-north-ridge') {
     assertGate4B5NorthRidgeVerification(result, failures);
     if (failures.length) {
@@ -5455,7 +5462,8 @@ function assertGate3RVerticalSliceVerification(result, failures, options = {}) {
     || result.goalGate === 'gate-4e-h-projects-foundry-readability-pass'
     || result.goalGate === 'gate-4e-i-behind-engineering-scale-pass'
     || result.goalGate === 'gate-4e-j-signal-harbor-broadcast-pass'
-    || result.goalGate === 'gate-4e-k-circuit-time-trial-readability-pass';
+    || result.goalGate === 'gate-4e-k-circuit-time-trial-readability-pass'
+    || result.goalGate === 'gate-4e-l-potato-greenhouse-readability-pass';
   const highQualityTriangleBudget = gate4eExpandedArchitecture ? 330000 : 210000;
   if ((result.highQuality?.triangles || 0) > highQualityTriangleBudget) failures.push(`Gate 3R high quality triangle budget exceeded: ${result.highQuality?.triangles || 0}`);
   if (!result.mobile?.ready || (result.mobile?.canvasSample || 0) <= 0) failures.push('Gate 3R mobile probe failed: canvas did not render');
@@ -6431,6 +6439,39 @@ function assertGate4EKCircuitTimeTrialReadabilityVerification(result, failures) 
   if ((circuit.timingFacades || 0) < 1) failures.push(`Gate 4-E-K Circuit failed: timingFacades=${circuit.timingFacades || 0}/1`);
   if ((circuit.checkpointCrowns || 0) < 1) failures.push(`Gate 4-E-K Circuit failed: checkpointCrowns=${circuit.checkpointCrowns || 0}/1`);
   if ((circuit.pitWallFacades || 0) < 1) failures.push(`Gate 4-E-K Circuit failed: pitWallFacades=${circuit.pitWallFacades || 0}/1`);
+}
+
+function assertGate4ELPotatoGreenhouseReadabilityVerification(result, failures) {
+  assertGate4EFRouteCompositionVerification(result, failures, 'gate-4e-l-potato-greenhouse-readability-pass');
+  assertAuthoredDistrictAsset(result, 'EnvPolishSecurityOperationsGate', 'Gate 4-E-G Security operations architecture', failures);
+  assertGate4DPotatoFarmStand(result, failures);
+  assertGate4DSentinelSocTower(result, failures);
+  assertGate4DProjectsFoundryBuilding(result, failures);
+  assertGate4DBehindEngineeringGarage(result, failures);
+  assertGate4DSignalHarborCommunicationsStation(result, failures);
+  assertGate4DCircuitTimeTrialGate(result, failures);
+
+  const security = result.securityLab || {};
+  const farm = result.gate4b2?.farm || {};
+  const sentinel = result.gate4b5?.sentinel || {};
+  const projects = result.gate4b4?.projects || {};
+  const behind = result.gate4b1?.behind || {};
+  const harbor = result.gate4b4?.harbor || {};
+  const circuit = result.gate4b5?.circuit || {};
+
+  if ((security.operationsGates || 0) < 1) failures.push(`Gate 4-E-L Security carry-forward failed: operationsGates=${security.operationsGates || 0}/1`);
+  if ((sentinel.shieldGateFrames || 0) < 1) failures.push(`Gate 4-E-L Sentinel carry-forward failed: shieldGateFrames=${sentinel.shieldGateFrames || 0}/1`);
+  if ((projects.publicGalleries || 0) < 1) failures.push(`Gate 4-E-L Projects carry-forward failed: publicGalleries=${projects.publicGalleries || 0}/1`);
+  if ((behind.diagnosticsTowers || 0) < 1) failures.push(`Gate 4-E-L Behind carry-forward failed: diagnosticsTowers=${behind.diagnosticsTowers || 0}/1`);
+  if ((harbor.broadcastTowers || 0) < 1) failures.push(`Gate 4-E-L Harbor carry-forward failed: broadcastTowers=${harbor.broadcastTowers || 0}/1`);
+  if ((circuit.raceControlTowers || 0) < 1) failures.push(`Gate 4-E-L Circuit carry-forward failed: raceControlTowers=${circuit.raceControlTowers || 0}/1`);
+  if ((circuit.timingFacades || 0) < 1) failures.push(`Gate 4-E-L Circuit carry-forward failed: timingFacades=${circuit.timingFacades || 0}/1`);
+  if ((farm.greenhouseAtriums || 0) < 1) failures.push(`Gate 4-E-L Potato failed: greenhouseAtriums=${farm.greenhouseAtriums || 0}/1`);
+  if ((farm.greenhouseRoofRidges || 0) < 1) failures.push(`Gate 4-E-L Potato failed: greenhouseRoofRidges=${farm.greenhouseRoofRidges || 0}/1`);
+  if ((farm.cropCourtFrames || 0) < 1) failures.push(`Gate 4-E-L Potato failed: cropCourtFrames=${farm.cropCourtFrames || 0}/1`);
+  if ((farm.waterTowers || 0) < 1) failures.push(`Gate 4-E-L Potato failed: waterTowers=${farm.waterTowers || 0}/1`);
+  if ((farm.fieldOffices || 0) < 1) failures.push(`Gate 4-E-L Potato failed: fieldOffices=${farm.fieldOffices || 0}/1`);
+  if ((farm.routeFarmFacades || 0) < 1) failures.push(`Gate 4-E-L Potato failed: routeFarmFacades=${farm.routeFarmFacades || 0}/1`);
 }
 
 function assertAuthoredDistrictAsset(result, assetName, label, failures) {

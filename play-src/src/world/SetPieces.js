@@ -476,6 +476,12 @@ export class SetPieces {
         irrigationTanks: 0,
         irrigationRuns: 0,
         counterStands: 0,
+        greenhouseAtriums: 0,
+        greenhouseRoofRidges: 0,
+        cropCourtFrames: 0,
+        waterTowers: 0,
+        fieldOffices: 0,
+        routeFarmFacades: 0,
         summonPatches: 0,
         fenceVisuals: 0,
         crates: 0,
@@ -1476,6 +1482,12 @@ export class SetPieces {
       stats.irrigationTanks += 1;
       stats.irrigationRuns += 1;
       stats.counterStands += 1;
+      stats.greenhouseAtriums += 1;
+      stats.greenhouseRoofRidges += 1;
+      stats.cropCourtFrames += 1;
+      stats.waterTowers += 1;
+      stats.fieldOffices += 1;
+      stats.routeFarmFacades += 1;
       stats.fenceVisuals += 1;
       stats.fenceSegments += 1;
       stats.crates += 3;
