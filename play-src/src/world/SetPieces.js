@@ -1783,6 +1783,25 @@ export class SetPieces {
     this.addGate4DLifeSignalPulse(group, anchors.find((item) => item.id === 'sentinel'), 0, 1.7, 6.0, 2.7, 'primary');
     this.addGate4DLifeSignalPulse(group, anchors.find((item) => item.id === 'circuit'), 0, 2.8, 3.4, 2.4, 'primary');
 
+    this.addGate4DLifeContainedMotions(group, anchors.find((item) => item.id === 'contact'), [
+      [-3.2, -2.0, 2.2, 0.58],
+      [-1.1, -2.3, 2.65, 0.52],
+      [1.1, -2.1, 2.42, 0.5],
+      [3.1, -1.7, 2.82, 0.46]
+    ], 'primary');
+    this.addGate4DLifeContainedMotions(group, anchors.find((item) => item.id === 'potato'), [
+      [-4.8, -2.1, 2.04, 0.52],
+      [-2.6, -2.4, 2.48, 0.48],
+      [1.2, -1.6, 1.62, 0.46],
+      [4.6, -0.8, 1.42, 0.44]
+    ], 'primary');
+    this.addGate4DLifeContainedMotions(group, anchors.find((item) => item.id === 'circuit'), [
+      [-4.6, -1.8, 2.12, 0.52],
+      [-2.1, -2.1, 2.58, 0.46],
+      [0.6, -2.0, 2.3, 0.44],
+      [3.4, -1.5, 2.74, 0.42]
+    ], 'primary');
+
     this.addGate4DLifeContainedMotions(group, anchors.find((item) => item.id === 'todo'), [
       [-3.6, -2.6, 1.78, 0.78],
       [-1.5, -2.2, 1.92, 0.72],

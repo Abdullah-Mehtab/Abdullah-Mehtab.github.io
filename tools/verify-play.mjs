@@ -4084,6 +4084,13 @@ function assertVerification(result) {
     }
     return;
   }
+  if (result.goalGate === 'gate-4e-d-site-integration-life-pass') {
+    assertGate4EDSiteIntegrationLifePassVerification(result, failures);
+    if (failures.length) {
+      throw new Error(`Play verification failed: ${failures.join('; ')}`);
+    }
+    return;
+  }
   if (result.goalGate === 'gate-4b5-north-ridge') {
     assertGate4B5NorthRidgeVerification(result, failures);
     if (failures.length) {
@@ -5398,7 +5405,9 @@ function assertGate3RVerticalSliceVerification(result, failures, options = {}) {
   if (!Number.isFinite(result.triangles) || result.triangles <= 0 || result.triangles > 190000) failures.push(`Gate 3R metrics failed: triangles=${result.triangles}`);
   if (!result.highQuality?.ready || (result.highQuality?.canvasSample || 0) <= 0) failures.push('Gate 3R high quality probe failed: canvas did not render');
   if ((result.highQuality?.calls || 0) > 300) failures.push(`Gate 3R high quality draw-call budget exceeded: ${result.highQuality?.calls || 0}`);
-  const highQualityTriangleBudget = result.goalGate === 'gate-4e-c-monumental-scale-pass' ? 330000 : 210000;
+  const gate4eExpandedArchitecture = result.goalGate === 'gate-4e-c-monumental-scale-pass'
+    || result.goalGate === 'gate-4e-d-site-integration-life-pass';
+  const highQualityTriangleBudget = gate4eExpandedArchitecture ? 330000 : 210000;
   if ((result.highQuality?.triangles || 0) > highQualityTriangleBudget) failures.push(`Gate 3R high quality triangle budget exceeded: ${result.highQuality?.triangles || 0}`);
   if (!result.mobile?.ready || (result.mobile?.canvasSample || 0) <= 0) failures.push('Gate 3R mobile probe failed: canvas did not render');
   if ((result.mobile?.calls || 0) > 185) failures.push(`Gate 3R mobile draw-call budget exceeded: ${result.mobile?.calls || 0}`);
@@ -6166,8 +6175,8 @@ function assertGate4DDLifeInteractionPassVerification(result, failures, expected
   if ((result.colliderCount || 0) !== 2) failures.push(`Gate 4-D-D failed: unexpected collider count=${result.colliderCount || 0}`);
 }
 
-function assertGate4ELandmarkScalePassVerification(result, failures) {
-  assertGate4DDLifeInteractionPassVerification(result, failures, 'gate-4e-c-monumental-scale-pass');
+function assertGate4ELandmarkScalePassVerification(result, failures, expectedGoal = 'gate-4e-c-monumental-scale-pass') {
+  assertGate4DDLifeInteractionPassVerification(result, failures, expectedGoal);
 
   const placement = result.gate3rPlacement || {};
   const scaledFootprints = [
@@ -6201,6 +6210,19 @@ function assertGate4ELandmarkScalePassVerification(result, failures) {
     .map((sample) => `${sample.id}:${sample.cameraDistance}`);
   if (tightPresentationShots.length) {
     failures.push(`Gate 4-E composition failed: presentation camera too close=${tightPresentationShots.join(', ')}`);
+  }
+}
+
+function assertGate4EDSiteIntegrationLifePassVerification(result, failures) {
+  assertGate4ELandmarkScalePassVerification(result, failures, 'gate-4e-d-site-integration-life-pass');
+
+  const life = result.gate4dLife?.counts || {};
+  const placement = result.gate3rPlacement || {};
+  if ((life.containedMotions || 0) < 24) {
+    failures.push(`Gate 4-E-D life failed: containedMotions=${life.containedMotions || 0}/24`);
+  }
+  if ((placement.byKind?.['gate4d-life-contained-motion'] || 0) < 24) {
+    failures.push(`Gate 4-E-D placement failed: contained motions=${placement.byKind?.['gate4d-life-contained-motion'] || 0}/24`);
   }
 }
 
