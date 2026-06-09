@@ -4148,6 +4148,13 @@ function assertVerification(result) {
     }
     return;
   }
+  if (result.goalGate === 'gate-4e-n-sentinel-soc-silhouette-pass') {
+    assertGate4ENSentinelSocSilhouetteVerification(result, failures);
+    if (failures.length) {
+      throw new Error(`Play verification failed: ${failures.join('; ')}`);
+    }
+    return;
+  }
   if (result.goalGate === 'gate-4b5-north-ridge') {
     assertGate4B5NorthRidgeVerification(result, failures);
     if (failures.length) {
@@ -5261,7 +5268,8 @@ function isGate4EExpandedArchitectureGate(goalGate) {
     || goalGate === 'gate-4e-j-signal-harbor-broadcast-pass'
     || goalGate === 'gate-4e-k-circuit-time-trial-readability-pass'
     || goalGate === 'gate-4e-l-potato-greenhouse-readability-pass'
-    || goalGate === 'gate-4e-m-protected-fcc-visibility-pass';
+    || goalGate === 'gate-4e-m-protected-fcc-visibility-pass'
+    || goalGate === 'gate-4e-n-sentinel-soc-silhouette-pass';
 }
 
 function assertGate3RVerticalSliceVerification(result, failures, options = {}) {
@@ -5269,7 +5277,8 @@ function assertGate3RVerticalSliceVerification(result, failures, options = {}) {
   const allowPrototypeStuntPark = Boolean(options.allowPrototypeStuntPark);
   const allowedExtraColliderPrefixes = options.allowedExtraColliderPrefixes || [];
   const gate4eExpandedArchitecture = isGate4EExpandedArchitectureGate(result.goalGate);
-  const allowProtectedFccExactAtDistance = result.goalGate === 'gate-4e-m-protected-fcc-visibility-pass';
+  const allowProtectedFccExactAtDistance = result.goalGate === 'gate-4e-m-protected-fcc-visibility-pass'
+    || result.goalGate === 'gate-4e-n-sentinel-soc-silhouette-pass';
   const blockout = result.blockout || {};
   const blockoutSetPieces = blockout.setPieces || {};
   const slice = result.verticalSlice || blockout.verticalSlice || {};
@@ -6493,8 +6502,8 @@ function assertGate4ELPotatoGreenhouseReadabilityVerification(result, failures, 
   if ((farm.routeFarmFacades || 0) < 1) failures.push(`Gate 4-E-L Potato failed: routeFarmFacades=${farm.routeFarmFacades || 0}/1`);
 }
 
-function assertGate4EMProtectedFccVisibilityVerification(result, failures) {
-  assertGate4ELPotatoGreenhouseReadabilityVerification(result, failures, 'gate-4e-m-protected-fcc-visibility-pass');
+function assertGate4EMProtectedFccVisibilityVerification(result, failures, expectedGoal = 'gate-4e-m-protected-fcc-visibility-pass') {
+  assertGate4ELPotatoGreenhouseReadabilityVerification(result, failures, expectedGoal);
 
   const far = result.protectedLandmarks?.far;
   const near = result.protectedLandmarks?.near;
@@ -6513,6 +6522,16 @@ function assertGate4EMProtectedFccVisibilityVerification(result, failures) {
   if ((far?.silhouetteTriangles || Infinity) > 2000) {
     failures.push(`Gate 4-E-M protected FCC fallback silhouette too heavy: triangles=${far?.silhouetteTriangles}`);
   }
+}
+
+function assertGate4ENSentinelSocSilhouetteVerification(result, failures) {
+  assertGate4EMProtectedFccVisibilityVerification(result, failures, 'gate-4e-n-sentinel-soc-silhouette-pass');
+
+  const sentinel = result.gate4b5?.sentinel || {};
+  if ((sentinel.routeShieldAtriums || 0) < 1) failures.push(`Gate 4-E-N Sentinel failed: routeShieldAtriums=${sentinel.routeShieldAtriums || 0}/1`);
+  if ((sentinel.incidentResponseHalls || 0) < 1) failures.push(`Gate 4-E-N Sentinel failed: incidentResponseHalls=${sentinel.incidentResponseHalls || 0}/1`);
+  if ((sentinel.scannerBridges || 0) < 1) failures.push(`Gate 4-E-N Sentinel failed: scannerBridges=${sentinel.scannerBridges || 0}/1`);
+  if ((sentinel.overwatchDecks || 0) < 1) failures.push(`Gate 4-E-N Sentinel failed: overwatchDecks=${sentinel.overwatchDecks || 0}/1`);
 }
 
 function assertAuthoredDistrictAsset(result, assetName, label, failures) {

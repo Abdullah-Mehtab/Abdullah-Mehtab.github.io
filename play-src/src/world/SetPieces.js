@@ -643,6 +643,10 @@ export class SetPieces {
         threatIntelMasts: 0,
         blueTeamBridges: 0,
         commandCatwalks: 0,
+        routeShieldAtriums: 0,
+        incidentResponseHalls: 0,
+        scannerBridges: 0,
+        overwatchDecks: 0,
         signs: 0,
         lamps: 0
       },
@@ -1782,6 +1786,10 @@ export class SetPieces {
       stats.threatIntelMasts += 1;
       stats.blueTeamBridges += 1;
       stats.commandCatwalks += 1;
+      stats.routeShieldAtriums += 1;
+      stats.incidentResponseHalls += 1;
+      stats.scannerBridges += 1;
+      stats.overwatchDecks += 1;
     }
 
     stats.signs = 0;
