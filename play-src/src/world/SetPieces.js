@@ -8,6 +8,19 @@ import { makePatchGeometry } from './WorldMaterials.js';
 const Y = 0.16;
 const VISIBILITY_HYSTERESIS = 10;
 const GATE3R_DEFAULT_PROP_CLEARANCE = 2.4;
+const LANDMARK_PRESENTATION = {
+  cv: { scale: 1.42, padWidth: 16, padDepth: 10 },
+  behind: { scale: 1.4, padWidth: 23, padDepth: 15 },
+  skills: { scale: 1.36, padWidth: 20, padDepth: 12 },
+  potato: { scale: 1.18, padWidth: 21.2, padDepth: 12.4 },
+  todo: { scale: 1.34, padWidth: 17.4, padDepth: 10.4 },
+  projects: { scale: 1.38, padWidth: 24, padDepth: 16 },
+  career: { scale: 1.38, padWidth: 18, padDepth: 11 },
+  harbor: { scale: 1.14, padWidth: 16, padDepth: 10 },
+  awards: { scale: 1.34, padWidth: 18, padDepth: 11 },
+  sentinel: { scale: 1.34, padWidth: 18, padDepth: 11 },
+  circuit: { scale: 1.22, padWidth: 19.2, padDepth: 11.2 }
+};
 const POLISH_MATERIAL_LIBRARY_KEYS = {
   polish_warm_limestone: 'warmStone',
   polish_stone_shadow: 'stone',
@@ -1282,13 +1295,14 @@ export class SetPieces {
     const stats = this.gate4b1Stats.cv;
     const rotation = zone.rotation || 0.12;
     const anchor = { x: -36, z: -88, rotation };
+    const presentation = LANDMARK_PRESENTATION.cv;
     const point = (right, forward) => this.gate4B1Point(anchor, right, forward);
 
-    this.gate3rPad(group, anchor.x, anchor.z, 18, 10, this.world.materials.paleStone, 0.132, 'GATE4D_CV_Records_Archive_Civic_Plate', rotation, 'gate4d-cv-footprint', 5.0);
+    this.gate3rPad(group, anchor.x, anchor.z, presentation.padWidth, presentation.padDepth, this.world.materials.paleStone, 0.132, 'GATE4D_CV_Records_Archive_Civic_Plate', rotation, 'gate4d-cv-footprint', 5.0);
     stats.pads += 1;
 
     const archive = point(0, 0.1);
-    if (this.addPolishAsset(group, 'EnvPolishCvRecordsArchive', archive[0], archive[1], rotation + Math.PI, 1.0)) {
+    if (this.addPolishAsset(group, 'EnvPolishCvRecordsArchive', archive[0], archive[1], rotation + Math.PI, presentation.scale)) {
       this.recordGate3RPlacement('gate4d-cv-records-archive', 'GATE4D_CV_Records_Archive_Architecture', archive[0], archive[1], { minClearance: 4.8 });
       stats.sourceAssets += 1;
       stats.authoredAssets += 1;
@@ -1313,13 +1327,14 @@ export class SetPieces {
     const stats = this.gate4b1Stats.behind;
     const rotation = zone.rotation || 0.08;
     const anchor = { x: 35, z: -76, rotation };
+    const presentation = LANDMARK_PRESENTATION.behind;
     const point = (right, forward) => this.gate4B1Point(anchor, right, forward);
 
-    this.gate3rPad(group, anchor.x, anchor.z, 23, 15, this.world.materials.stoneRoad, 0.132, 'GATE4D_Behind_Engineering_Garage_Service_Court', rotation, 'gate4d-behind-footprint', 5.0);
+    this.gate3rPad(group, anchor.x, anchor.z, presentation.padWidth, presentation.padDepth, this.world.materials.stoneRoad, 0.132, 'GATE4D_Behind_Engineering_Garage_Service_Court', rotation, 'gate4d-behind-footprint', 5.0);
     stats.pads += 1;
 
     const garage = point(0, 0.05);
-    if (this.addPolishAsset(group, 'EnvPolishBehindEngineeringGarage', garage[0], garage[1], rotation, 1.0)) {
+    if (this.addPolishAsset(group, 'EnvPolishBehindEngineeringGarage', garage[0], garage[1], rotation, presentation.scale)) {
       this.recordGate3RPlacement('gate4d-behind-engineering-garage', 'GATE4D_Behind_Engineering_Garage_Architecture', garage[0], garage[1], { minClearance: 5.0 });
       stats.sourceAssets += 1;
       stats.authoredAssets += 1;
@@ -1358,13 +1373,14 @@ export class SetPieces {
     const stats = this.gate4b2Stats.skills;
     const anchor = { x: -94, z: -84, rotation: 0.24 };
     const rotation = anchor.rotation;
+    const presentation = LANDMARK_PRESENTATION.skills;
     const point = (right, forward) => this.gate4B1Point(anchor, right, forward);
 
-    this.gate3rPad(group, anchor.x, anchor.z, 22, 13, this.world.materials.securityRoad, 0.132, 'GATE4D_Skills_Data_Center_Service_Court', rotation, 'gate4d-skills-footprint', 5.0);
+    this.gate3rPad(group, anchor.x, anchor.z, presentation.padWidth, presentation.padDepth, this.world.materials.securityRoad, 0.132, 'GATE4D_Skills_Data_Center_Service_Court', rotation, 'gate4d-skills-footprint', 5.0);
     stats.pads += 1;
 
     const dataCenter = point(0, 0.05);
-    if (this.addPolishAsset(group, 'EnvPolishSkillsDataCenter', dataCenter[0], dataCenter[1], rotation, 1.0)) {
+    if (this.addPolishAsset(group, 'EnvPolishSkillsDataCenter', dataCenter[0], dataCenter[1], rotation, presentation.scale)) {
       this.recordGate3RPlacement('gate4d-skills-data-center', 'GATE4D_Skills_Data_Center_Architecture', dataCenter[0], dataCenter[1], { minClearance: 5.0 });
       stats.sourceAssets += 1;
       stats.authoredAssets += 1;
@@ -1394,13 +1410,14 @@ export class SetPieces {
     const stats = this.gate4b2Stats.farm;
     const anchor = { x: -14, z: -129, rotation: 0.18 };
     const rotation = anchor.rotation;
+    const presentation = LANDMARK_PRESENTATION.potato;
     const point = (right, forward) => this.gate4B1Point(anchor, right, forward);
 
-    this.gate3rPad(group, anchor.x, anchor.z, 21.2, 12.4, this.world.materials.dirtRoad, 0.13, 'GATE4D_Potato_Farm_Stand_Service_Court', rotation, 'gate4d-potato-footprint', 5.0);
+    this.gate3rPad(group, anchor.x, anchor.z, presentation.padWidth, presentation.padDepth, this.world.materials.dirtRoad, 0.13, 'GATE4D_Potato_Farm_Stand_Service_Court', rotation, 'gate4d-potato-footprint', 5.0);
     stats.pads += 1;
 
     const farmStand = point(0, 0);
-    if (this.addPolishAsset(group, 'EnvPolishPotatoFarmStand', farmStand[0], farmStand[1], rotation, 1.0)) {
+    if (this.addPolishAsset(group, 'EnvPolishPotatoFarmStand', farmStand[0], farmStand[1], rotation, presentation.scale)) {
       this.recordGate3RPlacement('gate4d-potato-farm-stand', 'GATE4D_Potato_Farm_Stand_Architecture', farmStand[0], farmStand[1], { minClearance: 5.0 });
       stats.sourceAssets += 1;
       stats.authoredAssets += 1;
@@ -1454,13 +1471,14 @@ export class SetPieces {
     const rotation = zone.rotation || 0.24;
     const buildingRotation = rotation + Math.PI / 2;
     const anchor = { x: zone.position[0], z: zone.position[2], rotation };
+    const presentation = LANDMARK_PRESENTATION.todo;
     const point = (right, forward) => this.gate4B1Point(anchor, right, forward);
 
-    this.gate3rPad(group, anchor.x, anchor.z, 17.4, 10.4, this.world.materials.warmStone, 0.132, 'GATE4D_Todo_Planning_Studio_Service_Court', buildingRotation, 'gate4d-todo-footprint', 5.0);
+    this.gate3rPad(group, anchor.x, anchor.z, presentation.padWidth, presentation.padDepth, this.world.materials.warmStone, 0.132, 'GATE4D_Todo_Planning_Studio_Service_Court', buildingRotation, 'gate4d-todo-footprint', 5.0);
     stats.pads += 1;
 
     const studio = point(0, 0.05);
-    if (this.addPolishAsset(group, 'EnvPolishTodoPlanningStudio', studio[0], studio[1], buildingRotation, 1.0)) {
+    if (this.addPolishAsset(group, 'EnvPolishTodoPlanningStudio', studio[0], studio[1], buildingRotation, presentation.scale)) {
       this.recordGate3RPlacement('gate4d-todo-planning-studio', 'GATE4D_Todo_Planning_Studio_Architecture', studio[0], studio[1], { minClearance: 5.0 });
       stats.sourceAssets += 1;
       stats.authoredAssets += 1;
@@ -1511,13 +1529,14 @@ export class SetPieces {
     const anchor = { x: 76, z: -28, rotation: -0.34 };
     const point = (right, forward) => this.gate4B1Point(anchor, right, forward);
     const rotation = anchor.rotation;
+    const presentation = LANDMARK_PRESENTATION.projects;
 
-    this.gate3rPad(group, anchor.x, anchor.z, 24, 16, this.world.materials.stoneRoad, 0.132, 'GATE4D_Projects_Foundry_Workshop_Plate', rotation, 'gate4d-projects-footprint', 5.0);
+    this.gate3rPad(group, anchor.x, anchor.z, presentation.padWidth, presentation.padDepth, this.world.materials.stoneRoad, 0.132, 'GATE4D_Projects_Foundry_Workshop_Plate', rotation, 'gate4d-projects-footprint', 5.0);
     stats.pads += 1;
     stats.groundPlates += 1;
 
     const foundry = point(0, 0);
-    if (this.addPolishAsset(group, 'EnvPolishProjectsFoundryBuilding', foundry[0], foundry[1], rotation, 1.0)) {
+    if (this.addPolishAsset(group, 'EnvPolishProjectsFoundryBuilding', foundry[0], foundry[1], rotation, presentation.scale)) {
       this.recordGate3RPlacement('gate4d-projects-foundry-building', 'GATE4D_Projects_Foundry_Building_Architecture', foundry[0], foundry[1], { minClearance: 5.0 });
       stats.sourceAssets += 1;
       stats.authoredAssets += 1;
@@ -1539,8 +1558,9 @@ export class SetPieces {
     const anchor = { x: 82, z: -46, rotation: -0.24 };
     const point = (right, forward) => this.gate4B1Point(anchor, right, forward);
     const rotation = anchor.rotation;
+    const presentation = LANDMARK_PRESENTATION.career;
 
-    this.gate3rPad(group, anchor.x, anchor.z, 22, 14, this.world.materials.warmStone, 0.132, 'GATE4D_Career_Software_House_Campus_Plate', rotation, 'gate4d-career-footprint', 5.0);
+    this.gate3rPad(group, anchor.x, anchor.z, presentation.padWidth, presentation.padDepth, this.world.materials.warmStone, 0.132, 'GATE4D_Career_Software_House_Campus_Plate', rotation, 'gate4d-career-footprint', 5.0);
     stats.pads += 1;
 
     const placeSource = (assetName, kind, name, right, forward, assetRotation, scale, statName, minClearance = 5.0) => {
@@ -1554,7 +1574,7 @@ export class SetPieces {
       return null;
     };
 
-    placeSource('EnvPolishCareerSoftwareHouse', 'gate4d-career-software-house', 'GATE4D_Career_Software_House_Architecture', 0, 0.25, rotation, 1.0, 'softwareHouseBuildings', 5.0);
+    placeSource('EnvPolishCareerSoftwareHouse', 'gate4d-career-software-house', 'GATE4D_Career_Software_House_Architecture', 0, 0.25, rotation, presentation.scale, 'softwareHouseBuildings', 5.0);
     if (stats.softwareHouseBuildings > 0) {
       stats.architectureAssets += 1;
       stats.buildingShells += 1;
@@ -1580,14 +1600,15 @@ export class SetPieces {
     const anchor = { x: 127, z: 13, rotation: -0.34 };
     const point = (right, forward) => this.gate4B1Point(anchor, right, forward);
     const rotation = anchor.rotation;
+    const presentation = LANDMARK_PRESENTATION.harbor;
 
     const deck = point(1, 3);
-    this.gate3rPad(group, deck[0], deck[1], 18.2, 10.6, this.world.materials.paleStone, 0.132, 'GATE4D_Signal_Harbor_Communications_Service_Deck', rotation, 'gate4d-harbor-footprint', 4.8);
+    this.gate3rPad(group, deck[0], deck[1], presentation.padWidth, presentation.padDepth, this.world.materials.paleStone, 0.132, 'GATE4D_Signal_Harbor_Communications_Service_Deck', rotation, 'gate4d-harbor-footprint', 4.8);
     stats.deckPads += 1;
     stats.deckPlatforms += 1;
 
     const station = point(1, 3.05);
-    if (this.addPolishAsset(group, 'EnvPolishSignalHarborCommunicationsStation', station[0], station[1], rotation, 1.0)) {
+    if (this.addPolishAsset(group, 'EnvPolishSignalHarborCommunicationsStation', station[0], station[1], rotation, presentation.scale)) {
       this.recordGate3RPlacement('gate4d-harbor-communications-station', 'GATE4D_Signal_Harbor_Communications_Station_Architecture', station[0], station[1], { minClearance: 4.8 });
       stats.sourceAssets += 1;
       stats.authoredAssets += 1;
@@ -1632,13 +1653,14 @@ export class SetPieces {
     const anchor = { x: -58, z: 116, rotation: -0.18 };
     const point = (right, forward) => this.gate4B1Point(anchor, right, forward);
     const rotation = anchor.rotation;
+    const presentation = LANDMARK_PRESENTATION.awards;
 
-    this.gate3rPad(group, anchor.x, anchor.z, 18, 11, this.world.materials.paleStone, 0.132, 'GATE4D_Awards_Museum_Hall_Ceremonial_Ground', rotation, 'gate4d-awards-footprint', 5.2);
+    this.gate3rPad(group, anchor.x, anchor.z, presentation.padWidth, presentation.padDepth, this.world.materials.paleStone, 0.132, 'GATE4D_Awards_Museum_Hall_Ceremonial_Ground', rotation, 'gate4d-awards-footprint', 5.2);
     stats.pads += 1;
     stats.galleryBases += 1;
 
     const museum = point(0, 0.05);
-    if (this.addPolishAsset(group, 'EnvPolishAwardsMuseumHall', museum[0], museum[1], rotation, 1.0)) {
+    if (this.addPolishAsset(group, 'EnvPolishAwardsMuseumHall', museum[0], museum[1], rotation, presentation.scale)) {
       stats.authoredAssets += 1;
       stats.sourceAssets += 1;
       stats.architectureAssets += 1;
@@ -1662,13 +1684,14 @@ export class SetPieces {
     const anchor = { x: 10, z: 129, rotation: -0.12 };
     const point = (right, forward) => this.gate4B1Point(anchor, right, forward);
     const rotation = anchor.rotation;
+    const presentation = LANDMARK_PRESENTATION.sentinel;
 
-    this.gate3rPad(group, anchor.x, anchor.z, 18.4, 12, this.world.materials.securityRoad, 0.132, 'GATE4D_Sentinel_SOC_Tower_Service_Plate', rotation, 'gate4d-sentinel-footprint', 5.2);
+    this.gate3rPad(group, anchor.x, anchor.z, presentation.padWidth, presentation.padDepth, this.world.materials.securityRoad, 0.132, 'GATE4D_Sentinel_SOC_Tower_Service_Plate', rotation, 'gate4d-sentinel-footprint', 5.2);
     stats.pads += 1;
     stats.groundPlates += 1;
 
     const socTower = point(0, 0);
-    if (this.addPolishAsset(group, 'EnvPolishSentinelSocTower', socTower[0], socTower[1], rotation, 1.0)) {
+    if (this.addPolishAsset(group, 'EnvPolishSentinelSocTower', socTower[0], socTower[1], rotation, presentation.scale)) {
       this.recordGate3RPlacement('gate4d-sentinel-soc-tower', 'GATE4D_Sentinel_SOC_Tower_Architecture', socTower[0], socTower[1], { minClearance: 5.0 });
       stats.sourceAssets += 1;
       stats.authoredAssets += 1;
@@ -1695,12 +1718,13 @@ export class SetPieces {
     const anchor = { x: 58, z: 76, rotation: -0.28 };
     const point = (right, forward) => this.gate4B1Point(anchor, right, forward);
     const rotation = anchor.rotation;
+    const presentation = LANDMARK_PRESENTATION.circuit;
 
-    this.gate3rPad(group, anchor.x, anchor.z, 19.2, 11.2, this.world.materials.stuntRamp, 0.132, 'GATE4D_Circuit_Time_Trial_Service_Court', rotation, 'gate4d-circuit-footprint', 5.2);
+    this.gate3rPad(group, anchor.x, anchor.z, presentation.padWidth, presentation.padDepth, this.world.materials.stuntRamp, 0.132, 'GATE4D_Circuit_Time_Trial_Service_Court', rotation, 'gate4d-circuit-footprint', 5.2);
     stats.pads += 1;
 
     const gate = point(0, 0);
-    if (this.addPolishAsset(group, 'EnvPolishCircuitTimeTrialGate', gate[0], gate[1], rotation, 1.0)) {
+    if (this.addPolishAsset(group, 'EnvPolishCircuitTimeTrialGate', gate[0], gate[1], rotation, presentation.scale)) {
       this.recordGate3RPlacement('gate4d-circuit-time-trial-gate', 'GATE4D_Circuit_Time_Trial_Gate_Architecture', gate[0], gate[1], { minClearance: 5.0 });
       stats.authoredAssets += 1;
       stats.sourceAssets += 1;
@@ -1740,7 +1764,10 @@ export class SetPieces {
       { id: 'awards', x: -58, z: 116, rotation: -0.18, color: 0xffdf8a, kind: 'museum' },
       { id: 'sentinel', x: 10, z: 129, rotation: -0.12, color: 0xff6d8d, kind: 'soc' },
       { id: 'circuit', x: 58, z: 76, rotation: -0.28, color: 0xff9b6d, kind: 'time-trial' }
-    ];
+    ].map((anchor) => ({
+      ...anchor,
+      scale: LANDMARK_PRESENTATION[anchor.id]?.scale || LANDMARK_PRESENTATION.harbor.scale
+    }));
     this.gate4dLifeStats.activeLandmarks = anchors.length;
 
     for (const anchor of anchors) {
@@ -1779,9 +1806,10 @@ export class SetPieces {
   }
 
   gate4DLifePoint(anchor, right, forward) {
+    const scale = anchor.scale || 1;
     return [
-      anchor.x + Math.cos(anchor.rotation) * right + Math.sin(anchor.rotation) * forward,
-      anchor.z - Math.sin(anchor.rotation) * right + Math.cos(anchor.rotation) * forward
+      anchor.x + Math.cos(anchor.rotation) * right * scale + Math.sin(anchor.rotation) * forward * scale,
+      anchor.z - Math.sin(anchor.rotation) * right * scale + Math.cos(anchor.rotation) * forward * scale
     ];
   }
 
@@ -1789,14 +1817,15 @@ export class SetPieces {
     if (!anchor) return null;
     const [x, z] = this.gate4DLifePoint(anchor, right, forward);
     const material = this.gate4DLifeMaterial(anchor.color, opacity);
-    const mesh = new THREE.Mesh(new THREE.BoxGeometry(width, 0.34, 0.045), material);
+    const scale = anchor.scale || 1;
+    const mesh = new THREE.Mesh(new THREE.BoxGeometry(width * scale, 0.34 * scale, 0.045), material);
     mesh.name = `GATE4D_Life_WindowGlow_${anchor.id}`;
-    mesh.position.set(x, y, z);
+    mesh.position.set(x, y * scale, z);
     mesh.rotation.y = anchor.rotation;
     mesh.renderOrder = 30;
     group.add(mesh);
     this.recordGate3RPlacement('gate4d-life-window-glow', mesh.name, x, z, { minClearance: 4.0 });
-    this.registerGate4DLifeItem({ mesh, role: 'windowGlows', tier, baseOpacity: opacity, opacityRange: 0.06, speed: 0.72, phase: this.gate4dLifeItems.length * 0.47, baseY: y, baseScale: 1, range: 0.028 });
+    this.registerGate4DLifeItem({ mesh, role: 'windowGlows', tier, baseOpacity: opacity, opacityRange: 0.06, speed: 0.72, phase: this.gate4dLifeItems.length * 0.47, baseY: y * scale, baseScale: 1, range: 0.028 });
     return mesh;
   }
 
@@ -1805,16 +1834,17 @@ export class SetPieces {
     const [x, z] = this.gate4DLifePoint(anchor, right, forward);
     const material = this.gate4DLifeMaterial(anchor.color, 0.22);
     material.side = THREE.DoubleSide;
+    const anchorScale = anchor.scale || 1;
     const mesh = new THREE.Mesh(new THREE.RingGeometry(0.8, 1.08, 6), material);
     mesh.name = `GATE4D_Life_TerminalPulse_${anchor.id}`;
     mesh.position.set(x, 0.255, z);
     mesh.rotation.x = -Math.PI / 2;
     mesh.rotation.z = anchor.rotation;
-    mesh.scale.setScalar(scale);
+    mesh.scale.setScalar(scale * anchorScale);
     mesh.renderOrder = 42;
     group.add(mesh);
     this.recordGate3RPlacement('gate4d-life-terminal-pulse', mesh.name, x, z, { minClearance: 3.8 });
-    this.registerGate4DLifeItem({ mesh, role: 'terminalPulses', tier, baseOpacity: 0.18, opacityRange: 0.08, speed: 0.95, phase: this.gate4dLifeItems.length * 0.51, baseScale: scale, range: 0.11, rotationSpeed: 0.28 });
+    this.registerGate4DLifeItem({ mesh, role: 'terminalPulses', tier, baseOpacity: 0.18, opacityRange: 0.08, speed: 0.95, phase: this.gate4dLifeItems.length * 0.51, baseScale: scale * anchorScale, range: 0.11, rotationSpeed: 0.28 });
     return mesh;
   }
 
@@ -1822,14 +1852,15 @@ export class SetPieces {
     if (!anchor) return null;
     const [x, z] = this.gate4DLifePoint(anchor, right, forward);
     const material = this.gate4DLifeMaterial(anchor.color, 0.24);
-    const mesh = new THREE.Mesh(new THREE.BoxGeometry(width, 0.09, 0.05), material);
+    const anchorScale = anchor.scale || 1;
+    const mesh = new THREE.Mesh(new THREE.BoxGeometry(width * anchorScale, 0.09 * anchorScale, 0.05), material);
     mesh.name = `GATE4D_Life_GallerySweep_${anchor.id}`;
-    mesh.position.set(x, y, z);
+    mesh.position.set(x, y * anchorScale, z);
     mesh.rotation.y = anchor.rotation;
     mesh.renderOrder = 31;
     group.add(mesh);
     this.recordGate3RPlacement('gate4d-life-gallery-sweep', mesh.name, x, z, { minClearance: 4.0 });
-    this.registerGate4DLifeItem({ mesh, role: 'gallerySweeps', tier, baseOpacity: 0.16, opacityRange: 0.1, speed: 0.58, phase: this.gate4dLifeItems.length * 0.63, baseY: y, baseScale: 1, range: 0.075 });
+    this.registerGate4DLifeItem({ mesh, role: 'gallerySweeps', tier, baseOpacity: 0.16, opacityRange: 0.1, speed: 0.58, phase: this.gate4dLifeItems.length * 0.63, baseY: y * anchorScale, baseScale: 1, range: 0.075 });
     return mesh;
   }
 
@@ -1838,16 +1869,17 @@ export class SetPieces {
     const [x, z] = this.gate4DLifePoint(anchor, right, forward);
     const material = this.gate4DLifeMaterial(anchor.color, 0.2);
     material.side = THREE.DoubleSide;
+    const anchorScale = anchor.scale || 1;
     const mesh = new THREE.Mesh(new THREE.RingGeometry(0.92, 1.18, 28), material);
     mesh.name = `GATE4D_Life_SignalPulse_${anchor.id}`;
-    mesh.position.set(x, y, z);
+    mesh.position.set(x, y * anchorScale, z);
     mesh.rotation.x = -Math.PI / 2;
     mesh.rotation.z = anchor.rotation;
-    mesh.scale.setScalar(scale);
+    mesh.scale.setScalar(scale * anchorScale);
     mesh.renderOrder = 43;
     group.add(mesh);
     this.recordGate3RPlacement('gate4d-life-signal-pulse', mesh.name, x, z, { minClearance: 4.0 });
-    this.registerGate4DLifeItem({ mesh, role: 'signalPulses', tier, baseOpacity: 0.16, opacityRange: 0.09, speed: 0.7, phase: this.gate4dLifeItems.length * 0.41, baseScale: scale, range: 0.13, rotationSpeed: 0.2 });
+    this.registerGate4DLifeItem({ mesh, role: 'signalPulses', tier, baseOpacity: 0.16, opacityRange: 0.09, speed: 0.7, phase: this.gate4dLifeItems.length * 0.41, baseScale: scale * anchorScale, range: 0.13, rotationSpeed: 0.2 });
     return mesh;
   }
 
@@ -1857,9 +1889,10 @@ export class SetPieces {
       const [right, forward, y, scale] = specs[index];
       const [x, z] = this.gate4DLifePoint(anchor, right, forward);
       const material = this.gate4DLifeMaterial(anchor.color, 0.44);
-      const mesh = new THREE.Mesh(new THREE.BoxGeometry(0.82 * scale, 0.48 * scale, 0.045), material);
+      const anchorScale = anchor.scale || 1;
+      const mesh = new THREE.Mesh(new THREE.BoxGeometry(0.82 * scale * anchorScale, 0.48 * scale * anchorScale, 0.045), material);
       mesh.name = `GATE4D_Life_ContainedMotion_${anchor.id}_${index}`;
-      mesh.position.set(x, y, z);
+      mesh.position.set(x, y * anchorScale, z);
       mesh.rotation.y = anchor.rotation + (index - specs.length * 0.5) * 0.06;
       mesh.renderOrder = 33;
       group.add(mesh);
@@ -1872,7 +1905,7 @@ export class SetPieces {
         opacityRange: 0.1,
         speed: 0.54 + index * 0.05,
         phase: this.gate4dLifeItems.length * 0.55,
-        baseY: y,
+        baseY: y * anchorScale,
         bob: 0.16,
         baseRotation: mesh.rotation.y,
         rotationRange: 0.08,

@@ -119,14 +119,27 @@ export class Zones {
       const distance = vehiclePosition
         ? Math.hypot(vehiclePosition.x - entry.worldPosition.x, vehiclePosition.z - entry.worldPosition.z)
         : Infinity;
+      const distances = this.protectedLandmarkDistances(entry);
       const showExact = entry.mode === 'exact'
-        ? distance < entry.hideDistance
-        : distance < entry.showDistance;
+        ? distance < distances.hide
+        : distance < distances.show;
       entry.exact.visible = showExact;
       entry.silhouette.visible = !showExact;
       entry.mode = showExact ? 'exact' : 'silhouette';
       entry.distance = Number(distance.toFixed(2));
+      entry.showDistance = distances.show;
+      entry.hideDistance = distances.hide;
     }
+  }
+
+  protectedLandmarkDistances(entry) {
+    if (this.world.landscapeQuality === 'low') {
+      return entry.lowDistances;
+    }
+    if (this.world.landscapeQuality === 'high') {
+      return entry.highDistances;
+    }
+    return entry.mediumDistances;
   }
 
   getProtectedLandmarkStats() {
@@ -201,8 +214,11 @@ export class Zones {
       worldPosition: zone.position.clone(),
       mode: 'silhouette',
       distance: Infinity,
-      showDistance: 58,
-      hideDistance: 70,
+      lowDistances: { show: 58, hide: 70 },
+      mediumDistances: { show: 150, hide: 172 },
+      highDistances: { show: 210, hide: 232 },
+      showDistance: 150,
+      hideDistance: 172,
       exactTriangles: countTriangles(exact),
       silhouetteTriangles: countTriangles(silhouette)
     };

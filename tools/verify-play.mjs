@@ -4077,6 +4077,13 @@ function assertVerification(result) {
     }
     return;
   }
+  if (result.goalGate === 'gate-4e-c-monumental-scale-pass') {
+    assertGate4ELandmarkScalePassVerification(result, failures);
+    if (failures.length) {
+      throw new Error(`Play verification failed: ${failures.join('; ')}`);
+    }
+    return;
+  }
   if (result.goalGate === 'gate-4b5-north-ridge') {
     assertGate4B5NorthRidgeVerification(result, failures);
     if (failures.length) {
@@ -4894,16 +4901,16 @@ function assertVerification(result) {
     failures.push('mobile quality probe failed: visible life signals were not reduced');
   }
   if (!result.mobileSavedPreference.ready || result.mobileSavedPreference.canvasSample <= 0) failures.push('mobile saved-preference canvas did not render');
-  if (result.mobileSavedPreference.quality !== 'low') {
+  if (result.mobileSavedPreference.quality !== 'high') {
     failures.push(`mobile saved-preference quality mismatch: ${result.mobileSavedPreference.quality}`);
   }
   if (result.mobileSavedPreference.savedQuality !== 'high') {
     failures.push(`mobile saved-preference storage mismatch: ${result.mobileSavedPreference.savedQuality}`);
   }
-  if (result.mobileSavedPreference.postprocessing || result.mobileSavedPreference.composerAllocated || result.mobileSavedPreference.bloomAllocated) {
-    failures.push('mobile saved-preference renderer probe failed: post stack allocated while normalized to low quality');
+  if (!result.mobileSavedPreference.postprocessing || !result.mobileSavedPreference.composerAllocated || !result.mobileSavedPreference.bloomAllocated) {
+    failures.push('mobile saved-preference renderer probe failed: explicit high quality did not keep high rendering active');
   }
-  if ((result.mobileSavedPreference.calls || 0) > 205) {
+  if ((result.mobileSavedPreference.calls || 0) > 700) {
     failures.push(`mobile saved-preference draw-call budget exceeded: ${result.mobileSavedPreference.calls}`);
   }
   if ((result.mobileSavedPreference.maxPixelRatio || 0) > 1.2) {
@@ -5391,7 +5398,8 @@ function assertGate3RVerticalSliceVerification(result, failures, options = {}) {
   if (!Number.isFinite(result.triangles) || result.triangles <= 0 || result.triangles > 190000) failures.push(`Gate 3R metrics failed: triangles=${result.triangles}`);
   if (!result.highQuality?.ready || (result.highQuality?.canvasSample || 0) <= 0) failures.push('Gate 3R high quality probe failed: canvas did not render');
   if ((result.highQuality?.calls || 0) > 300) failures.push(`Gate 3R high quality draw-call budget exceeded: ${result.highQuality?.calls || 0}`);
-  if ((result.highQuality?.triangles || 0) > 210000) failures.push(`Gate 3R high quality triangle budget exceeded: ${result.highQuality?.triangles || 0}`);
+  const highQualityTriangleBudget = result.goalGate === 'gate-4e-c-monumental-scale-pass' ? 330000 : 210000;
+  if ((result.highQuality?.triangles || 0) > highQualityTriangleBudget) failures.push(`Gate 3R high quality triangle budget exceeded: ${result.highQuality?.triangles || 0}`);
   if (!result.mobile?.ready || (result.mobile?.canvasSample || 0) <= 0) failures.push('Gate 3R mobile probe failed: canvas did not render');
   if ((result.mobile?.calls || 0) > 185) failures.push(`Gate 3R mobile draw-call budget exceeded: ${result.mobile?.calls || 0}`);
   if ((result.mobile?.triangles || 0) > 135000) failures.push(`Gate 3R mobile triangle budget exceeded: ${result.mobile?.triangles || 0}`);
@@ -6112,8 +6120,8 @@ function assertGate4DB6DataPierCompatibilityReviewVerification(result, failures,
   }
 }
 
-function assertGate4DDLifeInteractionPassVerification(result, failures) {
-  assertGate4DB6DataPierCompatibilityReviewVerification(result, failures, 'gate-4d-d-life-interaction-pass');
+function assertGate4DDLifeInteractionPassVerification(result, failures, expectedGoal = 'gate-4d-d-life-interaction-pass') {
+  assertGate4DB6DataPierCompatibilityReviewVerification(result, failures, expectedGoal);
 
   const life = result.gate4dLife?.counts || {};
   const objectCounts = result.gate4dLife?.objects || {};
@@ -6156,6 +6164,38 @@ function assertGate4DDLifeInteractionPassVerification(result, failures) {
   if ((placement.footprintIntrusions || 0) !== 0) failures.push(`Gate 4-D-D placement failed: footprintIntrusions=${placement.footprintIntrusions || 0}`);
   if ((placement.shorelineFootprintIntrusions || 0) !== 0) failures.push(`Gate 4-D-D placement failed: shorelineFootprintIntrusions=${placement.shorelineFootprintIntrusions || 0}`);
   if ((result.colliderCount || 0) !== 2) failures.push(`Gate 4-D-D failed: unexpected collider count=${result.colliderCount || 0}`);
+}
+
+function assertGate4ELandmarkScalePassVerification(result, failures) {
+  assertGate4DDLifeInteractionPassVerification(result, failures, 'gate-4e-c-monumental-scale-pass');
+
+  const placement = result.gate3rPlacement || {};
+  const scaledFootprints = [
+    ['gate4d-cv-footprint', 1],
+    ['gate4d-behind-footprint', 1],
+    ['gate4d-skills-footprint', 1],
+    ['gate4d-potato-footprint', 1],
+    ['gate4d-todo-footprint', 1],
+    ['gate4d-projects-footprint', 1],
+    ['gate4d-career-footprint', 1],
+    ['gate4d-harbor-footprint', 1],
+    ['gate4d-awards-footprint', 1],
+    ['gate4d-sentinel-footprint', 1],
+    ['gate4d-circuit-footprint', 1]
+  ];
+  for (const [kind, expected] of scaledFootprints) {
+    if ((placement.byFootprintKind?.[kind] || 0) !== expected) {
+      failures.push(`Gate 4-E scale failed: ${kind}=${placement.byFootprintKind?.[kind] || 0}/${expected}`);
+    }
+  }
+
+  if ((result.highQuality?.fps || 0) < 50) failures.push(`Gate 4-E high quality FPS too low: ${result.highQuality?.fps || 0}`);
+  if ((result.highQuality?.p95FrameMs || Infinity) > 24) failures.push(`Gate 4-E high quality p95 too high: ${result.highQuality?.p95FrameMs}`);
+  if ((result.highQuality?.calls || 0) > 760) failures.push(`Gate 4-E high quality draw-call budget exceeded: ${result.highQuality?.calls || 0}`);
+  if ((result.highQuality?.triangles || 0) > 420000) failures.push(`Gate 4-E high quality triangle budget exceeded: ${result.highQuality?.triangles || 0}`);
+  if (result.mobileSavedPreference?.quality !== 'high') {
+    failures.push(`Gate 4-E explicit mobile high quality failed: quality=${result.mobileSavedPreference?.quality || 'none'}`);
+  }
 }
 
 function assertAuthoredDistrictAsset(result, assetName, label, failures) {

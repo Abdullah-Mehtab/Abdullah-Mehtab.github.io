@@ -36,7 +36,7 @@ const ROAD_SURFACES = {
   bridge: { label: 'pier deck', forwardGrip: 0.96, sideGrip: 0.93, engineFactor: 0.96, topSpeedFactor: 0.88, dustColor: 0x7aa9a7, skidColor: 0x2e4d4b, audioId: 'bridge-road', roughnessFeedback: 0.34 }
 };
 
-const GOAL_GATE = 'gate-4d-d-life-interaction-pass';
+const GOAL_GATE = 'gate-4e-c-monumental-scale-pass';
 const GATE4_C_B1_GATE_ID = 'gate-4c-b1-south-run-replacements';
 const GATE4_C_B2_GATE_ID = 'gate-4c-b2-gallery-side-replacements';
 const GATE4_C_B3_GATE_ID = 'gate-4c-b3-west-service-replacements';
@@ -51,7 +51,8 @@ const GATE4_D_B4_GATE_ID = 'gate-4d-b4-harbor-todo-architecture';
 const GATE4_D_B5_GATE_ID = 'gate-4d-b5-potato-sentinel-circuit-architecture';
 const GATE4_D_B6_GATE_ID = 'gate-4d-b6-data-pier-compatibility-review';
 const GATE4_D_D_GATE_ID = 'gate-4d-d-life-interaction-pass';
-const GATE4_D_GATE_IDS = [GATE4_D_B1_GATE_ID, GATE4_D_B2_GATE_ID, GATE4_D_B3_GATE_ID, GATE4_D_B4_GATE_ID, GATE4_D_B5_GATE_ID, GATE4_D_B6_GATE_ID, GATE4_D_D_GATE_ID];
+const GATE4_E_C_GATE_ID = 'gate-4e-c-monumental-scale-pass';
+const GATE4_D_GATE_IDS = [GATE4_D_B1_GATE_ID, GATE4_D_B2_GATE_ID, GATE4_D_B3_GATE_ID, GATE4_D_B4_GATE_ID, GATE4_D_B5_GATE_ID, GATE4_D_B6_GATE_ID, GATE4_D_D_GATE_ID, GATE4_E_C_GATE_ID];
 const GATE4_BR_GATE_ID = 'gate-4br-composition-correction';
 const GATE4_B1_GATE_IDS = new Set(['gate-4b1-south-run', 'gate-4b2-west-service', 'gate-4b3-data-pier-side', 'gate-4b4-east-side', 'gate-4b5-north-ridge', GATE4_BR_GATE_ID, ...GATE4_C_GATE_IDS, ...GATE4_D_GATE_IDS]);
 const GATE4_B2_GATE_IDS = new Set(['gate-4b2-west-service', 'gate-4b3-data-pier-side', 'gate-4b4-east-side', 'gate-4b5-north-ridge', GATE4_BR_GATE_ID, ...GATE4_C_GATE_IDS, ...GATE4_D_GATE_IDS]);
@@ -79,7 +80,7 @@ export class World {
     this.gate4b6Mode = false;
     this.gate4b6rPrototypeMode = false;
     this.gate4b6rFullMode = false;
-    this.gate4dLifeMode = GOAL_GATE === GATE4_D_D_GATE_ID;
+    this.gate4dLifeMode = GOAL_GATE === GATE4_D_D_GATE_ID || GOAL_GATE === GATE4_E_C_GATE_ID;
     this.blockoutMode = GOAL_GATE === 'gate-2-blockout' || this.verticalSliceMode || this.foundationReplacementMode;
     this.materials = createWorldMaterials();
     this.zones = [];
@@ -148,7 +149,7 @@ export class World {
   readLandscapeQuality() {
     const saved = localStorage.getItem('portfolio-drive-landscape-quality');
     const lightLandscape = prefersLightLandscape();
-    if (QUALITY_PROFILES[saved]) return normalizeLandscapeQualityForDevice(saved, lightLandscape);
+    if (QUALITY_PROFILES[saved]) return saved;
     return lightLandscape ? 'low' : 'medium';
   }
 
@@ -532,10 +533,6 @@ function prefersLightLandscape() {
   const coarsePointer = window.matchMedia?.('(pointer: coarse)')?.matches === true;
   const touch = navigator.maxTouchPoints > 1;
   return narrow || coarsePointer || touch;
-}
-
-function normalizeLandscapeQualityForDevice(quality, lightLandscape) {
-  return lightLandscape && quality === 'high' ? 'low' : quality;
 }
 
 function roadSurfaceForPath(path) {
