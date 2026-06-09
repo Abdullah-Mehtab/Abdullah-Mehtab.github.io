@@ -61,6 +61,9 @@ export class SetPieces {
     this.securityLabStats = {
       floorMarks: 0,
       authoredAssets: 0,
+      sourceAssets: 0,
+      architectureAssets: 0,
+      operationsGates: 0,
       cableRuns: 0,
       terminalRails: 0
     };
@@ -610,6 +613,10 @@ export class SetPieces {
         scannerCrowns: 0,
         alertWalls: 0,
         packetShardPanels: 0,
+        shieldGateFrames: 0,
+        threatIntelMasts: 0,
+        blueTeamBridges: 0,
+        commandCatwalks: 0,
         signs: 0,
         lamps: 0
       },
@@ -1713,6 +1720,10 @@ export class SetPieces {
       stats.shardPanels += 4;
       stats.packetShardPanels += 4;
       stats.perimeterPylons += 2;
+      stats.shieldGateFrames += 1;
+      stats.threatIntelMasts += 1;
+      stats.blueTeamBridges += 1;
+      stats.commandCatwalks += 1;
     }
 
     stats.signs = 0;
@@ -2368,8 +2379,13 @@ export class SetPieces {
     stats.floorPads += 3;
 
     const [labX, labZ] = point(0, 7.8);
-    if (this.addPolishAsset(group, 'EnvSecurityGate', labX, labZ, scan.rotation, 1.05)) {
+    const gateAsset = this.world.gate4eCybersecurityCraftMode ? 'EnvPolishSecurityOperationsGate' : 'EnvSecurityGate';
+    if (this.addPolishAsset(group, gateAsset, labX, labZ, scan.rotation, this.world.gate4eCybersecurityCraftMode ? 1.02 : 1.05)) {
       this.recordGate3RPlacement('security-operations-gate', 'GATE4E_Security_Operations_Gate_Architecture', labX, labZ, { minClearance: 5.0 });
+      this.securityLabStats.authoredAssets += 1;
+      this.securityLabStats.architectureAssets += 1;
+      this.securityLabStats.operationsGates += 1;
+      if (gateAsset === 'EnvPolishSecurityOperationsGate') this.securityLabStats.sourceAssets += 1;
     }
 
     this.securityScanWaveField(group, scan.x, scan.z, scan.rotation);

@@ -16,6 +16,7 @@ def main():
     mats = materials()
     create_info_kiosk(mats)
     create_security_scanner(mats)
+    create_security_operations_gate(mats)
     create_terminal_pillar(mats)
     create_road_barrier(mats)
     create_palm_cluster(mats)
@@ -215,6 +216,42 @@ def create_security_scanner(mats):
     cube("PolishScanner_TopGlow", group, (0, 3.86, -0.42), (4.3, 0.12, 0.08), mats["pink"], bevel=0.01)
     for x in [-1.4, -0.7, 0.0, 0.7, 1.4]:
         cube("PolishScanner_LightCurtain", group, (x, 2.08, -0.1), (0.055, 3.25, 0.08), mats["glass"], bevel=0.004)
+
+
+def create_security_operations_gate(mats):
+    group = root("EnvPolishSecurityOperationsGate")
+    cube("SecurityOps_ServiceCourt", group, (0, 0.08, 0.1), (15.2, 0.16, 9.4), mats["stone_shadow"], bevel=0.055)
+    cube("SecurityOps_OperationsHall", group, (-1.25, 1.92, 0.92), (7.9, 3.52, 4.28), mats["dark"], bevel=0.052)
+    cube("SecurityOps_CommandFloor", group, (-1.25, 4.06, 0.82), (6.7, 1.26, 3.34), mats["dark"], bevel=0.038)
+    cube("SecurityOps_GlassWarRoom", group, (4.2, 1.72, 0.28), (2.72, 3.05, 3.92), mats["glass"], bevel=0.035)
+    cube("SecurityOps_GlassCommandStack", group, (4.22, 4.08, 0.28), (2.08, 1.92, 3.06), mats["glass"], bevel=0.028)
+    cube("SecurityOps_ThreatTowerBase", group, (-6.15, 2.65, 0.92), (1.78, 4.95, 1.72), mats["stone_shadow"], bevel=0.04)
+    cube("SecurityOps_ThreatTowerCrown", group, (-6.15, 5.35, 0.92), (2.64, 0.42, 2.32), mats["dark"], bevel=0.028)
+    cube("SecurityOps_ThreatMast", group, (-6.15, 7.05, 0.92), (0.24, 3.4, 0.24), mats["dark"], bevel=0.008)
+    cube("SecurityOps_ThreatArray", group, (-6.15, 7.96, 0.92), (2.56, 0.12, 0.12), mats["pink"], bevel=0.006)
+    cube("SecurityOps_ShieldGateLeft", group, (-3.1, 2.32, -4.38), (0.42, 4.0, 0.34), mats["dark"], bevel=0.018)
+    cube("SecurityOps_ShieldGateRight", group, (3.1, 2.32, -4.38), (0.42, 4.0, 0.34), mats["dark"], bevel=0.018)
+    cube("SecurityOps_ShieldGateBeam", group, (0, 4.24, -4.38), (6.65, 0.4, 0.42), mats["dark"], bevel=0.026)
+    cube("SecurityOps_ShieldGlass", group, (0, 2.34, -4.54), (4.75, 2.45, 0.08), mats["glass"], bevel=0.008)
+    cube("SecurityOps_ScanThreshold", group, (0, 0.2, -4.83), (5.8, 0.08, 0.74), mats["pink"], bevel=0.006)
+    cube("SecurityOps_EntryCanopy", group, (0.3, 2.28, -3.24), (5.9, 0.3, 1.0), mats["dark"], bevel=0.024)
+    for index, z in enumerate([-4.18, -3.76, -3.34]):
+        cube(f"SecurityOps_EntryStep_{index}", group, (0.3, 0.16 + index * 0.05, z), (5.45 - index * 0.62, 0.12, 0.34), mats["paper"], bevel=0.018)
+    cube("SecurityOps_StatusWall", group, (-1.28, 2.08, -1.42), (5.7, 1.64, 0.12), mats["rubber"], bevel=0.022)
+    cube("SecurityOps_StatusScreen", group, (-1.28, 2.12, -1.51), (4.82, 1.02, 0.06), mats["screen"], bevel=0.006)
+    cube("SecurityOps_RedTeamTrace", group, (-1.28, 2.78, -1.55), (4.2, 0.08, 0.05), mats["pink"], bevel=0.004)
+    cube("SecurityOps_BlueTeamBridge", group, (0.8, 4.72, 2.72), (7.6, 0.18, 0.26), mats["screen"], bevel=0.008)
+    cube("SecurityOps_CommandCatwalk", group, (0.6, 5.22, 2.55), (8.4, 0.16, 0.24), mats["mint"], bevel=0.008)
+    for index, x in enumerate([-4.45, -3.35, 2.2, 3.3]):
+        cube(f"SecurityOps_ServerRack_{index}", group, (x, 1.1 + (index % 2) * 0.16, 3.1), (0.72, 1.6, 0.68), mats["stone_shadow"], bevel=0.018)
+        cube(f"SecurityOps_ServerGlow_{index}", group, (x, 1.46 + (index % 2) * 0.16, 2.72), (0.46, 0.08, 0.06), [mats["screen"], mats["mint"], mats["aqua"], mats["pink"]][index], bevel=0.003)
+    for index, y in enumerate([1.18, 1.7, 2.22, 2.74, 3.26, 3.78, 4.3]):
+        cube(f"SecurityOps_TowerTrace_{index}", group, (-6.86, y, -0.05), (0.08, 0.32, 0.58), [mats["screen"], mats["mint"], mats["pink"], mats["aqua"]][index % 4], bevel=0.004)
+    for index, x in enumerate([-5.8, -4.2, -2.6, -1.0, 0.6, 2.2]):
+        cube(f"SecurityOps_CommandTick_{index}", group, (x, 4.36, -1.1), (0.72, 0.08, 0.06), [mats["screen"], mats["mint"], mats["aqua"], mats["pink"], mats["screen"], mats["mint"]][index], bevel=0.003)
+    for index, x in enumerate([-7.0, 7.0]):
+        cube(f"SecurityOps_PerimeterPylon_{index}", group, (x, 1.16, -3.4), (0.36, 2.08, 0.36), mats["dark"], bevel=0.018)
+        cube(f"SecurityOps_PerimeterGlow_{index}", group, (x, 1.86, -3.62), (0.18, 0.68, 0.06), mats["mint"], bevel=0.004)
 
 
 def create_terminal_pillar(mats):

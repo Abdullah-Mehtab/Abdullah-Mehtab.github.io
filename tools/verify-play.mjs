@@ -58,6 +58,7 @@ const authoredDistrictAssets = [
   'EnvPolishFarmIrrigator',
   'EnvPolishPotatoFarmStand',
   'EnvPolishSentinelSocTower',
+  'EnvPolishSecurityOperationsGate',
   'EnvPolishHarborSignal',
   'EnvPolishSignalHarborCommunicationsStation',
   'EnvPolishDistrictGateway',
@@ -4098,6 +4099,13 @@ function assertVerification(result) {
     }
     return;
   }
+  if (result.goalGate === 'gate-4e-g-cybersecurity-craft-pass') {
+    assertGate4EGCybersecurityCraftVerification(result, failures);
+    if (failures.length) {
+      throw new Error(`Play verification failed: ${failures.join('; ')}`);
+    }
+    return;
+  }
   if (result.goalGate === 'gate-4b5-north-ridge') {
     assertGate4B5NorthRidgeVerification(result, failures);
     if (failures.length) {
@@ -5414,7 +5422,8 @@ function assertGate3RVerticalSliceVerification(result, failures, options = {}) {
   if ((result.highQuality?.calls || 0) > 300) failures.push(`Gate 3R high quality draw-call budget exceeded: ${result.highQuality?.calls || 0}`);
   const gate4eExpandedArchitecture = result.goalGate === 'gate-4e-c-monumental-scale-pass'
     || result.goalGate === 'gate-4e-d-site-integration-life-pass'
-    || result.goalGate === 'gate-4e-f-route-composition-pass';
+    || result.goalGate === 'gate-4e-f-route-composition-pass'
+    || result.goalGate === 'gate-4e-g-cybersecurity-craft-pass';
   const highQualityTriangleBudget = gate4eExpandedArchitecture ? 330000 : 210000;
   if ((result.highQuality?.triangles || 0) > highQualityTriangleBudget) failures.push(`Gate 3R high quality triangle budget exceeded: ${result.highQuality?.triangles || 0}`);
   if (!result.mobile?.ready || (result.mobile?.canvasSample || 0) <= 0) failures.push('Gate 3R mobile probe failed: canvas did not render');
@@ -6234,8 +6243,8 @@ function assertGate4EDSiteIntegrationLifePassVerification(result, failures, expe
   }
 }
 
-function assertGate4EFRouteCompositionVerification(result, failures) {
-  assertGate4EDSiteIntegrationLifePassVerification(result, failures, 'gate-4e-f-route-composition-pass');
+function assertGate4EFRouteCompositionVerification(result, failures, expectedGoal = 'gate-4e-f-route-composition-pass') {
+  assertGate4EDSiteIntegrationLifePassVerification(result, failures, expectedGoal);
 
   const route = result.routeComposition || {};
   const placement = result.gate3rPlacement || {};
@@ -6260,6 +6269,23 @@ function assertGate4EFRouteCompositionVerification(result, failures) {
   if ((placement.roadIntrusions || 0) !== 0) failures.push(`Gate 4-E-F placement failed: roadIntrusions=${placement.roadIntrusions || 0}`);
   if ((placement.footprintIntrusions || 0) !== 0) failures.push(`Gate 4-E-F placement failed: footprintIntrusions=${placement.footprintIntrusions || 0}`);
   if ((placement.shorelineFootprintIntrusions || 0) !== 0) failures.push(`Gate 4-E-F placement failed: shorelineFootprintIntrusions=${placement.shorelineFootprintIntrusions || 0}`);
+}
+
+function assertGate4EGCybersecurityCraftVerification(result, failures) {
+  assertGate4EFRouteCompositionVerification(result, failures, 'gate-4e-g-cybersecurity-craft-pass');
+  assertAuthoredDistrictAsset(result, 'EnvPolishSecurityOperationsGate', 'Gate 4-E-G Security operations architecture', failures);
+  assertGate4DSentinelSocTower(result, failures);
+
+  const security = result.securityLab || {};
+  const sentinel = result.gate4b5?.sentinel || {};
+
+  if ((security.sourceAssets || 0) < 1) failures.push(`Gate 4-E-G Security failed: sourceAssets=${security.sourceAssets || 0}/1`);
+  if ((security.architectureAssets || 0) < 1) failures.push(`Gate 4-E-G Security failed: architectureAssets=${security.architectureAssets || 0}/1`);
+  if ((security.operationsGates || 0) < 1) failures.push(`Gate 4-E-G Security failed: operationsGates=${security.operationsGates || 0}/1`);
+  if ((sentinel.shieldGateFrames || 0) < 1) failures.push(`Gate 4-E-G Sentinel failed: shieldGateFrames=${sentinel.shieldGateFrames || 0}/1`);
+  if ((sentinel.threatIntelMasts || 0) < 1) failures.push(`Gate 4-E-G Sentinel failed: threatIntelMasts=${sentinel.threatIntelMasts || 0}/1`);
+  if ((sentinel.blueTeamBridges || 0) < 1) failures.push(`Gate 4-E-G Sentinel failed: blueTeamBridges=${sentinel.blueTeamBridges || 0}/1`);
+  if ((sentinel.commandCatwalks || 0) < 1) failures.push(`Gate 4-E-G Sentinel failed: commandCatwalks=${sentinel.commandCatwalks || 0}/1`);
 }
 
 function assertAuthoredDistrictAsset(result, assetName, label, failures) {
