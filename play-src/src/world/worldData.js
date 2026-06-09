@@ -526,7 +526,7 @@ export const zonePresentation = {
   },
   awards: {
     respawn: { position: [-52, 1.08, 104], heading: 0.94 },
-    camera: [-80, 10, 130],
+    camera: [-76, 11, 94],
     target: [-58, 4, 116],
     fov: 42,
   },
@@ -544,7 +544,7 @@ export const zonePresentation = {
   },
   circuit: {
     respawn: { position: [70, 1.08, 92], heading: 0.42 },
-    camera: [82, 10, 98],
+    camera: [80, 11, 52],
     target: [58, 4, 76],
     fov: 42,
   },
