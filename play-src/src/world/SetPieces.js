@@ -422,6 +422,13 @@ export class SetPieces {
         garageShells: 0,
         toolWalls: 0,
         pipelinePanels: 0,
+        assemblyHalls: 0,
+        diagnosticsTowers: 0,
+        overheadCranes: 0,
+        sideServiceFacades: 0,
+        engineeringLofts: 0,
+        routeFacades: 0,
+        sourceSpires: 0,
         sourceTotems: 0,
         statusLights: 0,
         signs: 0,
@@ -1366,6 +1373,13 @@ export class SetPieces {
       stats.toolWalls += 3;
       stats.pipelinePanels += 1;
       stats.hologramPanels += 4;
+      stats.assemblyHalls += 1;
+      stats.diagnosticsTowers += 1;
+      stats.overheadCranes += 1;
+      stats.sideServiceFacades += 1;
+      stats.engineeringLofts += 1;
+      stats.routeFacades += 1;
+      stats.sourceSpires += 1;
       stats.sourceTotems += 1;
       stats.statusLights += 4;
     }
