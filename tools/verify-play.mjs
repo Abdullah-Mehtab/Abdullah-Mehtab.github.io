@@ -4169,6 +4169,13 @@ function assertVerification(result) {
     }
     return;
   }
+  if (result.goalGate === 'gate-4e-q-cv-records-archive-readability-pass') {
+    assertGate4EQCvRecordsArchiveReadabilityVerification(result, failures);
+    if (failures.length) {
+      throw new Error(`Play verification failed: ${failures.join('; ')}`);
+    }
+    return;
+  }
   if (result.goalGate === 'gate-4b5-north-ridge') {
     assertGate4B5NorthRidgeVerification(result, failures);
     if (failures.length) {
@@ -5285,7 +5292,8 @@ function isGate4EExpandedArchitectureGate(goalGate) {
     || goalGate === 'gate-4e-m-protected-fcc-visibility-pass'
     || goalGate === 'gate-4e-n-sentinel-soc-silhouette-pass'
     || goalGate === 'gate-4e-o-security-operations-readability-pass'
-    || goalGate === 'gate-4e-p-skills-data-center-readability-pass';
+    || goalGate === 'gate-4e-p-skills-data-center-readability-pass'
+    || goalGate === 'gate-4e-q-cv-records-archive-readability-pass';
 }
 
 function assertGate3RVerticalSliceVerification(result, failures, options = {}) {
@@ -5296,7 +5304,8 @@ function assertGate3RVerticalSliceVerification(result, failures, options = {}) {
   const allowProtectedFccExactAtDistance = result.goalGate === 'gate-4e-m-protected-fcc-visibility-pass'
     || result.goalGate === 'gate-4e-n-sentinel-soc-silhouette-pass'
     || result.goalGate === 'gate-4e-o-security-operations-readability-pass'
-    || result.goalGate === 'gate-4e-p-skills-data-center-readability-pass';
+    || result.goalGate === 'gate-4e-p-skills-data-center-readability-pass'
+    || result.goalGate === 'gate-4e-q-cv-records-archive-readability-pass';
   const blockout = result.blockout || {};
   const blockoutSetPieces = blockout.setPieces || {};
   const slice = result.verticalSlice || blockout.verticalSlice || {};
@@ -6570,8 +6579,8 @@ function assertGate4EOSecurityOperationsReadabilityVerification(result, failures
   }
 }
 
-function assertGate4EPSkillsDataCenterReadabilityVerification(result, failures) {
-  assertGate4EOSecurityOperationsReadabilityVerification(result, failures, 'gate-4e-p-skills-data-center-readability-pass');
+function assertGate4EPSkillsDataCenterReadabilityVerification(result, failures, expectedGoal = 'gate-4e-p-skills-data-center-readability-pass') {
+  assertGate4EOSecurityOperationsReadabilityVerification(result, failures, expectedGoal);
   assertGate4DSkillsDataCenter(result, failures);
 
   const skills = result.gate4b2?.skills || {};
@@ -6584,6 +6593,20 @@ function assertGate4EPSkillsDataCenterReadabilityVerification(result, failures) 
   if ((skills.coolingPlants || 0) < 1) failures.push(`Gate 4-E-P Skills failed: coolingPlants=${skills.coolingPlants || 0}/1`);
   if ((skills.signs || 0) !== 0) failures.push(`Gate 4-E-P Skills failed: rejected signs=${skills.signs || 0}`);
   if ((skills.lamps || 0) !== 0) failures.push(`Gate 4-E-P Skills failed: rejected lamps=${skills.lamps || 0}`);
+}
+
+function assertGate4EQCvRecordsArchiveReadabilityVerification(result, failures) {
+  assertGate4EPSkillsDataCenterReadabilityVerification(result, failures, 'gate-4e-q-cv-records-archive-readability-pass');
+  assertGate4DCvRecordsArchive(result, failures);
+
+  const cv = result.gate4b1?.cv || {};
+  if ((cv.publicVaultPortals || 0) < 1) failures.push(`Gate 4-E-Q CV failed: publicVaultPortals=${cv.publicVaultPortals || 0}/1`);
+  if ((cv.routeVaultSeals || 0) < 2) failures.push(`Gate 4-E-Q CV failed: routeVaultSeals=${cv.routeVaultSeals || 0}/2`);
+  if ((cv.archiveSpineTowers || 0) < 2) failures.push(`Gate 4-E-Q CV failed: archiveSpineTowers=${cv.archiveSpineTowers || 0}/2`);
+  if ((cv.readingHallWings || 0) < 2) failures.push(`Gate 4-E-Q CV failed: readingHallWings=${cv.readingHallWings || 0}/2`);
+  if ((cv.documentCrownStacks || 0) < 7) failures.push(`Gate 4-E-Q CV failed: documentCrownStacks=${cv.documentCrownStacks || 0}/7`);
+  if ((cv.signs || 0) !== 0) failures.push(`Gate 4-E-Q CV failed: rejected signs=${cv.signs || 0}`);
+  if ((cv.lamps || 0) !== 0) failures.push(`Gate 4-E-Q CV failed: rejected lamps=${cv.lamps || 0}`);
 }
 
 function assertAuthoredDistrictAsset(result, assetName, label, failures) {

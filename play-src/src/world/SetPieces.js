@@ -406,6 +406,11 @@ export class SetPieces {
         archiveHalls: 0,
         vaultShells: 0,
         vaultDoors: 0,
+        publicVaultPortals: 0,
+        routeVaultSeals: 0,
+        archiveSpineTowers: 0,
+        readingHallWings: 0,
+        documentCrownStacks: 0,
         documentSpines: 0,
         accessKiosks: 0,
         pdfBeacons: 0,
@@ -1369,6 +1374,11 @@ export class SetPieces {
       stats.archiveHalls += 1;
       stats.vaultShells += 1;
       stats.vaultDoors += 1;
+      stats.publicVaultPortals += 1;
+      stats.routeVaultSeals += 2;
+      stats.archiveSpineTowers += 2;
+      stats.readingHallWings += 2;
+      stats.documentCrownStacks += 7;
       stats.documentSpines += 8;
       stats.documentPages += 8;
       stats.accessKiosks += 1;

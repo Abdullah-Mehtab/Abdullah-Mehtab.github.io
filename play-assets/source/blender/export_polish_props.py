@@ -193,6 +193,20 @@ def cone(name, parent, loc, radius, depth, material, vertices=5, rot=(0, 0, 0)):
     return obj
 
 
+def cylinder(name, parent, loc, radius, depth, material, vertices=16, rot=(0, 0, 0), bevel=0.0):
+    bpy.ops.mesh.primitive_cylinder_add(vertices=vertices, radius=radius, depth=depth, location=loc, rotation=rot)
+    obj = bpy.context.object
+    obj.name = name
+    obj.data.materials.append(material)
+    obj.parent = parent
+    if bevel:
+        modifier = obj.modifiers.new("soft_edges", "BEVEL")
+        modifier.width = bevel
+        modifier.segments = 1
+        obj.modifiers.new("weighted_normals", "WEIGHTED_NORMAL")
+    return obj
+
+
 def create_info_kiosk(mats):
     group = root("EnvPolishInfoKiosk")
     cube("InfoKiosk_Base", group, (0, 0.16, 0), (2.8, 0.32, 1.7), mats["stone"], bevel=0.035)
@@ -630,6 +644,15 @@ def create_cv_records_archive(mats):
     cube("CvRecordsArchive_SecureDoor", group, (-0.6, 1.36, -2.34), (2.25, 2.42, 0.16), mats["dark"], bevel=0.035)
     cube("CvRecordsArchive_DoorGlow", group, (-0.6, 1.58, -2.48), (1.62, 1.62, 0.06), mats["screen"], bevel=0.008)
     cube("CvRecordsArchive_DoorHandle", group, (0.42, 1.42, -2.54), (0.16, 0.62, 0.08), mats["gold"], bevel=0.01)
+    cube("CvRecordsArchive_PublicVaultPortal", group, (-0.6, 2.16, -2.62), (4.15, 3.72, 0.28), mats["dark"], bevel=0.045)
+    cylinder("CvRecordsArchive_PublicVaultSeal", group, (-0.6, 2.18, -2.82), 1.18, 0.12, mats["gold"], vertices=12, bevel=0.012)
+    cylinder("CvRecordsArchive_PublicVaultGlass", group, (-0.6, 2.18, -2.9), 0.72, 0.08, mats["screen"], vertices=12, bevel=0.008)
+    cube("CvRecordsArchive_VaultSealHandle_H", group, (-0.6, 2.18, -2.96), (1.54, 0.1, 0.07), mats["dark"], bevel=0.004)
+    cube("CvRecordsArchive_VaultSealHandle_V", group, (-0.6, 2.18, -2.97), (0.1, 1.54, 0.07), mats["dark"], bevel=0.004)
+    cube("CvRecordsArchive_PublicLedgerHeader", group, (-0.6, 3.92, -2.84), (5.15, 0.18, 0.12), mats["paper"], bevel=0.008)
+    cube("CvRecordsArchive_PublicLedgerFooter", group, (-0.6, 0.42, -2.84), (4.55, 0.18, 0.12), mats["paper"], bevel=0.008)
+    for index, x in enumerate([-2.35, -1.75, 1.15, 1.75]):
+        cube(f"CvRecordsArchive_PublicCatalogLight_{index}", group, (x, 2.18, -2.98), (0.12, 1.92, 0.07), [mats["paper"], mats["mint"], mats["screen"], mats["paper"]][index], bevel=0.004)
     for index, z in enumerate([-4.58, -4.14, -3.7]):
         cube(f"CvRecordsArchive_EntryStep_{index}", group, (-0.6, 0.17 + index * 0.052, z), (5.6 - index * 0.64, 0.13, 0.38), mats["stone"], bevel=0.024)
     cube("CvRecordsArchive_PorticoBeam", group, (-0.6, 3.42, -3.0), (12.2, 0.28, 0.32), mats["wood"], bevel=0.024)
@@ -654,6 +677,15 @@ def create_cv_records_archive(mats):
         for col, x in enumerate([-4.62, -3.42, -2.22, -1.02, 0.18, 1.38, 2.58, 3.78, 4.98]):
             material = [mats["paper"], mats["foam"], mats["screen"], mats["paper"], mats["gold"], mats["paper"], mats["mint"], mats["paper"], mats["foam"]][col]
             cube(f"CvRecordsArchive_BackRecord_{row}_{col}", group, (x, y, 3.02), (0.62, 0.38, 0.07), material, bevel=0.006)
+    cube("CvRecordsArchive_RouteVaultFace", group, (-0.6, 2.28, 3.12), (5.35, 3.9, 0.24), mats["dark"], bevel=0.04)
+    cylinder("CvRecordsArchive_RouteVaultSeal", group, (-0.6, 2.34, 3.32), 1.28, 0.12, mats["gold"], vertices=12, bevel=0.012)
+    cylinder("CvRecordsArchive_RouteVaultCore", group, (-0.6, 2.34, 3.4), 0.78, 0.08, mats["mint"], vertices=12, bevel=0.008)
+    cube("CvRecordsArchive_RouteVaultHandle_H", group, (-0.6, 2.34, 3.48), (1.64, 0.1, 0.07), mats["dark"], bevel=0.004)
+    cube("CvRecordsArchive_RouteVaultHandle_V", group, (-0.6, 2.34, 3.49), (0.1, 1.64, 0.07), mats["dark"], bevel=0.004)
+    cube("CvRecordsArchive_RouteVaultLintel", group, (-0.6, 4.35, 3.36), (6.15, 0.26, 0.2), mats["paper"], bevel=0.012)
+    cube("CvRecordsArchive_RouteLedgerSteps", group, (-0.6, 0.58, 3.42), (4.85, 0.22, 0.28), mats["paper"], bevel=0.012)
+    for index, x in enumerate([-4.35, -3.25, 2.05, 3.15]):
+        cube(f"CvRecordsArchive_RouteCatalogPillar_{index}", group, (x, 2.46, 3.34), (0.22, 3.35, 0.12), [mats["paper"], mats["screen"], mats["mint"], mats["paper"]][index], bevel=0.006)
     for side, x in [(-1, -7.18), (1, 7.18)]:
         cube(f"CvRecordsArchive_SideFacade_{side}", group, (x, 2.02, 0.25), (0.08, 3.2, 3.72), mats["stone_shadow"], bevel=0.012)
         for z in [-1.1, 0.05, 1.2]:
@@ -671,6 +703,16 @@ def create_cv_records_archive(mats):
     cube("CvRecordsArchive_RecordTowerCap", group, (-5.1, 6.52, 1.18), (1.85, 0.32, 1.85), mats["wood"], bevel=0.03)
     cube("CvRecordsArchive_SignatureStack", group, (4.9, 5.02, 1.08), (1.28, 2.4, 1.32), mats["stone"], bevel=0.035)
     cube("CvRecordsArchive_SignatureGlow", group, (4.9, 6.34, 0.34), (0.86, 0.1, 0.08), mats["gold"], bevel=0.004)
+    cube("CvRecordsArchive_LeftArchiveSpineTower", group, (-8.15, 4.34, 0.68), (0.88, 5.9, 3.68), mats["stone_shadow"], bevel=0.034)
+    cube("CvRecordsArchive_RightArchiveSpineTower", group, (6.95, 4.34, 0.68), (0.88, 5.9, 3.68), mats["stone_shadow"], bevel=0.034)
+    cube("CvRecordsArchive_LeftSpineCap", group, (-8.15, 7.42, 0.68), (1.26, 0.3, 4.0), mats["wood"], bevel=0.022)
+    cube("CvRecordsArchive_RightSpineCap", group, (6.95, 7.42, 0.68), (1.26, 0.3, 4.0), mats["wood"], bevel=0.022)
+    for index, y in enumerate([2.3, 3.05, 3.8, 4.55, 5.3, 6.05]):
+        material = [mats["paper"], mats["foam"], mats["screen"], mats["gold"], mats["paper"], mats["mint"]][index]
+        cube(f"CvRecordsArchive_LeftSpineRecord_{index}", group, (-7.64, y, -0.76), (0.08, 0.42, 1.18), material, bevel=0.004)
+        cube(f"CvRecordsArchive_RightSpineRecord_{index}", group, (6.44, y, -0.76), (0.08, 0.42, 1.18), material, bevel=0.004)
+        cube(f"CvRecordsArchive_LeftSpineLedger_{index}", group, (-7.64, y, 1.44), (0.08, 0.1, 1.38), material, bevel=0.003)
+        cube(f"CvRecordsArchive_RightSpineLedger_{index}", group, (6.44, y, 1.44), (0.08, 0.1, 1.38), material, bevel=0.003)
     cube("CvRecordsArchive_LeftReadingHall", group, (-6.2, 3.98, 0.72), (2.35, 2.0, 3.7), mats["stone"], bevel=0.035)
     cube("CvRecordsArchive_RightDigitalHall", group, (6.2, 3.98, 0.72), (2.35, 2.0, 3.7), mats["glass"], bevel=0.02)
     cube("CvRecordsArchive_LeftHallCap", group, (-6.2, 5.12, 0.72), (2.72, 0.28, 4.05), mats["wood"], bevel=0.022)
@@ -679,6 +721,10 @@ def create_cv_records_archive(mats):
     cube("CvRecordsArchive_VaultCrown", group, (-0.6, 7.78, 0.68), (7.55, 0.34, 4.45), mats["wood"], bevel=0.026)
     cube("CvRecordsArchive_ProtectedGlassCore", group, (-0.6, 6.28, -1.48), (4.3, 1.72, 0.08), mats["glass"], bevel=0.008)
     cube("CvRecordsArchive_RecordsBridge", group, (-0.6, 5.86, 2.94), (12.7, 0.2, 0.32), mats["gold"], bevel=0.008)
+    cube("CvRecordsArchive_DocumentCrownBridge", group, (-0.6, 8.34, 0.78), (8.6, 0.28, 2.9), mats["wood"], bevel=0.022)
+    for index, x in enumerate([-3.3, -2.2, -1.1, 0.0, 1.1, 2.2, 3.3]):
+        material = [mats["paper"], mats["foam"], mats["gold"], mats["paper"], mats["mint"], mats["paper"], mats["foam"]][index]
+        cube(f"CvRecordsArchive_CrownDocumentStack_{index}", group, (x, 8.72 + (index % 3) * 0.12, 0.72), (0.72, 0.18, 2.42), material, rot=(0, 0, 0.035 - index * 0.01), bevel=0.006)
     for row, y in enumerate([5.52, 6.12, 6.72]):
         cube(f"CvRecordsArchive_UpperLedgerBand_{row}", group, (-0.6, y, -1.32), (5.8, 0.075, 0.08), mats["gold"], bevel=0.004)
         for col, x in enumerate([-2.75, -1.35, 0.05, 1.45, 2.85]):
