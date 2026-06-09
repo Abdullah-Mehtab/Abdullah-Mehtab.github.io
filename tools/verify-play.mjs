@@ -4162,6 +4162,13 @@ function assertVerification(result) {
     }
     return;
   }
+  if (result.goalGate === 'gate-4e-p-skills-data-center-readability-pass') {
+    assertGate4EPSkillsDataCenterReadabilityVerification(result, failures);
+    if (failures.length) {
+      throw new Error(`Play verification failed: ${failures.join('; ')}`);
+    }
+    return;
+  }
   if (result.goalGate === 'gate-4b5-north-ridge') {
     assertGate4B5NorthRidgeVerification(result, failures);
     if (failures.length) {
@@ -5277,7 +5284,8 @@ function isGate4EExpandedArchitectureGate(goalGate) {
     || goalGate === 'gate-4e-l-potato-greenhouse-readability-pass'
     || goalGate === 'gate-4e-m-protected-fcc-visibility-pass'
     || goalGate === 'gate-4e-n-sentinel-soc-silhouette-pass'
-    || goalGate === 'gate-4e-o-security-operations-readability-pass';
+    || goalGate === 'gate-4e-o-security-operations-readability-pass'
+    || goalGate === 'gate-4e-p-skills-data-center-readability-pass';
 }
 
 function assertGate3RVerticalSliceVerification(result, failures, options = {}) {
@@ -5287,7 +5295,8 @@ function assertGate3RVerticalSliceVerification(result, failures, options = {}) {
   const gate4eExpandedArchitecture = isGate4EExpandedArchitectureGate(result.goalGate);
   const allowProtectedFccExactAtDistance = result.goalGate === 'gate-4e-m-protected-fcc-visibility-pass'
     || result.goalGate === 'gate-4e-n-sentinel-soc-silhouette-pass'
-    || result.goalGate === 'gate-4e-o-security-operations-readability-pass';
+    || result.goalGate === 'gate-4e-o-security-operations-readability-pass'
+    || result.goalGate === 'gate-4e-p-skills-data-center-readability-pass';
   const blockout = result.blockout || {};
   const blockoutSetPieces = blockout.setPieces || {};
   const slice = result.verticalSlice || blockout.verticalSlice || {};
@@ -6543,8 +6552,8 @@ function assertGate4ENSentinelSocSilhouetteVerification(result, failures, expect
   if ((sentinel.overwatchDecks || 0) < 1) failures.push(`Gate 4-E-N Sentinel failed: overwatchDecks=${sentinel.overwatchDecks || 0}/1`);
 }
 
-function assertGate4EOSecurityOperationsReadabilityVerification(result, failures) {
-  assertGate4ENSentinelSocSilhouetteVerification(result, failures, 'gate-4e-o-security-operations-readability-pass');
+function assertGate4EOSecurityOperationsReadabilityVerification(result, failures, expectedGoal = 'gate-4e-o-security-operations-readability-pass') {
+  assertGate4ENSentinelSocSilhouetteVerification(result, failures, expectedGoal);
 
   const security = result.securityLab || {};
   if ((security.sourceAssets || 0) < 1) failures.push(`Gate 4-E-O Security failed: sourceAssets=${security.sourceAssets || 0}/1`);
@@ -6559,6 +6568,22 @@ function assertGate4EOSecurityOperationsReadabilityVerification(result, failures
   if (!result.securityScan?.complete?.complete || !result.securityScan?.complete?.panelVisible) {
     failures.push('Gate 4-E-O Security failed: scan completion/panel behavior regressed');
   }
+}
+
+function assertGate4EPSkillsDataCenterReadabilityVerification(result, failures) {
+  assertGate4EOSecurityOperationsReadabilityVerification(result, failures, 'gate-4e-p-skills-data-center-readability-pass');
+  assertGate4DSkillsDataCenter(result, failures);
+
+  const skills = result.gate4b2?.skills || {};
+  if ((skills.entryAtriums || 0) < 1) failures.push(`Gate 4-E-P Skills failed: entryAtriums=${skills.entryAtriums || 0}/1`);
+  if ((skills.disciplineCores || 0) < 4) failures.push(`Gate 4-E-P Skills failed: disciplineCores=${skills.disciplineCores || 0}/4`);
+  if ((skills.coolingRooflines || 0) < 1) failures.push(`Gate 4-E-P Skills failed: coolingRooflines=${skills.coolingRooflines || 0}/1`);
+  if ((skills.dataCanopies || 0) < 1) failures.push(`Gate 4-E-P Skills failed: dataCanopies=${skills.dataCanopies || 0}/1`);
+  if ((skills.archiveFacades || 0) < 1) failures.push(`Gate 4-E-P Skills failed: archiveFacades=${skills.archiveFacades || 0}/1`);
+  if ((skills.commandTerminals || 0) < 1) failures.push(`Gate 4-E-P Skills failed: commandTerminals=${skills.commandTerminals || 0}/1`);
+  if ((skills.coolingPlants || 0) < 1) failures.push(`Gate 4-E-P Skills failed: coolingPlants=${skills.coolingPlants || 0}/1`);
+  if ((skills.signs || 0) !== 0) failures.push(`Gate 4-E-P Skills failed: rejected signs=${skills.signs || 0}`);
+  if ((skills.lamps || 0) !== 0) failures.push(`Gate 4-E-P Skills failed: rejected lamps=${skills.lamps || 0}`);
 }
 
 function assertAuthoredDistrictAsset(result, assetName, label, failures) {

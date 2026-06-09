@@ -463,6 +463,11 @@ export class SetPieces {
         securityRacks: 0,
         statusRings: 0,
         cableFloors: 0,
+        entryAtriums: 0,
+        disciplineCores: 0,
+        coolingRooflines: 0,
+        dataCanopies: 0,
+        archiveFacades: 0,
         signs: 0,
         lamps: 0
       },
@@ -1457,6 +1462,11 @@ export class SetPieces {
       stats.syncRings += 1;
       stats.cableFloors += 4;
       stats.signalRibbons += 4;
+      stats.entryAtriums += 1;
+      stats.disciplineCores += 4;
+      stats.coolingRooflines += 1;
+      stats.dataCanopies += 1;
+      stats.archiveFacades += 1;
     }
 
     stats.terminalSlabs = stats.commandTerminals;
