@@ -214,11 +214,11 @@ export class Zones {
       worldPosition: zone.position.clone(),
       mode: 'silhouette',
       distance: Infinity,
-      lowDistances: { show: 58, hide: 70 },
-      mediumDistances: { show: 150, hide: 172 },
-      highDistances: { show: 210, hide: 232 },
-      showDistance: 150,
-      hideDistance: 172,
+      lowDistances: { show: 190, hide: 220 },
+      mediumDistances: { show: 300, hide: 340 },
+      highDistances: { show: 420, hide: 480 },
+      showDistance: 300,
+      hideDistance: 340,
       exactTriangles: countTriangles(exact),
       silhouetteTriangles: countTriangles(silhouette)
     };

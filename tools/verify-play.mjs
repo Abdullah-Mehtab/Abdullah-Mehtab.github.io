@@ -4141,6 +4141,13 @@ function assertVerification(result) {
     }
     return;
   }
+  if (result.goalGate === 'gate-4e-m-protected-fcc-visibility-pass') {
+    assertGate4EMProtectedFccVisibilityVerification(result, failures);
+    if (failures.length) {
+      throw new Error(`Play verification failed: ${failures.join('; ')}`);
+    }
+    return;
+  }
   if (result.goalGate === 'gate-4b5-north-ridge') {
     assertGate4B5NorthRidgeVerification(result, failures);
     if (failures.length) {
@@ -5244,10 +5251,25 @@ function assertGate2RFoundationReplacementVerification(result, failures) {
   if ((result.mobile?.triangles || 0) > 125000) failures.push(`Gate 2R mobile triangle budget exceeded: ${result.mobile?.triangles || 0}`);
 }
 
+function isGate4EExpandedArchitectureGate(goalGate) {
+  return goalGate === 'gate-4e-c-monumental-scale-pass'
+    || goalGate === 'gate-4e-d-site-integration-life-pass'
+    || goalGate === 'gate-4e-f-route-composition-pass'
+    || goalGate === 'gate-4e-g-cybersecurity-craft-pass'
+    || goalGate === 'gate-4e-h-projects-foundry-readability-pass'
+    || goalGate === 'gate-4e-i-behind-engineering-scale-pass'
+    || goalGate === 'gate-4e-j-signal-harbor-broadcast-pass'
+    || goalGate === 'gate-4e-k-circuit-time-trial-readability-pass'
+    || goalGate === 'gate-4e-l-potato-greenhouse-readability-pass'
+    || goalGate === 'gate-4e-m-protected-fcc-visibility-pass';
+}
+
 function assertGate3RVerticalSliceVerification(result, failures, options = {}) {
   const expectedGoal = options.expectedGoal || 'gate-3r-vertical-slice';
   const allowPrototypeStuntPark = Boolean(options.allowPrototypeStuntPark);
   const allowedExtraColliderPrefixes = options.allowedExtraColliderPrefixes || [];
+  const gate4eExpandedArchitecture = isGate4EExpandedArchitectureGate(result.goalGate);
+  const allowProtectedFccExactAtDistance = result.goalGate === 'gate-4e-m-protected-fcc-visibility-pass';
   const blockout = result.blockout || {};
   const blockoutSetPieces = blockout.setPieces || {};
   const slice = result.verticalSlice || blockout.verticalSlice || {};
@@ -5386,7 +5408,11 @@ function assertGate3RVerticalSliceVerification(result, failures, options = {}) {
   if ((result.mapStats?.circuitCheckpoints || 0) !== circuitCheckpoints.length) failures.push(`Gate 3R map failed: circuitCheckpoints=${result.mapStats?.circuitCheckpoints || 0}/${circuitCheckpoints.length}`);
   if ((result.zoneInteractionRings || 0) !== 0) failures.push(`Gate 3R zone markers failed: visible interaction rings=${result.zoneInteractionRings || 0}`);
   if ((result.zoneLandmarks?.protected || 0) !== 1) failures.push(`Gate 3R protected landmark failed: protected=${result.zoneLandmarks?.protected || 0}`);
-  if (!result.protectedLandmarks?.near?.exactVisible || !result.protectedLandmarks?.far?.silhouetteVisible) {
+  if (allowProtectedFccExactAtDistance) {
+    if (!result.protectedLandmarks?.near?.exactVisible || !result.protectedLandmarks?.far?.exactVisible) {
+      failures.push('Gate 3R protected landmark failed: FCC exact approach probe missing');
+    }
+  } else if (!result.protectedLandmarks?.near?.exactVisible || !result.protectedLandmarks?.far?.silhouetteVisible) {
     failures.push('Gate 3R protected landmark failed: FCC exact/silhouette probe missing');
   }
 
@@ -5452,23 +5478,16 @@ function assertGate3RVerticalSliceVerification(result, failures, options = {}) {
 
   if (!Number.isFinite(result.p95FrameMs) || result.p95FrameMs <= 0 || result.p95FrameMs > 22) failures.push(`Gate 3R metrics failed: p95FrameMs=${result.p95FrameMs}`);
   if (!Number.isFinite(result.calls) || result.calls <= 0 || result.calls > 280) failures.push(`Gate 3R metrics failed: calls=${result.calls}`);
-  if (!Number.isFinite(result.triangles) || result.triangles <= 0 || result.triangles > 190000) failures.push(`Gate 3R metrics failed: triangles=${result.triangles}`);
+  const triangleBudget = gate4eExpandedArchitecture ? 330000 : 190000;
+  if (!Number.isFinite(result.triangles) || result.triangles <= 0 || result.triangles > triangleBudget) failures.push(`Gate 3R metrics failed: triangles=${result.triangles}`);
   if (!result.highQuality?.ready || (result.highQuality?.canvasSample || 0) <= 0) failures.push('Gate 3R high quality probe failed: canvas did not render');
   if ((result.highQuality?.calls || 0) > 300) failures.push(`Gate 3R high quality draw-call budget exceeded: ${result.highQuality?.calls || 0}`);
-  const gate4eExpandedArchitecture = result.goalGate === 'gate-4e-c-monumental-scale-pass'
-    || result.goalGate === 'gate-4e-d-site-integration-life-pass'
-    || result.goalGate === 'gate-4e-f-route-composition-pass'
-    || result.goalGate === 'gate-4e-g-cybersecurity-craft-pass'
-    || result.goalGate === 'gate-4e-h-projects-foundry-readability-pass'
-    || result.goalGate === 'gate-4e-i-behind-engineering-scale-pass'
-    || result.goalGate === 'gate-4e-j-signal-harbor-broadcast-pass'
-    || result.goalGate === 'gate-4e-k-circuit-time-trial-readability-pass'
-    || result.goalGate === 'gate-4e-l-potato-greenhouse-readability-pass';
   const highQualityTriangleBudget = gate4eExpandedArchitecture ? 330000 : 210000;
   if ((result.highQuality?.triangles || 0) > highQualityTriangleBudget) failures.push(`Gate 3R high quality triangle budget exceeded: ${result.highQuality?.triangles || 0}`);
   if (!result.mobile?.ready || (result.mobile?.canvasSample || 0) <= 0) failures.push('Gate 3R mobile probe failed: canvas did not render');
   if ((result.mobile?.calls || 0) > 185) failures.push(`Gate 3R mobile draw-call budget exceeded: ${result.mobile?.calls || 0}`);
-  if ((result.mobile?.triangles || 0) > 135000) failures.push(`Gate 3R mobile triangle budget exceeded: ${result.mobile?.triangles || 0}`);
+  const mobileTriangleBudget = gate4eExpandedArchitecture ? 280000 : 135000;
+  if ((result.mobile?.triangles || 0) > mobileTriangleBudget) failures.push(`Gate 3R mobile triangle budget exceeded: ${result.mobile?.triangles || 0}`);
   if (!result.mobile?.vehicleFrame?.inFrame) failures.push('Gate 3R mobile framing failed: vehicle focus is outside the viewport');
   if ((result.mobile?.vehicleFrame?.centerY || 0) > 0.84) {
     failures.push(`Gate 3R mobile framing failed: vehicle centerY=${result.mobile?.vehicleFrame?.centerY}`);
@@ -6441,8 +6460,8 @@ function assertGate4EKCircuitTimeTrialReadabilityVerification(result, failures) 
   if ((circuit.pitWallFacades || 0) < 1) failures.push(`Gate 4-E-K Circuit failed: pitWallFacades=${circuit.pitWallFacades || 0}/1`);
 }
 
-function assertGate4ELPotatoGreenhouseReadabilityVerification(result, failures) {
-  assertGate4EFRouteCompositionVerification(result, failures, 'gate-4e-l-potato-greenhouse-readability-pass');
+function assertGate4ELPotatoGreenhouseReadabilityVerification(result, failures, expectedGoal = 'gate-4e-l-potato-greenhouse-readability-pass') {
+  assertGate4EFRouteCompositionVerification(result, failures, expectedGoal);
   assertAuthoredDistrictAsset(result, 'EnvPolishSecurityOperationsGate', 'Gate 4-E-G Security operations architecture', failures);
   assertGate4DPotatoFarmStand(result, failures);
   assertGate4DSentinelSocTower(result, failures);
@@ -6472,6 +6491,28 @@ function assertGate4ELPotatoGreenhouseReadabilityVerification(result, failures) 
   if ((farm.waterTowers || 0) < 1) failures.push(`Gate 4-E-L Potato failed: waterTowers=${farm.waterTowers || 0}/1`);
   if ((farm.fieldOffices || 0) < 1) failures.push(`Gate 4-E-L Potato failed: fieldOffices=${farm.fieldOffices || 0}/1`);
   if ((farm.routeFarmFacades || 0) < 1) failures.push(`Gate 4-E-L Potato failed: routeFarmFacades=${farm.routeFarmFacades || 0}/1`);
+}
+
+function assertGate4EMProtectedFccVisibilityVerification(result, failures) {
+  assertGate4ELPotatoGreenhouseReadabilityVerification(result, failures, 'gate-4e-m-protected-fcc-visibility-pass');
+
+  const far = result.protectedLandmarks?.far;
+  const near = result.protectedLandmarks?.near;
+  const restored = result.protectedLandmarks?.restored;
+  for (const [label, sample] of [['far', far], ['near', near], ['restored', restored]]) {
+    if (sample?.mode !== 'exact' || !sample?.exactVisible || sample?.silhouetteVisible) {
+      failures.push(`Gate 4-E-M protected FCC visibility failed at ${label}: mode=${sample?.mode || 'missing'}, exact=${sample?.exactVisible}, silhouette=${sample?.silhouetteVisible}`);
+    }
+  }
+  if ((far?.showDistance || 0) < 260 || (far?.hideDistance || 0) < 300) {
+    failures.push(`Gate 4-E-M protected FCC visibility range too short: show=${far?.showDistance || 0}, hide=${far?.hideDistance || 0}`);
+  }
+  if ((near?.exactTriangles || 0) < 100000) {
+    failures.push(`Gate 4-E-M protected FCC exact model not preserved: triangles=${near?.exactTriangles || 0}`);
+  }
+  if ((far?.silhouetteTriangles || Infinity) > 2000) {
+    failures.push(`Gate 4-E-M protected FCC fallback silhouette too heavy: triangles=${far?.silhouetteTriangles}`);
+  }
 }
 
 function assertAuthoredDistrictAsset(result, assetName, label, failures) {
