@@ -4183,6 +4183,13 @@ function assertVerification(result) {
     }
     return;
   }
+  if (result.goalGate === 'gate-4e-s-circuit-race-control-readability-pass') {
+    assertGate4ESCircuitRaceControlReadabilityVerification(result, failures);
+    if (failures.length) {
+      throw new Error(`Play verification failed: ${failures.join('; ')}`);
+    }
+    return;
+  }
   if (result.goalGate === 'gate-4b5-north-ridge') {
     assertGate4B5NorthRidgeVerification(result, failures);
     if (failures.length) {
@@ -5301,7 +5308,8 @@ function isGate4EExpandedArchitectureGate(goalGate) {
     || goalGate === 'gate-4e-o-security-operations-readability-pass'
     || goalGate === 'gate-4e-p-skills-data-center-readability-pass'
     || goalGate === 'gate-4e-q-cv-records-archive-readability-pass'
-    || goalGate === 'gate-4e-r-career-software-campus-readability-pass';
+    || goalGate === 'gate-4e-r-career-software-campus-readability-pass'
+    || goalGate === 'gate-4e-s-circuit-race-control-readability-pass';
 }
 
 function assertGate3RVerticalSliceVerification(result, failures, options = {}) {
@@ -5314,7 +5322,8 @@ function assertGate3RVerticalSliceVerification(result, failures, options = {}) {
     || result.goalGate === 'gate-4e-o-security-operations-readability-pass'
     || result.goalGate === 'gate-4e-p-skills-data-center-readability-pass'
     || result.goalGate === 'gate-4e-q-cv-records-archive-readability-pass'
-    || result.goalGate === 'gate-4e-r-career-software-campus-readability-pass';
+    || result.goalGate === 'gate-4e-r-career-software-campus-readability-pass'
+    || result.goalGate === 'gate-4e-s-circuit-race-control-readability-pass';
   const blockout = result.blockout || {};
   const blockoutSetPieces = blockout.setPieces || {};
   const slice = result.verticalSlice || blockout.verticalSlice || {};
@@ -6618,8 +6627,8 @@ function assertGate4EQCvRecordsArchiveReadabilityVerification(result, failures, 
   if ((cv.lamps || 0) !== 0) failures.push(`Gate 4-E-Q CV failed: rejected lamps=${cv.lamps || 0}`);
 }
 
-function assertGate4ERCareerSoftwareCampusReadabilityVerification(result, failures) {
-  assertGate4EQCvRecordsArchiveReadabilityVerification(result, failures, 'gate-4e-r-career-software-campus-readability-pass');
+function assertGate4ERCareerSoftwareCampusReadabilityVerification(result, failures, expectedGoal = 'gate-4e-r-career-software-campus-readability-pass') {
+  assertGate4EQCvRecordsArchiveReadabilityVerification(result, failures, expectedGoal);
   assertGate4DCareerSoftwareHouse(result, failures);
 
   const career = result.gate4b4?.career || {};
@@ -6634,6 +6643,21 @@ function assertGate4ERCareerSoftwareCampusReadabilityVerification(result, failur
   if ((career.officeFloorBands || 0) < 4) failures.push(`Gate 4-E-R Career failed: officeFloorBands=${career.officeFloorBands || 0}/4`);
   if ((career.signs || 0) !== 0) failures.push(`Gate 4-E-R Career failed: rejected signs=${career.signs || 0}`);
   if ((career.lamps || 0) !== 0) failures.push(`Gate 4-E-R Career failed: rejected lamps=${career.lamps || 0}`);
+}
+
+function assertGate4ESCircuitRaceControlReadabilityVerification(result, failures) {
+  assertGate4ERCareerSoftwareCampusReadabilityVerification(result, failures, 'gate-4e-s-circuit-race-control-readability-pass');
+  assertGate4DCircuitTimeTrialGate(result, failures);
+
+  const circuit = result.gate4b5?.circuit || {};
+  if ((circuit.overheadCheckpointPortals || 0) < 1) failures.push(`Gate 4-E-S Circuit failed: overheadCheckpointPortals=${circuit.overheadCheckpointPortals || 0}/1`);
+  if ((circuit.lapClockDisks || 0) < 1) failures.push(`Gate 4-E-S Circuit failed: lapClockDisks=${circuit.lapClockDisks || 0}/1`);
+  if ((circuit.startLightTrees || 0) < 1) failures.push(`Gate 4-E-S Circuit failed: startLightTrees=${circuit.startLightTrees || 0}/1`);
+  if ((circuit.raceControlBridges || 0) < 1) failures.push(`Gate 4-E-S Circuit failed: raceControlBridges=${circuit.raceControlBridges || 0}/1`);
+  if ((circuit.pitWallRhythms || 0) < 1) failures.push(`Gate 4-E-S Circuit failed: pitWallRhythms=${circuit.pitWallRhythms || 0}/1`);
+  if ((circuit.checkeredTimingPanels || 0) < 12) failures.push(`Gate 4-E-S Circuit failed: checkeredTimingPanels=${circuit.checkeredTimingPanels || 0}/12`);
+  if ((circuit.signs || 0) !== 0) failures.push(`Gate 4-E-S Circuit failed: rejected signs=${circuit.signs || 0}`);
+  if ((circuit.lamps || 0) !== 0) failures.push(`Gate 4-E-S Circuit failed: rejected lamps=${circuit.lamps || 0}`);
 }
 
 function assertAuthoredDistrictAsset(result, assetName, label, failures) {

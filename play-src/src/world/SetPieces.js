@@ -697,6 +697,12 @@ export class SetPieces {
         checkpointMarkers: 0,
         routeArrows: 0,
         pocketCurbVisuals: 0,
+        overheadCheckpointPortals: 0,
+        lapClockDisks: 0,
+        startLightTrees: 0,
+        raceControlBridges: 0,
+        pitWallRhythms: 0,
+        checkeredTimingPanels: 0,
         signs: 0,
         lamps: 0
       }
@@ -1873,6 +1879,12 @@ export class SetPieces {
       stats.routeArrows += 2;
       stats.laneCurbs += 2;
       stats.pocketCurbVisuals += 2;
+      stats.overheadCheckpointPortals += 1;
+      stats.lapClockDisks += 1;
+      stats.startLightTrees += 1;
+      stats.raceControlBridges += 1;
+      stats.pitWallRhythms += 1;
+      stats.checkeredTimingPanels += 12;
     }
 
     stats.signs = 0;
