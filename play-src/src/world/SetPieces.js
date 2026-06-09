@@ -582,6 +582,15 @@ export class SetPieces {
         experienceWalls: 0,
         lobbyGlows: 0,
         servicePaths: 0,
+        campusAtriums: 0,
+        deliveryTowers: 0,
+        engineeringTowers: 0,
+        collaborationWings: 0,
+        productBoardrooms: 0,
+        codeFacades: 0,
+        campusPromenades: 0,
+        interviewPods: 0,
+        officeFloorBands: 0,
         signs: 0,
         lamps: 0
       },
@@ -1675,6 +1684,15 @@ export class SetPieces {
       stats.entranceCanopies += 1;
       stats.experienceWalls += 1;
       stats.lobbyGlows += 1;
+      stats.campusAtriums += 1;
+      stats.deliveryTowers += 1;
+      stats.engineeringTowers += 1;
+      stats.collaborationWings += 1;
+      stats.productBoardrooms += 1;
+      stats.codeFacades += 1;
+      stats.campusPromenades += 1;
+      stats.interviewPods += 5;
+      stats.officeFloorBands += 4;
     }
 
     const path = point(0, -7.25);

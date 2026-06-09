@@ -970,6 +970,30 @@ def create_career_software_house(mats):
     cube("CareerSoftwareHouse_EntryGlow", group, (0.15, 2.12, -3.8), (3.7, 0.08, 0.08), mats["screen"], bevel=0.006)
     for index, z in enumerate([-4.25, -3.78, -3.31]):
         cube(f"CareerSoftwareHouse_EntryStep_{index}", group, (0.15, 0.18 + index * 0.05, z), (4.9 - index * 0.7, 0.14, 0.42), mats["paper"], bevel=0.025)
+    cube("CareerSoftwareHouse_CampusPromenade", group, (0.15, 0.28, -4.05), (10.6, 0.08, 0.72), mats["paper"], bevel=0.035)
+    cube("CareerSoftwareHouse_PromenadeCodeSpine", group, (0.15, 0.36, -4.46), (9.25, 0.07, 0.08), mats["screen"], bevel=0.004)
+    for index, x in enumerate([-4.2, -2.8, -1.4, 0.0, 1.4, 2.8, 4.2]):
+        cube(f"CareerSoftwareHouse_PromenadeSprintTick_{index}", group, (x, 0.41, -4.45), (0.58, 0.055, 0.055), [mats["mint"], mats["screen"], mats["paper"], mats["purple"], mats["paper"], mats["screen"], mats["mint"]][index], bevel=0.003)
+    cube("CareerSoftwareHouse_PublicCampusAtrium", group, (0.15, 3.46, -3.58), (5.9, 6.0, 0.28), mats["glass"], bevel=0.024)
+    cube("CareerSoftwareHouse_AtriumTopCodeBand", group, (0.15, 6.34, -3.78), (6.5, 0.16, 0.1), mats["screen"], bevel=0.006)
+    cube("CareerSoftwareHouse_AtriumLowerCodeBand", group, (0.15, 3.18, -3.82), (5.25, 0.11, 0.08), mats["mint"], bevel=0.005)
+    for index, x in enumerate([-2.7, -1.35, 0, 1.35, 2.7]):
+        cube(f"CareerSoftwareHouse_AtriumVerticalFrame_{index}", group, (x, 3.46, -3.86), (0.11, 5.4, 0.08), mats["dark"], bevel=0.004)
+    for index, y in enumerate([1.48, 2.2, 2.92, 3.64, 4.36, 5.08]):
+        cube(f"CareerSoftwareHouse_AtriumCodePulse_{index}", group, (0.15, y, -3.9), (3.85 - (index % 3) * 0.38, 0.055, 0.055), [mats["screen"], mats["mint"], mats["aqua"], mats["purple"], mats["screen"], mats["mint"]][index], bevel=0.003)
+    cube("CareerSoftwareHouse_CollaborationBridgeFront", group, (0.15, 4.82, -3.18), (10.2, 0.42, 0.48), mats["glass"], bevel=0.018)
+    cube("CareerSoftwareHouse_CollaborationBridgeRail", group, (0.15, 5.12, -3.48), (10.7, 0.12, 0.08), mats["mint"], bevel=0.004)
+    cube("CareerSoftwareHouse_DeliveryTower", group, (-6.6, 4.18, -0.52), (1.55, 7.42, 2.45), mats["stone_shadow"], bevel=0.038)
+    cube("CareerSoftwareHouse_DeliveryTowerGlass", group, (-5.78, 4.18, -1.72), (0.08, 5.88, 0.82), mats["glass"], bevel=0.006)
+    cube("CareerSoftwareHouse_DeliveryTowerCap", group, (-6.6, 8.04, -0.52), (1.95, 0.34, 2.82), mats["dark"], bevel=0.026)
+    cube("CareerSoftwareHouse_EngineeringTower", group, (6.35, 4.08, -0.26), (1.68, 7.25, 2.85), mats["stone"], bevel=0.038)
+    cube("CareerSoftwareHouse_EngineeringTowerGlass", group, (5.45, 4.08, -1.52), (0.08, 5.7, 0.95), mats["glass"], bevel=0.006)
+    cube("CareerSoftwareHouse_EngineeringTowerCap", group, (6.35, 7.86, -0.26), (2.08, 0.34, 3.16), mats["dark"], bevel=0.026)
+    cube("CareerSoftwareHouse_ProductBoardroom", group, (0.15, 7.12, -1.84), (5.7, 1.3, 1.42), mats["glass"], bevel=0.022)
+    cube("CareerSoftwareHouse_ProductBoardroomRoof", group, (0.15, 7.92, -1.84), (6.12, 0.28, 1.8), mats["dark"], bevel=0.018)
+    for index, x in enumerate([-4.55, -2.25, 2.25, 4.55]):
+        cube(f"CareerSoftwareHouse_InterviewPod_{index}", group, (x, 1.02, -3.42), (0.86, 0.84, 0.72), [mats["glass"], mats["screen"], mats["mint"], mats["glass"]][index], bevel=0.018)
+        cube(f"CareerSoftwareHouse_InterviewPodSeat_{index}", group, (x, 0.64, -3.06), (0.54, 0.18, 0.26), mats["wood"], bevel=0.012)
     for row, y in enumerate([1.05, 1.78, 2.51, 3.24]):
         cube(f"CareerSoftwareHouse_FloorBand_{row}", group, (-1.12, y + 0.34, -2.07), (8.85, 0.08, 0.1), mats["wood"], bevel=0.004)
         for col, x in enumerate([-4.48, -3.12, -1.76, -0.4, 0.96, 2.32]):
@@ -1005,6 +1029,12 @@ def create_career_software_house(mats):
     for index, y in enumerate([4.9, 5.34, 5.78, 6.22]):
         cube(f"CareerSoftwareHouse_TowerWindow_{index}", group, (-5.38, y, 0.5), (0.08, 0.08, 0.66), [mats["screen"], mats["mint"], mats["glass"], mats["purple"]][index], bevel=0.003)
         cube(f"CareerSoftwareHouse_OpsTowerWindow_{index}", group, (2.24, y, 0.58), (0.08, 0.08, 0.58), [mats["mint"], mats["screen"], mats["aqua"], mats["glass"]][index], bevel=0.003)
+    for index, y in enumerate([2.0, 3.0, 4.0, 5.0, 6.0]):
+        material = [mats["screen"], mats["mint"], mats["aqua"], mats["screen"], mats["purple"]][index]
+        cube(f"CareerSoftwareHouse_DeliveryTrace_{index}", group, (-5.75, y, -0.34), (0.08, 0.08, 1.28), material, bevel=0.003)
+        cube(f"CareerSoftwareHouse_EngineeringTrace_{index}", group, (5.5, y, -0.34), (0.08, 0.08, 1.28), material, bevel=0.003)
+    for index, x in enumerate([-2.4, -1.2, 0, 1.2, 2.4]):
+        cube(f"CareerSoftwareHouse_BoardroomTeamGlow_{index}", group, (x, 7.16, -2.64), (0.52, 0.08, 0.06), [mats["mint"], mats["screen"], mats["paper"], mats["screen"], mats["mint"]][index], bevel=0.003)
 
 
 def create_awards_museum_hall(mats):

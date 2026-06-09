@@ -4176,6 +4176,13 @@ function assertVerification(result) {
     }
     return;
   }
+  if (result.goalGate === 'gate-4e-r-career-software-campus-readability-pass') {
+    assertGate4ERCareerSoftwareCampusReadabilityVerification(result, failures);
+    if (failures.length) {
+      throw new Error(`Play verification failed: ${failures.join('; ')}`);
+    }
+    return;
+  }
   if (result.goalGate === 'gate-4b5-north-ridge') {
     assertGate4B5NorthRidgeVerification(result, failures);
     if (failures.length) {
@@ -5293,7 +5300,8 @@ function isGate4EExpandedArchitectureGate(goalGate) {
     || goalGate === 'gate-4e-n-sentinel-soc-silhouette-pass'
     || goalGate === 'gate-4e-o-security-operations-readability-pass'
     || goalGate === 'gate-4e-p-skills-data-center-readability-pass'
-    || goalGate === 'gate-4e-q-cv-records-archive-readability-pass';
+    || goalGate === 'gate-4e-q-cv-records-archive-readability-pass'
+    || goalGate === 'gate-4e-r-career-software-campus-readability-pass';
 }
 
 function assertGate3RVerticalSliceVerification(result, failures, options = {}) {
@@ -5305,7 +5313,8 @@ function assertGate3RVerticalSliceVerification(result, failures, options = {}) {
     || result.goalGate === 'gate-4e-n-sentinel-soc-silhouette-pass'
     || result.goalGate === 'gate-4e-o-security-operations-readability-pass'
     || result.goalGate === 'gate-4e-p-skills-data-center-readability-pass'
-    || result.goalGate === 'gate-4e-q-cv-records-archive-readability-pass';
+    || result.goalGate === 'gate-4e-q-cv-records-archive-readability-pass'
+    || result.goalGate === 'gate-4e-r-career-software-campus-readability-pass';
   const blockout = result.blockout || {};
   const blockoutSetPieces = blockout.setPieces || {};
   const slice = result.verticalSlice || blockout.verticalSlice || {};
@@ -6595,8 +6604,8 @@ function assertGate4EPSkillsDataCenterReadabilityVerification(result, failures, 
   if ((skills.lamps || 0) !== 0) failures.push(`Gate 4-E-P Skills failed: rejected lamps=${skills.lamps || 0}`);
 }
 
-function assertGate4EQCvRecordsArchiveReadabilityVerification(result, failures) {
-  assertGate4EPSkillsDataCenterReadabilityVerification(result, failures, 'gate-4e-q-cv-records-archive-readability-pass');
+function assertGate4EQCvRecordsArchiveReadabilityVerification(result, failures, expectedGoal = 'gate-4e-q-cv-records-archive-readability-pass') {
+  assertGate4EPSkillsDataCenterReadabilityVerification(result, failures, expectedGoal);
   assertGate4DCvRecordsArchive(result, failures);
 
   const cv = result.gate4b1?.cv || {};
@@ -6607,6 +6616,24 @@ function assertGate4EQCvRecordsArchiveReadabilityVerification(result, failures) 
   if ((cv.documentCrownStacks || 0) < 7) failures.push(`Gate 4-E-Q CV failed: documentCrownStacks=${cv.documentCrownStacks || 0}/7`);
   if ((cv.signs || 0) !== 0) failures.push(`Gate 4-E-Q CV failed: rejected signs=${cv.signs || 0}`);
   if ((cv.lamps || 0) !== 0) failures.push(`Gate 4-E-Q CV failed: rejected lamps=${cv.lamps || 0}`);
+}
+
+function assertGate4ERCareerSoftwareCampusReadabilityVerification(result, failures) {
+  assertGate4EQCvRecordsArchiveReadabilityVerification(result, failures, 'gate-4e-r-career-software-campus-readability-pass');
+  assertGate4DCareerSoftwareHouse(result, failures);
+
+  const career = result.gate4b4?.career || {};
+  if ((career.campusAtriums || 0) < 1) failures.push(`Gate 4-E-R Career failed: campusAtriums=${career.campusAtriums || 0}/1`);
+  if ((career.deliveryTowers || 0) < 1) failures.push(`Gate 4-E-R Career failed: deliveryTowers=${career.deliveryTowers || 0}/1`);
+  if ((career.engineeringTowers || 0) < 1) failures.push(`Gate 4-E-R Career failed: engineeringTowers=${career.engineeringTowers || 0}/1`);
+  if ((career.collaborationWings || 0) < 1) failures.push(`Gate 4-E-R Career failed: collaborationWings=${career.collaborationWings || 0}/1`);
+  if ((career.productBoardrooms || 0) < 1) failures.push(`Gate 4-E-R Career failed: productBoardrooms=${career.productBoardrooms || 0}/1`);
+  if ((career.codeFacades || 0) < 1) failures.push(`Gate 4-E-R Career failed: codeFacades=${career.codeFacades || 0}/1`);
+  if ((career.campusPromenades || 0) < 1) failures.push(`Gate 4-E-R Career failed: campusPromenades=${career.campusPromenades || 0}/1`);
+  if ((career.interviewPods || 0) < 4) failures.push(`Gate 4-E-R Career failed: interviewPods=${career.interviewPods || 0}/4`);
+  if ((career.officeFloorBands || 0) < 4) failures.push(`Gate 4-E-R Career failed: officeFloorBands=${career.officeFloorBands || 0}/4`);
+  if ((career.signs || 0) !== 0) failures.push(`Gate 4-E-R Career failed: rejected signs=${career.signs || 0}`);
+  if ((career.lamps || 0) !== 0) failures.push(`Gate 4-E-R Career failed: rejected lamps=${career.lamps || 0}`);
 }
 
 function assertAuthoredDistrictAsset(result, assetName, label, failures) {
