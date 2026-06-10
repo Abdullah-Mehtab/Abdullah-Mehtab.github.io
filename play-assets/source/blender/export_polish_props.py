@@ -634,6 +634,16 @@ def create_projects_foundry_building(mats):
     cube("ProjectsFoundry_RouteBuildCranePost", group, (5.72, 2.36, 4.02), (0.2, 3.65, 0.2), mats["dark"], bevel=0.012)
     cube("ProjectsFoundry_RouteBuildCraneHook", group, (2.46, 3.34, 4.16), (0.18, 1.1, 0.12), mats["rope"], bevel=0.005)
     cube("ProjectsFoundry_RouteBuildLoad", group, (2.46, 2.62, 4.25), (0.92, 0.42, 0.62), mats["stone_shadow"], bevel=0.02)
+    cube("ProjectsFoundry_RouteBuildTheaterPortalDeck", group, (-1.05, 0.46, 4.88), (12.4, 0.18, 0.34), mats["stone_shadow"])
+    cube("ProjectsFoundry_RouteBuildTheaterPortalLeftPier", group, (-6.42, 2.56, 4.92), (0.34, 3.7, 0.18), mats["dark"])
+    cube("ProjectsFoundry_RouteBuildTheaterPortalRightPier", group, (4.32, 2.56, 4.92), (0.34, 3.7, 0.18), mats["dark"])
+    cube("ProjectsFoundry_RouteBuildTheaterPortalHeader", group, (-1.05, 4.48, 4.92), (11.1, 0.28, 0.18), mats["dark"])
+    cube("ProjectsFoundry_RouteBuildTheaterPortalGlass", group, (-1.05, 2.44, 5.02), (8.95, 2.38, 0.07), mats["glass"])
+    cube("ProjectsFoundry_RouteReleasePipelineSpine", group, (-0.62, 3.5, 5.08), (8.55, 0.16, 0.08), mats["mint"])
+    for index, x in enumerate([-4.22, -1.05, 2.12]):
+        cube(f"ProjectsFoundry_RouteProjectStoryBay_{index}", group, (x, 2.05, 5.12), (1.86, 1.14, 0.07), [mats["screen"], mats["glass"], mats["mint"]][index])
+    cube("ProjectsFoundry_RouteCompileGantryFrame", group, (-1.05, 5.1, 5.12), (12.0, 0.32, 0.2), mats["dark"])
+    cube("ProjectsFoundry_RouteCompileGantryTrolley", group, (-2.95, 4.82, 5.22), (0.88, 0.32, 0.24), mats["stone_shadow"])
 
 
 def create_campus_fountain(mats):

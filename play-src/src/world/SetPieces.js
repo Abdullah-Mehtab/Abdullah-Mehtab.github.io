@@ -635,6 +635,10 @@ export class SetPieces {
         routeBuildCranes: 0,
         routeAssemblyHalls: 0,
         routeCranePortals: 0,
+        routeBuildTheaterPortals: 0,
+        routeReleasePipelineSpines: 0,
+        routeProjectStoryBays: 0,
+        routeCompileGantryFrames: 0,
         publicBuildGalleryFrames: 0,
         foundryHeatCores: 0,
         groundPlates: 0,
@@ -1826,6 +1830,10 @@ export class SetPieces {
       stats.routeBuildCranes += 1;
       stats.routeAssemblyHalls += 1;
       stats.routeCranePortals += 1;
+      stats.routeBuildTheaterPortals += 1;
+      stats.routeReleasePipelineSpines += 1;
+      stats.routeProjectStoryBays += 3;
+      stats.routeCompileGantryFrames += 1;
       stats.publicBuildGalleryFrames += 1;
       stats.foundryHeatCores += 1;
     }
