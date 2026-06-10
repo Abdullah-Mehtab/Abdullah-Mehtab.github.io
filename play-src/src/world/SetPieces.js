@@ -723,6 +723,10 @@ export class SetPieces {
         commandWindowBands: 0,
         scanPortalFrames: 0,
         threatWalls: 0,
+        commandCampusScaleMarkers: 0,
+        routeShieldPortals: 0,
+        overwatchTowerSilhouettes: 0,
+        commandTowerSilhouettes: 0,
         signs: 0,
         lamps: 0
       },
@@ -1938,6 +1942,10 @@ export class SetPieces {
       stats.commandWindowBands += 1;
       stats.scanPortalFrames += 1;
       stats.threatWalls += 1;
+      stats.commandCampusScaleMarkers += 1;
+      stats.routeShieldPortals += 1;
+      stats.overwatchTowerSilhouettes += 1;
+      stats.commandTowerSilhouettes += 1;
     }
 
     stats.signs = 0;
