@@ -458,6 +458,10 @@ export class SetPieces {
         routeGantryFrames: 0,
         routeTestRigDisplays: 0,
         routeToolProcessFacades: 0,
+        routeInnerBuildCells: 0,
+        routePrototypeRigFrames: 0,
+        routeDiagnosticsWalls: 0,
+        routeSourceControlSpines: 0,
         sourceSpires: 0,
         sourceTotems: 0,
         statusLights: 0,
@@ -1542,6 +1546,10 @@ export class SetPieces {
       stats.routeGantryFrames += 1;
       stats.routeTestRigDisplays += 1;
       stats.routeToolProcessFacades += 1;
+      stats.routeInnerBuildCells += 1;
+      stats.routePrototypeRigFrames += 1;
+      stats.routeDiagnosticsWalls += 1;
+      stats.routeSourceControlSpines += 1;
       stats.sourceSpires += 1;
       stats.sourceTotems += 1;
       stats.statusLights += 4;

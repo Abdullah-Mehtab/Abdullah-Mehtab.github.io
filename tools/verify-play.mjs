@@ -4346,6 +4346,13 @@ function assertVerification(result) {
     }
     return;
   }
+  if (result.goalGate === 'gate-4e-ap-behind-inner-build-cell-route-read-pass') {
+    assertGate4EAPBehindInnerBuildCellRouteReadVerification(result, failures);
+    if (failures.length) {
+      throw new Error(`Play verification failed: ${failures.join('; ')}`);
+    }
+    return;
+  }
   if (result.goalGate === 'gate-4b5-north-ridge') {
     assertGate4B5NorthRidgeVerification(result, failures);
     if (failures.length) {
@@ -5487,7 +5494,8 @@ function isGate4EExpandedArchitectureGate(goalGate) {
     || goalGate === 'gate-4e-al-sentinel-route-command-facade-pass'
     || goalGate === 'gate-4e-am-skills-learning-stack-route-atrium-pass'
     || goalGate === 'gate-4e-an-cv-records-vault-route-archive-pass'
-    || goalGate === 'gate-4e-ao-todo-operations-core-route-read-pass';
+    || goalGate === 'gate-4e-ao-todo-operations-core-route-read-pass'
+    || goalGate === 'gate-4e-ap-behind-inner-build-cell-route-read-pass';
 }
 
 function assertGate3RVerticalSliceVerification(result, failures, options = {}) {
@@ -5523,7 +5531,8 @@ function assertGate3RVerticalSliceVerification(result, failures, options = {}) {
     || result.goalGate === 'gate-4e-al-sentinel-route-command-facade-pass'
     || result.goalGate === 'gate-4e-am-skills-learning-stack-route-atrium-pass'
     || result.goalGate === 'gate-4e-an-cv-records-vault-route-archive-pass'
-    || result.goalGate === 'gate-4e-ao-todo-operations-core-route-read-pass';
+    || result.goalGate === 'gate-4e-ao-todo-operations-core-route-read-pass'
+    || result.goalGate === 'gate-4e-ap-behind-inner-build-cell-route-read-pass';
   const blockout = result.blockout || {};
   const blockoutSetPieces = blockout.setPieces || {};
   const slice = result.verticalSlice || blockout.verticalSlice || {};
@@ -5550,7 +5559,8 @@ function assertGate3RVerticalSliceVerification(result, failures, options = {}) {
     || result.goalGate === 'gate-4e-al-sentinel-route-command-facade-pass'
     || result.goalGate === 'gate-4e-am-skills-learning-stack-route-atrium-pass'
     || result.goalGate === 'gate-4e-an-cv-records-vault-route-archive-pass'
-    || result.goalGate === 'gate-4e-ao-todo-operations-core-route-read-pass';
+    || result.goalGate === 'gate-4e-ao-todo-operations-core-route-read-pass'
+    || result.goalGate === 'gate-4e-ap-behind-inner-build-cell-route-read-pass';
 
   if (result.goalGate !== expectedGoal) {
     failures.push(`Gate 3R probe failed: goalGate=${result.goalGate || 'none'}`);
@@ -7292,8 +7302,8 @@ function assertGate4EANCvRecordsVaultRouteArchiveVerification(result, failures, 
   if ((result.forwardDriveProbe?.halts || 0) !== 0) failures.push(`Gate 4-E-AN failed: forwardDriveProbe.halts=${result.forwardDriveProbe?.halts || 0}`);
 }
 
-function assertGate4EAOTodoOperationsCoreRouteReadVerification(result, failures) {
-  assertGate4EANCvRecordsVaultRouteArchiveVerification(result, failures, 'gate-4e-ao-todo-operations-core-route-read-pass');
+function assertGate4EAOTodoOperationsCoreRouteReadVerification(result, failures, expectedGoal = 'gate-4e-ao-todo-operations-core-route-read-pass') {
+  assertGate4EANCvRecordsVaultRouteArchiveVerification(result, failures, expectedGoal);
 
   const todo = result.gate4b3?.todo || {};
   assertAuthoredDistrictAsset(result, 'EnvPolishTodoPlanningStudio', 'Gate 4-E-AO Todo route operations-core architecture', failures);
@@ -7307,6 +7317,24 @@ function assertGate4EAOTodoOperationsCoreRouteReadVerification(result, failures)
   if ((todo.lamps || 0) !== 0) failures.push(`Gate 4-E-AO Todo failed: rejected lamps=${todo.lamps || 0}`);
   if ((result.colliderCount || 0) !== 2) failures.push(`Gate 4-E-AO failed: unexpected collider count=${result.colliderCount || 0}`);
   if ((result.forwardDriveProbe?.halts || 0) !== 0) failures.push(`Gate 4-E-AO failed: forwardDriveProbe.halts=${result.forwardDriveProbe?.halts || 0}`);
+}
+
+function assertGate4EAPBehindInnerBuildCellRouteReadVerification(result, failures) {
+  assertGate4EAOTodoOperationsCoreRouteReadVerification(result, failures, 'gate-4e-ap-behind-inner-build-cell-route-read-pass');
+
+  const behind = result.gate4b1?.behind || {};
+  assertAuthoredDistrictAsset(result, 'EnvPolishBehindEngineeringGarage', 'Gate 4-E-AP Behind route inner build-cell architecture', failures);
+  if ((behind.routeInnerBuildCells || 0) < 1) failures.push(`Gate 4-E-AP Behind failed: routeInnerBuildCells=${behind.routeInnerBuildCells || 0}/1`);
+  if ((behind.routePrototypeRigFrames || 0) < 1) failures.push(`Gate 4-E-AP Behind failed: routePrototypeRigFrames=${behind.routePrototypeRigFrames || 0}/1`);
+  if ((behind.routeDiagnosticsWalls || 0) < 1) failures.push(`Gate 4-E-AP Behind failed: routeDiagnosticsWalls=${behind.routeDiagnosticsWalls || 0}/1`);
+  if ((behind.routeSourceControlSpines || 0) < 1) failures.push(`Gate 4-E-AP Behind failed: routeSourceControlSpines=${behind.routeSourceControlSpines || 0}/1`);
+  if ((behind.routePrototypeBays || 0) < 1) failures.push(`Gate 4-E-AP Behind failed: routePrototypeBays=${behind.routePrototypeBays || 0}/1`);
+  if ((behind.routeGantryFrames || 0) < 1) failures.push(`Gate 4-E-AP Behind failed: routeGantryFrames=${behind.routeGantryFrames || 0}/1`);
+  if ((behind.routeToolProcessFacades || 0) < 1) failures.push(`Gate 4-E-AP Behind failed: routeToolProcessFacades=${behind.routeToolProcessFacades || 0}/1`);
+  if ((behind.signs || 0) !== 0) failures.push(`Gate 4-E-AP Behind failed: rejected signs=${behind.signs || 0}`);
+  if ((behind.lamps || 0) !== 0) failures.push(`Gate 4-E-AP Behind failed: rejected lamps=${behind.lamps || 0}`);
+  if ((result.colliderCount || 0) !== 2) failures.push(`Gate 4-E-AP failed: unexpected collider count=${result.colliderCount || 0}`);
+  if ((result.forwardDriveProbe?.halts || 0) !== 0) failures.push(`Gate 4-E-AP failed: forwardDriveProbe.halts=${result.forwardDriveProbe?.halts || 0}`);
 }
 
 function assertAuthoredDistrictAsset(result, assetName, label, failures) {
