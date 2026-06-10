@@ -68,6 +68,10 @@ export class SetPieces {
       incidentResponseHalls: 0,
       scannerBridges: 0,
       commandDecks: 0,
+      operationsCampusScaleMarkers: 0,
+      routeScanPortals: 0,
+      threatWatchTowers: 0,
+      commandCampuses: 0,
       cableRuns: 0,
       terminalRails: 0
     };
@@ -2684,6 +2688,10 @@ export class SetPieces {
         this.securityLabStats.incidentResponseHalls += 1;
         this.securityLabStats.scannerBridges += 1;
         this.securityLabStats.commandDecks += 1;
+        this.securityLabStats.operationsCampusScaleMarkers += 1;
+        this.securityLabStats.routeScanPortals += 1;
+        this.securityLabStats.threatWatchTowers += 1;
+        this.securityLabStats.commandCampuses += 1;
       }
     }
 
