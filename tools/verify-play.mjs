@@ -4290,6 +4290,13 @@ function assertVerification(result) {
     }
     return;
   }
+  if (result.goalGate === 'gate-4e-ah-potato-greenhouse-frontage-pass') {
+    assertGate4EAHPotatoGreenhouseFrontageVerification(result, failures);
+    if (failures.length) {
+      throw new Error(`Play verification failed: ${failures.join('; ')}`);
+    }
+    return;
+  }
   if (result.goalGate === 'gate-4b5-north-ridge') {
     assertGate4B5NorthRidgeVerification(result, failures);
     if (failures.length) {
@@ -5423,7 +5430,8 @@ function isGate4EExpandedArchitectureGate(goalGate) {
     || goalGate === 'gate-4e-ad-potato-greenhouse-farm-court-pass'
     || goalGate === 'gate-4e-ae-security-operations-campus-scale-pass'
     || goalGate === 'gate-4e-af-sentinel-soc-command-campus-pass'
-    || goalGate === 'gate-4e-ag-career-campus-frontage-pass';
+    || goalGate === 'gate-4e-ag-career-campus-frontage-pass'
+    || goalGate === 'gate-4e-ah-potato-greenhouse-frontage-pass';
 }
 
 function assertGate3RVerticalSliceVerification(result, failures, options = {}) {
@@ -5451,7 +5459,8 @@ function assertGate3RVerticalSliceVerification(result, failures, options = {}) {
     || result.goalGate === 'gate-4e-ad-potato-greenhouse-farm-court-pass'
     || result.goalGate === 'gate-4e-ae-security-operations-campus-scale-pass'
     || result.goalGate === 'gate-4e-af-sentinel-soc-command-campus-pass'
-    || result.goalGate === 'gate-4e-ag-career-campus-frontage-pass';
+    || result.goalGate === 'gate-4e-ag-career-campus-frontage-pass'
+    || result.goalGate === 'gate-4e-ah-potato-greenhouse-frontage-pass';
   const blockout = result.blockout || {};
   const blockoutSetPieces = blockout.setPieces || {};
   const slice = result.verticalSlice || blockout.verticalSlice || {};
@@ -5470,7 +5479,8 @@ function assertGate3RVerticalSliceVerification(result, failures, options = {}) {
     || result.goalGate === 'gate-4e-ad-potato-greenhouse-farm-court-pass'
     || result.goalGate === 'gate-4e-ae-security-operations-campus-scale-pass'
     || result.goalGate === 'gate-4e-af-sentinel-soc-command-campus-pass'
-    || result.goalGate === 'gate-4e-ag-career-campus-frontage-pass';
+    || result.goalGate === 'gate-4e-ag-career-campus-frontage-pass'
+    || result.goalGate === 'gate-4e-ah-potato-greenhouse-frontage-pass';
 
   if (result.goalGate !== expectedGoal) {
     failures.push(`Gate 3R probe failed: goalGate=${result.goalGate || 'none'}`);
@@ -7070,8 +7080,8 @@ function assertGate4EAFSentinelSocCommandCampusVerification(result, failures, ex
   if ((result.forwardDriveProbe?.halts || 0) !== 0) failures.push(`Gate 4-E-AF failed: forwardDriveProbe.halts=${result.forwardDriveProbe?.halts || 0}`);
 }
 
-function assertGate4EAGCareerCampusFrontageVerification(result, failures) {
-  assertGate4EAFSentinelSocCommandCampusVerification(result, failures, 'gate-4e-ag-career-campus-frontage-pass');
+function assertGate4EAGCareerCampusFrontageVerification(result, failures, expectedGoal = 'gate-4e-ag-career-campus-frontage-pass') {
+  assertGate4EAFSentinelSocCommandCampusVerification(result, failures, expectedGoal);
 
   const career = result.gate4b4?.career || {};
   assertAuthoredDistrictAsset(result, 'EnvPolishCareerSoftwareHouse', 'Gate 4-E-AG Career software campus frontage architecture', failures);
@@ -7086,6 +7096,23 @@ function assertGate4EAGCareerCampusFrontageVerification(result, failures) {
   if ((career.lamps || 0) !== 0) failures.push(`Gate 4-E-AG Career failed: rejected lamps=${career.lamps || 0}`);
   if ((result.colliderCount || 0) !== 2) failures.push(`Gate 4-E-AG failed: unexpected collider count=${result.colliderCount || 0}`);
   if ((result.forwardDriveProbe?.halts || 0) !== 0) failures.push(`Gate 4-E-AG failed: forwardDriveProbe.halts=${result.forwardDriveProbe?.halts || 0}`);
+}
+
+function assertGate4EAHPotatoGreenhouseFrontageVerification(result, failures) {
+  assertGate4EAGCareerCampusFrontageVerification(result, failures, 'gate-4e-ah-potato-greenhouse-frontage-pass');
+
+  const farm = result.gate4b2?.farm || {};
+  assertAuthoredDistrictAsset(result, 'EnvPolishPotatoFarmStand', 'Gate 4-E-AH Potato greenhouse frontage architecture', failures);
+  if ((farm.routeGreenhouseFrames || 0) < 1) failures.push(`Gate 4-E-AH Potato failed: routeGreenhouseFrames=${farm.routeGreenhouseFrames || 0}/1`);
+  if ((farm.routeGlassPanelBreakups || 0) < 1) failures.push(`Gate 4-E-AH Potato failed: routeGlassPanelBreakups=${farm.routeGlassPanelBreakups || 0}/1`);
+  if ((farm.routeProduceCounterRhythms || 0) < 1) failures.push(`Gate 4-E-AH Potato failed: routeProduceCounterRhythms=${farm.routeProduceCounterRhythms || 0}/1`);
+  if ((farm.routeProducePortals || 0) < 1) failures.push(`Gate 4-E-AH Potato failed: routeProducePortals=${farm.routeProducePortals || 0}/1`);
+  if ((farm.greenhouseMarketHalls || 0) < 1) failures.push(`Gate 4-E-AH Potato failed: greenhouseMarketHalls=${farm.greenhouseMarketHalls || 0}/1`);
+  if ((farm.fieldCanopyFrames || 0) < 1) failures.push(`Gate 4-E-AH Potato failed: fieldCanopyFrames=${farm.fieldCanopyFrames || 0}/1`);
+  if ((farm.signs || 0) !== 0) failures.push(`Gate 4-E-AH Potato failed: rejected signs=${farm.signs || 0}`);
+  if ((farm.lamps || 0) !== 0) failures.push(`Gate 4-E-AH Potato failed: rejected lamps=${farm.lamps || 0}`);
+  if ((result.colliderCount || 0) !== 2) failures.push(`Gate 4-E-AH failed: unexpected collider count=${result.colliderCount || 0}`);
+  if ((result.forwardDriveProbe?.halts || 0) !== 0) failures.push(`Gate 4-E-AH failed: forwardDriveProbe.halts=${result.forwardDriveProbe?.halts || 0}`);
 }
 
 function assertAuthoredDistrictAsset(result, assetName, label, failures) {

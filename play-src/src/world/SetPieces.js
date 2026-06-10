@@ -514,6 +514,9 @@ export class SetPieces {
         fieldOffices: 0,
         routeFarmFacades: 0,
         routeProducePortals: 0,
+        routeGreenhouseFrames: 0,
+        routeGlassPanelBreakups: 0,
+        routeProduceCounterRhythms: 0,
         greenhouseMarketHalls: 0,
         harvestAtriums: 0,
         fieldCanopyFrames: 0,
@@ -1604,6 +1607,9 @@ export class SetPieces {
       stats.fieldOffices += 1;
       stats.routeFarmFacades += 1;
       stats.routeProducePortals += 1;
+      stats.routeGreenhouseFrames += 1;
+      stats.routeGlassPanelBreakups += 1;
+      stats.routeProduceCounterRhythms += 1;
       stats.greenhouseMarketHalls += 1;
       stats.harvestAtriums += 1;
       stats.fieldCanopyFrames += 1;
