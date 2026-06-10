@@ -4304,6 +4304,13 @@ function assertVerification(result) {
     }
     return;
   }
+  if (result.goalGate === 'gate-4e-aj-behind-engineering-route-prototype-bay-pass') {
+    assertGate4EAJBehindEngineeringRoutePrototypeBayVerification(result, failures);
+    if (failures.length) {
+      throw new Error(`Play verification failed: ${failures.join('; ')}`);
+    }
+    return;
+  }
   if (result.goalGate === 'gate-4b5-north-ridge') {
     assertGate4B5NorthRidgeVerification(result, failures);
     if (failures.length) {
@@ -5439,7 +5446,8 @@ function isGate4EExpandedArchitectureGate(goalGate) {
     || goalGate === 'gate-4e-af-sentinel-soc-command-campus-pass'
     || goalGate === 'gate-4e-ag-career-campus-frontage-pass'
     || goalGate === 'gate-4e-ah-potato-greenhouse-frontage-pass'
-    || goalGate === 'gate-4e-ai-projects-foundry-route-build-hall-pass';
+    || goalGate === 'gate-4e-ai-projects-foundry-route-build-hall-pass'
+    || goalGate === 'gate-4e-aj-behind-engineering-route-prototype-bay-pass';
 }
 
 function assertGate3RVerticalSliceVerification(result, failures, options = {}) {
@@ -5469,7 +5477,8 @@ function assertGate3RVerticalSliceVerification(result, failures, options = {}) {
     || result.goalGate === 'gate-4e-af-sentinel-soc-command-campus-pass'
     || result.goalGate === 'gate-4e-ag-career-campus-frontage-pass'
     || result.goalGate === 'gate-4e-ah-potato-greenhouse-frontage-pass'
-    || result.goalGate === 'gate-4e-ai-projects-foundry-route-build-hall-pass';
+    || result.goalGate === 'gate-4e-ai-projects-foundry-route-build-hall-pass'
+    || result.goalGate === 'gate-4e-aj-behind-engineering-route-prototype-bay-pass';
   const blockout = result.blockout || {};
   const blockoutSetPieces = blockout.setPieces || {};
   const slice = result.verticalSlice || blockout.verticalSlice || {};
@@ -5490,7 +5499,8 @@ function assertGate3RVerticalSliceVerification(result, failures, options = {}) {
     || result.goalGate === 'gate-4e-af-sentinel-soc-command-campus-pass'
     || result.goalGate === 'gate-4e-ag-career-campus-frontage-pass'
     || result.goalGate === 'gate-4e-ah-potato-greenhouse-frontage-pass'
-    || result.goalGate === 'gate-4e-ai-projects-foundry-route-build-hall-pass';
+    || result.goalGate === 'gate-4e-ai-projects-foundry-route-build-hall-pass'
+    || result.goalGate === 'gate-4e-aj-behind-engineering-route-prototype-bay-pass';
 
   if (result.goalGate !== expectedGoal) {
     failures.push(`Gate 3R probe failed: goalGate=${result.goalGate || 'none'}`);
@@ -7125,8 +7135,8 @@ function assertGate4EAHPotatoGreenhouseFrontageVerification(result, failures, ex
   if ((result.forwardDriveProbe?.halts || 0) !== 0) failures.push(`Gate 4-E-AH failed: forwardDriveProbe.halts=${result.forwardDriveProbe?.halts || 0}`);
 }
 
-function assertGate4EAIProjectsFoundryRouteBuildHallVerification(result, failures) {
-  assertGate4EAHPotatoGreenhouseFrontageVerification(result, failures, 'gate-4e-ai-projects-foundry-route-build-hall-pass');
+function assertGate4EAIProjectsFoundryRouteBuildHallVerification(result, failures, expectedGoal = 'gate-4e-ai-projects-foundry-route-build-hall-pass') {
+  assertGate4EAHPotatoGreenhouseFrontageVerification(result, failures, expectedGoal);
 
   const projects = result.gate4b4?.projects || {};
   assertAuthoredDistrictAsset(result, 'EnvPolishProjectsFoundryBuilding', 'Gate 4-E-AI Projects route build-hall architecture', failures);
@@ -7140,6 +7150,24 @@ function assertGate4EAIProjectsFoundryRouteBuildHallVerification(result, failure
   if ((projects.lamps || 0) !== 0) failures.push(`Gate 4-E-AI Projects failed: rejected lamps=${projects.lamps || 0}`);
   if ((result.colliderCount || 0) !== 2) failures.push(`Gate 4-E-AI failed: unexpected collider count=${result.colliderCount || 0}`);
   if ((result.forwardDriveProbe?.halts || 0) !== 0) failures.push(`Gate 4-E-AI failed: forwardDriveProbe.halts=${result.forwardDriveProbe?.halts || 0}`);
+}
+
+function assertGate4EAJBehindEngineeringRoutePrototypeBayVerification(result, failures) {
+  assertGate4EAIProjectsFoundryRouteBuildHallVerification(result, failures, 'gate-4e-aj-behind-engineering-route-prototype-bay-pass');
+
+  const behind = result.gate4b1?.behind || {};
+  assertAuthoredDistrictAsset(result, 'EnvPolishBehindEngineeringGarage', 'Gate 4-E-AJ Behind route prototype bay architecture', failures);
+  if ((behind.routePrototypeBays || 0) < 1) failures.push(`Gate 4-E-AJ Behind failed: routePrototypeBays=${behind.routePrototypeBays || 0}/1`);
+  if ((behind.routeGantryFrames || 0) < 1) failures.push(`Gate 4-E-AJ Behind failed: routeGantryFrames=${behind.routeGantryFrames || 0}/1`);
+  if ((behind.routeTestRigDisplays || 0) < 1) failures.push(`Gate 4-E-AJ Behind failed: routeTestRigDisplays=${behind.routeTestRigDisplays || 0}/1`);
+  if ((behind.routeToolProcessFacades || 0) < 1) failures.push(`Gate 4-E-AJ Behind failed: routeToolProcessFacades=${behind.routeToolProcessFacades || 0}/1`);
+  if ((behind.assemblyHalls || 0) < 1) failures.push(`Gate 4-E-AJ Behind failed: assemblyHalls=${behind.assemblyHalls || 0}/1`);
+  if ((behind.diagnosticsTowers || 0) < 1) failures.push(`Gate 4-E-AJ Behind failed: diagnosticsTowers=${behind.diagnosticsTowers || 0}/1`);
+  if ((behind.overheadCranes || 0) < 1) failures.push(`Gate 4-E-AJ Behind failed: overheadCranes=${behind.overheadCranes || 0}/1`);
+  if ((behind.signs || 0) !== 0) failures.push(`Gate 4-E-AJ Behind failed: rejected signs=${behind.signs || 0}`);
+  if ((behind.lamps || 0) !== 0) failures.push(`Gate 4-E-AJ Behind failed: rejected lamps=${behind.lamps || 0}`);
+  if ((result.colliderCount || 0) !== 2) failures.push(`Gate 4-E-AJ failed: unexpected collider count=${result.colliderCount || 0}`);
+  if ((result.forwardDriveProbe?.halts || 0) !== 0) failures.push(`Gate 4-E-AJ failed: forwardDriveProbe.halts=${result.forwardDriveProbe?.halts || 0}`);
 }
 
 function assertAuthoredDistrictAsset(result, assetName, label, failures) {

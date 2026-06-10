@@ -450,6 +450,10 @@ export class SetPieces {
         sideServiceFacades: 0,
         engineeringLofts: 0,
         routeFacades: 0,
+        routePrototypeBays: 0,
+        routeGantryFrames: 0,
+        routeTestRigDisplays: 0,
+        routeToolProcessFacades: 0,
         sourceSpires: 0,
         sourceTotems: 0,
         statusLights: 0,
@@ -1510,6 +1514,10 @@ export class SetPieces {
       stats.sideServiceFacades += 1;
       stats.engineeringLofts += 1;
       stats.routeFacades += 1;
+      stats.routePrototypeBays += 1;
+      stats.routeGantryFrames += 1;
+      stats.routeTestRigDisplays += 1;
+      stats.routeToolProcessFacades += 1;
       stats.sourceSpires += 1;
       stats.sourceTotems += 1;
       stats.statusLights += 4;
