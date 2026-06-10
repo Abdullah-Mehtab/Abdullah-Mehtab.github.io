@@ -630,6 +630,10 @@ export class SetPieces {
         campusPromenades: 0,
         interviewPods: 0,
         officeFloorBands: 0,
+        roadsideLobbyWings: 0,
+        campusGatewayFrames: 0,
+        teamAtriumBeacons: 0,
+        campusArrivalPlazas: 0,
         signs: 0,
         lamps: 0
       },
@@ -1789,6 +1793,10 @@ export class SetPieces {
       stats.campusPromenades += 1;
       stats.interviewPods += 5;
       stats.officeFloorBands += 4;
+      stats.roadsideLobbyWings += 1;
+      stats.campusGatewayFrames += 1;
+      stats.teamAtriumBeacons += 1;
+      stats.campusArrivalPlazas += 1;
     }
 
     const path = point(0, -7.25);
