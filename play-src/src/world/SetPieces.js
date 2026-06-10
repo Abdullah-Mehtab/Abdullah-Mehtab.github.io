@@ -695,6 +695,10 @@ export class SetPieces {
         incidentResponseHalls: 0,
         scannerBridges: 0,
         overwatchDecks: 0,
+        solidCommandWings: 0,
+        commandWindowBands: 0,
+        scanPortalFrames: 0,
+        threatWalls: 0,
         signs: 0,
         lamps: 0
       },
@@ -1886,6 +1890,10 @@ export class SetPieces {
       stats.incidentResponseHalls += 1;
       stats.scannerBridges += 1;
       stats.overwatchDecks += 1;
+      stats.solidCommandWings += 1;
+      stats.commandWindowBands += 1;
+      stats.scanPortalFrames += 1;
+      stats.threatWalls += 1;
     }
 
     stats.signs = 0;

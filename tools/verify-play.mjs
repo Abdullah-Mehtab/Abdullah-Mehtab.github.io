@@ -4234,6 +4234,13 @@ function assertVerification(result) {
     }
     return;
   }
+  if (result.goalGate === 'gate-4e-z-sentinel-solid-soc-readability-pass') {
+    assertGate4EZSentinelSolidSocVerification(result, failures);
+    if (failures.length) {
+      throw new Error(`Play verification failed: ${failures.join('; ')}`);
+    }
+    return;
+  }
   if (result.goalGate === 'gate-4b5-north-ridge') {
     assertGate4B5NorthRidgeVerification(result, failures);
     if (failures.length) {
@@ -5359,7 +5366,8 @@ function isGate4EExpandedArchitectureGate(goalGate) {
     || goalGate === 'gate-4e-v-projects-public-build-readability-pass'
     || goalGate === 'gate-4e-w-route-cohesion-approach-life-pass'
     || goalGate === 'gate-4e-x-site-ground-craft-pass'
-    || goalGate === 'gate-4e-y-launch-hub-composition-pass';
+    || goalGate === 'gate-4e-y-launch-hub-composition-pass'
+    || goalGate === 'gate-4e-z-sentinel-solid-soc-readability-pass';
 }
 
 function assertGate3RVerticalSliceVerification(result, failures, options = {}) {
@@ -5379,7 +5387,8 @@ function assertGate3RVerticalSliceVerification(result, failures, options = {}) {
     || result.goalGate === 'gate-4e-v-projects-public-build-readability-pass'
     || result.goalGate === 'gate-4e-w-route-cohesion-approach-life-pass'
     || result.goalGate === 'gate-4e-x-site-ground-craft-pass'
-    || result.goalGate === 'gate-4e-y-launch-hub-composition-pass';
+    || result.goalGate === 'gate-4e-y-launch-hub-composition-pass'
+    || result.goalGate === 'gate-4e-z-sentinel-solid-soc-readability-pass';
   const blockout = result.blockout || {};
   const blockoutSetPieces = blockout.setPieces || {};
   const slice = result.verticalSlice || blockout.verticalSlice || {};
@@ -5390,7 +5399,8 @@ function assertGate3RVerticalSliceVerification(result, failures, options = {}) {
   const security = slice.security || {};
   const placement = result.gate3rPlacement || {};
   const allowGate4ESiteGroundCraft = result.goalGate === 'gate-4e-x-site-ground-craft-pass'
-    || result.goalGate === 'gate-4e-y-launch-hub-composition-pass';
+    || result.goalGate === 'gate-4e-y-launch-hub-composition-pass'
+    || result.goalGate === 'gate-4e-z-sentinel-solid-soc-readability-pass';
 
   if (result.goalGate !== expectedGoal) {
     failures.push(`Gate 3R probe failed: goalGate=${result.goalGate || 'none'}`);
@@ -6830,8 +6840,8 @@ function assertGate4EXSiteGroundCraftVerification(result, failures, expectedGoal
   if ((result.forwardDriveProbe?.halts || 0) !== 0) failures.push(`Gate 4-E-X failed: forwardDriveProbe.halts=${result.forwardDriveProbe?.halts || 0}`);
 }
 
-function assertGate4EYLaunchHubCompositionVerification(result, failures) {
-  assertGate4EXSiteGroundCraftVerification(result, failures, 'gate-4e-y-launch-hub-composition-pass');
+function assertGate4EYLaunchHubCompositionVerification(result, failures, expectedGoal = 'gate-4e-y-launch-hub-composition-pass') {
+  assertGate4EXSiteGroundCraftVerification(result, failures, expectedGoal);
 
   const launch = result.gate4eLaunchHub || {};
   const placement = result.gate3rPlacement || {};
@@ -6857,6 +6867,24 @@ function assertGate4EYLaunchHubCompositionVerification(result, failures) {
   if ((placement.shorelineFootprintIntrusions || 0) !== 0) failures.push(`Gate 4-E-Y placement failed: shorelineFootprintIntrusions=${placement.shorelineFootprintIntrusions || 0}`);
   if ((result.colliderCount || 0) !== 2) failures.push(`Gate 4-E-Y failed: unexpected collider count=${result.colliderCount || 0}`);
   if ((result.forwardDriveProbe?.halts || 0) !== 0) failures.push(`Gate 4-E-Y failed: forwardDriveProbe.halts=${result.forwardDriveProbe?.halts || 0}`);
+}
+
+function assertGate4EZSentinelSolidSocVerification(result, failures) {
+  assertGate4EYLaunchHubCompositionVerification(result, failures, 'gate-4e-z-sentinel-solid-soc-readability-pass');
+
+  const sentinel = result.gate4b5?.sentinel || {};
+  assertAuthoredDistrictAsset(result, 'EnvPolishSentinelSocTower', 'Gate 4-E-Z Sentinel SOC architecture', failures);
+  if ((sentinel.solidCommandWings || 0) < 1) failures.push(`Gate 4-E-Z Sentinel failed: solidCommandWings=${sentinel.solidCommandWings || 0}/1`);
+  if ((sentinel.commandWindowBands || 0) < 1) failures.push(`Gate 4-E-Z Sentinel failed: commandWindowBands=${sentinel.commandWindowBands || 0}/1`);
+  if ((sentinel.scanPortalFrames || 0) < 1) failures.push(`Gate 4-E-Z Sentinel failed: scanPortalFrames=${sentinel.scanPortalFrames || 0}/1`);
+  if ((sentinel.threatWalls || 0) < 1) failures.push(`Gate 4-E-Z Sentinel failed: threatWalls=${sentinel.threatWalls || 0}/1`);
+  if ((sentinel.routeShieldAtriums || 0) < 1) failures.push(`Gate 4-E-Z Sentinel failed: routeShieldAtriums=${sentinel.routeShieldAtriums || 0}/1`);
+  if ((sentinel.scannerBridges || 0) < 1) failures.push(`Gate 4-E-Z Sentinel failed: scannerBridges=${sentinel.scannerBridges || 0}/1`);
+  if ((sentinel.overwatchDecks || 0) < 1) failures.push(`Gate 4-E-Z Sentinel failed: overwatchDecks=${sentinel.overwatchDecks || 0}/1`);
+  if ((sentinel.signs || 0) !== 0) failures.push(`Gate 4-E-Z Sentinel failed: rejected signs=${sentinel.signs || 0}`);
+  if ((sentinel.lamps || 0) !== 0) failures.push(`Gate 4-E-Z Sentinel failed: rejected lamps=${sentinel.lamps || 0}`);
+  if ((result.colliderCount || 0) !== 2) failures.push(`Gate 4-E-Z failed: unexpected collider count=${result.colliderCount || 0}`);
+  if ((result.forwardDriveProbe?.halts || 0) !== 0) failures.push(`Gate 4-E-Z failed: forwardDriveProbe.halts=${result.forwardDriveProbe?.halts || 0}`);
 }
 
 function assertAuthoredDistrictAsset(result, assetName, label, failures) {
