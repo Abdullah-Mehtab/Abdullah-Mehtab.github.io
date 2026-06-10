@@ -482,6 +482,10 @@ export class SetPieces {
         coolingRooflines: 0,
         dataCanopies: 0,
         archiveFacades: 0,
+        skillStackPortals: 0,
+        learningCoreTowers: 0,
+        trainingRackFacades: 0,
+        dataSpineBridges: 0,
         signs: 0,
         lamps: 0
       },
@@ -1528,6 +1532,10 @@ export class SetPieces {
       stats.coolingRooflines += 1;
       stats.dataCanopies += 1;
       stats.archiveFacades += 1;
+      stats.skillStackPortals += 1;
+      stats.learningCoreTowers += 4;
+      stats.trainingRackFacades += 1;
+      stats.dataSpineBridges += 1;
     }
 
     stats.terminalSlabs = stats.commandTerminals;

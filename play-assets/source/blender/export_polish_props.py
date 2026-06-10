@@ -857,6 +857,13 @@ def create_skills_data_center(mats):
     cube("SkillsDataCenter_EntryCanopy", group, (0.2, 2.28, -3.35), (6.05, 0.32, 1.35), mats["dark"], bevel=0.026)
     cube("SkillsDataCenter_EntryPortal", group, (0.2, 1.9, -3.92), (5.55, 3.0, 0.18), mats["dark"], bevel=0.022)
     cube("SkillsDataCenter_EntryGlass", group, (0.2, 1.86, -4.02), (3.85, 1.94, 0.08), mats["glass"], bevel=0.008)
+    cube("SkillsDataCenter_SkillStackPortalFrame", group, (0.2, 2.55, -4.18), (6.62, 3.35, 0.12), mats["screen"], bevel=0.012)
+    cube("SkillsDataCenter_SkillStackPortalCutout", group, (0.2, 2.42, -4.25), (5.4, 2.42, 0.12), mats["dark"], bevel=0.008)
+    cube("SkillsDataCenter_SkillStackHeader", group, (0.2, 3.84, -4.34), (6.15, 0.32, 0.14), mats["aqua"], bevel=0.01)
+    cube("SkillsDataCenter_SkillStackThreshold", group, (0.2, 0.92, -4.34), (5.75, 0.26, 0.16), mats["paper"], bevel=0.012)
+    for index, y in enumerate([1.34, 1.78, 2.22, 2.66, 3.1]):
+        material = [mats["screen"], mats["mint"], mats["aqua"], mats["purple"], mats["screen"]][index]
+        cube(f"SkillsDataCenter_SkillStackLevel_{index}", group, (0.2, y, -4.42), (4.78 - index * 0.42, 0.1, 0.1), material, bevel=0.004)
     cube("SkillsDataCenter_LearningAtrium", group, (-5.55, 2.22, -3.18), (2.55, 3.85, 1.62), mats["glass"], bevel=0.026)
     cube("SkillsDataCenter_AtriumFrame", group, (-5.55, 4.28, -3.18), (2.9, 0.28, 1.88), mats["screen"], bevel=0.014)
     cube("SkillsDataCenter_AtriumBeacon", group, (-5.55, 5.46, -3.18), (1.7, 2.2, 0.28), mats["mint"], bevel=0.018)
@@ -876,11 +883,27 @@ def create_skills_data_center(mats):
         cube(f"SkillsDataCenter_DisciplineCap_{index}", group, (x, 6.28 + height, 1.78), (1.22, 0.2, 1.1), material, bevel=0.014)
     cube("SkillsDataCenter_DisciplineBridge", group, (0.08, 6.38, 1.78), (9.2, 0.16, 0.24), mats["aqua"], bevel=0.008)
     cube("SkillsDataCenter_DisciplineBridgeGlow", group, (0.08, 6.58, 1.42), (8.35, 0.08, 0.08), mats["screen"], bevel=0.004)
+    cube("SkillsDataCenter_DataSpineBridge", group, (0.0, 6.74, -2.85), (11.2, 0.2, 0.28), mats["screen"], bevel=0.01)
+    cube("SkillsDataCenter_DataSpineBridgeGlow", group, (0.0, 6.94, -3.14), (10.4, 0.08, 0.08), mats["mint"], bevel=0.004)
+    for index, (x, material, height) in enumerate([
+        (-4.85, mats["screen"], 2.25),
+        (-1.62, mats["mint"], 2.72),
+        (1.62, mats["aqua"], 2.44),
+        (4.85, mats["purple"], 2.58),
+    ]):
+        cube(f"SkillsDataCenter_LearningCoreTower_{index}", group, (x, 6.22 + height * 0.5, -2.72), (0.78, height, 0.76), mats["dark"], bevel=0.025)
+        cube(f"SkillsDataCenter_LearningCoreLight_{index}", group, (x, 6.22 + height * 0.5, -3.12), (0.46, height * 0.66, 0.08), material, bevel=0.004)
+        cube(f"SkillsDataCenter_LearningCoreCap_{index}", group, (x, 6.28 + height, -2.72), (1.1, 0.18, 1.02), material, bevel=0.012)
     for row, y in enumerate([0.98, 1.56, 2.14, 2.72]):
         cube(f"SkillsDataCenter_RackBand_{row}", group, (-1.25, y + 0.28, -2.1), (9.6, 0.07, 0.08), mats["aqua"], bevel=0.004)
         for col, x in enumerate([-4.65, -3.45, -2.25, -1.05, 0.15, 1.35, 2.55]):
             material = [mats["screen"], mats["mint"], mats["purple"], mats["aqua"]][(row + col) % 4]
             cube(f"SkillsDataCenter_RackLight_{row}_{col}", group, (x, y, -2.18), (0.52, 0.34, 0.07), material, bevel=0.005)
+    for column, x in enumerate([-5.0, -3.35, -1.7, -0.05, 1.6, 3.25]):
+        cube(f"SkillsDataCenter_TrainingRackColumn_{column}", group, (x, 2.25, -4.52), (0.22, 2.52, 0.1), mats["stone_shadow"], bevel=0.006)
+        for row, y in enumerate([1.28, 1.82, 2.36, 2.9]):
+            material = [mats["screen"], mats["mint"], mats["aqua"], mats["purple"]][(row + column) % 4]
+            cube(f"SkillsDataCenter_TrainingRackBadge_{column}_{row}", group, (x, y, -4.62), (0.72, 0.12, 0.07), material, bevel=0.003)
     for row, y in enumerate([3.38, 3.72, 4.06]):
         cube(f"SkillsDataCenter_ArchiveFacadeBand_{row}", group, (-1.25, y, -2.22), (9.85, 0.1, 0.08), mats["paper" if row == 1 else "aqua"], bevel=0.004)
         for col, x in enumerate([-4.95, -3.85, -2.75, -1.65, -0.55, 0.55, 1.65, 2.75]):
