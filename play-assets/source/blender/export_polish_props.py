@@ -1814,6 +1814,23 @@ def create_signal_harbor_communications_station(mats):
     cube("SignalHarbor_RoadsideContactEnvelopeRight", group, (8.7, 2.55, 1.48), (0.06, 1.38, 0.08), mats["paper"], rot=(0.0, 0.0, 0.36), bevel=0.003)
     for index, z in enumerate([-1.82, -0.74, 0.34, 1.42]):
         cube(f"SignalHarbor_RoadsideChannelStack_{index}", group, (8.68, 1.62 + index * 0.42, z), (0.06, 0.08, 0.74), [mats["screen"], mats["mint"], mats["aqua"], mats["purple"]][index], bevel=0.003)
+    cube("SignalHarbor_ContactGatewayPortal", group, (0.12, 3.2, 4.02), (12.4, 5.05, 0.22), mats["dark"], bevel=0.032)
+    cube("SignalHarbor_ContactGatewayGlass", group, (0.12, 3.02, 4.18), (10.9, 3.68, 0.08), mats["glass"], bevel=0.008)
+    cube("SignalHarbor_ContactGatewayTopBand", group, (0.12, 5.78, 4.24), (11.7, 0.24, 0.1), mats["mint"], bevel=0.006)
+    cube("SignalHarbor_ContactGatewayThreshold", group, (0.12, 0.72, 4.24), (10.8, 0.22, 0.12), mats["paper"], bevel=0.012)
+    cube("SignalHarbor_MessageExchangeAtrium", group, (-3.95, 4.35, 3.95), (3.15, 5.4, 1.15), mats["glass"], bevel=0.024)
+    cube("SignalHarbor_MessageExchangeAtriumCap", group, (-3.95, 7.18, 3.95), (3.55, 0.28, 1.42), mats["screen"], bevel=0.014)
+    cube("SignalHarbor_InboxBeaconWall", group, (4.68, 3.32, 4.12), (0.22, 4.75, 2.45), mats["stone_shadow"], bevel=0.026)
+    for index, y in enumerate([1.44, 1.98, 2.52, 3.06, 3.6, 4.14, 4.68, 5.22]):
+        material = [mats["screen"], mats["mint"], mats["aqua"], mats["paper"]][index % 4]
+        cube(f"SignalHarbor_InboxMessageSlot_{index}", group, (4.82, y, 4.14), (0.08, 0.12, 1.62 - (index % 2) * 0.28), material, bevel=0.003)
+    for index, x in enumerate([-4.0, 0.12, 4.24]):
+        material = [mats["screen"], mats["mint"], mats["aqua"]][index]
+        cube(f"SignalHarbor_ChannelBeaconMast_{index}", group, (x, 6.72, 4.18), (0.18, 3.35, 0.18), mats["dark"], bevel=0.008)
+        cube(f"SignalHarbor_ChannelBeaconBar_{index}", group, (x, 7.58, 4.18), (1.52, 0.08, 0.08), material, bevel=0.004)
+        cube(f"SignalHarbor_ChannelBeaconCap_{index}", group, (x, 8.42, 4.18), (0.54, 0.36, 0.54), material, bevel=0.018)
+    for index, x in enumerate([-4.6, -2.3, 0.0, 2.3]):
+        cube(f"SignalHarbor_GatewayMessagePulse_{index}", group, (x, 4.02, 4.32), (1.24, 0.08, 0.06), [mats["paper"], mats["screen"], mats["mint"], mats["aqua"]][index], bevel=0.003)
 
 
 def create_harbor_pier(mats):

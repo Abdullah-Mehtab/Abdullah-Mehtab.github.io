@@ -4248,6 +4248,13 @@ function assertVerification(result) {
     }
     return;
   }
+  if (result.goalGate === 'gate-4e-ab-signal-harbor-contact-gateway-pass') {
+    assertGate4EABSignalHarborContactGatewayVerification(result, failures);
+    if (failures.length) {
+      throw new Error(`Play verification failed: ${failures.join('; ')}`);
+    }
+    return;
+  }
   if (result.goalGate === 'gate-4b5-north-ridge') {
     assertGate4B5NorthRidgeVerification(result, failures);
     if (failures.length) {
@@ -5375,7 +5382,8 @@ function isGate4EExpandedArchitectureGate(goalGate) {
     || goalGate === 'gate-4e-x-site-ground-craft-pass'
     || goalGate === 'gate-4e-y-launch-hub-composition-pass'
     || goalGate === 'gate-4e-z-sentinel-solid-soc-readability-pass'
-    || goalGate === 'gate-4e-aa-skills-learning-systems-readability-pass';
+    || goalGate === 'gate-4e-aa-skills-learning-systems-readability-pass'
+    || goalGate === 'gate-4e-ab-signal-harbor-contact-gateway-pass';
 }
 
 function assertGate3RVerticalSliceVerification(result, failures, options = {}) {
@@ -5397,7 +5405,8 @@ function assertGate3RVerticalSliceVerification(result, failures, options = {}) {
     || result.goalGate === 'gate-4e-x-site-ground-craft-pass'
     || result.goalGate === 'gate-4e-y-launch-hub-composition-pass'
     || result.goalGate === 'gate-4e-z-sentinel-solid-soc-readability-pass'
-    || result.goalGate === 'gate-4e-aa-skills-learning-systems-readability-pass';
+    || result.goalGate === 'gate-4e-aa-skills-learning-systems-readability-pass'
+    || result.goalGate === 'gate-4e-ab-signal-harbor-contact-gateway-pass';
   const blockout = result.blockout || {};
   const blockoutSetPieces = blockout.setPieces || {};
   const slice = result.verticalSlice || blockout.verticalSlice || {};
@@ -5410,7 +5419,8 @@ function assertGate3RVerticalSliceVerification(result, failures, options = {}) {
   const allowGate4ESiteGroundCraft = result.goalGate === 'gate-4e-x-site-ground-craft-pass'
     || result.goalGate === 'gate-4e-y-launch-hub-composition-pass'
     || result.goalGate === 'gate-4e-z-sentinel-solid-soc-readability-pass'
-    || result.goalGate === 'gate-4e-aa-skills-learning-systems-readability-pass';
+    || result.goalGate === 'gate-4e-aa-skills-learning-systems-readability-pass'
+    || result.goalGate === 'gate-4e-ab-signal-harbor-contact-gateway-pass';
 
   if (result.goalGate !== expectedGoal) {
     failures.push(`Gate 3R probe failed: goalGate=${result.goalGate || 'none'}`);
@@ -6897,8 +6907,8 @@ function assertGate4EZSentinelSolidSocVerification(result, failures, expectedGoa
   if ((result.forwardDriveProbe?.halts || 0) !== 0) failures.push(`Gate 4-E-Z failed: forwardDriveProbe.halts=${result.forwardDriveProbe?.halts || 0}`);
 }
 
-function assertGate4EAASkillsLearningSystemsVerification(result, failures) {
-  assertGate4EZSentinelSolidSocVerification(result, failures, 'gate-4e-aa-skills-learning-systems-readability-pass');
+function assertGate4EAASkillsLearningSystemsVerification(result, failures, expectedGoal = 'gate-4e-aa-skills-learning-systems-readability-pass') {
+  assertGate4EZSentinelSolidSocVerification(result, failures, expectedGoal);
 
   const skills = result.gate4b2?.skills || {};
   assertAuthoredDistrictAsset(result, 'EnvPolishSkillsDataCenter', 'Gate 4-E-AA Skills learning systems architecture', failures);
@@ -6912,6 +6922,24 @@ function assertGate4EAASkillsLearningSystemsVerification(result, failures) {
   if ((skills.lamps || 0) !== 0) failures.push(`Gate 4-E-AA Skills failed: rejected lamps=${skills.lamps || 0}`);
   if ((result.colliderCount || 0) !== 2) failures.push(`Gate 4-E-AA failed: unexpected collider count=${result.colliderCount || 0}`);
   if ((result.forwardDriveProbe?.halts || 0) !== 0) failures.push(`Gate 4-E-AA failed: forwardDriveProbe.halts=${result.forwardDriveProbe?.halts || 0}`);
+}
+
+function assertGate4EABSignalHarborContactGatewayVerification(result, failures) {
+  assertGate4EAASkillsLearningSystemsVerification(result, failures, 'gate-4e-ab-signal-harbor-contact-gateway-pass');
+  assertGate4EUSignalHarborPublicContactReadabilityVerification(result, failures, 'gate-4e-ab-signal-harbor-contact-gateway-pass');
+
+  const harbor = result.gate4b4?.harbor || {};
+  assertAuthoredDistrictAsset(result, 'EnvPolishSignalHarborCommunicationsStation', 'Gate 4-E-AB Signal Harbor contact gateway architecture', failures);
+  if ((harbor.contactGatewayPortals || 0) < 1) failures.push(`Gate 4-E-AB Harbor failed: contactGatewayPortals=${harbor.contactGatewayPortals || 0}/1`);
+  if ((harbor.messageExchangeAtriums || 0) < 1) failures.push(`Gate 4-E-AB Harbor failed: messageExchangeAtriums=${harbor.messageExchangeAtriums || 0}/1`);
+  if ((harbor.channelBeaconMasts || 0) < 3) failures.push(`Gate 4-E-AB Harbor failed: channelBeaconMasts=${harbor.channelBeaconMasts || 0}/3`);
+  if ((harbor.inboxBeaconWalls || 0) < 1) failures.push(`Gate 4-E-AB Harbor failed: inboxBeaconWalls=${harbor.inboxBeaconWalls || 0}/1`);
+  if ((harbor.publicContactPortals || 0) < 1) failures.push(`Gate 4-E-AB Harbor failed: publicContactPortals=${harbor.publicContactPortals || 0}/1`);
+  if ((harbor.publicChannelBays || 0) < 3) failures.push(`Gate 4-E-AB Harbor failed: publicChannelBays=${harbor.publicChannelBays || 0}/3`);
+  if ((harbor.signs || 0) !== 0) failures.push(`Gate 4-E-AB Harbor failed: rejected signs=${harbor.signs || 0}`);
+  if ((harbor.lamps || 0) !== 0) failures.push(`Gate 4-E-AB Harbor failed: rejected lamps=${harbor.lamps || 0}`);
+  if ((result.colliderCount || 0) !== 2) failures.push(`Gate 4-E-AB failed: unexpected collider count=${result.colliderCount || 0}`);
+  if ((result.forwardDriveProbe?.halts || 0) !== 0) failures.push(`Gate 4-E-AB failed: forwardDriveProbe.halts=${result.forwardDriveProbe?.halts || 0}`);
 }
 
 function assertAuthoredDistrictAsset(result, assetName, label, failures) {

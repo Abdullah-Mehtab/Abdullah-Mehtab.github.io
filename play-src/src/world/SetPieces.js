@@ -649,6 +649,10 @@ export class SetPieces {
         relayCrownArrays: 0,
         shoreDishSilhouettes: 0,
         roadsideContactFacades: 0,
+        contactGatewayPortals: 0,
+        messageExchangeAtriums: 0,
+        channelBeaconMasts: 0,
+        inboxBeaconWalls: 0,
         signs: 0,
         lamps: 0
       }
@@ -1800,6 +1804,10 @@ export class SetPieces {
       stats.relayCrownArrays += 1;
       stats.shoreDishSilhouettes += 1;
       stats.roadsideContactFacades += 1;
+      stats.contactGatewayPortals += 1;
+      stats.messageExchangeAtriums += 1;
+      stats.channelBeaconMasts += 3;
+      stats.inboxBeaconWalls += 1;
       stats.signalMasts += 1;
       stats.relayMasts += 1;
       stats.contactTerminals += 3;
