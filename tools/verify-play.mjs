@@ -4211,6 +4211,13 @@ function assertVerification(result) {
     }
     return;
   }
+  if (result.goalGate === 'gate-4e-w-route-cohesion-approach-life-pass') {
+    assertGate4EWRouteCohesionApproachLifeVerification(result, failures);
+    if (failures.length) {
+      throw new Error(`Play verification failed: ${failures.join('; ')}`);
+    }
+    return;
+  }
   if (result.goalGate === 'gate-4b5-north-ridge') {
     assertGate4B5NorthRidgeVerification(result, failures);
     if (failures.length) {
@@ -5333,7 +5340,8 @@ function isGate4EExpandedArchitectureGate(goalGate) {
     || goalGate === 'gate-4e-s-circuit-race-control-readability-pass'
     || goalGate === 'gate-4e-t-todo-planning-studio-readability-pass'
     || goalGate === 'gate-4e-u-signal-harbor-public-contact-readability-pass'
-    || goalGate === 'gate-4e-v-projects-public-build-readability-pass';
+    || goalGate === 'gate-4e-v-projects-public-build-readability-pass'
+    || goalGate === 'gate-4e-w-route-cohesion-approach-life-pass';
 }
 
 function assertGate3RVerticalSliceVerification(result, failures, options = {}) {
@@ -5350,7 +5358,8 @@ function assertGate3RVerticalSliceVerification(result, failures, options = {}) {
     || result.goalGate === 'gate-4e-s-circuit-race-control-readability-pass'
     || result.goalGate === 'gate-4e-t-todo-planning-studio-readability-pass'
     || result.goalGate === 'gate-4e-u-signal-harbor-public-contact-readability-pass'
-    || result.goalGate === 'gate-4e-v-projects-public-build-readability-pass';
+    || result.goalGate === 'gate-4e-v-projects-public-build-readability-pass'
+    || result.goalGate === 'gate-4e-w-route-cohesion-approach-life-pass';
   const blockout = result.blockout || {};
   const blockoutSetPieces = blockout.setPieces || {};
   const slice = result.verticalSlice || blockout.verticalSlice || {};
@@ -6716,8 +6725,8 @@ function assertGate4EUSignalHarborPublicContactReadabilityVerification(result, f
   if ((harbor.lamps || 0) !== 0) failures.push(`Gate 4-E-U Harbor failed: rejected lamps=${harbor.lamps || 0}`);
 }
 
-function assertGate4EVProjectsPublicBuildReadabilityVerification(result, failures) {
-  assertGate4EUSignalHarborPublicContactReadabilityVerification(result, failures, 'gate-4e-v-projects-public-build-readability-pass');
+function assertGate4EVProjectsPublicBuildReadabilityVerification(result, failures, expectedGoal = 'gate-4e-v-projects-public-build-readability-pass') {
+  assertGate4EUSignalHarborPublicContactReadabilityVerification(result, failures, expectedGoal);
   assertGate4DProjectsFoundryBuilding(result, failures);
 
   const projects = result.gate4b4?.projects || {};
@@ -6728,6 +6737,38 @@ function assertGate4EVProjectsPublicBuildReadabilityVerification(result, failure
   if ((projects.routeBuildCranes || 0) < 1) failures.push(`Gate 4-E-V Projects failed: routeBuildCranes=${projects.routeBuildCranes || 0}/1`);
   if ((projects.signs || 0) !== 0) failures.push(`Gate 4-E-V Projects failed: rejected signs=${projects.signs || 0}`);
   if ((projects.lamps || 0) !== 0) failures.push(`Gate 4-E-V Projects failed: rejected lamps=${projects.lamps || 0}`);
+}
+
+function assertGate4EWRouteCohesionApproachLifeVerification(result, failures) {
+  assertGate4EVProjectsPublicBuildReadabilityVerification(result, failures, 'gate-4e-w-route-cohesion-approach-life-pass');
+
+  const route = result.routeComposition || {};
+  const placement = result.gate3rPlacement || {};
+  const byKind = placement.byKind || {};
+  const byFootprintKind = placement.byFootprintKind || {};
+
+  if ((route.gate4eRouteAnchors || 0) < 30) failures.push(`Gate 4-E-W route cohesion failed: gate4eRouteAnchors=${route.gate4eRouteAnchors || 0}/30`);
+  if ((route.authoredAssets || 0) < 30) failures.push(`Gate 4-E-W route cohesion failed: authoredAssets=${route.authoredAssets || 0}/30`);
+  if ((route.vistaKits || 0) < 6) failures.push(`Gate 4-E-W route cohesion failed: vistaKits=${route.vistaKits || 0}/6`);
+  if ((route.routeStoryMarkers || 0) < 7) failures.push(`Gate 4-E-W route cohesion failed: routeStoryMarkers=${route.routeStoryMarkers || 0}/7`);
+  if ((route.plazaEdgeKits || 0) < 8) failures.push(`Gate 4-E-W route cohesion failed: plazaEdgeKits=${route.plazaEdgeKits || 0}/8`);
+  if ((route.bollardRuns || 0) < 5) failures.push(`Gate 4-E-W route cohesion failed: bollardRuns=${route.bollardRuns || 0}/5`);
+  if ((route.splitterIslands || 0) < 2) failures.push(`Gate 4-E-W route cohesion failed: splitterIslands=${route.splitterIslands || 0}/2`);
+  if ((route.coastalLoopStaging || 0) < 20) failures.push(`Gate 4-E-W route cohesion failed: coastalLoopStaging=${route.coastalLoopStaging || 0}/20`);
+  if ((route.routeLanterns || 0) < 3) failures.push(`Gate 4-E-W route cohesion failed: routeLanterns=${route.routeLanterns || 0}/3`);
+  if ((route.signalSpires || 0) < 2) failures.push(`Gate 4-E-W route cohesion failed: signalSpires=${route.signalSpires || 0}/2`);
+  if ((route.guideTiles || 0) !== 0) failures.push(`Gate 4-E-W route cohesion failed: guideTiles=${route.guideTiles || 0}`);
+  if ((byKind['gate4e-route-composition'] || 0) < 30) {
+    failures.push(`Gate 4-E-W placement failed: route composition placements=${byKind['gate4e-route-composition'] || 0}/30`);
+  }
+  if ((byFootprintKind['gate4e-route-composition-footprint'] || 0) < 30) {
+    failures.push(`Gate 4-E-W placement failed: route composition footprints=${byFootprintKind['gate4e-route-composition-footprint'] || 0}/30`);
+  }
+  if ((placement.roadIntrusions || 0) !== 0) failures.push(`Gate 4-E-W placement failed: roadIntrusions=${placement.roadIntrusions || 0}`);
+  if ((placement.footprintIntrusions || 0) !== 0) failures.push(`Gate 4-E-W placement failed: footprintIntrusions=${placement.footprintIntrusions || 0}`);
+  if ((placement.shorelineFootprintIntrusions || 0) !== 0) failures.push(`Gate 4-E-W placement failed: shorelineFootprintIntrusions=${placement.shorelineFootprintIntrusions || 0}`);
+  if ((result.colliderCount || 0) !== 2) failures.push(`Gate 4-E-W failed: unexpected collider count=${result.colliderCount || 0}`);
+  if ((result.forwardDriveProbe?.halts || 0) !== 0) failures.push(`Gate 4-E-W failed: forwardDriveProbe.halts=${result.forwardDriveProbe?.halts || 0}`);
 }
 
 function assertAuthoredDistrictAsset(result, assetName, label, failures) {

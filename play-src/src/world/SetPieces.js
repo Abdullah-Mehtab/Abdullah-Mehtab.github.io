@@ -1943,7 +1943,24 @@ export class SetPieces {
       { name: 'South_Run_Vista', asset: 'EnvPolishRouteVistaKit', path: 'coastal-loop', segment: 10, t: 0.5, lateral: 8.4, scale: 0.68, stat: 'vistaKits', footprint: [4.8, 3.4] },
       { name: 'Behind_Run_Bollard_Frame', asset: 'EnvPolishChevronBollardRun', path: 'coastal-loop', segment: 11, t: 0.48, lateral: 9.2, scale: 0.66, stat: 'bollardRuns', footprint: [5.8, 2.2] },
       { name: 'Farm_Service_Lantern', asset: 'EnvPolishRouteLantern', path: 'farm-service', segment: 0, t: 0.44, lateral: 9.5, scale: 0.62, stat: 'routeLanterns', footprint: [2.2, 2.2] },
-      { name: 'Farm_Service_Plaza_Edge', asset: 'EnvPolishPlazaEdgeKit', path: 'farm-service', segment: 0, t: 0.72, lateral: 9.5, scale: 0.66, stat: 'plazaEdgeKits', footprint: [5.2, 2.8] }
+      { name: 'Farm_Service_Plaza_Edge', asset: 'EnvPolishPlazaEdgeKit', path: 'farm-service', segment: 0, t: 0.72, lateral: 9.5, scale: 0.66, stat: 'plazaEdgeKits', footprint: [5.2, 2.8] },
+      { name: 'Launch_Run_Right_Edge', asset: 'EnvPolishPlazaEdgeKit', path: 'coastal-loop', segment: 0, t: 0.78, lateral: 8.8, scale: 0.66, stat: 'plazaEdgeKits', footprint: [5.2, 2.8] },
+      { name: 'Projects_Foundry_Approach_Bollards', asset: 'EnvPolishChevronBollardRun', path: 'coastal-loop', segment: 2, t: 0.22, lateral: 8.8, scale: 0.64, stat: 'bollardRuns', footprint: [5.8, 2.2] },
+      { name: 'Projects_Foundry_Approach_Story', asset: 'EnvPolishRouteStoryMarker', path: 'coastal-loop', segment: 2, t: 0.74, lateral: -8.8, scale: 0.64, stat: 'routeStoryMarkers', footprint: [3.4, 2.8] },
+      { name: 'Signal_Harbor_Roadside_Edge', asset: 'EnvPolishPlazaEdgeKit', path: 'coastal-loop', segment: 3, t: 0.32, lateral: -9.2, scale: 0.64, stat: 'plazaEdgeKits', footprint: [5.2, 2.8] },
+      { name: 'Signal_Harbor_Return_Lantern', asset: 'EnvPolishRouteLantern', path: 'coastal-loop', segment: 4, t: 0.48, lateral: -8.6, scale: 0.58, stat: 'routeLanterns', footprint: [2.2, 2.2] },
+      { name: 'Circuit_Race_Control_Bollards', asset: 'EnvPolishChevronBollardRun', path: 'coastal-loop', segment: 5, t: 0.18, lateral: 8.6, scale: 0.62, stat: 'bollardRuns', footprint: [5.8, 2.2] },
+      { name: 'Sentinel_Ridge_Story_Marker', asset: 'EnvPolishRouteStoryMarker', path: 'coastal-loop', segment: 6, t: 0.44, lateral: 8.8, scale: 0.62, stat: 'routeStoryMarkers', footprint: [3.4, 2.8] },
+      { name: 'Awards_Campus_Signal_Spire', asset: 'EnvPolishSignalSpire', path: 'coastal-loop', segment: 7, t: 0.28, lateral: 9.4, scale: 0.48, stat: 'signalSpires', footprint: [3.2, 3.2] },
+      { name: 'FCC_Boulevard_Exit_Bollards', asset: 'EnvPolishChevronBollardRun', path: 'campus-boulevard', segment: 3, t: 0.32, lateral: -8.4, scale: 0.62, stat: 'bollardRuns', footprint: [5.8, 2.2] },
+      { name: 'Campus_Boulevard_Mid_Vista', asset: 'EnvPolishRouteVistaKit', path: 'campus-boulevard', segment: 2, t: 0.7, lateral: 9.2, scale: 0.62, stat: 'vistaKits', footprint: [4.8, 3.4] },
+      { name: 'Campus_Boulevard_Mid_Edge', asset: 'EnvPolishPlazaEdgeKit', path: 'campus-boulevard', segment: 2, t: 0.25, lateral: 9.2, scale: 0.62, stat: 'plazaEdgeKits', footprint: [5.2, 2.8] },
+      { name: 'Campus_Boulevard_Mid_Lantern', asset: 'EnvPolishRouteLantern', path: 'campus-boulevard', segment: 2, t: 0.5, lateral: 9.2, scale: 0.58, stat: 'routeLanterns', footprint: [2.2, 2.2] },
+      { name: 'Skills_Service_Route_Vista', asset: 'EnvPolishRouteVistaKit', path: 'coastal-loop', segment: 10, t: 0.42, lateral: -8.8, scale: 0.64, stat: 'vistaKits', footprint: [4.8, 3.4] },
+      { name: 'CV_Archive_Arrival_Edge', asset: 'EnvPolishPlazaEdgeKit', path: 'coastal-loop', segment: 11, t: 0.35, lateral: -8.6, scale: 0.64, stat: 'plazaEdgeKits', footprint: [5.2, 2.8] },
+      { name: 'Behind_Build_Approach_Story', asset: 'EnvPolishRouteStoryMarker', path: 'coastal-loop', segment: 1, t: 0.2, lateral: -8.2, scale: 0.62, stat: 'routeStoryMarkers', footprint: [3.4, 2.8] },
+      { name: 'Potato_Service_Field_Edge', asset: 'EnvPolishPlazaEdgeKit', path: 'farm-service', segment: 0, t: 0.7, lateral: -8.8, scale: 0.62, stat: 'plazaEdgeKits', footprint: [5.2, 2.8] },
+      { name: 'Potato_Service_Story_Marker', asset: 'EnvPolishRouteStoryMarker', path: 'farm-service', segment: 0, t: 0.9, lateral: -12.5, scale: 0.6, stat: 'routeStoryMarkers', footprint: [3.4, 2.8] }
     ];
 
     for (const spec of placements) this.addGate4ERouteCompositionAsset(group, spec);
