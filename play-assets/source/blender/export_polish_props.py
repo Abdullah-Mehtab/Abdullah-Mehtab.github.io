@@ -1325,6 +1325,25 @@ def create_todo_planning_studio(mats):
         cube(f"TodoPlanningStudio_FacadeProcessFin_{index}", group, (x, 2.12, -2.5), (0.12, 2.36, 0.08), [mats["screen"], mats["mint"], mats["amber"], mats["screen"]][index], bevel=0.004)
     for index, x in enumerate([-3.2, -1.6, 0.0, 1.6, 3.2]):
         cube(f"TodoPlanningStudio_RoofSprintCard_{index}", group, (x, 4.18, -2.24), (0.7, 0.08, 0.08), [mats["paper"], mats["mint"], mats["purple"], mats["amber"], mats["aqua"]][index], bevel=0.003)
+    cube("TodoPlanningStudio_ProductionControlHall", group, (0.0, 5.62, -3.44), (10.65, 2.12, 1.48), mats["stone_shadow"], bevel=0.04)
+    cube("TodoPlanningStudio_ProductionControlAtrium", group, (0.0, 5.55, -4.26), (8.7, 1.28, 0.08), mats["glass"], bevel=0.01)
+    cube("TodoPlanningStudio_ProductionControlCanopy", group, (0.0, 4.48, -4.28), (11.35, 0.32, 1.02), mats["dark"], bevel=0.024)
+    cube("TodoPlanningStudio_ProductionControlRoof", group, (0.0, 6.86, -3.44), (11.25, 0.34, 1.86), mats["wood"], bevel=0.026)
+    cube("TodoPlanningStudio_ProductionControlSignalBand", group, (0.0, 6.05, -4.38), (7.6, 0.1, 0.065), mats["screen"], bevel=0.004)
+    for index, x in enumerate([-3.8, -2.28, -0.76, 0.76, 2.28, 3.8]):
+        cube(f"TodoPlanningStudio_ControlRoomPulse_{index}", group, (x, 5.38, -4.43), (0.76, 0.34, 0.06), [mats["mint"], mats["paper"], mats["amber"], mats["aqua"], mats["screen"], mats["mint"]][index], bevel=0.004)
+    cube("TodoPlanningStudio_BacklogArchiveTower", group, (-8.18, 4.38, -2.52), (1.74, 6.08, 1.58), mats["stone_shadow"], bevel=0.038)
+    cube("TodoPlanningStudio_BacklogArchiveCrown", group, (-8.18, 7.64, -2.52), (2.18, 0.38, 1.96), mats["dark"], bevel=0.024)
+    for index, y in enumerate([2.38, 3.04, 3.7, 4.36, 5.02, 5.68]):
+        cube(f"TodoPlanningStudio_BacklogArchiveSlot_{index}", group, (-7.22, y, -2.98), (0.08, 0.28, 0.72), [mats["paper"], mats["foam"], mats["mint"], mats["amber"], mats["aqua"], mats["screen"]][index], bevel=0.004)
+    cube("TodoPlanningStudio_SprintReviewBridge", group, (-0.2, 4.92, -4.92), (10.75, 0.24, 0.44), mats["wood"], bevel=0.014)
+    cube("TodoPlanningStudio_SprintReviewBridgeGlow", group, (-0.2, 5.08, -5.18), (8.2, 0.08, 0.06), mats["mint"], bevel=0.004)
+    cube("TodoPlanningStudio_DeliveryLaneSpine", group, (7.72, 5.52, -1.58), (1.06, 4.86, 1.18), mats["dark"], bevel=0.028)
+    cube("TodoPlanningStudio_DeliveryLaneSpineGlass", group, (7.14, 5.46, -1.58), (0.08, 3.45, 0.82), mats["glass"], bevel=0.008)
+    for index, y in enumerate([4.12, 4.7, 5.28, 5.86, 6.44]):
+        cube(f"TodoPlanningStudio_DeliveryLaneSpineStep_{index}", group, (7.08, y, -2.05), (0.08, 0.14, 0.68), [mats["screen"], mats["mint"], mats["paper"], mats["amber"], mats["aqua"]][index], bevel=0.003)
+    cube("TodoPlanningStudio_DecisionBeaconMast", group, (0.0, 8.18, -3.44), (0.2, 2.28, 0.2), mats["dark"], bevel=0.008)
+    cylinder("TodoPlanningStudio_DecisionBeacon", group, (0.0, 9.48, -3.44), 0.5, 0.44, mats["amber"], vertices=20, bevel=0.012)
 
 
 def create_document_arcade(mats):

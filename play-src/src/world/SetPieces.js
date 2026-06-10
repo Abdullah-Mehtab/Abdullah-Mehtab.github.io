@@ -545,6 +545,12 @@ export class SetPieces {
         planningClockDisks: 0,
         sprintReviewCanopies: 0,
         deliveryLaneTowers: 0,
+        productionControlHalls: 0,
+        productionControlAtriums: 0,
+        backlogArchiveTowers: 0,
+        sprintReviewBridges: 0,
+        deliveryLaneSpines: 0,
+        decisionBeacons: 0,
         signs: 0,
         lamps: 0
       },
@@ -1649,6 +1655,12 @@ export class SetPieces {
       stats.planningClockDisks += 1;
       stats.sprintReviewCanopies += 1;
       stats.deliveryLaneTowers += 1;
+      stats.productionControlHalls += 1;
+      stats.productionControlAtriums += 1;
+      stats.backlogArchiveTowers += 1;
+      stats.sprintReviewBridges += 1;
+      stats.deliveryLaneSpines += 1;
+      stats.decisionBeacons += 1;
       stats.queueRails += 3;
     }
 
