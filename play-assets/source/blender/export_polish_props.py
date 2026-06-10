@@ -884,6 +884,17 @@ def create_skills_data_center(mats):
     cube("SkillsDataCenter_AtriumBeacon", group, (-5.55, 5.46, -3.18), (1.7, 2.2, 0.28), mats["mint"], bevel=0.018)
     cube("SkillsDataCenter_RouteDataCanopy", group, (-0.52, 5.98, -3.02), (11.7, 0.18, 0.34), mats["screen"], bevel=0.01)
     cube("SkillsDataCenter_RouteDataCanopyGlow", group, (-0.52, 5.82, -3.25), (10.6, 0.08, 0.1), mats["mint"], bevel=0.006)
+    cube("SkillsDataCenter_RouteLearningAtriumFrame", group, (0.15, 2.55, -4.72), (7.2, 3.85, 0.16), mats["screen"], bevel=0.014)
+    cube("SkillsDataCenter_RouteLearningAtriumGlass", group, (0.15, 2.42, -4.83), (5.85, 2.72, 0.08), mats["glass"], bevel=0.008)
+    cube("SkillsDataCenter_RouteSkillTreeTrunk", group, (0.15, 2.48, -4.93), (0.12, 2.1, 0.08), mats["mint"], bevel=0.004)
+    for index, (y, width, material) in enumerate([(1.62, 2.25, mats["screen"]), (2.12, 3.45, mats["aqua"]), (2.68, 4.35, mats["purple"]), (3.22, 5.1, mats["mint"])]):
+        cube(f"SkillsDataCenter_RouteSkillTreeBranch_{index}", group, (0.15, y, -4.98), (width, 0.09, 0.08), material, bevel=0.003)
+    cube("SkillsDataCenter_RouteCertificationVault", group, (-5.48, 2.38, -4.74), (1.55, 2.95, 0.12), mats["stone_shadow"], bevel=0.012)
+    for index, y in enumerate([1.28, 1.82, 2.36, 2.9, 3.44]):
+        cube(f"SkillsDataCenter_RouteCertificationSlot_{index}", group, (-5.48, y, -4.86), (1.05, 0.18, 0.08), [mats["paper"], mats["screen"], mats["mint"], mats["aqua"], mats["paper"]][index], bevel=0.003)
+    cube("SkillsDataCenter_RouteDisciplineLaneSpine", group, (4.9, 1.16, -4.74), (1.8, 0.22, 0.12), mats["stone_shadow"], bevel=0.008)
+    for index, y in enumerate([1.58, 1.98, 2.38, 2.78]):
+        cube(f"SkillsDataCenter_RouteDisciplineLane_{index}", group, (4.9, y, -4.88), (1.34, 0.08, 0.08), [mats["screen"], mats["mint"], mats["aqua"], mats["purple"]][index], bevel=0.003)
     for index, z in enumerate([-4.05, -3.62, -3.19]):
         cube(f"SkillsDataCenter_EntryStep_{index}", group, (0.2, 0.17 + index * 0.05, z), (5.4 - index * 0.66, 0.13, 0.38), mats["paper"], bevel=0.023)
     for index, (x, material, height) in enumerate([

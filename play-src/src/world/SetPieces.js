@@ -494,6 +494,10 @@ export class SetPieces {
         learningCoreTowers: 0,
         trainingRackFacades: 0,
         dataSpineBridges: 0,
+        routeLearningAtriums: 0,
+        routeSkillTrees: 0,
+        routeCertificationVaults: 0,
+        routeDisciplineLaneSpines: 0,
         signs: 0,
         lamps: 0
       },
@@ -1587,6 +1591,10 @@ export class SetPieces {
       stats.learningCoreTowers += 4;
       stats.trainingRackFacades += 1;
       stats.dataSpineBridges += 1;
+      stats.routeLearningAtriums += 1;
+      stats.routeSkillTrees += 1;
+      stats.routeCertificationVaults += 1;
+      stats.routeDisciplineLaneSpines += 1;
     }
 
     stats.terminalSlabs = stats.commandTerminals;
