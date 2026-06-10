@@ -509,6 +509,12 @@ export class SetPieces {
         waterTowers: 0,
         fieldOffices: 0,
         routeFarmFacades: 0,
+        routeProducePortals: 0,
+        greenhouseMarketHalls: 0,
+        harvestAtriums: 0,
+        fieldCanopyFrames: 0,
+        seedArchiveTowers: 0,
+        harvestBeacons: 0,
         summonPatches: 0,
         fenceVisuals: 0,
         crates: 0,
@@ -1585,6 +1591,12 @@ export class SetPieces {
       stats.waterTowers += 1;
       stats.fieldOffices += 1;
       stats.routeFarmFacades += 1;
+      stats.routeProducePortals += 1;
+      stats.greenhouseMarketHalls += 1;
+      stats.harvestAtriums += 1;
+      stats.fieldCanopyFrames += 1;
+      stats.seedArchiveTowers += 1;
+      stats.harvestBeacons += 1;
       stats.fenceVisuals += 1;
       stats.fenceSegments += 1;
       stats.crates += 3;
