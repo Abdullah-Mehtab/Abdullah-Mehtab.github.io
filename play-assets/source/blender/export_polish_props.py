@@ -15,6 +15,7 @@ def main():
     reset_scene()
     mats = materials()
     create_info_kiosk(mats)
+    create_launch_hub_gateway(mats)
     create_security_scanner(mats)
     create_security_operations_gate(mats)
     create_terminal_pillar(mats)
@@ -218,6 +219,64 @@ def create_info_kiosk(mats):
         cube("InfoKiosk_Post", group, (x, 1.34, -0.68), (0.14, 2.26, 0.14), mats["wood"], bevel=0.012)
     for y in [1.22, 1.5, 1.78]:
         cube("InfoKiosk_ScreenLine", group, (0, y, 0.11), (1.42, 0.045, 0.06), mats["mint"], bevel=0.004)
+
+
+def create_launch_hub_gateway(mats):
+    mats = {
+        **mats,
+        "stone_shadow": mats["stone"],
+        "wood": mats["stone"],
+        "rubber": mats["dark"],
+        "paper": mats["stone"],
+        "mint": mats["screen"],
+        "aqua": mats["screen"],
+        "leaf": mats["stone"],
+        "foam": mats["stone"],
+    }
+    group = root("EnvPolishLaunchHubGateway")
+    cube("LaunchHub_ServiceCourt", group, (0, 0.08, 0.1), (15.8, 0.16, 8.2), mats["stone"], bevel=0.065)
+    cube("LaunchHub_AsphaltApron", group, (0, 0.18, -3.15), (12.4, 0.09, 1.18), mats["rubber"], bevel=0.022)
+    cube("LaunchHub_CourtWarmInset", group, (0, 0.205, 0.72), (10.6, 0.055, 4.8), mats["paper"], bevel=0.035)
+    cube("LaunchHub_VisitorHall", group, (-2.8, 1.78, 0.86), (6.6, 3.16, 3.8), mats["dark"], bevel=0.055)
+    cube("LaunchHub_GlassLobby", group, (2.6, 1.72, 0.72), (4.3, 2.88, 3.36), mats["glass"], bevel=0.04)
+    cube("LaunchHub_RouteFacade", group, (0.0, 1.7, -2.2), (9.8, 2.6, 0.18), mats["dark"], bevel=0.032)
+    cube("LaunchHub_RouteGlass", group, (0.0, 1.68, -2.32), (8.1, 1.72, 0.08), mats["glass"], bevel=0.01)
+    cube("LaunchHub_RouteHeader", group, (0.0, 3.28, -2.28), (10.7, 0.32, 0.22), mats["screen"], bevel=0.014)
+    cube("LaunchHub_WarmFooter", group, (0.0, 0.66, -2.33), (8.9, 0.18, 0.12), mats["amber"], bevel=0.008)
+    for index, x in enumerate([-3.45, -2.3, -1.15, 0, 1.15, 2.3, 3.45]):
+        cube(f"LaunchHub_PortfolioBay_{index}", group, (x, 1.66, -2.42), (0.68, 0.92, 0.07), [mats["screen"], mats["mint"], mats["glass"], mats["amber"]][index % 4], bevel=0.006)
+    for x in [-6.35, 6.35]:
+        cube("LaunchHub_GatewayFoot", group, (x, 0.32, -2.86), (0.96, 0.48, 0.96), mats["stone_shadow"], bevel=0.04)
+        cube("LaunchHub_GatewayPylon", group, (x, 2.45, -2.86), (0.42, 4.25, 0.42), mats["dark"], bevel=0.024)
+        cube("LaunchHub_PylonGlow", group, (x, 2.48, -3.18), (0.1, 3.34, 0.065), mats["mint" if x < 0 else "amber"], bevel=0.004)
+    cube("LaunchHub_GatewayBeam", group, (0, 4.68, -2.86), (13.35, 0.46, 0.5), mats["dark"], bevel=0.03)
+    cube("LaunchHub_GatewayBeamGlow", group, (0, 4.38, -3.16), (10.4, 0.1, 0.08), mats["screen"], bevel=0.006)
+    cube("LaunchHub_CanopyDeck", group, (0.0, 3.84, 0.58), (11.2, 0.34, 4.9), mats["wood"], bevel=0.035)
+    cube("LaunchHub_CanopyGlassSlot", group, (2.4, 3.62, 0.62), (4.6, 0.12, 3.5), mats["glass"], bevel=0.012)
+    cube("LaunchHub_LeftTower", group, (-6.1, 2.28, 1.22), (1.22, 4.18, 1.28), mats["stone_shadow"], bevel=0.036)
+    cube("LaunchHub_LeftTowerCap", group, (-6.1, 4.66, 1.22), (1.64, 0.32, 1.66), mats["wood"], bevel=0.024)
+    cube("LaunchHub_RightBeaconBase", group, (6.1, 1.42, 1.34), (1.26, 2.38, 1.24), mats["stone_shadow"], bevel=0.034)
+    cube("LaunchHub_RightBeaconGlass", group, (6.1, 2.38, 0.68), (0.84, 1.58, 0.08), mats["screen"], bevel=0.008)
+    cube("LaunchHub_RightBeaconCrown", group, (6.1, 3.78, 1.34), (1.56, 0.36, 1.58), mats["amber"], bevel=0.024)
+    for index, y in enumerate([1.1, 1.62, 2.14, 2.66, 3.18]):
+        cube(f"LaunchHub_TowerTrace_{index}", group, (-6.78, y, 0.62), (0.08, 0.32, 0.5), [mats["mint"], mats["screen"], mats["amber"], mats["aqua"]][index % 4], bevel=0.004)
+    cube("LaunchHub_MapTable", group, (2.25, 0.84, 1.78), (2.8, 0.42, 1.55), mats["stone_shadow"], bevel=0.034)
+    cube("LaunchHub_MapGlow", group, (2.25, 1.08, 1.72), (2.12, 0.08, 1.02), mats["screen"], bevel=0.006)
+    cube("LaunchHub_ControlDesk", group, (-2.75, 0.88, 2.08), (3.2, 0.56, 1.24), mats["stone_shadow"], bevel=0.034)
+    for index, x in enumerate([-3.55, -2.75, -1.95]):
+        cube(f"LaunchHub_ControlChip_{index}", group, (x, 1.2, 1.58), (0.46, 0.08, 0.07), [mats["mint"], mats["amber"], mats["screen"]][index], bevel=0.004)
+    for x in [-4.9, 4.9]:
+        cube("LaunchHub_SidePlanter", group, (x, 0.42, 3.3), (1.76, 0.48, 0.78), mats["wood"], bevel=0.025)
+        for blade in [-0.54, -0.18, 0.18, 0.54]:
+            cone("LaunchHub_PlanterBlade", group, (x + blade, 0.96, 3.32), 0.09, 0.76, mats["leaf"], vertices=5, rot=(0.18, blade * 1.6, 0.06))
+    cube("LaunchHub_PhotoFrame_Left", group, (-5.1, 1.64, -0.58), (0.16, 2.42, 0.14), mats["dark"], bevel=0.01)
+    cube("LaunchHub_PhotoFrame_Right", group, (-3.65, 1.64, -0.58), (0.16, 2.42, 0.14), mats["dark"], bevel=0.01)
+    cube("LaunchHub_PhotoFrame_Top", group, (-4.38, 2.76, -0.58), (1.7, 0.16, 0.14), mats["screen"], bevel=0.006)
+    cube("LaunchHub_WitnessRail", group, (4.15, 0.82, -0.8), (3.15, 0.18, 0.16), mats["amber"], bevel=0.008)
+    for x in [3.0, 5.3]:
+        cube("LaunchHub_WitnessRailPost", group, (x, 0.72, -0.8), (0.16, 1.04, 0.16), mats["dark"], bevel=0.012)
+    rock_blob("LaunchHub_LeftPebble", group, (-6.8, 0.18, 3.0), (0.34, 0.16, 0.22), mats["stone_shadow"], rot=(0.12, 0.24, -0.08))
+    rock_blob("LaunchHub_RightPebble", group, (6.9, 0.16, 2.74), (0.28, 0.13, 0.18), mats["stone_shadow"], rot=(-0.1, -0.32, 0.06))
 
 
 def create_security_scanner(mats):

@@ -192,6 +192,15 @@ export class SetPieces {
       routeLanterns: 0,
       signalSpires: 0
     };
+    this.gate4eLaunchHubStats = {
+      enabled: false,
+      sourceAssets: 0,
+      authoredAssets: 0,
+      gatewayAssets: 0,
+      routeFacingFacades: 0,
+      supportFrames: 0,
+      guideTiles: 0
+    };
     this.meadowCompositionStats = {
       pockets: 0,
       patches: 0,
@@ -784,6 +793,9 @@ export class SetPieces {
       if (this.world.gate4eRouteCompositionMode) {
         this.createGate4ERouteCompositionPass();
       }
+      if (this.world.gate4eLaunchHubMode) {
+        this.createGate4ELaunchHubCompositionPass();
+      }
       this.applyQuality();
       return;
     }
@@ -1077,6 +1089,10 @@ export class SetPieces {
 
   getRouteCompositionStats() {
     return { ...this.routeCompositionStats };
+  }
+
+  getGate4ELaunchHubStats() {
+    return { ...this.gate4eLaunchHubStats };
   }
 
   getSecurityScanStats() {
@@ -1999,6 +2015,49 @@ export class SetPieces {
       );
     }
     return true;
+  }
+
+  createGate4ELaunchHubCompositionPass() {
+    this.gate4eLaunchHubStats.enabled = true;
+
+    const zone = findZone('landing');
+    const group = new THREE.Group();
+    group.name = 'GATE4E_Launch_Hub_Composition';
+    const rotation = zone.rotation || 0;
+
+    const place = (assetName, name, x, z, assetRotation, scale, statName, footprint, minClearance = 3.0) => {
+      const placed = this.addPolishAsset(group, assetName, x, z, assetRotation, scale);
+      if (!placed) return false;
+      this.gate4eLaunchHubStats.sourceAssets += 1;
+      this.gate4eLaunchHubStats.authoredAssets += 1;
+      this.gate4eLaunchHubStats[statName] = (this.gate4eLaunchHubStats[statName] || 0) + 1;
+      this.recordGate3RPlacement('gate4e-launch-hub', `GATE4E_${name}`, x, z, { minClearance });
+      if (footprint) {
+        const [width, depth] = footprint;
+        this.recordGate3RFootprintPlacement(
+          'gate4e-launch-hub-footprint',
+          `GATE4E_${name}_Footprint`,
+          x,
+          z,
+          width * scale,
+          depth * scale,
+          assetRotation,
+          minClearance
+        );
+      }
+      return true;
+    };
+
+    place('EnvPolishLaunchHubGateway', 'LaunchHubGateway', 13.8, -90.8, rotation, 0.94, 'gatewayAssets', [15.8, 8.2], 3.1);
+    this.gate4eLaunchHubStats.routeFacingFacades += this.gate4eLaunchHubStats.gatewayAssets;
+
+    mergeStaticMeshesInGroup(group, {
+      namePrefix: 'GATE4E_launch_hub',
+      cellSize: 48
+    });
+    this.registerQualityGroup(group, 'secondary');
+    this.registerBroadSetPieceBatches('launchHub', group, 'GATE4E_launch_hub', 'routeCompositionRadius');
+    this.world.scene.add(group);
   }
 
   routeCompositionPoint(pathId, segmentIndex, t, lateral) {
