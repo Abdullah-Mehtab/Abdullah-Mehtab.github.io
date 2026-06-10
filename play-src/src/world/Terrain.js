@@ -59,7 +59,15 @@ export class Terrain {
     this.addBeachBase();
     this.addGrassPlateau();
     if (this.world.blockoutMode) {
-      if (!this.world.foundationReplacementMode) {
+      if (this.world.gate4eSiteGroundCraftMode) {
+        this.addTerrainBrushes();
+        this.addMeadowDetailPatches();
+        this.addFieldMotifs();
+        this.addRoadsideFrames();
+        this.addDistrictGrounding();
+        this.addDistrictSurfaceDetails();
+        this.addScenicRelief();
+      } else if (!this.world.foundationReplacementMode) {
         this.addDistrictGrounding();
       }
       this.addCoastalEdges();

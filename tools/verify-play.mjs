@@ -4218,6 +4218,13 @@ function assertVerification(result) {
     }
     return;
   }
+  if (result.goalGate === 'gate-4e-x-site-ground-craft-pass') {
+    assertGate4EXSiteGroundCraftVerification(result, failures);
+    if (failures.length) {
+      throw new Error(`Play verification failed: ${failures.join('; ')}`);
+    }
+    return;
+  }
   if (result.goalGate === 'gate-4b5-north-ridge') {
     assertGate4B5NorthRidgeVerification(result, failures);
     if (failures.length) {
@@ -5341,7 +5348,8 @@ function isGate4EExpandedArchitectureGate(goalGate) {
     || goalGate === 'gate-4e-t-todo-planning-studio-readability-pass'
     || goalGate === 'gate-4e-u-signal-harbor-public-contact-readability-pass'
     || goalGate === 'gate-4e-v-projects-public-build-readability-pass'
-    || goalGate === 'gate-4e-w-route-cohesion-approach-life-pass';
+    || goalGate === 'gate-4e-w-route-cohesion-approach-life-pass'
+    || goalGate === 'gate-4e-x-site-ground-craft-pass';
 }
 
 function assertGate3RVerticalSliceVerification(result, failures, options = {}) {
@@ -5359,7 +5367,8 @@ function assertGate3RVerticalSliceVerification(result, failures, options = {}) {
     || result.goalGate === 'gate-4e-t-todo-planning-studio-readability-pass'
     || result.goalGate === 'gate-4e-u-signal-harbor-public-contact-readability-pass'
     || result.goalGate === 'gate-4e-v-projects-public-build-readability-pass'
-    || result.goalGate === 'gate-4e-w-route-cohesion-approach-life-pass';
+    || result.goalGate === 'gate-4e-w-route-cohesion-approach-life-pass'
+    || result.goalGate === 'gate-4e-x-site-ground-craft-pass';
   const blockout = result.blockout || {};
   const blockoutSetPieces = blockout.setPieces || {};
   const slice = result.verticalSlice || blockout.verticalSlice || {};
@@ -5369,6 +5378,7 @@ function assertGate3RVerticalSliceVerification(result, failures, options = {}) {
   const securityRoute = slice.securityRoute || {};
   const security = slice.security || {};
   const placement = result.gate3rPlacement || {};
+  const allowGate4ESiteGroundCraft = result.goalGate === 'gate-4e-x-site-ground-craft-pass';
 
   if (result.goalGate !== expectedGoal) {
     failures.push(`Gate 3R probe failed: goalGate=${result.goalGate || 'none'}`);
@@ -5384,11 +5394,11 @@ function assertGate3RVerticalSliceVerification(result, failures, options = {}) {
   if ((blockoutSetPieces.securityPacketShards || 0) !== 0) failures.push(`Gate 3R foundation failed: blockout packet shards built=${blockoutSetPieces.securityPacketShards || 0}`);
   if ((blockoutSetPieces.securityScanWaves || 0) !== 0) failures.push(`Gate 3R foundation failed: blockout scan waves built=${blockoutSetPieces.securityScanWaves || 0}`);
 
-  if ((result.districtGround?.pads || 0) !== 0) failures.push(`Gate 3R terrain failed: rejected district pads built=${result.districtGround?.pads || 0}`);
-  if ((result.districtGround?.edgeTrims || 0) !== 0) failures.push(`Gate 3R terrain failed: rejected district edge trims built=${result.districtGround?.edgeTrims || 0}`);
-  if ((result.surfaceDetails?.districts || 0) !== 0) failures.push(`Gate 3R terrain failed: final surface details built=${result.surfaceDetails?.districts || 0}`);
-  if ((result.meadowDetails?.patches || 0) !== 0) failures.push(`Gate 3R terrain failed: meadow detail patches built=${result.meadowDetails?.patches || 0}`);
-  if ((result.fieldMotifs?.clusters || 0) !== 0) failures.push(`Gate 3R terrain failed: field motif clusters built=${result.fieldMotifs?.clusters || 0}`);
+  if (!allowGate4ESiteGroundCraft && (result.districtGround?.pads || 0) !== 0) failures.push(`Gate 3R terrain failed: rejected district pads built=${result.districtGround?.pads || 0}`);
+  if (!allowGate4ESiteGroundCraft && (result.districtGround?.edgeTrims || 0) !== 0) failures.push(`Gate 3R terrain failed: rejected district edge trims built=${result.districtGround?.edgeTrims || 0}`);
+  if (!allowGate4ESiteGroundCraft && (result.surfaceDetails?.districts || 0) !== 0) failures.push(`Gate 3R terrain failed: final surface details built=${result.surfaceDetails?.districts || 0}`);
+  if (!allowGate4ESiteGroundCraft && (result.meadowDetails?.patches || 0) !== 0) failures.push(`Gate 3R terrain failed: meadow detail patches built=${result.meadowDetails?.patches || 0}`);
+  if (!allowGate4ESiteGroundCraft && (result.fieldMotifs?.clusters || 0) !== 0) failures.push(`Gate 3R terrain failed: field motif clusters built=${result.fieldMotifs?.clusters || 0}`);
   if ((result.roadSurfaceDetails?.wearStrips || 0) !== 0) failures.push(`Gate 3R roads failed: wear strips built=${result.roadSurfaceDetails?.wearStrips || 0}`);
   if ((result.roadSurfaceDetails?.laneSeams || 0) !== 0) failures.push(`Gate 3R roads failed: lane seams built=${result.roadSurfaceDetails?.laneSeams || 0}`);
   if ((result.roadSurfaceDetails?.transitionAprons || 0) !== 0) failures.push(`Gate 3R roads failed: transition aprons built=${result.roadSurfaceDetails?.transitionAprons || 0}`);
@@ -6739,8 +6749,8 @@ function assertGate4EVProjectsPublicBuildReadabilityVerification(result, failure
   if ((projects.lamps || 0) !== 0) failures.push(`Gate 4-E-V Projects failed: rejected lamps=${projects.lamps || 0}`);
 }
 
-function assertGate4EWRouteCohesionApproachLifeVerification(result, failures) {
-  assertGate4EVProjectsPublicBuildReadabilityVerification(result, failures, 'gate-4e-w-route-cohesion-approach-life-pass');
+function assertGate4EWRouteCohesionApproachLifeVerification(result, failures, expectedGoal = 'gate-4e-w-route-cohesion-approach-life-pass') {
+  assertGate4EVProjectsPublicBuildReadabilityVerification(result, failures, expectedGoal);
 
   const route = result.routeComposition || {};
   const placement = result.gate3rPlacement || {};
@@ -6769,6 +6779,43 @@ function assertGate4EWRouteCohesionApproachLifeVerification(result, failures) {
   if ((placement.shorelineFootprintIntrusions || 0) !== 0) failures.push(`Gate 4-E-W placement failed: shorelineFootprintIntrusions=${placement.shorelineFootprintIntrusions || 0}`);
   if ((result.colliderCount || 0) !== 2) failures.push(`Gate 4-E-W failed: unexpected collider count=${result.colliderCount || 0}`);
   if ((result.forwardDriveProbe?.halts || 0) !== 0) failures.push(`Gate 4-E-W failed: forwardDriveProbe.halts=${result.forwardDriveProbe?.halts || 0}`);
+}
+
+function assertGate4EXSiteGroundCraftVerification(result, failures) {
+  assertGate4EWRouteCohesionApproachLifeVerification(result, failures, 'gate-4e-x-site-ground-craft-pass');
+
+  const ground = result.districtGround || {};
+  const surface = result.surfaceDetails || {};
+  const meadow = result.meadowDetails || {};
+  const field = result.fieldMotifs || {};
+  const roadside = result.roadsideFrames || {};
+  const relief = result.terrainRelief || {};
+  const blockout = result.blockout || {};
+  const route = result.routeComposition || {};
+
+  if ((ground.pads || 0) < 8) failures.push(`Gate 4-E-X site ground failed: district pads=${ground.pads || 0}/8`);
+  if ((ground.edgeTrims || 0) < 8) failures.push(`Gate 4-E-X site ground failed: edge trims=${ground.edgeTrims || 0}/8`);
+  if ((surface.districts || 0) < 8) failures.push(`Gate 4-E-X surface craft failed: districts=${surface.districts || 0}/8`);
+  if ((surface.seams || 0) < 16) failures.push(`Gate 4-E-X surface craft failed: seams=${surface.seams || 0}/16`);
+  if ((surface.pavers || 0) < 24) failures.push(`Gate 4-E-X surface craft failed: pavers=${surface.pavers || 0}/24`);
+  if ((surface.accents || 0) < 16) failures.push(`Gate 4-E-X surface craft failed: accents=${surface.accents || 0}/16`);
+  if ((surface.breakups || 0) < 10) failures.push(`Gate 4-E-X surface craft failed: breakups=${surface.breakups || 0}/10`);
+  if ((meadow.patches || 0) < 10) failures.push(`Gate 4-E-X meadow craft failed: patches=${meadow.patches || 0}/10`);
+  if ((field.clusters || 0) < 8) failures.push(`Gate 4-E-X field craft failed: clusters=${field.clusters || 0}/8`);
+  if ((field.visibleTotal || 0) < 45) failures.push(`Gate 4-E-X field craft failed: visibleTotal=${field.visibleTotal || 0}/45`);
+  if ((roadside.paths || 0) < 5) failures.push(`Gate 4-E-X roadside craft failed: paths=${roadside.paths || 0}/5`);
+  if ((roadside.visibleTotal || 0) < 55) failures.push(`Gate 4-E-X roadside craft failed: visibleTotal=${roadside.visibleTotal || 0}/55`);
+  if ((roadside.visibleStoneTabs || 0) < 12) failures.push(`Gate 4-E-X roadside craft failed: visibleStoneTabs=${roadside.visibleStoneTabs || 0}/12`);
+  if ((relief.mounds || 0) < 6) failures.push(`Gate 4-E-X relief failed: mounds=${relief.mounds || 0}/6`);
+  if ((relief.interiorRidges || 0) < 10) failures.push(`Gate 4-E-X relief failed: interiorRidges=${relief.interiorRidges || 0}/10`);
+  if ((relief.contourBands || 0) < 30) failures.push(`Gate 4-E-X relief failed: contourBands=${relief.contourBands || 0}/30`);
+  if ((relief.beachRipples || 0) < 24) failures.push(`Gate 4-E-X relief failed: beachRipples=${relief.beachRipples || 0}/24`);
+  if ((route.guideTiles || 0) !== 0) failures.push(`Gate 4-E-X failed: route guideTiles=${route.guideTiles || 0}`);
+  if (blockout.densePropsBuilt) failures.push('Gate 4-E-X failed: rejected dense props were restored');
+  if (blockout.denseFoliageBuilt) failures.push('Gate 4-E-X failed: rejected dense foliage was restored');
+  if (blockout.potatoPocketBuilt) failures.push('Gate 4-E-X failed: final potato pocket was restored');
+  if ((result.colliderCount || 0) !== 2) failures.push(`Gate 4-E-X failed: unexpected collider count=${result.colliderCount || 0}`);
+  if ((result.forwardDriveProbe?.halts || 0) !== 0) failures.push(`Gate 4-E-X failed: forwardDriveProbe.halts=${result.forwardDriveProbe?.halts || 0}`);
 }
 
 function assertAuthoredDistrictAsset(result, assetName, label, failures) {

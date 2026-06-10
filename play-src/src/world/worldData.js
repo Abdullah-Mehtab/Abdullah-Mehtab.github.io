@@ -76,10 +76,57 @@ export const districtFootprints = [
   { id: 'data-pier', label: 'Data Pier', center: [-128, 38], size: [24, 22], color: '#79ffc5', kind: 'pier' },
 ];
 
-export const terrainBrushes = [];
-export const meadowDetailPatches = [];
-export const districtSurfaceBreakups = [];
-export const fieldMotifClusters = [];
+export const terrainBrushes = [
+  { id: 'launch-run-driving-lawn', center: [12, -86], size: [54, 30], rotation: 0.12, material: 'terrainBrushDark' },
+  { id: 'gallery-side-build-field', center: [84, -32], size: [66, 34], rotation: -0.24, material: 'terrainBrushWarm' },
+  { id: 'west-service-archive-field', center: [-66, -90], size: [58, 36], rotation: 0.18, material: 'terrainBrushBlue' },
+  { id: 'security-yard-scan-field', center: [-112, -48], size: [46, 30], rotation: -0.18, material: 'terrainBrushBlue' },
+  { id: 'fcc-campus-grove-field', center: [-76, 54], size: [60, 38], rotation: -0.3, material: 'terrainBrushLight' },
+  { id: 'north-ridge-museum-field', center: [18, 106], size: [76, 34], rotation: 0.2, material: 'terrainBrushFlower' },
+  { id: 'east-harbor-signal-field', center: [120, 24], size: [44, 32], rotation: -0.18, material: 'terrainBrushSand' },
+  { id: 'south-farm-service-field', center: [-18, -128], size: [62, 30], rotation: 0.22, material: 'terrainBrushWarm' },
+];
+
+export const meadowDetailPatches = [
+  { center: [18, -78], size: [34, 12], rotation: 0.2, color: '#4c8d48' },
+  { center: [68, -74], size: [30, 10], rotation: -0.42, color: '#8fc674' },
+  { center: [72, -22], size: [32, 12], rotation: -0.28, color: '#d7c36a' },
+  { center: [100, 14], size: [30, 10], rotation: 0.18, color: '#78b7ff' },
+  { center: [44, 80], size: [36, 12], rotation: -0.24, color: '#ffdf8a' },
+  { center: [-10, 100], size: [38, 12], rotation: 0.2, color: '#ff9db0' },
+  { center: [-76, 76], size: [34, 12], rotation: -0.28, color: '#9ccfff' },
+  { center: [-106, 14], size: [30, 10], rotation: 0.38, color: '#79ffc5' },
+  { center: [-112, -42], size: [28, 10], rotation: -0.12, color: '#68d8ff' },
+  { center: [-80, -92], size: [34, 12], rotation: 0.2, color: '#92ffea' },
+  { center: [-24, -122], size: [38, 12], rotation: 0.28, color: '#c79b56' },
+  { center: [26, -126], size: [34, 10], rotation: -0.36, color: '#ff9b6d' },
+];
+
+export const districtSurfaceBreakups = [
+  { center: [14, -96], size: [14, 3.8], rotation: 0.14, color: '#7cffb2' },
+  { center: [82, -44], size: [16, 4.2], rotation: -0.24, color: '#b6a0ff' },
+  { center: [76, -20], size: [18, 4.4], rotation: -0.34, color: '#ffcc66' },
+  { center: [122, 22], size: [14, 3.6], rotation: -0.32, color: '#78b7ff' },
+  { center: [58, 78], size: [15, 3.8], rotation: -0.28, color: '#ff9b6d' },
+  { center: [10, 124], size: [14, 3.8], rotation: -0.12, color: '#ff6d8d' },
+  { center: [-58, 116], size: [17, 4.2], rotation: -0.18, color: '#ffdf8a' },
+  { center: [-74, 58], size: [16, 4.0], rotation: -0.3, color: '#9ccfff' },
+  { center: [-116, -50], size: [14, 3.8], rotation: -0.18, color: '#68d8ff' },
+  { center: [-94, -84], size: [14, 3.8], rotation: 0.24, color: '#92ffea' },
+  { center: [-36, -88], size: [15, 4.0], rotation: 0.12, color: '#ffffff' },
+  { center: [-14, -129], size: [16, 4.2], rotation: 0.18, color: '#c79b56' },
+];
+
+export const fieldMotifClusters = [
+  { center: [24, -78], size: [42, 18], rotation: 0.12, berms: 5, ribbons: 7, seed: 101, palette: ['#4b8750', '#82c66f', '#d7c36a'] },
+  { center: [78, -58], size: [48, 20], rotation: -0.22, berms: 5, ribbons: 8, seed: 113, palette: ['#7f8067', '#d0b072', '#ffcc66'] },
+  { center: [96, 14], size: [36, 16], rotation: -0.14, berms: 4, ribbons: 6, seed: 127, palette: ['#78b7ff', '#8db8b9', '#84d7bd'] },
+  { center: [20, 96], size: [54, 18], rotation: 0.18, berms: 6, ribbons: 8, seed: 139, palette: ['#ffdf8a', '#ff9db0', '#8fc674'] },
+  { center: [-84, 48], size: [42, 16], rotation: -0.34, berms: 4, ribbons: 6, seed: 151, palette: ['#9ccfff', '#f2dfb2', '#8fc674'] },
+  { center: [-98, -54], size: [36, 16], rotation: -0.16, berms: 4, ribbons: 6, seed: 163, palette: ['#68d8ff', '#35666d', '#92ffea'] },
+  { center: [-64, -96], size: [46, 18], rotation: 0.16, berms: 5, ribbons: 7, seed: 179, palette: ['#92ffea', '#c79b56', '#5f7f43'] },
+  { center: [-20, -126], size: [44, 16], rotation: 0.24, berms: 4, ribbons: 6, seed: 191, palette: ['#c79b56', '#9b6f3d', '#77b85a'] },
+];
 export const canalSegments = [];
 export const scenicPropZones = [];
 
