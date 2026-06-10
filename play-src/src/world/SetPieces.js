@@ -782,6 +782,13 @@ export class SetPieces {
         routeShieldCrests: 0,
         routeThreatBoards: 0,
         routeStatusLanes: 0,
+        routeOpsPortals: 0,
+        routeWarRooms: 0,
+        routeWarRoomCommandDesks: 0,
+        routePacketQueueRails: 0,
+        routeDefenseCanopies: 0,
+        routeEntryPorticos: 0,
+        routeEntryWarRoomGlass: 0,
         signs: 0,
         lamps: 0
       },
@@ -2052,6 +2059,13 @@ export class SetPieces {
       stats.routeShieldCrests += 1;
       stats.routeThreatBoards += 1;
       stats.routeStatusLanes += 1;
+      stats.routeOpsPortals += 1;
+      stats.routeWarRooms += 1;
+      stats.routeWarRoomCommandDesks += 1;
+      stats.routePacketQueueRails += 5;
+      stats.routeDefenseCanopies += 1;
+      stats.routeEntryPorticos += 1;
+      stats.routeEntryWarRoomGlass += 1;
     }
 
     stats.signs = 0;
