@@ -4204,6 +4204,13 @@ function assertVerification(result) {
     }
     return;
   }
+  if (result.goalGate === 'gate-4e-v-projects-public-build-readability-pass') {
+    assertGate4EVProjectsPublicBuildReadabilityVerification(result, failures);
+    if (failures.length) {
+      throw new Error(`Play verification failed: ${failures.join('; ')}`);
+    }
+    return;
+  }
   if (result.goalGate === 'gate-4b5-north-ridge') {
     assertGate4B5NorthRidgeVerification(result, failures);
     if (failures.length) {
@@ -5325,7 +5332,8 @@ function isGate4EExpandedArchitectureGate(goalGate) {
     || goalGate === 'gate-4e-r-career-software-campus-readability-pass'
     || goalGate === 'gate-4e-s-circuit-race-control-readability-pass'
     || goalGate === 'gate-4e-t-todo-planning-studio-readability-pass'
-    || goalGate === 'gate-4e-u-signal-harbor-public-contact-readability-pass';
+    || goalGate === 'gate-4e-u-signal-harbor-public-contact-readability-pass'
+    || goalGate === 'gate-4e-v-projects-public-build-readability-pass';
 }
 
 function assertGate3RVerticalSliceVerification(result, failures, options = {}) {
@@ -5341,7 +5349,8 @@ function assertGate3RVerticalSliceVerification(result, failures, options = {}) {
     || result.goalGate === 'gate-4e-r-career-software-campus-readability-pass'
     || result.goalGate === 'gate-4e-s-circuit-race-control-readability-pass'
     || result.goalGate === 'gate-4e-t-todo-planning-studio-readability-pass'
-    || result.goalGate === 'gate-4e-u-signal-harbor-public-contact-readability-pass';
+    || result.goalGate === 'gate-4e-u-signal-harbor-public-contact-readability-pass'
+    || result.goalGate === 'gate-4e-v-projects-public-build-readability-pass';
   const blockout = result.blockout || {};
   const blockoutSetPieces = blockout.setPieces || {};
   const slice = result.verticalSlice || blockout.verticalSlice || {};
@@ -6692,8 +6701,8 @@ function assertGate4ETTodoPlanningStudioReadabilityVerification(result, failures
   if ((todo.lamps || 0) !== 0) failures.push(`Gate 4-E-T Todo failed: rejected lamps=${todo.lamps || 0}`);
 }
 
-function assertGate4EUSignalHarborPublicContactReadabilityVerification(result, failures) {
-  assertGate4ETTodoPlanningStudioReadabilityVerification(result, failures, 'gate-4e-u-signal-harbor-public-contact-readability-pass');
+function assertGate4EUSignalHarborPublicContactReadabilityVerification(result, failures, expectedGoal = 'gate-4e-u-signal-harbor-public-contact-readability-pass') {
+  assertGate4ETTodoPlanningStudioReadabilityVerification(result, failures, expectedGoal);
   assertGate4DSignalHarborCommunicationsStation(result, failures);
 
   const harbor = result.gate4b4?.harbor || {};
@@ -6705,6 +6714,20 @@ function assertGate4EUSignalHarborPublicContactReadabilityVerification(result, f
   if ((harbor.roadsideContactFacades || 0) < 1) failures.push(`Gate 4-E-U Harbor failed: roadsideContactFacades=${harbor.roadsideContactFacades || 0}/1`);
   if ((harbor.signs || 0) !== 0) failures.push(`Gate 4-E-U Harbor failed: rejected signs=${harbor.signs || 0}`);
   if ((harbor.lamps || 0) !== 0) failures.push(`Gate 4-E-U Harbor failed: rejected lamps=${harbor.lamps || 0}`);
+}
+
+function assertGate4EVProjectsPublicBuildReadabilityVerification(result, failures) {
+  assertGate4EUSignalHarborPublicContactReadabilityVerification(result, failures, 'gate-4e-v-projects-public-build-readability-pass');
+  assertGate4DProjectsFoundryBuilding(result, failures);
+
+  const projects = result.gate4b4?.projects || {};
+  if ((projects.publicBuildTheaters || 0) < 1) failures.push(`Gate 4-E-V Projects failed: publicBuildTheaters=${projects.publicBuildTheaters || 0}/1`);
+  if ((projects.showcaseProjectPods || 0) < 3) failures.push(`Gate 4-E-V Projects failed: showcaseProjectPods=${projects.showcaseProjectPods || 0}/3`);
+  if ((projects.compilePipelineBridges || 0) < 1) failures.push(`Gate 4-E-V Projects failed: compilePipelineBridges=${projects.compilePipelineBridges || 0}/1`);
+  if ((projects.repoBranchFrames || 0) < 2) failures.push(`Gate 4-E-V Projects failed: repoBranchFrames=${projects.repoBranchFrames || 0}/2`);
+  if ((projects.routeBuildCranes || 0) < 1) failures.push(`Gate 4-E-V Projects failed: routeBuildCranes=${projects.routeBuildCranes || 0}/1`);
+  if ((projects.signs || 0) !== 0) failures.push(`Gate 4-E-V Projects failed: rejected signs=${projects.signs || 0}`);
+  if ((projects.lamps || 0) !== 0) failures.push(`Gate 4-E-V Projects failed: rejected lamps=${projects.lamps || 0}`);
 }
 
 function assertAuthoredDistrictAsset(result, assetName, label, failures) {

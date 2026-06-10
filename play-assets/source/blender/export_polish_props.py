@@ -527,6 +527,27 @@ def create_projects_foundry_building(mats):
     cube("ProjectsFoundry_TestBridge", group, (0.3, 4.94, 2.92), (9.2, 0.18, 0.34), mats["rope"], bevel=0.012)
     for x in [-3.8, -1.9, 0.0, 1.9, 3.8]:
         cube("ProjectsFoundry_BridgeLamp", group, (x, 5.14, 2.68), (0.38, 0.2, 0.08), mats["amber"], bevel=0.012)
+    cube("ProjectsFoundry_PublicBuildTheater", group, (-1.05, 2.36, 4.0), (10.4, 3.05, 0.18), mats["dark"], bevel=0.035)
+    cube("ProjectsFoundry_PublicBuildGlass", group, (-1.05, 2.3, 4.12), (8.92, 2.12, 0.08), mats["glass"], bevel=0.01)
+    cube("ProjectsFoundry_PublicBuildHeader", group, (-1.05, 3.9, 4.18), (10.95, 0.24, 0.16), mats["screen"], bevel=0.008)
+    cube("ProjectsFoundry_PublicBuildFooter", group, (-1.05, 0.74, 4.18), (9.35, 0.22, 0.14), mats["amber"], bevel=0.008)
+    for index, x in enumerate([-4.15, -1.05, 2.05]):
+        cube(f"ProjectsFoundry_ShowcaseProjectPod_{index}", group, (x, 2.12, 4.26), (1.78, 1.38, 0.08), [mats["screen"], mats["mint"], mats["amber"]][index], bevel=0.008)
+        cube(f"ProjectsFoundry_ShowcaseProjectFrame_{index}", group, (x, 2.12, 4.22), (2.16, 1.74, 0.06), mats["paper"], bevel=0.004)
+        cube(f"ProjectsFoundry_ShowcaseProjectDock_{index}", group, (x, 0.96, 4.34), (1.74, 0.18, 0.42), mats["stone_shadow"], bevel=0.014)
+    cube("ProjectsFoundry_CompilePipelineBridge", group, (1.35, 4.72, 4.12), (8.35, 0.18, 0.28), mats["amber"], bevel=0.012)
+    cube("ProjectsFoundry_CompilePipelineGlow", group, (1.35, 4.52, 4.28), (7.4, 0.08, 0.07), mats["mint"], bevel=0.004)
+    for index, x in enumerate([-2.5, -0.58, 1.34, 3.26, 5.18]):
+        cube(f"ProjectsFoundry_CompilePipelineNode_{index}", group, (x, 4.72, 4.38), (0.44, 0.42, 0.1), [mats["screen"], mats["mint"], mats["amber"], mats["aqua"], mats["paper"]][index], bevel=0.012)
+    for side, x in [("Left", -5.92), ("Right", 3.84)]:
+        cube(f"ProjectsFoundry_RepoBranchFrame_{side}_PostA", group, (x, 1.85, 4.38), (0.18, 2.7, 0.16), mats["dark"], bevel=0.012)
+        cube(f"ProjectsFoundry_RepoBranchFrame_{side}_PostB", group, (x + 0.78, 1.85, 4.38), (0.18, 2.7, 0.16), mats["dark"], bevel=0.012)
+        cube(f"ProjectsFoundry_RepoBranchFrame_{side}_Top", group, (x + 0.39, 3.22, 4.42), (0.96, 0.16, 0.12), mats["screen"], bevel=0.006)
+        cube(f"ProjectsFoundry_RepoBranchFrame_{side}_Merge", group, (x + 0.39, 2.34, 4.46), (0.62, 0.12, 0.08), mats["mint"], rot=(0, 0, 0.34 * (1 if side == "Left" else -1)), bevel=0.004)
+    cube("ProjectsFoundry_RouteBuildCraneBeam", group, (3.58, 4.28, 4.02), (4.8, 0.18, 0.22), mats["dark"], bevel=0.012)
+    cube("ProjectsFoundry_RouteBuildCranePost", group, (5.72, 2.36, 4.02), (0.2, 3.65, 0.2), mats["dark"], bevel=0.012)
+    cube("ProjectsFoundry_RouteBuildCraneHook", group, (2.46, 3.34, 4.16), (0.18, 1.1, 0.12), mats["rope"], bevel=0.005)
+    cube("ProjectsFoundry_RouteBuildLoad", group, (2.46, 2.62, 4.25), (0.92, 0.42, 0.62), mats["stone_shadow"], bevel=0.02)
 
 
 def create_campus_fountain(mats):

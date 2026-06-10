@@ -568,6 +568,11 @@ export class SetPieces {
         publicGalleries: 0,
         routeFacades: 0,
         warmFacadeBands: 0,
+        publicBuildTheaters: 0,
+        showcaseProjectPods: 0,
+        compilePipelineBridges: 0,
+        repoBranchFrames: 0,
+        routeBuildCranes: 0,
         groundPlates: 0,
         signs: 0,
         lamps: 0
@@ -1672,6 +1677,11 @@ export class SetPieces {
       stats.publicGalleries += 1;
       stats.routeFacades += 1;
       stats.warmFacadeBands += 6;
+      stats.publicBuildTheaters += 1;
+      stats.showcaseProjectPods += 3;
+      stats.compilePipelineBridges += 1;
+      stats.repoBranchFrames += 2;
+      stats.routeBuildCranes += 1;
     }
 
     stats.assemblyRings = stats.foundryBuildings;
