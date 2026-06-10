@@ -576,6 +576,10 @@ export class SetPieces {
         sprintReviewBridges: 0,
         deliveryLaneSpines: 0,
         decisionBeacons: 0,
+        routeOperationsCores: 0,
+        routeReviewTheaters: 0,
+        routeDeliveryBridges: 0,
+        routeDecisionBeacons: 0,
         signs: 0,
         lamps: 0
       },
@@ -1727,6 +1731,10 @@ export class SetPieces {
       stats.sprintReviewBridges += 1;
       stats.deliveryLaneSpines += 1;
       stats.decisionBeacons += 1;
+      stats.routeOperationsCores += 1;
+      stats.routeReviewTheaters += 1;
+      stats.routeDeliveryBridges += 1;
+      stats.routeDecisionBeacons += 1;
       stats.queueRails += 3;
     }
 
