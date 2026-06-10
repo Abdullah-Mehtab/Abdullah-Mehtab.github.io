@@ -1670,6 +1670,32 @@ def create_signal_harbor_communications_station(mats):
         cube(f"SignalHarbor_TallRelayBar_{index}", group, (6.95, y, 1.05), (2.2 - index * 0.22, 0.08, 0.08), [mats["mint"], mats["screen"], mats["aqua"], mats["amber"]][index], bevel=0.004)
     for index, y in enumerate([6.25, 6.95, 7.65, 8.35]):
         cube(f"SignalHarbor_DeepSpaceTick_{index}", group, (-2.2, y, 1.65), (1.8 - index * 0.16, 0.07, 0.07), [mats["screen"], mats["mint"], mats["aqua"], mats["amber"]][index], bevel=0.004)
+    cube("SignalHarbor_PublicContactPortal", group, (0.15, 2.62, 3.34), (10.8, 3.28, 0.18), mats["dark"], bevel=0.03)
+    cube("SignalHarbor_PublicContactGlass", group, (0.15, 2.52, 3.48), (9.88, 2.42, 0.08), mats["glass"], bevel=0.01)
+    cube("SignalHarbor_PublicContactHeader", group, (0.15, 4.28, 3.52), (10.3, 0.34, 0.12), mats["mint"], bevel=0.008)
+    cube("SignalHarbor_PublicContactFooter", group, (0.15, 0.8, 3.52), (10.2, 0.22, 0.12), mats["paper"], bevel=0.012)
+    for index, x in enumerate([-3.55, 0.15, 3.85]):
+        material = [mats["screen"], mats["mint"], mats["purple"]][index]
+        cube(f"SignalHarbor_PublicChannelBay_{index}", group, (x, 2.48, 3.6), (2.15, 1.86, 0.08), material, bevel=0.006)
+        cube(f"SignalHarbor_PublicChannelHeader_{index}", group, (x, 3.34, 3.66), (1.62, 0.18, 0.07), [mats["mint"], mats["paper"], mats["amber"]][index], bevel=0.004)
+        for row, y in enumerate([1.72, 2.14, 2.56, 2.98]):
+            cube(f"SignalHarbor_PublicChannelPulse_{index}_{row}", group, (x, y, 3.68), (1.32 - row * 0.12, 0.06, 0.06), [mats["paper"], mats["screen"], mats["aqua"], mats["mint"]][(index + row) % 4], bevel=0.003)
+    cube("SignalHarbor_MessageBeaconWall", group, (-5.75, 3.65, 3.14), (0.18, 5.45, 2.65), mats["stone_shadow"], bevel=0.026)
+    for index, y in enumerate([1.45, 2.15, 2.85, 3.55, 4.25, 4.95, 5.65]):
+        cube(f"SignalHarbor_MessageBeaconWallPulse_{index}", group, (-5.86, y, 3.12), (0.08, 0.12, 1.72 - (index % 3) * 0.22), [mats["screen"], mats["mint"], mats["aqua"], mats["amber"], mats["purple"], mats["screen"], mats["mint"]][index], bevel=0.003)
+    cube("SignalHarbor_RelayCrownArrayBase", group, (7.18, 10.42, -0.92), (2.4, 0.18, 2.4), mats["dark"], bevel=0.016)
+    for index, angle in enumerate([-0.72, -0.36, 0.0, 0.36, 0.72]):
+        cube(f"SignalHarbor_RelayCrownArrayArm_{index}", group, (7.18, 10.7, -0.92), (2.55 - abs(index - 2) * 0.22, 0.08, 0.08), [mats["mint"], mats["screen"], mats["aqua"], mats["screen"], mats["mint"]][index], rot=(0.0, angle, 0.0), bevel=0.004)
+    cone("SignalHarbor_ShoreDishSilhouette", group, (3.2, 6.42, 3.08), 1.28, 0.38, mats["foam"], vertices=22, rot=(math.pi / 2, 0.0, -0.18))
+    cube("SignalHarbor_ShoreDishSilhouetteCore", group, (2.78, 6.42, 2.74), (0.26, 0.26, 0.2), mats["screen"], bevel=0.018)
+    cube("SignalHarbor_RoadsideContactFacade", group, (8.42, 2.72, 0.24), (0.18, 3.72, 5.62), mats["dark"], bevel=0.03)
+    cube("SignalHarbor_RoadsideContactGlass", group, (8.55, 2.68, 0.24), (0.08, 2.92, 4.82), mats["glass"], bevel=0.01)
+    cube("SignalHarbor_RoadsideContactHeader", group, (8.62, 4.38, 0.24), (0.1, 0.28, 5.24), mats["mint"], bevel=0.006)
+    cube("SignalHarbor_RoadsideContactEnvelopeTop", group, (8.68, 3.22, 0.24), (0.06, 0.08, 3.25), mats["paper"], bevel=0.003)
+    cube("SignalHarbor_RoadsideContactEnvelopeLeft", group, (8.7, 2.55, -1.0), (0.06, 1.38, 0.08), mats["paper"], rot=(0.0, 0.0, -0.36), bevel=0.003)
+    cube("SignalHarbor_RoadsideContactEnvelopeRight", group, (8.7, 2.55, 1.48), (0.06, 1.38, 0.08), mats["paper"], rot=(0.0, 0.0, 0.36), bevel=0.003)
+    for index, z in enumerate([-1.82, -0.74, 0.34, 1.42]):
+        cube(f"SignalHarbor_RoadsideChannelStack_{index}", group, (8.68, 1.62 + index * 0.42, z), (0.06, 0.08, 0.74), [mats["screen"], mats["mint"], mats["aqua"], mats["purple"]][index], bevel=0.003)
 
 
 def create_harbor_pier(mats):

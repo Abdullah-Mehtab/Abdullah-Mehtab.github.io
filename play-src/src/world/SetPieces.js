@@ -625,6 +625,12 @@ export class SetPieces {
         routeFacades: 0,
         signalCrowns: 0,
         contactTerminalRooms: 0,
+        publicContactPortals: 0,
+        publicChannelBays: 0,
+        messageBeaconWalls: 0,
+        relayCrownArrays: 0,
+        shoreDishSilhouettes: 0,
+        roadsideContactFacades: 0,
         signs: 0,
         lamps: 0
       }
@@ -1750,6 +1756,12 @@ export class SetPieces {
       stats.routeFacades += 1;
       stats.signalCrowns += 1;
       stats.contactTerminalRooms += 1;
+      stats.publicContactPortals += 1;
+      stats.publicChannelBays += 3;
+      stats.messageBeaconWalls += 1;
+      stats.relayCrownArrays += 1;
+      stats.shoreDishSilhouettes += 1;
+      stats.roadsideContactFacades += 1;
       stats.signalMasts += 1;
       stats.relayMasts += 1;
       stats.contactTerminals += 3;

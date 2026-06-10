@@ -4197,6 +4197,13 @@ function assertVerification(result) {
     }
     return;
   }
+  if (result.goalGate === 'gate-4e-u-signal-harbor-public-contact-readability-pass') {
+    assertGate4EUSignalHarborPublicContactReadabilityVerification(result, failures);
+    if (failures.length) {
+      throw new Error(`Play verification failed: ${failures.join('; ')}`);
+    }
+    return;
+  }
   if (result.goalGate === 'gate-4b5-north-ridge') {
     assertGate4B5NorthRidgeVerification(result, failures);
     if (failures.length) {
@@ -5317,7 +5324,8 @@ function isGate4EExpandedArchitectureGate(goalGate) {
     || goalGate === 'gate-4e-q-cv-records-archive-readability-pass'
     || goalGate === 'gate-4e-r-career-software-campus-readability-pass'
     || goalGate === 'gate-4e-s-circuit-race-control-readability-pass'
-    || goalGate === 'gate-4e-t-todo-planning-studio-readability-pass';
+    || goalGate === 'gate-4e-t-todo-planning-studio-readability-pass'
+    || goalGate === 'gate-4e-u-signal-harbor-public-contact-readability-pass';
 }
 
 function assertGate3RVerticalSliceVerification(result, failures, options = {}) {
@@ -5332,7 +5340,8 @@ function assertGate3RVerticalSliceVerification(result, failures, options = {}) {
     || result.goalGate === 'gate-4e-q-cv-records-archive-readability-pass'
     || result.goalGate === 'gate-4e-r-career-software-campus-readability-pass'
     || result.goalGate === 'gate-4e-s-circuit-race-control-readability-pass'
-    || result.goalGate === 'gate-4e-t-todo-planning-studio-readability-pass';
+    || result.goalGate === 'gate-4e-t-todo-planning-studio-readability-pass'
+    || result.goalGate === 'gate-4e-u-signal-harbor-public-contact-readability-pass';
   const blockout = result.blockout || {};
   const blockoutSetPieces = blockout.setPieces || {};
   const slice = result.verticalSlice || blockout.verticalSlice || {};
@@ -6669,8 +6678,8 @@ function assertGate4ESCircuitRaceControlReadabilityVerification(result, failures
   if ((circuit.lamps || 0) !== 0) failures.push(`Gate 4-E-S Circuit failed: rejected lamps=${circuit.lamps || 0}`);
 }
 
-function assertGate4ETTodoPlanningStudioReadabilityVerification(result, failures) {
-  assertGate4ESCircuitRaceControlReadabilityVerification(result, failures, 'gate-4e-t-todo-planning-studio-readability-pass');
+function assertGate4ETTodoPlanningStudioReadabilityVerification(result, failures, expectedGoal = 'gate-4e-t-todo-planning-studio-readability-pass') {
+  assertGate4ESCircuitRaceControlReadabilityVerification(result, failures, expectedGoal);
   assertGate4DTodoPlanningStudio(result, failures);
 
   const todo = result.gate4b3?.todo || {};
@@ -6681,6 +6690,21 @@ function assertGate4ETTodoPlanningStudioReadabilityVerification(result, failures
   if ((todo.deliveryLaneTowers || 0) < 1) failures.push(`Gate 4-E-T Todo failed: deliveryLaneTowers=${todo.deliveryLaneTowers || 0}/1`);
   if ((todo.signs || 0) !== 0) failures.push(`Gate 4-E-T Todo failed: rejected signs=${todo.signs || 0}`);
   if ((todo.lamps || 0) !== 0) failures.push(`Gate 4-E-T Todo failed: rejected lamps=${todo.lamps || 0}`);
+}
+
+function assertGate4EUSignalHarborPublicContactReadabilityVerification(result, failures) {
+  assertGate4ETTodoPlanningStudioReadabilityVerification(result, failures, 'gate-4e-u-signal-harbor-public-contact-readability-pass');
+  assertGate4DSignalHarborCommunicationsStation(result, failures);
+
+  const harbor = result.gate4b4?.harbor || {};
+  if ((harbor.publicContactPortals || 0) < 1) failures.push(`Gate 4-E-U Harbor failed: publicContactPortals=${harbor.publicContactPortals || 0}/1`);
+  if ((harbor.publicChannelBays || 0) < 3) failures.push(`Gate 4-E-U Harbor failed: publicChannelBays=${harbor.publicChannelBays || 0}/3`);
+  if ((harbor.messageBeaconWalls || 0) < 1) failures.push(`Gate 4-E-U Harbor failed: messageBeaconWalls=${harbor.messageBeaconWalls || 0}/1`);
+  if ((harbor.relayCrownArrays || 0) < 1) failures.push(`Gate 4-E-U Harbor failed: relayCrownArrays=${harbor.relayCrownArrays || 0}/1`);
+  if ((harbor.shoreDishSilhouettes || 0) < 1) failures.push(`Gate 4-E-U Harbor failed: shoreDishSilhouettes=${harbor.shoreDishSilhouettes || 0}/1`);
+  if ((harbor.roadsideContactFacades || 0) < 1) failures.push(`Gate 4-E-U Harbor failed: roadsideContactFacades=${harbor.roadsideContactFacades || 0}/1`);
+  if ((harbor.signs || 0) !== 0) failures.push(`Gate 4-E-U Harbor failed: rejected signs=${harbor.signs || 0}`);
+  if ((harbor.lamps || 0) !== 0) failures.push(`Gate 4-E-U Harbor failed: rejected lamps=${harbor.lamps || 0}`);
 }
 
 function assertAuthoredDistrictAsset(result, assetName, label, failures) {
