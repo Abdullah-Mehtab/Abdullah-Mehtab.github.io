@@ -605,6 +605,10 @@ export class SetPieces {
         compilePipelineBridges: 0,
         repoBranchFrames: 0,
         routeBuildCranes: 0,
+        routeAssemblyHalls: 0,
+        routeCranePortals: 0,
+        publicBuildGalleryFrames: 0,
+        foundryHeatCores: 0,
         groundPlates: 0,
         signs: 0,
         lamps: 0
@@ -1756,6 +1760,10 @@ export class SetPieces {
       stats.compilePipelineBridges += 1;
       stats.repoBranchFrames += 2;
       stats.routeBuildCranes += 1;
+      stats.routeAssemblyHalls += 1;
+      stats.routeCranePortals += 1;
+      stats.publicBuildGalleryFrames += 1;
+      stats.foundryHeatCores += 1;
     }
 
     stats.assemblyRings = stats.foundryBuildings;
