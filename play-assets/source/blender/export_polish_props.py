@@ -1223,6 +1223,19 @@ def create_awards_museum_hall(mats):
     cube("AwardsMuseum_TrophyCup", group, (0, 1.05, -0.56), (1.1, 0.86, 0.76), mats["gold"], bevel=0.08)
     cube("AwardsMuseum_TrophyStem", group, (0, 1.66, -0.56), (0.28, 0.72, 0.28), mats["gold"], bevel=0.035)
     cube("AwardsMuseum_TrophyGlow", group, (0, 2.05, -0.94), (1.45, 0.16, 0.12), mats["amber"], bevel=0.01)
+    cube("AwardsMuseum_RouteAtriumLeftPier", group, (-1.86, 2.55, -2.68), (0.28, 3.52, 0.2), mats["stone_shadow"])
+    cube("AwardsMuseum_RouteAtriumRightPier", group, (1.86, 2.55, -2.68), (0.28, 3.52, 0.2), mats["stone_shadow"])
+    cube("AwardsMuseum_RouteAtriumHeader", group, (0, 4.26, -2.69), (4.2, 0.32, 0.2), mats["gold"])
+    cube("AwardsMuseum_RouteAtriumSill", group, (0, 0.92, -2.69), (4.45, 0.24, 0.2), mats["paper"])
+    cube("AwardsMuseum_RouteAtriumGlass", group, (0, 2.58, -2.74), (3.25, 2.9, 0.08), mats["glass"])
+    cylinder("AwardsMuseum_RouteMedalDisc", group, (0, 2.78, -2.82), 0.92, 0.12, mats["gold"], vertices=20)
+    cube("AwardsMuseum_RouteMedalRibbonLeft", group, (-0.34, 1.78, -2.9), (0.26, 1.18, 0.08), mats["amber"], rot=(0, 0, -0.18))
+    cube("AwardsMuseum_RouteMedalRibbonRight", group, (0.34, 1.78, -2.9), (0.26, 1.18, 0.08), mats["paper"], rot=(0, 0, 0.18))
+    cube("AwardsMuseum_RouteCrownBar", group, (0, 4.72, -2.72), (3.25, 0.16, 0.1), mats["gold"])
+    for index, x in enumerate([-1.2, 0, 1.2]):
+        cube(f"AwardsMuseum_RouteCrownSpire_{index}", group, (x, 5.08, -2.76), (0.18, 0.72, 0.1), mats["gold"])
+    for index, (x, y) in enumerate([(-4.52, 1.46), (-4.52, 2.08), (-4.52, 2.7), (4.52, 1.46), (4.52, 2.08), (4.52, 2.7)]):
+        cube(f"AwardsMuseum_RouteCertificateCase_{index}", group, (x, y, -2.68), (0.82, 0.46, 0.08), [mats["paper"], mats["gold"], mats["glass"], mats["gold"], mats["paper"], mats["glass"]][index])
     for index, x in enumerate([-5.46, 5.46]):
         cube(f"AwardsMuseum_SideLantern_{index}", group, (x, 2.24, -1.38), (0.28, 0.62, 0.18), mats["amber"], bevel=0.02)
         cube(f"AwardsMuseum_SidePlinth_{index}", group, (x, 0.52, 0.6), (0.9, 0.72, 0.82), mats["stone_shadow"], bevel=0.03)

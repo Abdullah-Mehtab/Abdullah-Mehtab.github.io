@@ -4311,6 +4311,13 @@ function assertVerification(result) {
     }
     return;
   }
+  if (result.goalGate === 'gate-4e-ak-awards-museum-trophy-atrium-pass') {
+    assertGate4EAKAwardsMuseumTrophyAtriumVerification(result, failures);
+    if (failures.length) {
+      throw new Error(`Play verification failed: ${failures.join('; ')}`);
+    }
+    return;
+  }
   if (result.goalGate === 'gate-4b5-north-ridge') {
     assertGate4B5NorthRidgeVerification(result, failures);
     if (failures.length) {
@@ -5447,7 +5454,8 @@ function isGate4EExpandedArchitectureGate(goalGate) {
     || goalGate === 'gate-4e-ag-career-campus-frontage-pass'
     || goalGate === 'gate-4e-ah-potato-greenhouse-frontage-pass'
     || goalGate === 'gate-4e-ai-projects-foundry-route-build-hall-pass'
-    || goalGate === 'gate-4e-aj-behind-engineering-route-prototype-bay-pass';
+    || goalGate === 'gate-4e-aj-behind-engineering-route-prototype-bay-pass'
+    || goalGate === 'gate-4e-ak-awards-museum-trophy-atrium-pass';
 }
 
 function assertGate3RVerticalSliceVerification(result, failures, options = {}) {
@@ -5478,7 +5486,8 @@ function assertGate3RVerticalSliceVerification(result, failures, options = {}) {
     || result.goalGate === 'gate-4e-ag-career-campus-frontage-pass'
     || result.goalGate === 'gate-4e-ah-potato-greenhouse-frontage-pass'
     || result.goalGate === 'gate-4e-ai-projects-foundry-route-build-hall-pass'
-    || result.goalGate === 'gate-4e-aj-behind-engineering-route-prototype-bay-pass';
+    || result.goalGate === 'gate-4e-aj-behind-engineering-route-prototype-bay-pass'
+    || result.goalGate === 'gate-4e-ak-awards-museum-trophy-atrium-pass';
   const blockout = result.blockout || {};
   const blockoutSetPieces = blockout.setPieces || {};
   const slice = result.verticalSlice || blockout.verticalSlice || {};
@@ -5500,7 +5509,8 @@ function assertGate3RVerticalSliceVerification(result, failures, options = {}) {
     || result.goalGate === 'gate-4e-ag-career-campus-frontage-pass'
     || result.goalGate === 'gate-4e-ah-potato-greenhouse-frontage-pass'
     || result.goalGate === 'gate-4e-ai-projects-foundry-route-build-hall-pass'
-    || result.goalGate === 'gate-4e-aj-behind-engineering-route-prototype-bay-pass';
+    || result.goalGate === 'gate-4e-aj-behind-engineering-route-prototype-bay-pass'
+    || result.goalGate === 'gate-4e-ak-awards-museum-trophy-atrium-pass';
 
   if (result.goalGate !== expectedGoal) {
     failures.push(`Gate 3R probe failed: goalGate=${result.goalGate || 'none'}`);
@@ -7152,8 +7162,8 @@ function assertGate4EAIProjectsFoundryRouteBuildHallVerification(result, failure
   if ((result.forwardDriveProbe?.halts || 0) !== 0) failures.push(`Gate 4-E-AI failed: forwardDriveProbe.halts=${result.forwardDriveProbe?.halts || 0}`);
 }
 
-function assertGate4EAJBehindEngineeringRoutePrototypeBayVerification(result, failures) {
-  assertGate4EAIProjectsFoundryRouteBuildHallVerification(result, failures, 'gate-4e-aj-behind-engineering-route-prototype-bay-pass');
+function assertGate4EAJBehindEngineeringRoutePrototypeBayVerification(result, failures, expectedGoal = 'gate-4e-aj-behind-engineering-route-prototype-bay-pass') {
+  assertGate4EAIProjectsFoundryRouteBuildHallVerification(result, failures, expectedGoal);
 
   const behind = result.gate4b1?.behind || {};
   assertAuthoredDistrictAsset(result, 'EnvPolishBehindEngineeringGarage', 'Gate 4-E-AJ Behind route prototype bay architecture', failures);
@@ -7168,6 +7178,24 @@ function assertGate4EAJBehindEngineeringRoutePrototypeBayVerification(result, fa
   if ((behind.lamps || 0) !== 0) failures.push(`Gate 4-E-AJ Behind failed: rejected lamps=${behind.lamps || 0}`);
   if ((result.colliderCount || 0) !== 2) failures.push(`Gate 4-E-AJ failed: unexpected collider count=${result.colliderCount || 0}`);
   if ((result.forwardDriveProbe?.halts || 0) !== 0) failures.push(`Gate 4-E-AJ failed: forwardDriveProbe.halts=${result.forwardDriveProbe?.halts || 0}`);
+}
+
+function assertGate4EAKAwardsMuseumTrophyAtriumVerification(result, failures) {
+  assertGate4EAJBehindEngineeringRoutePrototypeBayVerification(result, failures, 'gate-4e-ak-awards-museum-trophy-atrium-pass');
+
+  const awards = result.gate4b5?.awards || {};
+  assertAuthoredDistrictAsset(result, 'EnvPolishAwardsMuseumHall', 'Gate 4-E-AK Awards route trophy atrium architecture', failures);
+  if ((awards.routeTrophyAtriums || 0) < 1) failures.push(`Gate 4-E-AK Awards failed: routeTrophyAtriums=${awards.routeTrophyAtriums || 0}/1`);
+  if ((awards.routeMedalCrowns || 0) < 1) failures.push(`Gate 4-E-AK Awards failed: routeMedalCrowns=${awards.routeMedalCrowns || 0}/1`);
+  if ((awards.routeCertificateGalleries || 0) < 1) failures.push(`Gate 4-E-AK Awards failed: routeCertificateGalleries=${awards.routeCertificateGalleries || 0}/1`);
+  if ((awards.routeHonorsEntryAxes || 0) < 1) failures.push(`Gate 4-E-AK Awards failed: routeHonorsEntryAxes=${awards.routeHonorsEntryAxes || 0}/1`);
+  if ((awards.museumHalls || 0) < 1) failures.push(`Gate 4-E-AK Awards failed: museumHalls=${awards.museumHalls || 0}/1`);
+  if ((awards.certificateFrames || 0) < 6) failures.push(`Gate 4-E-AK Awards failed: certificateFrames=${awards.certificateFrames || 0}/6`);
+  if ((awards.trophyPlinths || 0) < 3) failures.push(`Gate 4-E-AK Awards failed: trophyPlinths=${awards.trophyPlinths || 0}/3`);
+  if ((awards.signs || 0) !== 0) failures.push(`Gate 4-E-AK Awards failed: rejected signs=${awards.signs || 0}`);
+  if ((awards.lamps || 0) !== 0) failures.push(`Gate 4-E-AK Awards failed: rejected lamps=${awards.lamps || 0}`);
+  if ((result.colliderCount || 0) !== 2) failures.push(`Gate 4-E-AK failed: unexpected collider count=${result.colliderCount || 0}`);
+  if ((result.forwardDriveProbe?.halts || 0) !== 0) failures.push(`Gate 4-E-AK failed: forwardDriveProbe.halts=${result.forwardDriveProbe?.halts || 0}`);
 }
 
 function assertAuthoredDistrictAsset(result, assetName, label, failures) {
