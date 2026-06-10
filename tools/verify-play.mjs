@@ -4332,6 +4332,13 @@ function assertVerification(result) {
     }
     return;
   }
+  if (result.goalGate === 'gate-4e-an-cv-records-vault-route-archive-pass') {
+    assertGate4EANCvRecordsVaultRouteArchiveVerification(result, failures);
+    if (failures.length) {
+      throw new Error(`Play verification failed: ${failures.join('; ')}`);
+    }
+    return;
+  }
   if (result.goalGate === 'gate-4b5-north-ridge') {
     assertGate4B5NorthRidgeVerification(result, failures);
     if (failures.length) {
@@ -5471,7 +5478,8 @@ function isGate4EExpandedArchitectureGate(goalGate) {
     || goalGate === 'gate-4e-aj-behind-engineering-route-prototype-bay-pass'
     || goalGate === 'gate-4e-ak-awards-museum-trophy-atrium-pass'
     || goalGate === 'gate-4e-al-sentinel-route-command-facade-pass'
-    || goalGate === 'gate-4e-am-skills-learning-stack-route-atrium-pass';
+    || goalGate === 'gate-4e-am-skills-learning-stack-route-atrium-pass'
+    || goalGate === 'gate-4e-an-cv-records-vault-route-archive-pass';
 }
 
 function assertGate3RVerticalSliceVerification(result, failures, options = {}) {
@@ -5505,7 +5513,8 @@ function assertGate3RVerticalSliceVerification(result, failures, options = {}) {
     || result.goalGate === 'gate-4e-aj-behind-engineering-route-prototype-bay-pass'
     || result.goalGate === 'gate-4e-ak-awards-museum-trophy-atrium-pass'
     || result.goalGate === 'gate-4e-al-sentinel-route-command-facade-pass'
-    || result.goalGate === 'gate-4e-am-skills-learning-stack-route-atrium-pass';
+    || result.goalGate === 'gate-4e-am-skills-learning-stack-route-atrium-pass'
+    || result.goalGate === 'gate-4e-an-cv-records-vault-route-archive-pass';
   const blockout = result.blockout || {};
   const blockoutSetPieces = blockout.setPieces || {};
   const slice = result.verticalSlice || blockout.verticalSlice || {};
@@ -5530,7 +5539,8 @@ function assertGate3RVerticalSliceVerification(result, failures, options = {}) {
     || result.goalGate === 'gate-4e-aj-behind-engineering-route-prototype-bay-pass'
     || result.goalGate === 'gate-4e-ak-awards-museum-trophy-atrium-pass'
     || result.goalGate === 'gate-4e-al-sentinel-route-command-facade-pass'
-    || result.goalGate === 'gate-4e-am-skills-learning-stack-route-atrium-pass';
+    || result.goalGate === 'gate-4e-am-skills-learning-stack-route-atrium-pass'
+    || result.goalGate === 'gate-4e-an-cv-records-vault-route-archive-pass';
 
   if (result.goalGate !== expectedGoal) {
     failures.push(`Gate 3R probe failed: goalGate=${result.goalGate || 'none'}`);
@@ -7236,8 +7246,8 @@ function assertGate4EALSentinelRouteCommandFacadeVerification(result, failures, 
   if ((result.forwardDriveProbe?.halts || 0) !== 0) failures.push(`Gate 4-E-AL failed: forwardDriveProbe.halts=${result.forwardDriveProbe?.halts || 0}`);
 }
 
-function assertGate4EAMSkillsLearningStackRouteAtriumVerification(result, failures) {
-  assertGate4EALSentinelRouteCommandFacadeVerification(result, failures, 'gate-4e-am-skills-learning-stack-route-atrium-pass');
+function assertGate4EAMSkillsLearningStackRouteAtriumVerification(result, failures, expectedGoal = 'gate-4e-am-skills-learning-stack-route-atrium-pass') {
+  assertGate4EALSentinelRouteCommandFacadeVerification(result, failures, expectedGoal);
 
   const skills = result.gate4b2?.skills || {};
   assertAuthoredDistrictAsset(result, 'EnvPolishSkillsDataCenter', 'Gate 4-E-AM Skills route learning-stack atrium architecture', failures);
@@ -7253,6 +7263,23 @@ function assertGate4EAMSkillsLearningStackRouteAtriumVerification(result, failur
   if ((skills.lamps || 0) !== 0) failures.push(`Gate 4-E-AM Skills failed: rejected lamps=${skills.lamps || 0}`);
   if ((result.colliderCount || 0) !== 2) failures.push(`Gate 4-E-AM failed: unexpected collider count=${result.colliderCount || 0}`);
   if ((result.forwardDriveProbe?.halts || 0) !== 0) failures.push(`Gate 4-E-AM failed: forwardDriveProbe.halts=${result.forwardDriveProbe?.halts || 0}`);
+}
+
+function assertGate4EANCvRecordsVaultRouteArchiveVerification(result, failures) {
+  assertGate4EAMSkillsLearningStackRouteAtriumVerification(result, failures, 'gate-4e-an-cv-records-vault-route-archive-pass');
+
+  const cv = result.gate4b1?.cv || {};
+  assertAuthoredDistrictAsset(result, 'EnvPolishCvRecordsArchive', 'Gate 4-E-AN CV route archive facade architecture', failures);
+  if ((cv.routeArchivePortals || 0) < 1) failures.push(`Gate 4-E-AN CV failed: routeArchivePortals=${cv.routeArchivePortals || 0}/1`);
+  if ((cv.routeDocumentSpines || 0) < 1) failures.push(`Gate 4-E-AN CV failed: routeDocumentSpines=${cv.routeDocumentSpines || 0}/1`);
+  if ((cv.routeClassificationShelves || 0) < 6) failures.push(`Gate 4-E-AN CV failed: routeClassificationShelves=${cv.routeClassificationShelves || 0}/6`);
+  if ((cv.routeFileCapsules || 0) < 7) failures.push(`Gate 4-E-AN CV failed: routeFileCapsules=${cv.routeFileCapsules || 0}/7`);
+  if ((cv.publicVaultPortals || 0) < 1) failures.push(`Gate 4-E-AN CV failed: publicVaultPortals=${cv.publicVaultPortals || 0}/1`);
+  if ((cv.routeVaultSeals || 0) < 2) failures.push(`Gate 4-E-AN CV failed: routeVaultSeals=${cv.routeVaultSeals || 0}/2`);
+  if ((cv.signs || 0) !== 0) failures.push(`Gate 4-E-AN CV failed: rejected signs=${cv.signs || 0}`);
+  if ((cv.lamps || 0) !== 0) failures.push(`Gate 4-E-AN CV failed: rejected lamps=${cv.lamps || 0}`);
+  if ((result.colliderCount || 0) !== 2) failures.push(`Gate 4-E-AN failed: unexpected collider count=${result.colliderCount || 0}`);
+  if ((result.forwardDriveProbe?.halts || 0) !== 0) failures.push(`Gate 4-E-AN failed: forwardDriveProbe.halts=${result.forwardDriveProbe?.halts || 0}`);
 }
 
 function assertAuthoredDistrictAsset(result, assetName, label, failures) {

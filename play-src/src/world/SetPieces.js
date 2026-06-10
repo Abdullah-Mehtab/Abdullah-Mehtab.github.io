@@ -421,6 +421,10 @@ export class SetPieces {
         vaultDoors: 0,
         publicVaultPortals: 0,
         routeVaultSeals: 0,
+        routeArchivePortals: 0,
+        routeDocumentSpines: 0,
+        routeClassificationShelves: 0,
+        routeFileCapsules: 0,
         archiveSpineTowers: 0,
         readingHallWings: 0,
         documentCrownStacks: 0,
@@ -1482,6 +1486,10 @@ export class SetPieces {
       stats.vaultDoors += 1;
       stats.publicVaultPortals += 1;
       stats.routeVaultSeals += 2;
+      stats.routeArchivePortals += 1;
+      stats.routeDocumentSpines += 1;
+      stats.routeClassificationShelves += 6;
+      stats.routeFileCapsules += 7;
       stats.archiveSpineTowers += 2;
       stats.readingHallWings += 2;
       stats.documentCrownStacks += 7;

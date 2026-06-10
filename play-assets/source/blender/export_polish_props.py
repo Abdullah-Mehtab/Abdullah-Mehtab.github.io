@@ -781,6 +781,21 @@ def create_cv_records_archive(mats):
     cube("CvRecordsArchive_RouteLedgerSteps", group, (-0.6, 0.58, 3.42), (4.85, 0.22, 0.28), mats["paper"], bevel=0.012)
     for index, x in enumerate([-4.35, -3.25, 2.05, 3.15]):
         cube(f"CvRecordsArchive_RouteCatalogPillar_{index}", group, (x, 2.46, 3.34), (0.22, 3.35, 0.12), [mats["paper"], mats["screen"], mats["mint"], mats["paper"]][index], bevel=0.006)
+    cube("CvRecordsArchive_RouteArchivePortalFrame", group, (-0.6, 2.86, 3.56), (7.7, 4.85, 0.34), mats["stone_shadow"], bevel=0.042)
+    cube("CvRecordsArchive_RouteArchivePortalVoid", group, (-0.6, 2.7, 3.78), (5.52, 3.55, 0.18), mats["dark"], bevel=0.026)
+    cube("CvRecordsArchive_RouteArchivePortalHeader", group, (-0.6, 5.38, 3.86), (8.3, 0.34, 0.32), mats["wood"], bevel=0.022)
+    cube("CvRecordsArchive_RouteDocumentSpine", group, (-0.6, 5.42, 4.04), (6.35, 0.26, 0.14), mats["paper"], bevel=0.008)
+    cube("CvRecordsArchive_RouteDocumentSpineGlow", group, (-0.6, 5.66, 4.12), (5.45, 0.08, 0.07), mats["mint"], bevel=0.004)
+    for index, x in enumerate([-3.72, -2.92, -2.12, 0.92, 1.72, 2.52]):
+        height = 2.65 if index % 3 else 3.05
+        material = [mats["paper"], mats["foam"], mats["screen"], mats["gold"], mats["paper"], mats["mint"]][index]
+        cube(f"CvRecordsArchive_RouteClassificationShelf_{index}", group, (x, 2.52, 4.02), (0.48, height, 0.12), material, bevel=0.006)
+    for index, x in enumerate([-2.94, -2.1, -1.26, -0.42, 0.42, 1.26, 2.1]):
+        material = [mats["paper"], mats["screen"], mats["gold"], mats["foam"], mats["mint"], mats["paper"], mats["screen"]][index]
+        cube(f"CvRecordsArchive_RouteFileCapsule_{index}", group, (x, 1.0 + (index % 3) * 0.44, 4.13), (0.62, 0.24, 0.1), material, bevel=0.014)
+    cube("CvRecordsArchive_RouteResumeSealBackplate", group, (-0.6, 3.02, 4.18), (1.72, 1.96, 0.12), mats["stone"], bevel=0.018)
+    cylinder("CvRecordsArchive_RouteResumeSeal", group, (-0.6, 3.02, 4.28), 0.74, 0.08, mats["gold"], vertices=12, bevel=0.008)
+    cube("CvRecordsArchive_RouteResumePageMark", group, (-0.6, 3.02, 4.36), (0.56, 0.78, 0.06), mats["paper"], bevel=0.006)
     for side, x in [(-1, -7.18), (1, 7.18)]:
         cube(f"CvRecordsArchive_SideFacade_{side}", group, (x, 2.02, 0.25), (0.08, 3.2, 3.72), mats["stone_shadow"], bevel=0.012)
         for z in [-1.1, 0.05, 1.2]:
