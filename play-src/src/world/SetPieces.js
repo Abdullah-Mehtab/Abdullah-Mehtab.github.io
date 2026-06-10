@@ -746,6 +746,10 @@ export class SetPieces {
         routeShieldPortals: 0,
         overwatchTowerSilhouettes: 0,
         commandTowerSilhouettes: 0,
+        routeCommandFacades: 0,
+        routeShieldCrests: 0,
+        routeThreatBoards: 0,
+        routeStatusLanes: 0,
         signs: 0,
         lamps: 0
       },
@@ -1984,6 +1988,10 @@ export class SetPieces {
       stats.routeShieldPortals += 1;
       stats.overwatchTowerSilhouettes += 1;
       stats.commandTowerSilhouettes += 1;
+      stats.routeCommandFacades += 1;
+      stats.routeShieldCrests += 1;
+      stats.routeThreatBoards += 1;
+      stats.routeStatusLanes += 1;
     }
 
     stats.signs = 0;
