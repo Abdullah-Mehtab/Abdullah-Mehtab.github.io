@@ -72,6 +72,10 @@ export class SetPieces {
       routeScanPortals: 0,
       threatWatchTowers: 0,
       commandCampuses: 0,
+      routeAccessControlCores: 0,
+      routeShieldDoorFrames: 0,
+      routeIncidentCommandScreens: 0,
+      routePacketInspectionLanes: 0,
       cableRuns: 0,
       terminalRails: 0
     };
@@ -2778,6 +2782,10 @@ export class SetPieces {
         this.securityLabStats.routeScanPortals += 1;
         this.securityLabStats.threatWatchTowers += 1;
         this.securityLabStats.commandCampuses += 1;
+        this.securityLabStats.routeAccessControlCores += 1;
+        this.securityLabStats.routeShieldDoorFrames += 1;
+        this.securityLabStats.routeIncidentCommandScreens += 1;
+        this.securityLabStats.routePacketInspectionLanes += 4;
       }
     }
 

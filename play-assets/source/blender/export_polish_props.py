@@ -309,6 +309,18 @@ def create_security_operations_gate(mats):
     cube("SecurityOps_ShieldGateRight", group, (5.85, 3.12, -5.54), (0.54, 5.75, 0.5), mats["dark"], bevel=0.018)
     cube("SecurityOps_ShieldGateBeam", group, (0.1, 5.86, -5.54), (11.95, 0.54, 0.56), mats["dark"], bevel=0.026)
     cube("SecurityOps_ShieldGlass", group, (0.1, 3.02, -5.84), (9.25, 3.82, 0.08), mats["glass"], bevel=0.008)
+    cube("SecurityOps_RouteAccessControlCore", group, (0.1, 2.62, -6.14), (7.05, 3.6, 0.18), mats["dark"], bevel=0.022)
+    cube("SecurityOps_RouteAccessControlGlass", group, (0.1, 2.72, -6.27), (5.55, 2.38, 0.08), mats["glass"], bevel=0.008)
+    cube("SecurityOps_RouteShieldDoorLeft", group, (-2.95, 2.72, -6.34), (0.22, 3.22, 0.12), mats["paper"], bevel=0.006)
+    cube("SecurityOps_RouteShieldDoorRight", group, (3.15, 2.72, -6.34), (0.22, 3.22, 0.12), mats["paper"], bevel=0.006)
+    cube("SecurityOps_RouteShieldDoorHeader", group, (0.1, 4.28, -6.34), (6.35, 0.22, 0.12), mats["paper"], bevel=0.006)
+    cube("SecurityOps_RouteShieldDoorSill", group, (0.1, 1.14, -6.34), (5.75, 0.18, 0.12), mats["paper"], bevel=0.006)
+    cube("SecurityOps_RouteIncidentCommandScreen", group, (-3.94, 2.8, -6.36), (1.52, 1.92, 0.08), mats["screen"], bevel=0.006)
+    cube("SecurityOps_RouteIncidentCommandHeader", group, (-3.94, 3.88, -6.42), (1.24, 0.12, 0.06), mats["pink"], bevel=0.003)
+    for index, y in enumerate([2.08, 2.44, 2.8, 3.16]):
+        cube(f"SecurityOps_RouteIncidentCommandTrace_{index}", group, (-3.94, y, -6.43), (1.02 - index * 0.1, 0.06, 0.055), [mats["screen"], mats["mint"], mats["pink"], mats["aqua"]][index], bevel=0.002)
+    for index, x in enumerate([-1.7, -0.55, 0.6, 1.75]):
+        cube(f"SecurityOps_RoutePacketInspectionLane_{index}", group, (x, 1.62, -6.42), (0.58, 0.1, 0.08), [mats["mint"], mats["screen"], mats["aqua"], mats["pink"]][index], bevel=0.003)
     cube("SecurityOps_ShieldGateLeftFin", group, (-6.42, 3.18, -5.48), (0.24, 4.85, 1.02), mats["screen"], rot=(0, 0, -0.14), bevel=0.01)
     cube("SecurityOps_ShieldGateRightFin", group, (6.62, 3.18, -5.48), (0.24, 4.85, 1.02), mats["screen"], rot=(0, 0, 0.14), bevel=0.01)
     cube("SecurityOps_ScanThreshold", group, (0.1, 0.2, -6.14), (9.4, 0.08, 0.92), mats["pink"], bevel=0.006)

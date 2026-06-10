@@ -4353,6 +4353,13 @@ function assertVerification(result) {
     }
     return;
   }
+  if (result.goalGate === 'gate-4e-aq-security-access-control-threshold-pass') {
+    assertGate4EAQSecurityAccessControlThresholdVerification(result, failures);
+    if (failures.length) {
+      throw new Error(`Play verification failed: ${failures.join('; ')}`);
+    }
+    return;
+  }
   if (result.goalGate === 'gate-4b5-north-ridge') {
     assertGate4B5NorthRidgeVerification(result, failures);
     if (failures.length) {
@@ -5495,7 +5502,8 @@ function isGate4EExpandedArchitectureGate(goalGate) {
     || goalGate === 'gate-4e-am-skills-learning-stack-route-atrium-pass'
     || goalGate === 'gate-4e-an-cv-records-vault-route-archive-pass'
     || goalGate === 'gate-4e-ao-todo-operations-core-route-read-pass'
-    || goalGate === 'gate-4e-ap-behind-inner-build-cell-route-read-pass';
+    || goalGate === 'gate-4e-ap-behind-inner-build-cell-route-read-pass'
+    || goalGate === 'gate-4e-aq-security-access-control-threshold-pass';
 }
 
 function assertGate3RVerticalSliceVerification(result, failures, options = {}) {
@@ -5532,7 +5540,8 @@ function assertGate3RVerticalSliceVerification(result, failures, options = {}) {
     || result.goalGate === 'gate-4e-am-skills-learning-stack-route-atrium-pass'
     || result.goalGate === 'gate-4e-an-cv-records-vault-route-archive-pass'
     || result.goalGate === 'gate-4e-ao-todo-operations-core-route-read-pass'
-    || result.goalGate === 'gate-4e-ap-behind-inner-build-cell-route-read-pass';
+    || result.goalGate === 'gate-4e-ap-behind-inner-build-cell-route-read-pass'
+    || result.goalGate === 'gate-4e-aq-security-access-control-threshold-pass';
   const blockout = result.blockout || {};
   const blockoutSetPieces = blockout.setPieces || {};
   const slice = result.verticalSlice || blockout.verticalSlice || {};
@@ -5560,7 +5569,8 @@ function assertGate3RVerticalSliceVerification(result, failures, options = {}) {
     || result.goalGate === 'gate-4e-am-skills-learning-stack-route-atrium-pass'
     || result.goalGate === 'gate-4e-an-cv-records-vault-route-archive-pass'
     || result.goalGate === 'gate-4e-ao-todo-operations-core-route-read-pass'
-    || result.goalGate === 'gate-4e-ap-behind-inner-build-cell-route-read-pass';
+    || result.goalGate === 'gate-4e-ap-behind-inner-build-cell-route-read-pass'
+    || result.goalGate === 'gate-4e-aq-security-access-control-threshold-pass';
 
   if (result.goalGate !== expectedGoal) {
     failures.push(`Gate 3R probe failed: goalGate=${result.goalGate || 'none'}`);
@@ -7319,8 +7329,8 @@ function assertGate4EAOTodoOperationsCoreRouteReadVerification(result, failures,
   if ((result.forwardDriveProbe?.halts || 0) !== 0) failures.push(`Gate 4-E-AO failed: forwardDriveProbe.halts=${result.forwardDriveProbe?.halts || 0}`);
 }
 
-function assertGate4EAPBehindInnerBuildCellRouteReadVerification(result, failures) {
-  assertGate4EAOTodoOperationsCoreRouteReadVerification(result, failures, 'gate-4e-ap-behind-inner-build-cell-route-read-pass');
+function assertGate4EAPBehindInnerBuildCellRouteReadVerification(result, failures, expectedGoal = 'gate-4e-ap-behind-inner-build-cell-route-read-pass') {
+  assertGate4EAOTodoOperationsCoreRouteReadVerification(result, failures, expectedGoal);
 
   const behind = result.gate4b1?.behind || {};
   assertAuthoredDistrictAsset(result, 'EnvPolishBehindEngineeringGarage', 'Gate 4-E-AP Behind route inner build-cell architecture', failures);
@@ -7335,6 +7345,27 @@ function assertGate4EAPBehindInnerBuildCellRouteReadVerification(result, failure
   if ((behind.lamps || 0) !== 0) failures.push(`Gate 4-E-AP Behind failed: rejected lamps=${behind.lamps || 0}`);
   if ((result.colliderCount || 0) !== 2) failures.push(`Gate 4-E-AP failed: unexpected collider count=${result.colliderCount || 0}`);
   if ((result.forwardDriveProbe?.halts || 0) !== 0) failures.push(`Gate 4-E-AP failed: forwardDriveProbe.halts=${result.forwardDriveProbe?.halts || 0}`);
+}
+
+function assertGate4EAQSecurityAccessControlThresholdVerification(result, failures) {
+  assertGate4EAPBehindInnerBuildCellRouteReadVerification(result, failures, 'gate-4e-aq-security-access-control-threshold-pass');
+
+  const security = result.securityLab || {};
+  assertAuthoredDistrictAsset(result, 'EnvPolishSecurityOperationsGate', 'Gate 4-E-AQ Security access-control threshold architecture', failures);
+  if ((security.routeAccessControlCores || 0) < 1) failures.push(`Gate 4-E-AQ Security failed: routeAccessControlCores=${security.routeAccessControlCores || 0}/1`);
+  if ((security.routeShieldDoorFrames || 0) < 1) failures.push(`Gate 4-E-AQ Security failed: routeShieldDoorFrames=${security.routeShieldDoorFrames || 0}/1`);
+  if ((security.routeIncidentCommandScreens || 0) < 1) failures.push(`Gate 4-E-AQ Security failed: routeIncidentCommandScreens=${security.routeIncidentCommandScreens || 0}/1`);
+  if ((security.routePacketInspectionLanes || 0) < 4) failures.push(`Gate 4-E-AQ Security failed: routePacketInspectionLanes=${security.routePacketInspectionLanes || 0}/4`);
+  if ((security.routeScanPortals || 0) < 1) failures.push(`Gate 4-E-AQ Security failed: routeScanPortals=${security.routeScanPortals || 0}/1`);
+  if ((security.commandCampuses || 0) < 1) failures.push(`Gate 4-E-AQ Security failed: commandCampuses=${security.commandCampuses || 0}/1`);
+  if (!result.securityScan?.active?.active || (result.securityScan?.active?.stats?.visibleScanWaves || 0) < 1) {
+    failures.push('Gate 4-E-AQ Security failed: active scan state was not visible');
+  }
+  if (!result.securityScan?.complete?.complete || !result.securityScan?.complete?.panelVisible) {
+    failures.push('Gate 4-E-AQ Security failed: scan completion/panel behavior regressed');
+  }
+  if ((result.colliderCount || 0) !== 2) failures.push(`Gate 4-E-AQ failed: unexpected collider count=${result.colliderCount || 0}`);
+  if ((result.forwardDriveProbe?.halts || 0) !== 0) failures.push(`Gate 4-E-AQ failed: forwardDriveProbe.halts=${result.forwardDriveProbe?.halts || 0}`);
 }
 
 function assertAuthoredDistrictAsset(result, assetName, label, failures) {
