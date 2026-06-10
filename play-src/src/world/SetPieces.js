@@ -665,6 +665,10 @@ export class SetPieces {
         campusGatewayFrames: 0,
         teamAtriumBeacons: 0,
         campusArrivalPlazas: 0,
+        routeHiringPortalFrames: 0,
+        routeTeamBoardrooms: 0,
+        routeDeliverySprintLanes: 0,
+        routeCodeReviewFacades: 0,
         signs: 0,
         lamps: 0
       },
@@ -1863,6 +1867,10 @@ export class SetPieces {
       stats.campusGatewayFrames += 1;
       stats.teamAtriumBeacons += 1;
       stats.campusArrivalPlazas += 1;
+      stats.routeHiringPortalFrames += 1;
+      stats.routeTeamBoardrooms += 1;
+      stats.routeDeliverySprintLanes += 4;
+      stats.routeCodeReviewFacades += 1;
     }
 
     const path = point(0, -7.25);
