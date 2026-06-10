@@ -510,6 +510,10 @@ export class SetPieces {
         routeSkillTrees: 0,
         routeCertificationVaults: 0,
         routeDisciplineLaneSpines: 0,
+        routeCurriculumPortals: 0,
+        routeCurriculumSpines: 0,
+        routePracticeLabPods: 0,
+        routeCertificationGalleries: 0,
         signs: 0,
         lamps: 0
       },
@@ -1623,6 +1627,10 @@ export class SetPieces {
       stats.routeSkillTrees += 1;
       stats.routeCertificationVaults += 1;
       stats.routeDisciplineLaneSpines += 1;
+      stats.routeCurriculumPortals += 1;
+      stats.routeCurriculumSpines += 1;
+      stats.routePracticeLabPods += 4;
+      stats.routeCertificationGalleries += 1;
     }
 
     stats.terminalSlabs = stats.commandTerminals;
