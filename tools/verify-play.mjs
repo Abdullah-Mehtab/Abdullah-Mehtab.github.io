@@ -4444,6 +4444,13 @@ function assertVerification(result) {
     }
     return;
   }
+  if (result.goalGate === 'gate-4e-bd-circuit-race-control-route-tunnel-pass') {
+    assertGate4EBDCircuitRaceControlRouteTunnelVerification(result, failures);
+    if (failures.length) {
+      throw new Error(`Play verification failed: ${failures.join('; ')}`);
+    }
+    return;
+  }
   if (result.goalGate === 'gate-4b5-north-ridge') {
     assertGate4B5NorthRidgeVerification(result, failures);
     if (failures.length) {
@@ -5599,7 +5606,8 @@ function isGate4EExpandedArchitectureGate(goalGate) {
     || goalGate === 'gate-4e-az-security-operations-threshold-route-facade-pass'
     || goalGate === 'gate-4e-ba-launch-hub-arrival-portal-pass'
     || goalGate === 'gate-4e-bb-career-campus-forecourt-route-read-pass'
-    || goalGate === 'gate-4e-bc-signal-harbor-contact-exchange-route-gateway-pass';
+    || goalGate === 'gate-4e-bc-signal-harbor-contact-exchange-route-gateway-pass'
+    || goalGate === 'gate-4e-bd-circuit-race-control-route-tunnel-pass';
 }
 
 function assertGate3RVerticalSliceVerification(result, failures, options = {}) {
@@ -5649,7 +5657,8 @@ function assertGate3RVerticalSliceVerification(result, failures, options = {}) {
     || result.goalGate === 'gate-4e-az-security-operations-threshold-route-facade-pass'
     || result.goalGate === 'gate-4e-ba-launch-hub-arrival-portal-pass'
     || result.goalGate === 'gate-4e-bb-career-campus-forecourt-route-read-pass'
-    || result.goalGate === 'gate-4e-bc-signal-harbor-contact-exchange-route-gateway-pass';
+    || result.goalGate === 'gate-4e-bc-signal-harbor-contact-exchange-route-gateway-pass'
+    || result.goalGate === 'gate-4e-bd-circuit-race-control-route-tunnel-pass';
   const blockout = result.blockout || {};
   const blockoutSetPieces = blockout.setPieces || {};
   const slice = result.verticalSlice || blockout.verticalSlice || {};
@@ -5690,7 +5699,8 @@ function assertGate3RVerticalSliceVerification(result, failures, options = {}) {
     || result.goalGate === 'gate-4e-az-security-operations-threshold-route-facade-pass'
     || result.goalGate === 'gate-4e-ba-launch-hub-arrival-portal-pass'
     || result.goalGate === 'gate-4e-bb-career-campus-forecourt-route-read-pass'
-    || result.goalGate === 'gate-4e-bc-signal-harbor-contact-exchange-route-gateway-pass';
+    || result.goalGate === 'gate-4e-bc-signal-harbor-contact-exchange-route-gateway-pass'
+    || result.goalGate === 'gate-4e-bd-circuit-race-control-route-tunnel-pass';
 
   if (result.goalGate !== expectedGoal) {
     failures.push(`Gate 3R probe failed: goalGate=${result.goalGate || 'none'}`);
@@ -7688,8 +7698,8 @@ function assertGate4EBBCareerCampusForecourtRouteReadVerification(result, failur
   if ((result.forwardDriveProbe?.halts || 0) !== 0) failures.push(`Gate 4-E-BB failed: forwardDriveProbe.halts=${result.forwardDriveProbe?.halts || 0}`);
 }
 
-function assertGate4EBCSignalHarborContactExchangeRouteGatewayVerification(result, failures) {
-  assertGate4EBBCareerCampusForecourtRouteReadVerification(result, failures, 'gate-4e-bc-signal-harbor-contact-exchange-route-gateway-pass');
+function assertGate4EBCSignalHarborContactExchangeRouteGatewayVerification(result, failures, expectedGoal = 'gate-4e-bc-signal-harbor-contact-exchange-route-gateway-pass') {
+  assertGate4EBBCareerCampusForecourtRouteReadVerification(result, failures, expectedGoal);
 
   const harbor = result.gate4b4?.harbor || {};
   assertAuthoredDistrictAsset(result, 'EnvPolishSignalHarborCommunicationsStation', 'Gate 4-E-BC Signal Harbor contact exchange gateway architecture', failures);
@@ -7703,6 +7713,25 @@ function assertGate4EBCSignalHarborContactExchangeRouteGatewayVerification(resul
   if ((harbor.lamps || 0) !== 0) failures.push(`Gate 4-E-BC Harbor failed: rejected lamps=${harbor.lamps || 0}`);
   if ((result.colliderCount || 0) !== 2) failures.push(`Gate 4-E-BC failed: unexpected collider count=${result.colliderCount || 0}`);
   if ((result.forwardDriveProbe?.halts || 0) !== 0) failures.push(`Gate 4-E-BC failed: forwardDriveProbe.halts=${result.forwardDriveProbe?.halts || 0}`);
+}
+
+function assertGate4EBDCircuitRaceControlRouteTunnelVerification(result, failures) {
+  assertGate4EBCSignalHarborContactExchangeRouteGatewayVerification(result, failures, 'gate-4e-bd-circuit-race-control-route-tunnel-pass');
+  assertGate4DCircuitTimeTrialGate(result, failures);
+
+  const circuit = result.gate4b5?.circuit || {};
+  assertAuthoredDistrictAsset(result, 'EnvPolishCircuitTimeTrialGate', 'Gate 4-E-BD Circuit race-control route tunnel architecture', failures);
+  if ((circuit.routeRaceControlPorticos || 0) < 1) failures.push(`Gate 4-E-BD Circuit failed: routeRaceControlPorticos=${circuit.routeRaceControlPorticos || 0}/1`);
+  if ((circuit.routeDriveThroughTunnels || 0) < 1) failures.push(`Gate 4-E-BD Circuit failed: routeDriveThroughTunnels=${circuit.routeDriveThroughTunnels || 0}/1`);
+  if ((circuit.routeControlCabins || 0) < 2) failures.push(`Gate 4-E-BD Circuit failed: routeControlCabins=${circuit.routeControlCabins || 0}/2`);
+  if ((circuit.routeLapSignalStacks || 0) < 1) failures.push(`Gate 4-E-BD Circuit failed: routeLapSignalStacks=${circuit.routeLapSignalStacks || 0}/1`);
+  if ((circuit.routeCheckpointLaneFrames || 0) < 3) failures.push(`Gate 4-E-BD Circuit failed: routeCheckpointLaneFrames=${circuit.routeCheckpointLaneFrames || 0}/3`);
+  if ((circuit.overheadCheckpointPortals || 0) < 1) failures.push(`Gate 4-E-BD Circuit carry-forward failed: overheadCheckpointPortals=${circuit.overheadCheckpointPortals || 0}/1`);
+  if ((circuit.raceControlBridges || 0) < 1) failures.push(`Gate 4-E-BD Circuit carry-forward failed: raceControlBridges=${circuit.raceControlBridges || 0}/1`);
+  if ((circuit.signs || 0) !== 0) failures.push(`Gate 4-E-BD Circuit failed: rejected signs=${circuit.signs || 0}`);
+  if ((circuit.lamps || 0) !== 0) failures.push(`Gate 4-E-BD Circuit failed: rejected lamps=${circuit.lamps || 0}`);
+  if ((result.colliderCount || 0) !== 2) failures.push(`Gate 4-E-BD failed: unexpected collider count=${result.colliderCount || 0}`);
+  if ((result.forwardDriveProbe?.halts || 0) !== 0) failures.push(`Gate 4-E-BD failed: forwardDriveProbe.halts=${result.forwardDriveProbe?.halts || 0}`);
 }
 
 function assertAuthoredDistrictAsset(result, assetName, label, failures) {

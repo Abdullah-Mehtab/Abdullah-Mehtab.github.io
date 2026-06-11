@@ -1775,6 +1775,20 @@ def create_circuit_time_trial_gate(mats):
         for col, x in enumerate([-4.8, -3.6, -2.4, -1.2, 0, 1.2, 2.4, 3.6, 4.8]):
             material = mats["paper"] if (row + col) % 2 else mats["rubber"]
             cube(f"CircuitTimeTrial_CheckeredTimingPanel_{row}_{col}", group, (x, y, -2.24), (0.78, 0.34, 0.06), material, bevel=0.003)
+    cube("CircuitTimeTrial_RouteDriveThroughTunnelFloor", group, (0, 0.42, -4.98), (13.85, 0.32, 1.14), mats["stone"], bevel=0.028)
+    for index, x in enumerate([-6.95, 6.95]):
+        cube(f"CircuitTimeTrial_RouteRaceControlPorticoTower_{index}", group, (x, 2.72, -4.92), (0.74, 4.6, 1.0), mats["dark"], bevel=0.026)
+        cube(f"CircuitTimeTrial_RouteRaceControlPorticoGlow_{index}", group, (x, 2.74, -5.48), (0.12, 3.72, 0.07), mats["mint" if index == 0 else "amber"], bevel=0.004)
+        cube(f"CircuitTimeTrial_RouteControlCabin_{index}", group, (x * 0.72, 2.0, -5.38), (2.24, 2.32, 1.0), mats["glass"], bevel=0.016)
+    cube("CircuitTimeTrial_RouteRaceControlPorticoHeader", group, (0, 4.98, -4.92), (14.7, 0.48, 1.02), mats["dark"], bevel=0.024)
+    cube("CircuitTimeTrial_RouteRaceControlPorticoCrown", group, (0, 5.32, -5.34), (12.6, 0.16, 0.12), mats["amber"], bevel=0.006)
+    cube("CircuitTimeTrial_RouteStartFinishTimingScreen", group, (0, 3.92, -5.54), (6.4, 1.0, 0.08), mats["screen"], bevel=0.008)
+    cube("CircuitTimeTrial_RouteLapSignalStack", group, (0, 2.6, -5.62), (1.0, 3.1, 0.08), mats["dark"], bevel=0.01)
+    for index, y in enumerate([1.74, 2.42, 3.1]):
+        cube(f"CircuitTimeTrial_RouteLapSignalLamp_{index}", group, (0, y, -5.7), (0.72, 0.36, 0.06), [mats["pink"], mats["amber"], mats["mint"]][index], bevel=0.008)
+    for index, x in enumerate([-3.8, 0, 3.8]):
+        cube(f"CircuitTimeTrial_RouteCheckpointLaneFrame_{index}", group, (x, 0.72, -5.58), (2.35, 0.16, 0.08), mats["paper"], bevel=0.006)
+        cube(f"CircuitTimeTrial_RouteCheckpointLaneGlow_{index}", group, (x, 1.02, -5.66), (1.6, 0.08, 0.06), mats["mint" if index != 1 else "amber"], bevel=0.004)
 
 
 def create_stunt_checkpoint(mats):

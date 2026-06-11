@@ -857,6 +857,11 @@ export class SetPieces {
         raceControlBridges: 0,
         pitWallRhythms: 0,
         checkeredTimingPanels: 0,
+        routeRaceControlPorticos: 0,
+        routeDriveThroughTunnels: 0,
+        routeControlCabins: 0,
+        routeLapSignalStacks: 0,
+        routeCheckpointLaneFrames: 0,
         signs: 0,
         lamps: 0
       }
@@ -2174,6 +2179,11 @@ export class SetPieces {
       stats.raceControlBridges += 1;
       stats.pitWallRhythms += 1;
       stats.checkeredTimingPanels += 12;
+      stats.routeRaceControlPorticos += 1;
+      stats.routeDriveThroughTunnels += 1;
+      stats.routeControlCabins += 2;
+      stats.routeLapSignalStacks += 1;
+      stats.routeCheckpointLaneFrames += 3;
     }
 
     stats.signs = 0;
