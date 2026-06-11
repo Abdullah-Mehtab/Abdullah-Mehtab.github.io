@@ -210,6 +210,10 @@ export class SetPieces {
       sourceAssets: 0,
       authoredAssets: 0,
       gatewayAssets: 0,
+      arrivalPortals: 0,
+      driveUnderCanopies: 0,
+      destinationTiles: 0,
+      legacySignsSuppressed: 0,
       routeFacingFacades: 0,
       supportFrames: 0,
       guideTiles: 0
@@ -2267,8 +2271,11 @@ export class SetPieces {
       return true;
     };
 
-    place('EnvPolishLaunchHubGateway', 'LaunchHubGateway', 13.8, -90.8, rotation, 0.94, 'gatewayAssets', [15.8, 8.2], 3.1);
+    place('EnvPolishLaunchHubGateway', 'LaunchHubGateway', 13.8, -90.8, rotation, 0.94, 'gatewayAssets', [16.2, 8.6], 3.1);
     this.gate4eLaunchHubStats.routeFacingFacades += this.gate4eLaunchHubStats.gatewayAssets;
+    this.gate4eLaunchHubStats.arrivalPortals += this.gate4eLaunchHubStats.gatewayAssets;
+    this.gate4eLaunchHubStats.driveUnderCanopies += this.gate4eLaunchHubStats.gatewayAssets;
+    this.gate4eLaunchHubStats.destinationTiles += this.gate4eLaunchHubStats.gatewayAssets * 3;
 
     mergeStaticMeshesInGroup(group, {
       namePrefix: 'GATE4E_launch_hub',
@@ -2742,11 +2749,15 @@ export class SetPieces {
     this.gate3rLampFacingRoad(group, lampB[0], lampB[1], 0x7cffb2, 2.8, 'GATE3R_Start_Lamp_Right', 2.2);
     stats.lamps += 2;
 
-    const startSign = local(20, -4);
-    const routeSign = local(-24, 4);
-    this.gate3rSign(group, 'START', 'Campus route', startSign[0], startSign[1], rotation - 0.82, 0x7cffb2, 1.6, 'GATE3R_Start_Sign', 3.4);
-    this.gate3rSign(group, 'FCC / SCAN', 'One clean road', routeSign[0], routeSign[1], rotation + 0.68, 0x9ccfff, 1.55, 'GATE3R_Start_Route_Sign', 3.4);
-    stats.signs += 2;
+    if (this.world.gate4eLaunchHubMode) {
+      this.gate4eLaunchHubStats.legacySignsSuppressed += 2;
+    } else {
+      const startSign = local(20, -4);
+      const routeSign = local(-24, 4);
+      this.gate3rSign(group, 'START', 'Campus route', startSign[0], startSign[1], rotation - 0.82, 0x7cffb2, 1.6, 'GATE3R_Start_Sign', 3.4);
+      this.gate3rSign(group, 'FCC / SCAN', 'One clean road', routeSign[0], routeSign[1], rotation + 0.68, 0x9ccfff, 1.55, 'GATE3R_Start_Route_Sign', 3.4);
+      stats.signs += 2;
+    }
   }
 
   createGate3RCampusRoute(group) {

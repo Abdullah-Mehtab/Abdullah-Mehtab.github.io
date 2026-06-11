@@ -4423,6 +4423,13 @@ function assertVerification(result) {
     }
     return;
   }
+  if (result.goalGate === 'gate-4e-ba-launch-hub-arrival-portal-pass') {
+    assertGate4EBALaunchHubArrivalPortalVerification(result, failures);
+    if (failures.length) {
+      throw new Error(`Play verification failed: ${failures.join('; ')}`);
+    }
+    return;
+  }
   if (result.goalGate === 'gate-4b5-north-ridge') {
     assertGate4B5NorthRidgeVerification(result, failures);
     if (failures.length) {
@@ -5575,7 +5582,8 @@ function isGate4EExpandedArchitectureGate(goalGate) {
     || goalGate === 'gate-4e-aw-career-campus-arrival-court-route-read-pass'
     || goalGate === 'gate-4e-ax-skills-learning-campus-route-court-pass'
     || goalGate === 'gate-4e-ay-projects-public-showcase-route-theater-pass'
-    || goalGate === 'gate-4e-az-security-operations-threshold-route-facade-pass';
+    || goalGate === 'gate-4e-az-security-operations-threshold-route-facade-pass'
+    || goalGate === 'gate-4e-ba-launch-hub-arrival-portal-pass';
 }
 
 function assertGate3RVerticalSliceVerification(result, failures, options = {}) {
@@ -5622,7 +5630,8 @@ function assertGate3RVerticalSliceVerification(result, failures, options = {}) {
     || result.goalGate === 'gate-4e-aw-career-campus-arrival-court-route-read-pass'
     || result.goalGate === 'gate-4e-ax-skills-learning-campus-route-court-pass'
     || result.goalGate === 'gate-4e-ay-projects-public-showcase-route-theater-pass'
-    || result.goalGate === 'gate-4e-az-security-operations-threshold-route-facade-pass';
+    || result.goalGate === 'gate-4e-az-security-operations-threshold-route-facade-pass'
+    || result.goalGate === 'gate-4e-ba-launch-hub-arrival-portal-pass';
   const blockout = result.blockout || {};
   const blockoutSetPieces = blockout.setPieces || {};
   const slice = result.verticalSlice || blockout.verticalSlice || {};
@@ -5660,7 +5669,8 @@ function assertGate3RVerticalSliceVerification(result, failures, options = {}) {
     || result.goalGate === 'gate-4e-aw-career-campus-arrival-court-route-read-pass'
     || result.goalGate === 'gate-4e-ax-skills-learning-campus-route-court-pass'
     || result.goalGate === 'gate-4e-ay-projects-public-showcase-route-theater-pass'
-    || result.goalGate === 'gate-4e-az-security-operations-threshold-route-facade-pass';
+    || result.goalGate === 'gate-4e-az-security-operations-threshold-route-facade-pass'
+    || result.goalGate === 'gate-4e-ba-launch-hub-arrival-portal-pass';
 
   if (result.goalGate !== expectedGoal) {
     failures.push(`Gate 3R probe failed: goalGate=${result.goalGate || 'none'}`);
@@ -5764,7 +5774,7 @@ function assertGate3RVerticalSliceVerification(result, failures, options = {}) {
   if ((placement.byFootprintKind?.['security-pad'] || 0) < 3) failures.push(`Gate 3R footprint audit failed: security pads=${placement.byFootprintKind?.['security-pad'] || 0}`);
   if ((placement.byFootprintKind?.['fcc-walk'] || 0) < 2) failures.push(`Gate 3R footprint audit failed: FCC walks=${placement.byFootprintKind?.['fcc-walk'] || 0}`);
   if ((placement.byKind?.lamp || 0) < 8) failures.push(`Gate 3R placement audit failed: lamps=${placement.byKind?.lamp || 0}`);
-  const minimumPlacementSigns = gate4eExpandedArchitecture ? 5 : 6;
+  const minimumPlacementSigns = gate4eExpandedArchitecture ? 3 : 6;
   if ((placement.byKind?.sign || 0) < minimumPlacementSigns) failures.push(`Gate 3R placement audit failed: signs=${placement.byKind?.sign || 0}`);
 
   const colliderSummary = result.colliderAudit?.summary || [];
@@ -5837,7 +5847,7 @@ function assertGate3RVerticalSliceVerification(result, failures, options = {}) {
   if ((start.planters || 0) !== 0) failures.push(`Gate 3R start failed: rejected planters built=${start.planters || 0}`);
   if ((start.launchLights || 0) !== 0) failures.push(`Gate 3R start failed: removed launch start bars still built=${start.launchLights || 0}`);
   if ((start.burnoutScuffs || 0) < 6) failures.push(`Gate 3R start failed: burnoutScuffs=${start.burnoutScuffs || 0}`);
-  if ((start.signs || 0) < 2) failures.push(`Gate 3R start failed: signs=${start.signs || 0}`);
+  if (!gate4eExpandedArchitecture && (start.signs || 0) < 2) failures.push(`Gate 3R start failed: signs=${start.signs || 0}`);
   if ((start.lamps || 0) < 2) failures.push(`Gate 3R start failed: lamps=${start.lamps || 0}`);
   if ((campusRoute.routeMarks || 0) !== 0) failures.push(`Gate 3R campus route failed: rejected white route marks built=${campusRoute.routeMarks || 0}`);
   if ((campusRoute.lamps || 0) < 4) failures.push(`Gate 3R campus route failed: lamps=${campusRoute.lamps || 0}`);
@@ -7607,8 +7617,8 @@ function assertGate4EAYProjectsPublicShowcaseRouteTheaterVerification(result, fa
   if ((result.forwardDriveProbe?.halts || 0) !== 0) failures.push(`Gate 4-E-AY failed: forwardDriveProbe.halts=${result.forwardDriveProbe?.halts || 0}`);
 }
 
-function assertGate4EAZSecurityOperationsThresholdRouteFacadeVerification(result, failures) {
-  assertGate4EAYProjectsPublicShowcaseRouteTheaterVerification(result, failures, 'gate-4e-az-security-operations-threshold-route-facade-pass');
+function assertGate4EAZSecurityOperationsThresholdRouteFacadeVerification(result, failures, expectedGoal = 'gate-4e-az-security-operations-threshold-route-facade-pass') {
+  assertGate4EAYProjectsPublicShowcaseRouteTheaterVerification(result, failures, expectedGoal);
 
   const security = result.securityLab || {};
   assertAuthoredDistrictAsset(result, 'EnvPolishSecurityOperationsGate', 'Gate 4-E-AZ Security operations threshold route facade architecture', failures);
@@ -7622,6 +7632,21 @@ function assertGate4EAZSecurityOperationsThresholdRouteFacadeVerification(result
   if ((security.routePacketInspectionLanes || 0) < 4) failures.push(`Gate 4-E-AZ Security failed: routePacketInspectionLanes=${security.routePacketInspectionLanes || 0}/4`);
   if ((result.colliderCount || 0) !== 2) failures.push(`Gate 4-E-AZ failed: unexpected collider count=${result.colliderCount || 0}`);
   if ((result.forwardDriveProbe?.halts || 0) !== 0) failures.push(`Gate 4-E-AZ failed: forwardDriveProbe.halts=${result.forwardDriveProbe?.halts || 0}`);
+}
+
+function assertGate4EBALaunchHubArrivalPortalVerification(result, failures) {
+  assertGate4EAZSecurityOperationsThresholdRouteFacadeVerification(result, failures, 'gate-4e-ba-launch-hub-arrival-portal-pass');
+
+  const launch = result.gate4eLaunchHub || {};
+  assertAuthoredDistrictAsset(result, 'EnvPolishLaunchHubGateway', 'Gate 4-E-BA Launch Hub arrival portal architecture', failures);
+  if ((launch.arrivalPortals || 0) < 1) failures.push(`Gate 4-E-BA Launch Hub failed: arrivalPortals=${launch.arrivalPortals || 0}/1`);
+  if ((launch.driveUnderCanopies || 0) < 1) failures.push(`Gate 4-E-BA Launch Hub failed: driveUnderCanopies=${launch.driveUnderCanopies || 0}/1`);
+  if ((launch.destinationTiles || 0) < 3) failures.push(`Gate 4-E-BA Launch Hub failed: destinationTiles=${launch.destinationTiles || 0}/3`);
+  if ((launch.legacySignsSuppressed || 0) < 2) failures.push(`Gate 4-E-BA Launch Hub failed: legacySignsSuppressed=${launch.legacySignsSuppressed || 0}/2`);
+  if ((launch.supportFrames || 0) !== 0) failures.push(`Gate 4-E-BA Launch Hub failed: loose supportFrames=${launch.supportFrames || 0}`);
+  if ((launch.guideTiles || 0) !== 0) failures.push(`Gate 4-E-BA Launch Hub failed: guideTiles=${launch.guideTiles || 0}`);
+  if ((result.colliderCount || 0) !== 2) failures.push(`Gate 4-E-BA failed: unexpected collider count=${result.colliderCount || 0}`);
+  if ((result.forwardDriveProbe?.halts || 0) !== 0) failures.push(`Gate 4-E-BA failed: forwardDriveProbe.halts=${result.forwardDriveProbe?.halts || 0}`);
 }
 
 function assertAuthoredDistrictAsset(result, assetName, label, failures) {

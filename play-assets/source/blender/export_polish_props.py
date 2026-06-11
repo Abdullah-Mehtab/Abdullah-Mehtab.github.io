@@ -251,6 +251,16 @@ def create_launch_hub_gateway(mats):
         cube("LaunchHub_PylonGlow", group, (x, 2.48, -3.18), (0.1, 3.34, 0.065), mats["mint" if x < 0 else "amber"], bevel=0.004)
     cube("LaunchHub_GatewayBeam", group, (0, 4.68, -2.86), (13.35, 0.46, 0.5), mats["dark"], bevel=0.03)
     cube("LaunchHub_GatewayBeamGlow", group, (0, 4.38, -3.16), (10.4, 0.1, 0.08), mats["screen"], bevel=0.006)
+    for x, mat in [(-7.28, mats["mint"]), (7.28, mats["amber"])]:
+        cube("LaunchHub_ArrivalPortalFoot", group, (x, 0.36, -3.78), (1.2, 0.56, 1.18), mats["stone_shadow"], bevel=0.045)
+        cube("LaunchHub_ArrivalPortalPylon", group, (x, 3.18, -3.78), (0.56, 5.42, 0.58), mats["dark"], bevel=0.032)
+        cube("LaunchHub_ArrivalPortalSignal", group, (x, 3.26, -4.12), (0.12, 4.15, 0.07), mat, bevel=0.004)
+    cube("LaunchHub_ArrivalPortalCrown", group, (0, 5.92, -3.78), (16.5, 0.62, 0.66), mats["dark"], bevel=0.035)
+    cube("LaunchHub_ArrivalPortalCrownGlow", group, (0, 5.58, -4.18), (12.8, 0.12, 0.08), mats["screen"], bevel=0.006)
+    cube("LaunchHub_DriveUnderCanopy", group, (0.0, 4.72, -3.58), (12.9, 0.22, 1.42), mats["glass"], bevel=0.018)
+    cube("LaunchHub_RouteIntentRail", group, (0.0, 1.05, -4.02), (9.2, 0.18, 0.16), mats["amber"], bevel=0.008)
+    for index, x in enumerate([-3.2, 0.0, 3.2]):
+        cube(f"LaunchHub_DestinationTile_{index}", group, (x, 1.32, -4.1), (1.28, 0.18, 0.11), [mats["mint"], mats["screen"], mats["amber"]][index], bevel=0.006)
     cube("LaunchHub_CanopyDeck", group, (0.0, 3.84, 0.58), (11.2, 0.34, 4.9), mats["wood"], bevel=0.035)
     cube("LaunchHub_CanopyGlassSlot", group, (2.4, 3.62, 0.62), (4.6, 0.12, 3.5), mats["glass"], bevel=0.012)
     cube("LaunchHub_LeftTower", group, (-6.1, 2.28, 1.22), (1.22, 4.18, 1.28), mats["stone_shadow"], bevel=0.036)
