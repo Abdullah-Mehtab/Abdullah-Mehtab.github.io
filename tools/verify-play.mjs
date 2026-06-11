@@ -4509,6 +4509,13 @@ function assertVerification(result) {
     }
     return;
   }
+  if (result.goalGate === 'gate-4e-bh-career-software-campus-drive-by-arrival-pass') {
+    assertGate4EBHCareerSoftwareCampusDriveByArrivalVerification(result, failures);
+    if (failures.length) {
+      throw new Error(`Play verification failed: ${failures.join('; ')}`);
+    }
+    return;
+  }
   if (result.goalGate === 'gate-4b5-north-ridge') {
     assertGate4B5NorthRidgeVerification(result, failures);
     if (failures.length) {
@@ -5668,7 +5675,8 @@ function isGate4EExpandedArchitectureGate(goalGate) {
     || goalGate === 'gate-4e-bd-circuit-race-control-route-tunnel-pass'
     || goalGate === 'gate-4e-be-primary-landmark-quality-visibility-pass'
     || goalGate === 'gate-4e-bf-primary-route-discovery-visibility-pass'
-    || goalGate === 'gate-4e-bg-sentinel-soc-route-threshold-pass';
+    || goalGate === 'gate-4e-bg-sentinel-soc-route-threshold-pass'
+    || goalGate === 'gate-4e-bh-career-software-campus-drive-by-arrival-pass';
 }
 
 function assertGate3RVerticalSliceVerification(result, failures, options = {}) {
@@ -5722,7 +5730,8 @@ function assertGate3RVerticalSliceVerification(result, failures, options = {}) {
     || result.goalGate === 'gate-4e-bd-circuit-race-control-route-tunnel-pass'
     || result.goalGate === 'gate-4e-be-primary-landmark-quality-visibility-pass'
     || result.goalGate === 'gate-4e-bf-primary-route-discovery-visibility-pass'
-    || result.goalGate === 'gate-4e-bg-sentinel-soc-route-threshold-pass';
+    || result.goalGate === 'gate-4e-bg-sentinel-soc-route-threshold-pass'
+    || result.goalGate === 'gate-4e-bh-career-software-campus-drive-by-arrival-pass';
   const blockout = result.blockout || {};
   const blockoutSetPieces = blockout.setPieces || {};
   const slice = result.verticalSlice || blockout.verticalSlice || {};
@@ -5767,7 +5776,8 @@ function assertGate3RVerticalSliceVerification(result, failures, options = {}) {
     || result.goalGate === 'gate-4e-bd-circuit-race-control-route-tunnel-pass'
     || result.goalGate === 'gate-4e-be-primary-landmark-quality-visibility-pass'
     || result.goalGate === 'gate-4e-bf-primary-route-discovery-visibility-pass'
-    || result.goalGate === 'gate-4e-bg-sentinel-soc-route-threshold-pass';
+    || result.goalGate === 'gate-4e-bg-sentinel-soc-route-threshold-pass'
+    || result.goalGate === 'gate-4e-bh-career-software-campus-drive-by-arrival-pass';
 
   if (result.goalGate !== expectedGoal) {
     failures.push(`Gate 3R probe failed: goalGate=${result.goalGate || 'none'}`);
@@ -7893,8 +7903,8 @@ function assertGate4EBFPrimaryRouteDiscoveryVisibilityVerification(result, failu
   if ((result.forwardDriveProbe?.halts || 0) !== 0) failures.push(`Gate 4-E-BF failed: forwardDriveProbe.halts=${result.forwardDriveProbe?.halts || 0}`);
 }
 
-function assertGate4EBGSentinelSocRouteThresholdVerification(result, failures) {
-  assertGate4EBFPrimaryRouteDiscoveryVisibilityVerification(result, failures, 'gate-4e-bg-sentinel-soc-route-threshold-pass');
+function assertGate4EBGSentinelSocRouteThresholdVerification(result, failures, expectedGoal = 'gate-4e-bg-sentinel-soc-route-threshold-pass') {
+  assertGate4EBFPrimaryRouteDiscoveryVisibilityVerification(result, failures, expectedGoal);
 
   const sentinel = result.gate4b5?.sentinel || {};
   assertAuthoredDistrictAsset(result, 'EnvPolishSentinelSocTower', 'Gate 4-E-BG Sentinel SOC route threshold architecture', failures);
@@ -7912,6 +7922,27 @@ function assertGate4EBGSentinelSocRouteThresholdVerification(result, failures) {
   if ((sentinel.lamps || 0) !== 0) failures.push(`Gate 4-E-BG Sentinel failed: rejected lamps=${sentinel.lamps || 0}`);
   if ((result.colliderCount || 0) !== 2) failures.push(`Gate 4-E-BG failed: unexpected collider count=${result.colliderCount || 0}`);
   if ((result.forwardDriveProbe?.halts || 0) !== 0) failures.push(`Gate 4-E-BG failed: forwardDriveProbe.halts=${result.forwardDriveProbe?.halts || 0}`);
+}
+
+function assertGate4EBHCareerSoftwareCampusDriveByArrivalVerification(result, failures) {
+  assertGate4EBGSentinelSocRouteThresholdVerification(result, failures, 'gate-4e-bh-career-software-campus-drive-by-arrival-pass');
+
+  const career = result.gate4b4?.career || {};
+  assertAuthoredDistrictAsset(result, 'EnvPolishCareerSoftwareHouse', 'Gate 4-E-BH Career software-campus drive-by arrival architecture', failures);
+  if ((career.routeArrivalBoulevards || 0) < 2) failures.push(`Gate 4-E-BH Career failed: routeArrivalBoulevards=${career.routeArrivalBoulevards || 0}/2`);
+  if ((career.routeReceptionCanopies || 0) < 1) failures.push(`Gate 4-E-BH Career failed: routeReceptionCanopies=${career.routeReceptionCanopies || 0}/1`);
+  if ((career.routeHiringReviewPavilions || 0) < 2) failures.push(`Gate 4-E-BH Career failed: routeHiringReviewPavilions=${career.routeHiringReviewPavilions || 0}/2`);
+  if ((career.routeTeamFlowBridges || 0) < 1) failures.push(`Gate 4-E-BH Career failed: routeTeamFlowBridges=${career.routeTeamFlowBridges || 0}/1`);
+  if ((career.routeSprintBeaconStacks || 0) < 2) failures.push(`Gate 4-E-BH Career failed: routeSprintBeaconStacks=${career.routeSprintBeaconStacks || 0}/2`);
+  if ((career.routeForecourtWings || 0) < 2) failures.push(`Gate 4-E-BH Career carry-forward failed: routeForecourtWings=${career.routeForecourtWings || 0}/2`);
+  if ((career.routeSoftwareHouseThresholds || 0) < 1) failures.push(`Gate 4-E-BH Career carry-forward failed: routeSoftwareHouseThresholds=${career.routeSoftwareHouseThresholds || 0}/1`);
+  if ((career.routeArrivalCourts || 0) < 1) failures.push(`Gate 4-E-BH Career carry-forward failed: routeArrivalCourts=${career.routeArrivalCourts || 0}/1`);
+  if ((career.routeHiringArcades || 0) < 1) failures.push(`Gate 4-E-BH Career carry-forward failed: routeHiringArcades=${career.routeHiringArcades || 0}/1`);
+  if ((career.routeTeamPortals || 0) < 1) failures.push(`Gate 4-E-BH Career carry-forward failed: routeTeamPortals=${career.routeTeamPortals || 0}/1`);
+  if ((career.signs || 0) !== 0) failures.push(`Gate 4-E-BH Career failed: rejected signs=${career.signs || 0}`);
+  if ((career.lamps || 0) !== 0) failures.push(`Gate 4-E-BH Career failed: rejected lamps=${career.lamps || 0}`);
+  if ((result.colliderCount || 0) !== 2) failures.push(`Gate 4-E-BH failed: unexpected collider count=${result.colliderCount || 0}`);
+  if ((result.forwardDriveProbe?.halts || 0) !== 0) failures.push(`Gate 4-E-BH failed: forwardDriveProbe.halts=${result.forwardDriveProbe?.halts || 0}`);
 }
 
 function assertAuthoredDistrictAsset(result, assetName, label, failures) {

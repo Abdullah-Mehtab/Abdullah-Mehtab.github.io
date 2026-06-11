@@ -710,6 +710,11 @@ export class SetPieces {
         routeTeamReviewBays: 0,
         routeDeliveryFlowBars: 0,
         routeCampusEntryBeacons: 0,
+        routeArrivalBoulevards: 0,
+        routeReceptionCanopies: 0,
+        routeHiringReviewPavilions: 0,
+        routeTeamFlowBridges: 0,
+        routeSprintBeaconStacks: 0,
         signs: 0,
         lamps: 0
       },
@@ -1973,6 +1978,11 @@ export class SetPieces {
       stats.routeTeamReviewBays += 2;
       stats.routeDeliveryFlowBars += 4;
       stats.routeCampusEntryBeacons += 2;
+      stats.routeArrivalBoulevards += 2;
+      stats.routeReceptionCanopies += 1;
+      stats.routeHiringReviewPavilions += 2;
+      stats.routeTeamFlowBridges += 1;
+      stats.routeSprintBeaconStacks += 2;
     }
 
     const path = point(0, -7.25);
