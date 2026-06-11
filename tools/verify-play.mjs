@@ -4430,6 +4430,13 @@ function assertVerification(result) {
     }
     return;
   }
+  if (result.goalGate === 'gate-4e-bb-career-campus-forecourt-route-read-pass') {
+    assertGate4EBBCareerCampusForecourtRouteReadVerification(result, failures);
+    if (failures.length) {
+      throw new Error(`Play verification failed: ${failures.join('; ')}`);
+    }
+    return;
+  }
   if (result.goalGate === 'gate-4b5-north-ridge') {
     assertGate4B5NorthRidgeVerification(result, failures);
     if (failures.length) {
@@ -5583,7 +5590,8 @@ function isGate4EExpandedArchitectureGate(goalGate) {
     || goalGate === 'gate-4e-ax-skills-learning-campus-route-court-pass'
     || goalGate === 'gate-4e-ay-projects-public-showcase-route-theater-pass'
     || goalGate === 'gate-4e-az-security-operations-threshold-route-facade-pass'
-    || goalGate === 'gate-4e-ba-launch-hub-arrival-portal-pass';
+    || goalGate === 'gate-4e-ba-launch-hub-arrival-portal-pass'
+    || goalGate === 'gate-4e-bb-career-campus-forecourt-route-read-pass';
 }
 
 function assertGate3RVerticalSliceVerification(result, failures, options = {}) {
@@ -5631,7 +5639,8 @@ function assertGate3RVerticalSliceVerification(result, failures, options = {}) {
     || result.goalGate === 'gate-4e-ax-skills-learning-campus-route-court-pass'
     || result.goalGate === 'gate-4e-ay-projects-public-showcase-route-theater-pass'
     || result.goalGate === 'gate-4e-az-security-operations-threshold-route-facade-pass'
-    || result.goalGate === 'gate-4e-ba-launch-hub-arrival-portal-pass';
+    || result.goalGate === 'gate-4e-ba-launch-hub-arrival-portal-pass'
+    || result.goalGate === 'gate-4e-bb-career-campus-forecourt-route-read-pass';
   const blockout = result.blockout || {};
   const blockoutSetPieces = blockout.setPieces || {};
   const slice = result.verticalSlice || blockout.verticalSlice || {};
@@ -5670,7 +5679,8 @@ function assertGate3RVerticalSliceVerification(result, failures, options = {}) {
     || result.goalGate === 'gate-4e-ax-skills-learning-campus-route-court-pass'
     || result.goalGate === 'gate-4e-ay-projects-public-showcase-route-theater-pass'
     || result.goalGate === 'gate-4e-az-security-operations-threshold-route-facade-pass'
-    || result.goalGate === 'gate-4e-ba-launch-hub-arrival-portal-pass';
+    || result.goalGate === 'gate-4e-ba-launch-hub-arrival-portal-pass'
+    || result.goalGate === 'gate-4e-bb-career-campus-forecourt-route-read-pass';
 
   if (result.goalGate !== expectedGoal) {
     failures.push(`Gate 3R probe failed: goalGate=${result.goalGate || 'none'}`);
@@ -7634,8 +7644,8 @@ function assertGate4EAZSecurityOperationsThresholdRouteFacadeVerification(result
   if ((result.forwardDriveProbe?.halts || 0) !== 0) failures.push(`Gate 4-E-AZ failed: forwardDriveProbe.halts=${result.forwardDriveProbe?.halts || 0}`);
 }
 
-function assertGate4EBALaunchHubArrivalPortalVerification(result, failures) {
-  assertGate4EAZSecurityOperationsThresholdRouteFacadeVerification(result, failures, 'gate-4e-ba-launch-hub-arrival-portal-pass');
+function assertGate4EBALaunchHubArrivalPortalVerification(result, failures, expectedGoal = 'gate-4e-ba-launch-hub-arrival-portal-pass') {
+  assertGate4EAZSecurityOperationsThresholdRouteFacadeVerification(result, failures, expectedGoal);
 
   const launch = result.gate4eLaunchHub || {};
   assertAuthoredDistrictAsset(result, 'EnvPolishLaunchHubGateway', 'Gate 4-E-BA Launch Hub arrival portal architecture', failures);
@@ -7647,6 +7657,25 @@ function assertGate4EBALaunchHubArrivalPortalVerification(result, failures) {
   if ((launch.guideTiles || 0) !== 0) failures.push(`Gate 4-E-BA Launch Hub failed: guideTiles=${launch.guideTiles || 0}`);
   if ((result.colliderCount || 0) !== 2) failures.push(`Gate 4-E-BA failed: unexpected collider count=${result.colliderCount || 0}`);
   if ((result.forwardDriveProbe?.halts || 0) !== 0) failures.push(`Gate 4-E-BA failed: forwardDriveProbe.halts=${result.forwardDriveProbe?.halts || 0}`);
+}
+
+function assertGate4EBBCareerCampusForecourtRouteReadVerification(result, failures) {
+  assertGate4EBALaunchHubArrivalPortalVerification(result, failures, 'gate-4e-bb-career-campus-forecourt-route-read-pass');
+
+  const career = result.gate4b4?.career || {};
+  assertAuthoredDistrictAsset(result, 'EnvPolishCareerSoftwareHouse', 'Gate 4-E-BB Career campus forecourt architecture', failures);
+  if ((career.routeForecourtWings || 0) < 2) failures.push(`Gate 4-E-BB Career failed: routeForecourtWings=${career.routeForecourtWings || 0}/2`);
+  if ((career.routeSoftwareHouseThresholds || 0) < 1) failures.push(`Gate 4-E-BB Career failed: routeSoftwareHouseThresholds=${career.routeSoftwareHouseThresholds || 0}/1`);
+  if ((career.routeTeamReviewBays || 0) < 2) failures.push(`Gate 4-E-BB Career failed: routeTeamReviewBays=${career.routeTeamReviewBays || 0}/2`);
+  if ((career.routeDeliveryFlowBars || 0) < 4) failures.push(`Gate 4-E-BB Career failed: routeDeliveryFlowBars=${career.routeDeliveryFlowBars || 0}/4`);
+  if ((career.routeCampusEntryBeacons || 0) < 2) failures.push(`Gate 4-E-BB Career failed: routeCampusEntryBeacons=${career.routeCampusEntryBeacons || 0}/2`);
+  if ((career.routeArrivalCourts || 0) < 1) failures.push(`Gate 4-E-BB Career failed: routeArrivalCourts=${career.routeArrivalCourts || 0}/1`);
+  if ((career.routeHiringArcades || 0) < 1) failures.push(`Gate 4-E-BB Career failed: routeHiringArcades=${career.routeHiringArcades || 0}/1`);
+  if ((career.routeTeamPortals || 0) < 1) failures.push(`Gate 4-E-BB Career failed: routeTeamPortals=${career.routeTeamPortals || 0}/1`);
+  if ((career.signs || 0) !== 0) failures.push(`Gate 4-E-BB Career failed: rejected signs=${career.signs || 0}`);
+  if ((career.lamps || 0) !== 0) failures.push(`Gate 4-E-BB Career failed: rejected lamps=${career.lamps || 0}`);
+  if ((result.colliderCount || 0) !== 2) failures.push(`Gate 4-E-BB failed: unexpected collider count=${result.colliderCount || 0}`);
+  if ((result.forwardDriveProbe?.halts || 0) !== 0) failures.push(`Gate 4-E-BB failed: forwardDriveProbe.halts=${result.forwardDriveProbe?.halts || 0}`);
 }
 
 function assertAuthoredDistrictAsset(result, assetName, label, failures) {

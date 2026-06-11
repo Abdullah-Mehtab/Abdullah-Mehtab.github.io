@@ -1295,6 +1295,16 @@ def create_career_software_house(mats):
         cube(f"CareerSoftwareHouse_RouteHiringBoardLine_{index}", group, (-3.02, y, -6.72), (1.82 - index * 0.12, 0.055, 0.055), [mats["mint"], mats["screen"], mats["aqua"], mats["paper"], mats["purple"]][index], bevel=0.003)
     for index, x in enumerate([-4.9, -2.45, 0, 2.45, 4.9]):
         cube(f"CareerSoftwareHouse_RouteCandidateFlowStep_{index}", group, (x, 0.58, -6.98), (0.78, 0.08, 0.16), [mats["paper"], mats["mint"], mats["screen"], mats["aqua"], mats["paper"]][index], bevel=0.004)
+    cube("CareerSoftwareHouse_RouteForecourtLeftWing", group, (-3.95, 0.52, -7.18), (3.35, 0.16, 0.52), mats["paper"], bevel=0.018)
+    cube("CareerSoftwareHouse_RouteForecourtRightWing", group, (4.25, 0.52, -7.18), (3.35, 0.16, 0.52), mats["paper"], bevel=0.018)
+    cube("CareerSoftwareHouse_RouteSoftwareHouseThreshold", group, (0.15, 1.18, -7.26), (4.15, 1.38, 0.18), mats["glass"], bevel=0.012)
+    cube("CareerSoftwareHouse_RouteThresholdLintel", group, (0.15, 2.02, -7.32), (4.72, 0.22, 0.18), mats["screen"], bevel=0.006)
+    cube("CareerSoftwareHouse_RouteTeamReviewBayLeft", group, (-2.98, 1.08, -7.36), (1.32, 1.02, 0.12), mats["dark"], bevel=0.01)
+    cube("CareerSoftwareHouse_RouteTeamReviewBayRight", group, (3.28, 1.08, -7.36), (1.32, 1.02, 0.12), mats["dark"], bevel=0.01)
+    for index, x in enumerate([-3.3, -1.1, 1.4, 3.55]):
+        cube(f"CareerSoftwareHouse_RouteDeliveryFlowBar_{index}", group, (x, 0.68, -7.48), (1.26, 0.07, 0.12), [mats["mint"], mats["screen"], mats["paper"], mats["aqua"]][index], bevel=0.004)
+    cube("CareerSoftwareHouse_RouteCampusEntryBeaconLeft", group, (-5.72, 1.22, -7.05), (0.18, 1.75, 0.18), mats["mint"], bevel=0.006)
+    cube("CareerSoftwareHouse_RouteCampusEntryBeaconRight", group, (6.02, 1.22, -7.05), (0.18, 1.75, 0.18), mats["screen"], bevel=0.006)
     cube("CareerSoftwareHouse_PublicCampusAtrium", group, (0.15, 3.78, -3.88), (6.85, 6.65, 0.3), mats["glass"], bevel=0.024)
     cube("CareerSoftwareHouse_AtriumTopCodeBand", group, (0.15, 6.98, -4.08), (7.4, 0.17, 0.1), mats["screen"], bevel=0.006)
     cube("CareerSoftwareHouse_AtriumLowerCodeBand", group, (0.15, 3.42, -4.12), (6.1, 0.11, 0.08), mats["mint"], bevel=0.005)
