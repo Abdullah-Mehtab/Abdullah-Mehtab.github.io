@@ -644,6 +644,19 @@ def create_projects_foundry_building(mats):
         cube(f"ProjectsFoundry_RouteProjectStoryBay_{index}", group, (x, 2.05, 5.12), (1.86, 1.14, 0.07), [mats["screen"], mats["glass"], mats["mint"]][index])
     cube("ProjectsFoundry_RouteCompileGantryFrame", group, (-1.05, 5.1, 5.12), (12.0, 0.32, 0.2), mats["dark"])
     cube("ProjectsFoundry_RouteCompileGantryTrolley", group, (-2.95, 4.82, 5.22), (0.88, 0.32, 0.24), mats["stone_shadow"])
+    cube("ProjectsFoundry_RoutePublicShowcaseAtriumFrame", group, (-1.05, 2.68, 5.34), (12.65, 3.48, 0.16), mats["dark"], bevel=0.018)
+    cube("ProjectsFoundry_RoutePublicShowcaseAtriumGlass", group, (-1.05, 2.58, 5.46), (10.82, 2.36, 0.08), mats["glass"], bevel=0.008)
+    cube("ProjectsFoundry_RoutePublicShowcaseAtriumHeader", group, (-1.05, 4.48, 5.52), (12.95, 0.3, 0.18), mats["wood"], bevel=0.014)
+    cube("ProjectsFoundry_RouteReleaseTheaterScreen", group, (-4.95, 2.54, 5.58), (2.3, 1.54, 0.08), mats["screen"], bevel=0.006)
+    cube("ProjectsFoundry_RouteReleaseTheaterStage", group, (-4.95, 0.95, 5.58), (2.7, 0.24, 0.42), mats["stone_shadow"], bevel=0.012)
+    for index, x in enumerate([-1.9, -0.6, 0.7]):
+        cube(f"ProjectsFoundry_RoutePrototypeGalleryPod_{index}", group, (x, 2.28, 5.6), (0.92, 1.08, 0.08), [mats["mint"], mats["glass"], mats["amber"]][index], bevel=0.006)
+        cube(f"ProjectsFoundry_RoutePrototypeGalleryDock_{index}", group, (x, 0.94, 5.58), (1.05, 0.2, 0.38), mats["paper"], bevel=0.008)
+    cube("ProjectsFoundry_RouteCompilePipelineStageRail", group, (3.28, 2.66, 5.6), (3.62, 0.12, 0.08), mats["mint"], bevel=0.004)
+    for index, (x, y, material) in enumerate([(2.1, 1.56, mats["screen"]), (2.92, 2.05, mats["amber"]), (3.74, 2.54, mats["mint"]), (4.56, 3.03, mats["aqua"])]):
+        cube(f"ProjectsFoundry_RouteCompilePipelineStage_{index}", group, (x, y, 5.66), (0.58, 0.42, 0.08), material, bevel=0.004)
+    cube("ProjectsFoundry_RouteBuildReviewBalcony", group, (2.95, 3.72, 5.54), (4.45, 0.22, 0.26), mats["paper"], bevel=0.01)
+    cube("ProjectsFoundry_RouteBuildReviewCanopy", group, (2.95, 4.08, 5.48), (4.95, 0.18, 0.3), mats["dark"], bevel=0.012)
 
 
 def create_campus_fountain(mats):

@@ -648,6 +648,11 @@ export class SetPieces {
         routeCompileGantryFrames: 0,
         publicBuildGalleryFrames: 0,
         foundryHeatCores: 0,
+        routePublicShowcaseAtriums: 0,
+        routeReleaseTheaterScreens: 0,
+        routePrototypeGalleryPods: 0,
+        routeCompilePipelineStages: 0,
+        routeBuildReviewBalconies: 0,
         groundPlates: 0,
         signs: 0,
         lamps: 0
@@ -1862,6 +1867,11 @@ export class SetPieces {
       stats.routeCompileGantryFrames += 1;
       stats.publicBuildGalleryFrames += 1;
       stats.foundryHeatCores += 1;
+      stats.routePublicShowcaseAtriums += 1;
+      stats.routeReleaseTheaterScreens += 1;
+      stats.routePrototypeGalleryPods += 3;
+      stats.routeCompilePipelineStages += 4;
+      stats.routeBuildReviewBalconies += 1;
     }
 
     stats.assemblyRings = stats.foundryBuildings;
