@@ -117,6 +117,8 @@ export class SetPieces {
     };
     this.qualityGroups = [];
     this.qualityStats = {
+      primaryGroups: 0,
+      visiblePrimaryGroups: 0,
       secondaryGroups: 0,
       visibleSecondaryGroups: 0
     };
@@ -1091,14 +1093,24 @@ export class SetPieces {
 
   applyQualityGroups() {
     const hideSecondary = this.world.landscapeQuality === 'low';
+    let primaryGroups = 0;
+    let visiblePrimaryGroups = 0;
     let secondaryGroups = 0;
     let visibleSecondaryGroups = 0;
     for (const entry of this.qualityGroups) {
+      if (entry.tier === 'primary') {
+        primaryGroups += 1;
+        entry.group.visible = true;
+        visiblePrimaryGroups += 1;
+        continue;
+      }
       if (entry.tier !== 'secondary') continue;
       secondaryGroups += 1;
       entry.group.visible = !hideSecondary;
       if (entry.group.visible) visibleSecondaryGroups += 1;
     }
+    this.qualityStats.primaryGroups = primaryGroups;
+    this.qualityStats.visiblePrimaryGroups = visiblePrimaryGroups;
     this.qualityStats.secondaryGroups = secondaryGroups;
     this.qualityStats.visibleSecondaryGroups = visibleSecondaryGroups;
   }
@@ -2237,7 +2249,7 @@ export class SetPieces {
       cellSize: 72
     });
     group.userData.routeCompositionStats = { ...this.routeCompositionStats };
-    this.registerQualityGroup(group, 'secondary');
+    this.registerQualityGroup(group, this.world.gate4ePrimaryRouteDiscoveryMode ? 'primary' : 'secondary');
     this.registerBroadSetPieceBatches('routeComposition', group, 'GATE4E_route_composition', 'routeCompositionRadius');
     this.world.scene.add(group);
   }
@@ -2309,7 +2321,7 @@ export class SetPieces {
       namePrefix: 'GATE4E_launch_hub',
       cellSize: 48
     });
-    this.registerQualityGroup(group, 'secondary');
+    this.registerQualityGroup(group, this.world.gate4ePrimaryRouteDiscoveryMode ? 'primary' : 'secondary');
     this.registerBroadSetPieceBatches('launchHub', group, 'GATE4E_launch_hub', 'routeCompositionRadius');
     this.world.scene.add(group);
   }

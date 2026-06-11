@@ -3145,6 +3145,7 @@ async function collectRuntimeMetrics(page, loadMs, gameplay, water, surfaces, su
     const p95Ms = sorted[Math.floor(sorted.length * 0.95)] || 0;
     const game = window.__portfolioDrive.game;
     const protectedLandmarks = sampleProtectedLandmarks(game);
+    const setPieceQualityByQuality = sampleSetPieceQualityByQuality(game);
     const info = game.renderer.info.render;
     const materialPalette = sampleMaterialPalette(game.world.materials || {});
     return {
@@ -3207,6 +3208,7 @@ async function collectRuntimeMetrics(page, loadMs, gameplay, water, surfaces, su
       terrainRelief: game.world.terrain?.getReliefStats?.() || {},
       shoreline: game.world.terrain?.getShorelineStats?.() || {},
       setPieceQuality: game.world.setPieces?.getQualityStats?.() || {},
+      setPieceQualityByQuality,
       gate4dLifeRuntime: game.world.setPieces?.getGate4DLifeStats?.() || {},
       startDiorama: game.world.setPieces?.getStartDioramaStats?.() || {},
       polishMaterials: game.world.setPieces?.getPolishMaterialStats?.() || {},
@@ -3452,6 +3454,29 @@ async function collectRuntimeMetrics(page, loadMs, gameplay, water, surfaces, su
         restored: restored.education || null,
         byQuality
       };
+    }
+
+    function sampleSetPieceQualityByQuality(game) {
+      const setPieces = game.world.setPieces;
+      if (!setPieces?.getQualityStats) return {};
+      const originalQuality = game.world.landscapeQuality;
+      const samples = {};
+      for (const quality of ['low', 'medium', 'high']) {
+        game.world.setLandscapeQuality(quality);
+        window.__portfolioDrive.respawn('landing');
+        setPieces.applyQuality?.();
+        setPieces.updateBroadSetPieceVisibility?.(game.vehicle.position);
+        samples[quality] = {
+          quality: game.world.landscapeQuality,
+          setPieceQuality: setPieces.getQualityStats?.() || {},
+          broadSetPieceVisibility: setPieces.getBroadVisibilityStats?.() || {}
+        };
+      }
+      game.world.setLandscapeQuality(originalQuality);
+      window.__portfolioDrive.respawn('landing');
+      setPieces.applyQuality?.();
+      setPieces.updateBroadSetPieceVisibility?.(game.vehicle.position);
+      return samples;
     }
 
     function sampleZonePresentation(game) {
@@ -4465,6 +4490,13 @@ function assertVerification(result) {
   }
   if (result.goalGate === 'gate-4e-be-primary-landmark-quality-visibility-pass') {
     assertGate4EBEPrimaryLandmarkQualityVisibilityVerification(result, failures);
+    if (failures.length) {
+      throw new Error(`Play verification failed: ${failures.join('; ')}`);
+    }
+    return;
+  }
+  if (result.goalGate === 'gate-4e-bf-primary-route-discovery-visibility-pass') {
+    assertGate4EBFPrimaryRouteDiscoveryVisibilityVerification(result, failures);
     if (failures.length) {
       throw new Error(`Play verification failed: ${failures.join('; ')}`);
     }
@@ -5627,7 +5659,8 @@ function isGate4EExpandedArchitectureGate(goalGate) {
     || goalGate === 'gate-4e-bb-career-campus-forecourt-route-read-pass'
     || goalGate === 'gate-4e-bc-signal-harbor-contact-exchange-route-gateway-pass'
     || goalGate === 'gate-4e-bd-circuit-race-control-route-tunnel-pass'
-    || goalGate === 'gate-4e-be-primary-landmark-quality-visibility-pass';
+    || goalGate === 'gate-4e-be-primary-landmark-quality-visibility-pass'
+    || goalGate === 'gate-4e-bf-primary-route-discovery-visibility-pass';
 }
 
 function assertGate3RVerticalSliceVerification(result, failures, options = {}) {
@@ -5679,7 +5712,8 @@ function assertGate3RVerticalSliceVerification(result, failures, options = {}) {
     || result.goalGate === 'gate-4e-bb-career-campus-forecourt-route-read-pass'
     || result.goalGate === 'gate-4e-bc-signal-harbor-contact-exchange-route-gateway-pass'
     || result.goalGate === 'gate-4e-bd-circuit-race-control-route-tunnel-pass'
-    || result.goalGate === 'gate-4e-be-primary-landmark-quality-visibility-pass';
+    || result.goalGate === 'gate-4e-be-primary-landmark-quality-visibility-pass'
+    || result.goalGate === 'gate-4e-bf-primary-route-discovery-visibility-pass';
   const blockout = result.blockout || {};
   const blockoutSetPieces = blockout.setPieces || {};
   const slice = result.verticalSlice || blockout.verticalSlice || {};
@@ -5722,7 +5756,8 @@ function assertGate3RVerticalSliceVerification(result, failures, options = {}) {
     || result.goalGate === 'gate-4e-bb-career-campus-forecourt-route-read-pass'
     || result.goalGate === 'gate-4e-bc-signal-harbor-contact-exchange-route-gateway-pass'
     || result.goalGate === 'gate-4e-bd-circuit-race-control-route-tunnel-pass'
-    || result.goalGate === 'gate-4e-be-primary-landmark-quality-visibility-pass';
+    || result.goalGate === 'gate-4e-be-primary-landmark-quality-visibility-pass'
+    || result.goalGate === 'gate-4e-bf-primary-route-discovery-visibility-pass';
 
   if (result.goalGate !== expectedGoal) {
     failures.push(`Gate 3R probe failed: goalGate=${result.goalGate || 'none'}`);
@@ -7756,8 +7791,8 @@ function assertGate4EBDCircuitRaceControlRouteTunnelVerification(result, failure
   if ((result.forwardDriveProbe?.halts || 0) !== 0) failures.push(`Gate 4-E-BD failed: forwardDriveProbe.halts=${result.forwardDriveProbe?.halts || 0}`);
 }
 
-function assertGate4EBEPrimaryLandmarkQualityVisibilityVerification(result, failures) {
-  assertGate4EBDCircuitRaceControlRouteTunnelVerification(result, failures, 'gate-4e-be-primary-landmark-quality-visibility-pass');
+function assertGate4EBEPrimaryLandmarkQualityVisibilityVerification(result, failures, expectedGoal = 'gate-4e-be-primary-landmark-quality-visibility-pass') {
+  assertGate4EBDCircuitRaceControlRouteTunnelVerification(result, failures, expectedGoal);
 
   const samples = [
     ['far', result.protectedLandmarks?.far],
@@ -7781,6 +7816,71 @@ function assertGate4EBEPrimaryLandmarkQualityVisibilityVerification(result, fail
   }
   if ((result.colliderCount || 0) !== 2) failures.push(`Gate 4-E-BE failed: unexpected collider count=${result.colliderCount || 0}`);
   if ((result.forwardDriveProbe?.halts || 0) !== 0) failures.push(`Gate 4-E-BE failed: forwardDriveProbe.halts=${result.forwardDriveProbe?.halts || 0}`);
+}
+
+function assertGate4EBFPrimaryRouteDiscoveryVisibilityVerification(result, failures) {
+  assertGate4EBEPrimaryLandmarkQualityVisibilityVerification(result, failures, 'gate-4e-bf-primary-route-discovery-visibility-pass');
+
+  const quality = result.setPieceQuality || {};
+  const low = result.setPieceQualityByQuality?.low || {};
+  const lowQuality = low.setPieceQuality || {};
+  const lowBroad = low.broadSetPieceVisibility || {};
+  const mobileQuality = result.mobile?.setPieceQuality || {};
+  const mobileBroad = result.mobile?.broadSetPieceVisibility || {};
+  const route = result.routeComposition || {};
+  const launch = result.gate4eLaunchHub || {};
+
+  if ((quality.primaryGroups || 0) < 2) {
+    failures.push(`Gate 4-E-BF route discovery failed: primaryGroups=${quality.primaryGroups || 0}/2`);
+  }
+  if ((quality.visiblePrimaryGroups || 0) !== (quality.primaryGroups || 0)) {
+    failures.push(`Gate 4-E-BF route discovery failed: visiblePrimaryGroups=${quality.visiblePrimaryGroups || 0}/${quality.primaryGroups || 0}`);
+  }
+  if ((lowQuality.primaryGroups || 0) < 2) {
+    failures.push(`Gate 4-E-BF low-quality route discovery failed: primaryGroups=${lowQuality.primaryGroups || 0}/2`);
+  }
+  if ((lowQuality.visiblePrimaryGroups || 0) !== (lowQuality.primaryGroups || 0)) {
+    failures.push(`Gate 4-E-BF low-quality route discovery failed: visiblePrimaryGroups=${lowQuality.visiblePrimaryGroups || 0}/${lowQuality.primaryGroups || 0}`);
+  }
+  if ((mobileQuality.primaryGroups || 0) < 2) {
+    failures.push(`Gate 4-E-BF mobile route discovery failed: primaryGroups=${mobileQuality.primaryGroups || 0}/2`);
+  }
+  if ((mobileQuality.visiblePrimaryGroups || 0) !== (mobileQuality.primaryGroups || 0)) {
+    failures.push(`Gate 4-E-BF mobile route discovery failed: visiblePrimaryGroups=${mobileQuality.visiblePrimaryGroups || 0}/${mobileQuality.primaryGroups || 0}`);
+  }
+  if ((route.gate4eRouteAnchors || 0) < 33) {
+    failures.push(`Gate 4-E-BF route composition failed: gate4eRouteAnchors=${route.gate4eRouteAnchors || 0}/33`);
+  }
+  if ((route.authoredAssets || 0) < 33) {
+    failures.push(`Gate 4-E-BF route composition failed: authoredAssets=${route.authoredAssets || 0}/33`);
+  }
+  if (!launch.enabled || (launch.authoredAssets || 0) < 1) {
+    failures.push(`Gate 4-E-BF launch hub failed: enabled=${Boolean(launch.enabled)}, authoredAssets=${launch.authoredAssets || 0}`);
+  }
+  const lowRoute = lowBroad.groups?.routeComposition;
+  const lowLaunch = lowBroad.groups?.launchHub;
+  const mobileRoute = mobileBroad.groups?.routeComposition;
+  const mobileLaunch = mobileBroad.groups?.launchHub;
+  if ((lowRoute?.visibleBatches || 0) < 1) {
+    failures.push(`Gate 4-E-BF low-quality route composition visibility failed: visibleBatches=${lowRoute?.visibleBatches || 0}`);
+  }
+  if ((lowLaunch?.visibleBatches || 0) < 1) {
+    failures.push(`Gate 4-E-BF low-quality launch hub visibility failed: visibleBatches=${lowLaunch?.visibleBatches || 0}`);
+  }
+  if ((mobileRoute?.visibleBatches || 0) < 1) {
+    failures.push(`Gate 4-E-BF mobile route composition visibility failed: visibleBatches=${mobileRoute?.visibleBatches || 0}`);
+  }
+  if ((mobileLaunch?.visibleBatches || 0) < 1) {
+    failures.push(`Gate 4-E-BF mobile launch hub visibility failed: visibleBatches=${mobileLaunch?.visibleBatches || 0}`);
+  }
+  if ((result.gate3rPlacement?.roadIntrusions || 0) !== 0) {
+    failures.push(`Gate 4-E-BF placement failed: roadIntrusions=${result.gate3rPlacement?.roadIntrusions || 0}`);
+  }
+  if ((result.gate3rPlacement?.footprintIntrusions || 0) !== 0) {
+    failures.push(`Gate 4-E-BF placement failed: footprintIntrusions=${result.gate3rPlacement?.footprintIntrusions || 0}`);
+  }
+  if ((result.colliderCount || 0) !== 2) failures.push(`Gate 4-E-BF failed: unexpected collider count=${result.colliderCount || 0}`);
+  if ((result.forwardDriveProbe?.halts || 0) !== 0) failures.push(`Gate 4-E-BF failed: forwardDriveProbe.halts=${result.forwardDriveProbe?.halts || 0}`);
 }
 
 function assertAuthoredDistrictAsset(result, assetName, label, failures) {
