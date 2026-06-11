@@ -153,6 +153,7 @@ try {
   await screenshot(page, '07-world-whisper.png');
   await page.evaluate(() => window.__portfolioDrive.game.ui.updateWhisper(null));
 
+  const zoneVehicleFraming = [];
   for (const zone of worldZones) {
     await page.evaluate((zoneId) => {
       const game = window.__portfolioDrive.game;
@@ -161,6 +162,7 @@ try {
       if (zoneEntry) game.focusZone(zoneEntry);
     }, zone.id);
     await delay(650);
+    zoneVehicleFraming.push(await sampleZoneVehicleFrame(page, zone.id));
     await screenshot(page, `zone-${slug(zone.id)}.png`);
   }
   await page.evaluate(() => window.__portfolioDrive.game.clearFocus());
@@ -244,6 +246,7 @@ try {
     titleUi,
     panelUi,
     overlayUi: { map: mapUi, menu: menuUi },
+    zoneVehicleFraming,
     collectibles,
     securityScan,
     forwardDriveProbe,
@@ -329,6 +332,74 @@ async function waitForReady(page) {
 
 async function screenshot(page, name) {
   await page.screenshot({ path: join(outputDir, name), fullPage: true });
+}
+
+async function sampleZoneVehicleFrame(page, zoneId) {
+  return page.evaluate((id) => {
+    const game = window.__portfolioDrive.game;
+    const root = game.vehicle?.modelRoot;
+    const camera = game.camera;
+    const Vector3 = game.vehicle?.position?.constructor;
+    if (!root || !camera || !Vector3) return { id, ready: false };
+
+    root.updateMatrixWorld(true);
+    camera.updateMatrixWorld(true);
+    camera.updateProjectionMatrix();
+
+    let minX = Infinity;
+    let minY = Infinity;
+    let maxX = -Infinity;
+    let maxY = -Infinity;
+    let points = 0;
+
+    root.traverse((object) => {
+      if (!object.isMesh || !object.geometry) return;
+      if (!object.geometry.boundingBox) object.geometry.computeBoundingBox();
+      const box = object.geometry.boundingBox;
+      if (!box) return;
+      for (const x of [box.min.x, box.max.x]) {
+        for (const y of [box.min.y, box.max.y]) {
+          for (const z of [box.min.z, box.max.z]) {
+            const point = new Vector3(x, y, z);
+            point.applyMatrix4(object.matrixWorld);
+            point.project(camera);
+            if (!Number.isFinite(point.x) || !Number.isFinite(point.y) || !Number.isFinite(point.z)) continue;
+            const screenX = (point.x + 1) / 2;
+            const screenY = (1 - point.y) / 2;
+            minX = Math.min(minX, screenX);
+            maxX = Math.max(maxX, screenX);
+            minY = Math.min(minY, screenY);
+            maxY = Math.max(maxY, screenY);
+            points += 1;
+          }
+        }
+      }
+    });
+
+    if (!points) return { id, ready: false };
+
+    const margin = Math.min(minX, 1 - maxX, minY, 1 - maxY);
+    const inFrame = maxX > 0 && minX < 1 && maxY > 0 && minY < 1;
+    const safeInFrame = minX >= 0.035 && maxX <= 0.965 && minY >= 0.08 && maxY <= 0.965;
+
+    return {
+      id,
+      ready: true,
+      inFrame,
+      safeInFrame,
+      margin: Number(margin.toFixed(3)),
+      centerX: Number(((minX + maxX) / 2).toFixed(3)),
+      centerY: Number(((minY + maxY) / 2).toFixed(3)),
+      width: Number((maxX - minX).toFixed(3)),
+      height: Number((maxY - minY).toFixed(3)),
+      bounds: {
+        minX: Number(minX.toFixed(3)),
+        maxX: Number(maxX.toFixed(3)),
+        minY: Number(minY.toFixed(3)),
+        maxY: Number(maxY.toFixed(3))
+      }
+    };
+  }, zoneId);
 }
 
 async function exerciseGameplay(page) {
@@ -4579,6 +4650,13 @@ function assertVerification(result) {
     }
     return;
   }
+  if (result.goalGate === 'gate-4e-br-vehicle-first-presentation-framing-pass') {
+    assertGate4EBRVehicleFirstPresentationFramingVerification(result, failures);
+    if (failures.length) {
+      throw new Error(`Play verification failed: ${failures.join('; ')}`);
+    }
+    return;
+  }
   if (result.goalGate === 'gate-4b5-north-ridge') {
     assertGate4B5NorthRidgeVerification(result, failures);
     if (failures.length) {
@@ -5748,7 +5826,8 @@ function isGate4EExpandedArchitectureGate(goalGate) {
     || goalGate === 'gate-4e-bn-projects-release-foundry-drive-by-pass'
     || goalGate === 'gate-4e-bo-career-campus-route-framing-pass'
     || goalGate === 'gate-4e-bp-contact-vehicle-first-framing-pass'
-    || goalGate === 'gate-4e-bq-potato-harvest-court-vehicle-first-pass';
+    || goalGate === 'gate-4e-bq-potato-harvest-court-vehicle-first-pass'
+    || goalGate === 'gate-4e-br-vehicle-first-presentation-framing-pass';
 }
 
 function assertGate3RVerticalSliceVerification(result, failures, options = {}) {
@@ -5812,7 +5891,8 @@ function assertGate3RVerticalSliceVerification(result, failures, options = {}) {
     || result.goalGate === 'gate-4e-bn-projects-release-foundry-drive-by-pass'
     || result.goalGate === 'gate-4e-bo-career-campus-route-framing-pass'
     || result.goalGate === 'gate-4e-bp-contact-vehicle-first-framing-pass'
-    || result.goalGate === 'gate-4e-bq-potato-harvest-court-vehicle-first-pass';
+    || result.goalGate === 'gate-4e-bq-potato-harvest-court-vehicle-first-pass'
+    || result.goalGate === 'gate-4e-br-vehicle-first-presentation-framing-pass';
   const blockout = result.blockout || {};
   const blockoutSetPieces = blockout.setPieces || {};
   const slice = result.verticalSlice || blockout.verticalSlice || {};
@@ -5867,7 +5947,8 @@ function assertGate3RVerticalSliceVerification(result, failures, options = {}) {
     || result.goalGate === 'gate-4e-bn-projects-release-foundry-drive-by-pass'
     || result.goalGate === 'gate-4e-bo-career-campus-route-framing-pass'
     || result.goalGate === 'gate-4e-bp-contact-vehicle-first-framing-pass'
-    || result.goalGate === 'gate-4e-bq-potato-harvest-court-vehicle-first-pass';
+    || result.goalGate === 'gate-4e-bq-potato-harvest-court-vehicle-first-pass'
+    || result.goalGate === 'gate-4e-br-vehicle-first-presentation-framing-pass';
 
   if (result.goalGate !== expectedGoal) {
     failures.push(`Gate 3R probe failed: goalGate=${result.goalGate || 'none'}`);
@@ -8210,8 +8291,8 @@ function assertGate4EBPContactVehicleFirstFramingVerification(result, failures, 
   if ((result.forwardDriveProbe?.halts || 0) !== 0) failures.push(`Gate 4-E-BP failed: forwardDriveProbe.halts=${result.forwardDriveProbe?.halts || 0}`);
 }
 
-function assertGate4EBQPotatoHarvestCourtVehicleFirstVerification(result, failures) {
-  assertGate4EBPContactVehicleFirstFramingVerification(result, failures, 'gate-4e-bq-potato-harvest-court-vehicle-first-pass');
+function assertGate4EBQPotatoHarvestCourtVehicleFirstVerification(result, failures, expectedGoal = 'gate-4e-bq-potato-harvest-court-vehicle-first-pass') {
+  assertGate4EBPContactVehicleFirstFramingVerification(result, failures, expectedGoal);
 
   const farm = result.gate4b2?.farm || {};
   assertAuthoredDistrictAsset(result, 'EnvPolishPotatoFarmStand', 'Gate 4-E-BQ Potato harvest-court architecture', failures);
@@ -8239,6 +8320,37 @@ function assertGate4EBQPotatoHarvestCourtVehicleFirstVerification(result, failur
   }
   if ((result.colliderCount || 0) !== 2) failures.push(`Gate 4-E-BQ failed: unexpected collider count=${result.colliderCount || 0}`);
   if ((result.forwardDriveProbe?.halts || 0) !== 0) failures.push(`Gate 4-E-BQ failed: forwardDriveProbe.halts=${result.forwardDriveProbe?.halts || 0}`);
+}
+
+function assertGate4EBRVehicleFirstPresentationFramingVerification(result, failures) {
+  assertGate4EBQPotatoHarvestCourtVehicleFirstVerification(result, failures, 'gate-4e-br-vehicle-first-presentation-framing-pass');
+
+  const frames = result.zoneVehicleFraming || [];
+  const expectedZones = worldZones.map((zone) => zone.id);
+  if (frames.length !== expectedZones.length) {
+    failures.push(`Gate 4-E-BR framing failed: zoneVehicleFraming=${frames.length}/${expectedZones.length}`);
+  }
+
+  const frameById = new Map(frames.map((frame) => [frame.id, frame]));
+  for (const zoneId of expectedZones) {
+    if (!frameById.has(zoneId)) failures.push(`Gate 4-E-BR framing failed: missing ${zoneId}`);
+  }
+
+  const cropped = frames
+    .filter((frame) => frame.id !== 'data-pier')
+    .filter((frame) => !frame.ready || !frame.safeInFrame)
+    .map((frame) => `${frame.id}:margin=${frame.margin ?? 'n/a'},bounds=${JSON.stringify(frame.bounds || {})}`);
+  if (cropped.length) {
+    failures.push(`Gate 4-E-BR framing failed: cropped vehicle frames=${cropped.join('; ')}`);
+  }
+
+  const hardEdges = frames
+    .filter((frame) => frame.id !== 'data-pier')
+    .filter((frame) => frame.ready && frame.inFrame && frame.margin < 0.035)
+    .map((frame) => `${frame.id}:${frame.margin}`);
+  if (hardEdges.length) {
+    failures.push(`Gate 4-E-BR framing failed: vehicle hard-edge margins=${hardEdges.join(', ')}`);
+  }
 }
 
 function assertAuthoredDistrictAsset(result, assetName, label, failures) {
