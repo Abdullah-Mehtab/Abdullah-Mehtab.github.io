@@ -1620,6 +1620,27 @@ def create_todo_planning_studio(mats):
         cube(f"TodoPlanningStudio_DeliveryLaneSpineStep_{index}", group, (7.08, y, -2.05), (0.08, 0.14, 0.68), [mats["screen"], mats["mint"], mats["paper"], mats["amber"], mats["aqua"]][index], bevel=0.003)
     cube("TodoPlanningStudio_DecisionBeaconMast", group, (0.0, 8.18, -3.44), (0.2, 2.28, 0.2), mats["dark"], bevel=0.008)
     cylinder("TodoPlanningStudio_DecisionBeacon", group, (0.0, 9.48, -3.44), 0.5, 0.44, mats["amber"], vertices=20, bevel=0.012)
+    cube("TodoPlanningStudio_RouteSprintBoardGateDeck", group, (0.0, 0.46, -5.92), (12.9, 0.26, 1.06), mats["stone"], bevel=0.04)
+    for x in [-6.05, 6.05]:
+        cube("TodoPlanningStudio_RouteSprintBoardGatePylon", group, (x, 3.58, -5.92), (0.62, 6.18, 0.72), mats["stone_shadow"], bevel=0.035)
+        cube("TodoPlanningStudio_RouteSprintBoardGateLight", group, (x, 3.54, -6.34), (0.08, 4.58, 0.06), mats["screen"], bevel=0.004)
+    cube("TodoPlanningStudio_RouteSprintBoardGateHeader", group, (0.0, 6.78, -5.92), (12.9, 0.46, 0.92), mats["dark"], bevel=0.026)
+    cube("TodoPlanningStudio_RouteSprintBoardSignalBand", group, (0.0, 6.52, -6.42), (10.8, 0.1, 0.06), mats["mint"], bevel=0.004)
+    cube("TodoPlanningStudio_RouteProductionPortalGlass", group, (0.0, 3.46, -6.38), (8.84, 3.72, 0.08), mats["glass"], bevel=0.014)
+    for x in [-3.9, -1.95, 0.0, 1.95, 3.9]:
+        cube("TodoPlanningStudio_RouteProductionPortalMullion", group, (x, 3.46, -6.46), (0.08, 3.42, 0.07), mats["screen"], bevel=0.003)
+    for index, x in enumerate([-4.35, -2.9, -1.45, 0.0, 1.45, 2.9, 4.35]):
+        cube(f"TodoPlanningStudio_RouteSprintBoardTile_{index}", group, (x, 2.64 + (index % 2) * 0.44, -6.5), (0.72, 0.34, 0.06), [mats["paper"], mats["amber"], mats["mint"], mats["aqua"]][index % 4], bevel=0.004)
+    for x in [-4.95, 4.95]:
+        cube("TodoPlanningStudio_RouteBacklogArchiveWing", group, (x, 2.58, -6.72), (1.12, 4.12, 0.86), mats["wood"], bevel=0.028)
+        for index, y in enumerate([1.36, 1.96, 2.56, 3.16]):
+            cube(f"TodoPlanningStudio_RouteBacklogArchiveSlot_{'L' if x < 0 else 'R'}_{index}", group, (x, y, -7.2), (0.68, 0.12, 0.08), [mats["paper"], mats["mint"], mats["amber"], mats["aqua"]][index], bevel=0.003)
+    cube("TodoPlanningStudio_RouteDecisionStack", group, (6.98, 4.34, -5.86), (0.72, 5.88, 0.84), mats["dark"], bevel=0.026)
+    for index, y in enumerate([2.0, 2.66, 3.32, 3.98, 4.64, 5.3, 5.96]):
+        cube(f"TodoPlanningStudio_RouteDecisionStackPulse_{index}", group, (6.56, y, -6.34), (0.08, 0.12, 0.58), [mats["screen"], mats["mint"], mats["amber"], mats["paper"], mats["aqua"], mats["purple"], mats["screen"]][index], bevel=0.003)
+    cube("TodoPlanningStudio_RouteDeliverySignalRun", group, (-0.2, 7.34, -6.46), (9.4, 0.16, 0.08), mats["screen"], bevel=0.004)
+    for index, x in enumerate([-4.2, -2.8, -1.4, 0.0, 1.4, 2.8, 4.2]):
+        cube(f"TodoPlanningStudio_RouteDeliverySignalPacket_{index}", group, (x, 7.34, -6.56), (0.38, 0.24, 0.08), [mats["mint"], mats["paper"], mats["amber"], mats["aqua"]][index % 4], bevel=0.004)
 
 
 def create_document_arcade(mats):

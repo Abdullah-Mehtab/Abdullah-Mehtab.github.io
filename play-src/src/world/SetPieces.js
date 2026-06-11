@@ -610,6 +610,11 @@ export class SetPieces {
         routeReviewTheaters: 0,
         routeDeliveryBridges: 0,
         routeDecisionBeacons: 0,
+        routeSprintBoardGates: 0,
+        routeProductionPortals: 0,
+        routeDecisionStacks: 0,
+        routeBacklogArchiveWings: 0,
+        routeDeliverySignalRuns: 0,
         signs: 0,
         lamps: 0
       },
@@ -1839,6 +1844,11 @@ export class SetPieces {
       stats.routeReviewTheaters += 1;
       stats.routeDeliveryBridges += 1;
       stats.routeDecisionBeacons += 1;
+      stats.routeSprintBoardGates += 1;
+      stats.routeProductionPortals += 1;
+      stats.routeDecisionStacks += 1;
+      stats.routeBacklogArchiveWings += 2;
+      stats.routeDeliverySignalRuns += 1;
       stats.queueRails += 3;
     }
 
