@@ -7,6 +7,7 @@ import { worldZones } from './worldData.js';
 const SETPIECE_COMPOSED_ZONE_IDS = new Set(worldZones
   .filter((zone) => zone.id !== 'education')
   .map((zone) => zone.id));
+const PROTECTED_LANDMARK_EXACT_DISTANCE = 10000;
 
 export class Zones {
   constructor(world) {
@@ -202,8 +203,8 @@ export class Zones {
     exact.name = `VIS_Landmark_${zone.id}_exact`;
     const silhouette = this.mergeStaticMeshes(this.createFccSilhouette(), `${zone.id}_silhouette`);
     silhouette.name = `VIS_Landmark_${zone.id}_silhouette`;
-    silhouette.visible = true;
-    exact.visible = false;
+    silhouette.visible = false;
+    exact.visible = true;
 
     const group = new THREE.Group();
     group.add(exact, silhouette);
@@ -212,13 +213,13 @@ export class Zones {
       exact,
       silhouette,
       worldPosition: zone.position.clone(),
-      mode: 'silhouette',
+      mode: 'exact',
       distance: Infinity,
-      lowDistances: { show: 190, hide: 220 },
-      mediumDistances: { show: 300, hide: 340 },
-      highDistances: { show: 420, hide: 480 },
-      showDistance: 300,
-      hideDistance: 340,
+      lowDistances: { show: PROTECTED_LANDMARK_EXACT_DISTANCE, hide: PROTECTED_LANDMARK_EXACT_DISTANCE },
+      mediumDistances: { show: PROTECTED_LANDMARK_EXACT_DISTANCE, hide: PROTECTED_LANDMARK_EXACT_DISTANCE },
+      highDistances: { show: PROTECTED_LANDMARK_EXACT_DISTANCE, hide: PROTECTED_LANDMARK_EXACT_DISTANCE },
+      showDistance: PROTECTED_LANDMARK_EXACT_DISTANCE,
+      hideDistance: PROTECTED_LANDMARK_EXACT_DISTANCE,
       exactTriangles: countTriangles(exact),
       silhouetteTriangles: countTriangles(silhouette)
     };

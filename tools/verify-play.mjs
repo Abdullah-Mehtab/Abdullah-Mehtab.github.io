@@ -3425,6 +3425,7 @@ async function collectRuntimeMetrics(page, loadMs, gameplay, water, surfaces, su
     function sampleProtectedLandmarks(game) {
       const zones = game.world.zonesSystem;
       if (!zones?.getProtectedLandmarkStats) return {};
+      const originalQuality = game.world.landscapeQuality;
       window.__portfolioDrive.respawn('landing');
       zones.update(game.vehicle.position);
       const far = zones.getProtectedLandmarkStats();
@@ -3435,10 +3436,21 @@ async function collectRuntimeMetrics(page, loadMs, gameplay, water, surfaces, su
       window.__portfolioDrive.respawn('landing');
       zones.update(game.vehicle.position);
       const restored = zones.getProtectedLandmarkStats();
+      const byQuality = {};
+      for (const quality of ['low', 'medium', 'high']) {
+        game.world.setLandscapeQuality(quality);
+        window.__portfolioDrive.respawn('landing');
+        zones.update(game.vehicle.position);
+        byQuality[quality] = zones.getProtectedLandmarkStats().education || null;
+      }
+      game.world.setLandscapeQuality(originalQuality);
+      window.__portfolioDrive.respawn('landing');
+      zones.update(game.vehicle.position);
       return {
         far: far.education || null,
         near: near.education || null,
-        restored: restored.education || null
+        restored: restored.education || null,
+        byQuality
       };
     }
 
@@ -4446,6 +4458,13 @@ function assertVerification(result) {
   }
   if (result.goalGate === 'gate-4e-bd-circuit-race-control-route-tunnel-pass') {
     assertGate4EBDCircuitRaceControlRouteTunnelVerification(result, failures);
+    if (failures.length) {
+      throw new Error(`Play verification failed: ${failures.join('; ')}`);
+    }
+    return;
+  }
+  if (result.goalGate === 'gate-4e-be-primary-landmark-quality-visibility-pass') {
+    assertGate4EBEPrimaryLandmarkQualityVisibilityVerification(result, failures);
     if (failures.length) {
       throw new Error(`Play verification failed: ${failures.join('; ')}`);
     }
@@ -5607,7 +5626,8 @@ function isGate4EExpandedArchitectureGate(goalGate) {
     || goalGate === 'gate-4e-ba-launch-hub-arrival-portal-pass'
     || goalGate === 'gate-4e-bb-career-campus-forecourt-route-read-pass'
     || goalGate === 'gate-4e-bc-signal-harbor-contact-exchange-route-gateway-pass'
-    || goalGate === 'gate-4e-bd-circuit-race-control-route-tunnel-pass';
+    || goalGate === 'gate-4e-bd-circuit-race-control-route-tunnel-pass'
+    || goalGate === 'gate-4e-be-primary-landmark-quality-visibility-pass';
 }
 
 function assertGate3RVerticalSliceVerification(result, failures, options = {}) {
@@ -5658,7 +5678,8 @@ function assertGate3RVerticalSliceVerification(result, failures, options = {}) {
     || result.goalGate === 'gate-4e-ba-launch-hub-arrival-portal-pass'
     || result.goalGate === 'gate-4e-bb-career-campus-forecourt-route-read-pass'
     || result.goalGate === 'gate-4e-bc-signal-harbor-contact-exchange-route-gateway-pass'
-    || result.goalGate === 'gate-4e-bd-circuit-race-control-route-tunnel-pass';
+    || result.goalGate === 'gate-4e-bd-circuit-race-control-route-tunnel-pass'
+    || result.goalGate === 'gate-4e-be-primary-landmark-quality-visibility-pass';
   const blockout = result.blockout || {};
   const blockoutSetPieces = blockout.setPieces || {};
   const slice = result.verticalSlice || blockout.verticalSlice || {};
@@ -5700,7 +5721,8 @@ function assertGate3RVerticalSliceVerification(result, failures, options = {}) {
     || result.goalGate === 'gate-4e-ba-launch-hub-arrival-portal-pass'
     || result.goalGate === 'gate-4e-bb-career-campus-forecourt-route-read-pass'
     || result.goalGate === 'gate-4e-bc-signal-harbor-contact-exchange-route-gateway-pass'
-    || result.goalGate === 'gate-4e-bd-circuit-race-control-route-tunnel-pass';
+    || result.goalGate === 'gate-4e-bd-circuit-race-control-route-tunnel-pass'
+    || result.goalGate === 'gate-4e-be-primary-landmark-quality-visibility-pass';
 
   if (result.goalGate !== expectedGoal) {
     failures.push(`Gate 3R probe failed: goalGate=${result.goalGate || 'none'}`);
@@ -7715,8 +7737,8 @@ function assertGate4EBCSignalHarborContactExchangeRouteGatewayVerification(resul
   if ((result.forwardDriveProbe?.halts || 0) !== 0) failures.push(`Gate 4-E-BC failed: forwardDriveProbe.halts=${result.forwardDriveProbe?.halts || 0}`);
 }
 
-function assertGate4EBDCircuitRaceControlRouteTunnelVerification(result, failures) {
-  assertGate4EBCSignalHarborContactExchangeRouteGatewayVerification(result, failures, 'gate-4e-bd-circuit-race-control-route-tunnel-pass');
+function assertGate4EBDCircuitRaceControlRouteTunnelVerification(result, failures, expectedGoal = 'gate-4e-bd-circuit-race-control-route-tunnel-pass') {
+  assertGate4EBCSignalHarborContactExchangeRouteGatewayVerification(result, failures, expectedGoal);
   assertGate4DCircuitTimeTrialGate(result, failures);
 
   const circuit = result.gate4b5?.circuit || {};
@@ -7732,6 +7754,33 @@ function assertGate4EBDCircuitRaceControlRouteTunnelVerification(result, failure
   if ((circuit.lamps || 0) !== 0) failures.push(`Gate 4-E-BD Circuit failed: rejected lamps=${circuit.lamps || 0}`);
   if ((result.colliderCount || 0) !== 2) failures.push(`Gate 4-E-BD failed: unexpected collider count=${result.colliderCount || 0}`);
   if ((result.forwardDriveProbe?.halts || 0) !== 0) failures.push(`Gate 4-E-BD failed: forwardDriveProbe.halts=${result.forwardDriveProbe?.halts || 0}`);
+}
+
+function assertGate4EBEPrimaryLandmarkQualityVisibilityVerification(result, failures) {
+  assertGate4EBDCircuitRaceControlRouteTunnelVerification(result, failures, 'gate-4e-be-primary-landmark-quality-visibility-pass');
+
+  const samples = [
+    ['far', result.protectedLandmarks?.far],
+    ['near', result.protectedLandmarks?.near],
+    ['restored', result.protectedLandmarks?.restored],
+    ['quality-low', result.protectedLandmarks?.byQuality?.low],
+    ['quality-medium', result.protectedLandmarks?.byQuality?.medium],
+    ['quality-high', result.protectedLandmarks?.byQuality?.high]
+  ];
+  for (const [label, sample] of samples) {
+    if (sample?.mode !== 'exact' || !sample?.exactVisible || sample?.silhouetteVisible) {
+      failures.push(`Gate 4-E-BE protected FCC exact visibility failed at ${label}: mode=${sample?.mode || 'missing'}, exact=${sample?.exactVisible}, silhouette=${sample?.silhouetteVisible}`);
+    }
+    if ((sample?.showDistance || 0) < 9000 || (sample?.hideDistance || 0) < 9000) {
+      failures.push(`Gate 4-E-BE protected FCC distance gate too short at ${label}: show=${sample?.showDistance || 0}, hide=${sample?.hideDistance || 0}`);
+    }
+  }
+  const near = result.protectedLandmarks?.near;
+  if ((near?.exactTriangles || 0) < 100000) {
+    failures.push(`Gate 4-E-BE protected FCC exact model not preserved: triangles=${near?.exactTriangles || 0}`);
+  }
+  if ((result.colliderCount || 0) !== 2) failures.push(`Gate 4-E-BE failed: unexpected collider count=${result.colliderCount || 0}`);
+  if ((result.forwardDriveProbe?.halts || 0) !== 0) failures.push(`Gate 4-E-BE failed: forwardDriveProbe.halts=${result.forwardDriveProbe?.halts || 0}`);
 }
 
 function assertAuthoredDistrictAsset(result, assetName, label, failures) {
