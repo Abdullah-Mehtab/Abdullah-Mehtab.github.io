@@ -1183,6 +1183,26 @@ def create_behind_engineering_garage(mats):
     cube("BehindEngineeringGarage_RouteSourceFlowBridge", group, (-4.78, 2.42, 3.82), (0.32, 2.68, 0.16), mats["dark"], bevel=0.012)
     for index, y in enumerate([1.36, 1.86, 2.36, 2.86, 3.36]):
         cube(f"BehindEngineeringGarage_RouteSourceFlowBranch_{index}", group, (-4.36 + index * 0.16, y, 3.94), (0.72 + index * 0.1, 0.08, 0.08), [mats["mint"], mats["screen"], mats["purple"], mats["aqua"], mats["amber"]][index], bevel=0.003)
+    cube("BehindEngineeringGarage_RouteBuildPortalDeck", group, (-0.6, 0.62, 4.34), (10.6, 0.32, 0.72), mats["stone"], bevel=0.028)
+    for x in [-5.7, 4.55]:
+        cube("BehindEngineeringGarage_RouteBuildPortalPylon", group, (x, 3.25, 4.28), (0.46, 5.24, 0.42), mats["dark"], bevel=0.018)
+        cube("BehindEngineeringGarage_RouteBuildPortalTrace", group, (x, 3.22, 4.58), (0.08, 3.82, 0.08), mats["screen"], bevel=0.003)
+    cube("BehindEngineeringGarage_RouteBuildPortalBeam", group, (-0.6, 5.78, 4.28), (10.72, 0.32, 0.48), mats["dark"], bevel=0.018)
+    cube("BehindEngineeringGarage_RouteBuildPortalGlow", group, (-0.6, 5.52, 4.62), (8.7, 0.1, 0.08), mats["amber"], bevel=0.004)
+    cube("BehindEngineeringGarage_RouteAssemblyCatwalk", group, (-0.55, 4.58, 4.54), (8.85, 0.22, 0.28), mats["wood"], bevel=0.012)
+    for index, x in enumerate([-4.05, -2.7, -1.35, 0.0, 1.35, 2.7, 4.05]):
+        cube(f"BehindEngineeringGarage_RouteAssemblyCatwalkPost_{index}", group, (x, 3.64, 4.64), (0.08, 1.8, 0.08), mats["screen"], bevel=0.003)
+        cube(f"BehindEngineeringGarage_RouteAssemblyPacket_{index}", group, (x, 4.84, 4.7), (0.42, 0.18, 0.08), [mats["screen"], mats["mint"], mats["purple"], mats["amber"], mats["aqua"], mats["paper"], mats["screen"]][index], bevel=0.004)
+    cube("BehindEngineeringGarage_RoutePrototypeTestCell", group, (2.72, 2.2, 4.74), (3.28, 2.95, 0.14), mats["glass"], bevel=0.014)
+    cube("BehindEngineeringGarage_RoutePrototypeTestCellFrame", group, (2.72, 3.78, 4.84), (3.72, 0.22, 0.16), mats["screen"], bevel=0.006)
+    cube("BehindEngineeringGarage_RoutePrototypeTestCellDeck", group, (2.72, 0.98, 4.88), (2.8, 0.22, 0.28), mats["stone_shadow"], bevel=0.012)
+    cube("BehindEngineeringGarage_RouteDiagnosticsBeaconStack", group, (5.85, 4.18, 4.38), (0.72, 5.84, 0.58), mats["dark"], bevel=0.02)
+    for index, y in enumerate([2.0, 2.68, 3.36, 4.04, 4.72, 5.4, 6.08]):
+        cube(f"BehindEngineeringGarage_RouteDiagnosticsBeaconPulse_{index}", group, (5.48, y, 4.74), (0.08, 0.12, 0.42), [mats["screen"], mats["mint"], mats["purple"], mats["amber"], mats["aqua"], mats["paper"], mats["screen"]][index], bevel=0.003)
+    cube("BehindEngineeringGarage_RouteSourceControlCrownMast", group, (-5.1, 5.58, 4.42), (0.5, 4.9, 0.5), mats["dark"], bevel=0.018)
+    cube("BehindEngineeringGarage_RouteSourceControlCrown", group, (-5.1, 8.02, 4.42), (2.0, 0.3, 1.1), mats["screen"], bevel=0.018)
+    for index, x in enumerate([-5.72, -5.31, -4.9, -4.49]):
+        cube(f"BehindEngineeringGarage_RouteSourceControlCrownBranch_{index}", group, (x, 7.58 - index * 0.28, 4.94), (0.08, 0.08, 0.62 + index * 0.12), [mats["mint"], mats["screen"], mats["purple"], mats["aqua"]][index], bevel=0.003)
     for index, x in enumerate([-4.8, -2.6, -0.4, 1.8]):
         cube(f"BehindEngineeringGarage_RoofVent_{index}", group, (x, 4.56, 0.86 + (index % 2) * 0.46), (1.0, 0.42, 0.72), mats["stone_shadow"], bevel=0.024)
     for index, x in enumerate([-4.7, -3.35, -2.0, -0.65, 0.7]):

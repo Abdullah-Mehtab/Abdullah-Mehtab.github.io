@@ -480,6 +480,11 @@ export class SetPieces {
         routeProcessAtriums: 0,
         routeProcessStageLanes: 0,
         routeCutawayPrototypeDisplays: 0,
+        routeBuildPortals: 0,
+        routeAssemblyCatwalks: 0,
+        routePrototypeTestCells: 0,
+        routeDiagnosticsBeaconStacks: 0,
+        routeSourceControlCrowns: 0,
         sourceSpires: 0,
         sourceTotems: 0,
         statusLights: 0,
@@ -1643,6 +1648,11 @@ export class SetPieces {
       stats.routeProcessAtriums += 1;
       stats.routeProcessStageLanes += 6;
       stats.routeCutawayPrototypeDisplays += 1;
+      stats.routeBuildPortals += 1;
+      stats.routeAssemblyCatwalks += 1;
+      stats.routePrototypeTestCells += 1;
+      stats.routeDiagnosticsBeaconStacks += 1;
+      stats.routeSourceControlCrowns += 1;
       stats.sourceSpires += 1;
       stats.sourceTotems += 1;
       stats.statusLights += 4;

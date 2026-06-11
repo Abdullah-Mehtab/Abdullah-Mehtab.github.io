@@ -4523,6 +4523,13 @@ function assertVerification(result) {
     }
     return;
   }
+  if (result.goalGate === 'gate-4e-bj-behind-engineering-drive-by-build-portal-pass') {
+    assertGate4EBJBehindEngineeringDriveByBuildPortalVerification(result, failures);
+    if (failures.length) {
+      throw new Error(`Play verification failed: ${failures.join('; ')}`);
+    }
+    return;
+  }
   if (result.goalGate === 'gate-4b5-north-ridge') {
     assertGate4B5NorthRidgeVerification(result, failures);
     if (failures.length) {
@@ -5684,7 +5691,8 @@ function isGate4EExpandedArchitectureGate(goalGate) {
     || goalGate === 'gate-4e-bf-primary-route-discovery-visibility-pass'
     || goalGate === 'gate-4e-bg-sentinel-soc-route-threshold-pass'
     || goalGate === 'gate-4e-bh-career-software-campus-drive-by-arrival-pass'
-    || goalGate === 'gate-4e-bi-todo-production-control-drive-by-threshold-pass';
+    || goalGate === 'gate-4e-bi-todo-production-control-drive-by-threshold-pass'
+    || goalGate === 'gate-4e-bj-behind-engineering-drive-by-build-portal-pass';
 }
 
 function assertGate3RVerticalSliceVerification(result, failures, options = {}) {
@@ -5740,7 +5748,8 @@ function assertGate3RVerticalSliceVerification(result, failures, options = {}) {
     || result.goalGate === 'gate-4e-bf-primary-route-discovery-visibility-pass'
     || result.goalGate === 'gate-4e-bg-sentinel-soc-route-threshold-pass'
     || result.goalGate === 'gate-4e-bh-career-software-campus-drive-by-arrival-pass'
-    || result.goalGate === 'gate-4e-bi-todo-production-control-drive-by-threshold-pass';
+    || result.goalGate === 'gate-4e-bi-todo-production-control-drive-by-threshold-pass'
+    || result.goalGate === 'gate-4e-bj-behind-engineering-drive-by-build-portal-pass';
   const blockout = result.blockout || {};
   const blockoutSetPieces = blockout.setPieces || {};
   const slice = result.verticalSlice || blockout.verticalSlice || {};
@@ -5787,7 +5796,8 @@ function assertGate3RVerticalSliceVerification(result, failures, options = {}) {
     || result.goalGate === 'gate-4e-bf-primary-route-discovery-visibility-pass'
     || result.goalGate === 'gate-4e-bg-sentinel-soc-route-threshold-pass'
     || result.goalGate === 'gate-4e-bh-career-software-campus-drive-by-arrival-pass'
-    || result.goalGate === 'gate-4e-bi-todo-production-control-drive-by-threshold-pass';
+    || result.goalGate === 'gate-4e-bi-todo-production-control-drive-by-threshold-pass'
+    || result.goalGate === 'gate-4e-bj-behind-engineering-drive-by-build-portal-pass';
 
   if (result.goalGate !== expectedGoal) {
     failures.push(`Gate 3R probe failed: goalGate=${result.goalGate || 'none'}`);
@@ -7955,8 +7965,8 @@ function assertGate4EBHCareerSoftwareCampusDriveByArrivalVerification(result, fa
   if ((result.forwardDriveProbe?.halts || 0) !== 0) failures.push(`Gate 4-E-BH failed: forwardDriveProbe.halts=${result.forwardDriveProbe?.halts || 0}`);
 }
 
-function assertGate4EBITodoProductionControlDriveByThresholdVerification(result, failures) {
-  assertGate4EBHCareerSoftwareCampusDriveByArrivalVerification(result, failures, 'gate-4e-bi-todo-production-control-drive-by-threshold-pass');
+function assertGate4EBITodoProductionControlDriveByThresholdVerification(result, failures, expectedGoal = 'gate-4e-bi-todo-production-control-drive-by-threshold-pass') {
+  assertGate4EBHCareerSoftwareCampusDriveByArrivalVerification(result, failures, expectedGoal);
 
   const todo = result.gate4b3?.todo || {};
   assertAuthoredDistrictAsset(result, 'EnvPolishTodoPlanningStudio', 'Gate 4-E-BI Todo production-control drive-by threshold architecture', failures);
@@ -7973,6 +7983,29 @@ function assertGate4EBITodoProductionControlDriveByThresholdVerification(result,
   if ((todo.lamps || 0) !== 0) failures.push(`Gate 4-E-BI Todo failed: rejected lamps=${todo.lamps || 0}`);
   if ((result.colliderCount || 0) !== 2) failures.push(`Gate 4-E-BI failed: unexpected collider count=${result.colliderCount || 0}`);
   if ((result.forwardDriveProbe?.halts || 0) !== 0) failures.push(`Gate 4-E-BI failed: forwardDriveProbe.halts=${result.forwardDriveProbe?.halts || 0}`);
+}
+
+function assertGate4EBJBehindEngineeringDriveByBuildPortalVerification(result, failures) {
+  assertGate4EBITodoProductionControlDriveByThresholdVerification(result, failures, 'gate-4e-bj-behind-engineering-drive-by-build-portal-pass');
+
+  const behind = result.gate4b1?.behind || {};
+  assertAuthoredDistrictAsset(result, 'EnvPolishBehindEngineeringGarage', 'Gate 4-E-BJ Behind engineering drive-by build portal architecture', failures);
+  if ((behind.routeBuildPortals || 0) < 1) failures.push(`Gate 4-E-BJ Behind failed: routeBuildPortals=${behind.routeBuildPortals || 0}/1`);
+  if ((behind.routeAssemblyCatwalks || 0) < 1) failures.push(`Gate 4-E-BJ Behind failed: routeAssemblyCatwalks=${behind.routeAssemblyCatwalks || 0}/1`);
+  if ((behind.routePrototypeTestCells || 0) < 1) failures.push(`Gate 4-E-BJ Behind failed: routePrototypeTestCells=${behind.routePrototypeTestCells || 0}/1`);
+  if ((behind.routeDiagnosticsBeaconStacks || 0) < 1) failures.push(`Gate 4-E-BJ Behind failed: routeDiagnosticsBeaconStacks=${behind.routeDiagnosticsBeaconStacks || 0}/1`);
+  if ((behind.routeSourceControlCrowns || 0) < 1) failures.push(`Gate 4-E-BJ Behind failed: routeSourceControlCrowns=${behind.routeSourceControlCrowns || 0}/1`);
+  if ((behind.routeProcessAtriums || 0) < 1) failures.push(`Gate 4-E-BJ Behind carry-forward failed: routeProcessAtriums=${behind.routeProcessAtriums || 0}/1`);
+  if ((behind.routeProcessStageLanes || 0) < 6) failures.push(`Gate 4-E-BJ Behind carry-forward failed: routeProcessStageLanes=${behind.routeProcessStageLanes || 0}/6`);
+  if ((behind.routeCutawayPrototypeDisplays || 0) < 1) failures.push(`Gate 4-E-BJ Behind carry-forward failed: routeCutawayPrototypeDisplays=${behind.routeCutawayPrototypeDisplays || 0}/1`);
+  if ((behind.routeInnerBuildCells || 0) < 1) failures.push(`Gate 4-E-BJ Behind carry-forward failed: routeInnerBuildCells=${behind.routeInnerBuildCells || 0}/1`);
+  if ((behind.routePrototypeRigFrames || 0) < 1) failures.push(`Gate 4-E-BJ Behind carry-forward failed: routePrototypeRigFrames=${behind.routePrototypeRigFrames || 0}/1`);
+  if ((behind.routeDiagnosticsWalls || 0) < 1) failures.push(`Gate 4-E-BJ Behind carry-forward failed: routeDiagnosticsWalls=${behind.routeDiagnosticsWalls || 0}/1`);
+  if ((behind.routeSourceControlSpines || 0) < 1) failures.push(`Gate 4-E-BJ Behind carry-forward failed: routeSourceControlSpines=${behind.routeSourceControlSpines || 0}/1`);
+  if ((behind.signs || 0) !== 0) failures.push(`Gate 4-E-BJ Behind failed: rejected signs=${behind.signs || 0}`);
+  if ((behind.lamps || 0) !== 0) failures.push(`Gate 4-E-BJ Behind failed: rejected lamps=${behind.lamps || 0}`);
+  if ((result.colliderCount || 0) !== 2) failures.push(`Gate 4-E-BJ failed: unexpected collider count=${result.colliderCount || 0}`);
+  if ((result.forwardDriveProbe?.halts || 0) !== 0) failures.push(`Gate 4-E-BJ failed: forwardDriveProbe.halts=${result.forwardDriveProbe?.halts || 0}`);
 }
 
 function assertAuthoredDistrictAsset(result, assetName, label, failures) {
