@@ -4565,6 +4565,13 @@ function assertVerification(result) {
     }
     return;
   }
+  if (result.goalGate === 'gate-4e-bp-contact-vehicle-first-framing-pass') {
+    assertGate4EBPContactVehicleFirstFramingVerification(result, failures);
+    if (failures.length) {
+      throw new Error(`Play verification failed: ${failures.join('; ')}`);
+    }
+    return;
+  }
   if (result.goalGate === 'gate-4b5-north-ridge') {
     assertGate4B5NorthRidgeVerification(result, failures);
     if (failures.length) {
@@ -5732,7 +5739,8 @@ function isGate4EExpandedArchitectureGate(goalGate) {
     || goalGate === 'gate-4e-bl-awards-honors-boulevard-pass'
     || goalGate === 'gate-4e-bm-security-operations-campus-arrival-pass'
     || goalGate === 'gate-4e-bn-projects-release-foundry-drive-by-pass'
-    || goalGate === 'gate-4e-bo-career-campus-route-framing-pass';
+    || goalGate === 'gate-4e-bo-career-campus-route-framing-pass'
+    || goalGate === 'gate-4e-bp-contact-vehicle-first-framing-pass';
 }
 
 function assertGate3RVerticalSliceVerification(result, failures, options = {}) {
@@ -5794,7 +5802,8 @@ function assertGate3RVerticalSliceVerification(result, failures, options = {}) {
     || result.goalGate === 'gate-4e-bl-awards-honors-boulevard-pass'
     || result.goalGate === 'gate-4e-bm-security-operations-campus-arrival-pass'
     || result.goalGate === 'gate-4e-bn-projects-release-foundry-drive-by-pass'
-    || result.goalGate === 'gate-4e-bo-career-campus-route-framing-pass';
+    || result.goalGate === 'gate-4e-bo-career-campus-route-framing-pass'
+    || result.goalGate === 'gate-4e-bp-contact-vehicle-first-framing-pass';
   const blockout = result.blockout || {};
   const blockoutSetPieces = blockout.setPieces || {};
   const slice = result.verticalSlice || blockout.verticalSlice || {};
@@ -5847,7 +5856,8 @@ function assertGate3RVerticalSliceVerification(result, failures, options = {}) {
     || result.goalGate === 'gate-4e-bl-awards-honors-boulevard-pass'
     || result.goalGate === 'gate-4e-bm-security-operations-campus-arrival-pass'
     || result.goalGate === 'gate-4e-bn-projects-release-foundry-drive-by-pass'
-    || result.goalGate === 'gate-4e-bo-career-campus-route-framing-pass';
+    || result.goalGate === 'gate-4e-bo-career-campus-route-framing-pass'
+    || result.goalGate === 'gate-4e-bp-contact-vehicle-first-framing-pass';
 
   if (result.goalGate !== expectedGoal) {
     failures.push(`Gate 3R probe failed: goalGate=${result.goalGate || 'none'}`);
@@ -8135,8 +8145,8 @@ function assertGate4EBNProjectsReleaseFoundryDriveByVerification(result, failure
   if ((result.forwardDriveProbe?.halts || 0) !== 0) failures.push(`Gate 4-E-BN failed: forwardDriveProbe.halts=${result.forwardDriveProbe?.halts || 0}`);
 }
 
-function assertGate4EBOCareerCampusRouteFramingVerification(result, failures) {
-  assertGate4EBNProjectsReleaseFoundryDriveByVerification(result, failures, 'gate-4e-bo-career-campus-route-framing-pass');
+function assertGate4EBOCareerCampusRouteFramingVerification(result, failures, expectedGoal = 'gate-4e-bo-career-campus-route-framing-pass') {
+  assertGate4EBNProjectsReleaseFoundryDriveByVerification(result, failures, expectedGoal);
 
   const career = result.gate4b4?.career || {};
   assertAuthoredDistrictAsset(result, 'EnvPolishCareerSoftwareHouse', 'Gate 4-E-BO Career route framing architecture', failures);
@@ -8159,6 +8169,35 @@ function assertGate4EBOCareerCampusRouteFramingVerification(result, failures) {
   }
   if ((result.colliderCount || 0) !== 2) failures.push(`Gate 4-E-BO failed: unexpected collider count=${result.colliderCount || 0}`);
   if ((result.forwardDriveProbe?.halts || 0) !== 0) failures.push(`Gate 4-E-BO failed: forwardDriveProbe.halts=${result.forwardDriveProbe?.halts || 0}`);
+}
+
+function assertGate4EBPContactVehicleFirstFramingVerification(result, failures) {
+  assertGate4EBOCareerCampusRouteFramingVerification(result, failures, 'gate-4e-bp-contact-vehicle-first-framing-pass');
+
+  const harbor = result.gate4b4?.harbor || {};
+  assertAuthoredDistrictAsset(result, 'EnvPolishSignalHarborCommunicationsStation', 'Gate 4-E-BP Contact vehicle-first signal exchange architecture', failures);
+  if ((harbor.routePublicSignalGateways || 0) < 1) failures.push(`Gate 4-E-BP Contact failed: routePublicSignalGateways=${harbor.routePublicSignalGateways || 0}/1`);
+  if ((harbor.routeInboxOutboxTowers || 0) < 2) failures.push(`Gate 4-E-BP Contact failed: routeInboxOutboxTowers=${harbor.routeInboxOutboxTowers || 0}/2`);
+  if ((harbor.routeMessageBridgeSpans || 0) < 1) failures.push(`Gate 4-E-BP Contact failed: routeMessageBridgeSpans=${harbor.routeMessageBridgeSpans || 0}/1`);
+  if ((harbor.routeSignalCrownArrays || 0) < 1) failures.push(`Gate 4-E-BP Contact failed: routeSignalCrownArrays=${harbor.routeSignalCrownArrays || 0}/1`);
+  if ((harbor.routeContactBeaconSpines || 0) < 1) failures.push(`Gate 4-E-BP Contact failed: routeContactBeaconSpines=${harbor.routeContactBeaconSpines || 0}/1`);
+  if ((harbor.routeContactExchangeHalls || 0) < 1) failures.push(`Gate 4-E-BP Contact carry-forward failed: routeContactExchangeHalls=${harbor.routeContactExchangeHalls || 0}/1`);
+  if ((harbor.routeChannelSpines || 0) < 4) failures.push(`Gate 4-E-BP Contact carry-forward failed: routeChannelSpines=${harbor.routeChannelSpines || 0}/4`);
+  if ((harbor.signs || 0) !== 0) failures.push(`Gate 4-E-BP Contact failed: rejected signs=${harbor.signs || 0}`);
+  if ((harbor.lamps || 0) !== 0) failures.push(`Gate 4-E-BP Contact failed: rejected lamps=${harbor.lamps || 0}`);
+
+  const contactPresentation = result.zonePresentation?.samples?.find((sample) => sample.id === 'contact');
+  if (!contactPresentation) {
+    failures.push('Gate 4-E-BP Contact failed: missing zone presentation sample');
+  } else {
+    if (contactPresentation.surface !== 'road') failures.push(`Gate 4-E-BP Contact failed: respawn surface=${contactPresentation.surface}`);
+    if (contactPresentation.respawnDistance > 28) failures.push(`Gate 4-E-BP Contact failed: respawnDistance=${contactPresentation.respawnDistance}`);
+    if (contactPresentation.cameraDistance < 38 || contactPresentation.cameraDistance > 48) failures.push(`Gate 4-E-BP Contact failed: cameraDistance=${contactPresentation.cameraDistance}`);
+    if (contactPresentation.targetDistance > 12) failures.push(`Gate 4-E-BP Contact failed: targetDistance=${contactPresentation.targetDistance}`);
+    if (contactPresentation.fov < 46 || contactPresentation.fov > 49) failures.push(`Gate 4-E-BP Contact failed: fov=${contactPresentation.fov}`);
+  }
+  if ((result.colliderCount || 0) !== 2) failures.push(`Gate 4-E-BP failed: unexpected collider count=${result.colliderCount || 0}`);
+  if ((result.forwardDriveProbe?.halts || 0) !== 0) failures.push(`Gate 4-E-BP failed: forwardDriveProbe.halts=${result.forwardDriveProbe?.halts || 0}`);
 }
 
 function assertAuthoredDistrictAsset(result, assetName, label, failures) {
