@@ -76,6 +76,11 @@ export class SetPieces {
       routeShieldDoorFrames: 0,
       routeIncidentCommandScreens: 0,
       routePacketInspectionLanes: 0,
+      routeSocEntryVestibules: 0,
+      routeScanCanopies: 0,
+      routeTriageDesks: 0,
+      routeClearancePillars: 0,
+      routePacketQueueTicks: 0,
       cableRuns: 0,
       terminalRails: 0
     };
@@ -2858,6 +2863,11 @@ export class SetPieces {
         this.securityLabStats.routeShieldDoorFrames += 1;
         this.securityLabStats.routeIncidentCommandScreens += 1;
         this.securityLabStats.routePacketInspectionLanes += 4;
+        this.securityLabStats.routeSocEntryVestibules += 1;
+        this.securityLabStats.routeScanCanopies += 1;
+        this.securityLabStats.routeTriageDesks += 1;
+        this.securityLabStats.routeClearancePillars += 4;
+        this.securityLabStats.routePacketQueueTicks += 6;
       }
     }
 
@@ -2954,9 +2964,11 @@ export class SetPieces {
       stats.warningBollards += 1;
     }
 
-    const sign = point(architectureMode ? -7.8 : 16, architectureMode ? -3.8 : -7);
-    this.gate3rSign(group, 'SECURITY SCAN', 'Hold in beam', sign[0], sign[1], scan.rotation - (architectureMode ? 0.18 : 0.95), 0x68d8ff, architectureMode ? 1.36 : 1.56, 'GATE3R_Security_Scan_Sign', 2.8);
-    stats.signs += 1;
+    if (!architectureMode) {
+      const sign = point(16, -7);
+      this.gate3rSign(group, 'SECURITY SCAN', 'Hold in beam', sign[0], sign[1], scan.rotation - 0.95, 0x68d8ff, 1.56, 'GATE3R_Security_Scan_Sign', 2.8);
+      stats.signs += 1;
+    }
   }
 
   createGate3RRouteRun(group, path, stats, spec) {
