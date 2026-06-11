@@ -2163,6 +2163,18 @@ def create_signal_harbor_communications_station(mats):
         cube(f"SignalHarbor_ChannelBeaconCap_{index}", group, (x, 8.42, 4.18), (0.54, 0.36, 0.54), material, bevel=0.018)
     for index, x in enumerate([-4.6, -2.3, 0.0, 2.3]):
         cube(f"SignalHarbor_GatewayMessagePulse_{index}", group, (x, 4.02, 4.32), (1.24, 0.08, 0.06), [mats["paper"], mats["screen"], mats["mint"], mats["aqua"]][index], bevel=0.003)
+    cube("SignalHarbor_RouteContactExchangeHall", group, (0.12, 2.12, 4.66), (9.2, 2.34, 0.58), mats["stone_shadow"], bevel=0.028)
+    cube("SignalHarbor_RouteContactExchangeGlass", group, (0.12, 2.22, 4.98), (8.25, 1.58, 0.08), mats["glass"], bevel=0.008)
+    cube("SignalHarbor_RouteContactExchangeCanopy", group, (0.12, 3.56, 4.86), (10.0, 0.22, 1.02), mats["dark"], bevel=0.018)
+    for index, x in enumerate([-2.75, 2.95]):
+        cube(f"SignalHarbor_RouteInboxOutboxFrame_{index}", group, (x, 2.34, 5.08), (2.35, 2.1, 0.12), mats["dark"], bevel=0.018)
+        cube(f"SignalHarbor_RouteInboxOutboxGlass_{index}", group, (x, 2.34, 5.18), (1.68, 1.34, 0.06), [mats["screen"], mats["mint"]][index], bevel=0.006)
+        cube(f"SignalHarbor_RouteInboxOutboxHeader_{index}", group, (x, 3.18, 5.24), (1.44, 0.14, 0.06), [mats["paper"], mats["amber"]][index], bevel=0.004)
+    for index, x in enumerate([-4.35, -1.45, 1.45, 4.35]):
+        cube(f"SignalHarbor_RouteChannelSpine_{index}", group, (x, 4.82, 4.94), (0.18, 2.44, 0.18), mats["dark"], bevel=0.008)
+        cube(f"SignalHarbor_RouteChannelSpineGlow_{index}", group, (x, 5.5, 4.96), (0.78, 0.08, 0.08), [mats["screen"], mats["mint"], mats["aqua"], mats["purple"]][index], bevel=0.004)
+    for index, x in enumerate([-3.75, -2.25, -0.75, 0.75, 2.25, 3.75]):
+        cube(f"SignalHarbor_RouteMessageFlowTick_{index}", group, (x, 1.24 + (index % 2) * 0.26, 5.22), (0.82, 0.08, 0.06), [mats["paper"], mats["screen"], mats["mint"], mats["aqua"], mats["amber"], mats["screen"]][index], bevel=0.003)
 
 
 def create_harbor_pier(mats):

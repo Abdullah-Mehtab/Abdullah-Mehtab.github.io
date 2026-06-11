@@ -747,6 +747,10 @@ export class SetPieces {
         messageExchangeAtriums: 0,
         channelBeaconMasts: 0,
         inboxBeaconWalls: 0,
+        routeContactExchangeHalls: 0,
+        routeInboxOutboxFrames: 0,
+        routeChannelSpines: 0,
+        routeMessageFlowTicks: 0,
         signs: 0,
         lamps: 0
       }
@@ -1998,6 +2002,10 @@ export class SetPieces {
       stats.messageExchangeAtriums += 1;
       stats.channelBeaconMasts += 3;
       stats.inboxBeaconWalls += 1;
+      stats.routeContactExchangeHalls += 1;
+      stats.routeInboxOutboxFrames += 2;
+      stats.routeChannelSpines += 4;
+      stats.routeMessageFlowTicks += 6;
       stats.signalMasts += 1;
       stats.relayMasts += 1;
       stats.contactTerminals += 3;
