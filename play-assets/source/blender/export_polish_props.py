@@ -1116,6 +1116,21 @@ def create_behind_engineering_garage(mats):
     cube("BehindEngineeringGarage_PipelineBoard", group, (-1.0, 2.18, 2.88), (6.8, 2.15, 0.18), mats["dark"], bevel=0.026)
     for index, y in enumerate([1.42, 1.82, 2.22, 2.62]):
         cube(f"BehindEngineeringGarage_PipelineTrace_{index}", group, (-1.0 + (index % 2) * 0.42, y, 2.72), (4.9 - index * 0.38, 0.06, 0.07), [mats["screen"], mats["mint"], mats["purple"], mats["amber"]][index], bevel=0.004)
+    cube("BehindEngineeringGarage_RouteProcessAtriumFrame", group, (-1.0, 2.42, 3.42), (7.75, 3.12, 0.22), mats["dark"], bevel=0.018)
+    cube("BehindEngineeringGarage_RouteProcessAtriumGlass", group, (-1.0, 2.42, 3.58), (6.72, 2.42, 0.1), mats["glass"], bevel=0.012)
+    cube("BehindEngineeringGarage_RouteProcessAtriumHeader", group, (-1.0, 3.92, 3.66), (7.2, 0.22, 0.14), mats["screen"], bevel=0.006)
+    cube("BehindEngineeringGarage_RouteProcessAtriumSill", group, (-1.0, 0.92, 3.66), (6.95, 0.18, 0.14), mats["amber"], bevel=0.006)
+    for index, x in enumerate([-3.62, -2.36, -1.1, 0.16, 1.42, 2.68]):
+        cube(f"BehindEngineeringGarage_RouteProcessStageLane_{index}", group, (x, 1.86, 3.76), (0.1, 1.62, 0.08), [mats["screen"], mats["mint"], mats["purple"], mats["amber"], mats["aqua"], mats["paper"]][index], bevel=0.003)
+        cube(f"BehindEngineeringGarage_RouteProcessStageCard_{index}", group, (x, 2.76, 3.78), (0.58, 0.26, 0.08), [mats["screen"], mats["mint"], mats["purple"], mats["amber"], mats["aqua"], mats["paper"]][index], bevel=0.004)
+    cube("BehindEngineeringGarage_RouteCutawayPrototypeDeck", group, (1.72, 1.3, 3.9), (2.95, 0.22, 0.28), mats["dark"], bevel=0.01)
+    cube("BehindEngineeringGarage_RouteCutawayPrototypeBody", group, (1.72, 1.68, 3.98), (2.18, 0.46, 0.18), mats["amber"], bevel=0.018)
+    cube("BehindEngineeringGarage_RouteCutawayPrototypeCab", group, (2.18, 2.02, 4.04), (0.74, 0.42, 0.12), mats["glass"], bevel=0.012)
+    cube("BehindEngineeringGarage_RouteCutawayPrototypeWheelFront", group, (0.72, 1.24, 4.06), (0.28, 0.42, 0.1), mats["rubber"], bevel=0.012)
+    cube("BehindEngineeringGarage_RouteCutawayPrototypeWheelRear", group, (2.72, 1.24, 4.06), (0.28, 0.42, 0.1), mats["rubber"], bevel=0.012)
+    cube("BehindEngineeringGarage_RouteSourceFlowBridge", group, (-4.78, 2.42, 3.82), (0.32, 2.68, 0.16), mats["dark"], bevel=0.012)
+    for index, y in enumerate([1.36, 1.86, 2.36, 2.86, 3.36]):
+        cube(f"BehindEngineeringGarage_RouteSourceFlowBranch_{index}", group, (-4.36 + index * 0.16, y, 3.94), (0.72 + index * 0.1, 0.08, 0.08), [mats["mint"], mats["screen"], mats["purple"], mats["aqua"], mats["amber"]][index], bevel=0.003)
     for index, x in enumerate([-4.8, -2.6, -0.4, 1.8]):
         cube(f"BehindEngineeringGarage_RoofVent_{index}", group, (x, 4.56, 0.86 + (index % 2) * 0.46), (1.0, 0.42, 0.72), mats["stone_shadow"], bevel=0.024)
     for index, x in enumerate([-4.7, -3.35, -2.0, -0.65, 0.7]):
