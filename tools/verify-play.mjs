@@ -4572,6 +4572,13 @@ function assertVerification(result) {
     }
     return;
   }
+  if (result.goalGate === 'gate-4e-bq-potato-harvest-court-vehicle-first-pass') {
+    assertGate4EBQPotatoHarvestCourtVehicleFirstVerification(result, failures);
+    if (failures.length) {
+      throw new Error(`Play verification failed: ${failures.join('; ')}`);
+    }
+    return;
+  }
   if (result.goalGate === 'gate-4b5-north-ridge') {
     assertGate4B5NorthRidgeVerification(result, failures);
     if (failures.length) {
@@ -5740,7 +5747,8 @@ function isGate4EExpandedArchitectureGate(goalGate) {
     || goalGate === 'gate-4e-bm-security-operations-campus-arrival-pass'
     || goalGate === 'gate-4e-bn-projects-release-foundry-drive-by-pass'
     || goalGate === 'gate-4e-bo-career-campus-route-framing-pass'
-    || goalGate === 'gate-4e-bp-contact-vehicle-first-framing-pass';
+    || goalGate === 'gate-4e-bp-contact-vehicle-first-framing-pass'
+    || goalGate === 'gate-4e-bq-potato-harvest-court-vehicle-first-pass';
 }
 
 function assertGate3RVerticalSliceVerification(result, failures, options = {}) {
@@ -5803,7 +5811,8 @@ function assertGate3RVerticalSliceVerification(result, failures, options = {}) {
     || result.goalGate === 'gate-4e-bm-security-operations-campus-arrival-pass'
     || result.goalGate === 'gate-4e-bn-projects-release-foundry-drive-by-pass'
     || result.goalGate === 'gate-4e-bo-career-campus-route-framing-pass'
-    || result.goalGate === 'gate-4e-bp-contact-vehicle-first-framing-pass';
+    || result.goalGate === 'gate-4e-bp-contact-vehicle-first-framing-pass'
+    || result.goalGate === 'gate-4e-bq-potato-harvest-court-vehicle-first-pass';
   const blockout = result.blockout || {};
   const blockoutSetPieces = blockout.setPieces || {};
   const slice = result.verticalSlice || blockout.verticalSlice || {};
@@ -5857,7 +5866,8 @@ function assertGate3RVerticalSliceVerification(result, failures, options = {}) {
     || result.goalGate === 'gate-4e-bm-security-operations-campus-arrival-pass'
     || result.goalGate === 'gate-4e-bn-projects-release-foundry-drive-by-pass'
     || result.goalGate === 'gate-4e-bo-career-campus-route-framing-pass'
-    || result.goalGate === 'gate-4e-bp-contact-vehicle-first-framing-pass';
+    || result.goalGate === 'gate-4e-bp-contact-vehicle-first-framing-pass'
+    || result.goalGate === 'gate-4e-bq-potato-harvest-court-vehicle-first-pass';
 
   if (result.goalGate !== expectedGoal) {
     failures.push(`Gate 3R probe failed: goalGate=${result.goalGate || 'none'}`);
@@ -8171,8 +8181,8 @@ function assertGate4EBOCareerCampusRouteFramingVerification(result, failures, ex
   if ((result.forwardDriveProbe?.halts || 0) !== 0) failures.push(`Gate 4-E-BO failed: forwardDriveProbe.halts=${result.forwardDriveProbe?.halts || 0}`);
 }
 
-function assertGate4EBPContactVehicleFirstFramingVerification(result, failures) {
-  assertGate4EBOCareerCampusRouteFramingVerification(result, failures, 'gate-4e-bp-contact-vehicle-first-framing-pass');
+function assertGate4EBPContactVehicleFirstFramingVerification(result, failures, expectedGoal = 'gate-4e-bp-contact-vehicle-first-framing-pass') {
+  assertGate4EBOCareerCampusRouteFramingVerification(result, failures, expectedGoal);
 
   const harbor = result.gate4b4?.harbor || {};
   assertAuthoredDistrictAsset(result, 'EnvPolishSignalHarborCommunicationsStation', 'Gate 4-E-BP Contact vehicle-first signal exchange architecture', failures);
@@ -8198,6 +8208,37 @@ function assertGate4EBPContactVehicleFirstFramingVerification(result, failures) 
   }
   if ((result.colliderCount || 0) !== 2) failures.push(`Gate 4-E-BP failed: unexpected collider count=${result.colliderCount || 0}`);
   if ((result.forwardDriveProbe?.halts || 0) !== 0) failures.push(`Gate 4-E-BP failed: forwardDriveProbe.halts=${result.forwardDriveProbe?.halts || 0}`);
+}
+
+function assertGate4EBQPotatoHarvestCourtVehicleFirstVerification(result, failures) {
+  assertGate4EBPContactVehicleFirstFramingVerification(result, failures, 'gate-4e-bq-potato-harvest-court-vehicle-first-pass');
+
+  const farm = result.gate4b2?.farm || {};
+  assertAuthoredDistrictAsset(result, 'EnvPolishPotatoFarmStand', 'Gate 4-E-BQ Potato harvest-court architecture', failures);
+  if ((farm.routeHarvestGates || 0) < 1) failures.push(`Gate 4-E-BQ Potato failed: routeHarvestGates=${farm.routeHarvestGates || 0}/1`);
+  if ((farm.routeCropRowLanes || 0) < 6) failures.push(`Gate 4-E-BQ Potato failed: routeCropRowLanes=${farm.routeCropRowLanes || 0}/6`);
+  if ((farm.routeProduceCarts || 0) < 1) failures.push(`Gate 4-E-BQ Potato failed: routeProduceCarts=${farm.routeProduceCarts || 0}/1`);
+  if ((farm.routePotatoCrates || 0) < 3) failures.push(`Gate 4-E-BQ Potato failed: routePotatoCrates=${farm.routePotatoCrates || 0}/3`);
+  if ((farm.routePotatoCrests || 0) < 1) failures.push(`Gate 4-E-BQ Potato failed: routePotatoCrests=${farm.routePotatoCrests || 0}/1`);
+  if ((farm.routeGreenhouseFrames || 0) < 1) failures.push(`Gate 4-E-BQ Potato carry-forward failed: routeGreenhouseFrames=${farm.routeGreenhouseFrames || 0}/1`);
+  if ((farm.routeProducePortals || 0) < 1) failures.push(`Gate 4-E-BQ Potato carry-forward failed: routeProducePortals=${farm.routeProducePortals || 0}/1`);
+  if ((farm.greenhouseMarketHalls || 0) < 1) failures.push(`Gate 4-E-BQ Potato carry-forward failed: greenhouseMarketHalls=${farm.greenhouseMarketHalls || 0}/1`);
+  if ((farm.fieldCanopyFrames || 0) < 1) failures.push(`Gate 4-E-BQ Potato carry-forward failed: fieldCanopyFrames=${farm.fieldCanopyFrames || 0}/1`);
+  if ((farm.signs || 0) !== 0) failures.push(`Gate 4-E-BQ Potato failed: rejected signs=${farm.signs || 0}`);
+  if ((farm.lamps || 0) !== 0) failures.push(`Gate 4-E-BQ Potato failed: rejected lamps=${farm.lamps || 0}`);
+
+  const potatoPresentation = result.zonePresentation?.samples?.find((sample) => sample.id === 'potato');
+  if (!potatoPresentation) {
+    failures.push('Gate 4-E-BQ Potato failed: missing zone presentation sample');
+  } else {
+    if (potatoPresentation.surface !== 'road') failures.push(`Gate 4-E-BQ Potato failed: respawn surface=${potatoPresentation.surface}`);
+    if (potatoPresentation.respawnDistance > 32) failures.push(`Gate 4-E-BQ Potato failed: respawnDistance=${potatoPresentation.respawnDistance}`);
+    if (potatoPresentation.cameraDistance < 36 || potatoPresentation.cameraDistance > 48) failures.push(`Gate 4-E-BQ Potato failed: cameraDistance=${potatoPresentation.cameraDistance}`);
+    if (potatoPresentation.targetDistance > 8) failures.push(`Gate 4-E-BQ Potato failed: targetDistance=${potatoPresentation.targetDistance}`);
+    if (potatoPresentation.fov < 46 || potatoPresentation.fov > 49) failures.push(`Gate 4-E-BQ Potato failed: fov=${potatoPresentation.fov}`);
+  }
+  if ((result.colliderCount || 0) !== 2) failures.push(`Gate 4-E-BQ failed: unexpected collider count=${result.colliderCount || 0}`);
+  if ((result.forwardDriveProbe?.halts || 0) !== 0) failures.push(`Gate 4-E-BQ failed: forwardDriveProbe.halts=${result.forwardDriveProbe?.halts || 0}`);
 }
 
 function assertAuthoredDistrictAsset(result, assetName, label, failures) {

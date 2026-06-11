@@ -615,9 +615,9 @@ export const zonePresentation = {
   },
   potato: {
     respawn: { position: [-38, 1.08, -124], heading: 2.36 },
-    camera: [-34, 9, -150],
-    target: [-14, 3, -132],
-    fov: 42,
+    camera: [-56, 12, -150],
+    target: [-16, 4, -128],
+    fov: 49,
   },
 };
 

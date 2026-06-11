@@ -569,6 +569,11 @@ export class SetPieces {
         routeGreenhouseFrames: 0,
         routeGlassPanelBreakups: 0,
         routeProduceCounterRhythms: 0,
+        routeHarvestGates: 0,
+        routeCropRowLanes: 0,
+        routeProduceCarts: 0,
+        routePotatoCrates: 0,
+        routePotatoCrests: 0,
         greenhouseMarketHalls: 0,
         harvestAtriums: 0,
         fieldCanopyFrames: 0,
@@ -1787,6 +1792,11 @@ export class SetPieces {
       stats.routeGreenhouseFrames += 1;
       stats.routeGlassPanelBreakups += 1;
       stats.routeProduceCounterRhythms += 1;
+      stats.routeHarvestGates += 1;
+      stats.routeCropRowLanes += 6;
+      stats.routeProduceCarts += 1;
+      stats.routePotatoCrates += 3;
+      stats.routePotatoCrests += 1;
       stats.greenhouseMarketHalls += 1;
       stats.harvestAtriums += 1;
       stats.fieldCanopyFrames += 1;
