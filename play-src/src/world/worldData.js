@@ -337,7 +337,7 @@ export const worldZones = [
     kind: 'Experience',
     title: 'Career Office',
     districtId: 'gallery-side',
-    position: [116, 0, -60],
+    position: [90, 0, -55],
     rotation: -0.24,
     radius: 10,
     color: '#b6a0ff',
@@ -560,10 +560,10 @@ export const zonePresentation = {
     fov: 42,
   },
   career: {
-    respawn: { position: [114, 1.08, -10], heading: 1.4 },
-    camera: [126, 12, -82],
-    target: [110, 4, -56],
-    fov: 44,
+    respawn: { position: [99.3, 1.08, -59.7], heading: 1.4 },
+    camera: [120, 11, -79],
+    target: [90, 4, -55],
+    fov: 47,
   },
   skills: {
     respawn: { position: [-94, 1.08, -58], heading: -2.63 },
