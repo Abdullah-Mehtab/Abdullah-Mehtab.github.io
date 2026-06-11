@@ -167,6 +167,18 @@ try {
   }
   await page.evaluate(() => window.__portfolioDrive.game.clearFocus());
 
+  const routeApproachFraming = [];
+  for (const zone of worldZones.filter((item) => item.id !== 'data-pier')) {
+    await stageRouteApproachView(page, zone.id);
+    routeApproachFraming.push(await sampleRouteApproachFrame(page, zone.id));
+    await screenshot(page, `route-approach-${slug(zone.id)}.png`);
+  }
+  await page.evaluate(() => {
+    const game = window.__portfolioDrive.game;
+    game.clearFocus();
+    window.__portfolioDrive.respawn('landing');
+  });
+
   const collectiblePreviewAvailable = await page.evaluate(() => {
     const game = window.__portfolioDrive.game;
     const shard = game.world.collectibles[0];
@@ -247,6 +259,7 @@ try {
     panelUi,
     overlayUi: { map: mapUi, menu: menuUi },
     zoneVehicleFraming,
+    routeApproachFraming,
     collectibles,
     securityScan,
     forwardDriveProbe,
@@ -399,6 +412,207 @@ async function sampleZoneVehicleFrame(page, zoneId) {
         maxY: Number(maxY.toFixed(3))
       }
     };
+  }, zoneId);
+}
+
+async function stageRouteApproachView(page, zoneId) {
+  await page.evaluate((id) => {
+    const game = window.__portfolioDrive.game;
+    const zone = game.world.zones.find((item) => item.id === id);
+    if (!zone) return;
+
+    const Vector3 = game.camera.position.constructor;
+    const respawn = game.world.getRespawnPose(id);
+    const vehiclePosition = respawn.position.clone();
+    const landmarkPosition = zone.position.clone();
+    const direction = landmarkPosition.clone().sub(vehiclePosition).setY(0);
+    if (direction.lengthSq() < 0.001) {
+      direction.set(Math.sin(respawn.heading || 0), 0, Math.cos(respawn.heading || 0));
+    }
+    direction.normalize();
+
+    const heading = Math.atan2(direction.x, direction.z);
+    game.ui.closePanel?.();
+    game.ui.closeMap?.();
+    game.ui.closeMenu?.();
+    game.vehicle.respawn({ x: vehiclePosition.x, y: 1.08, z: vehiclePosition.z }, heading);
+
+    const side = new Vector3(-direction.z, 0, direction.x);
+    const approachDistance = vehiclePosition.distanceTo(landmarkPosition);
+    const cameraPullback = Math.min(28, Math.max(20, approachDistance * 0.78));
+    const cameraPosition = vehiclePosition
+      .clone()
+      .add(direction.clone().multiplyScalar(-cameraPullback))
+      .add(side.multiplyScalar(2.2));
+    cameraPosition.y = 11.2;
+
+    const lookAt = vehiclePosition.clone().lerp(landmarkPosition, 0.62);
+    lookAt.y = 1.8;
+    game.cameraRig.setCinematic(cameraPosition, lookAt, 56);
+    game.cameraRig.smoothedTarget.copy(lookAt);
+    game.camera.position.copy(cameraPosition);
+    game.camera.fov = 56;
+    game.camera.updateProjectionMatrix();
+    game.camera.lookAt(lookAt);
+  }, zoneId);
+  await delay(380);
+}
+
+async function sampleRouteApproachFrame(page, zoneId) {
+  return page.evaluate((id) => {
+    const game = window.__portfolioDrive.game;
+    const zone = game.world.zones.find((item) => item.id === id);
+    const root = game.vehicle?.modelRoot;
+    const camera = game.camera;
+    const Vector3 = game.camera.position.constructor;
+    if (!zone || !root || !camera || !Vector3) return { id, ready: false };
+
+    root.updateMatrixWorld(true);
+    camera.updateMatrixWorld(true);
+    camera.updateProjectionMatrix();
+
+    const projectBounds = (points) => {
+      let minX = Infinity;
+      let minY = Infinity;
+      let maxX = -Infinity;
+      let maxY = -Infinity;
+      let visiblePoints = 0;
+      let projectedPoints = 0;
+      for (const source of points) {
+        const point = source.clone().project(camera);
+        if (!Number.isFinite(point.x) || !Number.isFinite(point.y) || !Number.isFinite(point.z)) continue;
+        const screenX = (point.x + 1) / 2;
+        const screenY = (1 - point.y) / 2;
+        minX = Math.min(minX, screenX);
+        maxX = Math.max(maxX, screenX);
+        minY = Math.min(minY, screenY);
+        maxY = Math.max(maxY, screenY);
+        projectedPoints += 1;
+        if (point.z >= -1 && point.z <= 1 && screenX >= 0 && screenX <= 1 && screenY >= 0 && screenY <= 1) {
+          visiblePoints += 1;
+        }
+      }
+      if (!projectedPoints) return { ready: false };
+      const margin = Math.min(minX, 1 - maxX, minY, 1 - maxY);
+      return {
+        ready: true,
+        inFrame: maxX > 0 && minX < 1 && maxY > 0 && minY < 1 && visiblePoints > 0,
+        safeInFrame: minX >= 0.025 && maxX <= 0.975 && minY >= 0.055 && maxY <= 0.985 && visiblePoints > 0,
+        margin: Number(margin.toFixed(3)),
+        visiblePoints,
+        bounds: {
+          minX: Number(minX.toFixed(3)),
+          maxX: Number(maxX.toFixed(3)),
+          minY: Number(minY.toFixed(3)),
+          maxY: Number(maxY.toFixed(3))
+        }
+      };
+    };
+
+    const vehiclePoints = [];
+    root.traverse((object) => {
+      if (!object.isMesh || !object.geometry) return;
+      if (!object.geometry.boundingBox) object.geometry.computeBoundingBox();
+      const box = object.geometry.boundingBox;
+      if (!box) return;
+      for (const x of [box.min.x, box.max.x]) {
+        for (const y of [box.min.y, box.max.y]) {
+          for (const z of [box.min.z, box.max.z]) {
+            vehiclePoints.push(new Vector3(x, y, z).applyMatrix4(object.matrixWorld));
+          }
+        }
+      }
+    });
+
+    const landmarkHeightById = {
+      education: 32,
+      security: 22,
+      projects: 22,
+      sentinel: 30,
+      career: 22,
+      skills: 22,
+      awards: 24,
+      cv: 18,
+      todo: 18,
+      circuit: 18,
+      contact: 24,
+      behind: 20,
+      potato: 18,
+      landing: 16
+    };
+    const radius = Math.max(5, zone.radius || 8);
+    const height = landmarkHeightById[id] || 18;
+    const center = zone.position.clone();
+    const landmarkPoints = [];
+    for (const x of [-radius, radius]) {
+      for (const z of [-radius, radius]) {
+        landmarkPoints.push(center.clone().add(new Vector3(x, 0.4, z)));
+        landmarkPoints.push(center.clone().add(new Vector3(x, height, z)));
+      }
+    }
+    landmarkPoints.push(center.clone().add(new Vector3(0, height * 0.55, 0)));
+
+    const road = nearestRoadSample(game.world.roadSegments || [], game.vehicle.position);
+    const vehicle = projectBounds(vehiclePoints);
+    const landmark = projectBounds(landmarkPoints);
+    const vehiclePosition = game.vehicle.position.clone();
+    const surface = game.world.getSurfaceInfo(vehiclePosition).id;
+    const approachDistance = vehiclePosition.distanceTo(zone.position);
+    const cameraDistance = game.camera.position.distanceTo(vehiclePosition);
+    const targetDistance = game.camera.position.distanceTo(zone.position);
+    return {
+      id,
+      ready: vehicle.ready && landmark.ready,
+      surface,
+      vehicle,
+      landmark,
+      road,
+      approachDistance: Number(approachDistance.toFixed(2)),
+      cameraDistance: Number(cameraDistance.toFixed(2)),
+      targetDistance: Number(targetDistance.toFixed(2)),
+      fov: Number(game.camera.fov.toFixed(2)),
+      safeInFrame: surface === 'road' && vehicle.safeInFrame && landmark.inFrame && road.offsetSafe
+    };
+
+    function nearestRoadSample(segments, position) {
+      let best = null;
+      for (let index = 0; index < segments.length; index += 1) {
+        const segment = segments[index];
+        const cx = segment[0];
+        const cz = segment[1];
+        const width = segment[2];
+        const length = segment[3];
+        const rotation = segment[4];
+        const dx = position.x - cx;
+        const dz = position.z - cz;
+        const along = dx * Math.sin(rotation) + dz * Math.cos(rotation);
+        const lateral = dx * Math.cos(rotation) - dz * Math.sin(rotation);
+        const alongOverflow = Math.max(0, Math.abs(along) - length / 2);
+        const lateralOverflow = Math.max(0, Math.abs(lateral) - width / 2);
+        const edgeDistance = Math.hypot(alongOverflow, lateralOverflow);
+        if (!best || edgeDistance < best.edgeDistance) {
+          best = {
+            index,
+            lateralOffset: Math.abs(lateral),
+            roadHalfWidth: width / 2,
+            alongOffset: Math.abs(along),
+            segmentHalfLength: length / 2,
+            edgeDistance
+          };
+        }
+      }
+      if (!best) return { ready: false, offsetSafe: false };
+      return {
+        ready: true,
+        index: best.index,
+        lateralOffset: Number(best.lateralOffset.toFixed(2)),
+        roadHalfWidth: Number(best.roadHalfWidth.toFixed(2)),
+        alongOffset: Number(best.alongOffset.toFixed(2)),
+        segmentHalfLength: Number(best.segmentHalfLength.toFixed(2)),
+        edgeDistance: Number(best.edgeDistance.toFixed(2)),
+        offsetSafe: best.lateralOffset <= best.roadHalfWidth + 0.55 && best.edgeDistance <= 0.6
+      };
+    }
   }, zoneId);
 }
 
@@ -4657,6 +4871,13 @@ function assertVerification(result) {
     }
     return;
   }
+  if (result.goalGate === 'gate-4e-bs-bruno-route-approach-benchmark-evidence') {
+    assertGate4EBSBrunoRouteApproachBenchmarkEvidenceVerification(result, failures);
+    if (failures.length) {
+      throw new Error(`Play verification failed: ${failures.join('; ')}`);
+    }
+    return;
+  }
   if (result.goalGate === 'gate-4b5-north-ridge') {
     assertGate4B5NorthRidgeVerification(result, failures);
     if (failures.length) {
@@ -5827,7 +6048,8 @@ function isGate4EExpandedArchitectureGate(goalGate) {
     || goalGate === 'gate-4e-bo-career-campus-route-framing-pass'
     || goalGate === 'gate-4e-bp-contact-vehicle-first-framing-pass'
     || goalGate === 'gate-4e-bq-potato-harvest-court-vehicle-first-pass'
-    || goalGate === 'gate-4e-br-vehicle-first-presentation-framing-pass';
+    || goalGate === 'gate-4e-br-vehicle-first-presentation-framing-pass'
+    || goalGate === 'gate-4e-bs-bruno-route-approach-benchmark-evidence';
 }
 
 function assertGate3RVerticalSliceVerification(result, failures, options = {}) {
@@ -5892,7 +6114,8 @@ function assertGate3RVerticalSliceVerification(result, failures, options = {}) {
     || result.goalGate === 'gate-4e-bo-career-campus-route-framing-pass'
     || result.goalGate === 'gate-4e-bp-contact-vehicle-first-framing-pass'
     || result.goalGate === 'gate-4e-bq-potato-harvest-court-vehicle-first-pass'
-    || result.goalGate === 'gate-4e-br-vehicle-first-presentation-framing-pass';
+    || result.goalGate === 'gate-4e-br-vehicle-first-presentation-framing-pass'
+    || result.goalGate === 'gate-4e-bs-bruno-route-approach-benchmark-evidence';
   const blockout = result.blockout || {};
   const blockoutSetPieces = blockout.setPieces || {};
   const slice = result.verticalSlice || blockout.verticalSlice || {};
@@ -5948,7 +6171,8 @@ function assertGate3RVerticalSliceVerification(result, failures, options = {}) {
     || result.goalGate === 'gate-4e-bo-career-campus-route-framing-pass'
     || result.goalGate === 'gate-4e-bp-contact-vehicle-first-framing-pass'
     || result.goalGate === 'gate-4e-bq-potato-harvest-court-vehicle-first-pass'
-    || result.goalGate === 'gate-4e-br-vehicle-first-presentation-framing-pass';
+    || result.goalGate === 'gate-4e-br-vehicle-first-presentation-framing-pass'
+    || result.goalGate === 'gate-4e-bs-bruno-route-approach-benchmark-evidence';
 
   if (result.goalGate !== expectedGoal) {
     failures.push(`Gate 3R probe failed: goalGate=${result.goalGate || 'none'}`);
@@ -8322,8 +8546,8 @@ function assertGate4EBQPotatoHarvestCourtVehicleFirstVerification(result, failur
   if ((result.forwardDriveProbe?.halts || 0) !== 0) failures.push(`Gate 4-E-BQ failed: forwardDriveProbe.halts=${result.forwardDriveProbe?.halts || 0}`);
 }
 
-function assertGate4EBRVehicleFirstPresentationFramingVerification(result, failures) {
-  assertGate4EBQPotatoHarvestCourtVehicleFirstVerification(result, failures, 'gate-4e-br-vehicle-first-presentation-framing-pass');
+function assertGate4EBRVehicleFirstPresentationFramingVerification(result, failures, expectedGoal = 'gate-4e-br-vehicle-first-presentation-framing-pass') {
+  assertGate4EBQPotatoHarvestCourtVehicleFirstVerification(result, failures, expectedGoal);
 
   const frames = result.zoneVehicleFraming || [];
   const expectedZones = worldZones.map((zone) => zone.id);
@@ -8350,6 +8574,56 @@ function assertGate4EBRVehicleFirstPresentationFramingVerification(result, failu
     .map((frame) => `${frame.id}:${frame.margin}`);
   if (hardEdges.length) {
     failures.push(`Gate 4-E-BR framing failed: vehicle hard-edge margins=${hardEdges.join(', ')}`);
+  }
+}
+
+function assertGate4EBSBrunoRouteApproachBenchmarkEvidenceVerification(result, failures) {
+  assertGate4EBRVehicleFirstPresentationFramingVerification(result, failures, 'gate-4e-bs-bruno-route-approach-benchmark-evidence');
+
+  const frames = result.routeApproachFraming || [];
+  const expectedZones = worldZones.filter((zone) => zone.id !== 'data-pier').map((zone) => zone.id);
+  if (frames.length !== expectedZones.length) {
+    failures.push(`Gate 4-E-BS route approach failed: routeApproachFraming=${frames.length}/${expectedZones.length}`);
+  }
+
+  const frameById = new Map(frames.map((frame) => [frame.id, frame]));
+  for (const zoneId of expectedZones) {
+    const frame = frameById.get(zoneId);
+    if (!frame) {
+      failures.push(`Gate 4-E-BS route approach failed: missing ${zoneId}`);
+      continue;
+    }
+    if (!frame.ready) failures.push(`Gate 4-E-BS route approach failed: ${zoneId} not ready`);
+    if (frame.surface !== 'road') failures.push(`Gate 4-E-BS route approach failed: ${zoneId} surface=${frame.surface}`);
+    if (!frame.vehicle?.safeInFrame) {
+      failures.push(`Gate 4-E-BS route approach failed: ${zoneId} vehicle frame=${JSON.stringify(frame.vehicle?.bounds || {})}`);
+    }
+    if (!frame.landmark?.inFrame) {
+      failures.push(`Gate 4-E-BS route approach failed: ${zoneId} landmark frame=${JSON.stringify(frame.landmark?.bounds || {})}`);
+    }
+    if (!frame.road?.offsetSafe) {
+      failures.push(`Gate 4-E-BS route approach failed: ${zoneId} road lateral=${frame.road?.lateralOffset}, halfWidth=${frame.road?.roadHalfWidth}, edge=${frame.road?.edgeDistance}`);
+    }
+    if (!Number.isFinite(frame.approachDistance) || frame.approachDistance > 38) {
+      failures.push(`Gate 4-E-BS route approach failed: ${zoneId} approachDistance=${frame.approachDistance}`);
+    }
+    if (!Number.isFinite(frame.cameraDistance) || frame.cameraDistance < 10 || frame.cameraDistance > 34) {
+      failures.push(`Gate 4-E-BS route approach failed: ${zoneId} cameraDistance=${frame.cameraDistance}`);
+    }
+    if (!Number.isFinite(frame.fov) || frame.fov < 46 || frame.fov > 58) {
+      failures.push(`Gate 4-E-BS route approach failed: ${zoneId} fov=${frame.fov}`);
+    }
+  }
+
+  const hardEdges = frames
+    .filter((frame) => frame.vehicle?.ready && frame.vehicle.margin < 0.025)
+    .map((frame) => `${frame.id}:${frame.vehicle.margin}`);
+  if (hardEdges.length) {
+    failures.push(`Gate 4-E-BS route approach failed: vehicle hard-edge margins=${hardEdges.join(', ')}`);
+  }
+
+  if ((result.forwardDriveProbe?.halts || 0) !== 0) {
+    failures.push(`Gate 4-E-BS failed: forwardDriveProbe.halts=${result.forwardDriveProbe?.halts || 0}`);
   }
 }
 
