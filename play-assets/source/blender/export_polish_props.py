@@ -1230,6 +1230,19 @@ def create_career_software_house(mats):
         cube(f"CareerSoftwareHouse_RouteCodeReviewLine_{index}", group, (-3.52, y, -5.87), (0.98 - (index % 2) * 0.18, 0.055, 0.055), [mats["screen"], mats["mint"], mats["aqua"], mats["screen"], mats["purple"]][index], bevel=0.003)
     for index, x in enumerate([-4.25, -1.4, 1.4, 4.25]):
         cube(f"CareerSoftwareHouse_RouteDeliverySprintLane_{index}", group, (x, 0.48, -5.98), (1.58, 0.06, 0.08), [mats["screen"], mats["mint"], mats["paper"], mats["purple"]][index], bevel=0.004)
+    cube("CareerSoftwareHouse_RouteArrivalCourtFrame", group, (0.15, 0.46, -6.32), (12.95, 0.16, 0.34), mats["dark"], bevel=0.018)
+    cube("CareerSoftwareHouse_RouteArrivalCourtThreshold", group, (0.15, 0.42, -6.72), (10.75, 0.08, 0.38), mats["paper"], bevel=0.018)
+    cube("CareerSoftwareHouse_RouteHiringArcadeBeam", group, (0.15, 4.05, -6.46), (12.6, 0.36, 0.34), mats["dark"], bevel=0.018)
+    cube("CareerSoftwareHouse_RouteHiringArcadeLeftPier", group, (-6.42, 2.18, -6.44), (0.42, 3.56, 0.36), mats["stone_shadow"], bevel=0.016)
+    cube("CareerSoftwareHouse_RouteHiringArcadeRightPier", group, (6.72, 2.18, -6.44), (0.42, 3.56, 0.36), mats["stone_shadow"], bevel=0.016)
+    cube("CareerSoftwareHouse_RouteTeamPortal", group, (0.15, 2.36, -6.58), (2.8, 2.72, 0.12), mats["glass"], bevel=0.012)
+    cube("CareerSoftwareHouse_RouteReviewTheater", group, (3.25, 2.38, -6.62), (3.48, 2.58, 0.12), mats["glass"], bevel=0.012)
+    cube("CareerSoftwareHouse_RouteReviewDesk", group, (3.25, 1.44, -6.72), (2.42, 0.18, 0.1), mats["wood"], bevel=0.006)
+    cube("CareerSoftwareHouse_RouteHiringBoard", group, (-3.02, 2.32, -6.62), (2.48, 2.48, 0.13), mats["dark"], bevel=0.012)
+    for index, y in enumerate([1.42, 1.84, 2.26, 2.68, 3.1]):
+        cube(f"CareerSoftwareHouse_RouteHiringBoardLine_{index}", group, (-3.02, y, -6.72), (1.82 - index * 0.12, 0.055, 0.055), [mats["mint"], mats["screen"], mats["aqua"], mats["paper"], mats["purple"]][index], bevel=0.003)
+    for index, x in enumerate([-4.9, -2.45, 0, 2.45, 4.9]):
+        cube(f"CareerSoftwareHouse_RouteCandidateFlowStep_{index}", group, (x, 0.58, -6.98), (0.78, 0.08, 0.16), [mats["paper"], mats["mint"], mats["screen"], mats["aqua"], mats["paper"]][index], bevel=0.004)
     cube("CareerSoftwareHouse_PublicCampusAtrium", group, (0.15, 3.78, -3.88), (6.85, 6.65, 0.3), mats["glass"], bevel=0.024)
     cube("CareerSoftwareHouse_AtriumTopCodeBand", group, (0.15, 6.98, -4.08), (7.4, 0.17, 0.1), mats["screen"], bevel=0.006)
     cube("CareerSoftwareHouse_AtriumLowerCodeBand", group, (0.15, 3.42, -4.12), (6.1, 0.11, 0.08), mats["mint"], bevel=0.005)
