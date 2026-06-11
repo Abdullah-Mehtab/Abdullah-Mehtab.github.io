@@ -698,6 +698,26 @@ def create_projects_foundry_building(mats):
         cube(f"ProjectsFoundry_RouteCompilePipelineStage_{index}", group, (x, y, 5.66), (0.58, 0.42, 0.08), material, bevel=0.004)
     cube("ProjectsFoundry_RouteBuildReviewBalcony", group, (2.95, 3.72, 5.54), (4.45, 0.22, 0.26), mats["paper"], bevel=0.01)
     cube("ProjectsFoundry_RouteBuildReviewCanopy", group, (2.95, 4.08, 5.48), (4.95, 0.18, 0.3), mats["dark"], bevel=0.012)
+    cube("ProjectsFoundry_RouteReleaseGantryLeftFrame", group, (-6.65, 3.0, 5.76), (0.34, 5.1, 0.26), mats["dark"], bevel=0.018)
+    cube("ProjectsFoundry_RouteReleaseGantryRightFrame", group, (4.55, 3.0, 5.76), (0.34, 5.1, 0.26), mats["dark"], bevel=0.018)
+    cube("ProjectsFoundry_RouteReleaseGantryHeader", group, (-1.05, 5.58, 5.74), (11.55, 0.34, 0.28), mats["dark"], bevel=0.02)
+    cube("ProjectsFoundry_RouteReleaseGantryStatusGlow", group, (-1.05, 5.25, 5.94), (9.8, 0.1, 0.08), mats["mint"], bevel=0.004)
+    for index, x in enumerate([-5.25, -3.55, -1.85, -0.15, 1.55, 3.25]):
+        cube(f"ProjectsFoundry_RouteReleaseGantryTick_{index}", group, (x, 5.06, 6.0), (0.48, 0.18, 0.08), [mats["mint"], mats["amber"], mats["screen"]][index % 3], bevel=0.006)
+    cube("ProjectsFoundry_RoutePrototypeLaunchPortalDeck", group, (-2.0, 0.72, 5.84), (5.7, 0.28, 0.52), mats["stone_shadow"], bevel=0.018)
+    cube("ProjectsFoundry_RoutePrototypeLaunchPortalLeft", group, (-4.72, 2.14, 5.88), (0.24, 2.72, 0.18), mats["screen"], bevel=0.01)
+    cube("ProjectsFoundry_RoutePrototypeLaunchPortalRight", group, (0.72, 2.14, 5.88), (0.24, 2.72, 0.18), mats["screen"], bevel=0.01)
+    cube("ProjectsFoundry_RoutePrototypeLaunchPortalBeam", group, (-2.0, 3.52, 5.9), (5.72, 0.22, 0.16), mats["amber"], bevel=0.008)
+    for index, x in enumerate([-3.72, -2.0, -0.28]):
+        cube(f"ProjectsFoundry_RoutePrototypeLaunchPod_{index}", group, (x, 1.54, 5.96), (0.74, 0.74, 0.08), [mats["glass"], mats["mint"], mats["aqua"]][index], bevel=0.006)
+    cube("ProjectsFoundry_RouteBuildReviewCourtRail", group, (3.22, 1.02, 5.88), (3.82, 0.16, 0.12), mats["paper"], bevel=0.006)
+    cube("ProjectsFoundry_RouteBuildReviewCourtBack", group, (3.22, 2.14, 5.96), (3.42, 1.65, 0.08), mats["glass"], bevel=0.006)
+    for index, x in enumerate([2.12, 3.22, 4.32]):
+        cube(f"ProjectsFoundry_RouteBuildReviewCourtPanel_{index}", group, (x, 2.16, 6.02), (0.58, 0.82, 0.06), [mats["screen"], mats["amber"], mats["mint"]][index], bevel=0.004)
+    cube("ProjectsFoundry_RouteDeployBeaconStackCore", group, (5.72, 4.8, 4.98), (0.72, 4.0, 0.72), mats["dark"], bevel=0.024)
+    cube("ProjectsFoundry_RouteDeployBeaconStackCap", group, (5.72, 7.0, 4.98), (1.18, 0.38, 1.18), mats["mint"], bevel=0.026)
+    for index, y in enumerate([3.62, 4.28, 4.94, 5.6, 6.26]):
+        cube(f"ProjectsFoundry_RouteDeployBeaconPulse_{index}", group, (5.72, y, 5.38), (0.62, 0.09, 0.07), [mats["mint"], mats["screen"], mats["amber"]][index % 3], bevel=0.003)
 
 
 def create_campus_fountain(mats):

@@ -679,6 +679,10 @@ export class SetPieces {
         routePrototypeGalleryPods: 0,
         routeCompilePipelineStages: 0,
         routeBuildReviewBalconies: 0,
+        routeReleaseGantryFrames: 0,
+        routePrototypeLaunchPortals: 0,
+        routeBuildReviewCourts: 0,
+        routeDeployBeaconStacks: 0,
         groundPlates: 0,
         signs: 0,
         lamps: 0
@@ -1951,6 +1955,10 @@ export class SetPieces {
       stats.routePrototypeGalleryPods += 3;
       stats.routeCompilePipelineStages += 4;
       stats.routeBuildReviewBalconies += 1;
+      stats.routeReleaseGantryFrames += 1;
+      stats.routePrototypeLaunchPortals += 1;
+      stats.routeBuildReviewCourts += 1;
+      stats.routeDeployBeaconStacks += 1;
     }
 
     stats.assemblyRings = stats.foundryBuildings;
