@@ -16,7 +16,7 @@ const LANDMARK_PRESENTATION = {
   todo: { scale: 1.34, padWidth: 17.4, padDepth: 10.4 },
   projects: { scale: 1.38, padWidth: 24, padDepth: 16 },
   career: { scale: 1.38, padWidth: 18, padDepth: 11 },
-  harbor: { scale: 1.14, padWidth: 16, padDepth: 10 },
+  harbor: { scale: 1.22, padWidth: 18.8, padDepth: 11.8 },
   awards: { scale: 1.34, padWidth: 18, padDepth: 11 },
   sentinel: { scale: 1.34, padWidth: 18, padDepth: 11 },
   circuit: { scale: 1.22, padWidth: 19.2, padDepth: 11.2 }
@@ -768,6 +768,11 @@ export class SetPieces {
         routeInboxOutboxFrames: 0,
         routeChannelSpines: 0,
         routeMessageFlowTicks: 0,
+        routePublicSignalGateways: 0,
+        routeInboxOutboxTowers: 0,
+        routeMessageBridgeSpans: 0,
+        routeSignalCrownArrays: 0,
+        routeContactBeaconSpines: 0,
         signs: 0,
         lamps: 0
       }
@@ -2058,6 +2063,11 @@ export class SetPieces {
       stats.routeInboxOutboxFrames += 2;
       stats.routeChannelSpines += 4;
       stats.routeMessageFlowTicks += 6;
+      stats.routePublicSignalGateways += 1;
+      stats.routeInboxOutboxTowers += 2;
+      stats.routeMessageBridgeSpans += 1;
+      stats.routeSignalCrownArrays += 1;
+      stats.routeContactBeaconSpines += 1;
       stats.signalMasts += 1;
       stats.relayMasts += 1;
       stats.contactTerminals += 3;
