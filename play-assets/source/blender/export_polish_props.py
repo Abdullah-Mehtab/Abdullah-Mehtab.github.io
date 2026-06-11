@@ -1505,6 +1505,27 @@ def create_awards_museum_hall(mats):
         cube(f"AwardsMuseum_RoofTrophyLight_{index}", group, (x, 4.78, 2.04), (0.26, 0.42, 0.18), mats["gold"], bevel=0.018)
     for index, y in enumerate([4.32, 4.82, 5.32]):
         cube(f"AwardsMuseum_CupHallWindow_{index}", group, (0, y, -0.64), (1.7 - index * 0.2, 0.42, 0.08), [mats["gold"], mats["screen"], mats["paper"]][index], bevel=0.006)
+    cube("AwardsMuseum_RouteHonorsBoulevard", group, (0, 0.38, -3.42), (10.8, 0.18, 1.18), mats["stone"], bevel=0.032)
+    for index, x in enumerate([-4.6, -2.3, 0, 2.3, 4.6]):
+        cube(f"AwardsMuseum_RouteHonorsBoulevardMedal_{index}", group, (x, 0.54, -3.66), (0.62, 0.12, 0.12), [mats["gold"], mats["amber"], mats["paper"], mats["amber"], mats["gold"]][index], bevel=0.006)
+    for x in [-5.42, 5.42]:
+        cube("AwardsMuseum_RouteMedalGatePylon", group, (x, 3.2, -3.38), (0.62, 5.46, 0.58), mats["stone_shadow"], bevel=0.032)
+        cube("AwardsMuseum_RouteMedalGateGlow", group, (x, 3.18, -3.74), (0.08, 4.12, 0.06), mats["amber"], bevel=0.004)
+    cube("AwardsMuseum_RouteMedalGateHeader", group, (0, 5.92, -3.38), (11.25, 0.48, 0.58), mats["gold"], bevel=0.026)
+    cylinder("AwardsMuseum_RouteMedalGateDisc", group, (0, 4.52, -3.74), 1.08, 0.1, mats["gold"], vertices=24, bevel=0.012)
+    cube("AwardsMuseum_RouteMedalGateRibbonLeft", group, (-0.38, 3.18, -3.84), (0.28, 1.36, 0.08), mats["amber"], rot=(0, 0, -0.18), bevel=0.004)
+    cube("AwardsMuseum_RouteMedalGateRibbonRight", group, (0.38, 3.18, -3.84), (0.28, 1.36, 0.08), mats["paper"], rot=(0, 0, 0.18), bevel=0.004)
+    cube("AwardsMuseum_RouteTrophyRotundaBase", group, (0, 6.72, -1.82), (3.2, 0.42, 2.18), mats["stone_shadow"], bevel=0.035)
+    cube("AwardsMuseum_RouteTrophyRotundaCup", group, (0, 7.42, -1.82), (1.54, 0.72, 1.0), mats["gold"], bevel=0.075)
+    cube("AwardsMuseum_RouteTrophyRotundaStem", group, (0, 6.96, -1.82), (0.32, 0.58, 0.32), mats["gold"], bevel=0.028)
+    cube("AwardsMuseum_RouteTrophyRotundaGlow", group, (0, 7.86, -2.42), (2.35, 0.12, 0.08), mats["amber"], bevel=0.004)
+    for index, x in enumerate([-3.8, -2.28, 2.28, 3.8]):
+        cube(f"AwardsMuseum_RouteCertificateGalleryCase_{index}", group, (x, 2.62, -3.0), (0.86, 1.02, 0.08), [mats["paper"], mats["gold"], mats["gold"], mats["paper"]][index], bevel=0.008)
+        cube(f"AwardsMuseum_RouteCertificateGalleryGlow_{index}", group, (x, 3.32, -3.08), (0.64, 0.08, 0.06), mats["amber"], bevel=0.004)
+    cube("AwardsMuseum_RouteCeremonialCrownBase", group, (0, 8.38, -0.74), (4.8, 0.26, 0.42), mats["gold"], bevel=0.018)
+    for index, x in enumerate([-1.92, -0.96, 0, 0.96, 1.92]):
+        cube(f"AwardsMuseum_RouteCeremonialCrownSpire_{index}", group, (x, 8.92 + (0.28 if index == 2 else 0), -0.78), (0.24, 0.96 + (0.38 if index == 2 else 0), 0.18), mats["gold"], bevel=0.012)
+    cube("AwardsMuseum_RouteCeremonialCrownGlow", group, (0, 8.36, -1.05), (3.8, 0.1, 0.08), mats["amber"], bevel=0.004)
 
 
 def create_todo_board(mats):

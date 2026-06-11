@@ -798,6 +798,10 @@ export class SetPieces {
         routeMedalCrowns: 0,
         routeCertificateGalleries: 0,
         routeHonorsEntryAxes: 0,
+        routeHonorsBoulevards: 0,
+        routeMedalGates: 0,
+        routeTrophyRotundas: 0,
+        routeCeremonialCrowns: 0,
         signs: 0,
         lamps: 0
       },
@@ -2127,6 +2131,10 @@ export class SetPieces {
       stats.routeMedalCrowns += 1;
       stats.routeCertificateGalleries += 1;
       stats.routeHonorsEntryAxes += 1;
+      stats.routeHonorsBoulevards += 1;
+      stats.routeMedalGates += 1;
+      stats.routeTrophyRotundas += 1;
+      stats.routeCeremonialCrowns += 1;
     }
     this.recordGate3RPlacement('gate4d-awards-museum-hall', 'GATE4D_Awards_Museum_Hall_Architecture', museum[0], museum[1], { minClearance: 4.8 });
 
