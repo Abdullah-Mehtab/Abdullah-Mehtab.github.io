@@ -342,6 +342,26 @@ def create_security_operations_gate(mats):
         cube(f"SecurityOps_RouteClearancePillarGlow_{index}", group, (x, 2.72, -6.73), (0.09, 2.45, 0.05), [mats["screen"], mats["mint"], mats["aqua"], mats["pink"]][index], bevel=0.002)
     for index, x in enumerate([-1.15, -0.35, 0.45, 1.25, 2.05, 2.85]):
         cube(f"SecurityOps_RoutePacketQueueTick_{index}", group, (x, 0.9, -6.74), (0.45, 0.08, 0.055), [mats["screen"], mats["mint"], mats["aqua"]][index % 3], bevel=0.002)
+    cube("SecurityOps_RouteCampusArrivalArchDeck", group, (0.1, 0.58, -7.08), (12.6, 0.22, 0.52), mats["stone"], bevel=0.022)
+    for x in [-6.48, 6.68]:
+        cube("SecurityOps_RouteCampusArrivalArchPylon", group, (x, 3.55, -6.92), (0.56, 6.18, 0.46), mats["dark"], bevel=0.018)
+        cube("SecurityOps_RouteCampusArrivalArchTrace", group, (x, 3.48, -7.22), (0.08, 4.42, 0.06), mats["mint"], bevel=0.003)
+    cube("SecurityOps_RouteCampusArrivalArchBeam", group, (0.1, 6.46, -6.92), (13.72, 0.42, 0.48), mats["dark"], bevel=0.02)
+    cube("SecurityOps_RouteCampusArrivalArchGlow", group, (0.1, 6.16, -7.24), (11.2, 0.1, 0.06), mats["screen"], bevel=0.003)
+    cube("SecurityOps_RouteCommandFrontageHall", group, (0.1, 3.2, -7.18), (8.6, 4.8, 0.22), mats["glass"], bevel=0.016)
+    cube("SecurityOps_RouteCommandFrontageHeader", group, (0.1, 5.72, -7.34), (9.35, 0.32, 0.18), mats["screen"], bevel=0.008)
+    cube("SecurityOps_RouteCommandFrontageDesk", group, (0.1, 1.36, -7.34), (5.35, 0.24, 0.12), mats["stone_shadow"], bevel=0.01)
+    cube("SecurityOps_RouteScanCourtFrame", group, (0.1, 0.66, -7.72), (10.8, 0.12, 0.34), mats["mint"], bevel=0.006)
+    for index, x in enumerate([-4.0, -2.4, -0.8, 0.8, 2.4, 4.0]):
+        cube(f"SecurityOps_RouteScanCourtLane_{index}", group, (x, 0.78, -7.92), (0.58, 0.08, 0.08), [mats["mint"], mats["screen"], mats["aqua"], mats["pink"], mats["screen"], mats["mint"]][index], bevel=0.003)
+    cube("SecurityOps_RouteIncidentResponseWing", group, (5.32, 3.2, -7.06), (2.34, 4.72, 0.28), mats["stone_shadow"], bevel=0.018)
+    cube("SecurityOps_RouteIncidentResponseWingGlass", group, (5.32, 3.18, -7.28), (1.42, 2.8, 0.08), mats["glass"], bevel=0.006)
+    cube("SecurityOps_RouteThreatWatchTower", group, (-5.35, 4.32, -7.0), (1.42, 7.0, 0.42), mats["dark"], bevel=0.018)
+    for index, y in enumerate([1.78, 2.48, 3.18, 3.88, 4.58, 5.28, 5.98]):
+        cube(f"SecurityOps_RouteThreatWatchPulse_{index}", group, (-5.35, y, -7.28), (0.58, 0.08, 0.06), [mats["pink"], mats["screen"], mats["mint"], mats["aqua"]][index % 4], bevel=0.003)
+    cube("SecurityOps_RouteThreatWatchCrown", group, (-5.35, 8.0, -7.02), (2.24, 0.32, 0.58), mats["pink"], bevel=0.01)
+    cube("SecurityOps_RouteShieldCourtFrame", group, (0.1, 4.05, -7.54), (12.8, 0.16, 0.12), mats["mint"], bevel=0.004)
+    cube("SecurityOps_RouteShieldCourtCore", group, (0.1, 2.82, -7.62), (1.86, 2.52, 0.1), mats["screen"], bevel=0.006)
     cube("SecurityOps_ShieldGateLeftFin", group, (-6.42, 3.18, -5.48), (0.24, 4.85, 1.02), mats["screen"], rot=(0, 0, -0.14), bevel=0.01)
     cube("SecurityOps_ShieldGateRightFin", group, (6.62, 3.18, -5.48), (0.24, 4.85, 1.02), mats["screen"], rot=(0, 0, 0.14), bevel=0.01)
     cube("SecurityOps_ScanThreshold", group, (0.1, 0.2, -6.14), (9.4, 0.08, 0.92), mats["pink"], bevel=0.006)

@@ -81,6 +81,11 @@ export class SetPieces {
       routeTriageDesks: 0,
       routeClearancePillars: 0,
       routePacketQueueTicks: 0,
+      routeCampusArrivalArches: 0,
+      routeCommandFrontages: 0,
+      routeThreatWatchTowers: 0,
+      routeIncidentResponseWings: 0,
+      routeShieldCourts: 0,
       cableRuns: 0,
       terminalRails: 0
     };
@@ -2977,6 +2982,11 @@ export class SetPieces {
         this.securityLabStats.routeTriageDesks += 1;
         this.securityLabStats.routeClearancePillars += 4;
         this.securityLabStats.routePacketQueueTicks += 6;
+        this.securityLabStats.routeCampusArrivalArches += 1;
+        this.securityLabStats.routeCommandFrontages += 1;
+        this.securityLabStats.routeThreatWatchTowers += 1;
+        this.securityLabStats.routeIncidentResponseWings += 1;
+        this.securityLabStats.routeShieldCourts += 1;
       }
     }
 
