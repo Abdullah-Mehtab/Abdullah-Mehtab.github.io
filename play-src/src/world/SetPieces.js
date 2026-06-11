@@ -826,6 +826,11 @@ export class SetPieces {
         routeDefenseCanopies: 0,
         routeEntryPorticos: 0,
         routeEntryWarRoomGlass: 0,
+        routeShieldThresholdArches: 0,
+        routeSocFrontageWings: 0,
+        routeInspectionLaneMarks: 0,
+        routeThreatIntelCrowns: 0,
+        routeCommandBeaconMasts: 0,
         signs: 0,
         lamps: 0
       },
@@ -2144,6 +2149,11 @@ export class SetPieces {
       stats.routeDefenseCanopies += 1;
       stats.routeEntryPorticos += 1;
       stats.routeEntryWarRoomGlass += 1;
+      stats.routeShieldThresholdArches += 1;
+      stats.routeSocFrontageWings += 2;
+      stats.routeInspectionLaneMarks += 5;
+      stats.routeThreatIntelCrowns += 1;
+      stats.routeCommandBeaconMasts += 1;
     }
 
     stats.signs = 0;
