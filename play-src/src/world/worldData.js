@@ -354,7 +354,7 @@ export const worldZones = [
     kind: 'Stack',
     title: 'Skills Service Road',
     districtId: 'west-service',
-    position: [-86, 0, -76],
+    position: [-94, 0, -84],
     rotation: 0.24,
     radius: 10,
     color: '#92ffea',
@@ -554,10 +554,10 @@ export const zonePresentation = {
     fov: 50,
   },
   sentinel: {
-    respawn: { position: [18, 1.08, 116], heading: -0.05 },
-    camera: [42, 18, 154],
-    target: [10, 5, 129],
-    fov: 42,
+    respawn: { position: [36, 1.08, 108], heading: -0.9 },
+    camera: [56, 14, 140],
+    target: [18, 4, 122],
+    fov: 50,
   },
   career: {
     respawn: { position: [99.3, 1.08, -59.7], heading: 1.4 },

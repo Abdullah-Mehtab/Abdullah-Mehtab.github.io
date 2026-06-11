@@ -1711,7 +1711,7 @@ export class SetPieces {
     stats.pads += 1;
 
     const dataCenter = point(0, 0.05);
-    if (this.addPolishAsset(group, 'EnvPolishSkillsDataCenter', dataCenter[0], dataCenter[1], rotation, presentation.scale)) {
+    if (this.addPolishAsset(group, 'EnvPolishSkillsDataCenter', dataCenter[0], dataCenter[1], rotation + Math.PI, presentation.scale)) {
       this.recordGate3RPlacement('gate4d-skills-data-center', 'GATE4D_Skills_Data_Center_Architecture', dataCenter[0], dataCenter[1], { minClearance: 5.0 });
       stats.sourceAssets += 1;
       stats.authoredAssets += 1;
