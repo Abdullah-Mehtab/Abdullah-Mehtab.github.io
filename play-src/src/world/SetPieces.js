@@ -693,6 +693,10 @@ export class SetPieces {
         routePrototypeLaunchPortals: 0,
         routeBuildReviewCourts: 0,
         routeDeployBeaconStacks: 0,
+        routeRepositoryAtriumFaces: 0,
+        routeBuildPipelineRunways: 0,
+        routePrototypeReviewWindows: 0,
+        routeReleaseCraneCrowns: 0,
         groundPlates: 0,
         signs: 0,
         lamps: 0
@@ -1982,6 +1986,10 @@ export class SetPieces {
       stats.routePrototypeLaunchPortals += 1;
       stats.routeBuildReviewCourts += 1;
       stats.routeDeployBeaconStacks += 1;
+      stats.routeRepositoryAtriumFaces += 1;
+      stats.routeBuildPipelineRunways += 1;
+      stats.routePrototypeReviewWindows += 3;
+      stats.routeReleaseCraneCrowns += 1;
     }
 
     stats.assemblyRings = stats.foundryBuildings;

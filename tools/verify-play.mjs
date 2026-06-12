@@ -4953,6 +4953,13 @@ function assertVerification(result) {
     }
     return;
   }
+  if (result.goalGate === 'gate-4e-ca-projects-route-foundry-facade-benchmark-pass') {
+    assertGate4ECAProjectsRouteFoundryFacadeBenchmarkVerification(result, failures);
+    if (failures.length) {
+      throw new Error(`Play verification failed: ${failures.join('; ')}`);
+    }
+    return;
+  }
   if (result.goalGate === 'gate-4b5-north-ridge') {
     assertGate4B5NorthRidgeVerification(result, failures);
     if (failures.length) {
@@ -6131,7 +6138,8 @@ function isGate4EExpandedArchitectureGate(goalGate) {
     || goalGate === 'gate-4e-bw-todo-route-sprint-board-benchmark-pass'
     || goalGate === 'gate-4e-bx-awards-route-honors-forecourt-benchmark-pass'
     || goalGate === 'gate-4e-by-security-scanner-threshold-benchmark-pass'
-    || goalGate === 'gate-4e-bz-route-framing-benchmark-sweep';
+    || goalGate === 'gate-4e-bz-route-framing-benchmark-sweep'
+    || goalGate === 'gate-4e-ca-projects-route-foundry-facade-benchmark-pass';
 }
 
 function assertGate3RVerticalSliceVerification(result, failures, options = {}) {
@@ -6204,7 +6212,8 @@ function assertGate3RVerticalSliceVerification(result, failures, options = {}) {
     || result.goalGate === 'gate-4e-bw-todo-route-sprint-board-benchmark-pass'
     || result.goalGate === 'gate-4e-bx-awards-route-honors-forecourt-benchmark-pass'
     || result.goalGate === 'gate-4e-by-security-scanner-threshold-benchmark-pass'
-    || result.goalGate === 'gate-4e-bz-route-framing-benchmark-sweep';
+    || result.goalGate === 'gate-4e-bz-route-framing-benchmark-sweep'
+    || result.goalGate === 'gate-4e-ca-projects-route-foundry-facade-benchmark-pass';
   const blockout = result.blockout || {};
   const blockoutSetPieces = blockout.setPieces || {};
   const slice = result.verticalSlice || blockout.verticalSlice || {};
@@ -6268,7 +6277,8 @@ function assertGate3RVerticalSliceVerification(result, failures, options = {}) {
     || result.goalGate === 'gate-4e-bw-todo-route-sprint-board-benchmark-pass'
     || result.goalGate === 'gate-4e-bx-awards-route-honors-forecourt-benchmark-pass'
     || result.goalGate === 'gate-4e-by-security-scanner-threshold-benchmark-pass'
-    || result.goalGate === 'gate-4e-bz-route-framing-benchmark-sweep';
+    || result.goalGate === 'gate-4e-bz-route-framing-benchmark-sweep'
+    || result.goalGate === 'gate-4e-ca-projects-route-foundry-facade-benchmark-pass';
 
   if (result.goalGate !== expectedGoal) {
     failures.push(`Gate 3R probe failed: goalGate=${result.goalGate || 'none'}`);
@@ -8969,6 +8979,45 @@ function assertGate4EBZRouteFramingBenchmarkSweepVerification(result, failures) 
     if (!Number.isFinite(frame.approachDistance) || frame.approachDistance < 16 || frame.approachDistance > 46) {
       failures.push(`Gate 4-E-BZ route framing failed: ${id} approachDistance=${frame.approachDistance}`);
     }
+  }
+}
+
+function assertGate4ECAProjectsRouteFoundryFacadeBenchmarkVerification(result, failures) {
+  assertGate4EBZRouteFramingBenchmarkSweepVerification(result, failures);
+
+  const projects = result.gate4b4?.projects || {};
+  assertAuthoredDistrictAsset(result, 'EnvPolishProjectsFoundryBuilding', 'Gate 4-E-CA Projects route foundry facade architecture', failures);
+  if ((projects.routeRepositoryAtriumFaces || 0) < 1) {
+    failures.push(`Gate 4-E-CA Projects failed: routeRepositoryAtriumFaces=${projects.routeRepositoryAtriumFaces || 0}/1`);
+  }
+  if ((projects.routeBuildPipelineRunways || 0) < 1) {
+    failures.push(`Gate 4-E-CA Projects failed: routeBuildPipelineRunways=${projects.routeBuildPipelineRunways || 0}/1`);
+  }
+  if ((projects.routePrototypeReviewWindows || 0) < 3) {
+    failures.push(`Gate 4-E-CA Projects failed: routePrototypeReviewWindows=${projects.routePrototypeReviewWindows || 0}/3`);
+  }
+  if ((projects.routeReleaseCraneCrowns || 0) < 1) {
+    failures.push(`Gate 4-E-CA Projects failed: routeReleaseCraneCrowns=${projects.routeReleaseCraneCrowns || 0}/1`);
+  }
+
+  const frames = new Map((result.routeApproachFraming || []).map((frame) => [frame.id, frame]));
+  const frame = frames.get('projects');
+  if (!frame) {
+    failures.push('Gate 4-E-CA Projects failed: missing route approach frame');
+    return;
+  }
+  if (!frame.safeInFrame) failures.push(`Gate 4-E-CA Projects failed: safeInFrame=${frame.safeInFrame}`);
+  if (!frame.vehicle?.safeInFrame) {
+    failures.push(`Gate 4-E-CA Projects failed: vehicle frame=${JSON.stringify(frame.vehicle?.bounds || {})}`);
+  }
+  if (!frame.landmark?.inFrame || !frame.landmark?.safeInFrame) {
+    failures.push(`Gate 4-E-CA Projects failed: landmark frame=${JSON.stringify(frame.landmark?.bounds || {})}`);
+  }
+  if (!frame.road?.offsetSafe || Math.abs(frame.road?.lateralOffset || 0) > 0.85) {
+    failures.push(`Gate 4-E-CA Projects failed: road lateral=${frame.road?.lateralOffset}`);
+  }
+  if (!Number.isFinite(frame.approachDistance) || frame.approachDistance < 16 || frame.approachDistance > 46) {
+    failures.push(`Gate 4-E-CA Projects failed: approachDistance=${frame.approachDistance}`);
   }
 }
 

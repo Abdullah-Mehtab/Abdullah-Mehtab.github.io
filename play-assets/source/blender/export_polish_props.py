@@ -718,6 +718,44 @@ def create_projects_foundry_building(mats):
     cube("ProjectsFoundry_RouteDeployBeaconStackCap", group, (5.72, 7.0, 4.98), (1.18, 0.38, 1.18), mats["mint"], bevel=0.026)
     for index, y in enumerate([3.62, 4.28, 4.94, 5.6, 6.26]):
         cube(f"ProjectsFoundry_RouteDeployBeaconPulse_{index}", group, (5.72, y, 5.38), (0.62, 0.09, 0.07), [mats["mint"], mats["screen"], mats["amber"]][index % 3], bevel=0.003)
+    cube("ProjectsFoundry_RouteRepositoryAtriumFaceFrame", group, (-1.05, 3.1, 6.18), (13.35, 4.15, 0.18), mats["dark"], bevel=0.02)
+    cube("ProjectsFoundry_RouteRepositoryAtriumFaceGlass", group, (-1.05, 3.02, 6.3), (11.35, 2.85, 0.08), mats["glass"], bevel=0.008)
+    cube("ProjectsFoundry_RouteRepositoryAtriumFaceHeader", group, (-1.05, 5.32, 6.36), (13.8, 0.34, 0.18), mats["wood"], bevel=0.018)
+    cube("ProjectsFoundry_RouteRepositoryAtriumFaceSill", group, (-1.05, 0.86, 6.36), (12.45, 0.3, 0.16), mats["stone_shadow"], bevel=0.016)
+    for index, x in enumerate([-5.38, -3.92, -2.46, -1.0, 0.46, 1.92, 3.38]):
+        cube(f"ProjectsFoundry_RouteRepositoryCommitColumn_{index}", group, (x, 3.02, 6.42), (0.12, 2.6, 0.08), mats["paper"], bevel=0.004)
+        cube(f"ProjectsFoundry_RouteRepositoryCommitNode_{index}", group, (x, 1.72 + (index % 4) * 0.45, 6.5), (0.34, 0.18, 0.07), [mats["screen"], mats["mint"], mats["amber"], mats["aqua"]][index % 4], bevel=0.006)
+    for index, (x, y) in enumerate([(-4.5, 2.0), (-3.2, 2.72), (-1.85, 2.24), (-0.48, 3.12), (0.92, 2.52), (2.28, 3.3)]):
+        cube(f"ProjectsFoundry_RouteRepositoryBranchTrace_{index}", group, (x, y, 6.54), (1.02, 0.08, 0.06), mats["mint" if index % 2 else "amber"], rot=(0, 0, 0.28 if index % 2 else -0.24), bevel=0.003)
+    cube("ProjectsFoundry_RouteBuildPipelineRunwayDeck", group, (-1.05, 0.42, 6.74), (11.75, 0.18, 1.02), mats["stone_shadow"], bevel=0.018)
+    cube("ProjectsFoundry_RouteBuildPipelineRunwayCenterGlow", group, (-1.05, 0.56, 7.28), (9.85, 0.08, 0.08), mats["mint"], bevel=0.004)
+    for index, x in enumerate([-5.0, -3.45, -1.9, -0.35, 1.2, 2.75, 4.3]):
+        cube(f"ProjectsFoundry_RouteBuildPipelineRunwayStage_{index}", group, (x, 0.62, 6.74), (0.72, 0.1, 0.72), [mats["screen"], mats["amber"], mats["mint"], mats["paper"]][index % 4], bevel=0.008)
+    for index, x in enumerate([-4.25, -1.05, 2.15]):
+        cube(f"ProjectsFoundry_RoutePrototypeReviewWindowFrame_{index}", group, (x, 2.62, 6.86), (2.35, 1.72, 0.08), mats["paper"], bevel=0.006)
+        cube(f"ProjectsFoundry_RoutePrototypeReviewWindowGlass_{index}", group, (x, 2.62, 6.92), (1.78, 1.16, 0.06), [mats["glass"], mats["screen"], mats["mint"]][index], bevel=0.004)
+        cube(f"ProjectsFoundry_RoutePrototypeReviewBench_{index}", group, (x, 1.36, 6.98), (1.95, 0.24, 0.34), mats["stone_shadow"], bevel=0.012)
+    cube("ProjectsFoundry_RouteReleaseCraneCrownLeft", group, (-6.82, 5.92, 6.18), (0.36, 2.3, 0.28), mats["dark"], bevel=0.016)
+    cube("ProjectsFoundry_RouteReleaseCraneCrownRight", group, (4.72, 5.92, 6.18), (0.36, 2.3, 0.28), mats["dark"], bevel=0.016)
+    cube("ProjectsFoundry_RouteReleaseCraneCrownBeam", group, (-1.05, 6.94, 6.18), (12.15, 0.34, 0.28), mats["dark"], bevel=0.018)
+    cube("ProjectsFoundry_RouteReleaseCraneCrownGlow", group, (-1.05, 6.58, 6.4), (10.9, 0.1, 0.08), mats["amber"], bevel=0.004)
+    cube("ProjectsFoundry_RouteReleaseCraneCrownTrolley", group, (2.1, 6.46, 6.48), (0.95, 0.32, 0.24), mats["stone_shadow"], bevel=0.012)
+    cube("ProjectsFoundry_RouteReleaseCraneCrownHook", group, (2.1, 5.52, 6.52), (0.16, 1.24, 0.1), mats["rope"], bevel=0.004)
+    cube("ProjectsFoundry_RouteReleaseCraneCrownLoad", group, (2.1, 4.78, 6.58), (0.88, 0.48, 0.5), mats["amber"], bevel=0.016)
+    cube("ProjectsFoundry_RouteSideRepositoryFaceFrame", group, (7.06, 3.34, 1.08), (0.16, 3.9, 3.05), mats["dark"], bevel=0.018)
+    cube("ProjectsFoundry_RouteSideRepositoryFaceGlass", group, (7.16, 3.2, 1.08), (0.08, 2.72, 2.35), mats["glass"], bevel=0.008)
+    for index, z in enumerate([-0.05, 0.68, 1.41, 2.14]):
+        cube(f"ProjectsFoundry_RouteSideRepositoryLane_{index}", group, (7.22, 3.04, z), (0.07, 0.12, 0.48), [mats["screen"], mats["mint"], mats["amber"], mats["aqua"]][index], bevel=0.003)
+    cube("ProjectsFoundry_RouteFabricationStackPublicFace", group, (5.82, 4.48, -1.22), (2.0, 3.35, 0.1), mats["dark"], bevel=0.016)
+    cube("ProjectsFoundry_RouteFabricationStackReviewGlass", group, (5.82, 4.42, -1.3), (1.45, 2.36, 0.07), mats["glass"], bevel=0.006)
+    cube("ProjectsFoundry_RouteFabricationStackReviewHeader", group, (5.82, 5.92, -1.34), (1.85, 0.22, 0.06), mats["screen"], bevel=0.004)
+    cube("ProjectsFoundry_RouteFabricationStackDeployLine", group, (5.82, 3.16, -1.36), (1.55, 0.12, 0.06), mats["amber"], bevel=0.004)
+    for index, y in enumerate([3.72, 4.28, 4.84, 5.4]):
+        cube(f"ProjectsFoundry_RouteFabricationStackStatus_{index}", group, (6.66, y, -1.38), (0.28, 0.12, 0.06), [mats["mint"], mats["screen"], mats["amber"], mats["aqua"]][index], bevel=0.004)
+    cube("ProjectsFoundry_RouteFabricationStackSideFace", group, (6.98, 4.42, 0.58), (0.1, 3.2, 2.38), mats["dark"], bevel=0.016)
+    cube("ProjectsFoundry_RouteFabricationStackSideGlass", group, (7.06, 4.34, 0.58), (0.07, 2.18, 1.72), mats["glass"], bevel=0.006)
+    for index, z in enumerate([-0.16, 0.58, 1.32]):
+        cube(f"ProjectsFoundry_RouteFabricationStackSideStatus_{index}", group, (7.12, 4.96, z), (0.06, 0.16, 0.44), [mats["screen"], mats["mint"], mats["amber"]][index], bevel=0.003)
 
 
 def create_campus_fountain(mats):
