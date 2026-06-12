@@ -445,6 +445,8 @@ export class SetPieces {
         routeDocumentSpines: 0,
         routeClassificationShelves: 0,
         routeFileCapsules: 0,
+        routeSideArchiveFacades: 0,
+        routeSideResumeSeals: 0,
         archiveSpineTowers: 0,
         readingHallWings: 0,
         documentCrownStacks: 0,
@@ -1616,6 +1618,8 @@ export class SetPieces {
       stats.routeDocumentSpines += 1;
       stats.routeClassificationShelves += 6;
       stats.routeFileCapsules += 7;
+      stats.routeSideArchiveFacades += 2;
+      stats.routeSideResumeSeals += 2;
       stats.archiveSpineTowers += 2;
       stats.readingHallWings += 2;
       stats.documentCrownStacks += 7;

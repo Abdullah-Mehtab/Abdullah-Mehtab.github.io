@@ -897,6 +897,21 @@ def create_cv_records_archive(mats):
         for z in [-1.1, 0.05, 1.2]:
             for y in [1.16, 1.86, 2.56]:
                 cube(f"CvRecordsArchive_SideRecord_{side}_{z}_{y}", group, (x + side * 0.05, y, z), (0.06, 0.42, 0.62), mats["glass" if y > 2 else "paper"], bevel=0.004)
+    for side, x in [(-1, -8.56), (1, 8.56)]:
+        cube(f"CvRecordsArchive_RouteSideArchiveFacade_{side}", group, (x, 3.02, 0.42), (0.12, 4.72, 3.15), mats["dark"], bevel=0.028)
+        cube(f"CvRecordsArchive_RouteSideArchiveLintel_{side}", group, (x + side * 0.16, 5.48, 0.42), (0.08, 0.24, 3.6), mats["stone_shadow"], bevel=0.012)
+        cube(f"CvRecordsArchive_RouteSideArchiveSill_{side}", group, (x + side * 0.16, 0.58, 0.42), (0.08, 0.22, 3.35), mats["stone_shadow"], bevel=0.012)
+        for z in [-1.24, 2.08]:
+            cube(f"CvRecordsArchive_RouteSideArchiveJamb_{side}_{z}", group, (x + side * 0.16, 3.02, z), (0.08, 4.52, 0.18), mats["stone_shadow"], bevel=0.01)
+        cube(f"CvRecordsArchive_RouteSideDocumentSpine_{side}", group, (x + side * 0.13, 5.62, 0.42), (0.08, 0.24, 2.78), mats["paper"], bevel=0.006)
+        cube(f"CvRecordsArchive_RouteSideDocumentGlow_{side}", group, (x + side * 0.18, 5.86, 0.42), (0.06, 0.08, 2.36), mats["mint"], bevel=0.004)
+        cylinder(f"CvRecordsArchive_RouteSideResumeSeal_{side}", group, (x + side * 0.2, 3.18, 0.42), 0.82, 0.12, mats["gold"], vertices=12, rot=(0, math.pi / 2, 0), bevel=0.008)
+        cube(f"CvRecordsArchive_RouteSideResumePage_{side}", group, (x + side * 0.28, 3.18, 0.42), (0.06, 0.72, 0.52), mats["paper"], bevel=0.006)
+        for index, z in enumerate([-0.94, -0.44, 0.06, 0.56, 1.06]):
+            material = [mats["paper"], mats["screen"], mats["gold"], mats["foam"], mats["mint"]][index]
+            cube(f"CvRecordsArchive_RouteSideShelf_{side}_{index}", group, (x + side * 0.21, 2.12 + (index % 2) * 0.46, z), (0.06, 0.16, 0.36), material, bevel=0.004)
+        for index, z in enumerate([-1.18, -0.7, 0.74, 1.22]):
+            cube(f"CvRecordsArchive_RouteSideCatalogLine_{side}_{index}", group, (x + side * 0.22, 1.28 + index * 0.36, z), (0.05, 0.08, 0.62), mats["paper" if index % 2 else "screen"], bevel=0.003)
     cube("CvRecordsArchive_AccessKiosk", group, (3.05, 0.78, -3.52), (1.25, 1.18, 0.72), mats["dark"], bevel=0.035)
     cube("CvRecordsArchive_KioskScreen", group, (3.05, 1.18, -3.9), (0.86, 0.46, 0.06), mats["mint"], bevel=0.006)
     cube("CvRecordsArchive_PdfBeacon", group, (4.4, 1.42, -3.45), (0.5, 1.6, 0.5), mats["screen"], bevel=0.04)

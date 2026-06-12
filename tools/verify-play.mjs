@@ -4892,6 +4892,13 @@ function assertVerification(result) {
     }
     return;
   }
+  if (result.goalGate === 'gate-4e-bv-cv-route-side-archive-readability-pass') {
+    assertGate4EBVCvRouteSideArchiveReadabilityVerification(result, failures);
+    if (failures.length) {
+      throw new Error(`Play verification failed: ${failures.join('; ')}`);
+    }
+    return;
+  }
   if (result.goalGate === 'gate-4b5-north-ridge') {
     assertGate4B5NorthRidgeVerification(result, failures);
     if (failures.length) {
@@ -6065,7 +6072,8 @@ function isGate4EExpandedArchitectureGate(goalGate) {
     || goalGate === 'gate-4e-br-vehicle-first-presentation-framing-pass'
     || goalGate === 'gate-4e-bs-bruno-route-approach-benchmark-evidence'
     || goalGate === 'gate-4e-bt-route-place-integration-pass'
-    || goalGate === 'gate-4e-bu-contact-route-exchange-benchmark-pass';
+    || goalGate === 'gate-4e-bu-contact-route-exchange-benchmark-pass'
+    || goalGate === 'gate-4e-bv-cv-route-side-archive-readability-pass';
 }
 
 function assertGate3RVerticalSliceVerification(result, failures, options = {}) {
@@ -6133,7 +6141,8 @@ function assertGate3RVerticalSliceVerification(result, failures, options = {}) {
     || result.goalGate === 'gate-4e-br-vehicle-first-presentation-framing-pass'
     || result.goalGate === 'gate-4e-bs-bruno-route-approach-benchmark-evidence'
     || result.goalGate === 'gate-4e-bt-route-place-integration-pass'
-    || result.goalGate === 'gate-4e-bu-contact-route-exchange-benchmark-pass';
+    || result.goalGate === 'gate-4e-bu-contact-route-exchange-benchmark-pass'
+    || result.goalGate === 'gate-4e-bv-cv-route-side-archive-readability-pass';
   const blockout = result.blockout || {};
   const blockoutSetPieces = blockout.setPieces || {};
   const slice = result.verticalSlice || blockout.verticalSlice || {};
@@ -6192,7 +6201,8 @@ function assertGate3RVerticalSliceVerification(result, failures, options = {}) {
     || result.goalGate === 'gate-4e-br-vehicle-first-presentation-framing-pass'
     || result.goalGate === 'gate-4e-bs-bruno-route-approach-benchmark-evidence'
     || result.goalGate === 'gate-4e-bt-route-place-integration-pass'
-    || result.goalGate === 'gate-4e-bu-contact-route-exchange-benchmark-pass';
+    || result.goalGate === 'gate-4e-bu-contact-route-exchange-benchmark-pass'
+    || result.goalGate === 'gate-4e-bv-cv-route-side-archive-readability-pass';
 
   if (result.goalGate !== expectedGoal) {
     failures.push(`Gate 3R probe failed: goalGate=${result.goalGate || 'none'}`);
@@ -8701,6 +8711,41 @@ function assertGate4EBUContactRouteExchangeBenchmarkVerification(result, failure
   const halfWidth = frame.road?.roadHalfWidth;
   if (!Number.isFinite(lateral) || !Number.isFinite(halfWidth) || lateral > Math.max(0.8, halfWidth * 0.55)) {
     failures.push(`Gate 4-E-BU Contact failed: road-centered lateral=${lateral}, halfWidth=${halfWidth}`);
+  }
+}
+
+function assertGate4EBVCvRouteSideArchiveReadabilityVerification(result, failures) {
+  assertGate4EBUContactRouteExchangeBenchmarkVerification(
+    { ...result, goalGate: 'gate-4e-bu-contact-route-exchange-benchmark-pass' },
+    failures
+  );
+
+  const cv = result.gate4b1?.cv || {};
+  if ((cv.routeSideArchiveFacades || 0) < 2) {
+    failures.push(`Gate 4-E-BV CV failed: routeSideArchiveFacades=${cv.routeSideArchiveFacades || 0}/2`);
+  }
+  if ((cv.routeSideResumeSeals || 0) < 2) {
+    failures.push(`Gate 4-E-BV CV failed: routeSideResumeSeals=${cv.routeSideResumeSeals || 0}/2`);
+  }
+
+  const frames = new Map((result.routeApproachFraming || []).map((frame) => [frame.id, frame]));
+  const frame = frames.get('cv');
+  if (!frame) {
+    failures.push('Gate 4-E-BV CV failed: missing route approach frame');
+    return;
+  }
+  if (!frame.safeInFrame) failures.push(`Gate 4-E-BV CV failed: safeInFrame=${frame.safeInFrame}`);
+  if (!frame.vehicle?.safeInFrame) {
+    failures.push(`Gate 4-E-BV CV failed: vehicle frame=${JSON.stringify(frame.vehicle?.bounds || {})}`);
+  }
+  if (!frame.landmark?.inFrame) {
+    failures.push(`Gate 4-E-BV CV failed: landmark frame=${JSON.stringify(frame.landmark?.bounds || {})}`);
+  }
+  if (!Number.isFinite(frame.approachDistance) || frame.approachDistance < 16) {
+    failures.push(`Gate 4-E-BV CV failed: approachDistance=${frame.approachDistance}`);
+  }
+  if (!frame.road?.offsetSafe) {
+    failures.push(`Gate 4-E-BV CV failed: road lateral=${frame.road?.lateralOffset}`);
   }
 }
 
