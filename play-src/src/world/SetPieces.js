@@ -86,6 +86,11 @@ export class SetPieces {
       routeThreatWatchTowers: 0,
       routeIncidentResponseWings: 0,
       routeShieldCourts: 0,
+      routeOperationsThresholds: 0,
+      routeScanCanopyBridges: 0,
+      routeThreatReviewGalleries: 0,
+      routeAccessReviewBays: 0,
+      routeScanStatusBands: 0,
       cableRuns: 0,
       terminalRails: 0
     };
@@ -3103,6 +3108,11 @@ export class SetPieces {
         this.securityLabStats.routeThreatWatchTowers += 1;
         this.securityLabStats.routeIncidentResponseWings += 1;
         this.securityLabStats.routeShieldCourts += 1;
+        this.securityLabStats.routeOperationsThresholds += 1;
+        this.securityLabStats.routeScanCanopyBridges += 1;
+        this.securityLabStats.routeThreatReviewGalleries += 1;
+        this.securityLabStats.routeAccessReviewBays += 4;
+        this.securityLabStats.routeScanStatusBands += 6;
       }
     }
 
