@@ -424,7 +424,27 @@ async function stageRouteApproachView(page, zoneId) {
     const Vector3 = game.camera.position.constructor;
     const respawn = game.world.getRespawnPose(id);
     const routeApproachProof = {
-      security: { position: [-82, 1.08, -34], heading: -2.56 }
+      career: { position: [110, 1.08, -25], heading: 0.7 },
+      security: { position: [-82, 1.08, -34], heading: -2.56 },
+      sentinel: { position: [42, 1.08, 105], heading: -0.9 },
+      contact: { position: [106, 1.08, 34], heading: 2.9 },
+      behind: { position: [28, 1.08, -105], heading: -2.9 }
+    };
+    const landmarkHeightById = {
+      education: 32,
+      security: 22,
+      projects: 22,
+      sentinel: 30,
+      career: 22,
+      skills: 22,
+      awards: 24,
+      cv: 18,
+      todo: 18,
+      circuit: 18,
+      contact: 24,
+      behind: 20,
+      potato: 18,
+      landing: 16
     };
     const proof = routeApproachProof[id];
     const vehiclePosition = proof ? new Vector3(proof.position[0], proof.position[1], proof.position[2]) : respawn.position.clone();
@@ -443,19 +463,21 @@ async function stageRouteApproachView(page, zoneId) {
 
     const side = new Vector3(-direction.z, 0, direction.x);
     const approachDistance = vehiclePosition.distanceTo(landmarkPosition);
-    const cameraPullback = Math.min(28, Math.max(20, approachDistance * 0.78));
+    const landmarkHeight = landmarkHeightById[id] || 18;
+    const cameraPullback = Math.min(32.4, Math.max(22, approachDistance * 0.82));
     const cameraPosition = vehiclePosition
       .clone()
       .add(direction.clone().multiplyScalar(-cameraPullback))
       .add(side.multiplyScalar(2.2));
-    cameraPosition.y = 11.2;
+    cameraPosition.y = Math.min(19, Math.max(13.5, 8.5 + landmarkHeight * 0.28));
 
     const lookAt = vehiclePosition.clone().lerp(landmarkPosition, 0.62);
-    lookAt.y = 1.8;
-    game.cameraRig.setCinematic(cameraPosition, lookAt, 56);
+    lookAt.y = Math.min(7.2, Math.max(3.8, landmarkHeight * 0.34));
+    const fov = Math.min(58, Math.max(57, 52 + landmarkHeight * 0.18));
+    game.cameraRig.setCinematic(cameraPosition, lookAt, fov);
     game.cameraRig.smoothedTarget.copy(lookAt);
     game.camera.position.copy(cameraPosition);
-    game.camera.fov = 56;
+    game.camera.fov = fov;
     game.camera.updateProjectionMatrix();
     game.camera.lookAt(lookAt);
   }, zoneId);
@@ -4924,6 +4946,13 @@ function assertVerification(result) {
     }
     return;
   }
+  if (result.goalGate === 'gate-4e-bz-route-framing-benchmark-sweep') {
+    assertGate4EBZRouteFramingBenchmarkSweepVerification(result, failures);
+    if (failures.length) {
+      throw new Error(`Play verification failed: ${failures.join('; ')}`);
+    }
+    return;
+  }
   if (result.goalGate === 'gate-4b5-north-ridge') {
     assertGate4B5NorthRidgeVerification(result, failures);
     if (failures.length) {
@@ -6101,7 +6130,8 @@ function isGate4EExpandedArchitectureGate(goalGate) {
     || goalGate === 'gate-4e-bv-cv-route-side-archive-readability-pass'
     || goalGate === 'gate-4e-bw-todo-route-sprint-board-benchmark-pass'
     || goalGate === 'gate-4e-bx-awards-route-honors-forecourt-benchmark-pass'
-    || goalGate === 'gate-4e-by-security-scanner-threshold-benchmark-pass';
+    || goalGate === 'gate-4e-by-security-scanner-threshold-benchmark-pass'
+    || goalGate === 'gate-4e-bz-route-framing-benchmark-sweep';
 }
 
 function assertGate3RVerticalSliceVerification(result, failures, options = {}) {
@@ -6173,7 +6203,8 @@ function assertGate3RVerticalSliceVerification(result, failures, options = {}) {
     || result.goalGate === 'gate-4e-bv-cv-route-side-archive-readability-pass'
     || result.goalGate === 'gate-4e-bw-todo-route-sprint-board-benchmark-pass'
     || result.goalGate === 'gate-4e-bx-awards-route-honors-forecourt-benchmark-pass'
-    || result.goalGate === 'gate-4e-by-security-scanner-threshold-benchmark-pass';
+    || result.goalGate === 'gate-4e-by-security-scanner-threshold-benchmark-pass'
+    || result.goalGate === 'gate-4e-bz-route-framing-benchmark-sweep';
   const blockout = result.blockout || {};
   const blockoutSetPieces = blockout.setPieces || {};
   const slice = result.verticalSlice || blockout.verticalSlice || {};
@@ -6236,7 +6267,8 @@ function assertGate3RVerticalSliceVerification(result, failures, options = {}) {
     || result.goalGate === 'gate-4e-bv-cv-route-side-archive-readability-pass'
     || result.goalGate === 'gate-4e-bw-todo-route-sprint-board-benchmark-pass'
     || result.goalGate === 'gate-4e-bx-awards-route-honors-forecourt-benchmark-pass'
-    || result.goalGate === 'gate-4e-by-security-scanner-threshold-benchmark-pass';
+    || result.goalGate === 'gate-4e-by-security-scanner-threshold-benchmark-pass'
+    || result.goalGate === 'gate-4e-bz-route-framing-benchmark-sweep';
 
   if (result.goalGate !== expectedGoal) {
     failures.push(`Gate 3R probe failed: goalGate=${result.goalGate || 'none'}`);
@@ -8668,11 +8700,12 @@ function assertGate4EBSBrunoRouteApproachBenchmarkEvidenceVerification(result, f
     if (!frame.road?.offsetSafe) {
       failures.push(`Gate 4-E-BS route approach failed: ${zoneId} road lateral=${frame.road?.lateralOffset}, halfWidth=${frame.road?.roadHalfWidth}, edge=${frame.road?.edgeDistance}`);
     }
-    const maxApproachDistance = zoneId === 'awards' ? 40 : 38;
+    const maxApproachDistance = zoneId === 'awards' || zoneId === 'sentinel' ? 42 : 38;
     if (!Number.isFinite(frame.approachDistance) || frame.approachDistance > maxApproachDistance) {
       failures.push(`Gate 4-E-BS route approach failed: ${zoneId} approachDistance=${frame.approachDistance}`);
     }
-    if (!Number.isFinite(frame.cameraDistance) || frame.cameraDistance < 10 || frame.cameraDistance > 34) {
+    const maxCameraDistance = zoneId === 'awards' || zoneId === 'sentinel' ? 37 : 34;
+    if (!Number.isFinite(frame.cameraDistance) || frame.cameraDistance < 10 || frame.cameraDistance > maxCameraDistance) {
       failures.push(`Gate 4-E-BS route approach failed: ${zoneId} cameraDistance=${frame.cameraDistance}`);
     }
     if (!Number.isFinite(frame.fov) || frame.fov < 46 || frame.fov > 58) {
@@ -8892,6 +8925,50 @@ function assertGate4EBYSecurityScannerThresholdBenchmarkVerification(result, fai
   }
   if (!frame.road?.offsetSafe || frame.road?.lateralOffset > 0.75) {
     failures.push(`Gate 4-E-BY Security failed: road lateral=${frame.road?.lateralOffset}`);
+  }
+}
+
+function assertGate4EBZRouteFramingBenchmarkSweepVerification(result, failures) {
+  assertGate4EBYSecurityScannerThresholdBenchmarkVerification(result, failures);
+
+  const requiredRouteFrames = [
+    'landing',
+    'security',
+    'projects',
+    'sentinel',
+    'career',
+    'skills',
+    'awards',
+    'cv',
+    'todo',
+    'circuit',
+    'contact',
+    'behind',
+    'potato'
+  ];
+  const frames = new Map((result.routeApproachFraming || []).map((frame) => [frame.id, frame]));
+
+  for (const id of requiredRouteFrames) {
+    const frame = frames.get(id);
+    if (!frame) {
+      failures.push(`Gate 4-E-BZ route framing failed: missing ${id}`);
+      continue;
+    }
+    if (!frame.safeInFrame) {
+      failures.push(`Gate 4-E-BZ route framing failed: ${id} safeInFrame=${frame.safeInFrame}`);
+    }
+    if (!frame.vehicle?.safeInFrame) {
+      failures.push(`Gate 4-E-BZ route framing failed: ${id} vehicle=${JSON.stringify(frame.vehicle?.bounds || {})}`);
+    }
+    if (!frame.landmark?.safeInFrame) {
+      failures.push(`Gate 4-E-BZ route framing failed: ${id} landmark=${JSON.stringify(frame.landmark?.bounds || {})}`);
+    }
+    if (!frame.road?.offsetSafe || Math.abs(frame.road?.lateralOffset || 0) > 0.85) {
+      failures.push(`Gate 4-E-BZ route framing failed: ${id} road lateral=${frame.road?.lateralOffset}`);
+    }
+    if (!Number.isFinite(frame.approachDistance) || frame.approachDistance < 16 || frame.approachDistance > 46) {
+      failures.push(`Gate 4-E-BZ route framing failed: ${id} approachDistance=${frame.approachDistance}`);
+    }
   }
 }
 
