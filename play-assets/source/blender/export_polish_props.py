@@ -2243,6 +2243,23 @@ def create_potato_farm_stand(mats):
         cube(f"PotatoFarmStand_SeedArchivePacket_{index}", group, (-7.86, y, -3.68), (0.08, 0.28, 0.62), [mats["paper"], mats["crop"], mats["amber"], mats["mint"], mats["foam"], mats["paper"]][index], bevel=0.004)
     cube("PotatoFarmStand_HarvestBeaconMast", group, (8.75, 6.34, 2.95), (0.2, 2.78, 0.2), mats["dark"], bevel=0.008)
     cube("PotatoFarmStand_HarvestBeacon", group, (8.75, 7.94, 2.95), (0.72, 0.54, 0.72), mats["amber"], bevel=0.018)
+    cube("PotatoFarmStand_RouteSideHarvestCanopyFrame", group, (4.95, 3.42, 6.02), (10.4, 4.35, 0.3), mats["foam"], bevel=0.018)
+    cube("PotatoFarmStand_RouteSideHarvestCanopyRidge", group, (4.95, 5.76, 6.0), (10.7, 0.24, 0.42), mats["wood"], bevel=0.014)
+    cube("PotatoFarmStand_RouteSideHarvestCanopyGlow", group, (4.95, 5.52, 5.78), (8.8, 0.08, 0.07), mats["mint"], bevel=0.004)
+    for index, x in enumerate([1.1, 3.0, 4.9, 6.8, 8.7]):
+        cube(f"PotatoFarmStand_RouteSideHarvestRib_{index}", group, (x, 3.38, 5.82), (0.12, 4.05, 0.1), mats["foam"], bevel=0.006)
+    cube("PotatoFarmStand_RouteSideProduceArcadeDeck", group, (-4.45, 1.02, 5.96), (7.6, 0.44, 0.86), mats["wood"], bevel=0.025)
+    cube("PotatoFarmStand_RouteSideProduceArcadeBack", group, (-4.45, 2.42, 6.18), (7.9, 2.1, 0.22), mats["stone_shadow"], bevel=0.03)
+    cube("PotatoFarmStand_RouteSideProduceArcadeGlass", group, (-4.45, 2.54, 5.98), (6.5, 1.1, 0.08), mats["glass"], bevel=0.008)
+    cube("PotatoFarmStand_RouteSideProduceArcadeCanopy", group, (-4.45, 3.68, 5.8), (8.2, 0.3, 1.02), mats["wood"], bevel=0.025)
+    for index, x in enumerate([-7.0, -5.3, -3.6, -1.9]):
+        cube(f"PotatoFarmStand_RouteSideProduceBin_{index}", group, (x, 1.28, 5.48), (0.82, 0.36, 0.42), [mats["crop"], mats["amber"], mats["paper"], mats["crop"]][index], bevel=0.018)
+    cube("PotatoFarmStand_RouteSideIrrigationTowerBase", group, (8.85, 1.72, 6.02), (1.32, 2.78, 0.92), mats["stone_shadow"], bevel=0.03)
+    cube("PotatoFarmStand_RouteSideIrrigationTank", group, (8.85, 3.58, 6.02), (1.84, 1.02, 1.18), mats["aqua"], bevel=0.065)
+    cube("PotatoFarmStand_RouteSideIrrigationSpout", group, (7.3, 3.34, 5.86), (2.86, 0.12, 0.12), mats["rope"], bevel=0.01)
+    for index, x in enumerate([1.45, 3.55, 5.65, 7.75]):
+        cube(f"PotatoFarmStand_RouteSideCropRibbonSoil_{index}", group, (x, 0.48, 5.34), (1.36, 0.1, 0.44), mats["wood"], bevel=0.008)
+        cube(f"PotatoFarmStand_RouteSideCropRibbonLeaf_{index}", group, (x, 0.64, 5.28), (1.1, 0.18, 0.34), mats["crop"], bevel=0.01)
 
 
 def create_sentinel_soc_tower(mats):

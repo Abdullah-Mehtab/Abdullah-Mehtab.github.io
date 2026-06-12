@@ -585,6 +585,10 @@ export class SetPieces {
         fieldCanopyFrames: 0,
         seedArchiveTowers: 0,
         harvestBeacons: 0,
+        routeSideHarvestCanopies: 0,
+        routeSideProduceArcades: 0,
+        routeSideIrrigationTowers: 0,
+        routeSideCropRibbonRows: 0,
         summonPatches: 0,
         fenceVisuals: 0,
         crates: 0,
@@ -1829,6 +1833,10 @@ export class SetPieces {
       stats.fieldCanopyFrames += 1;
       stats.seedArchiveTowers += 1;
       stats.harvestBeacons += 1;
+      stats.routeSideHarvestCanopies += 1;
+      stats.routeSideProduceArcades += 1;
+      stats.routeSideIrrigationTowers += 1;
+      stats.routeSideCropRibbonRows += 4;
       stats.fenceVisuals += 1;
       stats.fenceSegments += 1;
       stats.crates += 3;

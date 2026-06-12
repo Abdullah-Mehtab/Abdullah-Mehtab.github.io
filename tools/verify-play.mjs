@@ -4974,6 +4974,13 @@ function assertVerification(result) {
     }
     return;
   }
+  if (result.goalGate === 'gate-4e-cd-potato-route-harvest-silhouette-benchmark-pass') {
+    assertGate4ECDPotatoRouteHarvestSilhouetteBenchmarkVerification(result, failures);
+    if (failures.length) {
+      throw new Error(`Play verification failed: ${failures.join('; ')}`);
+    }
+    return;
+  }
   if (result.goalGate === 'gate-4b5-north-ridge') {
     assertGate4B5NorthRidgeVerification(result, failures);
     if (failures.length) {
@@ -6155,7 +6162,8 @@ function isGate4EExpandedArchitectureGate(goalGate) {
     || goalGate === 'gate-4e-bz-route-framing-benchmark-sweep'
     || goalGate === 'gate-4e-ca-projects-route-foundry-facade-benchmark-pass'
     || goalGate === 'gate-4e-cb-skills-route-learning-systems-facade-benchmark-pass'
-    || goalGate === 'gate-4e-cc-circuit-route-time-trial-gantry-benchmark-pass';
+    || goalGate === 'gate-4e-cc-circuit-route-time-trial-gantry-benchmark-pass'
+    || goalGate === 'gate-4e-cd-potato-route-harvest-silhouette-benchmark-pass';
 }
 
 function assertGate3RVerticalSliceVerification(result, failures, options = {}) {
@@ -6231,7 +6239,8 @@ function assertGate3RVerticalSliceVerification(result, failures, options = {}) {
     || result.goalGate === 'gate-4e-bz-route-framing-benchmark-sweep'
     || result.goalGate === 'gate-4e-ca-projects-route-foundry-facade-benchmark-pass'
     || result.goalGate === 'gate-4e-cb-skills-route-learning-systems-facade-benchmark-pass'
-    || result.goalGate === 'gate-4e-cc-circuit-route-time-trial-gantry-benchmark-pass';
+    || result.goalGate === 'gate-4e-cc-circuit-route-time-trial-gantry-benchmark-pass'
+    || result.goalGate === 'gate-4e-cd-potato-route-harvest-silhouette-benchmark-pass';
   const blockout = result.blockout || {};
   const blockoutSetPieces = blockout.setPieces || {};
   const slice = result.verticalSlice || blockout.verticalSlice || {};
@@ -6298,7 +6307,8 @@ function assertGate3RVerticalSliceVerification(result, failures, options = {}) {
     || result.goalGate === 'gate-4e-bz-route-framing-benchmark-sweep'
     || result.goalGate === 'gate-4e-ca-projects-route-foundry-facade-benchmark-pass'
     || result.goalGate === 'gate-4e-cb-skills-route-learning-systems-facade-benchmark-pass'
-    || result.goalGate === 'gate-4e-cc-circuit-route-time-trial-gantry-benchmark-pass';
+    || result.goalGate === 'gate-4e-cc-circuit-route-time-trial-gantry-benchmark-pass'
+    || result.goalGate === 'gate-4e-cd-potato-route-harvest-silhouette-benchmark-pass';
 
   if (result.goalGate !== expectedGoal) {
     failures.push(`Gate 3R probe failed: goalGate=${result.goalGate || 'none'}`);
@@ -9119,6 +9129,45 @@ function assertGate4ECCCircuitRouteTimeTrialGantryBenchmarkVerification(result, 
   }
   if (!Number.isFinite(frame.approachDistance) || frame.approachDistance < 16 || frame.approachDistance > 46) {
     failures.push(`Gate 4-E-CC Circuit failed: approachDistance=${frame.approachDistance}`);
+  }
+}
+
+function assertGate4ECDPotatoRouteHarvestSilhouetteBenchmarkVerification(result, failures) {
+  assertGate4ECCCircuitRouteTimeTrialGantryBenchmarkVerification(result, failures);
+
+  const farm = result.gate4b2?.farm || {};
+  assertAuthoredDistrictAsset(result, 'EnvPolishPotatoFarmStand', 'Gate 4-E-CD Potato route harvest silhouette architecture', failures);
+  if ((farm.routeSideHarvestCanopies || 0) < 1) {
+    failures.push(`Gate 4-E-CD Potato failed: routeSideHarvestCanopies=${farm.routeSideHarvestCanopies || 0}/1`);
+  }
+  if ((farm.routeSideProduceArcades || 0) < 1) {
+    failures.push(`Gate 4-E-CD Potato failed: routeSideProduceArcades=${farm.routeSideProduceArcades || 0}/1`);
+  }
+  if ((farm.routeSideIrrigationTowers || 0) < 1) {
+    failures.push(`Gate 4-E-CD Potato failed: routeSideIrrigationTowers=${farm.routeSideIrrigationTowers || 0}/1`);
+  }
+  if ((farm.routeSideCropRibbonRows || 0) < 4) {
+    failures.push(`Gate 4-E-CD Potato failed: routeSideCropRibbonRows=${farm.routeSideCropRibbonRows || 0}/4`);
+  }
+
+  const frames = new Map((result.routeApproachFraming || []).map((frame) => [frame.id, frame]));
+  const frame = frames.get('potato');
+  if (!frame) {
+    failures.push('Gate 4-E-CD Potato failed: missing route approach frame');
+    return;
+  }
+  if (!frame.safeInFrame) failures.push(`Gate 4-E-CD Potato failed: safeInFrame=${frame.safeInFrame}`);
+  if (!frame.vehicle?.safeInFrame) {
+    failures.push(`Gate 4-E-CD Potato failed: vehicle frame=${JSON.stringify(frame.vehicle?.bounds || {})}`);
+  }
+  if (!frame.landmark?.inFrame || !frame.landmark?.safeInFrame) {
+    failures.push(`Gate 4-E-CD Potato failed: landmark frame=${JSON.stringify(frame.landmark?.bounds || {})}`);
+  }
+  if (!frame.road?.offsetSafe || Math.abs(frame.road?.lateralOffset || 0) > 0.85) {
+    failures.push(`Gate 4-E-CD Potato failed: road lateral=${frame.road?.lateralOffset}`);
+  }
+  if (!Number.isFinite(frame.approachDistance) || frame.approachDistance < 16 || frame.approachDistance > 46) {
+    failures.push(`Gate 4-E-CD Potato failed: approachDistance=${frame.approachDistance}`);
   }
 }
 
