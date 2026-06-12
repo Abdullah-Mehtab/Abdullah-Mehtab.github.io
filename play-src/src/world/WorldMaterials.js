@@ -119,6 +119,7 @@ export function createWorldMaterials() {
     terrainBrushSand: makeTerrainBrushMaterial(0xe2bd82, 0.26, terrainBrushAlpha),
     terrainBrushFlower: makeTerrainBrushMaterial(0xf4b8be, 0.14, terrainBrushAlpha),
     terrainBrushBlue: makeTerrainBrushMaterial(0x8fddff, 0.13, terrainBrushAlpha),
+    terrainBrushSecurity: makeTerrainBrushMaterial(0x68d8ff, 0.07, terrainBrushAlpha),
     stoneRoad: new THREE.MeshStandardMaterial({ color: 0x5f6d68, map: stoneTexture, roughness: 0.92, metalness: 0.02 }),
     plazaRoad: new THREE.MeshStandardMaterial({ color: 0xc9c4a7, map: stoneTexture, roughness: 0.9, metalness: 0.02 }),
     securityRoad: new THREE.MeshStandardMaterial({ color: 0x24434c, roughness: 0.74, metalness: 0.1, emissive: 0x0b2831, emissiveIntensity: 0.28 }),

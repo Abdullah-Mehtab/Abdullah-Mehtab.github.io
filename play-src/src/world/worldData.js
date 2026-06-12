@@ -80,7 +80,7 @@ export const terrainBrushes = [
   { id: 'launch-run-driving-lawn', center: [12, -86], size: [54, 30], rotation: 0.12, material: 'terrainBrushDark' },
   { id: 'gallery-side-build-field', center: [84, -32], size: [66, 34], rotation: -0.24, material: 'terrainBrushWarm' },
   { id: 'west-service-archive-field', center: [-66, -90], size: [58, 36], rotation: 0.18, material: 'terrainBrushBlue' },
-  { id: 'security-yard-scan-field', center: [-112, -48], size: [46, 30], rotation: -0.18, material: 'terrainBrushBlue' },
+  { id: 'security-yard-scan-field', center: [-112, -48], size: [34, 20], rotation: -0.18, material: 'terrainBrushSecurity' },
   { id: 'fcc-campus-grove-field', center: [-76, 54], size: [60, 38], rotation: -0.3, material: 'terrainBrushLight' },
   { id: 'north-ridge-museum-field', center: [18, 106], size: [76, 34], rotation: 0.2, material: 'terrainBrushFlower' },
   { id: 'east-harbor-signal-field', center: [120, 24], size: [44, 32], rotation: -0.18, material: 'terrainBrushSand' },

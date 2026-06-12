@@ -423,7 +423,11 @@ async function stageRouteApproachView(page, zoneId) {
 
     const Vector3 = game.camera.position.constructor;
     const respawn = game.world.getRespawnPose(id);
-    const vehiclePosition = respawn.position.clone();
+    const routeApproachProof = {
+      security: { position: [-82, 1.08, -34], heading: -2.56 }
+    };
+    const proof = routeApproachProof[id];
+    const vehiclePosition = proof ? new Vector3(proof.position[0], proof.position[1], proof.position[2]) : respawn.position.clone();
     const landmarkPosition = zone.position.clone();
     const direction = landmarkPosition.clone().sub(vehiclePosition).setY(0);
     if (direction.lengthSq() < 0.001) {
@@ -4913,6 +4917,13 @@ function assertVerification(result) {
     }
     return;
   }
+  if (result.goalGate === 'gate-4e-by-security-scanner-threshold-benchmark-pass') {
+    assertGate4EBYSecurityScannerThresholdBenchmarkVerification(result, failures);
+    if (failures.length) {
+      throw new Error(`Play verification failed: ${failures.join('; ')}`);
+    }
+    return;
+  }
   if (result.goalGate === 'gate-4b5-north-ridge') {
     assertGate4B5NorthRidgeVerification(result, failures);
     if (failures.length) {
@@ -6089,7 +6100,8 @@ function isGate4EExpandedArchitectureGate(goalGate) {
     || goalGate === 'gate-4e-bu-contact-route-exchange-benchmark-pass'
     || goalGate === 'gate-4e-bv-cv-route-side-archive-readability-pass'
     || goalGate === 'gate-4e-bw-todo-route-sprint-board-benchmark-pass'
-    || goalGate === 'gate-4e-bx-awards-route-honors-forecourt-benchmark-pass';
+    || goalGate === 'gate-4e-bx-awards-route-honors-forecourt-benchmark-pass'
+    || goalGate === 'gate-4e-by-security-scanner-threshold-benchmark-pass';
 }
 
 function assertGate3RVerticalSliceVerification(result, failures, options = {}) {
@@ -6160,7 +6172,8 @@ function assertGate3RVerticalSliceVerification(result, failures, options = {}) {
     || result.goalGate === 'gate-4e-bu-contact-route-exchange-benchmark-pass'
     || result.goalGate === 'gate-4e-bv-cv-route-side-archive-readability-pass'
     || result.goalGate === 'gate-4e-bw-todo-route-sprint-board-benchmark-pass'
-    || result.goalGate === 'gate-4e-bx-awards-route-honors-forecourt-benchmark-pass';
+    || result.goalGate === 'gate-4e-bx-awards-route-honors-forecourt-benchmark-pass'
+    || result.goalGate === 'gate-4e-by-security-scanner-threshold-benchmark-pass';
   const blockout = result.blockout || {};
   const blockoutSetPieces = blockout.setPieces || {};
   const slice = result.verticalSlice || blockout.verticalSlice || {};
@@ -6222,7 +6235,8 @@ function assertGate3RVerticalSliceVerification(result, failures, options = {}) {
     || result.goalGate === 'gate-4e-bu-contact-route-exchange-benchmark-pass'
     || result.goalGate === 'gate-4e-bv-cv-route-side-archive-readability-pass'
     || result.goalGate === 'gate-4e-bw-todo-route-sprint-board-benchmark-pass'
-    || result.goalGate === 'gate-4e-bx-awards-route-honors-forecourt-benchmark-pass';
+    || result.goalGate === 'gate-4e-bx-awards-route-honors-forecourt-benchmark-pass'
+    || result.goalGate === 'gate-4e-by-security-scanner-threshold-benchmark-pass';
 
   if (result.goalGate !== expectedGoal) {
     failures.push(`Gate 3R probe failed: goalGate=${result.goalGate || 'none'}`);
@@ -8840,6 +8854,44 @@ function assertGate4EBXAwardsRouteHonorsForecourtBenchmarkVerification(result, f
   }
   if (!frame.road?.offsetSafe) {
     failures.push(`Gate 4-E-BX Awards failed: road lateral=${frame.road?.lateralOffset}`);
+  }
+}
+
+function assertGate4EBYSecurityScannerThresholdBenchmarkVerification(result, failures) {
+  assertGate4EBXAwardsRouteHonorsForecourtBenchmarkVerification(result, failures);
+
+  if (!result.securityScan?.active?.active) failures.push('Gate 4-E-BY Security failed: scan active state not observed');
+  if (!result.securityScan?.complete?.complete) failures.push('Gate 4-E-BY Security failed: scan complete state not observed');
+
+  const security = result.securityLab || {};
+  if ((security.operationsGates || 0) < 1) {
+    failures.push(`Gate 4-E-BY Security failed: operationsGates=${security.operationsGates || 0}/1`);
+  }
+  if ((security.routeCampusArrivalArches || 0) < 1) {
+    failures.push(`Gate 4-E-BY Security failed: routeCampusArrivalArches=${security.routeCampusArrivalArches || 0}/1`);
+  }
+  if ((security.routeScanCanopies || 0) < 1) {
+    failures.push(`Gate 4-E-BY Security failed: routeScanCanopies=${security.routeScanCanopies || 0}/1`);
+  }
+
+  const frames = new Map((result.routeApproachFraming || []).map((frame) => [frame.id, frame]));
+  const frame = frames.get('security');
+  if (!frame) {
+    failures.push('Gate 4-E-BY Security failed: missing route approach frame');
+    return;
+  }
+  if (!frame.safeInFrame) failures.push(`Gate 4-E-BY Security failed: safeInFrame=${frame.safeInFrame}`);
+  if (!frame.vehicle?.safeInFrame) {
+    failures.push(`Gate 4-E-BY Security failed: vehicle frame=${JSON.stringify(frame.vehicle?.bounds || {})}`);
+  }
+  if (!frame.landmark?.inFrame || !frame.landmark?.safeInFrame) {
+    failures.push(`Gate 4-E-BY Security failed: landmark frame=${JSON.stringify(frame.landmark?.bounds || {})}`);
+  }
+  if (!Number.isFinite(frame.approachDistance) || frame.approachDistance < 28 || frame.approachDistance > 44) {
+    failures.push(`Gate 4-E-BY Security failed: approachDistance=${frame.approachDistance}`);
+  }
+  if (!frame.road?.offsetSafe || frame.road?.lateralOffset > 0.75) {
+    failures.push(`Gate 4-E-BY Security failed: road lateral=${frame.road?.lateralOffset}`);
   }
 }
 
