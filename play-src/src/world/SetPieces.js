@@ -813,6 +813,15 @@ export class SetPieces {
         routeMessageBridgeSpans: 0,
         routeSignalCrownArrays: 0,
         routeContactBeaconSpines: 0,
+        routeContactForecourts: 0,
+        routeMessageLanes: 0,
+        routeExchangeDesks: 0,
+        routeContactEnvelopeArches: 0,
+        routeExchangeCanopies: 0,
+        routeSignalQueuePylons: 0,
+        routeContactArrivalConcourses: 0,
+        routeConcourseEdges: 0,
+        routeContactQueueSteps: 0,
         signs: 0,
         lamps: 0
       }
@@ -2151,6 +2160,15 @@ export class SetPieces {
       stats.routeMessageBridgeSpans += 1;
       stats.routeSignalCrownArrays += 1;
       stats.routeContactBeaconSpines += 1;
+      stats.routeContactForecourts += 1;
+      stats.routeMessageLanes += 5;
+      stats.routeExchangeDesks += 3;
+      stats.routeContactEnvelopeArches += 1;
+      stats.routeExchangeCanopies += 1;
+      stats.routeSignalQueuePylons += 3;
+      stats.routeContactArrivalConcourses += 1;
+      stats.routeConcourseEdges += 2;
+      stats.routeContactQueueSteps += 4;
       stats.signalMasts += 1;
       stats.relayMasts += 1;
       stats.contactTerminals += 3;

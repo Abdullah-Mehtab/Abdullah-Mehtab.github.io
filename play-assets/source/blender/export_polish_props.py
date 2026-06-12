@@ -2530,6 +2530,26 @@ def create_signal_harbor_communications_station(mats):
     cube("SignalHarbor_RouteContactExchangeGlass", group, (0.12, 2.22, 4.98), (8.25, 1.58, 0.08), mats["glass"], bevel=0.008)
     cube("SignalHarbor_RouteContactExchangeCanopy", group, (0.12, 3.56, 4.86), (10.0, 0.22, 1.02), mats["dark"], bevel=0.018)
     cube("SignalHarbor_RoutePublicSignalGatewayDeck", group, (0.12, 0.62, 5.58), (13.8, 0.26, 0.88), mats["paper"], bevel=0.022)
+    cube("SignalHarbor_RouteContactForecourt", group, (0.12, 0.34, 6.52), (12.6, 0.16, 1.82), mats["stone"], bevel=0.035)
+    cube("SignalHarbor_RouteContactArrivalConcourse", group, (0.12, 0.22, 8.48), (9.6, 0.12, 3.78), mats["paper"], bevel=0.04)
+    cube("SignalHarbor_RouteConcourseCenterSpine", group, (0.12, 0.36, 8.48), (0.42, 0.08, 3.42), mats["stone_shadow"], bevel=0.012)
+    for index, x in enumerate([-4.64, 4.88]):
+        cube(f"SignalHarbor_RouteConcourseEdge_{index}", group, (x, 0.48, 8.48), (0.24, 0.26, 3.72), mats["stone_shadow"], bevel=0.018)
+        cube(f"SignalHarbor_RouteConcourseEdgeGlow_{index}", group, (x, 0.72, 8.48), (0.1, 0.08, 3.04), [mats["mint"], mats["screen"]][index], bevel=0.003)
+    for index, z in enumerate([7.18, 8.02, 8.86, 9.7]):
+        cube(f"SignalHarbor_RouteContactQueueStep_{index}", group, (0.12, 0.43, z), (6.9 - index * 0.52, 0.07, 0.12), [mats["stone_shadow"], mats["mint"], mats["screen"], mats["stone_shadow"]][index], bevel=0.004)
+    cube("SignalHarbor_RouteExchangeCanopy", group, (0.12, 3.92, 6.24), (11.4, 0.22, 1.18), mats["dark"], bevel=0.02)
+    cube("SignalHarbor_RouteContactEnvelopeArch", group, (0.12, 4.42, 6.72), (9.8, 0.18, 0.16), mats["paper"], bevel=0.008)
+    cube("SignalHarbor_RouteContactEnvelopeFlapLeft", group, (-2.28, 3.42, 6.82), (4.38, 0.12, 0.1), mats["paper"], rot=(0.0, 0.0, -0.34), bevel=0.004)
+    cube("SignalHarbor_RouteContactEnvelopeFlapRight", group, (2.52, 3.42, 6.82), (4.38, 0.12, 0.1), mats["paper"], rot=(0.0, 0.0, 0.34), bevel=0.004)
+    for index, x in enumerate([-3.6, 0.12, 3.84]):
+        cube(f"SignalHarbor_RouteExchangeDesk_{index}", group, (x, 1.02, 6.26), (1.92, 0.72, 0.74), mats["stone_shadow"], bevel=0.025)
+        cube(f"SignalHarbor_RouteExchangeDeskGlow_{index}", group, (x, 1.42, 6.66), (1.42, 0.08, 0.08), [mats["screen"], mats["mint"], mats["aqua"]][index], bevel=0.004)
+    for index, x in enumerate([-4.9, -2.45, 0.0, 2.45, 4.9]):
+        cube(f"SignalHarbor_RouteMessageLane_{index}", group, (x, 0.47, 6.96), (0.28, 0.05, 1.28), [mats["paper"], mats["screen"], mats["mint"], mats["aqua"], mats["paper"]][index], bevel=0.002)
+    for index, x in enumerate([-5.35, 0.12, 5.59]):
+        cube(f"SignalHarbor_RouteSignalQueuePylon_{index}", group, (x, 2.22, 6.94), (0.28, 3.24, 0.28), mats["dark"], bevel=0.014)
+        cube(f"SignalHarbor_RouteSignalQueueBeacon_{index}", group, (x, 3.96, 6.94), (0.68, 0.34, 0.68), [mats["screen"], mats["mint"], mats["aqua"]][index], bevel=0.02)
     for x in [-6.48, 6.72]:
         cube("SignalHarbor_RoutePublicSignalGatewayPylon", group, (x, 3.58, 5.42), (0.48, 5.75, 0.54), mats["dark"], bevel=0.024)
         cube("SignalHarbor_RoutePublicSignalGatewayTrace", group, (x, 3.58, 5.76), (0.08, 4.7, 0.08), mats["screen"], bevel=0.003)
