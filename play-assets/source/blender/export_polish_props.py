@@ -2043,6 +2043,27 @@ def create_circuit_time_trial_gate(mats):
     for index, x in enumerate([-3.8, 0, 3.8]):
         cube(f"CircuitTimeTrial_RouteCheckpointLaneFrame_{index}", group, (x, 0.72, -5.58), (2.35, 0.16, 0.08), mats["paper"], bevel=0.006)
         cube(f"CircuitTimeTrial_RouteCheckpointLaneGlow_{index}", group, (x, 1.02, -5.66), (1.6, 0.08, 0.06), mats["mint" if index != 1 else "amber"], bevel=0.004)
+    cube("CircuitTimeTrial_RouteApproachTimingPortalDeck", group, (0, 0.46, 6.58), (14.4, 0.28, 1.28), mats["stone"], bevel=0.026)
+    cube("CircuitTimeTrial_RouteApproachStartFinishStripe", group, (0, 0.66, 5.92), (12.4, 0.08, 0.2), mats["paper"], bevel=0.006)
+    cube("CircuitTimeTrial_RouteApproachTimingRibbonWall", group, (0, 2.2, 6.92), (12.8, 2.35, 0.18), mats["dark"], bevel=0.026)
+    cube("CircuitTimeTrial_RouteApproachTimingRibbonGlass", group, (0, 2.24, 6.78), (9.8, 1.08, 0.08), mats["screen"], bevel=0.008)
+    cube("CircuitTimeTrial_RouteApproachTimingRibbonGlow", group, (0, 3.52, 6.74), (10.8, 0.1, 0.08), mats["mint"], bevel=0.004)
+    for index, x in enumerate([-4.8, -3.6, -2.4, -1.2, 0, 1.2, 2.4, 3.6, 4.8]):
+        cube(f"CircuitTimeTrial_RouteApproachSplitTick_{index}", group, (x, 2.2, 6.68), (0.52, 0.62, 0.07), [mats["paper"], mats["amber"], mats["mint"]][index % 3], bevel=0.004)
+    for index, x in enumerate([-7.4, 7.4]):
+        cube(f"CircuitTimeTrial_RouteApproachTimingPortalFoot_{index}", group, (x, 0.58, 6.58), (1.05, 0.72, 1.18), mats["stone_shadow"], bevel=0.04)
+        cube(f"CircuitTimeTrial_RouteApproachTimingPortalPost_{index}", group, (x, 3.32, 6.58), (0.44, 5.25, 0.54), mats["dark"], bevel=0.025)
+        cube(f"CircuitTimeTrial_RouteApproachTimingPortalGlow_{index}", group, (x, 3.36, 6.19), (0.1, 4.22, 0.06), mats["amber" if index == 0 else "mint"], bevel=0.004)
+        cube(f"CircuitTimeTrial_RouteApproachControlCabin_{index}", group, (x * 0.7, 2.02, 7.42), (2.18, 2.28, 1.08), mats["glass"], bevel=0.016)
+        cube(f"CircuitTimeTrial_RouteApproachControlCabinRoof_{index}", group, (x * 0.7, 3.28, 7.42), (2.62, 0.24, 1.34), mats["wood"], bevel=0.014)
+    cube("CircuitTimeTrial_RouteApproachTimingPortalHeader", group, (0, 5.92, 6.58), (15.4, 0.52, 0.74), mats["dark"], bevel=0.03)
+    cube("CircuitTimeTrial_RouteApproachTimingPortalCrown", group, (0, 6.28, 6.18), (12.8, 0.16, 0.14), mats["amber"], bevel=0.006)
+    cube("CircuitTimeTrial_RouteApproachLapSignalStack", group, (0, 3.05, 6.06), (1.0, 3.4, 0.08), mats["dark"], bevel=0.01)
+    for index, y in enumerate([2.02, 2.78, 3.54]):
+        cube(f"CircuitTimeTrial_RouteApproachLapSignalLamp_{index}", group, (0, y, 5.96), (0.72, 0.38, 0.06), [mats["pink"], mats["amber"], mats["mint"]][index], bevel=0.008)
+    for index, x in enumerate([-4.2, 0, 4.2]):
+        cube(f"CircuitTimeTrial_RouteApproachCheckpointLaneFrame_{index}", group, (x, 0.82, 5.78), (2.5, 0.16, 0.08), mats["paper"], bevel=0.006)
+        cube(f"CircuitTimeTrial_RouteApproachCheckpointLaneGlow_{index}", group, (x, 1.12, 5.7), (1.76, 0.08, 0.06), mats["mint" if index != 1 else "amber"], bevel=0.004)
 
 
 def create_stunt_checkpoint(mats):
