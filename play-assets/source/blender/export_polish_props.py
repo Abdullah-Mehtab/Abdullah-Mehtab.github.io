@@ -1563,6 +1563,16 @@ def create_awards_museum_hall(mats):
     cube("AwardsMuseum_RouteHonorsBoulevard", group, (0, 0.38, -3.42), (10.8, 0.18, 1.18), mats["stone"], bevel=0.032)
     for index, x in enumerate([-4.6, -2.3, 0, 2.3, 4.6]):
         cube(f"AwardsMuseum_RouteHonorsBoulevardMedal_{index}", group, (x, 0.54, -3.66), (0.62, 0.12, 0.12), [mats["gold"], mats["amber"], mats["paper"], mats["amber"], mats["gold"]][index], bevel=0.006)
+    cube("AwardsMuseum_RouteHonorsForecourt", group, (0, 0.24, -5.28), (12.4, 0.16, 2.85), mats["paper"], bevel=0.038)
+    cube("AwardsMuseum_RouteHonorsForecourtShadowLip", group, (0, 0.34, -6.78), (12.0, 0.12, 0.2), mats["stone_shadow"], bevel=0.018)
+    cube("AwardsMuseum_RouteHonorsThreshold", group, (0, 0.58, -6.12), (9.4, 0.22, 0.42), mats["stone"], bevel=0.026)
+    cube("AwardsMuseum_RouteHonorsThresholdGlow", group, (0, 0.74, -6.28), (7.8, 0.08, 0.06), mats["amber"], bevel=0.004)
+    for index, x in enumerate([-4.8, -2.4, 0, 2.4, 4.8]):
+        cube(f"AwardsMuseum_RouteCeremonialWalkTile_{index}", group, (x, 0.44, -5.28), (1.05, 0.08, 1.16), [mats["stone"], mats["paper"], mats["gold"], mats["paper"], mats["stone"]][index], bevel=0.014)
+        cube(f"AwardsMuseum_RouteCeremonialWalkMedal_{index}", group, (x, 0.53, -5.92), (0.46, 0.08, 0.12), [mats["gold"], mats["amber"], mats["paper"], mats["amber"], mats["gold"]][index], bevel=0.004)
+    for index, x in enumerate([-5.85, 5.85]):
+        cube(f"AwardsMuseum_RouteForecourtEdgeRail_{index}", group, (x, 0.62, -5.28), (0.16, 0.6, 2.56), mats["wood"], bevel=0.014)
+        cube(f"AwardsMuseum_RouteForecourtCertificateLight_{index}", group, (x, 1.1, -5.28), (0.08, 0.08, 1.8), mats["amber"], bevel=0.004)
     for x in [-5.42, 5.42]:
         cube("AwardsMuseum_RouteMedalGatePylon", group, (x, 3.2, -3.38), (0.62, 5.46, 0.58), mats["stone_shadow"], bevel=0.032)
         cube("AwardsMuseum_RouteMedalGateGlow", group, (x, 3.18, -3.74), (0.08, 4.12, 0.06), mats["amber"], bevel=0.004)

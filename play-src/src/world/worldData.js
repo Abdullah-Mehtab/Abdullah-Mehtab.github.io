@@ -572,10 +572,10 @@ export const zonePresentation = {
     fov: 42,
   },
   awards: {
-    respawn: { position: [-52, 1.08, 104], heading: 0.94 },
-    camera: [-76, 11, 94],
-    target: [-58, 4, 116],
-    fov: 42,
+    respawn: { position: [-20, 1.08, 109.5], heading: -1.42 },
+    camera: [-82, 13, 90],
+    target: [-52, 5.4, 116],
+    fov: 50,
   },
   cv: {
     respawn: { position: [-52, 1.08, -98], heading: 2.94 },
