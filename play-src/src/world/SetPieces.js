@@ -728,6 +728,10 @@ export class SetPieces {
         routeBuildPipelineRunways: 0,
         routePrototypeReviewWindows: 0,
         routeReleaseCraneCrowns: 0,
+        routePublicBuildForecourts: 0,
+        routeVehicleScaleBuildArches: 0,
+        routeOpenWorkshopDoors: 0,
+        routeReleaseReviewBays: 0,
         groundPlates: 0,
         signs: 0,
         lamps: 0
@@ -2062,6 +2066,10 @@ export class SetPieces {
       stats.routeBuildPipelineRunways += 1;
       stats.routePrototypeReviewWindows += 3;
       stats.routeReleaseCraneCrowns += 1;
+      stats.routePublicBuildForecourts += 1;
+      stats.routeVehicleScaleBuildArches += 1;
+      stats.routeOpenWorkshopDoors += 1;
+      stats.routeReleaseReviewBays += 3;
     }
 
     stats.assemblyRings = stats.foundryBuildings;

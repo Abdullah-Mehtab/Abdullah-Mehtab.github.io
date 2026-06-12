@@ -329,7 +329,7 @@ def create_launch_hub_gateway(mats):
     for index, x in enumerate([-3.2, 0.0, 3.2]):
         cube(f"LaunchHub_DestinationTile_{index}", group, (x, 1.32, -4.1), (1.28, 0.18, 0.11), [mats["mint"], mats["screen"], mats["amber"]][index], bevel=0.006)
     cube("LaunchHub_FirstFrameForecourt", group, (0.0, 0.19, -6.58), (14.9, 0.09, 4.82), mats["stone"], bevel=0.055)
-    cube("LaunchHub_WorldEntryDeck", group, (0.0, 0.28, -8.92), (12.8, 0.18, 0.86), mats["stone_shadow"], bevel=0.018)
+    cube("LaunchHub_WorldEntryDeck", group, (0.0, 0.28, -8.92), (12.8, 0.18, 0.86), mats["stone_shadow"])
     multi_cube("LaunchHub_WorldEntryPortal", group, [
         ((-6.1, 1.92, -8.96), (0.46, 3.3, 0.5), (0, 0, 0)),
         ((6.1, 1.92, -8.96), (0.46, 3.3, 0.5), (0, 0, 0)),
@@ -339,9 +339,9 @@ def create_launch_hub_gateway(mats):
         ((-3.25, 2.02, -9.24), (0.24, 2.22, 0.09), (0, 0, 0)),
         ((3.25, 2.02, -9.24), (0.24, 2.22, 0.09), (0, 0, 0)),
         ((0.0, 3.12, -9.24), (6.72, 0.24, 0.1), (0, 0, 0)),
-    ], mats["screen"], bevel=0.004)
+    ], mats["screen"])
     for index, x in enumerate([-2.2, 0.0, 2.2]):
-        cube(f"LaunchHub_PortfolioThresholdPanel_{index}", group, (x, 1.72, -9.34), (1.05, 1.28, 0.08), [mats["mint"], mats["screen"], mats["amber"]][index], bevel=0.004)
+        cube(f"LaunchHub_PortfolioThresholdPanel_{index}", group, (x, 1.72, -9.34), (1.05, 1.28, 0.08), [mats["mint"], mats["screen"], mats["amber"]][index])
     cube("LaunchHub_ForecourtThresholdCanopy", group, (0.0, 2.82, -6.18), (11.8, 0.28, 0.62), mats["dark"], bevel=0.024)
     cube("LaunchHub_ForecourtThresholdGlow", group, (0.0, 2.58, -6.5), (9.6, 0.08, 0.07), mats["screen"], bevel=0.004)
     for x, mat in [(-6.88, mats["mint"]), (6.88, mats["amber"])]:
@@ -847,6 +847,18 @@ def create_projects_foundry_building(mats):
     cube("ProjectsFoundry_RouteReleaseCraneCrownTrolley", group, (2.1, 6.46, 6.48), (0.95, 0.32, 0.24), mats["stone_shadow"], bevel=0.012)
     cube("ProjectsFoundry_RouteReleaseCraneCrownHook", group, (2.1, 5.52, 6.52), (0.16, 1.24, 0.1), mats["rope"], bevel=0.004)
     cube("ProjectsFoundry_RouteReleaseCraneCrownLoad", group, (2.1, 4.78, 6.58), (0.88, 0.48, 0.5), mats["amber"], bevel=0.016)
+    cube("ProjectsFoundry_RoutePublicBuildForecourt", group, (-1.05, 0.34, 7.32), (13.2, 0.16, 0.86), mats["stone_shadow"])
+    multi_cube("ProjectsFoundry_RouteVehicleScaleBuildArch", group, [
+        ((-6.82, 2.96, 7.38), (0.42, 5.0, 0.32), (0, 0, 0)),
+        ((4.72, 2.96, 7.38), (0.42, 5.0, 0.32), (0, 0, 0)),
+        ((-1.05, 5.42, 7.38), (12.0, 0.42, 0.34), (0, 0, 0)),
+    ], mats["dark"])
+    cube("ProjectsFoundry_RouteOpenWorkshopDoor", group, (-1.05, 2.56, 7.56), (8.8, 2.86, 0.09), mats["dark"])
+    cube("ProjectsFoundry_RouteOpenWorkshopGlow", group, (-1.05, 2.52, 7.64), (7.25, 1.86, 0.06), mats["glass"])
+    cube("ProjectsFoundry_RouteBuildFlowThreshold", group, (-1.05, 0.66, 7.72), (10.4, 0.14, 0.12), mats["amber"])
+    for index, x in enumerate([-3.95, -1.05, 1.85]):
+        cube(f"ProjectsFoundry_RouteReleaseReviewBay_{index}", group, (x, 2.48, 7.78), (1.62, 1.18, 0.07), [mats["screen"], mats["mint"], mats["amber"]][index])
+        cube(f"ProjectsFoundry_RouteReleaseReviewDock_{index}", group, (x, 1.16, 7.72), (1.74, 0.2, 0.36), mats["paper"])
     cube("ProjectsFoundry_RouteSideRepositoryFaceFrame", group, (7.06, 3.34, 1.08), (0.16, 3.9, 3.05), mats["dark"], bevel=0.018)
     cube("ProjectsFoundry_RouteSideRepositoryFaceGlass", group, (7.16, 3.2, 1.08), (0.08, 2.72, 2.35), mats["glass"], bevel=0.008)
     for index, z in enumerate([-0.05, 0.68, 1.41, 2.14]):
