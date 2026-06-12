@@ -329,6 +329,19 @@ def create_launch_hub_gateway(mats):
     for index, x in enumerate([-3.2, 0.0, 3.2]):
         cube(f"LaunchHub_DestinationTile_{index}", group, (x, 1.32, -4.1), (1.28, 0.18, 0.11), [mats["mint"], mats["screen"], mats["amber"]][index], bevel=0.006)
     cube("LaunchHub_FirstFrameForecourt", group, (0.0, 0.19, -6.58), (14.9, 0.09, 4.82), mats["stone"], bevel=0.055)
+    cube("LaunchHub_WorldEntryDeck", group, (0.0, 0.28, -8.92), (12.8, 0.18, 0.86), mats["stone_shadow"], bevel=0.018)
+    multi_cube("LaunchHub_WorldEntryPortal", group, [
+        ((-6.1, 1.92, -8.96), (0.46, 3.3, 0.5), (0, 0, 0)),
+        ((6.1, 1.92, -8.96), (0.46, 3.3, 0.5), (0, 0, 0)),
+        ((0.0, 3.54, -8.96), (12.7, 0.42, 0.58), (0, 0, 0)),
+    ], mats["dark"], bevel=0.012)
+    multi_cube("LaunchHub_RouteEntrySignalFrame", group, [
+        ((-3.25, 2.02, -9.24), (0.24, 2.22, 0.09), (0, 0, 0)),
+        ((3.25, 2.02, -9.24), (0.24, 2.22, 0.09), (0, 0, 0)),
+        ((0.0, 3.12, -9.24), (6.72, 0.24, 0.1), (0, 0, 0)),
+    ], mats["screen"], bevel=0.004)
+    for index, x in enumerate([-2.2, 0.0, 2.2]):
+        cube(f"LaunchHub_PortfolioThresholdPanel_{index}", group, (x, 1.72, -9.34), (1.05, 1.28, 0.08), [mats["mint"], mats["screen"], mats["amber"]][index], bevel=0.004)
     cube("LaunchHub_ForecourtThresholdCanopy", group, (0.0, 2.82, -6.18), (11.8, 0.28, 0.62), mats["dark"], bevel=0.024)
     cube("LaunchHub_ForecourtThresholdGlow", group, (0.0, 2.58, -6.5), (9.6, 0.08, 0.07), mats["screen"], bevel=0.004)
     for x, mat in [(-6.88, mats["mint"]), (6.88, mats["amber"])]:

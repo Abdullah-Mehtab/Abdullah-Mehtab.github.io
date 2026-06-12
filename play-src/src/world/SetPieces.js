@@ -232,7 +232,10 @@ export class SetPieces {
       firstFrameForecourts: 0,
       routeThresholdCanopies: 0,
       forecourtSideWalls: 0,
-      destinationBandCues: 0
+      destinationBandCues: 0,
+      worldEntryPortals: 0,
+      routeEntrySignalFrames: 0,
+      portfolioThresholdPanels: 0
     };
     this.meadowCompositionStats = {
       pockets: 0,
@@ -2516,6 +2519,9 @@ export class SetPieces {
     this.gate4eLaunchHubStats.routeThresholdCanopies += this.gate4eLaunchHubStats.gatewayAssets;
     this.gate4eLaunchHubStats.forecourtSideWalls += this.gate4eLaunchHubStats.gatewayAssets * 2;
     this.gate4eLaunchHubStats.destinationBandCues += this.gate4eLaunchHubStats.gatewayAssets * 6;
+    this.gate4eLaunchHubStats.worldEntryPortals += this.gate4eLaunchHubStats.gatewayAssets;
+    this.gate4eLaunchHubStats.routeEntrySignalFrames += this.gate4eLaunchHubStats.gatewayAssets;
+    this.gate4eLaunchHubStats.portfolioThresholdPanels += this.gate4eLaunchHubStats.gatewayAssets * 3;
 
     mergeStaticMeshesInGroup(group, {
       namePrefix: 'GATE4E_launch_hub',
