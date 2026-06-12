@@ -961,6 +961,11 @@ export class SetPieces {
         routeApproachControlCabins: 0,
         routeApproachLapSignalStacks: 0,
         routeApproachCheckpointLaneFrames: 0,
+        routeStarterArcades: 0,
+        routeSplitTimerBlades: 0,
+        routeCountdownTrees: 0,
+        routeCheckeredCrowns: 0,
+        routeRecoveryRailRuns: 0,
         signs: 0,
         lamps: 0
       }
@@ -2376,6 +2381,11 @@ export class SetPieces {
       stats.routeApproachControlCabins += 2;
       stats.routeApproachLapSignalStacks += 1;
       stats.routeApproachCheckpointLaneFrames += 3;
+      stats.routeStarterArcades += 1;
+      stats.routeSplitTimerBlades += 1;
+      stats.routeCountdownTrees += 1;
+      stats.routeCheckeredCrowns += 1;
+      stats.routeRecoveryRailRuns += 2;
     }
 
     stats.signs = 0;

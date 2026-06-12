@@ -2118,6 +2118,24 @@ def create_circuit_time_trial_gate(mats):
     for index, x in enumerate([-4.2, 0, 4.2]):
         cube(f"CircuitTimeTrial_RouteApproachCheckpointLaneFrame_{index}", group, (x, 0.82, 5.78), (2.5, 0.16, 0.08), mats["paper"], bevel=0.006)
         cube(f"CircuitTimeTrial_RouteApproachCheckpointLaneGlow_{index}", group, (x, 1.12, 5.7), (1.76, 0.08, 0.06), mats["mint" if index != 1 else "amber"], bevel=0.004)
+    cube("CircuitTimeTrial_RouteStarterArcadeDeck", group, (0, 0.74, 8.22), (16.2, 0.3, 0.82), mats["stone"], bevel=0.026)
+    for index, x in enumerate([-7.85, 7.85]):
+        cube(f"CircuitTimeTrial_RouteStarterArcadeTower_{index}", group, (x, 4.12, 8.22), (0.82, 6.88, 0.82), mats["dark"], bevel=0.026)
+        cube(f"CircuitTimeTrial_RouteStarterArcadeGlow_{index}", group, (x, 4.14, 7.78), (0.12, 5.7, 0.07), mats["amber" if index == 0 else "mint"])
+    cube("CircuitTimeTrial_RouteStarterArcadeHeader", group, (0, 7.48, 8.22), (16.8, 0.52, 0.78), mats["dark"], bevel=0.03)
+    cube("CircuitTimeTrial_RouteStarterArcadeScoreGlow", group, (0, 7.16, 7.72), (11.8, 0.1, 0.08), mats["screen"])
+    for index, x in enumerate([-4.8, -3.6, -2.4, -1.2, 0, 1.2, 2.4, 3.6, 4.8]):
+        cube(f"CircuitTimeTrial_RouteCheckeredCrownTile_{index}", group, (x, 7.48, 7.76), (0.84, 0.34, 0.06), mats["paper" if index % 2 else "rubber"])
+    cube("CircuitTimeTrial_RouteSplitTimerBlade", group, (0, 4.88, 7.64), (4.4, 2.36, 0.12), mats["stone_shadow"], bevel=0.018)
+    cube("CircuitTimeTrial_RouteSplitTimerGlass", group, (0, 4.9, 7.54), (3.28, 1.26, 0.07), mats["screen"], bevel=0.006)
+    for index, y in enumerate([4.52, 4.9, 5.28]):
+        cube(f"CircuitTimeTrial_RouteSplitTimerLine_{index}", group, (0, y, 7.48), (2.52 - index * 0.32, 0.08, 0.055), [mats["mint"], mats["amber"], mats["pink"]][index])
+    cube("CircuitTimeTrial_RouteCountdownTreeMast", group, (-5.95, 3.58, 7.62), (0.24, 4.92, 0.12), mats["dark"], bevel=0.012)
+    for index, y in enumerate([2.48, 3.18, 3.88, 4.58]):
+        cube(f"CircuitTimeTrial_RouteCountdownTreeLamp_{index}", group, (-5.95, y, 7.5), (0.72, 0.34, 0.055), [mats["pink"], mats["amber"], mats["amber"], mats["mint"]][index])
+    for index, x in enumerate([-6.05, 6.05]):
+        cube(f"CircuitTimeTrial_RouteRecoveryRailRun_{index}", group, (x, 0.86, 5.58), (0.18, 0.28, 5.4), mats["paper"], bevel=0.01)
+        cube(f"CircuitTimeTrial_RouteRecoveryRailGlow_{index}", group, (x, 1.08, 5.58), (0.08, 0.08, 4.8), mats["mint" if index == 0 else "amber"])
 
 
 def create_stunt_checkpoint(mats):
