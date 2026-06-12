@@ -544,6 +544,10 @@ export class SetPieces {
         routePracticeAtriums: 0,
         routeMentorReviewSteps: 0,
         routeCertificationBeacons: 0,
+        routeLearningFacadeFaces: 0,
+        routeCurriculumRibbons: 0,
+        routePracticeLabWindows: 0,
+        routeSkillBeaconCrowns: 0,
         signs: 0,
         lamps: 0
       },
@@ -1763,6 +1767,10 @@ export class SetPieces {
       stats.routePracticeAtriums += 1;
       stats.routeMentorReviewSteps += 5;
       stats.routeCertificationBeacons += 1;
+      stats.routeLearningFacadeFaces += 3;
+      stats.routeCurriculumRibbons += 18;
+      stats.routePracticeLabWindows += 18;
+      stats.routeSkillBeaconCrowns += 1;
     }
 
     stats.terminalSlabs = stats.commandTerminals;

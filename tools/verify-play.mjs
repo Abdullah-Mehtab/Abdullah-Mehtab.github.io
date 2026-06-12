@@ -4960,6 +4960,13 @@ function assertVerification(result) {
     }
     return;
   }
+  if (result.goalGate === 'gate-4e-cb-skills-route-learning-systems-facade-benchmark-pass') {
+    assertGate4ECBSkillsRouteLearningSystemsFacadeBenchmarkVerification(result, failures);
+    if (failures.length) {
+      throw new Error(`Play verification failed: ${failures.join('; ')}`);
+    }
+    return;
+  }
   if (result.goalGate === 'gate-4b5-north-ridge') {
     assertGate4B5NorthRidgeVerification(result, failures);
     if (failures.length) {
@@ -6139,7 +6146,8 @@ function isGate4EExpandedArchitectureGate(goalGate) {
     || goalGate === 'gate-4e-bx-awards-route-honors-forecourt-benchmark-pass'
     || goalGate === 'gate-4e-by-security-scanner-threshold-benchmark-pass'
     || goalGate === 'gate-4e-bz-route-framing-benchmark-sweep'
-    || goalGate === 'gate-4e-ca-projects-route-foundry-facade-benchmark-pass';
+    || goalGate === 'gate-4e-ca-projects-route-foundry-facade-benchmark-pass'
+    || goalGate === 'gate-4e-cb-skills-route-learning-systems-facade-benchmark-pass';
 }
 
 function assertGate3RVerticalSliceVerification(result, failures, options = {}) {
@@ -6213,7 +6221,8 @@ function assertGate3RVerticalSliceVerification(result, failures, options = {}) {
     || result.goalGate === 'gate-4e-bx-awards-route-honors-forecourt-benchmark-pass'
     || result.goalGate === 'gate-4e-by-security-scanner-threshold-benchmark-pass'
     || result.goalGate === 'gate-4e-bz-route-framing-benchmark-sweep'
-    || result.goalGate === 'gate-4e-ca-projects-route-foundry-facade-benchmark-pass';
+    || result.goalGate === 'gate-4e-ca-projects-route-foundry-facade-benchmark-pass'
+    || result.goalGate === 'gate-4e-cb-skills-route-learning-systems-facade-benchmark-pass';
   const blockout = result.blockout || {};
   const blockoutSetPieces = blockout.setPieces || {};
   const slice = result.verticalSlice || blockout.verticalSlice || {};
@@ -6278,7 +6287,8 @@ function assertGate3RVerticalSliceVerification(result, failures, options = {}) {
     || result.goalGate === 'gate-4e-bx-awards-route-honors-forecourt-benchmark-pass'
     || result.goalGate === 'gate-4e-by-security-scanner-threshold-benchmark-pass'
     || result.goalGate === 'gate-4e-bz-route-framing-benchmark-sweep'
-    || result.goalGate === 'gate-4e-ca-projects-route-foundry-facade-benchmark-pass';
+    || result.goalGate === 'gate-4e-ca-projects-route-foundry-facade-benchmark-pass'
+    || result.goalGate === 'gate-4e-cb-skills-route-learning-systems-facade-benchmark-pass';
 
   if (result.goalGate !== expectedGoal) {
     failures.push(`Gate 3R probe failed: goalGate=${result.goalGate || 'none'}`);
@@ -9018,6 +9028,45 @@ function assertGate4ECAProjectsRouteFoundryFacadeBenchmarkVerification(result, f
   }
   if (!Number.isFinite(frame.approachDistance) || frame.approachDistance < 16 || frame.approachDistance > 46) {
     failures.push(`Gate 4-E-CA Projects failed: approachDistance=${frame.approachDistance}`);
+  }
+}
+
+function assertGate4ECBSkillsRouteLearningSystemsFacadeBenchmarkVerification(result, failures) {
+  assertGate4ECAProjectsRouteFoundryFacadeBenchmarkVerification(result, failures);
+
+  const skills = result.gate4b2?.skills || {};
+  assertAuthoredDistrictAsset(result, 'EnvPolishSkillsDataCenter', 'Gate 4-E-CB Skills route learning-systems facade architecture', failures);
+  if ((skills.routeLearningFacadeFaces || 0) < 2) {
+    failures.push(`Gate 4-E-CB Skills failed: routeLearningFacadeFaces=${skills.routeLearningFacadeFaces || 0}/2`);
+  }
+  if ((skills.routeCurriculumRibbons || 0) < 6) {
+    failures.push(`Gate 4-E-CB Skills failed: routeCurriculumRibbons=${skills.routeCurriculumRibbons || 0}/6`);
+  }
+  if ((skills.routePracticeLabWindows || 0) < 6) {
+    failures.push(`Gate 4-E-CB Skills failed: routePracticeLabWindows=${skills.routePracticeLabWindows || 0}/6`);
+  }
+  if ((skills.routeSkillBeaconCrowns || 0) < 1) {
+    failures.push(`Gate 4-E-CB Skills failed: routeSkillBeaconCrowns=${skills.routeSkillBeaconCrowns || 0}/1`);
+  }
+
+  const frames = new Map((result.routeApproachFraming || []).map((frame) => [frame.id, frame]));
+  const frame = frames.get('skills');
+  if (!frame) {
+    failures.push('Gate 4-E-CB Skills failed: missing route approach frame');
+    return;
+  }
+  if (!frame.safeInFrame) failures.push(`Gate 4-E-CB Skills failed: safeInFrame=${frame.safeInFrame}`);
+  if (!frame.vehicle?.safeInFrame) {
+    failures.push(`Gate 4-E-CB Skills failed: vehicle frame=${JSON.stringify(frame.vehicle?.bounds || {})}`);
+  }
+  if (!frame.landmark?.inFrame || !frame.landmark?.safeInFrame) {
+    failures.push(`Gate 4-E-CB Skills failed: landmark frame=${JSON.stringify(frame.landmark?.bounds || {})}`);
+  }
+  if (!frame.road?.offsetSafe || Math.abs(frame.road?.lateralOffset || 0) > 0.85) {
+    failures.push(`Gate 4-E-CB Skills failed: road lateral=${frame.road?.lateralOffset}`);
+  }
+  if (!Number.isFinite(frame.approachDistance) || frame.approachDistance < 16 || frame.approachDistance > 46) {
+    failures.push(`Gate 4-E-CB Skills failed: approachDistance=${frame.approachDistance}`);
   }
 }
 

@@ -1095,6 +1095,56 @@ def create_skills_data_center(mats):
         cube(f"SkillsDataCenter_RouteMentorReviewStep_{index}", group, (x, 0.72 + index * 0.1, -5.86), (0.96, 0.14, 0.32), mats["paper" if index % 2 else "stone"], bevel=0.006)
         cube(f"SkillsDataCenter_RouteMentorReviewScreen_{index}", group, (x, 1.02 + index * 0.1, -5.98), (0.68, 0.18, 0.06), [mats["screen"], mats["mint"], mats["aqua"], mats["purple"], mats["screen"]][index], bevel=0.003)
     cube("SkillsDataCenter_RouteLearningProgressBeam", group, (0.18, 4.28, -5.6), (7.92, 0.14, 0.12), mats["mint"], bevel=0.004)
+    cube("SkillsDataCenter_RouteLearningSystemsFacadeFrame", group, (0.18, 2.82, -6.04), (8.86, 3.72, 0.16), mats["dark"], bevel=0.018)
+    cube("SkillsDataCenter_RouteLearningSystemsGlass", group, (0.18, 2.72, -6.16), (7.38, 2.6, 0.08), mats["glass"], bevel=0.008)
+    cube("SkillsDataCenter_RouteLearningSystemsHeader", group, (0.18, 4.68, -6.16), (8.16, 0.34, 0.12), mats["screen"], bevel=0.008)
+    cube("SkillsDataCenter_RouteLearningSystemsThreshold", group, (0.18, 0.88, -6.16), (7.6, 0.26, 0.14), mats["paper"], bevel=0.008)
+    for index, y in enumerate([1.46, 1.88, 2.3, 2.72, 3.14, 3.56]):
+        width = 5.7 + (index % 3) * 0.58
+        x = 0.18 + (index - 2.5) * 0.12
+        cube(f"SkillsDataCenter_RouteCurriculumRibbon_{index}", group, (x, y, -6.26), (width, 0.1, 0.08), [mats["screen"], mats["mint"], mats["aqua"], mats["purple"], mats["paper"], mats["screen"]][index], bevel=0.003)
+    for index, (x, y, material) in enumerate([
+        (-2.78, 1.52, mats["screen"]),
+        (-1.36, 1.52, mats["mint"]),
+        (0.06, 1.52, mats["aqua"]),
+        (1.48, 2.56, mats["purple"]),
+        (2.9, 2.56, mats["screen"]),
+        (4.32, 2.56, mats["mint"]),
+    ]):
+        cube(f"SkillsDataCenter_RoutePracticeWindow_{index}", group, (x, y, -6.32), (0.82, 0.52, 0.08), material, bevel=0.004)
+    cube("SkillsDataCenter_RouteCertificationBeaconCrown", group, (-5.72, 5.16, -5.96), (1.34, 0.28, 0.34), mats["paper"], bevel=0.012)
+    cube("SkillsDataCenter_RouteCertificationBeaconGlow", group, (-5.72, 4.9, -6.18), (0.92, 0.12, 0.08), mats["mint"], bevel=0.004)
+    cube("SkillsDataCenter_SideLearningSystemsFacadeFrame", group, (6.98, 2.72, -2.42), (0.16, 3.42, 4.76), mats["dark"], bevel=0.016)
+    cube("SkillsDataCenter_SideLearningSystemsGlass", group, (7.08, 2.56, -2.42), (0.08, 2.48, 3.74), mats["glass"], bevel=0.008)
+    cube("SkillsDataCenter_SideLearningSystemsHeader", group, (7.1, 4.42, -2.42), (0.1, 0.28, 4.24), mats["screen"], bevel=0.006)
+    for index, z in enumerate([-4.0, -3.28, -2.56, -1.84, -1.12, -0.4]):
+        cube(f"SkillsDataCenter_SideCurriculumRibbon_{index}", group, (7.18, 1.42 + (index % 3) * 0.48, z), (0.08, 0.1, 0.56), [mats["screen"], mats["mint"], mats["aqua"], mats["purple"], mats["paper"], mats["screen"]][index], bevel=0.003)
+    for index, (z, y, material) in enumerate([
+        (-3.76, 2.28, mats["screen"]),
+        (-3.04, 2.28, mats["mint"]),
+        (-2.32, 2.28, mats["aqua"]),
+        (-1.6, 3.1, mats["purple"]),
+        (-0.88, 3.1, mats["screen"]),
+        (-0.16, 3.1, mats["mint"]),
+    ]):
+        cube(f"SkillsDataCenter_SidePracticeWindow_{index}", group, (7.22, y, z), (0.08, 0.46, 0.48), material, bevel=0.004)
+    cube("SkillsDataCenter_RearLearningSystemsFacadeFrame", group, (-0.78, 2.92, 3.12), (9.96, 3.64, 0.16), mats["dark"], bevel=0.018)
+    cube("SkillsDataCenter_RearLearningSystemsGlass", group, (-0.78, 2.74, 3.22), (8.32, 2.42, 0.08), mats["glass"], bevel=0.008)
+    cube("SkillsDataCenter_RearLearningSystemsHeader", group, (-0.78, 4.76, 3.24), (9.18, 0.32, 0.12), mats["screen"], bevel=0.008)
+    cube("SkillsDataCenter_RearLearningSystemsThreshold", group, (-0.78, 0.9, 3.24), (8.58, 0.24, 0.14), mats["paper"], bevel=0.008)
+    cube("SkillsDataCenter_RearKnowledgeCore", group, (-5.2, 2.78, 3.34), (1.28, 2.82, 0.08), mats["mint"], bevel=0.006)
+    cube("SkillsDataCenter_RearPracticeLabCore", group, (3.28, 2.78, 3.34), (1.42, 2.82, 0.08), mats["aqua"], bevel=0.006)
+    for index, y in enumerate([1.48, 1.9, 2.32, 2.74, 3.16, 3.58]):
+        cube(f"SkillsDataCenter_RearCurriculumRibbon_{index}", group, (-0.78, y, 3.4), (5.7 + index * 0.22, 0.1, 0.08), [mats["screen"], mats["mint"], mats["aqua"], mats["purple"], mats["paper"], mats["screen"]][index], bevel=0.003)
+    for index, (x, y, material) in enumerate([
+        (-3.72, 1.42, mats["screen"]),
+        (-2.34, 1.42, mats["mint"]),
+        (-0.96, 1.42, mats["aqua"]),
+        (0.42, 2.5, mats["purple"]),
+        (1.8, 2.5, mats["screen"]),
+        (3.18, 2.5, mats["mint"]),
+    ]):
+        cube(f"SkillsDataCenter_RearPracticeWindow_{index}", group, (x, y, 3.48), (0.86, 0.5, 0.08), material, bevel=0.004)
     for index, x in enumerate([-2.8, -1.7, -0.6, 0.5, 1.6, 2.7]):
         cube(f"SkillsDataCenter_RouteCurriculumModule_{index}", group, (x, 2.18 + (index % 3) * 0.36, -5.72), (0.72, 0.34, 0.08), [mats["screen"], mats["paper"], mats["mint"], mats["aqua"], mats["purple"], mats["paper"]][index], bevel=0.004)
     for index, z in enumerate([-4.05, -3.62, -3.19]):
