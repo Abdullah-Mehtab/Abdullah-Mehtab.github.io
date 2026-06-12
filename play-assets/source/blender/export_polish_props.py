@@ -5,6 +5,7 @@ import math
 from pathlib import Path
 
 import bpy
+from mathutils import Euler, Vector
 
 
 def main():
@@ -158,11 +159,77 @@ def root(name):
 
 
 def cube(name, parent, loc, scale, material, rot=(0, 0, 0), bevel=0.0):
-    bpy.ops.mesh.primitive_cube_add(size=1, location=loc, rotation=rot)
-    obj = bpy.context.object
+    sx, sy, sz = scale
+    hx, hy, hz = sx * 0.5, sy * 0.5, sz * 0.5
+    rotation = Euler(rot, "XYZ").to_matrix()
+    origin = Vector(loc)
+    verts = [
+        (-hx, -hy, -hz),
+        (hx, -hy, -hz),
+        (hx, hy, -hz),
+        (-hx, hy, -hz),
+        (-hx, -hy, hz),
+        (hx, -hy, hz),
+        (hx, hy, hz),
+        (-hx, hy, hz),
+    ]
+    verts = [origin + rotation @ Vector(vertex) for vertex in verts]
+    faces = [
+        (0, 1, 2, 3),
+        (4, 7, 6, 5),
+        (0, 4, 5, 1),
+        (1, 5, 6, 2),
+        (2, 6, 7, 3),
+        (3, 7, 4, 0),
+    ]
+    mesh = bpy.data.meshes.new(f"{name}_Mesh")
+    mesh.from_pydata(verts, [], faces)
+    mesh.update()
+    obj = bpy.data.objects.new(name, mesh)
+    bpy.context.collection.objects.link(obj)
     obj.name = name
-    obj.dimensions = scale
-    bpy.ops.object.transform_apply(location=False, rotation=False, scale=True)
+    obj.data.materials.append(material)
+    obj.parent = parent
+    if bevel:
+        modifier = obj.modifiers.new("soft_edges", "BEVEL")
+        modifier.width = bevel
+        modifier.segments = 1
+        obj.modifiers.new("weighted_normals", "WEIGHTED_NORMAL")
+    return obj
+
+
+def multi_cube(name, parent, boxes, material, bevel=0.0):
+    verts = []
+    faces = []
+    for loc, scale, rot in boxes:
+        sx, sy, sz = scale
+        hx, hy, hz = sx * 0.5, sy * 0.5, sz * 0.5
+        rotation = Euler(rot, "XYZ").to_matrix()
+        origin = Vector(loc)
+        base = len(verts)
+        verts.extend([
+            origin + rotation @ Vector((-hx, -hy, -hz)),
+            origin + rotation @ Vector((hx, -hy, -hz)),
+            origin + rotation @ Vector((hx, hy, -hz)),
+            origin + rotation @ Vector((-hx, hy, -hz)),
+            origin + rotation @ Vector((-hx, -hy, hz)),
+            origin + rotation @ Vector((hx, -hy, hz)),
+            origin + rotation @ Vector((hx, hy, hz)),
+            origin + rotation @ Vector((-hx, hy, hz)),
+        ])
+        faces.extend([
+            (base + 0, base + 1, base + 2, base + 3),
+            (base + 4, base + 7, base + 6, base + 5),
+            (base + 0, base + 4, base + 5, base + 1),
+            (base + 1, base + 5, base + 6, base + 2),
+            (base + 2, base + 6, base + 7, base + 3),
+            (base + 3, base + 7, base + 4, base + 0),
+        ])
+    mesh = bpy.data.meshes.new(f"{name}_Mesh")
+    mesh.from_pydata(verts, [], faces)
+    mesh.update()
+    obj = bpy.data.objects.new(name, mesh)
+    bpy.context.collection.objects.link(obj)
     obj.data.materials.append(material)
     obj.parent = parent
     if bevel:
@@ -1697,6 +1764,15 @@ def create_awards_museum_hall(mats):
     cube("AwardsMuseum_RouteHonorsForecourtShadowLip", group, (0, 0.34, -6.78), (12.0, 0.12, 0.2), mats["stone_shadow"], bevel=0.018)
     cube("AwardsMuseum_RouteHonorsThreshold", group, (0, 0.58, -6.12), (9.4, 0.22, 0.42), mats["stone"], bevel=0.026)
     cube("AwardsMuseum_RouteHonorsThresholdGlow", group, (0, 0.74, -6.28), (7.8, 0.08, 0.06), mats["amber"], bevel=0.004)
+    multi_cube("AwardsMuseum_RouteHonorsArrivalArch", group, [
+        ((0, 0.5, -7.08), (12.6, 0.22, 0.74), (0, 0, 0)),
+        ((-6.0, 3.25, -7.08), (0.54, 5.5, 0.48), (0, 0, 0)),
+        ((6.0, 3.25, -7.08), (0.54, 5.5, 0.48), (0, 0, 0)),
+        ((0, 6.1, -7.08), (12.8, 0.42, 0.48), (0, 0, 0)),
+        ((0, 3.18, -7.44), (8.2, 0.22, 0.06), (0, 0, 0)),
+        ((0, 3.82, -7.44), (7.0, 0.22, 0.06), (0, 0, 0)),
+    ], mats["gold"])
+    cube("AwardsMuseum_RouteHonorsMedalWindow", group, (0, 4.68, -7.36), (3.5, 1.28, 0.08), mats["glass"])
     for index, x in enumerate([-4.8, -2.4, 0, 2.4, 4.8]):
         cube(f"AwardsMuseum_RouteCeremonialWalkTile_{index}", group, (x, 0.44, -5.28), (1.05, 0.08, 1.16), [mats["stone"], mats["paper"], mats["gold"], mats["paper"], mats["stone"]][index], bevel=0.014)
         cube(f"AwardsMuseum_RouteCeremonialWalkMedal_{index}", group, (x, 0.53, -5.92), (0.46, 0.08, 0.12), [mats["gold"], mats["amber"], mats["paper"], mats["amber"], mats["gold"]][index], bevel=0.004)

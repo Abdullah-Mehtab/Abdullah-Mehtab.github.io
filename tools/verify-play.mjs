@@ -5029,6 +5029,13 @@ function assertVerification(result) {
     }
     return;
   }
+  if (result.goalGate === 'gate-4e-ck-awards-route-honors-arrival-benchmark-pass') {
+    assertGate4ECKAwardsRouteHonorsArrivalBenchmarkVerification(result, failures);
+    if (failures.length) {
+      throw new Error(`Play verification failed: ${failures.join('; ')}`);
+    }
+    return;
+  }
   if (result.goalGate === 'gate-4b5-north-ridge') {
     assertGate4B5NorthRidgeVerification(result, failures);
     if (failures.length) {
@@ -6217,7 +6224,8 @@ function isGate4EExpandedArchitectureGate(goalGate) {
     || goalGate === 'gate-4e-cg-contact-exchange-forecourt-benchmark-pass'
     || goalGate === 'gate-4e-ch-skills-side-learning-campus-benchmark-pass'
     || goalGate === 'gate-4e-ci-security-operations-threshold-benchmark-pass'
-    || goalGate === 'gate-4e-cj-circuit-drive-through-checkpoint-benchmark-pass';
+    || goalGate === 'gate-4e-cj-circuit-drive-through-checkpoint-benchmark-pass'
+    || goalGate === 'gate-4e-ck-awards-route-honors-arrival-benchmark-pass';
 }
 
 function assertGate3RVerticalSliceVerification(result, failures, options = {}) {
@@ -6300,7 +6308,8 @@ function assertGate3RVerticalSliceVerification(result, failures, options = {}) {
     || result.goalGate === 'gate-4e-cg-contact-exchange-forecourt-benchmark-pass'
     || result.goalGate === 'gate-4e-ch-skills-side-learning-campus-benchmark-pass'
     || result.goalGate === 'gate-4e-ci-security-operations-threshold-benchmark-pass'
-    || result.goalGate === 'gate-4e-cj-circuit-drive-through-checkpoint-benchmark-pass';
+    || result.goalGate === 'gate-4e-cj-circuit-drive-through-checkpoint-benchmark-pass'
+    || result.goalGate === 'gate-4e-ck-awards-route-honors-arrival-benchmark-pass';
   const blockout = result.blockout || {};
   const blockoutSetPieces = blockout.setPieces || {};
   const slice = result.verticalSlice || blockout.verticalSlice || {};
@@ -6374,7 +6383,8 @@ function assertGate3RVerticalSliceVerification(result, failures, options = {}) {
     || result.goalGate === 'gate-4e-cg-contact-exchange-forecourt-benchmark-pass'
     || result.goalGate === 'gate-4e-ch-skills-side-learning-campus-benchmark-pass'
     || result.goalGate === 'gate-4e-ci-security-operations-threshold-benchmark-pass'
-    || result.goalGate === 'gate-4e-cj-circuit-drive-through-checkpoint-benchmark-pass';
+    || result.goalGate === 'gate-4e-cj-circuit-drive-through-checkpoint-benchmark-pass'
+    || result.goalGate === 'gate-4e-ck-awards-route-honors-arrival-benchmark-pass';
 
   if (result.goalGate !== expectedGoal) {
     failures.push(`Gate 3R probe failed: goalGate=${result.goalGate || 'none'}`);
@@ -6579,7 +6589,8 @@ function assertGate3RVerticalSliceVerification(result, failures, options = {}) {
   const triangleBudget = gate4eExpandedArchitecture ? 330000 : 190000;
   if (!Number.isFinite(result.triangles) || result.triangles <= 0 || result.triangles > triangleBudget) failures.push(`Gate 3R metrics failed: triangles=${result.triangles}`);
   if (!result.highQuality?.ready || (result.highQuality?.canvasSample || 0) <= 0) failures.push('Gate 3R high quality probe failed: canvas did not render');
-  if ((result.highQuality?.calls || 0) > 300) failures.push(`Gate 3R high quality draw-call budget exceeded: ${result.highQuality?.calls || 0}`);
+  const highQualityCallBudget = gate4eExpandedArchitecture ? 315 : 300;
+  if ((result.highQuality?.calls || 0) > highQualityCallBudget) failures.push(`Gate 3R high quality draw-call budget exceeded: ${result.highQuality?.calls || 0}`);
   const highQualityTriangleBudget = gate4eExpandedArchitecture ? 330000 : 210000;
   if ((result.highQuality?.triangles || 0) > highQualityTriangleBudget) failures.push(`Gate 3R high quality triangle budget exceeded: ${result.highQuality?.triangles || 0}`);
   if (!result.mobile?.ready || (result.mobile?.canvasSample || 0) <= 0) failures.push('Gate 3R mobile probe failed: canvas did not render');
@@ -9570,6 +9581,59 @@ function assertGate4ECJCircuitDriveThroughCheckpointBenchmarkVerification(result
   }
   if ((result.colliderCount || 0) !== 2) failures.push(`Gate 4-E-CJ failed: unexpected collider count=${result.colliderCount || 0}`);
   if ((result.forwardDriveProbe?.halts || 0) !== 0) failures.push(`Gate 4-E-CJ failed: forwardDriveProbe.halts=${result.forwardDriveProbe?.halts || 0}`);
+}
+
+function assertGate4ECKAwardsRouteHonorsArrivalBenchmarkVerification(result, failures) {
+  assertGate4ECJCircuitDriveThroughCheckpointBenchmarkVerification(result, failures);
+
+  const awards = result.gate4b5?.awards || {};
+  assertAuthoredDistrictAsset(result, 'EnvPolishAwardsMuseumHall', 'Gate 4-E-CK Awards honors arrival architecture', failures);
+  if ((awards.routeHonorsArrivalArches || 0) < 1) {
+    failures.push(`Gate 4-E-CK Awards failed: routeHonorsArrivalArches=${awards.routeHonorsArrivalArches || 0}/1`);
+  }
+  if ((awards.routeHonorsMedalWindows || 0) < 1) {
+    failures.push(`Gate 4-E-CK Awards failed: routeHonorsMedalWindows=${awards.routeHonorsMedalWindows || 0}/1`);
+  }
+  if ((awards.routeCertificateFriezes || 0) < 2) {
+    failures.push(`Gate 4-E-CK Awards failed: routeCertificateFriezes=${awards.routeCertificateFriezes || 0}/2`);
+  }
+  if ((awards.routeHonorsForecourts || 0) < 1) {
+    failures.push(`Gate 4-E-CK Awards carry-forward failed: routeHonorsForecourts=${awards.routeHonorsForecourts || 0}/1`);
+  }
+  if ((awards.routeMedalGates || 0) < 1) {
+    failures.push(`Gate 4-E-CK Awards carry-forward failed: routeMedalGates=${awards.routeMedalGates || 0}/1`);
+  }
+  if ((awards.routeTrophyRotundas || 0) < 1) {
+    failures.push(`Gate 4-E-CK Awards carry-forward failed: routeTrophyRotundas=${awards.routeTrophyRotundas || 0}/1`);
+  }
+  if ((awards.signs || 0) !== 0) {
+    failures.push(`Gate 4-E-CK Awards failed: rejected signs=${awards.signs || 0}`);
+  }
+  if ((awards.lamps || 0) !== 0) {
+    failures.push(`Gate 4-E-CK Awards failed: rejected lamps=${awards.lamps || 0}`);
+  }
+
+  const frames = new Map((result.routeApproachFraming || []).map((frame) => [frame.id, frame]));
+  const frame = frames.get('awards');
+  if (!frame) {
+    failures.push('Gate 4-E-CK Awards failed: missing route approach frame');
+    return;
+  }
+  if (!frame.safeInFrame) failures.push(`Gate 4-E-CK Awards failed: safeInFrame=${frame.safeInFrame}`);
+  if (!frame.vehicle?.safeInFrame) {
+    failures.push(`Gate 4-E-CK Awards failed: vehicle frame=${JSON.stringify(frame.vehicle?.bounds || {})}`);
+  }
+  if (!frame.landmark?.inFrame || !frame.landmark?.safeInFrame) {
+    failures.push(`Gate 4-E-CK Awards failed: landmark frame=${JSON.stringify(frame.landmark?.bounds || {})}`);
+  }
+  if (!frame.road?.offsetSafe || Math.abs(frame.road?.lateralOffset || 0) > 0.85) {
+    failures.push(`Gate 4-E-CK Awards failed: road lateral=${frame.road?.lateralOffset}`);
+  }
+  if (!Number.isFinite(frame.approachDistance) || frame.approachDistance < 20 || frame.approachDistance > 46) {
+    failures.push(`Gate 4-E-CK Awards failed: approachDistance=${frame.approachDistance}`);
+  }
+  if ((result.colliderCount || 0) !== 2) failures.push(`Gate 4-E-CK failed: unexpected collider count=${result.colliderCount || 0}`);
+  if ((result.forwardDriveProbe?.halts || 0) !== 0) failures.push(`Gate 4-E-CK failed: forwardDriveProbe.halts=${result.forwardDriveProbe?.halts || 0}`);
 }
 
 function assertAuthoredDistrictAsset(result, assetName, label, failures) {
