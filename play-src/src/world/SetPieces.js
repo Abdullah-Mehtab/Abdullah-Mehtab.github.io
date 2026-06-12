@@ -647,6 +647,11 @@ export class SetPieces {
         routeSprintBoardFacades: 0,
         routeChecklistSpines: 0,
         routeCalendarCues: 0,
+        routePlanningHallGlassFacades: 0,
+        routePlanningHallHeaderBridges: 0,
+        routePlanningHallSideWings: 0,
+        routePlanningEntranceCanopies: 0,
+        routeWorkflowMullions: 0,
         signs: 0,
         lamps: 0
       },
@@ -1929,6 +1934,11 @@ export class SetPieces {
       stats.routeSprintBoardFacades += 1;
       stats.routeChecklistSpines += 1;
       stats.routeCalendarCues += 1;
+      stats.routePlanningHallGlassFacades += 1;
+      stats.routePlanningHallHeaderBridges += 1;
+      stats.routePlanningHallSideWings += 2;
+      stats.routePlanningEntranceCanopies += 1;
+      stats.routeWorkflowMullions += 5;
       stats.queueRails += 3;
     }
 

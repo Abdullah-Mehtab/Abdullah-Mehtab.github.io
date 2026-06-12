@@ -4988,6 +4988,13 @@ function assertVerification(result) {
     }
     return;
   }
+  if (result.goalGate === 'gate-4e-cf-todo-planning-hall-facade-benchmark-pass') {
+    assertGate4ECFTodoPlanningHallFacadeBenchmarkVerification(result, failures);
+    if (failures.length) {
+      throw new Error(`Play verification failed: ${failures.join('; ')}`);
+    }
+    return;
+  }
   if (result.goalGate === 'gate-4b5-north-ridge') {
     assertGate4B5NorthRidgeVerification(result, failures);
     if (failures.length) {
@@ -6171,7 +6178,8 @@ function isGate4EExpandedArchitectureGate(goalGate) {
     || goalGate === 'gate-4e-cb-skills-route-learning-systems-facade-benchmark-pass'
     || goalGate === 'gate-4e-cc-circuit-route-time-trial-gantry-benchmark-pass'
     || goalGate === 'gate-4e-cd-potato-route-harvest-silhouette-benchmark-pass'
-    || goalGate === 'gate-4e-ce-launch-hub-forecourt-first-frame-benchmark-pass';
+    || goalGate === 'gate-4e-ce-launch-hub-forecourt-first-frame-benchmark-pass'
+    || goalGate === 'gate-4e-cf-todo-planning-hall-facade-benchmark-pass';
 }
 
 function assertGate3RVerticalSliceVerification(result, failures, options = {}) {
@@ -6249,7 +6257,8 @@ function assertGate3RVerticalSliceVerification(result, failures, options = {}) {
     || result.goalGate === 'gate-4e-cb-skills-route-learning-systems-facade-benchmark-pass'
     || result.goalGate === 'gate-4e-cc-circuit-route-time-trial-gantry-benchmark-pass'
     || result.goalGate === 'gate-4e-cd-potato-route-harvest-silhouette-benchmark-pass'
-    || result.goalGate === 'gate-4e-ce-launch-hub-forecourt-first-frame-benchmark-pass';
+    || result.goalGate === 'gate-4e-ce-launch-hub-forecourt-first-frame-benchmark-pass'
+    || result.goalGate === 'gate-4e-cf-todo-planning-hall-facade-benchmark-pass';
   const blockout = result.blockout || {};
   const blockoutSetPieces = blockout.setPieces || {};
   const slice = result.verticalSlice || blockout.verticalSlice || {};
@@ -6318,7 +6327,8 @@ function assertGate3RVerticalSliceVerification(result, failures, options = {}) {
     || result.goalGate === 'gate-4e-cb-skills-route-learning-systems-facade-benchmark-pass'
     || result.goalGate === 'gate-4e-cc-circuit-route-time-trial-gantry-benchmark-pass'
     || result.goalGate === 'gate-4e-cd-potato-route-harvest-silhouette-benchmark-pass'
-    || result.goalGate === 'gate-4e-ce-launch-hub-forecourt-first-frame-benchmark-pass';
+    || result.goalGate === 'gate-4e-ce-launch-hub-forecourt-first-frame-benchmark-pass'
+    || result.goalGate === 'gate-4e-cf-todo-planning-hall-facade-benchmark-pass';
 
   if (result.goalGate !== expectedGoal) {
     failures.push(`Gate 3R probe failed: goalGate=${result.goalGate || 'none'}`);
@@ -9226,6 +9236,59 @@ function assertGate4ECELaunchHubForecourtFirstFrameBenchmarkVerification(result,
   }
   if ((result.colliderCount || 0) !== 2) failures.push(`Gate 4-E-CE failed: unexpected collider count=${result.colliderCount || 0}`);
   if ((result.forwardDriveProbe?.halts || 0) !== 0) failures.push(`Gate 4-E-CE failed: forwardDriveProbe.halts=${result.forwardDriveProbe?.halts || 0}`);
+}
+
+function assertGate4ECFTodoPlanningHallFacadeBenchmarkVerification(result, failures) {
+  assertGate4ECELaunchHubForecourtFirstFrameBenchmarkVerification(result, failures);
+
+  const todo = result.gate4b3?.todo || {};
+  assertAuthoredDistrictAsset(result, 'EnvPolishTodoPlanningStudio', 'Gate 4-E-CF Todo planning hall facade architecture', failures);
+  if ((todo.routePlanningHallGlassFacades || 0) < 1) {
+    failures.push(`Gate 4-E-CF Todo failed: routePlanningHallGlassFacades=${todo.routePlanningHallGlassFacades || 0}/1`);
+  }
+  if ((todo.routePlanningHallHeaderBridges || 0) < 1) {
+    failures.push(`Gate 4-E-CF Todo failed: routePlanningHallHeaderBridges=${todo.routePlanningHallHeaderBridges || 0}/1`);
+  }
+  if ((todo.routePlanningHallSideWings || 0) < 2) {
+    failures.push(`Gate 4-E-CF Todo failed: routePlanningHallSideWings=${todo.routePlanningHallSideWings || 0}/2`);
+  }
+  if ((todo.routePlanningEntranceCanopies || 0) < 1) {
+    failures.push(`Gate 4-E-CF Todo failed: routePlanningEntranceCanopies=${todo.routePlanningEntranceCanopies || 0}/1`);
+  }
+  if ((todo.routeWorkflowMullions || 0) < 4) {
+    failures.push(`Gate 4-E-CF Todo failed: routeWorkflowMullions=${todo.routeWorkflowMullions || 0}/4`);
+  }
+  if ((todo.routeSprintBoardFacades || 0) < 1) {
+    failures.push(`Gate 4-E-CF Todo carry-forward failed: routeSprintBoardFacades=${todo.routeSprintBoardFacades || 0}/1`);
+  }
+  if ((todo.signs || 0) !== 0) {
+    failures.push(`Gate 4-E-CF Todo failed: rejected signs=${todo.signs || 0}`);
+  }
+  if ((todo.lamps || 0) !== 0) {
+    failures.push(`Gate 4-E-CF Todo failed: rejected lamps=${todo.lamps || 0}`);
+  }
+
+  const frames = new Map((result.routeApproachFraming || []).map((frame) => [frame.id, frame]));
+  const frame = frames.get('todo');
+  if (!frame) {
+    failures.push('Gate 4-E-CF Todo failed: missing route approach frame');
+    return;
+  }
+  if (!frame.safeInFrame) failures.push(`Gate 4-E-CF Todo failed: safeInFrame=${frame.safeInFrame}`);
+  if (!frame.vehicle?.safeInFrame) {
+    failures.push(`Gate 4-E-CF Todo failed: vehicle frame=${JSON.stringify(frame.vehicle?.bounds || {})}`);
+  }
+  if (!frame.landmark?.inFrame || !frame.landmark?.safeInFrame) {
+    failures.push(`Gate 4-E-CF Todo failed: landmark frame=${JSON.stringify(frame.landmark?.bounds || {})}`);
+  }
+  if (!frame.road?.offsetSafe || Math.abs(frame.road?.lateralOffset || 0) > 0.85) {
+    failures.push(`Gate 4-E-CF Todo failed: road lateral=${frame.road?.lateralOffset}`);
+  }
+  if (!Number.isFinite(frame.approachDistance) || frame.approachDistance < 14 || frame.approachDistance > 48) {
+    failures.push(`Gate 4-E-CF Todo failed: approachDistance=${frame.approachDistance}`);
+  }
+  if ((result.colliderCount || 0) !== 2) failures.push(`Gate 4-E-CF failed: unexpected collider count=${result.colliderCount || 0}`);
+  if ((result.forwardDriveProbe?.halts || 0) !== 0) failures.push(`Gate 4-E-CF failed: forwardDriveProbe.halts=${result.forwardDriveProbe?.halts || 0}`);
 }
 
 function assertAuthoredDistrictAsset(result, assetName, label, failures) {
