@@ -353,6 +353,7 @@ async function sampleZoneVehicleFrame(page, zoneId) {
     const root = game.vehicle?.modelRoot;
     const camera = game.camera;
     const Vector3 = game.vehicle?.position?.constructor;
+    const zone = game.world.zones.find((item) => item.id === id);
     if (!root || !camera || !Vector3) return { id, ready: false };
 
     root.updateMatrixWorld(true);
@@ -394,10 +395,15 @@ async function sampleZoneVehicleFrame(page, zoneId) {
     const margin = Math.min(minX, 1 - maxX, minY, 1 - maxY);
     const inFrame = maxX > 0 && minX < 1 && maxY > 0 && minY < 1;
     const safeInFrame = minX >= 0.035 && maxX <= 0.965 && minY >= 0.08 && maxY <= 0.965;
+    const nearest = game.world.nearestZone(game.vehicle.position);
 
     return {
       id,
       ready: true,
+      activeZoneId: game.activeZone?.id || null,
+      nearestZoneId: nearest?.zone?.id || null,
+      distanceToTarget: zone ? Number(game.vehicle.position.distanceTo(zone.position).toFixed(2)) : null,
+      distanceToActive: game.activeZone ? Number(game.vehicle.position.distanceTo(game.activeZone.position).toFixed(2)) : null,
       inFrame,
       safeInFrame,
       margin: Number(margin.toFixed(3)),
@@ -8730,6 +8736,14 @@ function assertGate4EBRVehicleFirstPresentationFramingVerification(result, failu
     .map((frame) => `${frame.id}:${frame.margin}`);
   if (hardEdges.length) {
     failures.push(`Gate 4-E-BR framing failed: vehicle hard-edge margins=${hardEdges.join(', ')}`);
+  }
+
+  const mislabeled = frames
+    .filter((frame) => frame.id !== 'data-pier')
+    .filter((frame) => frame.ready && frame.activeZoneId && frame.activeZoneId !== frame.id)
+    .map((frame) => `${frame.id}:active=${frame.activeZoneId},nearest=${frame.nearestZoneId || 'none'},targetDistance=${frame.distanceToTarget}`);
+  if (mislabeled.length) {
+    failures.push(`Gate 4-E-BR framing failed: zone screenshot active-label mismatch=${mislabeled.join('; ')}`);
   }
 }
 

@@ -602,7 +602,7 @@ export const zonePresentation = {
     fov: 47,
   },
   behind: {
-    respawn: { position: [18, 1.08, -104], heading: -2.8 },
+    respawn: { position: [40, 1.08, -103], heading: -2.95 },
     camera: [58, 12, -126],
     target: [30, 4, -88],
     fov: 50,
