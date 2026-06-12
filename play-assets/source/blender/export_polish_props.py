@@ -261,6 +261,17 @@ def create_launch_hub_gateway(mats):
     cube("LaunchHub_RouteIntentRail", group, (0.0, 1.05, -4.02), (9.2, 0.18, 0.16), mats["amber"], bevel=0.008)
     for index, x in enumerate([-3.2, 0.0, 3.2]):
         cube(f"LaunchHub_DestinationTile_{index}", group, (x, 1.32, -4.1), (1.28, 0.18, 0.11), [mats["mint"], mats["screen"], mats["amber"]][index], bevel=0.006)
+    cube("LaunchHub_FirstFrameForecourt", group, (0.0, 0.19, -6.58), (14.9, 0.09, 4.82), mats["stone"], bevel=0.055)
+    cube("LaunchHub_ForecourtThresholdCanopy", group, (0.0, 2.82, -6.18), (11.8, 0.28, 0.62), mats["dark"], bevel=0.024)
+    cube("LaunchHub_ForecourtThresholdGlow", group, (0.0, 2.58, -6.5), (9.6, 0.08, 0.07), mats["screen"], bevel=0.004)
+    for x, mat in [(-6.88, mats["mint"]), (6.88, mats["amber"])]:
+        cube("LaunchHub_ForecourtSideWall", group, (x, 0.9, -6.64), (0.36, 1.38, 4.35), mats["stone_shadow"], bevel=0.032)
+        cube("LaunchHub_ForecourtSideWallGlow", group, (x, 1.42, -6.64), (0.08, 0.14, 3.55), mat, bevel=0.004)
+    for index, z in enumerate([-8.3, -7.72, -7.14, -5.58, -5.0, -4.42]):
+        x = -3.55 if index < 3 else 3.55
+        material = [mats["mint"], mats["screen"], mats["amber"], mats["amber"], mats["screen"], mats["mint"]][index]
+        cube(f"LaunchHub_FirstFrameDestinationBand_{index}", group, (x, 0.265, z), (3.25, 0.045, 0.14), material, bevel=0.004)
+    cube("LaunchHub_ForecourtCenterSeam", group, (0.0, 0.268, -6.55), (0.18, 0.045, 3.5), mats["paper"], bevel=0.004)
     cube("LaunchHub_CanopyDeck", group, (0.0, 3.84, 0.58), (11.2, 0.34, 4.9), mats["wood"], bevel=0.035)
     cube("LaunchHub_CanopyGlassSlot", group, (2.4, 3.62, 0.62), (4.6, 0.12, 3.5), mats["glass"], bevel=0.012)
     cube("LaunchHub_LeftTower", group, (-6.1, 2.28, 1.22), (1.22, 4.18, 1.28), mats["stone_shadow"], bevel=0.036)

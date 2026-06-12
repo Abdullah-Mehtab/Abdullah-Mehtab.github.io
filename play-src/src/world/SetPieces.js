@@ -223,7 +223,11 @@ export class SetPieces {
       legacySignsSuppressed: 0,
       routeFacingFacades: 0,
       supportFrames: 0,
-      guideTiles: 0
+      guideTiles: 0,
+      firstFrameForecourts: 0,
+      routeThresholdCanopies: 0,
+      forecourtSideWalls: 0,
+      destinationBandCues: 0
     };
     this.meadowCompositionStats = {
       pockets: 0,
@@ -2442,11 +2446,15 @@ export class SetPieces {
       return true;
     };
 
-    place('EnvPolishLaunchHubGateway', 'LaunchHubGateway', 13.8, -90.8, rotation, 0.94, 'gatewayAssets', [16.2, 8.6], 3.1);
+    place('EnvPolishLaunchHubGateway', 'LaunchHubGateway', 13.8, -90.8, rotation, 0.94, 'gatewayAssets', [16.8, 12.8], 3.1);
     this.gate4eLaunchHubStats.routeFacingFacades += this.gate4eLaunchHubStats.gatewayAssets;
     this.gate4eLaunchHubStats.arrivalPortals += this.gate4eLaunchHubStats.gatewayAssets;
     this.gate4eLaunchHubStats.driveUnderCanopies += this.gate4eLaunchHubStats.gatewayAssets;
     this.gate4eLaunchHubStats.destinationTiles += this.gate4eLaunchHubStats.gatewayAssets * 3;
+    this.gate4eLaunchHubStats.firstFrameForecourts += this.gate4eLaunchHubStats.gatewayAssets;
+    this.gate4eLaunchHubStats.routeThresholdCanopies += this.gate4eLaunchHubStats.gatewayAssets;
+    this.gate4eLaunchHubStats.forecourtSideWalls += this.gate4eLaunchHubStats.gatewayAssets * 2;
+    this.gate4eLaunchHubStats.destinationBandCues += this.gate4eLaunchHubStats.gatewayAssets * 6;
 
     mergeStaticMeshesInGroup(group, {
       namePrefix: 'GATE4E_launch_hub',
