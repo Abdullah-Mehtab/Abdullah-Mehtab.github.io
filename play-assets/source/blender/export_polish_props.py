@@ -1139,6 +1139,23 @@ def create_skills_data_center(mats):
         (-0.16, 3.1, mats["mint"]),
     ]):
         cube(f"SkillsDataCenter_SidePracticeWindow_{index}", group, (7.22, y, z), (0.08, 0.46, 0.48), material, bevel=0.004)
+    cube("SkillsDataCenter_SideAcademyPortal", group, (7.42, 2.72, -2.44), (0.18, 3.92, 5.42), mats["dark"], bevel=0.018)
+    cube("SkillsDataCenter_SideAcademyPortalGlass", group, (7.56, 2.64, -2.44), (0.08, 2.74, 4.28), mats["glass"], bevel=0.008)
+    cube("SkillsDataCenter_SideCurriculumHall", group, (7.64, 3.02, -2.44), (0.14, 3.28, 3.78), mats["stone_shadow"], bevel=0.014)
+    cube("SkillsDataCenter_SideCurriculumHallHeader", group, (7.74, 4.86, -2.44), (0.09, 0.34, 4.26), mats["screen"], bevel=0.006)
+    for index, z in enumerate([-3.78, -3.08, -2.38, -1.68, -0.98, -0.28]):
+        cube(f"SkillsDataCenter_SideCurriculumHallRibbon_{index}", group, (7.82, 1.72 + (index % 3) * 0.46, z), (0.08, 0.1, 0.56), [mats["screen"], mats["mint"], mats["aqua"], mats["purple"], mats["paper"], mats["screen"]][index], bevel=0.003)
+    for index, (z, y, material) in enumerate([(-3.72, 1.42, mats["screen"]), (-2.78, 1.42, mats["mint"]), (-1.84, 2.42, mats["aqua"]), (-0.9, 2.42, mats["purple"])]):
+        cube(f"SkillsDataCenter_SidePracticeStudioBay_{index}", group, (7.94, y, z), (0.1, 0.64, 0.7), mats["dark"], bevel=0.01)
+        cube(f"SkillsDataCenter_SidePracticeStudioWindow_{index}", group, (8.02, y, z), (0.08, 0.42, 0.48), material, bevel=0.004)
+    cube("SkillsDataCenter_SideSkillLadderLeftRail", group, (8.06, 2.62, -1.34), (0.08, 2.86, 0.08), mats["aqua"], bevel=0.003)
+    cube("SkillsDataCenter_SideSkillLadderRightRail", group, (8.06, 2.62, 0.02), (0.08, 2.86, 0.08), mats["aqua"], bevel=0.003)
+    for index, y in enumerate([1.36, 1.82, 2.28, 2.74, 3.2, 3.66]):
+        cube(f"SkillsDataCenter_SideSkillLadderRung_{index}", group, (8.14, y, -0.66), (0.08, 0.07, 1.48), [mats["paper"], mats["mint"], mats["screen"]][index % 3], bevel=0.003)
+    cube("SkillsDataCenter_SideCertificationCrown", group, (7.84, 5.36, -4.0), (0.14, 0.34, 1.52), mats["paper"], bevel=0.012)
+    cube("SkillsDataCenter_SideCertificationCrownGlow", group, (8.0, 5.08, -4.0), (0.08, 0.12, 1.06), mats["mint"], bevel=0.004)
+    for index, z in enumerate([-3.72, -2.84, -1.96, -1.08]):
+        cube(f"SkillsDataCenter_SideMentorReviewStep_{index}", group, (8.08, 0.76 + index * 0.12, z), (0.42, 0.12, 0.74), mats["paper" if index % 2 else "stone"], bevel=0.006)
     cube("SkillsDataCenter_RearLearningSystemsFacadeFrame", group, (-0.78, 2.92, 3.12), (9.96, 3.64, 0.16), mats["dark"], bevel=0.018)
     cube("SkillsDataCenter_RearLearningSystemsGlass", group, (-0.78, 2.74, 3.22), (8.32, 2.42, 0.08), mats["glass"], bevel=0.008)
     cube("SkillsDataCenter_RearLearningSystemsHeader", group, (-0.78, 4.76, 3.24), (9.18, 0.32, 0.12), mats["screen"], bevel=0.008)

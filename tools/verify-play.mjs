@@ -5008,6 +5008,13 @@ function assertVerification(result) {
     }
     return;
   }
+  if (result.goalGate === 'gate-4e-ch-skills-side-learning-campus-benchmark-pass') {
+    assertGate4ECHSkillsSideLearningCampusBenchmarkVerification(result, failures);
+    if (failures.length) {
+      throw new Error(`Play verification failed: ${failures.join('; ')}`);
+    }
+    return;
+  }
   if (result.goalGate === 'gate-4b5-north-ridge') {
     assertGate4B5NorthRidgeVerification(result, failures);
     if (failures.length) {
@@ -6193,7 +6200,8 @@ function isGate4EExpandedArchitectureGate(goalGate) {
     || goalGate === 'gate-4e-cd-potato-route-harvest-silhouette-benchmark-pass'
     || goalGate === 'gate-4e-ce-launch-hub-forecourt-first-frame-benchmark-pass'
     || goalGate === 'gate-4e-cf-todo-planning-hall-facade-benchmark-pass'
-    || goalGate === 'gate-4e-cg-contact-exchange-forecourt-benchmark-pass';
+    || goalGate === 'gate-4e-cg-contact-exchange-forecourt-benchmark-pass'
+    || goalGate === 'gate-4e-ch-skills-side-learning-campus-benchmark-pass';
 }
 
 function assertGate3RVerticalSliceVerification(result, failures, options = {}) {
@@ -6273,7 +6281,8 @@ function assertGate3RVerticalSliceVerification(result, failures, options = {}) {
     || result.goalGate === 'gate-4e-cd-potato-route-harvest-silhouette-benchmark-pass'
     || result.goalGate === 'gate-4e-ce-launch-hub-forecourt-first-frame-benchmark-pass'
     || result.goalGate === 'gate-4e-cf-todo-planning-hall-facade-benchmark-pass'
-    || result.goalGate === 'gate-4e-cg-contact-exchange-forecourt-benchmark-pass';
+    || result.goalGate === 'gate-4e-cg-contact-exchange-forecourt-benchmark-pass'
+    || result.goalGate === 'gate-4e-ch-skills-side-learning-campus-benchmark-pass';
   const blockout = result.blockout || {};
   const blockoutSetPieces = blockout.setPieces || {};
   const slice = result.verticalSlice || blockout.verticalSlice || {};
@@ -6344,7 +6353,8 @@ function assertGate3RVerticalSliceVerification(result, failures, options = {}) {
     || result.goalGate === 'gate-4e-cd-potato-route-harvest-silhouette-benchmark-pass'
     || result.goalGate === 'gate-4e-ce-launch-hub-forecourt-first-frame-benchmark-pass'
     || result.goalGate === 'gate-4e-cf-todo-planning-hall-facade-benchmark-pass'
-    || result.goalGate === 'gate-4e-cg-contact-exchange-forecourt-benchmark-pass';
+    || result.goalGate === 'gate-4e-cg-contact-exchange-forecourt-benchmark-pass'
+    || result.goalGate === 'gate-4e-ch-skills-side-learning-campus-benchmark-pass';
 
   if (result.goalGate !== expectedGoal) {
     failures.push(`Gate 3R probe failed: goalGate=${result.goalGate || 'none'}`);
@@ -9375,6 +9385,59 @@ function assertGate4ECGContactExchangeForecourtBenchmarkVerification(result, fai
   }
   if ((result.colliderCount || 0) !== 2) failures.push(`Gate 4-E-CG failed: unexpected collider count=${result.colliderCount || 0}`);
   if ((result.forwardDriveProbe?.halts || 0) !== 0) failures.push(`Gate 4-E-CG failed: forwardDriveProbe.halts=${result.forwardDriveProbe?.halts || 0}`);
+}
+
+function assertGate4ECHSkillsSideLearningCampusBenchmarkVerification(result, failures) {
+  assertGate4ECGContactExchangeForecourtBenchmarkVerification(result, failures);
+
+  const skills = result.gate4b2?.skills || {};
+  assertAuthoredDistrictAsset(result, 'EnvPolishSkillsDataCenter', 'Gate 4-E-CH Skills side learning-campus architecture', failures);
+  if ((skills.sideAcademyPortals || 0) < 1) {
+    failures.push(`Gate 4-E-CH Skills failed: sideAcademyPortals=${skills.sideAcademyPortals || 0}/1`);
+  }
+  if ((skills.sideCurriculumHalls || 0) < 1) {
+    failures.push(`Gate 4-E-CH Skills failed: sideCurriculumHalls=${skills.sideCurriculumHalls || 0}/1`);
+  }
+  if ((skills.sidePracticeStudioBays || 0) < 4) {
+    failures.push(`Gate 4-E-CH Skills failed: sidePracticeStudioBays=${skills.sidePracticeStudioBays || 0}/4`);
+  }
+  if ((skills.sideSkillLadders || 0) < 1) {
+    failures.push(`Gate 4-E-CH Skills failed: sideSkillLadders=${skills.sideSkillLadders || 0}/1`);
+  }
+  if ((skills.sideCertificationCrowns || 0) < 1) {
+    failures.push(`Gate 4-E-CH Skills failed: sideCertificationCrowns=${skills.sideCertificationCrowns || 0}/1`);
+  }
+  if ((skills.sideMentorReviewSteps || 0) < 4) {
+    failures.push(`Gate 4-E-CH Skills failed: sideMentorReviewSteps=${skills.sideMentorReviewSteps || 0}/4`);
+  }
+  if ((skills.signs || 0) !== 0) {
+    failures.push(`Gate 4-E-CH Skills failed: rejected signs=${skills.signs || 0}`);
+  }
+  if ((skills.lamps || 0) !== 0) {
+    failures.push(`Gate 4-E-CH Skills failed: rejected lamps=${skills.lamps || 0}`);
+  }
+
+  const frames = new Map((result.routeApproachFraming || []).map((frame) => [frame.id, frame]));
+  const frame = frames.get('skills');
+  if (!frame) {
+    failures.push('Gate 4-E-CH Skills failed: missing route approach frame');
+    return;
+  }
+  if (!frame.safeInFrame) failures.push(`Gate 4-E-CH Skills failed: safeInFrame=${frame.safeInFrame}`);
+  if (!frame.vehicle?.safeInFrame) {
+    failures.push(`Gate 4-E-CH Skills failed: vehicle frame=${JSON.stringify(frame.vehicle?.bounds || {})}`);
+  }
+  if (!frame.landmark?.inFrame || !frame.landmark?.safeInFrame) {
+    failures.push(`Gate 4-E-CH Skills failed: landmark frame=${JSON.stringify(frame.landmark?.bounds || {})}`);
+  }
+  if (!frame.road?.offsetSafe || Math.abs(frame.road?.lateralOffset || 0) > 0.85) {
+    failures.push(`Gate 4-E-CH Skills failed: road lateral=${frame.road?.lateralOffset}`);
+  }
+  if (!Number.isFinite(frame.approachDistance) || frame.approachDistance < 16 || frame.approachDistance > 46) {
+    failures.push(`Gate 4-E-CH Skills failed: approachDistance=${frame.approachDistance}`);
+  }
+  if ((result.colliderCount || 0) !== 2) failures.push(`Gate 4-E-CH failed: unexpected collider count=${result.colliderCount || 0}`);
+  if ((result.forwardDriveProbe?.halts || 0) !== 0) failures.push(`Gate 4-E-CH failed: forwardDriveProbe.halts=${result.forwardDriveProbe?.halts || 0}`);
 }
 
 function assertAuthoredDistrictAsset(result, assetName, label, failures) {

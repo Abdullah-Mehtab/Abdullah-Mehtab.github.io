@@ -552,6 +552,12 @@ export class SetPieces {
         routeCurriculumRibbons: 0,
         routePracticeLabWindows: 0,
         routeSkillBeaconCrowns: 0,
+        sideAcademyPortals: 0,
+        sideCurriculumHalls: 0,
+        sidePracticeStudioBays: 0,
+        sideSkillLadders: 0,
+        sideCertificationCrowns: 0,
+        sideMentorReviewSteps: 0,
         signs: 0,
         lamps: 0
       },
@@ -1798,6 +1804,12 @@ export class SetPieces {
       stats.routeCurriculumRibbons += 18;
       stats.routePracticeLabWindows += 18;
       stats.routeSkillBeaconCrowns += 1;
+      stats.sideAcademyPortals += 1;
+      stats.sideCurriculumHalls += 1;
+      stats.sidePracticeStudioBays += 4;
+      stats.sideSkillLadders += 1;
+      stats.sideCertificationCrowns += 1;
+      stats.sideMentorReviewSteps += 4;
     }
 
     stats.terminalSlabs = stats.commandTerminals;
