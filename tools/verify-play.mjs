@@ -5050,6 +5050,13 @@ function assertVerification(result) {
     }
     return;
   }
+  if (result.goalGate === 'gate-4e-cn-contact-public-signal-arrival-benchmark-pass') {
+    assertGate4ECNContactPublicSignalArrivalBenchmarkVerification(result, failures);
+    if (failures.length) {
+      throw new Error(`Play verification failed: ${failures.join('; ')}`);
+    }
+    return;
+  }
   if (result.goalGate === 'gate-4b5-north-ridge') {
     assertGate4B5NorthRidgeVerification(result, failures);
     if (failures.length) {
@@ -6241,7 +6248,8 @@ function isGate4EExpandedArchitectureGate(goalGate) {
     || goalGate === 'gate-4e-cj-circuit-drive-through-checkpoint-benchmark-pass'
     || goalGate === 'gate-4e-ck-awards-route-honors-arrival-benchmark-pass'
     || goalGate === 'gate-4e-cl-launch-hub-world-entry-first-frame-benchmark-pass'
-    || goalGate === 'gate-4e-cm-projects-public-build-forecourt-benchmark-pass';
+    || goalGate === 'gate-4e-cm-projects-public-build-forecourt-benchmark-pass'
+    || goalGate === 'gate-4e-cn-contact-public-signal-arrival-benchmark-pass';
 }
 
 function assertGate3RVerticalSliceVerification(result, failures, options = {}) {
@@ -6327,7 +6335,8 @@ function assertGate3RVerticalSliceVerification(result, failures, options = {}) {
     || result.goalGate === 'gate-4e-cj-circuit-drive-through-checkpoint-benchmark-pass'
     || result.goalGate === 'gate-4e-ck-awards-route-honors-arrival-benchmark-pass'
     || result.goalGate === 'gate-4e-cl-launch-hub-world-entry-first-frame-benchmark-pass'
-    || result.goalGate === 'gate-4e-cm-projects-public-build-forecourt-benchmark-pass';
+    || result.goalGate === 'gate-4e-cm-projects-public-build-forecourt-benchmark-pass'
+    || result.goalGate === 'gate-4e-cn-contact-public-signal-arrival-benchmark-pass';
   const blockout = result.blockout || {};
   const blockoutSetPieces = blockout.setPieces || {};
   const slice = result.verticalSlice || blockout.verticalSlice || {};
@@ -6404,7 +6413,8 @@ function assertGate3RVerticalSliceVerification(result, failures, options = {}) {
     || result.goalGate === 'gate-4e-cj-circuit-drive-through-checkpoint-benchmark-pass'
     || result.goalGate === 'gate-4e-ck-awards-route-honors-arrival-benchmark-pass'
     || result.goalGate === 'gate-4e-cl-launch-hub-world-entry-first-frame-benchmark-pass'
-    || result.goalGate === 'gate-4e-cm-projects-public-build-forecourt-benchmark-pass';
+    || result.goalGate === 'gate-4e-cm-projects-public-build-forecourt-benchmark-pass'
+    || result.goalGate === 'gate-4e-cn-contact-public-signal-arrival-benchmark-pass';
 
   if (result.goalGate !== expectedGoal) {
     failures.push(`Gate 3R probe failed: goalGate=${result.goalGate || 'none'}`);
@@ -9772,6 +9782,62 @@ function assertGate4ECMProjectsPublicBuildForecourtBenchmarkVerification(result,
   }
   if ((result.colliderCount || 0) !== 2) failures.push(`Gate 4-E-CM failed: unexpected collider count=${result.colliderCount || 0}`);
   if ((result.forwardDriveProbe?.halts || 0) !== 0) failures.push(`Gate 4-E-CM failed: forwardDriveProbe.halts=${result.forwardDriveProbe?.halts || 0}`);
+}
+
+function assertGate4ECNContactPublicSignalArrivalBenchmarkVerification(result, failures) {
+  assertGate4ECMProjectsPublicBuildForecourtBenchmarkVerification(result, failures);
+
+  const harbor = result.gate4b4?.harbor || {};
+  assertAuthoredDistrictAsset(result, 'EnvPolishSignalHarborCommunicationsStation', 'Gate 4-E-CN Contact public signal arrival architecture', failures);
+  if ((harbor.routePublicSignalArrivalThresholds || 0) < 1) {
+    failures.push(`Gate 4-E-CN Contact failed: routePublicSignalArrivalThresholds=${harbor.routePublicSignalArrivalThresholds || 0}/1`);
+  }
+  if ((harbor.routeVehicleMessagePortals || 0) < 1) {
+    failures.push(`Gate 4-E-CN Contact failed: routeVehicleMessagePortals=${harbor.routeVehicleMessagePortals || 0}/1`);
+  }
+  if ((harbor.routeContactSignalWindows || 0) < 1) {
+    failures.push(`Gate 4-E-CN Contact failed: routeContactSignalWindows=${harbor.routeContactSignalWindows || 0}/1`);
+  }
+  if ((harbor.routeMessageArrivalBays || 0) < 3) {
+    failures.push(`Gate 4-E-CN Contact failed: routeMessageArrivalBays=${harbor.routeMessageArrivalBays || 0}/3`);
+  }
+  if ((harbor.routeContactForecourts || 0) < 1) {
+    failures.push(`Gate 4-E-CN Contact carry-forward failed: routeContactForecourts=${harbor.routeContactForecourts || 0}/1`);
+  }
+  if ((harbor.routeContactArrivalConcourses || 0) < 1) {
+    failures.push(`Gate 4-E-CN Contact carry-forward failed: routeContactArrivalConcourses=${harbor.routeContactArrivalConcourses || 0}/1`);
+  }
+  if ((harbor.routePublicSignalGateways || 0) < 1) {
+    failures.push(`Gate 4-E-CN Contact carry-forward failed: routePublicSignalGateways=${harbor.routePublicSignalGateways || 0}/1`);
+  }
+  if ((harbor.signs || 0) !== 0) {
+    failures.push(`Gate 4-E-CN Contact failed: rejected signs=${harbor.signs || 0}`);
+  }
+  if ((harbor.lamps || 0) !== 0) {
+    failures.push(`Gate 4-E-CN Contact failed: rejected lamps=${harbor.lamps || 0}`);
+  }
+
+  const frames = new Map((result.routeApproachFraming || []).map((frame) => [frame.id, frame]));
+  const frame = frames.get('contact');
+  if (!frame) {
+    failures.push('Gate 4-E-CN Contact failed: missing route approach frame');
+    return;
+  }
+  if (!frame.safeInFrame) failures.push(`Gate 4-E-CN Contact failed: safeInFrame=${frame.safeInFrame}`);
+  if (!frame.vehicle?.safeInFrame) {
+    failures.push(`Gate 4-E-CN Contact failed: vehicle frame=${JSON.stringify(frame.vehicle?.bounds || {})}`);
+  }
+  if (!frame.landmark?.inFrame || !frame.landmark?.safeInFrame) {
+    failures.push(`Gate 4-E-CN Contact failed: landmark frame=${JSON.stringify(frame.landmark?.bounds || {})}`);
+  }
+  if (!frame.road?.offsetSafe || Math.abs(frame.road?.lateralOffset || 0) > 0.85) {
+    failures.push(`Gate 4-E-CN Contact failed: road lateral=${frame.road?.lateralOffset}`);
+  }
+  if (!Number.isFinite(frame.approachDistance) || frame.approachDistance < 20 || frame.approachDistance > 42) {
+    failures.push(`Gate 4-E-CN Contact failed: approachDistance=${frame.approachDistance}`);
+  }
+  if ((result.colliderCount || 0) !== 2) failures.push(`Gate 4-E-CN failed: unexpected collider count=${result.colliderCount || 0}`);
+  if ((result.forwardDriveProbe?.halts || 0) !== 0) failures.push(`Gate 4-E-CN failed: forwardDriveProbe.halts=${result.forwardDriveProbe?.halts || 0}`);
 }
 
 function assertAuthoredDistrictAsset(result, assetName, label, failures) {

@@ -2688,6 +2688,17 @@ def create_signal_harbor_communications_station(mats):
         cube(f"SignalHarbor_RouteConcourseEdgeGlow_{index}", group, (x, 0.72, 8.48), (0.1, 0.08, 3.04), [mats["mint"], mats["screen"]][index], bevel=0.003)
     for index, z in enumerate([7.18, 8.02, 8.86, 9.7]):
         cube(f"SignalHarbor_RouteContactQueueStep_{index}", group, (0.12, 0.43, z), (6.9 - index * 0.52, 0.07, 0.12), [mats["stone_shadow"], mats["mint"], mats["screen"], mats["stone_shadow"]][index], bevel=0.004)
+    cube("SignalHarbor_RoutePublicSignalArrivalThreshold", group, (0.12, 0.58, 9.56), (8.4, 0.22, 0.52), mats["stone_shadow"])
+    multi_cube("SignalHarbor_RouteVehicleMessagePortal", group, [
+        ((-4.42, 2.86, 9.62), (0.36, 4.96, 0.32), (0, 0, 0)),
+        ((4.66, 2.86, 9.62), (0.36, 4.96, 0.32), (0, 0, 0)),
+        ((0.12, 5.42, 9.62), (9.58, 0.34, 0.38), (0, 0, 0)),
+    ], mats["dark"])
+    cube("SignalHarbor_RouteContactSignalWindow", group, (0.12, 3.02, 9.78), (6.9, 2.26, 0.08), mats["glass"])
+    cube("SignalHarbor_RouteContactSignalHeader", group, (0.12, 4.28, 9.84), (6.2, 0.12, 0.06), mats["mint"])
+    cube("SignalHarbor_RouteContactSignalFooter", group, (0.12, 1.68, 9.84), (5.5, 0.08, 0.06), mats["screen"])
+    for index, x in enumerate([-2.62, 0.12, 2.86]):
+        cube(f"SignalHarbor_RouteMessageArrivalBay_{index}", group, (x, 1.88, 9.92), (1.28, 1.34, 0.08), [mats["screen"], mats["mint"], mats["aqua"]][index])
     cube("SignalHarbor_RouteExchangeCanopy", group, (0.12, 3.92, 6.24), (11.4, 0.22, 1.18), mats["dark"], bevel=0.02)
     cube("SignalHarbor_RouteContactEnvelopeArch", group, (0.12, 4.42, 6.72), (9.8, 0.18, 0.16), mats["paper"], bevel=0.008)
     cube("SignalHarbor_RouteContactEnvelopeFlapLeft", group, (-2.28, 3.42, 6.82), (4.38, 0.12, 0.1), mats["paper"], rot=(0.0, 0.0, -0.34), bevel=0.004)

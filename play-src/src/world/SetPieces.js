@@ -840,6 +840,10 @@ export class SetPieces {
         routeContactArrivalConcourses: 0,
         routeConcourseEdges: 0,
         routeContactQueueSteps: 0,
+        routePublicSignalArrivalThresholds: 0,
+        routeVehicleMessagePortals: 0,
+        routeContactSignalWindows: 0,
+        routeMessageArrivalBays: 0,
         signs: 0,
         lamps: 0
       }
@@ -2205,6 +2209,10 @@ export class SetPieces {
       stats.routeContactArrivalConcourses += 1;
       stats.routeConcourseEdges += 2;
       stats.routeContactQueueSteps += 4;
+      stats.routePublicSignalArrivalThresholds += 1;
+      stats.routeVehicleMessagePortals += 1;
+      stats.routeContactSignalWindows += 1;
+      stats.routeMessageArrivalBays += 3;
       stats.signalMasts += 1;
       stats.relayMasts += 1;
       stats.contactTerminals += 3;
