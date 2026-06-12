@@ -632,6 +632,9 @@ export class SetPieces {
         routeDecisionStacks: 0,
         routeBacklogArchiveWings: 0,
         routeDeliverySignalRuns: 0,
+        routeSprintBoardFacades: 0,
+        routeChecklistSpines: 0,
+        routeCalendarCues: 0,
         signs: 0,
         lamps: 0
       },
@@ -1891,6 +1894,9 @@ export class SetPieces {
       stats.routeDecisionStacks += 1;
       stats.routeBacklogArchiveWings += 2;
       stats.routeDeliverySignalRuns += 1;
+      stats.routeSprintBoardFacades += 1;
+      stats.routeChecklistSpines += 1;
+      stats.routeCalendarCues += 1;
       stats.queueRails += 3;
     }
 

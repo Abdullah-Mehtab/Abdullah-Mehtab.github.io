@@ -1737,6 +1737,25 @@ def create_todo_planning_studio(mats):
     cube("TodoPlanningStudio_RouteDeliverySignalRun", group, (-0.2, 7.34, -6.46), (9.4, 0.16, 0.08), mats["screen"], bevel=0.004)
     for index, x in enumerate([-4.2, -2.8, -1.4, 0.0, 1.4, 2.8, 4.2]):
         cube(f"TodoPlanningStudio_RouteDeliverySignalPacket_{index}", group, (x, 7.34, -6.56), (0.38, 0.24, 0.08), [mats["mint"], mats["paper"], mats["amber"], mats["aqua"]][index % 4], bevel=0.004)
+    cube("TodoPlanningStudio_RouteSprintBoardFacade", group, (0.0, 3.72, -7.12), (11.7, 4.12, 0.18), mats["dark"], bevel=0.032)
+    cube("TodoPlanningStudio_RouteSprintBoardFacadeFrameTop", group, (0.0, 5.88, -7.24), (12.15, 0.28, 0.22), mats["wood"], bevel=0.014)
+    cube("TodoPlanningStudio_RouteSprintBoardFacadeFrameBase", group, (0.0, 1.55, -7.24), (12.15, 0.28, 0.22), mats["stone_shadow"], bevel=0.014)
+    for index, x in enumerate([-3.55, 0.0, 3.55]):
+        column_material = [mats["screen"], mats["mint"], mats["purple"]][index]
+        cube(f"TodoPlanningStudio_RouteSprintBoardColumn_{index}", group, (x, 3.72, -7.34), (2.5, 3.28, 0.1), column_material, bevel=0.01)
+        cube(f"TodoPlanningStudio_RouteSprintBoardColumnHeader_{index}", group, (x, 5.05, -7.43), (2.04, 0.28, 0.08), [mats["paper"], mats["amber"], mats["aqua"]][index], bevel=0.006)
+        for row, y in enumerate([2.42, 3.08, 3.74, 4.4]):
+            card_material = [mats["paper"], mats["foam"], mats["amber"], mats["mint"], mats["aqua"], mats["purple"]][(index + row) % 6]
+            cube(f"TodoPlanningStudio_RouteSprintBoardTask_{index}_{row}", group, (x - 0.48 + (row % 2) * 0.32, y, -7.48), (1.22, 0.32, 0.08), card_material, bevel=0.005)
+    cube("TodoPlanningStudio_RouteChecklistSpine", group, (6.62, 3.7, -7.02), (0.78, 4.62, 0.34), mats["stone_shadow"], bevel=0.025)
+    for index, y in enumerate([2.24, 3.0, 3.76, 4.52]):
+        cube(f"TodoPlanningStudio_RouteChecklistBox_{index}", group, (6.62, y, -7.34), (0.34, 0.34, 0.08), [mats["paper"], mats["mint"], mats["paper"], mats["amber"]][index], bevel=0.004)
+        cube(f"TodoPlanningStudio_RouteChecklistMarkA_{index}", group, (6.53, y + 0.02, -7.4), (0.06, 0.26, 0.05), mats["dark"], rot=(0, 0, -0.72), bevel=0.002)
+        cube(f"TodoPlanningStudio_RouteChecklistMarkB_{index}", group, (6.7, y + 0.04, -7.4), (0.06, 0.44, 0.05), mats["dark"], rot=(0, 0, 0.66), bevel=0.002)
+    cube("TodoPlanningStudio_RouteCalendarCrown", group, (-5.4, 6.34, -7.05), (2.3, 1.22, 0.28), mats["stone_shadow"], bevel=0.02)
+    for column, x in enumerate([-6.05, -5.4, -4.75]):
+        for row, y in enumerate([6.08, 6.48]):
+            cube(f"TodoPlanningStudio_RouteCalendarTile_{column}_{row}", group, (x, y, -7.34), (0.42, 0.22, 0.08), [mats["paper"], mats["mint"], mats["amber"], mats["aqua"]][(column + int(row * 10)) % 4], bevel=0.003)
 
 
 def create_document_arcade(mats):
