@@ -394,14 +394,25 @@ def create_security_scanner(mats):
 
 def create_security_operations_gate(mats):
     group = root("EnvPolishSecurityOperationsGate")
-    cube("SecurityOps_ServiceCourt", group, (0, 0.08, 0.1), (22.4, 0.16, 13.8), mats["stone_shadow"], bevel=0.055)
+    cube("SecurityOps_ServiceCourt", group, (0, 0.08, 0.1), (17.6, 0.16, 10.4), mats["dark"], bevel=0.055)
     cube("SecurityOps_OperationsHall", group, (-2.35, 2.72, 1.12), (10.8, 5.1, 5.75), mats["dark"], bevel=0.052)
     cube("SecurityOps_IncidentResponseHall", group, (2.3, 2.44, -1.24), (9.7, 4.42, 4.2), mats["stone_shadow"], bevel=0.048)
+    cube("SecurityOps_SecureCampusShell", group, (0.35, 3.12, -1.78), (13.4, 5.75, 5.55), mats["stone_shadow"], bevel=0.07)
+    cube("SecurityOps_SecureCampusRoof", group, (0.35, 6.22, -1.78), (14.2, 0.42, 6.05), mats["dark"], bevel=0.032)
+    cube("SecurityOps_SecureCampusFrontFrame", group, (0.35, 3.05, -4.72), (12.2, 5.2, 0.38), mats["dark"], bevel=0.032)
+    cube("SecurityOps_SecureCampusFrontGlass", group, (0.35, 2.95, -4.98), (9.8, 3.46, 0.08), mats["glass"], bevel=0.008)
+    for index, x in enumerate([-4.25, -2.12, 0.0, 2.12, 4.25]):
+        cube(f"SecurityOps_SecureCampusFacadeMullion_{index}", group, (x, 3.0, -5.06), (0.16, 4.05, 0.08), mats["paper"], bevel=0.004)
+    for index, y in enumerate([1.82, 2.58, 3.34, 4.1]):
+        cube(f"SecurityOps_SecureCampusStatusBand_{index}", group, (0.35, y, -5.12), (9.0 - index * 0.4, 0.08, 0.07), [mats["screen"], mats["mint"], mats["aqua"], mats["pink"]][index], bevel=0.003)
     cube("SecurityOps_CommandFloor", group, (-2.05, 5.36, 0.9), (9.6, 2.04, 4.46), mats["dark"], bevel=0.038)
     cube("SecurityOps_CommandDeck", group, (-2.05, 6.48, 0.82), (8.2, 0.62, 3.82), mats["rubber"], bevel=0.03)
     cube("SecurityOps_GlassWarRoom", group, (4.95, 2.24, 0.08), (3.65, 4.1, 4.95), mats["glass"], bevel=0.035)
     cube("SecurityOps_GlassCommandStack", group, (4.92, 5.2, 0.02), (2.82, 2.72, 4.05), mats["glass"], bevel=0.028)
     cube("SecurityOps_ThreatTowerBase", group, (-7.35, 3.52, 1.0), (2.08, 6.7, 2.02), mats["stone_shadow"], bevel=0.04)
+    cube("SecurityOps_ThreatTowerStoneCore", group, (-7.35, 5.3, -1.92), (2.65, 9.8, 2.2), mats["stone_shadow"], bevel=0.04)
+    cube("SecurityOps_ThreatTowerGlassSlot", group, (-7.35, 5.0, -3.06), (1.65, 6.8, 0.08), mats["glass"], bevel=0.006)
+    cube("SecurityOps_ThreatTowerControlCrown", group, (-7.35, 10.42, -1.92), (3.3, 0.44, 2.72), mats["pink"], bevel=0.018)
     cube("SecurityOps_ThreatTowerCrown", group, (-7.35, 7.12, 1.0), (3.08, 0.48, 2.72), mats["dark"], bevel=0.028)
     cube("SecurityOps_ThreatMast", group, (-7.35, 9.15, 1.0), (0.26, 4.05, 0.26), mats["dark"], bevel=0.008)
     cube("SecurityOps_ThreatArray", group, (-7.35, 10.28, 1.0), (3.1, 0.13, 0.13), mats["pink"], bevel=0.006)
@@ -1189,11 +1200,24 @@ def create_skills_array(mats):
 
 def create_skills_data_center(mats):
     group = root("EnvPolishSkillsDataCenter")
-    cube("SkillsDataCenter_ServiceCourt", group, (0, 0.09, -0.34), (16.8, 0.18, 9.6), mats["stone_shadow"], bevel=0.055)
+    cube("SkillsDataCenter_ServiceCourt", group, (0, 0.09, -0.34), (14.4, 0.18, 8.8), mats["dark"], bevel=0.055)
+    cube("SkillsDataCenter_LearningCampusBase", group, (-0.48, 2.95, -0.22), (13.8, 5.55, 6.65), mats["stone_shadow"], bevel=0.074)
+    cube("SkillsDataCenter_LearningCampusRoof", group, (-0.48, 5.98, -0.22), (14.5, 0.44, 7.15), mats["dark"], bevel=0.036)
+    cube("SkillsDataCenter_LearningCampusRouteFacade", group, (-0.48, 3.1, -3.9), (12.9, 5.36, 0.42), mats["stone_shadow"], bevel=0.038)
+    cube("SkillsDataCenter_LearningCampusGlassBand", group, (-0.48, 3.16, -4.18), (9.75, 3.62, 0.08), mats["glass"], bevel=0.008)
+    for index, x in enumerate([-4.85, -3.25, -1.65, -0.05, 1.55, 3.15, 4.75]):
+        cube(f"SkillsDataCenter_LearningFacadePier_{index}", group, (x, 3.1, -4.28), (0.16, 4.54, 0.08), mats["paper"], bevel=0.004)
+    for index, y in enumerate([1.52, 2.16, 2.8, 3.44, 4.08]):
+        cube(f"SkillsDataCenter_LearningProgressBand_{index}", group, (-0.48, y, -4.36), (8.8 - index * 0.45, 0.08, 0.07), [mats["screen"], mats["mint"], mats["aqua"], mats["purple"], mats["screen"]][index], bevel=0.003)
     cube("SkillsDataCenter_ServerHall", group, (-1.05, 2.25, 0.38), (10.8, 4.3, 5.15), mats["dark"], bevel=0.048)
     cube("SkillsDataCenter_UpperServerFloor", group, (-1.04, 4.95, 0.35), (9.45, 1.82, 4.25), mats["dark"], bevel=0.04)
     cube("SkillsDataCenter_CommandRoom", group, (4.9, 1.7, -0.16), (3.55, 3.15, 4.22), mats["glass"], bevel=0.035)
     cube("SkillsDataCenter_CommandStack", group, (4.98, 4.0, -0.14), (2.65, 3.86, 3.28), mats["glass"], bevel=0.03)
+    cube("SkillsDataCenter_CurriculumTowerCore", group, (-6.95, 5.25, -1.85), (2.28, 9.55, 2.35), mats["stone_shadow"], bevel=0.042)
+    cube("SkillsDataCenter_CurriculumTowerGlass", group, (-6.95, 5.0, -3.05), (1.42, 6.7, 0.08), mats["glass"], bevel=0.006)
+    cube("SkillsDataCenter_CurriculumTowerCrown", group, (-6.95, 10.18, -1.85), (3.1, 0.42, 2.9), mats["aqua"], bevel=0.018)
+    for index, y in enumerate([2.1, 2.85, 3.6, 4.35, 5.1, 5.85, 6.6, 7.35]):
+        cube(f"SkillsDataCenter_CurriculumTowerLessonSlot_{index}", group, (-7.78, y, -2.3), (0.08, 0.32, 0.74), [mats["screen"], mats["mint"], mats["paper"], mats["aqua"]][index % 4], bevel=0.003)
     cube("SkillsDataCenter_CoolingPlant", group, (-6.35, 1.38, 0.78), (2.92, 2.56, 4.3), mats["stone"], bevel=0.04)
     cube("SkillsDataCenter_CoolingArchiveTower", group, (-6.48, 3.74, 0.72), (2.08, 4.3, 3.42), mats["stone"], bevel=0.032)
     cube("SkillsDataCenter_RoofSlab", group, (-0.85, 4.42, 0.32), (12.45, 0.36, 5.85), mats["stone"], bevel=0.035)
@@ -1238,6 +1262,12 @@ def create_skills_data_center(mats):
     cube("SkillsDataCenter_RouteSkillLadderRightRail", group, (2.62, 2.34, -5.28), (0.08, 2.48, 0.08), mats["aqua"], bevel=0.003)
     for index, y in enumerate([1.24, 1.68, 2.12, 2.56, 3.0, 3.44]):
         cube(f"SkillsDataCenter_RouteSkillLadderRung_{index}", group, (2.07, y, -5.34), (1.18, 0.07, 0.07), [mats["paper"], mats["mint"], mats["screen"]][index % 3], bevel=0.003)
+    cube("SkillsDataCenter_RouteClassroomWingLeft", group, (-4.95, 2.78, -4.7), (2.2, 3.56, 0.24), mats["stone_shadow"], bevel=0.018)
+    cube("SkillsDataCenter_RouteClassroomWingRight", group, (5.25, 2.78, -4.7), (2.2, 3.56, 0.24), mats["stone_shadow"], bevel=0.018)
+    for side, x in enumerate([-4.95, 5.25]):
+        for row, y in enumerate([1.82, 2.64, 3.46]):
+            cube(f"SkillsDataCenter_RouteClassroomWindow_{side}_{row}", group, (x, y, -4.88), (1.18, 0.46, 0.08), [mats["screen"], mats["mint"], mats["aqua"]][row], bevel=0.004)
+        cube(f"SkillsDataCenter_RouteClassroomHeader_{side}", group, (x, 4.66, -4.88), (1.66, 0.18, 0.08), mats["paper"], bevel=0.004)
     cube("SkillsDataCenter_RouteCertificationGallery", group, (-5.92, 2.42, -5.02), (1.8, 3.06, 0.16), mats["dark"], bevel=0.014)
     cube("SkillsDataCenter_RouteCertificationGalleryHeader", group, (-5.92, 3.96, -5.18), (1.94, 0.16, 0.08), mats["paper"], bevel=0.004)
     for index, y in enumerate([1.36, 1.88, 2.4, 2.92, 3.44]):
@@ -1333,29 +1363,33 @@ def create_skills_data_center(mats):
         cube(f"SkillsDataCenter_RouteCurriculumModule_{index}", group, (x, 2.18 + (index % 3) * 0.36, -5.72), (0.72, 0.34, 0.08), [mats["screen"], mats["paper"], mats["mint"], mats["aqua"], mats["purple"], mats["paper"]][index], bevel=0.004)
     for index, z in enumerate([-4.05, -3.62, -3.19]):
         cube(f"SkillsDataCenter_EntryStep_{index}", group, (0.2, 0.17 + index * 0.05, z), (5.4 - index * 0.66, 0.13, 0.38), mats["paper"], bevel=0.023)
+    cube("SkillsDataCenter_RoofAcademyParapetFront", group, (-0.1, 6.28, -2.92), (12.85, 0.54, 0.4), mats["stone_shadow"], bevel=0.02)
+    cube("SkillsDataCenter_RoofAcademyParapetBack", group, (-0.1, 6.24, 2.42), (12.15, 0.42, 0.34), mats["stone_shadow"], bevel=0.018)
+    cube("SkillsDataCenter_RoofAcademyParapetLeft", group, (-6.38, 6.24, -0.22), (0.38, 0.42, 5.3), mats["stone_shadow"], bevel=0.018)
+    cube("SkillsDataCenter_RoofAcademyParapetRight", group, (6.05, 6.24, -0.22), (0.38, 0.42, 5.3), mats["stone_shadow"], bevel=0.018)
     for index, (x, material, height) in enumerate([
-        (-4.15, mats["screen"], 2.15),
-        (-1.35, mats["mint"], 2.55),
-        (1.45, mats["purple"], 2.25),
-        (4.25, mats["aqua"], 2.4),
+        (-3.9, mats["screen"], 0.86),
+        (-1.3, mats["mint"], 1.02),
+        (1.3, mats["purple"], 0.9),
+        (3.9, mats["aqua"], 0.96),
     ]):
-        cube(f"SkillsDataCenter_DisciplinePodium_{index}", group, (x, 6.18, 1.78), (1.25, 0.34, 1.08), mats["stone_shadow"], bevel=0.018)
-        cube(f"SkillsDataCenter_DisciplineCore_{index}", group, (x, 6.22 + height * 0.5, 1.78), (0.86, height, 0.82), mats["dark"], bevel=0.028)
-        cube(f"SkillsDataCenter_DisciplineGlow_{index}", group, (x, 6.22 + height * 0.5, 1.33), (0.54, height * 0.68, 0.08), material, bevel=0.006)
-        cube(f"SkillsDataCenter_DisciplineCap_{index}", group, (x, 6.28 + height, 1.78), (1.22, 0.2, 1.1), material, bevel=0.014)
-    cube("SkillsDataCenter_DisciplineBridge", group, (0.08, 6.38, 1.78), (9.2, 0.16, 0.24), mats["aqua"], bevel=0.008)
-    cube("SkillsDataCenter_DisciplineBridgeGlow", group, (0.08, 6.58, 1.42), (8.35, 0.08, 0.08), mats["screen"], bevel=0.004)
-    cube("SkillsDataCenter_DataSpineBridge", group, (0.0, 6.74, -2.85), (11.2, 0.2, 0.28), mats["screen"], bevel=0.01)
-    cube("SkillsDataCenter_DataSpineBridgeGlow", group, (0.0, 6.94, -3.14), (10.4, 0.08, 0.08), mats["mint"], bevel=0.004)
+        cube(f"SkillsDataCenter_DisciplinePodium_{index}", group, (x, 6.42, 1.38), (1.46, 0.3, 0.86), mats["stone_shadow"], bevel=0.018)
+        cube(f"SkillsDataCenter_DisciplineCore_{index}", group, (x, 6.46 + height * 0.5, 1.38), (0.92, height, 0.64), mats["stone_shadow"], bevel=0.026)
+        cube(f"SkillsDataCenter_DisciplineGlow_{index}", group, (x, 6.46 + height * 0.5, 1.0), (0.56, height * 0.66, 0.07), material, bevel=0.006)
+        cube(f"SkillsDataCenter_DisciplineCap_{index}", group, (x, 6.52 + height, 1.38), (1.28, 0.18, 0.9), mats["dark"], bevel=0.012)
+    cube("SkillsDataCenter_DisciplineBridge", group, (0.0, 6.82, 1.38), (9.4, 0.16, 0.22), mats["aqua"], bevel=0.008)
+    cube("SkillsDataCenter_DisciplineBridgeGlow", group, (0.0, 6.98, 1.05), (8.35, 0.07, 0.07), mats["screen"], bevel=0.004)
+    cube("SkillsDataCenter_DataSpineBridge", group, (0.0, 6.74, -2.92), (11.45, 0.2, 0.28), mats["screen"], bevel=0.01)
+    cube("SkillsDataCenter_DataSpineBridgeGlow", group, (0.0, 6.92, -3.14), (10.35, 0.07, 0.07), mats["mint"], bevel=0.004)
     for index, (x, material, height) in enumerate([
-        (-4.85, mats["screen"], 2.25),
-        (-1.62, mats["mint"], 2.72),
-        (1.62, mats["aqua"], 2.44),
-        (4.85, mats["purple"], 2.58),
+        (-4.45, mats["screen"], 0.96),
+        (-1.48, mats["mint"], 1.1),
+        (1.48, mats["aqua"], 1.0),
+        (4.45, mats["purple"], 1.06),
     ]):
-        cube(f"SkillsDataCenter_LearningCoreTower_{index}", group, (x, 6.22 + height * 0.5, -2.72), (0.78, height, 0.76), mats["dark"], bevel=0.025)
-        cube(f"SkillsDataCenter_LearningCoreLight_{index}", group, (x, 6.22 + height * 0.5, -3.12), (0.46, height * 0.66, 0.08), material, bevel=0.004)
-        cube(f"SkillsDataCenter_LearningCoreCap_{index}", group, (x, 6.28 + height, -2.72), (1.1, 0.18, 1.02), material, bevel=0.012)
+        cube(f"SkillsDataCenter_LearningCoreTower_{index}", group, (x, 6.42 + height * 0.5, -2.2), (0.88, height, 0.72), mats["stone_shadow"], bevel=0.024)
+        cube(f"SkillsDataCenter_LearningCoreLight_{index}", group, (x, 6.42 + height * 0.5, -2.62), (0.48, height * 0.64, 0.07), material, bevel=0.004)
+        cube(f"SkillsDataCenter_LearningCoreCap_{index}", group, (x, 6.5 + height, -2.2), (1.18, 0.18, 0.96), mats["dark"], bevel=0.012)
     for row, y in enumerate([0.98, 1.56, 2.14, 2.72]):
         cube(f"SkillsDataCenter_RackBand_{row}", group, (-1.25, y + 0.28, -2.1), (9.6, 0.07, 0.08), mats["aqua"], bevel=0.004)
         for col, x in enumerate([-4.65, -3.45, -2.25, -1.05, 0.15, 1.35, 2.55]):
@@ -1381,8 +1415,8 @@ def create_skills_data_center(mats):
         cube(f"SkillsDataCenter_RoofUnit_{index}", group, (x, 5.15, 0.82), (1.28, 0.58, 0.9), mats["stone_shadow"], bevel=0.026)
         cube(f"SkillsDataCenter_RoofUnitGlow_{index}", group, (x, 5.36, 0.36), (0.88, 0.08, 0.08), [mats["screen"], mats["mint"], mats["aqua"], mats["purple"]][index], bevel=0.004)
     cube("SkillsDataCenter_CoolingRoofline", group, (-1.15, 6.12, 2.32), (10.8, 0.2, 0.22), mats["stone_shadow"], bevel=0.012)
-    for index, x in enumerate([-4.9, -3.35, -1.8, -0.25, 1.3, 2.85]):
-        cube(f"SkillsDataCenter_RoofCoolingFin_{index}", group, (x, 6.3, 2.34), (0.22, 0.7, 0.18), mats["foam" if index % 2 else "aqua"], bevel=0.006)
+    for index, x in enumerate([-4.7, -3.18, -1.66, -0.14, 1.38, 2.9]):
+        cube(f"SkillsDataCenter_RoofCoolingFin_{index}", group, (x, 6.48, 2.34), (0.24, 0.38, 0.18), mats["foam" if index % 2 else "aqua"], bevel=0.006)
     for index, x in enumerate([-4.2, -1.4, 1.4, 4.2]):
         cube(f"SkillsDataCenter_CableTrench_{index}", group, (x, 0.22, -3.28), (1.6, 0.08, 1.15), mats["aqua" if index % 2 else "screen"], bevel=0.006)
     cube("SkillsDataCenter_StatusSpine", group, (6.65, 2.28, 0.88), (0.18, 3.2, 2.8), mats["dark"], bevel=0.018)
@@ -1394,9 +1428,9 @@ def create_skills_data_center(mats):
     cube("SkillsDataCenter_NetworkCrown", group, (-5.2, 9.2, 1.42), (1.38, 0.28, 1.38), mats["mint"], bevel=0.022)
     cube("SkillsDataCenter_OperationsBridge", group, (-0.4, 4.72, 2.92), (8.6, 0.22, 0.34), mats["screen"], bevel=0.01)
     cube("SkillsDataCenter_CoolingCatwalk", group, (-0.55, 5.92, 2.62), (10.4, 0.16, 0.26), mats["aqua"], bevel=0.008)
-    for index, x in enumerate([-4.2, -2.1, 0, 2.1, 4.2]):
-        cube(f"SkillsDataCenter_RoofAntenna_{index}", group, (x, 5.28 + (index % 2) * 0.3, -1.25), (0.12, 1.4 + (index % 2) * 0.5, 0.12), mats["dark"], bevel=0.006)
-        cube(f"SkillsDataCenter_AntennaBlink_{index}", group, (x, 6.05 + (index % 2) * 0.54, -1.25), (0.28, 0.16, 0.28), [mats["mint"], mats["screen"], mats["purple"], mats["aqua"], mats["mint"]][index], bevel=0.018)
+    for index, x in enumerate([-3.2, 0, 3.2]):
+        cube(f"SkillsDataCenter_RoofAntenna_{index}", group, (x, 6.42, -1.25), (0.12, 1.12, 0.12), mats["dark"], bevel=0.006)
+        cube(f"SkillsDataCenter_AntennaBlink_{index}", group, (x, 7.04, -1.25), (0.26, 0.14, 0.26), [mats["mint"], mats["screen"], mats["aqua"]][index], bevel=0.018)
     for index, y in enumerate([4.58, 5.08, 5.58, 6.08]):
         cube(f"SkillsDataCenter_TowerTrace_{index}", group, (-5.78, y, 0.8), (0.08, 0.08, 0.7), [mats["screen"], mats["mint"], mats["purple"], mats["aqua"]][index], bevel=0.003)
 
@@ -2683,7 +2717,21 @@ def create_potato_farm_stand(mats):
 
 def create_sentinel_soc_tower(mats):
     group = root("EnvPolishSentinelSocTower")
-    cube("SentinelSoc_ServicePlate", group, (0.35, 0.08, -0.18), (16.4, 0.16, 10.2), mats["stone_shadow"], bevel=0.055)
+    cube("SentinelSoc_ServicePlate", group, (0.35, 0.08, -0.18), (16.4, 0.16, 10.2), mats["dark"], bevel=0.055)
+    cube("SentinelSoc_CommandCampusBase", group, (0.1, 2.98, -0.82), (13.6, 5.55, 7.2), mats["stone_shadow"], bevel=0.072)
+    cube("SentinelSoc_CommandCampusRoof", group, (0.1, 6.02, -0.82), (14.35, 0.44, 7.82), mats["dark"], bevel=0.035)
+    cube("SentinelSoc_RouteCommandHall", group, (0.1, 3.12, -4.72), (12.2, 5.45, 0.42), mats["stone_shadow"], bevel=0.035)
+    cube("SentinelSoc_RouteCommandHallGlass", group, (0.1, 3.06, -5.02), (9.3, 3.7, 0.08), mats["glass"], bevel=0.008)
+    for index, x in enumerate([-4.15, -2.55, -0.95, 0.65, 2.25, 3.85]):
+        cube(f"SentinelSoc_RouteCommandMullion_{index}", group, (x, 3.05, -5.12), (0.15, 4.48, 0.08), mats["paper"], bevel=0.004)
+    cube("SentinelSoc_OverwatchTowerPrimary", group, (-6.75, 7.0, -0.38), (3.2, 13.4, 3.0), mats["stone_shadow"], bevel=0.048)
+    cube("SentinelSoc_OverwatchTowerGlassFront", group, (-6.75, 6.75, -1.95), (2.2, 9.2, 0.08), mats["glass"], bevel=0.006)
+    cube("SentinelSoc_OverwatchTowerCrown", group, (-6.75, 13.95, -0.38), (4.2, 0.52, 3.72), mats["dark"], bevel=0.03)
+    cube("SentinelSoc_OverwatchTowerCrownGlow", group, (-6.75, 14.28, -2.2), (3.35, 0.12, 0.08), mats["pink"], bevel=0.004)
+    cube("SentinelSoc_OverwatchSpire", group, (-6.75, 17.0, -0.38), (0.32, 5.0, 0.32), mats["dark"], bevel=0.01)
+    cube("SentinelSoc_OverwatchArray", group, (-6.75, 18.35, -0.38), (4.35, 0.16, 0.16), mats["pink"], bevel=0.006)
+    for index, y in enumerate([2.8, 3.65, 4.5, 5.35, 6.2, 7.05, 7.9, 8.75, 9.6, 10.45, 11.3]):
+        cube(f"SentinelSoc_OverwatchStatusSlot_{index}", group, (-8.42, y, -0.82), (0.08, 0.36, 0.82), [mats["screen"], mats["mint"], mats["pink"], mats["aqua"]][index % 4], bevel=0.003)
     cube("SentinelSoc_OperationsHall", group, (-2.75, 2.15, 0.72), (10.8, 4.05, 6.2), mats["stone_shadow"], bevel=0.052)
     cube("SentinelSoc_IncidentResponseHall", group, (0.9, 2.38, -1.08), (8.45, 4.18, 3.72), mats["stone_shadow"], bevel=0.048)
     cube("SentinelSoc_UpperOperationsDeck", group, (-2.45, 4.55, 0.62), (10.2, 1.9, 5.25), mats["dark"], bevel=0.04)

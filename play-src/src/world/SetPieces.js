@@ -18,7 +18,7 @@ const LANDMARK_PRESENTATION = {
   career: { scale: 1.38, padWidth: 27, padDepth: 18 },
   harbor: { scale: 1.22, padWidth: 18.8, padDepth: 11.8 },
   awards: { scale: 1.34, padWidth: 18, padDepth: 11 },
-  sentinel: { scale: 1.34, padWidth: 15.2, padDepth: 8.8 },
+  sentinel: { scale: 1.0, padWidth: 19, padDepth: 13 },
   circuit: { scale: 1.22, padWidth: 19.2, padDepth: 11.2 }
 };
 const POLISH_MATERIAL_LIBRARY_KEYS = {
@@ -1787,7 +1787,7 @@ export class SetPieces {
     const presentation = LANDMARK_PRESENTATION.skills;
     const point = (right, forward) => this.gate4B1Point(anchor, right, forward);
 
-    this.gate3rPad(group, anchor.x, anchor.z, presentation.padWidth, presentation.padDepth, this.world.materials.securityRoad, 0.132, 'GATE4D_Skills_Data_Center_Service_Court', rotation, 'gate4d-skills-footprint', 5.0);
+    this.recordGate3RFootprintPlacement('gate4f-skills-learning-data-center-footprint', 'GATE4F_Skills_Learning_Data_Center_Footprint', anchor.x, anchor.z, presentation.padWidth, presentation.padDepth, rotation, 5.0);
     stats.pads += 1;
 
     const dataCenter = point(0, 0.05);
@@ -2293,12 +2293,12 @@ export class SetPieces {
 
   createGate4B5SentinelRidge(group) {
     const stats = this.gate4b5Stats.sentinel;
-    const anchor = { x: 10, z: 129, rotation: -0.12 };
+    const anchor = { x: -16, z: 125, rotation: -0.12 };
     const point = (right, forward) => this.gate4B1Point(anchor, right, forward);
     const rotation = anchor.rotation;
     const presentation = LANDMARK_PRESENTATION.sentinel;
 
-    this.gate3rPad(group, anchor.x, anchor.z, presentation.padWidth, presentation.padDepth, this.world.materials.stone, 0.132, 'GATE4D_Sentinel_SOC_Tower_Service_Plate', rotation, 'gate4d-sentinel-footprint', 5.2);
+    this.recordGate3RFootprintPlacement('gate4f-sentinel-soc-watchtower-footprint', 'GATE4F_Sentinel_SOC_Watchtower_Footprint', anchor.x, anchor.z, presentation.padWidth, presentation.padDepth, rotation, 5.2);
     stats.pads += 1;
     stats.groundPlates += 1;
 
@@ -3117,7 +3117,8 @@ export class SetPieces {
           [-10.8, 5.4, 5.2, 4.2, 'GATE3R_Security_Server_Deck_B']
         ];
     for (const [side, forward, width, depth, name] of serviceDecks) {
-      this.gate3rPad(group, ...point(side, forward), width, depth, this.world.materials.stoneRoad, 0.132, name, scan.rotation, 'security-pad', 8);
+      const [deckX, deckZ] = point(side, forward);
+      this.recordGate3RFootprintPlacement('security-pad', name, deckX, deckZ, width, depth, scan.rotation, 8);
     }
     stats.floorPads += 3;
 
