@@ -1940,7 +1940,7 @@ export class SetPieces {
     const presentation = LANDMARK_PRESENTATION.todo;
     const point = (right, forward) => this.gate4B1Point(anchor, right, forward);
 
-    this.gate3rPad(group, anchor.x, anchor.z, presentation.padWidth, presentation.padDepth, this.world.materials.warmStone, 0.132, 'GATE4D_Todo_Planning_Studio_Service_Court', buildingRotation, 'gate4d-todo-footprint', 5.0);
+    this.recordGate3RFootprintPlacement('gate4f-todo-planning-studio-footprint', 'GATE4F_Todo_Planning_Studio_Footprint', anchor.x, anchor.z, presentation.padWidth, presentation.padDepth, buildingRotation, 5.0);
     stats.pads += 1;
 
     const studio = point(0, 0.05);
@@ -2250,7 +2250,7 @@ export class SetPieces {
     const rotation = anchor.rotation;
     const presentation = LANDMARK_PRESENTATION.awards;
 
-    this.gate3rPad(group, anchor.x, anchor.z, presentation.padWidth, presentation.padDepth, this.world.materials.paleStone, 0.132, 'GATE4D_Awards_Museum_Hall_Ceremonial_Ground', rotation, 'gate4d-awards-footprint', 5.2);
+    this.recordGate3RFootprintPlacement('gate4f-awards-museum-hall-footprint', 'GATE4F_Awards_Museum_Hall_Footprint', anchor.x, anchor.z, presentation.padWidth, presentation.padDepth, rotation, 5.2);
     stats.pads += 1;
     stats.galleryBases += 1;
 
