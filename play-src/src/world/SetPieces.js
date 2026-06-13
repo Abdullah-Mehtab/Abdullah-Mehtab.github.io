@@ -1855,12 +1855,12 @@ export class SetPieces {
     const presentation = LANDMARK_PRESENTATION.potato;
     const point = (right, forward) => this.gate4B1Point(anchor, right, forward);
 
-    this.gate3rPad(group, anchor.x, anchor.z, presentation.padWidth, presentation.padDepth, this.world.materials.dirtRoad, 0.13, 'GATE4D_Potato_Farm_Stand_Service_Court', rotation, 'gate4d-potato-footprint', 5.0);
+    this.recordGate3RFootprintPlacement('gate4f-potato-greenhouse-farm-court-footprint', 'GATE4F_Potato_Greenhouse_Farm_Court_Footprint', anchor.x, anchor.z, presentation.padWidth, presentation.padDepth, rotation, 5.0);
     stats.pads += 1;
 
     const farmStand = point(0, 0);
     if (this.addPolishAsset(group, 'EnvPolishPotatoFarmStand', farmStand[0], farmStand[1], rotation, presentation.scale)) {
-      this.recordGate3RPlacement('gate4d-potato-farm-stand', 'GATE4D_Potato_Farm_Stand_Architecture', farmStand[0], farmStand[1], { minClearance: 5.0 });
+      this.recordGate3RPlacement('gate4f-potato-greenhouse-farm-court', 'GATE4F_Potato_Greenhouse_Farm_Court_Architecture', farmStand[0], farmStand[1], { minClearance: 5.0 });
       stats.sourceAssets += 1;
       stats.authoredAssets += 1;
       stats.architectureAssets += 1;
@@ -2160,13 +2160,13 @@ export class SetPieces {
     const presentation = LANDMARK_PRESENTATION.harbor;
 
     const deck = point(1, 3);
-    this.gate3rPad(group, deck[0], deck[1], presentation.padWidth, presentation.padDepth, this.world.materials.paleStone, 0.132, 'GATE4D_Signal_Harbor_Communications_Service_Deck', rotation, 'gate4d-harbor-footprint', 4.8);
+    this.recordGate3RFootprintPlacement('gate4f-contact-signal-harbor-footprint', 'GATE4F_Contact_Signal_Harbor_Footprint', deck[0], deck[1], presentation.padWidth, presentation.padDepth, rotation, 4.8);
     stats.deckPads += 1;
     stats.deckPlatforms += 1;
 
     const station = point(1, 3.05);
     if (this.addPolishAsset(group, 'EnvPolishSignalHarborCommunicationsStation', station[0], station[1], rotation, presentation.scale)) {
-      this.recordGate3RPlacement('gate4d-harbor-communications-station', 'GATE4D_Signal_Harbor_Communications_Station_Architecture', station[0], station[1], { minClearance: 4.8 });
+      this.recordGate3RPlacement('gate4f-contact-signal-harbor', 'GATE4F_Contact_Signal_Harbor_Architecture', station[0], station[1], { minClearance: 4.8 });
       stats.sourceAssets += 1;
       stats.authoredAssets += 1;
       stats.architectureAssets += 1;
@@ -2368,12 +2368,12 @@ export class SetPieces {
     const rotation = anchor.rotation;
     const presentation = LANDMARK_PRESENTATION.circuit;
 
-    this.gate3rPad(group, anchor.x, anchor.z, presentation.padWidth, presentation.padDepth, this.world.materials.stuntRamp, 0.132, 'GATE4D_Circuit_Time_Trial_Service_Court', rotation, 'gate4d-circuit-footprint', 5.2);
+    this.recordGate3RFootprintPlacement('gate4f-circuit-time-trial-gate-footprint', 'GATE4F_Circuit_Time_Trial_Gate_Footprint', anchor.x, anchor.z, presentation.padWidth, presentation.padDepth, rotation, 5.2);
     stats.pads += 1;
 
     const gate = point(0, 0);
     if (this.addPolishAsset(group, 'EnvPolishCircuitTimeTrialGate', gate[0], gate[1], rotation, presentation.scale)) {
-      this.recordGate3RPlacement('gate4d-circuit-time-trial-gate', 'GATE4D_Circuit_Time_Trial_Gate_Architecture', gate[0], gate[1], { minClearance: 5.0 });
+      this.recordGate3RPlacement('gate4f-circuit-time-trial-gate', 'GATE4F_Circuit_Time_Trial_Gate_Architecture', gate[0], gate[1], { minClearance: 5.0 });
       stats.authoredAssets += 1;
       stats.sourceAssets += 1;
       stats.architectureAssets += 1;
