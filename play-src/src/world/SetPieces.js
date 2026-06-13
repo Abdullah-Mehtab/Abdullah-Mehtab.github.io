@@ -9,6 +9,7 @@ const Y = 0.16;
 const VISIBILITY_HYSTERESIS = 10;
 const GATE3R_DEFAULT_PROP_CLEARANCE = 2.4;
 const LANDMARK_PRESENTATION = {
+  landing: { scale: 0.94, padWidth: 16.8, padDepth: 12.8 },
   cv: { scale: 1.0, padWidth: 16, padDepth: 10 },
   behind: { scale: 1.28, padWidth: 28, padDepth: 20 },
   skills: { scale: 1.36, padWidth: 20, padDepth: 12 },
@@ -2576,6 +2577,7 @@ export class SetPieces {
     const group = new THREE.Group();
     group.name = 'GATE4D_Life_Interaction_Pass';
     const anchors = [
+      { id: 'landing', x: 13.8, z: -90.8, rotation: 0.36, color: 0xffc36a, kind: 'launch' },
       { id: 'cv', x: -36, z: -88, rotation: 0.12, color: 0xe6f3ff, kind: 'archive' },
       { id: 'behind', x: 35, z: -76, rotation: 0.08, color: 0xa8a6ff, kind: 'garage' },
       { id: 'skills', x: -94, z: -84, rotation: 0.24, color: 0x92ffea, kind: 'terminal' },
@@ -2606,6 +2608,12 @@ export class SetPieces {
     this.addGate4DLifeSignalPulse(group, anchors.find((item) => item.id === 'sentinel'), 0, 1.7, 6.0, 2.7, 'primary');
     this.addGate4DLifeSignalPulse(group, anchors.find((item) => item.id === 'circuit'), 0, 2.8, 3.4, 2.4, 'primary');
 
+    this.addGate4DLifeContainedMotions(group, anchors.find((item) => item.id === 'landing'), [
+      [-3.8, -1.9, 2.1, 0.58],
+      [-1.2, -2.2, 2.42, 0.52],
+      [1.4, -2.0, 2.18, 0.5],
+      [3.7, -1.5, 2.55, 0.46]
+    ], 'primary');
     this.addGate4DLifeContainedMotions(group, anchors.find((item) => item.id === 'contact'), [
       [-3.2, -2.0, 2.2, 0.58],
       [-1.1, -2.3, 2.65, 0.52],

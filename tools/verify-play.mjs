@@ -5106,6 +5106,13 @@ function assertVerification(result) {
     }
     return;
   }
+  if (result.goalGate === 'gate-4f-d-site-integration-pass') {
+    assertGate4FDSiteIntegrationVerification(result, failures);
+    if (failures.length) {
+      throw new Error(`Play verification failed: ${failures.join('; ')}`);
+    }
+    return;
+  }
   if (result.goalGate === 'gate-4b5-north-ridge') {
     assertGate4B5NorthRidgeVerification(result, failures);
     if (failures.length) {
@@ -10263,6 +10270,49 @@ function assertGate4ECURoadPathHygieneVerification(result, failures) {
   if ((result.forwardDriveProbe?.halts || 0) !== 0) failures.push(`Gate 4-E-CU failed: forwardDriveProbe.halts=${result.forwardDriveProbe?.halts || 0}`);
   if ((result.highQuality?.triangles || 0) > 327642) {
     failures.push(`Gate 4-E-CU failed: high-quality triangles grew over CT baseline (${result.highQuality?.triangles || 0}/327642)`);
+  }
+}
+
+function assertGate4FDSiteIntegrationVerification(result, failures) {
+  assertGate4ECURoadPathHygieneVerification(result, failures);
+
+  const life = result.gate4dLife?.counts || {};
+  const objectCounts = result.gate4dLife?.objects || {};
+  const placement = result.gate3rPlacement || {};
+
+  if (!life.enabled) failures.push('Gate 4-F-D life failed: pass not enabled');
+  if ((life.activeLandmarks || 0) !== 12) failures.push(`Gate 4-F-D life failed: activeLandmarks=${life.activeLandmarks || 0}/12`);
+  if ((life.windowGlows || 0) < 12) failures.push(`Gate 4-F-D life failed: windowGlows=${life.windowGlows || 0}/12`);
+  if ((life.terminalPulses || 0) < 12) failures.push(`Gate 4-F-D life failed: terminalPulses=${life.terminalPulses || 0}/12`);
+  if ((life.gallerySweeps || 0) < 3) failures.push(`Gate 4-F-D life failed: gallerySweeps=${life.gallerySweeps || 0}/3`);
+  if ((life.signalPulses || 0) < 3) failures.push(`Gate 4-F-D life failed: signalPulses=${life.signalPulses || 0}/3`);
+  if ((life.containedMotions || 0) < 28) failures.push(`Gate 4-F-D life failed: containedMotions=${life.containedMotions || 0}/28`);
+  if ((life.visibleTotal || 0) < 58) failures.push(`Gate 4-F-D life failed: visibleTotal=${life.visibleTotal || 0}/58`);
+  if ((objectCounts.total || 0) !== ((life.windowGlows || 0) + (life.terminalPulses || 0) + (life.gallerySweeps || 0) + (life.signalPulses || 0) + (life.containedMotions || 0))) {
+    failures.push(`Gate 4-F-D life failed: object count mismatch ${objectCounts.total || 0}`);
+  }
+  if (!result.gate4dLife?.animated) failures.push('Gate 4-F-D life failed: transform animation not observed');
+  if (!result.gate4dLife?.opacityAnimated) failures.push('Gate 4-F-D life failed: opacity animation not observed');
+  if (!result.gate4dLife?.motionAdvanced) failures.push('Gate 4-F-D life failed: motion samples did not advance');
+  if (!result.gate4dLife?.quality?.lowReduced) failures.push('Gate 4-F-D life failed: low quality did not reduce visible effects');
+  if (!result.gate4dLife?.quality?.restoredMatchesMedium) failures.push('Gate 4-F-D life failed: medium quality did not restore visible effects');
+  if ((result.gate4dLife?.quality?.low?.visibleTotal || 0) >= (life.visibleTotal || Infinity)) {
+    failures.push(`Gate 4-F-D life failed: low visibleTotal=${result.gate4dLife?.quality?.low?.visibleTotal || 0}, medium=${life.visibleTotal || 0}`);
+  }
+  if ((result.gate4dLifeRuntime?.visibleTotal || 0) !== (life.visibleTotal || 0)) {
+    failures.push(`Gate 4-F-D life failed: runtime visibleTotal=${result.gate4dLifeRuntime?.visibleTotal || 0}, sampled=${life.visibleTotal || 0}`);
+  }
+
+  for (const [kind, minimum] of [
+    ['gate4d-life-window-glow', 12],
+    ['gate4d-life-terminal-pulse', 12],
+    ['gate4d-life-gallery-sweep', 3],
+    ['gate4d-life-signal-pulse', 3],
+    ['gate4d-life-contained-motion', 28]
+  ]) {
+    if ((placement.byKind?.[kind] || 0) < minimum) {
+      failures.push(`Gate 4-F-D placement failed: ${kind}=${placement.byKind?.[kind] || 0}/${minimum}`);
+    }
   }
 }
 
