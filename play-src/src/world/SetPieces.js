@@ -9,8 +9,8 @@ const Y = 0.16;
 const VISIBILITY_HYSTERESIS = 10;
 const GATE3R_DEFAULT_PROP_CLEARANCE = 2.4;
 const LANDMARK_PRESENTATION = {
-  cv: { scale: 1.42, padWidth: 16, padDepth: 10 },
-  behind: { scale: 1.4, padWidth: 23, padDepth: 15 },
+  cv: { scale: 1.0, padWidth: 16, padDepth: 10 },
+  behind: { scale: 1.28, padWidth: 28, padDepth: 20 },
   skills: { scale: 1.36, padWidth: 20, padDepth: 12 },
   potato: { scale: 1.18, padWidth: 21.2, padDepth: 12.4 },
   todo: { scale: 1.34, padWidth: 17.4, padDepth: 10.4 },
@@ -1677,8 +1677,7 @@ export class SetPieces {
     const presentation = LANDMARK_PRESENTATION.cv;
     const point = (right, forward) => this.gate4B1Point(anchor, right, forward);
 
-    this.gate3rPad(group, anchor.x, anchor.z, presentation.padWidth, presentation.padDepth, this.world.materials.paleStone, 0.132, 'GATE4D_CV_Records_Archive_Civic_Plate', rotation, 'gate4d-cv-footprint', 5.0);
-    stats.pads += 1;
+    this.recordGate3RFootprintPlacement('gate4f-cv-records-archive-footprint', 'GATE4F_CV_Records_Archive_Footprint', anchor.x, anchor.z, presentation.padWidth, presentation.padDepth, rotation, 5.0);
 
     const archive = point(0, 0.1);
     if (this.addPolishAsset(group, 'EnvPolishCvRecordsArchive', archive[0], archive[1], rotation + Math.PI, presentation.scale)) {
@@ -1720,8 +1719,7 @@ export class SetPieces {
     const presentation = LANDMARK_PRESENTATION.behind;
     const point = (right, forward) => this.gate4B1Point(anchor, right, forward);
 
-    this.gate3rPad(group, anchor.x, anchor.z, presentation.padWidth, presentation.padDepth, this.world.materials.stoneRoad, 0.132, 'GATE4D_Behind_Engineering_Garage_Service_Court', rotation, 'gate4d-behind-footprint', 5.0);
-    stats.pads += 1;
+    this.recordGate3RFootprintPlacement('gate4f-behind-engineering-garage-footprint', 'GATE4F_Behind_Engineering_Garage_Footprint', anchor.x, anchor.z, presentation.padWidth, presentation.padDepth, rotation, 5.0);
 
     const garage = point(0, 0.05);
     if (this.addPolishAsset(group, 'EnvPolishBehindEngineeringGarage', garage[0], garage[1], rotation, presentation.scale)) {
