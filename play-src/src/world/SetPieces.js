@@ -11,16 +11,16 @@ const GATE3R_DEFAULT_PROP_CLEARANCE = 2.4;
 const LANDMARK_PRESENTATION = {
   landing: { scale: 0.94, padWidth: 16.8, padDepth: 12.8 },
   cv: { scale: 1.0, padWidth: 16, padDepth: 10 },
-  behind: { scale: 1.28, padWidth: 28, padDepth: 20 },
-  skills: { scale: 1.36, padWidth: 20, padDepth: 12 },
-  potato: { scale: 1.18, padWidth: 21.2, padDepth: 12.4 },
-  todo: { scale: 1.34, padWidth: 17.4, padDepth: 10.4 },
-  projects: { scale: 1.46, padWidth: 31.5, padDepth: 20 },
-  career: { scale: 1.38, padWidth: 27, padDepth: 18 },
+  behind: { scale: 1.34, padWidth: 29.4, padDepth: 21 },
+  skills: { scale: 1.42, padWidth: 20.8, padDepth: 12.8 },
+  potato: { scale: 1.22, padWidth: 21.8, padDepth: 12.9 },
+  todo: { scale: 1.42, padWidth: 18.4, padDepth: 11.1 },
+  projects: { scale: 1.54, padWidth: 33.2, padDepth: 21.2 },
+  career: { scale: 1.48, padWidth: 29.2, padDepth: 19.4 },
   harbor: { scale: 1.22, padWidth: 18.8, padDepth: 11.8 },
   awards: { scale: 1.34, padWidth: 18, padDepth: 11 },
   sentinel: { scale: 1.0, padWidth: 19, padDepth: 13 },
-  circuit: { scale: 1.22, padWidth: 19.2, padDepth: 11.2 }
+  circuit: { scale: 1.3, padWidth: 20.4, padDepth: 12 }
 };
 const POLISH_MATERIAL_LIBRARY_KEYS = {
   polish_warm_limestone: 'warmStone',
@@ -190,6 +190,18 @@ export class SetPieces {
       visibleSignalPulses: 0,
       visibleContainedMotions: 0,
       motionSamples: 0
+    };
+    this.gate4fSelfAcceptanceStats = {
+      enabled: false,
+      landmarks: 0,
+      footprintAudits: 0,
+      thresholdCourts: 0,
+      portalFrames: 0,
+      routeFacingAxes: 0,
+      sideCurbs: 0,
+      arrivalSteps: 0,
+      conceptBeacons: 0,
+      staticBatches: 0
     };
     this.approachStats = {
       clusters: 0,
@@ -1050,6 +1062,9 @@ export class SetPieces {
       if (this.world.gate4dLifeMode) {
         this.createGate4DLifeInteractionPass();
       }
+      if (this.world.gate4fSelfAcceptanceMode) {
+        this.createGate4FSelfAcceptanceLockPass();
+      }
       if (this.world.gate4eRouteCompositionMode) {
         this.createGate4ERouteCompositionPass();
       }
@@ -1273,6 +1288,10 @@ export class SetPieces {
 
   getGate4DLifeStats() {
     return { ...this.gate4dLifeStats };
+  }
+
+  getGate4FSelfAcceptanceStats() {
+    return { ...this.gate4fSelfAcceptanceStats };
   }
 
   getQualityStats() {
@@ -2570,6 +2589,109 @@ export class SetPieces {
     const x = ax + dx * progress + Math.cos(rotation) * lateral;
     const z = az + dz * progress - Math.sin(rotation) * lateral;
     return { x, z, rotation };
+  }
+
+  createGate4FSelfAcceptanceLockPass() {
+    this.gate4fSelfAcceptanceStats.enabled = true;
+    const group = new THREE.Group();
+    group.name = 'GATE4F_Self_Acceptance_Site_Context';
+    const contexts = [
+      { id: 'landing', x: 13.8, z: -90.8, rotation: 0.36, width: 16.8, depth: 12.8, accent: 'warmGlow', stone: 'warmStone', portal: 0.88 },
+      { id: 'career', x: 74, z: -60, rotation: -0.65, width: 29.2, depth: 19.4, accent: 'glowPink', stone: 'warmStone', portal: 1.08 },
+      { id: 'projects', x: 76, z: -28, rotation: -0.34, width: 33.2, depth: 21.2, accent: 'warmGlow', stone: 'stone', portal: 1.14 },
+      { id: 'cv', x: -36, z: -88, rotation: 0.12, width: 16, depth: 10, accent: 'glowBlue', stone: 'paleStone', portal: 0.92 },
+      { id: 'behind', x: 35, z: -76, rotation: 0.08, width: 29.4, depth: 21, accent: 'glowPink', stone: 'stone', portal: 1.12 },
+      { id: 'skills', x: -94, z: -84, rotation: 0.24, width: 20.8, depth: 12.8, accent: 'glowBlue', stone: 'paleStone', portal: 0.98 },
+      { id: 'security', x: -116, z: -50, rotation: -2.36, width: 18, depth: 12, accent: 'glowBlue', stone: 'stone', portal: 1.0 },
+      { id: 'sentinel', x: -16, z: 125, rotation: -0.12, width: 19, depth: 13, accent: 'glowPink', stone: 'stone', portal: 1.0 },
+      { id: 'awards', x: -58, z: 116, rotation: -0.18, width: 18, depth: 11, accent: 'gold', stone: 'warmStone', portal: 1.0 },
+      { id: 'todo', x: -96, z: 4, rotation: 0.24 + Math.PI / 2, width: 18.4, depth: 11.1, accent: 'glow', stone: 'paleStone', portal: 0.96 },
+      { id: 'contact', x: 127, z: 13, rotation: -0.34, width: 18.8, depth: 11.8, accent: 'glowBlue', stone: 'paleStone', portal: 1.0 },
+      { id: 'potato', x: -14, z: -129, rotation: 0.18, width: 21.8, depth: 12.9, accent: 'crop', stone: 'warmStone', portal: 0.96 },
+      { id: 'circuit', x: 58, z: 76, rotation: -0.28, width: 20.4, depth: 12, accent: 'warmGlow', stone: 'stone', portal: 1.02 }
+    ];
+
+    for (const context of contexts) this.addGate4FSiteContext(group, context);
+
+    this.gate4fSelfAcceptanceStats.staticBatches = mergeStaticMeshesInGroup(group, {
+      namePrefix: 'GATE4F_self_acceptance_context',
+      cellSize: 52
+    });
+    this.registerQualityGroup(group, 'primary');
+    this.world.scene.add(group);
+  }
+
+  addGate4FSiteContext(group, context) {
+    const stats = this.gate4fSelfAcceptanceStats;
+    const stone = this.world.materials[context.stone] || this.world.materials.paleStone;
+    const accent = this.world.materials[context.accent] || this.world.materials.glow;
+    const dark = this.world.materials.darkWood || this.world.materials.cable;
+    const curb = this.world.materials.stone || stone;
+    const y = 0.196;
+
+    this.recordGate3RFootprintPlacement(
+      'gate4f-self-acceptance-context-footprint',
+      `GATE4F_${context.id}_Site_Context_Footprint`,
+      context.x,
+      context.z,
+      context.width,
+      context.depth,
+      context.rotation,
+      4.2
+    );
+    this.recordGate3RPlacement(
+      'gate4f-self-acceptance-threshold',
+      `GATE4F_${context.id}_Route_Facing_Threshold`,
+      context.x,
+      context.z,
+      { minClearance: 4.2 }
+    );
+
+    this.addGate4FContextBar(group, context, 0, -context.depth * 0.38, context.width * 0.54, 0.24, stone, context.rotation, y, `${context.id}_threshold_court`);
+    this.addGate4FContextBar(group, context, 0, -context.depth * 0.18, 0.24, context.depth * 0.34, stone, context.rotation, y + 0.004, `${context.id}_entry_axis`);
+    stats.thresholdCourts += 1;
+    stats.routeFacingAxes += 1;
+
+    for (const side of [-1, 1]) {
+      this.addGate4FContextBar(group, context, side * context.width * 0.31, -context.depth * 0.11, 0.2, context.depth * 0.52, curb, context.rotation, y + 0.002, `${context.id}_side_curb_${side}`);
+      this.addGate4FContextPost(group, context, side * context.width * 0.29, -context.depth * 0.42, 0.18, 1.62 * context.portal, 0.18, dark, `${context.id}_portal_post_${side}`);
+      stats.sideCurbs += 1;
+      stats.portalFrames += 1;
+    }
+
+    this.addGate4FContextPost(group, context, 0, -context.depth * 0.42, context.width * 0.58, 0.14, 0.16, dark, `${context.id}_portal_beam`, 1.62 * context.portal);
+    stats.portalFrames += 1;
+
+    for (let index = 0; index < 2; index += 1) {
+      const forward = -context.depth * (0.53 + index * 0.07);
+      this.addGate4FContextBar(group, context, 0, forward, context.width * 0.42, 0.18, stone, context.rotation, y + 0.006 + index * 0.001, `${context.id}_arrival_step_${index}`);
+      stats.arrivalSteps += 1;
+    }
+
+    for (const side of [-1, 1]) {
+      this.addGate4FContextPost(group, context, side * context.width * 0.2, -context.depth * 0.3, 0.14, 0.42, 0.14, accent, `${context.id}_concept_beacon_${side}`, 0.43);
+      stats.conceptBeacons += 1;
+    }
+
+    stats.landmarks += 1;
+    stats.footprintAudits += 1;
+  }
+
+  addGate4FContextBar(group, context, right, forward, width, depth, material, rotation, y, name) {
+    const [x, z] = this.gate4FContextPoint(context, right, forward);
+    this.box(group, x, y, z, width, 0.035, depth, material, rotation, `GATE4F_${name}`);
+  }
+
+  addGate4FContextPost(group, context, right, forward, width, height, depth, material, name, y = null) {
+    const [x, z] = this.gate4FContextPoint(context, right, forward);
+    this.box(group, x, y ?? 0.16 + height * 0.5, z, width, height, depth, material, context.rotation, `GATE4F_${name}`);
+  }
+
+  gate4FContextPoint(context, right, forward) {
+    return [
+      context.x + Math.cos(context.rotation) * right + Math.sin(context.rotation) * forward,
+      context.z - Math.sin(context.rotation) * right + Math.cos(context.rotation) * forward
+    ];
   }
 
   createGate4DLifeInteractionPass() {

@@ -3527,6 +3527,7 @@ async function collectRuntimeMetrics(page, loadMs, gameplay, water, surfaces, su
       setPieceQuality: game.world.setPieces?.getQualityStats?.() || {},
       setPieceQualityByQuality,
       gate4dLifeRuntime: game.world.setPieces?.getGate4DLifeStats?.() || {},
+      gate4fSelfAcceptance: game.world.setPieces?.getGate4FSelfAcceptanceStats?.() || {},
       startDiorama: game.world.setPieces?.getStartDioramaStats?.() || {},
       polishMaterials: game.world.setPieces?.getPolishMaterialStats?.() || {},
       districtVisibility: game.world.setPieces?.getDistrictVisibilityStats?.() || {},
@@ -5108,6 +5109,13 @@ function assertVerification(result) {
   }
   if (result.goalGate === 'gate-4f-d-site-integration-pass') {
     assertGate4FDSiteIntegrationVerification(result, failures);
+    if (failures.length) {
+      throw new Error(`Play verification failed: ${failures.join('; ')}`);
+    }
+    return;
+  }
+  if (result.goalGate === 'gate-4f-e-self-acceptance-lock') {
+    assertGate4FESelfAcceptanceLockVerification(result, failures);
     if (failures.length) {
       throw new Error(`Play verification failed: ${failures.join('; ')}`);
     }
@@ -10314,6 +10322,33 @@ function assertGate4FDSiteIntegrationVerification(result, failures) {
       failures.push(`Gate 4-F-D placement failed: ${kind}=${placement.byKind?.[kind] || 0}/${minimum}`);
     }
   }
+}
+
+function assertGate4FESelfAcceptanceLockVerification(result, failures) {
+  assertGate4FDSiteIntegrationVerification(result, failures);
+
+  const stats = result.gate4fSelfAcceptance || {};
+  const placement = result.gate3rPlacement || {};
+
+  if (!stats.enabled) failures.push('Gate 4-F-E self-acceptance failed: pass not enabled');
+  if ((stats.landmarks || 0) !== 13) failures.push(`Gate 4-F-E self-acceptance failed: landmarks=${stats.landmarks || 0}/13`);
+  if ((stats.footprintAudits || 0) !== 13) failures.push(`Gate 4-F-E self-acceptance failed: footprintAudits=${stats.footprintAudits || 0}/13`);
+  if ((stats.thresholdCourts || 0) !== 13) failures.push(`Gate 4-F-E self-acceptance failed: thresholdCourts=${stats.thresholdCourts || 0}/13`);
+  if ((stats.routeFacingAxes || 0) !== 13) failures.push(`Gate 4-F-E self-acceptance failed: routeFacingAxes=${stats.routeFacingAxes || 0}/13`);
+  if ((stats.sideCurbs || 0) !== 26) failures.push(`Gate 4-F-E self-acceptance failed: sideCurbs=${stats.sideCurbs || 0}/26`);
+  if ((stats.portalFrames || 0) !== 39) failures.push(`Gate 4-F-E self-acceptance failed: portalFrames=${stats.portalFrames || 0}/39`);
+  if ((stats.arrivalSteps || 0) !== 26) failures.push(`Gate 4-F-E self-acceptance failed: arrivalSteps=${stats.arrivalSteps || 0}/26`);
+  if ((stats.conceptBeacons || 0) !== 26) failures.push(`Gate 4-F-E self-acceptance failed: conceptBeacons=${stats.conceptBeacons || 0}/26`);
+  if ((stats.staticBatches || 0) < 1) failures.push(`Gate 4-F-E self-acceptance failed: staticBatches=${stats.staticBatches || 0}`);
+  if ((placement.byFootprintKind?.['gate4f-self-acceptance-context-footprint'] || 0) !== 13) {
+    failures.push(`Gate 4-F-E placement failed: context footprints=${placement.byFootprintKind?.['gate4f-self-acceptance-context-footprint'] || 0}/13`);
+  }
+  if ((placement.byKind?.['gate4f-self-acceptance-threshold'] || 0) !== 13) {
+    failures.push(`Gate 4-F-E placement failed: thresholds=${placement.byKind?.['gate4f-self-acceptance-threshold'] || 0}/13`);
+  }
+  if ((placement.roadIntrusions || 0) !== 0) failures.push(`Gate 4-F-E placement failed: roadIntrusions=${placement.roadIntrusions || 0}`);
+  if ((placement.footprintIntrusions || 0) !== 0) failures.push(`Gate 4-F-E placement failed: footprintIntrusions=${placement.footprintIntrusions || 0}`);
+  if ((placement.shorelineFootprintIntrusions || 0) !== 0) failures.push(`Gate 4-F-E placement failed: shorelineFootprintIntrusions=${placement.shorelineFootprintIntrusions || 0}`);
 }
 
 function assertAuthoredDistrictAsset(result, assetName, label, failures) {
