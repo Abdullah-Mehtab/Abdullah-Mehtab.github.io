@@ -70,7 +70,7 @@ export const districtFootprints = [
   { id: 'fcc-campus', label: 'FCC Campus', center: [-74, 58], size: [48, 34], color: '#9ccfff', kind: 'campus' },
   { id: 'security-yard', label: 'Security Yard', center: [-116, -50], size: [34, 26], color: '#68d8ff', kind: 'security' },
   { id: 'gallery-side', label: 'Gallery Side', center: [96, -16], size: [42, 34], color: '#ffcc66', kind: 'workshop' },
-  { id: 'north-ridge', label: 'North Ridge', center: [34, 108], size: [54, 26], color: '#ff6d8d', kind: 'tower' },
+  { id: 'north-ridge', label: 'North Ridge', center: [12, 126], size: [22, 12], rotation: -0.12, color: '#ff6d8d', kind: 'tower' },
   { id: 'west-service', label: 'West Service', center: [-72, -88], size: [42, 28], color: '#92ffea', kind: 'trail' },
   { id: 'east-harbor', label: 'East Harbor', center: [116, 34], size: [34, 26], color: '#78b7ff', kind: 'harbor' },
   { id: 'data-pier', label: 'Data Pier', center: [-128, 38], size: [24, 22], color: '#79ffc5', kind: 'pier' },
@@ -82,7 +82,6 @@ export const terrainBrushes = [
   { id: 'west-service-archive-field', center: [-66, -90], size: [58, 36], rotation: 0.18, material: 'terrainBrushBlue' },
   { id: 'security-yard-scan-field', center: [-112, -48], size: [34, 20], rotation: -0.18, material: 'terrainBrushSecurity' },
   { id: 'fcc-campus-grove-field', center: [-76, 54], size: [60, 38], rotation: -0.3, material: 'terrainBrushLight' },
-  { id: 'north-ridge-museum-field', center: [18, 106], size: [76, 34], rotation: 0.2, material: 'terrainBrushFlower' },
   { id: 'east-harbor-signal-field', center: [120, 24], size: [44, 32], rotation: -0.18, material: 'terrainBrushSand' },
   { id: 'south-farm-service-field', center: [-18, -128], size: [62, 30], rotation: 0.22, material: 'terrainBrushWarm' },
 ];

@@ -2435,7 +2435,7 @@ def create_potato_farm_stand(mats):
 
 def create_sentinel_soc_tower(mats):
     group = root("EnvPolishSentinelSocTower")
-    cube("SentinelSoc_ServicePlate", group, (0, 0.08, 0), (20.2, 0.16, 13.2), mats["security"] if "security" in mats else mats["stone_shadow"], bevel=0.055)
+    cube("SentinelSoc_ServicePlate", group, (0.35, 0.08, -0.18), (16.4, 0.16, 10.2), mats["stone_shadow"], bevel=0.055)
     cube("SentinelSoc_OperationsHall", group, (-2.75, 2.15, 0.72), (10.8, 4.05, 6.2), mats["stone_shadow"], bevel=0.052)
     cube("SentinelSoc_IncidentResponseHall", group, (0.9, 2.38, -1.08), (8.45, 4.18, 3.72), mats["stone_shadow"], bevel=0.048)
     cube("SentinelSoc_UpperOperationsDeck", group, (-2.45, 4.55, 0.62), (10.2, 1.9, 5.25), mats["dark"], bevel=0.04)
@@ -2480,6 +2480,14 @@ def create_sentinel_soc_tower(mats):
     cube("SentinelSoc_RouteEntryWarRoomGlass", group, (8.02, 2.64, -0.18), (1.04, 2.86, 3.86), mats["glass"], bevel=0.012)
     for index, z in enumerate([-1.66, -0.86, -0.06, 0.74, 1.54]):
         cube(f"SentinelSoc_RouteEntryQueueLight_{index}", group, (9.56, 1.02, z), (0.08, 0.08, 0.46), [mats["mint"], mats["screen"], mats["aqua"], mats["pink"], mats["mint"]][index], bevel=0.003)
+    cube("SentinelSoc_RoutePublicSocGatewayHall", group, (9.02, 3.02, -0.18), (1.42, 4.95, 6.48), mats["stone_shadow"], bevel=0.024)
+    cube("SentinelSoc_RoutePublicSocGatewayFrame", group, (9.76, 3.22, -0.18), (0.34, 5.35, 6.92), mats["dark"], bevel=0.018)
+    cube("SentinelSoc_RouteShieldControlEntry", group, (9.98, 2.72, -0.18), (0.12, 2.94, 3.42), mats["glass"], bevel=0.008)
+    cube("SentinelSoc_RouteShieldControlHeader", group, (10.06, 4.32, -0.18), (0.1, 0.28, 3.84), mats["mint"], bevel=0.004)
+    cube("SentinelSoc_RouteCommandWindowMassLeft", group, (10.08, 2.88, -2.45), (0.1, 2.24, 1.18), mats["screen"], bevel=0.004)
+    cube("SentinelSoc_RouteCommandWindowMassRight", group, (10.08, 2.88, 2.09), (0.1, 2.24, 1.18), mats["screen"], bevel=0.004)
+    for index, z in enumerate([-1.28, -0.18, 0.92]):
+        cube(f"SentinelSoc_RouteIncidentReviewBay_{index}", group, (10.16, 1.38, z), (0.08, 0.42, 0.72), [mats["pink"], mats["aqua"], mats["mint"]][index], bevel=0.003)
     cube("SentinelSoc_RouteShieldThresholdLeftPier", group, (9.78, 3.24, -3.58), (0.68, 5.82, 0.72), mats["stone_shadow"], bevel=0.03)
     cube("SentinelSoc_RouteShieldThresholdRightPier", group, (9.78, 3.24, 3.22), (0.68, 5.82, 0.72), mats["stone_shadow"], bevel=0.03)
     cube("SentinelSoc_RouteShieldThresholdBeam", group, (9.78, 6.08, -0.18), (0.78, 0.62, 7.22), mats["dark"], bevel=0.026)

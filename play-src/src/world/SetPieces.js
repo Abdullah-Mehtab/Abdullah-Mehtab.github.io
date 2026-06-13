@@ -18,7 +18,7 @@ const LANDMARK_PRESENTATION = {
   career: { scale: 1.38, padWidth: 18, padDepth: 11 },
   harbor: { scale: 1.22, padWidth: 18.8, padDepth: 11.8 },
   awards: { scale: 1.34, padWidth: 18, padDepth: 11 },
-  sentinel: { scale: 1.34, padWidth: 18, padDepth: 11 },
+  sentinel: { scale: 1.34, padWidth: 15.2, padDepth: 8.8 },
   circuit: { scale: 1.22, padWidth: 19.2, padDepth: 11.2 }
 };
 const POLISH_MATERIAL_LIBRARY_KEYS = {
@@ -935,6 +935,10 @@ export class SetPieces {
         routeInspectionLaneMarks: 0,
         routeThreatIntelCrowns: 0,
         routeCommandBeaconMasts: 0,
+        routePublicSocGateways: 0,
+        routeShieldControlEntries: 0,
+        routeCommandWindowMasses: 0,
+        routeIncidentReviewBays: 0,
         signs: 0,
         lamps: 0
       },
@@ -2302,7 +2306,7 @@ export class SetPieces {
     const rotation = anchor.rotation;
     const presentation = LANDMARK_PRESENTATION.sentinel;
 
-    this.gate3rPad(group, anchor.x, anchor.z, presentation.padWidth, presentation.padDepth, this.world.materials.securityRoad, 0.132, 'GATE4D_Sentinel_SOC_Tower_Service_Plate', rotation, 'gate4d-sentinel-footprint', 5.2);
+    this.gate3rPad(group, anchor.x, anchor.z, presentation.padWidth, presentation.padDepth, this.world.materials.stone, 0.132, 'GATE4D_Sentinel_SOC_Tower_Service_Plate', rotation, 'gate4d-sentinel-footprint', 5.2);
     stats.pads += 1;
     stats.groundPlates += 1;
 
@@ -2355,6 +2359,10 @@ export class SetPieces {
       stats.routeInspectionLaneMarks += 5;
       stats.routeThreatIntelCrowns += 1;
       stats.routeCommandBeaconMasts += 1;
+      stats.routePublicSocGateways += 1;
+      stats.routeShieldControlEntries += 1;
+      stats.routeCommandWindowMasses += 2;
+      stats.routeIncidentReviewBays += 3;
     }
 
     stats.signs = 0;

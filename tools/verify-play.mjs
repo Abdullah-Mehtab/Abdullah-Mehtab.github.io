@@ -5092,6 +5092,13 @@ function assertVerification(result) {
     }
     return;
   }
+  if (result.goalGate === 'gate-4e-ct-sentinel-public-soc-threshold-benchmark-pass') {
+    assertGate4ECTSentinelPublicSocThresholdBenchmarkVerification(result, failures);
+    if (failures.length) {
+      throw new Error(`Play verification failed: ${failures.join('; ')}`);
+    }
+    return;
+  }
   if (result.goalGate === 'gate-4b5-north-ridge') {
     assertGate4B5NorthRidgeVerification(result, failures);
     if (failures.length) {
@@ -6289,7 +6296,8 @@ function isGate4EExpandedArchitectureGate(goalGate) {
     || goalGate === 'gate-4e-cp-projects-build-hall-silhouette-benchmark-pass'
     || goalGate === 'gate-4e-cq-projects-single-hall-facade-benchmark-pass'
     || goalGate === 'gate-4e-cr-projects-material-silhouette-benchmark-pass'
-    || goalGate === 'gate-4e-cs-awards-solid-entry-benchmark-pass';
+    || goalGate === 'gate-4e-cs-awards-solid-entry-benchmark-pass'
+    || goalGate === 'gate-4e-ct-sentinel-public-soc-threshold-benchmark-pass';
 }
 
 function assertGate3RVerticalSliceVerification(result, failures, options = {}) {
@@ -6381,7 +6389,8 @@ function assertGate3RVerticalSliceVerification(result, failures, options = {}) {
     || result.goalGate === 'gate-4e-cp-projects-build-hall-silhouette-benchmark-pass'
     || result.goalGate === 'gate-4e-cq-projects-single-hall-facade-benchmark-pass'
     || result.goalGate === 'gate-4e-cr-projects-material-silhouette-benchmark-pass'
-    || result.goalGate === 'gate-4e-cs-awards-solid-entry-benchmark-pass';
+    || result.goalGate === 'gate-4e-cs-awards-solid-entry-benchmark-pass'
+    || result.goalGate === 'gate-4e-ct-sentinel-public-soc-threshold-benchmark-pass';
   const blockout = result.blockout || {};
   const blockoutSetPieces = blockout.setPieces || {};
   const slice = result.verticalSlice || blockout.verticalSlice || {};
@@ -6464,7 +6473,8 @@ function assertGate3RVerticalSliceVerification(result, failures, options = {}) {
     || result.goalGate === 'gate-4e-cp-projects-build-hall-silhouette-benchmark-pass'
     || result.goalGate === 'gate-4e-cq-projects-single-hall-facade-benchmark-pass'
     || result.goalGate === 'gate-4e-cr-projects-material-silhouette-benchmark-pass'
-    || result.goalGate === 'gate-4e-cs-awards-solid-entry-benchmark-pass';
+    || result.goalGate === 'gate-4e-cs-awards-solid-entry-benchmark-pass'
+    || result.goalGate === 'gate-4e-ct-sentinel-public-soc-threshold-benchmark-pass';
 
   if (result.goalGate !== expectedGoal) {
     failures.push(`Gate 3R probe failed: goalGate=${result.goalGate || 'none'}`);
@@ -10081,6 +10091,64 @@ function assertGate4ECSAwardsSolidEntryBenchmarkVerification(result, failures) {
   }
   if ((result.colliderCount || 0) !== 2) failures.push(`Gate 4-E-CS failed: unexpected collider count=${result.colliderCount || 0}`);
   if ((result.forwardDriveProbe?.halts || 0) !== 0) failures.push(`Gate 4-E-CS failed: forwardDriveProbe.halts=${result.forwardDriveProbe?.halts || 0}`);
+}
+
+function assertGate4ECTSentinelPublicSocThresholdBenchmarkVerification(result, failures) {
+  assertGate4ECSAwardsSolidEntryBenchmarkVerification(result, failures);
+
+  const sentinel = result.gate4b5?.sentinel || {};
+  assertAuthoredDistrictAsset(result, 'EnvPolishSentinelSocTower', 'Gate 4-E-CT Sentinel public SOC threshold architecture', failures);
+  if ((sentinel.routePublicSocGateways || 0) < 1) {
+    failures.push(`Gate 4-E-CT Sentinel failed: routePublicSocGateways=${sentinel.routePublicSocGateways || 0}/1`);
+  }
+  if ((sentinel.routeShieldControlEntries || 0) < 1) {
+    failures.push(`Gate 4-E-CT Sentinel failed: routeShieldControlEntries=${sentinel.routeShieldControlEntries || 0}/1`);
+  }
+  if ((sentinel.routeCommandWindowMasses || 0) < 2) {
+    failures.push(`Gate 4-E-CT Sentinel failed: routeCommandWindowMasses=${sentinel.routeCommandWindowMasses || 0}/2`);
+  }
+  if ((sentinel.routeIncidentReviewBays || 0) < 3) {
+    failures.push(`Gate 4-E-CT Sentinel failed: routeIncidentReviewBays=${sentinel.routeIncidentReviewBays || 0}/3`);
+  }
+  if ((sentinel.routeShieldThresholdArches || 0) < 1) {
+    failures.push(`Gate 4-E-CT Sentinel carry-forward failed: routeShieldThresholdArches=${sentinel.routeShieldThresholdArches || 0}/1`);
+  }
+  if ((sentinel.routeOpsPortals || 0) < 1) {
+    failures.push(`Gate 4-E-CT Sentinel carry-forward failed: routeOpsPortals=${sentinel.routeOpsPortals || 0}/1`);
+  }
+  if ((sentinel.routeCommandFacades || 0) < 1) {
+    failures.push(`Gate 4-E-CT Sentinel carry-forward failed: routeCommandFacades=${sentinel.routeCommandFacades || 0}/1`);
+  }
+
+  const frames = new Map((result.routeApproachFraming || []).map((frame) => [frame.id, frame]));
+  const frame = frames.get('sentinel');
+  if (!frame) {
+    failures.push('Gate 4-E-CT Sentinel failed: missing route approach frame');
+    return;
+  }
+  if (!frame.safeInFrame) failures.push(`Gate 4-E-CT Sentinel failed: safeInFrame=${frame.safeInFrame}`);
+  if (!frame.vehicle?.safeInFrame) {
+    failures.push(`Gate 4-E-CT Sentinel failed: vehicle frame=${JSON.stringify(frame.vehicle?.bounds || {})}`);
+  }
+  if (!frame.landmark?.inFrame || !frame.landmark?.safeInFrame) {
+    failures.push(`Gate 4-E-CT Sentinel failed: landmark frame=${JSON.stringify(frame.landmark?.bounds || {})}`);
+  }
+  if (!frame.road?.offsetSafe || Math.abs(frame.road?.lateralOffset || 0) > 0.85) {
+    failures.push(`Gate 4-E-CT Sentinel failed: road lateral=${frame.road?.lateralOffset}`);
+  }
+  if (!Number.isFinite(frame.approachDistance) || frame.approachDistance < 20 || frame.approachDistance > 46) {
+    failures.push(`Gate 4-E-CT Sentinel failed: approachDistance=${frame.approachDistance}`);
+  }
+
+  const polishPropsBytes = result.glbAssets?.['play/game-assets/polish-props.glb'] || 0;
+  if (polishPropsBytes > 8602264) {
+    failures.push(`Gate 4-E-CT Sentinel failed: polish-props.glb grew over CQ benchmark (${polishPropsBytes}/8602264)`);
+  }
+  if ((result.highQuality?.triangles || 0) > 327642) {
+    failures.push(`Gate 4-E-CT Sentinel failed: high-quality triangles grew over CQ benchmark (${result.highQuality?.triangles || 0}/327642)`);
+  }
+  if ((result.colliderCount || 0) !== 2) failures.push(`Gate 4-E-CT failed: unexpected collider count=${result.colliderCount || 0}`);
+  if ((result.forwardDriveProbe?.halts || 0) !== 0) failures.push(`Gate 4-E-CT failed: forwardDriveProbe.halts=${result.forwardDriveProbe?.halts || 0}`);
 }
 
 function assertAuthoredDistrictAsset(result, assetName, label, failures) {
