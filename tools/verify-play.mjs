@@ -5078,6 +5078,13 @@ function assertVerification(result) {
     }
     return;
   }
+  if (result.goalGate === 'gate-4e-cr-projects-material-silhouette-benchmark-pass') {
+    assertGate4ECRProjectsMaterialSilhouetteBenchmarkVerification(result, failures);
+    if (failures.length) {
+      throw new Error(`Play verification failed: ${failures.join('; ')}`);
+    }
+    return;
+  }
   if (result.goalGate === 'gate-4b5-north-ridge') {
     assertGate4B5NorthRidgeVerification(result, failures);
     if (failures.length) {
@@ -6273,7 +6280,8 @@ function isGate4EExpandedArchitectureGate(goalGate) {
     || goalGate === 'gate-4e-cn-contact-public-signal-arrival-benchmark-pass'
     || goalGate === 'gate-4e-co-projects-hierarchy-simplification-benchmark-pass'
     || goalGate === 'gate-4e-cp-projects-build-hall-silhouette-benchmark-pass'
-    || goalGate === 'gate-4e-cq-projects-single-hall-facade-benchmark-pass';
+    || goalGate === 'gate-4e-cq-projects-single-hall-facade-benchmark-pass'
+    || goalGate === 'gate-4e-cr-projects-material-silhouette-benchmark-pass';
 }
 
 function assertGate3RVerticalSliceVerification(result, failures, options = {}) {
@@ -6363,7 +6371,8 @@ function assertGate3RVerticalSliceVerification(result, failures, options = {}) {
     || result.goalGate === 'gate-4e-cn-contact-public-signal-arrival-benchmark-pass'
     || result.goalGate === 'gate-4e-co-projects-hierarchy-simplification-benchmark-pass'
     || result.goalGate === 'gate-4e-cp-projects-build-hall-silhouette-benchmark-pass'
-    || result.goalGate === 'gate-4e-cq-projects-single-hall-facade-benchmark-pass';
+    || result.goalGate === 'gate-4e-cq-projects-single-hall-facade-benchmark-pass'
+    || result.goalGate === 'gate-4e-cr-projects-material-silhouette-benchmark-pass';
   const blockout = result.blockout || {};
   const blockoutSetPieces = blockout.setPieces || {};
   const slice = result.verticalSlice || blockout.verticalSlice || {};
@@ -6444,7 +6453,8 @@ function assertGate3RVerticalSliceVerification(result, failures, options = {}) {
     || result.goalGate === 'gate-4e-cn-contact-public-signal-arrival-benchmark-pass'
     || result.goalGate === 'gate-4e-co-projects-hierarchy-simplification-benchmark-pass'
     || result.goalGate === 'gate-4e-cp-projects-build-hall-silhouette-benchmark-pass'
-    || result.goalGate === 'gate-4e-cq-projects-single-hall-facade-benchmark-pass';
+    || result.goalGate === 'gate-4e-cq-projects-single-hall-facade-benchmark-pass'
+    || result.goalGate === 'gate-4e-cr-projects-material-silhouette-benchmark-pass';
 
   if (result.goalGate !== expectedGoal) {
     failures.push(`Gate 3R probe failed: goalGate=${result.goalGate || 'none'}`);
@@ -10000,6 +10010,21 @@ function assertGate4ECQProjectsSingleHallFacadeBenchmarkVerification(result, fai
   }
   if ((result.colliderCount || 0) !== 2) failures.push(`Gate 4-E-CQ failed: unexpected collider count=${result.colliderCount || 0}`);
   if ((result.forwardDriveProbe?.halts || 0) !== 0) failures.push(`Gate 4-E-CQ failed: forwardDriveProbe.halts=${result.forwardDriveProbe?.halts || 0}`);
+}
+
+function assertGate4ECRProjectsMaterialSilhouetteBenchmarkVerification(result, failures) {
+  assertGate4ECQProjectsSingleHallFacadeBenchmarkVerification(result, failures);
+
+  const polishPropsBytes = result.glbAssets?.['play/game-assets/polish-props.glb'] || 0;
+  if (polishPropsBytes > 8602264) {
+    failures.push(`Gate 4-E-CR Projects failed: polish-props.glb grew over CQ baseline (${polishPropsBytes}/8602264)`);
+  }
+  if ((result.highQuality?.triangles || 0) > 327642) {
+    failures.push(`Gate 4-E-CR Projects failed: high-quality triangles grew over CQ baseline (${result.highQuality?.triangles || 0}/327642)`);
+  }
+  if ((result.highQuality?.calls || 0) > 306) {
+    failures.push(`Gate 4-E-CR Projects failed: high-quality draw calls grew over CQ baseline (${result.highQuality?.calls || 0}/306)`);
+  }
 }
 
 function assertAuthoredDistrictAsset(result, assetName, label, failures) {
