@@ -5099,6 +5099,13 @@ function assertVerification(result) {
     }
     return;
   }
+  if (result.goalGate === 'gate-4e-cu-road-path-hygiene-blocker') {
+    assertGate4ECURoadPathHygieneVerification(result, failures);
+    if (failures.length) {
+      throw new Error(`Play verification failed: ${failures.join('; ')}`);
+    }
+    return;
+  }
   if (result.goalGate === 'gate-4b5-north-ridge') {
     assertGate4B5NorthRidgeVerification(result, failures);
     if (failures.length) {
@@ -10149,6 +10156,114 @@ function assertGate4ECTSentinelPublicSocThresholdBenchmarkVerification(result, f
   }
   if ((result.colliderCount || 0) !== 2) failures.push(`Gate 4-E-CT failed: unexpected collider count=${result.colliderCount || 0}`);
   if ((result.forwardDriveProbe?.halts || 0) !== 0) failures.push(`Gate 4-E-CT failed: forwardDriveProbe.halts=${result.forwardDriveProbe?.halts || 0}`);
+}
+
+function assertGate4ECURoadPathHygieneVerification(result, failures) {
+  for (const [assetName, label] of [
+    ['EnvPolishLaunchHubGateway', 'Launch Hub'],
+    ['EnvPolishCareerSoftwareHouse', 'Career campus'],
+    ['EnvPolishAwardsMuseumHall', 'Awards hall'],
+    ['EnvPolishProjectsFoundryBuilding', 'Projects foundry'],
+    ['EnvPolishCvRecordsArchive', 'CV records archive'],
+    ['EnvPolishSkillsDataCenter', 'Skills data center'],
+    ['EnvPolishBehindEngineeringGarage', 'Behind build garage'],
+    ['EnvPolishSignalHarborCommunicationsStation', 'Signal harbor'],
+    ['EnvPolishTodoPlanningStudio', 'Todo planning studio'],
+    ['EnvPolishPotatoFarmStand', 'Potato farm stand'],
+    ['EnvPolishSentinelSocTower', 'Sentinel SOC tower'],
+    ['EnvPolishCircuitTimeTrialGate', 'Circuit checkpoint']
+  ]) {
+    assertAuthoredDistrictAsset(result, assetName, `Gate 4-E-CU ${label} carry-forward`, failures);
+  }
+
+  const sentinel = result.gate4b5?.sentinel || {};
+  if ((sentinel.routePublicSocGateways || 0) < 1) {
+    failures.push(`Gate 4-E-CU Sentinel carry-forward failed: routePublicSocGateways=${sentinel.routePublicSocGateways || 0}/1`);
+  }
+  if ((sentinel.routeShieldControlEntries || 0) < 1) {
+    failures.push(`Gate 4-E-CU Sentinel carry-forward failed: routeShieldControlEntries=${sentinel.routeShieldControlEntries || 0}/1`);
+  }
+  if ((sentinel.routeCommandWindowMasses || 0) < 2) {
+    failures.push(`Gate 4-E-CU Sentinel carry-forward failed: routeCommandWindowMasses=${sentinel.routeCommandWindowMasses || 0}/2`);
+  }
+  if ((sentinel.routeIncidentReviewBays || 0) < 3) {
+    failures.push(`Gate 4-E-CU Sentinel carry-forward failed: routeIncidentReviewBays=${sentinel.routeIncidentReviewBays || 0}/3`);
+  }
+
+  const dataPier = result.dataPier || {};
+  for (const [key, value] of Object.entries(dataPier)) {
+    if ((value || 0) !== 0) failures.push(`Gate 4-E-CU Data Pier deletion carry-forward failed: dataPier.${key}=${value || 0}`);
+  }
+  const gate4b3DataPier = result.gate4b3?.dataPier || {};
+  for (const [key, value] of Object.entries(gate4b3DataPier)) {
+    if ((value || 0) !== 0) failures.push(`Gate 4-E-CU Data Pier deletion carry-forward failed: gate4b3.dataPier.${key}=${value || 0}`);
+  }
+  for (const kind of ['gate4b3-pier-rail', 'gate4b3-pier-beacon', 'gate4b3-pier-cargo']) {
+    if ((result.gate3rPlacement?.byKind?.[kind] || 0) !== 0) {
+      failures.push(`Gate 4-E-CU Data Pier placement carry-forward failed: ${kind}=${result.gate3rPlacement?.byKind?.[kind] || 0}`);
+    }
+  }
+  if ((result.gate3rPlacement?.byFootprintKind?.['gate4b3-data-pier-pad'] || 0) !== 0) {
+    failures.push(`Gate 4-E-CU Data Pier footprint carry-forward failed: gate4b3-data-pier-pad=${result.gate3rPlacement?.byFootprintKind?.['gate4b3-data-pier-pad'] || 0}`);
+  }
+
+  const noisyRouteKeys = [
+    'gate4eRouteAnchors',
+    'authoredAssets',
+    'splitterIslands',
+    'plazaEdgeKits',
+    'bollardRuns',
+    'routeStoryMarkers',
+    'vistaKits',
+    'coastalLoopStaging',
+    'routeLanterns',
+    'signalSpires',
+    'guideTiles'
+  ];
+  const route = result.routeComposition || {};
+  for (const key of noisyRouteKeys) {
+    if ((route[key] || 0) !== 0) failures.push(`Gate 4-E-CU route hygiene failed: routeComposition.${key}=${route[key] || 0}`);
+  }
+
+  const surface = result.surfaceDetails || {};
+  for (const key of ['districts', 'seams', 'pavers', 'accents', 'breakups']) {
+    if ((surface[key] || 0) !== 0) failures.push(`Gate 4-E-CU surface hygiene failed: surfaceDetails.${key}=${surface[key] || 0}`);
+  }
+
+  const meadow = result.meadowDetails || {};
+  if ((meadow.patches || 0) !== 0) failures.push(`Gate 4-E-CU meadow hygiene failed: patches=${meadow.patches || 0}`);
+
+  const field = result.fieldMotifs || {};
+  for (const key of ['clusters', 'berms', 'ribbons', 'visibleBerms', 'visibleRibbons', 'visibleTotal']) {
+    if ((field[key] || 0) !== 0) failures.push(`Gate 4-E-CU field hygiene failed: fieldMotifs.${key}=${field[key] || 0}`);
+  }
+
+  const roadside = result.roadsideFrames || {};
+  for (const key of ['paths', 'segments', 'berms', 'ribbons', 'stoneTabs', 'visibleBerms', 'visibleRibbons', 'visibleStoneTabs', 'visibleTotal']) {
+    if ((roadside[key] || 0) !== 0) failures.push(`Gate 4-E-CU roadside hygiene failed: roadsideFrames.${key}=${roadside[key] || 0}`);
+  }
+
+  const relief = result.terrainRelief || {};
+  for (const key of ['mounds', 'cliffShelves', 'rockOutcrops', 'duneRidges', 'contourBands', 'beachRipples', 'beachCombs', 'interiorRidges', 'visibleInteriorRidges']) {
+    if ((relief[key] || 0) !== 0) failures.push(`Gate 4-E-CU relief hygiene failed: terrainRelief.${key}=${relief[key] || 0}`);
+  }
+
+  const ground = result.districtGround || {};
+  if ((ground.pads || 0) < 8) failures.push(`Gate 4-E-CU district grounding failed: pads=${ground.pads || 0}/8`);
+  if ((ground.edgeTrims || 0) < 8) failures.push(`Gate 4-E-CU district grounding failed: edgeTrims=${ground.edgeTrims || 0}/8`);
+
+  const placement = result.gate3rPlacement || {};
+  if ((placement.roadIntrusions || 0) !== 0) failures.push(`Gate 4-E-CU placement failed: roadIntrusions=${placement.roadIntrusions || 0}`);
+  if ((placement.footprintIntrusions || 0) !== 0) failures.push(`Gate 4-E-CU placement failed: footprintIntrusions=${placement.footprintIntrusions || 0}`);
+  if ((placement.shorelineFootprintIntrusions || 0) !== 0) failures.push(`Gate 4-E-CU placement failed: shorelineFootprintIntrusions=${placement.shorelineFootprintIntrusions || 0}`);
+
+  if ((result.roadTopology?.paths || 0) !== roadPaths.length) failures.push(`Gate 4-E-CU road topology failed: paths=${result.roadTopology?.paths || 0}/${roadPaths.length}`);
+  if ((result.roadTopology?.nonJunctionCrossings || 0) !== 0) failures.push(`Gate 4-E-CU road topology failed: nonJunctionCrossings=${result.roadTopology?.nonJunctionCrossings || 0}`);
+  if ((result.colliderCount || 0) !== 2) failures.push(`Gate 4-E-CU failed: unexpected collider count=${result.colliderCount || 0}`);
+  if ((result.forwardDriveProbe?.halts || 0) !== 0) failures.push(`Gate 4-E-CU failed: forwardDriveProbe.halts=${result.forwardDriveProbe?.halts || 0}`);
+  if ((result.highQuality?.triangles || 0) > 327642) {
+    failures.push(`Gate 4-E-CU failed: high-quality triangles grew over CT baseline (${result.highQuality?.triangles || 0}/327642)`);
+  }
 }
 
 function assertAuthoredDistrictAsset(result, assetName, label, failures) {

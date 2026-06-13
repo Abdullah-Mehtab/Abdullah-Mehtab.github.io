@@ -60,13 +60,17 @@ export class Terrain {
     this.addGrassPlateau();
     if (this.world.blockoutMode) {
       if (this.world.gate4eSiteGroundCraftMode) {
-        this.addTerrainBrushes();
-        this.addMeadowDetailPatches();
-        this.addFieldMotifs();
-        this.addRoadsideFrames();
-        this.addDistrictGrounding();
-        this.addDistrictSurfaceDetails();
-        this.addScenicRelief();
+        if (this.world.gate4eRoadPathHygieneMode) {
+          this.addDistrictGrounding();
+        } else {
+          this.addTerrainBrushes();
+          this.addMeadowDetailPatches();
+          this.addFieldMotifs();
+          this.addRoadsideFrames();
+          this.addDistrictGrounding();
+          this.addDistrictSurfaceDetails();
+          this.addScenicRelief();
+        }
       } else if (!this.world.foundationReplacementMode) {
         this.addDistrictGrounding();
       }
