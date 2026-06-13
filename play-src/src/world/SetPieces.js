@@ -14,8 +14,8 @@ const LANDMARK_PRESENTATION = {
   skills: { scale: 1.36, padWidth: 20, padDepth: 12 },
   potato: { scale: 1.18, padWidth: 21.2, padDepth: 12.4 },
   todo: { scale: 1.34, padWidth: 17.4, padDepth: 10.4 },
-  projects: { scale: 1.38, padWidth: 24, padDepth: 16 },
-  career: { scale: 1.38, padWidth: 18, padDepth: 11 },
+  projects: { scale: 1.46, padWidth: 31.5, padDepth: 20 },
+  career: { scale: 1.38, padWidth: 27, padDepth: 18 },
   harbor: { scale: 1.22, padWidth: 18.8, padDepth: 11.8 },
   awards: { scale: 1.34, padWidth: 18, padDepth: 11 },
   sentinel: { scale: 1.34, padWidth: 15.2, padDepth: 8.8 },
@@ -2022,14 +2022,13 @@ export class SetPieces {
 
   createGate4B4ProjectsYard(group) {
     const stats = this.gate4b4Stats.projects;
-    const anchor = { x: 76, z: -28, rotation: -0.34 };
+    const zone = findZone('projects');
+    const anchor = { x: zone.position[0], z: zone.position[2], rotation: zone.rotation || -0.34 };
     const point = (right, forward) => this.gate4B1Point(anchor, right, forward);
     const rotation = anchor.rotation;
     const presentation = LANDMARK_PRESENTATION.projects;
 
-    this.gate3rPad(group, anchor.x, anchor.z, presentation.padWidth, presentation.padDepth, this.world.materials.stoneRoad, 0.132, 'GATE4D_Projects_Foundry_Workshop_Plate', rotation, 'gate4d-projects-footprint', 5.0);
-    stats.pads += 1;
-    stats.groundPlates += 1;
+    this.recordGate3RFootprintPlacement('gate4f-projects-build-hall-footprint', 'GATE4F_Projects_Public_Build_Hall_Footprint', anchor.x, anchor.z, presentation.padWidth, presentation.padDepth, rotation, 5.0);
 
     const foundry = point(0, 0);
     if (this.addPolishAsset(group, 'EnvPolishProjectsFoundryBuilding', foundry[0], foundry[1], rotation, presentation.scale)) {
@@ -2088,13 +2087,13 @@ export class SetPieces {
 
   createGate4B4CareerOffice(group) {
     const stats = this.gate4b4Stats.career;
-    const anchor = { x: 82, z: -46, rotation: -0.24 };
+    const zone = findZone('career');
+    const anchor = { x: zone.position[0], z: zone.position[2], rotation: zone.rotation || -0.65 };
     const point = (right, forward) => this.gate4B1Point(anchor, right, forward);
     const rotation = anchor.rotation;
     const presentation = LANDMARK_PRESENTATION.career;
 
-    this.gate3rPad(group, anchor.x, anchor.z, presentation.padWidth, presentation.padDepth, this.world.materials.warmStone, 0.132, 'GATE4D_Career_Software_House_Campus_Plate', rotation, 'gate4d-career-footprint', 5.0);
-    stats.pads += 1;
+    this.recordGate3RFootprintPlacement('gate4f-career-software-campus-footprint', 'GATE4F_Career_Software_Campus_Footprint', anchor.x, anchor.z, presentation.padWidth, presentation.padDepth, rotation, 5.0);
 
     const placeSource = (assetName, kind, name, right, forward, assetRotation, scale, statName, minClearance = 5.0) => {
       const position = point(right, forward);
@@ -2149,13 +2148,8 @@ export class SetPieces {
       stats.routeSprintBeaconStacks += 2;
     }
 
-    const path = point(0, -7.25);
-    this.box(group, path[0], 0.154, path[1], 7.8, 0.018, 0.42, this.world.materials.paleStone, rotation, 'GATE4D_Career_Campus_Entry_Axis');
-    this.recordGate3RPlacement('gate4d-career-entry-axis', 'GATE4D_Career_Campus_Entry_Axis', path[0], path[1], { minClearance: 5.0 });
-    stats.servicePaths += 1;
-
     stats.officeBlocks = stats.buildingShells;
-    stats.facadePanels = 1;
+    stats.facadePanels = 0;
     stats.signalFrames = stats.entranceCanopies + stats.lobbyGlows;
     stats.connectorMarks = 0;
   }
