@@ -10249,8 +10249,8 @@ function assertGate4ECURoadPathHygieneVerification(result, failures) {
   }
 
   const ground = result.districtGround || {};
-  if ((ground.pads || 0) < 8) failures.push(`Gate 4-E-CU district grounding failed: pads=${ground.pads || 0}/8`);
-  if ((ground.edgeTrims || 0) < 8) failures.push(`Gate 4-E-CU district grounding failed: edgeTrims=${ground.edgeTrims || 0}/8`);
+  if ((ground.pads || 0) !== 0) failures.push(`Gate 4-E-CU district grounding failed: pads=${ground.pads || 0}`);
+  if ((ground.edgeTrims || 0) !== 0) failures.push(`Gate 4-E-CU district grounding failed: edgeTrims=${ground.edgeTrims || 0}`);
 
   const placement = result.gate3rPlacement || {};
   if ((placement.roadIntrusions || 0) !== 0) failures.push(`Gate 4-E-CU placement failed: roadIntrusions=${placement.roadIntrusions || 0}`);

@@ -60,9 +60,7 @@ export class Terrain {
     this.addGrassPlateau();
     if (this.world.blockoutMode) {
       if (this.world.gate4eSiteGroundCraftMode) {
-        if (this.world.gate4eRoadPathHygieneMode) {
-          this.addDistrictGrounding();
-        } else {
+        if (!this.world.gate4eRoadPathHygieneMode) {
           this.addTerrainBrushes();
           this.addMeadowDetailPatches();
           this.addFieldMotifs();
