@@ -2043,6 +2043,69 @@ def create_todo_board(mats):
 
 def create_todo_planning_studio(mats):
     group = root("EnvPolishTodoPlanningStudio")
+    cube("TodoPlanningStudio_Forecourt", group, (0, 0.08, -4.16), (9.6, 0.16, 1.5), mats["stone"], bevel=0.045)
+    cube("TodoPlanningStudio_MainHall", group, (0, 1.82, -0.1), (9.9, 3.42, 5.85), mats["wood"], bevel=0.055)
+    cube("TodoPlanningStudio_LeftArchiveWing", group, (-5.75, 1.55, 0.0), (2.2, 2.92, 5.05), mats["stone_shadow"], bevel=0.045)
+    cube("TodoPlanningStudio_RightReviewWing", group, (5.75, 1.55, 0.0), (2.2, 2.92, 5.05), mats["stone"], bevel=0.045)
+    cube("TodoPlanningStudio_BackServiceWall", group, (0, 1.78, 3.02), (10.25, 3.18, 0.38), mats["stone_shadow"], bevel=0.03)
+    cube("TodoPlanningStudio_Roof", group, (0, 3.7, -0.1), (12.75, 0.36, 6.45), mats["dark"], bevel=0.04)
+    cube("TodoPlanningStudio_RoofGlow", group, (0, 3.48, -3.34), (9.4, 0.08, 0.07), mats["mint"], bevel=0.004)
+
+    cube("TodoPlanningStudio_FrontGlass", group, (0, 2.0, -3.12), (8.2, 2.22, 0.1), mats["glass"], bevel=0.012)
+    cube("TodoPlanningStudio_FrontFrameTop", group, (0, 3.2, -3.22), (8.75, 0.22, 0.16), mats["dark"], bevel=0.012)
+    cube("TodoPlanningStudio_FrontFrameBase", group, (0, 0.8, -3.22), (8.75, 0.24, 0.18), mats["stone_shadow"], bevel=0.012)
+    for x in [-3.25, -1.62, 0, 1.62, 3.25]:
+        cube("TodoPlanningStudio_FrontMullion", group, (x, 2.0, -3.32), (0.08, 2.25, 0.08), mats["screen"], bevel=0.003)
+
+    cube("TodoPlanningStudio_EntranceCanopy", group, (0, 2.18, -4.08), (4.95, 0.28, 0.84), mats["wood"], bevel=0.02)
+    cube("TodoPlanningStudio_EntranceGlow", group, (0, 2.04, -4.54), (3.65, 0.08, 0.055), mats["mint"], bevel=0.004)
+    for x in [-2.55, 2.55]:
+        cube("TodoPlanningStudio_EntranceColumn", group, (x, 1.4, -4.1), (0.28, 2.5, 0.28), mats["stone_shadow"], bevel=0.016)
+    for index, z in enumerate([-4.88, -4.48, -4.08]):
+        cube(f"TodoPlanningStudio_EntryStep_{index}", group, (0, 0.18 + index * 0.045, z), (4.95 - index * 0.55, 0.12, 0.34), mats["paper"], bevel=0.018)
+
+    cube("TodoPlanningStudio_PlanningBoard", group, (-2.05, 2.02, -3.46), (3.45, 1.72, 0.1), mats["dark"], bevel=0.02)
+    cube("TodoPlanningStudio_PlanningBoardHeader", group, (-2.05, 2.88, -3.55), (3.0, 0.14, 0.06), mats["screen"], bevel=0.004)
+    for column, x in enumerate([-3.1, -2.05, -1.0]):
+        cube(f"TodoPlanningStudio_PlanningColumn_{column}", group, (x, 2.03, -3.6), (0.82, 1.18, 0.06), [mats["mint"], mats["aqua"], mats["purple"]][column], bevel=0.006)
+        for row, y in enumerate([1.58, 1.95, 2.32]):
+            cube(f"TodoPlanningStudio_PlanningCard_{column}_{row}", group, (x, y, -3.66), (0.52, 0.16, 0.05), [mats["paper"], mats["amber"], mats["foam"], mats["mint"]][(column + row) % 4], bevel=0.003)
+
+    cube("TodoPlanningStudio_ReviewTheater", group, (2.15, 1.78, -3.46), (3.55, 1.55, 0.1), mats["dark"], bevel=0.02)
+    for index, x in enumerate([1.18, 2.15, 3.12]):
+        cube(f"TodoPlanningStudio_ReviewDesk_{index}", group, (x, 1.42, -3.62), (0.68, 0.16, 0.08), [mats["paper"], mats["mint"], mats["amber"]][index], bevel=0.004)
+        cube(f"TodoPlanningStudio_ReviewPulse_{index}", group, (x, 2.06, -3.64), (0.62, 0.07, 0.05), [mats["screen"], mats["aqua"], mats["purple"]][index], bevel=0.003)
+
+    for index, x in enumerate([-6.6, -5.75, -4.9]):
+        cube(f"TodoPlanningStudio_ArchiveFrontSlot_{index}", group, (x, 1.78, -2.74), (0.54, 0.48, 0.08), [mats["paper"], mats["foam"], mats["mint"]][index], bevel=0.006)
+        cube(f"TodoPlanningStudio_ArchiveRearSlot_{index}", group, (x, 1.74, 2.72), (0.5, 0.42, 0.08), [mats["paper"], mats["amber"], mats["aqua"]][index], bevel=0.006)
+    for index, x in enumerate([4.9, 5.75, 6.6]):
+        cube(f"TodoPlanningStudio_WorkroomFrontWindow_{index}", group, (x, 1.88, -2.74), (0.58, 0.56, 0.08), mats["glass"], bevel=0.006)
+        cube(f"TodoPlanningStudio_WorkroomRearWindow_{index}", group, (x, 1.84, 2.72), (0.54, 0.48, 0.08), mats["glass"], bevel=0.006)
+
+    for index, z in enumerate([-1.65, 0.0, 1.65]):
+        cube(f"TodoPlanningStudio_LeftSideReviewWindow_{index}", group, (-6.88, 1.92, z), (0.08, 0.64, 0.72), mats["glass"], bevel=0.006)
+        cube(f"TodoPlanningStudio_LeftSideTaskSlot_{index}", group, (-6.95, 2.58, z), (0.06, 0.08, 0.58), [mats["paper"], mats["mint"], mats["amber"]][index], bevel=0.003)
+        cube(f"TodoPlanningStudio_RightSideReviewWindow_{index}", group, (6.88, 1.92, z), (0.08, 0.64, 0.72), mats["glass"], bevel=0.006)
+        cube(f"TodoPlanningStudio_RightSideTaskSlot_{index}", group, (6.95, 2.58, z), (0.06, 0.08, 0.58), [mats["aqua"], mats["paper"], mats["mint"]][index], bevel=0.003)
+    cube("TodoPlanningStudio_LeftSideScheduleBand", group, (-6.96, 2.96, 0.0), (0.06, 0.07, 4.5), mats["screen"], bevel=0.003)
+    cube("TodoPlanningStudio_RightSideScheduleBand", group, (6.96, 2.96, 0.0), (0.06, 0.07, 4.5), mats["screen"], bevel=0.003)
+
+    for index, x in enumerate([-3.8, -1.9, 0, 1.9, 3.8]):
+        cube(f"TodoPlanningStudio_BackScheduleWindow_{index}", group, (x, 2.08, 3.26), (0.92, 0.54, 0.08), [mats["glass"], mats["screen"], mats["glass"], mats["mint"], mats["glass"]][index], bevel=0.006)
+    cube("TodoPlanningStudio_BackServiceDoor", group, (4.92, 1.06, 3.28), (1.0, 1.42, 0.09), mats["dark"], bevel=0.008)
+    cube("TodoPlanningStudio_BackScheduleBand", group, (-1.2, 2.92, 3.3), (5.8, 0.09, 0.06), mats["screen"], bevel=0.003)
+
+    cube("TodoPlanningStudio_RoofControlRoom", group, (-1.85, 4.72, -0.45), (3.65, 1.68, 2.05), mats["stone_shadow"], bevel=0.035)
+    cube("TodoPlanningStudio_RoofControlGlass", group, (-1.85, 4.68, -1.54), (2.85, 0.92, 0.08), mats["glass"], bevel=0.008)
+    cube("TodoPlanningStudio_RoofControlCap", group, (-1.85, 5.7, -0.45), (4.15, 0.28, 2.45), mats["dark"], bevel=0.024)
+    cylinder("TodoPlanningStudio_RoofClock", group, (3.58, 4.22, -3.1), 0.48, 0.08, mats["amber"], vertices=22, bevel=0.008)
+    cube("TodoPlanningStudio_RoofClockHandA", group, (3.58, 4.22, -3.18), (0.05, 0.54, 0.04), mats["dark"], bevel=0.002)
+    cube("TodoPlanningStudio_RoofClockHandB", group, (3.58, 4.22, -3.19), (0.45, 0.05, 0.04), mats["dark"], bevel=0.002)
+
+
+def create_todo_planning_panel_study(mats):
+    group = root("EnvPolishTodoPlanningStudio")
     cube("TodoPlanningStudio_ServiceCourt", group, (0, 0.09, -0.2), (17.4, 0.18, 10.4), mats["stone"], bevel=0.055)
     cube("TodoPlanningStudio_MainStudio", group, (-1.2, 1.86, 0.32), (9.8, 3.48, 5.0), mats["wood"], bevel=0.052)
     cube("TodoPlanningStudio_GlassWorkroom", group, (5.25, 1.45, -0.18), (3.55, 2.65, 4.18), mats["glass"], bevel=0.038)

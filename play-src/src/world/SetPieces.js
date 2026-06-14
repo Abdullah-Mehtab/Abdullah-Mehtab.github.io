@@ -1955,7 +1955,7 @@ export class SetPieces {
     const stats = this.gate4b3Stats.todo;
     const zone = findZone('todo');
     const rotation = zone.rotation || 0.24;
-    const buildingRotation = rotation + Math.PI / 2;
+    const buildingRotation = rotation;
     const anchor = { x: zone.position[0], z: zone.position[2], rotation };
     const presentation = LANDMARK_PRESENTATION.todo;
     const point = (right, forward) => this.gate4B1Point(anchor, right, forward);
