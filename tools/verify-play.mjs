@@ -183,6 +183,7 @@ try {
   const gate4frCAwardsInspection = await captureGate4FRCAwardsInspection(page);
   const gate4frCTodoInspection = await captureGate4FRCTodoInspection(page);
   const gate4frCPotatoInspection = await captureGate4FRCPotatoInspection(page);
+  const gate4frDTerrainBounds = await captureGate4FRDTerrainBounds(page);
   await page.evaluate(() => {
     const game = window.__portfolioDrive.game;
     game.clearFocus();
@@ -286,6 +287,7 @@ try {
     gate4frCAwardsInspection,
     gate4frCTodoInspection,
     gate4frCPotatoInspection,
+    gate4frDTerrainBounds,
     stuntPrototype,
     stuntFull,
     vehicleLights,
@@ -1315,6 +1317,180 @@ async function captureGate4FRCPotatoInspection(page) {
   }
 
   return { enabled: true, screenshots };
+}
+
+async function captureGate4FRDTerrainBounds(page) {
+  const enabled = await page.evaluate(() => window.__portfolioDrive.game.world.goalGate === 'gate-4fr-d-terrain-bounds-consistency');
+  if (!enabled) return { enabled: false, screenshots: [], samples: [], mismatches: [] };
+
+  const analysis = await page.evaluate(() => {
+    const game = window.__portfolioDrive.game;
+    const radius = 158;
+    const waterY = -0.55;
+    const angleSamples = Array.from({ length: 72 }, (_, index) => (index / 72) * Math.PI * 2);
+    const ratios = [0.84, 0.9, 0.965, 0.995, 1.014, 1.045];
+    const samples = [];
+
+    function angleDistance(a, b) {
+      return Math.atan2(Math.sin(a - b), Math.cos(a - b));
+    }
+
+    function islandRadiusAt(angle, baseRadius) {
+      const long = Math.sin(angle * 3.0 + 0.4) * 0.052;
+      const medium = Math.cos(angle * 5.0 - 0.8) * 0.038;
+      const small = Math.sin(angle * 9.0 + 1.7) * 0.018;
+      const northHeadland = Math.exp(-Math.pow(angleDistance(angle, Math.PI * 0.5), 2) / 0.28) * 0.09;
+      const westBite = Math.exp(-Math.pow(angleDistance(angle, Math.PI * 0.96), 2) / 0.18) * -0.08;
+      const southShelf = Math.exp(-Math.pow(angleDistance(angle, Math.PI * 1.48), 2) / 0.22) * 0.045;
+      return baseRadius * (0.92 + long + medium + small + northHeadland + westBite + southShelf);
+    }
+
+    function boundaryRadiusAt(x, z, scale = 1) {
+      return islandRadiusAt(Math.atan2(z, x), radius) * scale;
+    }
+
+    function boundaryRatioAt(x, z, scale = 1) {
+      return Math.hypot(x, z) / Math.max(0.001, boundaryRadiusAt(x, z, scale));
+    }
+
+    function expectedSurface(x, z, y = 1.08) {
+      const boundaryRatio = boundaryRatioAt(x, z);
+      if (boundaryRatio > 1.012 || y < waterY + 0.24) return 'water';
+      if (game.world.roads?.getSurfaceAt(x, z, 0.9)) return 'road';
+      if (boundaryRatio > 0.965) return 'shore';
+      if (boundaryRatio > 0.88) return 'sand';
+      return 'grass';
+    }
+
+    function legacyCircularSurface(x, z, y = 1.08) {
+      const distance = Math.hypot(x, z);
+      if (distance > radius * 1.012 || y < waterY + 0.24) return 'water';
+      if (game.world.roads?.getSurfaceAt(x, z, 0.9)) return 'road';
+      if (distance > radius * 0.965) return 'shore';
+      if (distance > radius * 0.88) return 'sand';
+      return 'grass';
+    }
+
+    for (const angle of angleSamples) {
+      const boundary = islandRadiusAt(angle, radius);
+      for (const ratio of ratios) {
+        const x = Math.cos(angle) * boundary * ratio;
+        const z = Math.sin(angle) * boundary * ratio;
+        const current = game.world.getSurfaceInfo({ x, y: 1.08, z }).id;
+        const expected = expectedSurface(x, z);
+        const legacy = legacyCircularSurface(x, z);
+        const boundaryRatio = boundaryRatioAt(x, z);
+        samples.push({
+          angle: Number(angle.toFixed(4)),
+          x: Number(x.toFixed(2)),
+          z: Number(z.toFixed(2)),
+          radialDistance: Number(Math.hypot(x, z).toFixed(2)),
+          boundaryRadius: Number(boundary.toFixed(2)),
+          boundaryRatio: Number(boundaryRatio.toFixed(4)),
+          current,
+          expected,
+          legacy,
+          mismatch: current !== expected,
+          legacyMismatch: legacy !== expected
+        });
+      }
+    }
+
+    const mismatches = samples.filter((sample) => sample.mismatch);
+    const legacyMismatches = samples.filter((sample) => sample.legacyMismatch);
+    return {
+      samples,
+      mismatchCount: mismatches.length,
+      legacyMismatchCount: legacyMismatches.length,
+      mismatches: mismatches.slice(0, 24),
+      legacyMismatches: legacyMismatches.slice(0, 24),
+      byCurrentExpected: summarizePairs(mismatches),
+      byLegacyExpected: summarizePairs(legacyMismatches)
+    };
+
+    function summarizePairs(items) {
+      const counts = {};
+      for (const item of items) {
+        const key = `${item.current}->${item.expected}`;
+        counts[key] = (counts[key] || 0) + 1;
+      }
+      return counts;
+    }
+  });
+
+  const views = [
+    { id: 'north-headland', angle: Math.PI * 0.5, ratio: 0.995, distance: 34 },
+    { id: 'west-bite', angle: Math.PI * 0.96, ratio: 1.014, distance: 32 },
+    { id: 'south-shelf', angle: Math.PI * 1.48, ratio: 1.014, distance: 32 },
+    { id: 'east-waterline', angle: 0, ratio: 1.014, distance: 32 },
+    { id: 'top-map', angle: 0, ratio: 0, distance: 0, top: true }
+  ];
+  const screenshots = [];
+
+  for (const view of views) {
+    const sample = await page.evaluate((viewSpec) => {
+      const game = window.__portfolioDrive.game;
+      const Vector3 = game.camera.position.constructor;
+      const radius = 158;
+
+      function angleDistance(a, b) {
+        return Math.atan2(Math.sin(a - b), Math.cos(a - b));
+      }
+
+      function islandRadiusAt(angle, baseRadius) {
+        const long = Math.sin(angle * 3.0 + 0.4) * 0.052;
+        const medium = Math.cos(angle * 5.0 - 0.8) * 0.038;
+        const small = Math.sin(angle * 9.0 + 1.7) * 0.018;
+        const northHeadland = Math.exp(-Math.pow(angleDistance(angle, Math.PI * 0.5), 2) / 0.28) * 0.09;
+        const westBite = Math.exp(-Math.pow(angleDistance(angle, Math.PI * 0.96), 2) / 0.18) * -0.08;
+        const southShelf = Math.exp(-Math.pow(angleDistance(angle, Math.PI * 1.48), 2) / 0.22) * 0.045;
+        return baseRadius * (0.92 + long + medium + small + northHeadland + westBite + southShelf);
+      }
+
+      const angle = viewSpec.angle;
+      const boundary = islandRadiusAt(angle, radius);
+      const x = Math.cos(angle) * boundary * (viewSpec.ratio || 0.985);
+      const z = Math.sin(angle) * boundary * (viewSpec.ratio || 0.985);
+      const inward = new Vector3(-Math.cos(angle), 0, -Math.sin(angle));
+      const point = new Vector3(x, 1.08, z);
+      const lookAt = viewSpec.top ? new Vector3(0, 0.2, 0) : new Vector3(x, 0.18, z);
+      const cameraPosition = viewSpec.top
+        ? new Vector3(0, 210, 0.01)
+        : point.clone().add(inward.multiplyScalar(viewSpec.distance)).setY(14);
+      const heading = Math.atan2(-Math.cos(angle), -Math.sin(angle));
+
+      game.ui.closePanel?.();
+      game.ui.closeMap?.();
+      game.ui.closeMenu?.();
+      game.clearFocus?.();
+      game.vehicle.respawn({ x, y: 1.08, z }, heading);
+      game.vehicle.setControls?.({ throttle: 0, brake: 0, steer: 0, boost: false, handbrake: false });
+      game.createColliderDebugOverlay?.();
+      if (game.debugColliderOverlay) game.debugColliderOverlay.visible = true;
+      game.cameraRig.setCinematic(cameraPosition, lookAt, viewSpec.top ? 48 : 54);
+      game.cameraRig.smoothedTarget.copy(lookAt);
+      game.camera.position.copy(cameraPosition);
+      game.camera.fov = viewSpec.top ? 48 : 54;
+      game.camera.updateProjectionMatrix();
+      game.camera.lookAt(lookAt);
+      const surface = game.world.getSurfaceInfo(point).id;
+      return {
+        id: viewSpec.id,
+        position: [x, 1.08, z].map((value) => Number(value.toFixed(2))),
+        camera: [cameraPosition.x, cameraPosition.y, cameraPosition.z].map((value) => Number(value.toFixed(2))),
+        lookAt: [lookAt.x, lookAt.y, lookAt.z].map((value) => Number(value.toFixed(2))),
+        boundaryRadius: Number(boundary.toFixed(2)),
+        radialDistance: Number(Math.hypot(x, z).toFixed(2)),
+        surface
+      };
+    }, view);
+    await delay(320);
+    const name = `gate4fr-d-terrain-bounds-${view.id}.png`;
+    await screenshot(page, name);
+    screenshots.push({ ...sample, name });
+  }
+
+  return { enabled: true, screenshots, ...analysis };
 }
 
 async function sampleRouteApproachFrame(page, zoneId) {
@@ -5980,6 +6156,13 @@ function assertVerification(result) {
   }
   if (result.goalGate === 'gate-4fr-c-landmark-rebuilds') {
     assertGate4FRCLandmarkReplacementVerification(result, failures);
+    if (failures.length) {
+      throw new Error(`Play verification failed: ${failures.join('; ')}`);
+    }
+    return;
+  }
+  if (result.goalGate === 'gate-4fr-d-terrain-bounds-consistency') {
+    assertGate4FRDTerrainBoundsVerification(result, failures);
     if (failures.length) {
       throw new Error(`Play verification failed: ${failures.join('; ')}`);
     }
@@ -11365,6 +11548,47 @@ function assertGate4FRCLandmarkReplacementVerification(result, failures) {
   if ((potatoInspection.screenshots || []).length !== 7) {
     failures.push(`Gate 4-FR-C Potato inspection failed: screenshots=${(potatoInspection.screenshots || []).length}/7`);
   }
+}
+
+function assertGate4FRDTerrainBoundsVerification(result, failures) {
+  assertGate4ECURoadPathHygieneVerification(result, failures, { launchHubRemoved: true });
+
+  for (const [assetName, label] of [
+    ['EnvPolishBehindEngineeringGarage', 'Behind The Build'],
+    ['EnvPolishCareerSoftwareHouse', 'Career Software Campus'],
+    ['EnvPolishProjectsFoundryBuilding', 'Projects Public Build Hall'],
+    ['EnvPolishSignalHarborCommunicationsStation', 'Contact Signal Exchange'],
+    ['EnvPolishCircuitTimeTrialGate', 'Circuit Time-Trial Gate'],
+    ['EnvPolishSentinelSocTower', 'Cyber Sentinel SOC'],
+    ['EnvPolishAwardsMuseumHall', 'Awards Museum'],
+    ['EnvPolishTodoPlanningStudio', 'Todo Planning Studio'],
+    ['EnvPolishPotatoFarmStand', 'Potato Farm']
+  ]) {
+    const asset = (result.authoredDistrictAssets || []).find((entry) => entry.name === assetName);
+    if (!asset?.template) failures.push(`Gate 4-FR-D carry-forward failed: ${label} template missing`);
+    if (!asset?.placed) failures.push(`Gate 4-FR-D carry-forward failed: ${label} not placed`);
+  }
+
+  const bounds = result.gate4frDTerrainBounds || {};
+  if (!bounds.enabled) failures.push('Gate 4-FR-D terrain/bounds failed: probe not enabled');
+  if ((bounds.samples || []).length < 400) failures.push(`Gate 4-FR-D terrain/bounds failed: samples=${(bounds.samples || []).length}/400`);
+  if ((bounds.screenshots || []).length < 5) failures.push(`Gate 4-FR-D terrain/bounds failed: screenshots=${(bounds.screenshots || []).length}/5`);
+  if ((bounds.mismatchCount || 0) !== 0) {
+    const examples = (bounds.mismatches || [])
+      .slice(0, 5)
+      .map((sample) => `${sample.current}->${sample.expected}@${sample.x},${sample.z} ratio=${sample.boundaryRatio}`)
+      .join(', ');
+    failures.push(`Gate 4-FR-D terrain/bounds failed: surface-policy mismatches=${bounds.mismatchCount}${examples ? ` (${examples})` : ''}`);
+  }
+  if ((bounds.legacyMismatchCount || 0) < 1) {
+    failures.push('Gate 4-FR-D terrain/bounds failed: diagnostic did not prove the legacy circular policy differed from the irregular coastline policy');
+  }
+  if ((result.forwardDriveProbe?.halts || 0) !== 0) failures.push(`Gate 4-FR-D terrain/bounds failed: halts=${result.forwardDriveProbe.halts}`);
+  if ((result.colliderCount || 0) !== 2) failures.push(`Gate 4-FR-D terrain/bounds failed: colliderCount=${result.colliderCount}`);
+  const placement = result.gate3rPlacement || {};
+  if ((placement.roadIntrusions || 0) !== 0) failures.push(`Gate 4-FR-D placement failed: roadIntrusions=${placement.roadIntrusions || 0}`);
+  if ((placement.footprintIntrusions || 0) !== 0) failures.push(`Gate 4-FR-D placement failed: footprintIntrusions=${placement.footprintIntrusions || 0}`);
+  if ((placement.shorelineFootprintIntrusions || 0) !== 0) failures.push(`Gate 4-FR-D placement failed: shorelineFootprintIntrusions=${placement.shorelineFootprintIntrusions || 0}`);
 }
 
 function assertAuthoredDistrictAsset(result, assetName, label, failures) {

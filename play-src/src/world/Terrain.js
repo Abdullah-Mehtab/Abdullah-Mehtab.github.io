@@ -2,7 +2,7 @@
 // ABOUTME: Replaces the old authored island GLB while keeping a stable visible driving floor.
 import * as THREE from 'three';
 import { districtFootprints, districtSurfaceBreakups, fieldMotifClusters, ISLAND_RADIUS, WORLD_HALF_SIZE, meadowDetailPatches, roadPaths, roadSegments, terrainBrushes } from './worldData.js';
-import { getIslandCoastPoints, makeIslandBandGeometry, makeIslandGeometry, makePatchGeometry, pseudoRandom, WATER_Y } from './WorldMaterials.js';
+import { getIslandCoastPoints, isInsideIslandBoundary, makeIslandBandGeometry, makeIslandGeometry, makePatchGeometry, pseudoRandom, WATER_Y } from './WorldMaterials.js';
 import { mergeStaticMeshesInGroup } from './StaticBatching.js';
 
 const DISTRICT_DETAIL_STYLES = {
@@ -978,7 +978,7 @@ export class Terrain {
   }
 
   containsPoint(x, z, margin = 0) {
-    return Math.hypot(x, z) <= ISLAND_RADIUS - margin;
+    return isInsideIslandBoundary(x, z, ISLAND_RADIUS, 1, margin);
   }
 
   getReliefStats() {

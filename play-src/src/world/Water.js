@@ -3,7 +3,7 @@
 import * as THREE from 'three';
 import { ISLAND_RADIUS, WORLD_HALF_SIZE } from './worldData.js';
 import { mergeStaticMeshesInGroup } from './StaticBatching.js';
-import { getIslandCoastPoints, makeIslandBandGeometry, pseudoRandom, WATER_Y } from './WorldMaterials.js';
+import { getIslandBoundaryRadius, getIslandBoundaryRatio, getIslandCoastPoints, makeIslandBandGeometry, pseudoRandom, WATER_Y } from './WorldMaterials.js';
 
 const SPLASH_LIMITS = { low: 12, medium: 24, high: 40 };
 const BOBBING_LIMITS = { low: 5, medium: 10, high: 16 };
@@ -46,9 +46,9 @@ const FOAM_STREAK_PROFILE = {
   speedStretch: 0.055,
   expansion: 1.1
 };
-const SHORE_WAKE_RADIUS = ISLAND_RADIUS * 0.94;
-const WATER_DRAG_RADIUS = ISLAND_RADIUS * 1.012;
-const WATER_RESPAWN_RADIUS = ISLAND_RADIUS * 1.04;
+const SHORE_WAKE_RATIO = 0.94;
+const WATER_DRAG_RATIO = 1.012;
+const WATER_RESPAWN_RATIO = 1.04;
 
 export class Water {
   constructor(world) {
@@ -760,10 +760,10 @@ export class Water {
   updateVehicleWaterInteraction(dt, elapsed, vehiclePosition, vehicle) {
     if (!vehiclePosition || !vehicle?.body) return;
 
-    const distance = Math.hypot(vehiclePosition.x, vehiclePosition.z);
+    const boundaryRatio = getIslandBoundaryRatio(vehiclePosition.x, vehiclePosition.z, ISLAND_RADIUS);
     const speed = Math.abs(vehicle.speed || 0);
-    const nearShore = distance > SHORE_WAKE_RADIUS;
-    const inWater = distance > WATER_DRAG_RADIUS || vehiclePosition.y < WATER_Y + 0.24;
+    const nearShore = boundaryRatio > SHORE_WAKE_RATIO;
+    const inWater = boundaryRatio > WATER_DRAG_RATIO || vehiclePosition.y < WATER_Y + 0.24;
     const currentSurface = this.world.surfaceState || {};
     this.world.surfaceState = {
       label: inWater ? 'water' : nearShore && currentSurface.label !== 'road' ? 'shore' : currentSurface.label || 'land',
@@ -796,7 +796,7 @@ export class Water {
       }, true);
     }
 
-    if (distance > WATER_RESPAWN_RADIUS || vehiclePosition.y < WATER_Y - 1.2) {
+    if (boundaryRatio > WATER_RESPAWN_RATIO || vehiclePosition.y < WATER_Y - 1.2) {
       this.submergeTime += dt;
     } else {
       this.submergeTime = Math.max(0, this.submergeTime - dt * 2.5);
@@ -854,7 +854,7 @@ export class Water {
       const position = local.applyQuaternion(vehicle.group.quaternion).add(vehicle.group.position);
       if (!inWater) {
         const radial = Math.hypot(position.x, position.z) || 1;
-        const waterline = ISLAND_RADIUS * 1.002;
+        const waterline = getIslandBoundaryRadius(position.x, position.z, ISLAND_RADIUS, 1.002);
         const scale = waterline / radial;
         position.x *= scale;
         position.z *= scale;

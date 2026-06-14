@@ -17,7 +17,7 @@ import { SetPieces } from './SetPieces.js';
 import { Terrain } from './Terrain.js';
 import { Water } from './Water.js';
 import { Zones } from './Zones.js';
-import { createWorldMaterials, QUALITY_ORDER, QUALITY_PROFILES, WATER_Y } from './WorldMaterials.js';
+import { createWorldMaterials, getIslandBoundaryRatio, QUALITY_ORDER, QUALITY_PROFILES, WATER_Y } from './WorldMaterials.js';
 
 const SURFACES = {
   road: { id: 'road', label: 'road', forwardGrip: 1, sideGrip: 1, engineFactor: 1, topSpeedFactor: 1, drag: 1, dustColor: 0x6f6250, skidColor: 0x161410, skidMarks: true },
@@ -41,7 +41,7 @@ const GATE4_FR_C_GATE_ID = 'gate-4fr-c-landmark-rebuilds';
 const GATE4_FR_D_GATE_ID = 'gate-4fr-d-terrain-bounds-consistency';
 const GATE4_FR_E_GATE_ID = 'gate-4fr-e-final-self-acceptance';
 const GATE4_FR_GATE_IDS = new Set([GATE4_FR_B_GATE_ID, GATE4_FR_C_GATE_ID, GATE4_FR_D_GATE_ID, GATE4_FR_E_GATE_ID]);
-const GOAL_GATE = GATE4_FR_C_GATE_ID;
+const GOAL_GATE = GATE4_FR_D_GATE_ID;
 const GATE4_C_B1_GATE_ID = 'gate-4c-b1-south-run-replacements';
 const GATE4_C_B2_GATE_ID = 'gate-4c-b2-gallery-side-replacements';
 const GATE4_C_B3_GATE_ID = 'gate-4c-b3-west-service-replacements';
@@ -492,17 +492,17 @@ export class World {
 
   getSurfaceInfo(position) {
     if (!position) return SURFACES.road;
-    const distance = Math.hypot(position.x, position.z);
-    const inWater = distance > ISLAND_RADIUS * 1.012 || position.y < WATER_Y + 0.24;
+    const boundaryRatio = getIslandBoundaryRatio(position.x, position.z, ISLAND_RADIUS);
+    const inWater = boundaryRatio > 1.012 || position.y < WATER_Y + 0.24;
     const roadPath = this.roads?.getSurfaceAt(position.x, position.z, 0.9);
     let surface = SURFACES.grass;
     if (inWater) {
       surface = SURFACES.water;
     } else if (roadPath) {
       surface = roadSurfaceForPath(roadPath);
-    } else if (distance > ISLAND_RADIUS * 0.965) {
+    } else if (boundaryRatio > 0.965) {
       surface = SURFACES.shore;
-    } else if (distance > ISLAND_RADIUS * 0.88) {
+    } else if (boundaryRatio > 0.88) {
       surface = SURFACES.sand;
     }
     this.surfaceState = {

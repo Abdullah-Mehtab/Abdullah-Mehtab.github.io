@@ -339,6 +339,18 @@ export function getIslandCoastPoints(radius, scale = 1, segments = 144) {
   return points;
 }
 
+export function getIslandBoundaryRadius(x, z, radius, scale = 1) {
+  return islandRadiusAt(Math.atan2(z, x), radius) * scale;
+}
+
+export function getIslandBoundaryRatio(x, z, radius, scale = 1) {
+  return Math.hypot(x, z) / Math.max(0.001, getIslandBoundaryRadius(x, z, radius, scale));
+}
+
+export function isInsideIslandBoundary(x, z, radius, scale = 1, margin = 0) {
+  return Math.hypot(x, z) <= getIslandBoundaryRadius(x, z, radius, scale) - margin;
+}
+
 function makeIslandShape(radius, segments, scale) {
   const shape = new THREE.Shape();
   const points = getIslandCoastPoints(radius, scale, segments);
