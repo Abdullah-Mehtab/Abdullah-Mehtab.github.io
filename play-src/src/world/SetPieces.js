@@ -2483,7 +2483,11 @@ export class SetPieces {
       { name: 'Potato_Service_Story_Marker', asset: 'EnvPolishRouteStoryMarker', path: 'farm-service', segment: 0, t: 0.9, lateral: -12.5, scale: 0.6, stat: 'routeStoryMarkers', footprint: [3.4, 2.8] }
     ];
 
-    for (const spec of placements) this.addGate4ERouteCompositionAsset(group, spec);
+    const activePlacements = this.world.gate4frLaunchRemovedMode
+      ? placements.filter((spec) => !spec.name.startsWith('Launch_Run'))
+      : placements;
+
+    for (const spec of activePlacements) this.addGate4ERouteCompositionAsset(group, spec);
 
     mergeStaticMeshesInGroup(group, {
       namePrefix: 'GATE4E_route_composition',
@@ -2522,6 +2526,8 @@ export class SetPieces {
   }
 
   createGate4ELaunchHubCompositionPass() {
+    if (this.world.gate4frLaunchRemovedMode) return;
+
     this.gate4eLaunchHubStats.enabled = true;
 
     const zone = findZone('landing');
@@ -2611,7 +2617,11 @@ export class SetPieces {
       { id: 'circuit', x: 58, z: 76, rotation: -0.28, width: 20.4, depth: 12, accent: 'warmGlow', stone: 'stone', portal: 1.02 }
     ];
 
-    for (const context of contexts) this.addGate4FSiteContext(group, context);
+    const activeContexts = this.world.gate4frLaunchRemovedMode
+      ? contexts.filter((context) => context.id !== 'landing')
+      : contexts;
+
+    for (const context of activeContexts) this.addGate4FSiteContext(group, context);
 
     this.gate4fSelfAcceptanceStats.staticBatches = mergeStaticMeshesInGroup(group, {
       namePrefix: 'GATE4F_self_acceptance_context',
@@ -2698,7 +2708,7 @@ export class SetPieces {
     this.gate4dLifeStats.enabled = true;
     const group = new THREE.Group();
     group.name = 'GATE4D_Life_Interaction_Pass';
-    const anchors = [
+    const baseAnchors = [
       { id: 'landing', x: 13.8, z: -90.8, rotation: 0.36, color: 0xffc36a, kind: 'launch' },
       { id: 'cv', x: -36, z: -88, rotation: 0.12, color: 0xe6f3ff, kind: 'archive' },
       { id: 'behind', x: 35, z: -76, rotation: 0.08, color: 0xa8a6ff, kind: 'garage' },
@@ -2711,7 +2721,10 @@ export class SetPieces {
       { id: 'awards', x: -58, z: 116, rotation: -0.18, color: 0xffdf8a, kind: 'museum' },
       { id: 'sentinel', x: 10, z: 129, rotation: -0.12, color: 0xff6d8d, kind: 'soc' },
       { id: 'circuit', x: 58, z: 76, rotation: -0.28, color: 0xff9b6d, kind: 'time-trial' }
-    ].map((anchor) => ({
+    ];
+    const anchors = (this.world.gate4frLaunchRemovedMode
+      ? baseAnchors.filter((anchor) => anchor.id !== 'landing')
+      : baseAnchors).map((anchor) => ({
       ...anchor,
       scale: LANDMARK_PRESENTATION[anchor.id]?.scale || LANDMARK_PRESENTATION.harbor.scale
     }));
@@ -3110,6 +3123,10 @@ export class SetPieces {
     const zone = findZone('landing');
     const stats = this.verticalSliceStats.start;
     const rotation = zone.rotation || 0;
+    if (this.world.gate4frLaunchRemovedMode) {
+      stats.launchLandmarkSuppressed = true;
+      return;
+    }
     const centerX = 2.2;
     const centerZ = -108.4;
     const local = (right, forward) => {

@@ -110,6 +110,7 @@ try {
   const loadMs = Date.now() - startedAt;
   await screenshot(page, '01-title.png');
   const titleUi = await sampleTitleUi(page);
+  const startFlow = await exerciseStartFlow(browser);
 
   await page.evaluate(() => window.__portfolioDrive.start());
   await delay(700);
@@ -256,6 +257,7 @@ try {
     mobile,
     mobileSavedPreference,
     titleUi,
+    startFlow,
     panelUi,
     overlayUi: { map: mapUi, menu: menuUi },
     zoneVehicleFraming,
@@ -341,6 +343,60 @@ async function waitForReady(page) {
     () => window.__portfolioDrive?.ready?.() && window.__portfolioDrive.sampleCanvas() > 0,
     { timeout: 60000 }
   );
+}
+
+async function exerciseStartFlow(browser) {
+  const cases = [
+    {
+      id: 'key-w',
+      act: (page) => page.evaluate(() => window.dispatchEvent(new KeyboardEvent('keydown', { code: 'KeyW', key: 'w', bubbles: true })))
+    },
+    {
+      id: 'key-space',
+      act: (page) => page.evaluate(() => window.dispatchEvent(new KeyboardEvent('keydown', { code: 'Space', key: ' ', bubbles: true })))
+    },
+    {
+      id: 'title-pointer',
+      act: (page) => page.click('#title-screen')
+    },
+    {
+      id: 'drive-button',
+      act: (page) => page.click('#start-button')
+    }
+  ];
+  const results = {};
+  for (const item of cases) {
+    const page = await browser.newPage();
+    wirePageDiagnostics(page);
+    await page.setViewport({ width: 1280, height: 800, deviceScaleFactor: 1 });
+    await page.evaluateOnNewDocument(() => {
+      localStorage.setItem('portfolio-drive-landscape-quality', 'medium');
+      localStorage.setItem('portfolio-drive-muted', '1');
+      localStorage.setItem('portfolio-drive-disable-analytics', '1');
+    });
+    await page.goto(`${baseUrl}/play/?debugDrive=1`, { waitUntil: 'domcontentloaded', timeout: 60000 });
+    await waitForReady(page);
+    const before = await sampleStartState(page);
+    await screenshot(page, `start-flow-${item.id}-before.png`);
+    await item.act(page);
+    await delay(260);
+    const after = await sampleStartState(page);
+    await screenshot(page, `start-flow-${item.id}-after.png`);
+    results[item.id] = { before, after };
+    await page.close();
+  }
+  return results;
+}
+
+async function sampleStartState(page) {
+  return page.evaluate(() => {
+    const title = document.getElementById('title-screen');
+    return {
+      started: Boolean(window.__portfolioDrive?.game?.started),
+      titleHidden: Boolean(title?.hidden),
+      bodyDriving: document.body.classList.contains('is-driving')
+    };
+  });
 }
 
 async function screenshot(page, name) {
@@ -5116,6 +5172,13 @@ function assertVerification(result) {
   }
   if (result.goalGate === 'gate-4f-e-self-acceptance-lock') {
     assertGate4FESelfAcceptanceLockVerification(result, failures);
+    if (failures.length) {
+      throw new Error(`Play verification failed: ${failures.join('; ')}`);
+    }
+    return;
+  }
+  if (result.goalGate === 'gate-4fr-b-start-flow-launch-removal') {
+    assertGate4FRBStartFlowLaunchRemovalVerification(result, failures);
     if (failures.length) {
       throw new Error(`Play verification failed: ${failures.join('; ')}`);
     }
@@ -10173,7 +10236,7 @@ function assertGate4ECTSentinelPublicSocThresholdBenchmarkVerification(result, f
   if ((result.forwardDriveProbe?.halts || 0) !== 0) failures.push(`Gate 4-E-CT failed: forwardDriveProbe.halts=${result.forwardDriveProbe?.halts || 0}`);
 }
 
-function assertGate4ECURoadPathHygieneVerification(result, failures) {
+function assertGate4ECURoadPathHygieneVerification(result, failures, options = {}) {
   for (const [assetName, label] of [
     ['EnvPolishLaunchHubGateway', 'Launch Hub'],
     ['EnvPolishCareerSoftwareHouse', 'Career campus'],
@@ -10188,6 +10251,12 @@ function assertGate4ECURoadPathHygieneVerification(result, failures) {
     ['EnvPolishSentinelSocTower', 'Sentinel SOC tower'],
     ['EnvPolishCircuitTimeTrialGate', 'Circuit checkpoint']
   ]) {
+    if (options.launchHubRemoved && assetName === 'EnvPolishLaunchHubGateway') {
+      const asset = (result.authoredDistrictAssets || []).find((entry) => entry.name === assetName);
+      if (!asset?.template) failures.push(`Gate 4-FR-B Launch removal failed: ${assetName} template was not loaded`);
+      if (asset?.placed) failures.push(`Gate 4-FR-B Launch removal failed: ${assetName} was still placed in the scene`);
+      continue;
+    }
     assertAuthoredDistrictAsset(result, assetName, `Gate 4-E-CU ${label} carry-forward`, failures);
   }
 
@@ -10349,6 +10418,60 @@ function assertGate4FESelfAcceptanceLockVerification(result, failures) {
   if ((placement.roadIntrusions || 0) !== 0) failures.push(`Gate 4-F-E placement failed: roadIntrusions=${placement.roadIntrusions || 0}`);
   if ((placement.footprintIntrusions || 0) !== 0) failures.push(`Gate 4-F-E placement failed: footprintIntrusions=${placement.footprintIntrusions || 0}`);
   if ((placement.shorelineFootprintIntrusions || 0) !== 0) failures.push(`Gate 4-F-E placement failed: shorelineFootprintIntrusions=${placement.shorelineFootprintIntrusions || 0}`);
+}
+
+function assertGate4FRBStartFlowLaunchRemovalVerification(result, failures) {
+  assertGate4ECURoadPathHygieneVerification(result, failures, { launchHubRemoved: true });
+
+  const startFlow = result.startFlow || {};
+  for (const id of ['key-w', 'key-space', 'title-pointer', 'drive-button']) {
+    const state = startFlow[id];
+    if (!state) {
+      failures.push(`Gate 4-FR-B start flow failed: ${id} was not sampled`);
+      continue;
+    }
+    if (state.before?.started) failures.push(`Gate 4-FR-B start flow failed: ${id} started before input`);
+    if (state.before?.titleHidden) failures.push(`Gate 4-FR-B start flow failed: ${id} title hidden before input`);
+    if (!state.after?.started) failures.push(`Gate 4-FR-B start flow failed: ${id} did not start driving`);
+    if (!state.after?.titleHidden) failures.push(`Gate 4-FR-B start flow failed: ${id} title remained visible`);
+    if (!state.after?.bodyDriving) failures.push(`Gate 4-FR-B start flow failed: ${id} body driving state missing`);
+  }
+
+  const start = result.verticalSlice?.start || {};
+  if (!start.launchLandmarkSuppressed) failures.push('Gate 4-FR-B launch removal failed: start hub suppression flag missing');
+  for (const key of ['burnoutScuffs', 'launchLights', 'signs', 'lamps', 'planters', 'routeMarks']) {
+    if ((start[key] || 0) !== 0) failures.push(`Gate 4-FR-B start hub removal failed: verticalSlice.start.${key}=${start[key] || 0}`);
+  }
+
+  const launchHub = result.gate4eLaunchHub || {};
+  if (launchHub.enabled) failures.push('Gate 4-FR-B launch removal failed: launch hub pass still enabled');
+  for (const key of ['sourceAssets', 'authoredAssets', 'gatewayAssets', 'arrivalPortals', 'driveUnderCanopies', 'destinationTiles', 'worldEntryPortals']) {
+    if ((launchHub[key] || 0) !== 0) failures.push(`Gate 4-FR-B launch hub removal failed: gate4eLaunchHub.${key}=${launchHub[key] || 0}`);
+  }
+
+  const life = result.gate4dLife?.counts || {};
+  if (!life.enabled) failures.push('Gate 4-FR-B life carry-forward failed: pass not enabled');
+  if ((life.activeLandmarks || 0) !== 11) failures.push(`Gate 4-FR-B life carry-forward failed: activeLandmarks=${life.activeLandmarks || 0}/11`);
+  if ((life.windowGlows || 0) !== 11) failures.push(`Gate 4-FR-B life carry-forward failed: windowGlows=${life.windowGlows || 0}/11`);
+  if ((life.terminalPulses || 0) !== 11) failures.push(`Gate 4-FR-B life carry-forward failed: terminalPulses=${life.terminalPulses || 0}/11`);
+  if ((life.containedMotions || 0) < 24) failures.push(`Gate 4-FR-B life carry-forward failed: containedMotions=${life.containedMotions || 0}/24`);
+
+  const self = result.gate4fSelfAcceptance || {};
+  if (!self.enabled) failures.push('Gate 4-FR-B context carry-forward failed: self-acceptance pass not enabled');
+  if ((self.landmarks || 0) !== 12) failures.push(`Gate 4-FR-B context carry-forward failed: landmarks=${self.landmarks || 0}/12`);
+  if ((self.footprintAudits || 0) !== 12) failures.push(`Gate 4-FR-B context carry-forward failed: footprintAudits=${self.footprintAudits || 0}/12`);
+  if ((self.thresholdCourts || 0) !== 12) failures.push(`Gate 4-FR-B context carry-forward failed: thresholdCourts=${self.thresholdCourts || 0}/12`);
+  if ((self.portalFrames || 0) !== 36) failures.push(`Gate 4-FR-B context carry-forward failed: portalFrames=${self.portalFrames || 0}/36`);
+
+  const placement = result.gate3rPlacement || {};
+  if ((placement.byKind?.['gate4e-launch-hub'] || 0) !== 0) failures.push(`Gate 4-FR-B placement failed: gate4e-launch-hub=${placement.byKind?.['gate4e-launch-hub'] || 0}`);
+  if ((placement.byFootprintKind?.['gate4e-launch-hub-footprint'] || 0) !== 0) failures.push(`Gate 4-FR-B placement failed: gate4e-launch-hub-footprint=${placement.byFootprintKind?.['gate4e-launch-hub-footprint'] || 0}`);
+  if ((placement.byKind?.['gate4f-self-acceptance-threshold'] || 0) !== 12) {
+    failures.push(`Gate 4-FR-B placement failed: thresholds=${placement.byKind?.['gate4f-self-acceptance-threshold'] || 0}/12`);
+  }
+  if ((placement.byFootprintKind?.['gate4f-self-acceptance-context-footprint'] || 0) !== 12) {
+    failures.push(`Gate 4-FR-B placement failed: context footprints=${placement.byFootprintKind?.['gate4f-self-acceptance-context-footprint'] || 0}/12`);
+  }
 }
 
 function assertAuthoredDistrictAsset(result, assetName, label, failures) {

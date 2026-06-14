@@ -119,6 +119,15 @@ export class Game {
 
   setupEvents() {
     window.addEventListener('resize', () => this.resize());
+    window.addEventListener('keydown', (event) => {
+      if (this.started || event.repeat || event.metaKey || event.ctrlKey || event.altKey || event.key === 'Tab') return;
+      if (isFormControl(event.target)) return;
+      this.startDriving();
+    });
+    this.ui.refs.titleScreen.addEventListener('pointerdown', (event) => {
+      if (this.started || isInteractiveControl(event.target)) return;
+      this.startDriving();
+    });
     document.addEventListener('visibilitychange', () => {
       if (document.hidden) {
         this.audio?.context?.suspend?.();
@@ -163,6 +172,7 @@ export class Game {
   }
 
   startDriving() {
+    if (this.started) return;
     this.started = true;
     this.audio.resume();
     this.ui.hideTitle();
@@ -226,7 +236,7 @@ export class Game {
   }
 
   handleGlobalInput() {
-    if (!this.started && this.input.consume('interact')) {
+    if (!this.started && this.hasStartIntent()) {
       this.startDriving();
       return;
     }
@@ -242,6 +252,20 @@ export class Game {
     if (this.input.consume('interact') && this.activeZone && !this.ui.isPanelOpen()) {
       this.ui.openZone(this.activeZone);
     }
+  }
+
+  hasStartIntent() {
+    return (
+      this.input.consume('interact')
+      || this.input.consume('jump')
+      || this.input.actions.forward
+      || this.input.actions.backward
+      || this.input.actions.left
+      || this.input.actions.right
+      || this.input.actions.boost
+      || this.input.actions.brake
+      || this.input.actions.handbrake
+    );
   }
 
   recordZoneVisit(zone) {
@@ -457,4 +481,12 @@ function formatTime(seconds) {
   const minutes = Math.floor(seconds / 60);
   const rest = seconds - minutes * 60;
   return `${minutes}:${rest.toFixed(2).padStart(5, '0')}`;
+}
+
+function isFormControl(target) {
+  return Boolean(target?.closest?.('input, textarea, select, [contenteditable="true"]'));
+}
+
+function isInteractiveControl(target) {
+  return Boolean(target?.closest?.('a, button, input, textarea, select, [contenteditable="true"]'));
 }

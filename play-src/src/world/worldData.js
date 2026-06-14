@@ -66,7 +66,7 @@ export const roadSurfaceProfiles = {
 };
 
 export const districtFootprints = [
-  { id: 'launch-run', label: 'Launch Run', center: [10, -98], size: [34, 24], color: '#7cffb2', kind: 'plaza' },
+  { id: 'launch-run', label: 'Portfolio Start', center: [10, -98], size: [34, 24], color: '#7cffb2', kind: 'start' },
   { id: 'fcc-campus', label: 'FCC Campus', center: [-74, 58], size: [48, 34], color: '#9ccfff', kind: 'campus' },
   { id: 'security-yard', label: 'Security Yard', center: [-116, -50], size: [34, 26], color: '#68d8ff', kind: 'security' },
   { id: 'gallery-side', label: 'Gallery Side', center: [96, -16], size: [42, 34], color: '#ffcc66', kind: 'workshop' },
@@ -240,9 +240,9 @@ export const boostPads = [];
 export const worldZones = [
   {
     id: 'landing',
-    name: 'Launch Plaza',
+    name: 'Portfolio Start',
     kind: 'Home',
-    title: 'Launch Run',
+    title: 'Drive Start',
     districtId: 'launch-run',
     position: [12, 0, -96],
     rotation: 0.36,
