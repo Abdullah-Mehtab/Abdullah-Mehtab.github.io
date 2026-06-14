@@ -182,6 +182,7 @@ try {
   const gate4frCSentinelInspection = await captureGate4FRCSentinelInspection(page);
   const gate4frCAwardsInspection = await captureGate4FRCAwardsInspection(page);
   const gate4frCTodoInspection = await captureGate4FRCTodoInspection(page);
+  const gate4frCPotatoInspection = await captureGate4FRCPotatoInspection(page);
   await page.evaluate(() => {
     const game = window.__portfolioDrive.game;
     game.clearFocus();
@@ -284,6 +285,7 @@ try {
     gate4frCSentinelInspection,
     gate4frCAwardsInspection,
     gate4frCTodoInspection,
+    gate4frCPotatoInspection,
     stuntPrototype,
     stuntFull,
     vehicleLights,
@@ -1215,6 +1217,90 @@ async function captureGate4FRCTodoInspection(page) {
     }, view);
     await delay(260);
     const name = `gate4fr-c-todo-${view.id}.png`;
+    await screenshot(page, name);
+    screenshots.push({ ...sample, name });
+    if (view.hideUi) {
+      await page.evaluate(() => {
+        for (const element of document.querySelectorAll('[data-verify-previous-visibility], .hud, .minimap, .whisper-feed, .circuit-status, #debug-readout')) {
+          if (!element.dataset.verifyPreviousVisibility) continue;
+          element.style.visibility = element.dataset.verifyPreviousVisibility === 'visible' ? '' : element.dataset.verifyPreviousVisibility;
+          delete element.dataset.verifyPreviousVisibility;
+        }
+      });
+    }
+  }
+
+  return { enabled: true, screenshots };
+}
+
+async function captureGate4FRCPotatoInspection(page) {
+  const enabled = await page.evaluate(() => window.__portfolioDrive.game.world.goalGate === 'gate-4fr-c-landmark-rebuilds');
+  if (!enabled) return { enabled: false, screenshots: [] };
+
+  const views = [
+    { id: 'front', right: 0, forward: -27, y: 9.8, lookY: 2.6, fov: 50 },
+    { id: 'rear', right: 0, forward: 24, y: 9.2, lookY: 2.4, fov: 51 },
+    { id: 'left', right: -24, forward: 0, y: 8.8, lookY: 2.4, fov: 51 },
+    { id: 'right', right: 24, forward: 0, y: 8.8, lookY: 2.4, fov: 51 },
+    { id: 'close', right: 0, forward: -12.5, y: 5.0, lookY: 1.8, fov: 55 },
+    { id: 'top', right: 0, forward: 0, y: 39, lookY: 0.1, fov: 42 },
+    { id: 'ui-hidden-concept-read', right: 0, forward: -27, y: 9.6, lookY: 2.6, fov: 50, hideUi: true }
+  ];
+  const screenshots = [];
+
+  for (const view of views) {
+    const sample = await page.evaluate((viewSpec) => {
+      const game = window.__portfolioDrive.game;
+      const Vector3 = game.camera.position.constructor;
+      const anchor = { x: -14, z: -129, rotation: 0.18 };
+      const localPoint = (right, forward, y = 0) =>
+        new Vector3(
+          anchor.x + Math.cos(anchor.rotation) * right + Math.sin(anchor.rotation) * forward,
+          y,
+          anchor.z - Math.sin(anchor.rotation) * right + Math.cos(anchor.rotation) * forward
+        );
+
+      const respawn = game.world.getRespawnPose('potato');
+      const vehiclePoint = respawn.position.clone();
+      const direction = localPoint(0, 0, 0).sub(vehiclePoint).setY(0).normalize();
+      const heading = Math.atan2(direction.x, direction.z);
+      game.ui.closePanel?.();
+      game.ui.closeMap?.();
+      game.ui.closeMenu?.();
+      game.vehicle.respawn({ x: vehiclePoint.x, y: 1.08, z: vehiclePoint.z }, heading);
+      game.vehicle.setControls?.({ throttle: 0, brake: 0, steer: 0, boost: false, handbrake: false });
+      game.clearFocus?.();
+
+      const cameraPosition = localPoint(viewSpec.right, viewSpec.forward, viewSpec.y);
+      const lookAt = localPoint(0, 0.02, viewSpec.lookY);
+      game.cameraRig.setCinematic(cameraPosition, lookAt, viewSpec.fov);
+      game.cameraRig.smoothedTarget.copy(lookAt);
+      game.camera.position.copy(cameraPosition);
+      game.camera.fov = viewSpec.fov;
+      game.camera.updateProjectionMatrix();
+      game.camera.lookAt(lookAt);
+
+      const hiddenSelectors = ['.hud', '.minimap', '.whisper-feed', '.circuit-status', '#debug-readout'];
+      for (const element of document.querySelectorAll(hiddenSelectors.join(','))) {
+        if (viewSpec.hideUi) {
+          if (!element.dataset.verifyPreviousVisibility) element.dataset.verifyPreviousVisibility = element.style.visibility || 'visible';
+          element.style.visibility = 'hidden';
+        } else if (element.dataset.verifyPreviousVisibility) {
+          element.style.visibility = element.dataset.verifyPreviousVisibility === 'visible' ? '' : element.dataset.verifyPreviousVisibility;
+          delete element.dataset.verifyPreviousVisibility;
+        }
+      }
+
+      return {
+        id: viewSpec.id,
+        camera: [cameraPosition.x, cameraPosition.y, cameraPosition.z].map((value) => Number(value.toFixed(2))),
+        lookAt: [lookAt.x, lookAt.y, lookAt.z].map((value) => Number(value.toFixed(2))),
+        vehicle: [vehiclePoint.x, vehiclePoint.y, vehiclePoint.z].map((value) => Number(value.toFixed(2))),
+        hiddenUi: Boolean(viewSpec.hideUi)
+      };
+    }, view);
+    await delay(260);
+    const name = `gate4fr-c-potato-${view.id}.png`;
     await screenshot(page, name);
     screenshots.push({ ...sample, name });
     if (view.hideUi) {
@@ -4723,6 +4809,9 @@ async function captureMobile(browser) {
     await stageRouteApproachView(page, 'todo');
     await delay(350);
     await page.screenshot({ path: join(outputDir, 'mobile-todo.png'), fullPage: true });
+    await stageRouteApproachView(page, 'potato');
+    await delay(350);
+    await page.screenshot({ path: join(outputDir, 'mobile-potato.png'), fullPage: true });
   }
   const sample = await page.evaluate(async () => {
     const game = window.__portfolioDrive.game;
@@ -11227,6 +11316,9 @@ function assertGate4FRCLandmarkReplacementVerification(result, failures) {
   const todoAsset = (result.authoredDistrictAssets || []).find((entry) => entry.name === 'EnvPolishTodoPlanningStudio');
   if (!todoAsset?.template) failures.push('Gate 4-FR-C Todo replacement failed: EnvPolishTodoPlanningStudio template missing');
   if (!todoAsset?.placed) failures.push('Gate 4-FR-C Todo replacement failed: EnvPolishTodoPlanningStudio not placed');
+  const potatoAsset = (result.authoredDistrictAssets || []).find((entry) => entry.name === 'EnvPolishPotatoFarmStand');
+  if (!potatoAsset?.template) failures.push('Gate 4-FR-C Potato replacement failed: EnvPolishPotatoFarmStand template missing');
+  if (!potatoAsset?.placed) failures.push('Gate 4-FR-C Potato replacement failed: EnvPolishPotatoFarmStand not placed');
 
   const inspection = result.gate4frCBehindInspection || {};
   if (!inspection.enabled) failures.push('Gate 4-FR-C Behind inspection failed: 360 screenshot pass not enabled');
@@ -11267,6 +11359,11 @@ function assertGate4FRCLandmarkReplacementVerification(result, failures) {
   if (!todoInspection.enabled) failures.push('Gate 4-FR-C Todo inspection failed: 360 screenshot pass not enabled');
   if ((todoInspection.screenshots || []).length !== 7) {
     failures.push(`Gate 4-FR-C Todo inspection failed: screenshots=${(todoInspection.screenshots || []).length}/7`);
+  }
+  const potatoInspection = result.gate4frCPotatoInspection || {};
+  if (!potatoInspection.enabled) failures.push('Gate 4-FR-C Potato inspection failed: 360 screenshot pass not enabled');
+  if ((potatoInspection.screenshots || []).length !== 7) {
+    failures.push(`Gate 4-FR-C Potato inspection failed: screenshots=${(potatoInspection.screenshots || []).length}/7`);
   }
 }
 
