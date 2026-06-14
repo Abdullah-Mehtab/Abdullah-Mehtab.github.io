@@ -178,6 +178,7 @@ try {
   const gate4frCCareerInspection = await captureGate4FRCCareerInspection(page);
   const gate4frCProjectsInspection = await captureGate4FRCProjectsInspection(page);
   const gate4frCContactInspection = await captureGate4FRCContactInspection(page);
+  const gate4frCCircuitInspection = await captureGate4FRCCircuitInspection(page);
   await page.evaluate(() => {
     const game = window.__portfolioDrive.game;
     game.clearFocus();
@@ -276,6 +277,7 @@ try {
     gate4frCCareerInspection,
     gate4frCProjectsInspection,
     gate4frCContactInspection,
+    gate4frCCircuitInspection,
     stuntPrototype,
     stuntFull,
     vehicleLights,
@@ -875,6 +877,89 @@ async function captureGate4FRCContactInspection(page) {
     }, view);
     await delay(260);
     const name = `gate4fr-c-contact-${view.id}.png`;
+    await screenshot(page, name);
+    screenshots.push({ ...sample, name });
+    if (view.hideUi) {
+      await page.evaluate(() => {
+        for (const element of document.querySelectorAll('[data-verify-previous-visibility], .hud, .minimap, .whisper-feed, .circuit-status, #debug-readout')) {
+          if (!element.dataset.verifyPreviousVisibility) continue;
+          element.style.visibility = element.dataset.verifyPreviousVisibility === 'visible' ? '' : element.dataset.verifyPreviousVisibility;
+          delete element.dataset.verifyPreviousVisibility;
+        }
+      });
+    }
+  }
+
+  return { enabled: true, screenshots };
+}
+
+async function captureGate4FRCCircuitInspection(page) {
+  const enabled = await page.evaluate(() => window.__portfolioDrive.game.world.goalGate === 'gate-4fr-c-landmark-rebuilds');
+  if (!enabled) return { enabled: false, screenshots: [] };
+
+  const views = [
+    { id: 'front', right: 0, forward: 30, y: 11.2, lookY: 4.1, fov: 51 },
+    { id: 'rear', right: 0, forward: -25, y: 10.2, lookY: 4.0, fov: 50 },
+    { id: 'left', right: -27, forward: 1, y: 10.2, lookY: 4.0, fov: 50 },
+    { id: 'right', right: 27, forward: 1, y: 10.2, lookY: 4.0, fov: 50 },
+    { id: 'close', right: 0, forward: 17, y: 5.5, lookY: 2.9, fov: 54 },
+    { id: 'top', right: 0, forward: 0, y: 42, lookY: 0.1, fov: 42 },
+    { id: 'ui-hidden-concept-read', right: 0, forward: 29, y: 10.2, lookY: 3.8, fov: 51, hideUi: true }
+  ];
+  const screenshots = [];
+
+  for (const view of views) {
+    const sample = await page.evaluate((viewSpec) => {
+      const game = window.__portfolioDrive.game;
+      const Vector3 = game.camera.position.constructor;
+      const anchor = { x: 58, z: 76, rotation: -0.28 };
+      const localPoint = (right, forward, y = 0) =>
+        new Vector3(
+          anchor.x + Math.cos(anchor.rotation) * right + Math.sin(anchor.rotation) * forward,
+          y,
+          anchor.z - Math.sin(anchor.rotation) * right + Math.cos(anchor.rotation) * forward
+        );
+
+      const vehiclePoint = localPoint(0, 21, 1.08);
+      const direction = localPoint(0, 0, 0).sub(vehiclePoint).setY(0).normalize();
+      const heading = Math.atan2(direction.x, direction.z);
+      game.ui.closePanel?.();
+      game.ui.closeMap?.();
+      game.ui.closeMenu?.();
+      game.vehicle.respawn({ x: vehiclePoint.x, y: 1.08, z: vehiclePoint.z }, heading);
+      game.vehicle.setControls?.({ throttle: 0, brake: 0, steer: 0, boost: false, handbrake: false });
+      game.clearFocus?.();
+
+      const cameraPosition = localPoint(viewSpec.right, viewSpec.forward, viewSpec.y);
+      const lookAt = localPoint(0, 0.02, viewSpec.lookY);
+      game.cameraRig.setCinematic(cameraPosition, lookAt, viewSpec.fov);
+      game.cameraRig.smoothedTarget.copy(lookAt);
+      game.camera.position.copy(cameraPosition);
+      game.camera.fov = viewSpec.fov;
+      game.camera.updateProjectionMatrix();
+      game.camera.lookAt(lookAt);
+
+      const hiddenSelectors = ['.hud', '.minimap', '.whisper-feed', '.circuit-status', '#debug-readout'];
+      for (const element of document.querySelectorAll(hiddenSelectors.join(','))) {
+        if (viewSpec.hideUi) {
+          if (!element.dataset.verifyPreviousVisibility) element.dataset.verifyPreviousVisibility = element.style.visibility || 'visible';
+          element.style.visibility = 'hidden';
+        } else if (element.dataset.verifyPreviousVisibility) {
+          element.style.visibility = element.dataset.verifyPreviousVisibility === 'visible' ? '' : element.dataset.verifyPreviousVisibility;
+          delete element.dataset.verifyPreviousVisibility;
+        }
+      }
+
+      return {
+        id: viewSpec.id,
+        camera: [cameraPosition.x, cameraPosition.y, cameraPosition.z].map((value) => Number(value.toFixed(2))),
+        lookAt: [lookAt.x, lookAt.y, lookAt.z].map((value) => Number(value.toFixed(2))),
+        vehicle: [vehiclePoint.x, vehiclePoint.y, vehiclePoint.z].map((value) => Number(value.toFixed(2))),
+        hiddenUi: Boolean(viewSpec.hideUi)
+      };
+    }, view);
+    await delay(260);
+    const name = `gate4fr-c-circuit-${view.id}.png`;
     await screenshot(page, name);
     screenshots.push({ ...sample, name });
     if (view.hideUi) {
@@ -4371,6 +4456,9 @@ async function captureMobile(browser) {
     await stageRouteApproachView(page, 'contact');
     await delay(350);
     await page.screenshot({ path: join(outputDir, 'mobile-contact.png'), fullPage: true });
+    await stageRouteApproachView(page, 'circuit');
+    await delay(350);
+    await page.screenshot({ path: join(outputDir, 'mobile-circuit.png'), fullPage: true });
   }
   const sample = await page.evaluate(async () => {
     const game = window.__portfolioDrive.game;
@@ -10863,6 +10951,9 @@ function assertGate4FRCLandmarkReplacementVerification(result, failures) {
   const contactAsset = (result.authoredDistrictAssets || []).find((entry) => entry.name === 'EnvPolishSignalHarborCommunicationsStation');
   if (!contactAsset?.template) failures.push('Gate 4-FR-C Contact replacement failed: EnvPolishSignalHarborCommunicationsStation template missing');
   if (!contactAsset?.placed) failures.push('Gate 4-FR-C Contact replacement failed: EnvPolishSignalHarborCommunicationsStation not placed');
+  const circuitAsset = (result.authoredDistrictAssets || []).find((entry) => entry.name === 'EnvPolishCircuitTimeTrialGate');
+  if (!circuitAsset?.template) failures.push('Gate 4-FR-C Circuit replacement failed: EnvPolishCircuitTimeTrialGate template missing');
+  if (!circuitAsset?.placed) failures.push('Gate 4-FR-C Circuit replacement failed: EnvPolishCircuitTimeTrialGate not placed');
 
   const inspection = result.gate4frCBehindInspection || {};
   if (!inspection.enabled) failures.push('Gate 4-FR-C Behind inspection failed: 360 screenshot pass not enabled');
@@ -10883,6 +10974,11 @@ function assertGate4FRCLandmarkReplacementVerification(result, failures) {
   if (!contactInspection.enabled) failures.push('Gate 4-FR-C Contact inspection failed: 360 screenshot pass not enabled');
   if ((contactInspection.screenshots || []).length !== 7) {
     failures.push(`Gate 4-FR-C Contact inspection failed: screenshots=${(contactInspection.screenshots || []).length}/7`);
+  }
+  const circuitInspection = result.gate4frCCircuitInspection || {};
+  if (!circuitInspection.enabled) failures.push('Gate 4-FR-C Circuit inspection failed: 360 screenshot pass not enabled');
+  if ((circuitInspection.screenshots || []).length !== 7) {
+    failures.push(`Gate 4-FR-C Circuit inspection failed: screenshots=${(circuitInspection.screenshots || []).length}/7`);
   }
 }
 
