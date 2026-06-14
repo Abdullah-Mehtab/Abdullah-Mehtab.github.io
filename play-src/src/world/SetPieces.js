@@ -2617,8 +2617,12 @@ export class SetPieces {
       { id: 'circuit', x: 58, z: 76, rotation: -0.28, width: 20.4, depth: 12, accent: 'warmGlow', stone: 'stone', portal: 1.02 }
     ];
 
-    const activeContexts = this.world.gate4frLaunchRemovedMode
-      ? contexts.filter((context) => context.id !== 'landing')
+    const hiddenContextIds = new Set();
+    if (this.world.gate4frLaunchRemovedMode) hiddenContextIds.add('landing');
+    if (this.world.goalGate === 'gate-4fr-c-landmark-rebuilds') hiddenContextIds.add('behind');
+
+    const activeContexts = hiddenContextIds.size
+      ? contexts.filter((context) => !hiddenContextIds.has(context.id))
       : contexts;
 
     for (const context of activeContexts) this.addGate4FSiteContext(group, context);
@@ -4366,48 +4370,6 @@ export class SetPieces {
 
     const circuit = findZone('circuit');
     this.createCircuitStartComposition(group, circuit);
-
-    const behind = findZone('behind');
-    this.addCompositionPad(group, behind.position[0] - 0.4, behind.position[2] - 1.2, 23, 15, this.world.materials.plazaRoad, 0.121, 'BehindWorkshopPad');
-    this.addCompositionPad(group, behind.position[0] - 8.2, behind.position[2] + 3.6, 6.4, 12.5, this.world.materials.paleStone, 0.126, 'BehindProcessWalk');
-    for (let i = 0; i < 8; i += 1) {
-      this.addCompositionPathMark(
-        group,
-        behind.position[0] - 11.8 + i * 2.65,
-        behind.position[2] + 7.4 - i * 1.25,
-        1.3,
-        0.12,
-        i % 2 ? this.world.materials.glowBlue : this.world.materials.glow,
-        -0.34,
-        'BehindProcessGuideMark'
-      );
-    }
-    this.addSign(group, 'BEHIND', 'Process Yard', behind.position[0] - 10, behind.position[2] + 8, -0.2, 0x8fd3ff, 2.3, 'BehindSign');
-    this.addPolishAsset(group, 'EnvPolishBuildWorkbench', behind.position[0] + 0.6, behind.position[2] - 1.2, 0.08, 1.08);
-    this.addPolishAsset(group, 'EnvPolishTerminalPillar', behind.position[0] + 8.4, behind.position[2] + 3.6, 0.3, 0.82);
-    this.addSilhouetteAnchor(group, 'EnvPolishProcessCrane', behind.position[0] - 2.8, behind.position[2] - 6.6, -0.22, 0.82);
-    this.addCompositionAsset(group, 'EnvPolishTerminalCanopy', behind.position[0] + 5.4, behind.position[2] + 5.8, -0.24, 0.64);
-    for (const [dx, dz, rotation, scale] of [[-6, -5, 0.22, 0.86], [1, -7, -0.12, 0.72], [7, -3, 0.42, 0.76]]) {
-      this.addDistrictStoryAsset(group, 'EnvPolishBuildCrateStack', behind.position[0] + dx, behind.position[2] + dz, rotation, scale, 'crateStacks');
-    }
-    this.addCompositionLamp(group, behind.position[0] - 11.2, behind.position[2] - 6.6, 0x8fd3ff, 2.6, 'BehindLampA');
-    this.addCompositionLamp(group, behind.position[0] + 10.8, behind.position[2] + 7.2, 0x7cffb2, 2.5, 'BehindLampB');
-    this.addCompositionAsset(group, 'EnvPolishBenchPlanter', behind.position[0] - 10.4, behind.position[2] + 1.8, 0.28, 0.7);
-    this.addCompositionAsset(group, 'EnvPolishRoadBarrier', behind.position[0] + 11.2, behind.position[2] - 7.2, -0.18, 0.62);
-    this.addCompositionAsset(group, 'EnvPolishRouteLantern', behind.position[0] - 12.4, behind.position[2] - 2.6, -0.34, 0.66);
-    this.addSilhouetteAnchor(group, 'EnvPolishWorkshopCanopy', behind.position[0] - 2.6, behind.position[2] + 4.0, -0.22, 0.86);
-    this.addCompositionPlanter(group, behind.position[0] + 8.8, behind.position[2] - 8.0, 0x8fd3ff);
-    this.addYardEdgeDetails(group, behind.position[0] - 0.4, behind.position[2] - 1.2, 23, 15);
-    for (const [dx, dz, rotation, scale] of [
-      [-6.2, 3.4, -0.28, 0.72],
-      [2.4, 1.6, 0.1, 0.7],
-      [6.5, -5.1, 0.32, 0.72]
-    ]) {
-      this.addCompositionDetailAsset(group, 'EnvPolishYardSurfaceMarks', behind.position[0] + dx, behind.position[2] + dz, rotation, scale, 'surfaceMarks');
-    }
-    this.addCompositionDetailAsset(group, 'EnvPolishWorkshopProcessRail', behind.position[0] - 5.8, behind.position[2] + 5.8, -0.18, 0.76, 'rails');
-    this.addCompositionDetailAsset(group, 'EnvPolishWorkshopProcessRail', behind.position[0] + 5.8, behind.position[2] - 6.2, 0.32, 0.72, 'rails');
-    this.createBehindBuildLife(group, behind);
 
     const potato = findZone('potato');
     this.addSign(group, 'FARM', 'Potato Counter', potato.position[0] - 11, potato.position[2] + 9, 0.32, 0xc79b56, 2.3, 'PotatoFarmSign');

@@ -174,6 +174,7 @@ try {
     routeApproachFraming.push(await sampleRouteApproachFrame(page, zone.id));
     await screenshot(page, `route-approach-${slug(zone.id)}.png`);
   }
+  const gate4frCBehindInspection = await captureGate4FRCBehindInspection(page);
   await page.evaluate(() => {
     const game = window.__portfolioDrive.game;
     game.clearFocus();
@@ -268,6 +269,7 @@ try {
     vehicleChassisGroundContact,
     vehicleGroundingMotion,
     vehicleBodyRoadClipping,
+    gate4frCBehindInspection,
     stuntPrototype,
     stuntFull,
     vehicleLights,
@@ -544,6 +546,89 @@ async function stageRouteApproachView(page, zoneId) {
     game.camera.lookAt(lookAt);
   }, zoneId);
   await delay(380);
+}
+
+async function captureGate4FRCBehindInspection(page) {
+  const enabled = await page.evaluate(() => window.__portfolioDrive.game.world.goalGate === 'gate-4fr-c-landmark-rebuilds');
+  if (!enabled) return { enabled: false, screenshots: [] };
+
+  const views = [
+    { id: 'front', right: 0, forward: -26, y: 10.5, lookY: 3.8, fov: 49 },
+    { id: 'rear', right: 0, forward: 25, y: 9.6, lookY: 3.6, fov: 50 },
+    { id: 'left', right: -24, forward: 0, y: 9.4, lookY: 3.6, fov: 50 },
+    { id: 'right', right: 24, forward: 0, y: 9.4, lookY: 3.6, fov: 50 },
+    { id: 'close', right: 0, forward: -13.5, y: 4.9, lookY: 2.8, fov: 54 },
+    { id: 'top', right: 0, forward: -0.1, y: 37, lookY: 0.1, fov: 42 },
+    { id: 'ui-hidden-concept-read', right: 0, forward: -24, y: 9.2, lookY: 3.4, fov: 49, hideUi: true }
+  ];
+  const screenshots = [];
+
+  for (const view of views) {
+    const sample = await page.evaluate((viewSpec) => {
+      const game = window.__portfolioDrive.game;
+      const Vector3 = game.camera.position.constructor;
+      const anchor = { x: 35, z: -76, rotation: 0.08 };
+      const localPoint = (right, forward, y = 0) =>
+        new Vector3(
+          anchor.x + Math.cos(anchor.rotation) * right + Math.sin(anchor.rotation) * forward,
+          y,
+          anchor.z - Math.sin(anchor.rotation) * right + Math.cos(anchor.rotation) * forward
+        );
+
+      const vehiclePoint = localPoint(0, -14.2, 1.08);
+      const direction = localPoint(0, 0, 0).sub(vehiclePoint).setY(0).normalize();
+      const heading = Math.atan2(direction.x, direction.z);
+      game.ui.closePanel?.();
+      game.ui.closeMap?.();
+      game.ui.closeMenu?.();
+      game.vehicle.respawn({ x: vehiclePoint.x, y: 1.08, z: vehiclePoint.z }, heading);
+      game.vehicle.setControls?.({ throttle: 0, brake: 0, steer: 0, boost: false, handbrake: false });
+      game.clearFocus?.();
+
+      const cameraPosition = localPoint(viewSpec.right, viewSpec.forward, viewSpec.y);
+      const lookAt = localPoint(0, 0.02, viewSpec.lookY);
+      game.cameraRig.setCinematic(cameraPosition, lookAt, viewSpec.fov);
+      game.cameraRig.smoothedTarget.copy(lookAt);
+      game.camera.position.copy(cameraPosition);
+      game.camera.fov = viewSpec.fov;
+      game.camera.updateProjectionMatrix();
+      game.camera.lookAt(lookAt);
+
+      const hiddenSelectors = ['.hud', '.minimap', '.whisper-feed', '.circuit-status', '#debug-readout'];
+      for (const element of document.querySelectorAll(hiddenSelectors.join(','))) {
+        if (viewSpec.hideUi) {
+          if (!element.dataset.verifyPreviousVisibility) element.dataset.verifyPreviousVisibility = element.style.visibility || 'visible';
+          element.style.visibility = 'hidden';
+        } else if (element.dataset.verifyPreviousVisibility) {
+          element.style.visibility = element.dataset.verifyPreviousVisibility === 'visible' ? '' : element.dataset.verifyPreviousVisibility;
+          delete element.dataset.verifyPreviousVisibility;
+        }
+      }
+
+      return {
+        id: viewSpec.id,
+        camera: [cameraPosition.x, cameraPosition.y, cameraPosition.z].map((value) => Number(value.toFixed(2))),
+        lookAt: [lookAt.x, lookAt.y, lookAt.z].map((value) => Number(value.toFixed(2))),
+        vehicle: [vehiclePoint.x, vehiclePoint.y, vehiclePoint.z].map((value) => Number(value.toFixed(2))),
+        hiddenUi: Boolean(viewSpec.hideUi)
+      };
+    }, view);
+    await delay(260);
+    const name = `gate4fr-c-behind-${view.id}.png`;
+    await screenshot(page, name);
+    screenshots.push({ ...sample, name });
+    if (view.hideUi) {
+      await page.evaluate(() => {
+        for (const element of document.querySelectorAll('[data-verify-previous-visibility], .hud, .minimap, .whisper-feed, .circuit-status, #debug-readout')) {
+          if (!element.dataset.verifyPreviousVisibility) continue;
+          element.style.visibility = element.dataset.verifyPreviousVisibility === 'visible' ? '' : element.dataset.verifyPreviousVisibility;
+          delete element.dataset.verifyPreviousVisibility;
+        }
+      });
+    }
+  }
+
+  return { enabled: true, screenshots };
 }
 
 async function sampleRouteApproachFrame(page, zoneId) {
@@ -5179,6 +5264,13 @@ function assertVerification(result) {
   }
   if (result.goalGate === 'gate-4fr-b-start-flow-launch-removal') {
     assertGate4FRBStartFlowLaunchRemovalVerification(result, failures);
+    if (failures.length) {
+      throw new Error(`Play verification failed: ${failures.join('; ')}`);
+    }
+    return;
+  }
+  if (result.goalGate === 'gate-4fr-c-landmark-rebuilds') {
+    assertGate4FRCLandmarkReplacementVerification(result, failures);
     if (failures.length) {
       throw new Error(`Play verification failed: ${failures.join('; ')}`);
     }
@@ -10471,6 +10563,34 @@ function assertGate4FRBStartFlowLaunchRemovalVerification(result, failures) {
   }
   if ((placement.byFootprintKind?.['gate4f-self-acceptance-context-footprint'] || 0) !== 12) {
     failures.push(`Gate 4-FR-B placement failed: context footprints=${placement.byFootprintKind?.['gate4f-self-acceptance-context-footprint'] || 0}/12`);
+  }
+}
+
+function assertGate4FRCLandmarkReplacementVerification(result, failures) {
+  assertGate4ECURoadPathHygieneVerification(result, failures, { launchHubRemoved: true });
+
+  const start = result.verticalSlice?.start || {};
+  if (!start.launchLandmarkSuppressed) failures.push('Gate 4-FR-C launch removal carry-forward failed: start hub suppression flag missing');
+
+  const launchHub = result.gate4eLaunchHub || {};
+  if (launchHub.enabled) failures.push('Gate 4-FR-C launch removal carry-forward failed: launch hub pass still enabled');
+  for (const key of ['sourceAssets', 'authoredAssets', 'gatewayAssets', 'arrivalPortals', 'driveUnderCanopies', 'destinationTiles', 'worldEntryPortals']) {
+    if ((launchHub[key] || 0) !== 0) failures.push(`Gate 4-FR-C launch hub removal carry-forward failed: gate4eLaunchHub.${key}=${launchHub[key] || 0}`);
+  }
+
+  const placement = result.gate3rPlacement || {};
+  if ((placement.roadIntrusions || 0) !== 0) failures.push(`Gate 4-FR-C placement failed: roadIntrusions=${placement.roadIntrusions || 0}`);
+  if ((placement.footprintIntrusions || 0) !== 0) failures.push(`Gate 4-FR-C placement failed: footprintIntrusions=${placement.footprintIntrusions || 0}`);
+  if ((placement.shorelineFootprintIntrusions || 0) !== 0) failures.push(`Gate 4-FR-C placement failed: shorelineFootprintIntrusions=${placement.shorelineFootprintIntrusions || 0}`);
+
+  const authoredAsset = (result.authoredDistrictAssets || []).find((entry) => entry.name === 'EnvPolishBehindEngineeringGarage');
+  if (!authoredAsset?.template) failures.push('Gate 4-FR-C Behind replacement failed: EnvPolishBehindEngineeringGarage template missing');
+  if (!authoredAsset?.placed) failures.push('Gate 4-FR-C Behind replacement failed: EnvPolishBehindEngineeringGarage not placed');
+
+  const inspection = result.gate4frCBehindInspection || {};
+  if (!inspection.enabled) failures.push('Gate 4-FR-C Behind inspection failed: 360 screenshot pass not enabled');
+  if ((inspection.screenshots || []).length !== 7) {
+    failures.push(`Gate 4-FR-C Behind inspection failed: screenshots=${(inspection.screenshots || []).length}/7`);
   }
 }
 
