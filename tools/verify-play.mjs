@@ -566,8 +566,22 @@ async function stageRouteApproachView(page, zoneId) {
   await delay(380);
 }
 
+async function isGate4FRCInspectionGate(page) {
+  return page.evaluate(() => {
+    const gate = window.__portfolioDrive.game.world.goalGate;
+    return gate === 'gate-4fr-c-landmark-rebuilds' || gate === 'gate-4fr-e-final-self-acceptance';
+  });
+}
+
+async function isGate4FRDTerrainGate(page) {
+  return page.evaluate(() => {
+    const gate = window.__portfolioDrive.game.world.goalGate;
+    return gate === 'gate-4fr-d-terrain-bounds-consistency' || gate === 'gate-4fr-e-final-self-acceptance';
+  });
+}
+
 async function captureGate4FRCBehindInspection(page) {
-  const enabled = await page.evaluate(() => window.__portfolioDrive.game.world.goalGate === 'gate-4fr-c-landmark-rebuilds');
+  const enabled = await isGate4FRCInspectionGate(page);
   if (!enabled) return { enabled: false, screenshots: [] };
 
   const views = [
@@ -650,7 +664,7 @@ async function captureGate4FRCBehindInspection(page) {
 }
 
 async function captureGate4FRCCareerInspection(page) {
-  const enabled = await page.evaluate(() => window.__portfolioDrive.game.world.goalGate === 'gate-4fr-c-landmark-rebuilds');
+  const enabled = await isGate4FRCInspectionGate(page);
   if (!enabled) return { enabled: false, screenshots: [] };
 
   const views = [
@@ -733,7 +747,7 @@ async function captureGate4FRCCareerInspection(page) {
 }
 
 async function captureGate4FRCProjectsInspection(page) {
-  const enabled = await page.evaluate(() => window.__portfolioDrive.game.world.goalGate === 'gate-4fr-c-landmark-rebuilds');
+  const enabled = await isGate4FRCInspectionGate(page);
   if (!enabled) return { enabled: false, screenshots: [] };
 
   const views = [
@@ -816,7 +830,7 @@ async function captureGate4FRCProjectsInspection(page) {
 }
 
 async function captureGate4FRCContactInspection(page) {
-  const enabled = await page.evaluate(() => window.__portfolioDrive.game.world.goalGate === 'gate-4fr-c-landmark-rebuilds');
+  const enabled = await isGate4FRCInspectionGate(page);
   if (!enabled) return { enabled: false, screenshots: [] };
 
   const views = [
@@ -904,7 +918,7 @@ async function captureGate4FRCContactInspection(page) {
 }
 
 async function captureGate4FRCCircuitInspection(page) {
-  const enabled = await page.evaluate(() => window.__portfolioDrive.game.world.goalGate === 'gate-4fr-c-landmark-rebuilds');
+  const enabled = await isGate4FRCInspectionGate(page);
   if (!enabled) return { enabled: false, screenshots: [] };
 
   const views = [
@@ -987,7 +1001,7 @@ async function captureGate4FRCCircuitInspection(page) {
 }
 
 async function captureGate4FRCSentinelInspection(page) {
-  const enabled = await page.evaluate(() => window.__portfolioDrive.game.world.goalGate === 'gate-4fr-c-landmark-rebuilds');
+  const enabled = await isGate4FRCInspectionGate(page);
   if (!enabled) return { enabled: false, screenshots: [] };
 
   const views = [
@@ -1070,7 +1084,7 @@ async function captureGate4FRCSentinelInspection(page) {
 }
 
 async function captureGate4FRCAwardsInspection(page) {
-  const enabled = await page.evaluate(() => window.__portfolioDrive.game.world.goalGate === 'gate-4fr-c-landmark-rebuilds');
+  const enabled = await isGate4FRCInspectionGate(page);
   if (!enabled) return { enabled: false, screenshots: [] };
 
   const views = [
@@ -1153,7 +1167,7 @@ async function captureGate4FRCAwardsInspection(page) {
 }
 
 async function captureGate4FRCTodoInspection(page) {
-  const enabled = await page.evaluate(() => window.__portfolioDrive.game.world.goalGate === 'gate-4fr-c-landmark-rebuilds');
+  const enabled = await isGate4FRCInspectionGate(page);
   if (!enabled) return { enabled: false, screenshots: [] };
 
   const views = [
@@ -1236,7 +1250,7 @@ async function captureGate4FRCTodoInspection(page) {
 }
 
 async function captureGate4FRCPotatoInspection(page) {
-  const enabled = await page.evaluate(() => window.__portfolioDrive.game.world.goalGate === 'gate-4fr-c-landmark-rebuilds');
+  const enabled = await isGate4FRCInspectionGate(page);
   if (!enabled) return { enabled: false, screenshots: [] };
 
   const views = [
@@ -1320,7 +1334,7 @@ async function captureGate4FRCPotatoInspection(page) {
 }
 
 async function captureGate4FRDTerrainBounds(page) {
-  const enabled = await page.evaluate(() => window.__portfolioDrive.game.world.goalGate === 'gate-4fr-d-terrain-bounds-consistency');
+  const enabled = await isGate4FRDTerrainGate(page);
   if (!enabled) return { enabled: false, screenshots: [], samples: [], mismatches: [] };
 
   const analysis = await page.evaluate(() => {
@@ -4966,7 +4980,7 @@ async function captureMobile(browser) {
   await page.evaluate(() => window.__portfolioDrive.start());
   await delay(700);
   await page.screenshot({ path: join(outputDir, 'mobile-start.png'), fullPage: true });
-  if (await page.evaluate(() => window.__portfolioDrive.game.world.goalGate === 'gate-4fr-c-landmark-rebuilds')) {
+  if (await isGate4FRCInspectionGate(page)) {
     await stageRouteApproachView(page, 'projects');
     await delay(350);
     await page.screenshot({ path: join(outputDir, 'mobile-projects.png'), fullPage: true });
@@ -6163,6 +6177,13 @@ function assertVerification(result) {
   }
   if (result.goalGate === 'gate-4fr-d-terrain-bounds-consistency') {
     assertGate4FRDTerrainBoundsVerification(result, failures);
+    if (failures.length) {
+      throw new Error(`Play verification failed: ${failures.join('; ')}`);
+    }
+    return;
+  }
+  if (result.goalGate === 'gate-4fr-e-final-self-acceptance') {
+    assertGate4FREFinalSelfAcceptanceVerification(result, failures);
     if (failures.length) {
       throw new Error(`Play verification failed: ${failures.join('; ')}`);
     }
@@ -11589,6 +11610,17 @@ function assertGate4FRDTerrainBoundsVerification(result, failures) {
   if ((placement.roadIntrusions || 0) !== 0) failures.push(`Gate 4-FR-D placement failed: roadIntrusions=${placement.roadIntrusions || 0}`);
   if ((placement.footprintIntrusions || 0) !== 0) failures.push(`Gate 4-FR-D placement failed: footprintIntrusions=${placement.footprintIntrusions || 0}`);
   if ((placement.shorelineFootprintIntrusions || 0) !== 0) failures.push(`Gate 4-FR-D placement failed: shorelineFootprintIntrusions=${placement.shorelineFootprintIntrusions || 0}`);
+}
+
+function assertGate4FREFinalSelfAcceptanceVerification(result, failures) {
+  assertGate4FRBStartFlowLaunchRemovalVerification(result, failures);
+  assertGate4FRCLandmarkReplacementVerification(result, failures);
+  assertGate4FRDTerrainBoundsVerification(result, failures);
+  assertStuntCoveDeleted(result, failures);
+
+  if (result.goalGate !== 'gate-4fr-e-final-self-acceptance') {
+    failures.push(`Gate 4-FR-E failed: goalGate=${result.goalGate || 'none'}`);
+  }
 }
 
 function assertAuthoredDistrictAsset(result, assetName, label, failures) {
