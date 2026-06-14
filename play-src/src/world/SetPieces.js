@@ -2620,6 +2620,7 @@ export class SetPieces {
     const hiddenContextIds = new Set();
     if (this.world.gate4frLaunchRemovedMode) hiddenContextIds.add('landing');
     if (this.world.goalGate === 'gate-4fr-c-landmark-rebuilds') hiddenContextIds.add('behind');
+    if (this.world.goalGate === 'gate-4fr-c-landmark-rebuilds') hiddenContextIds.add('career');
 
     const activeContexts = hiddenContextIds.size
       ? contexts.filter((context) => !hiddenContextIds.has(context.id))

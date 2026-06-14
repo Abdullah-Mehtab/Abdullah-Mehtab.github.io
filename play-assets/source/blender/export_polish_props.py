@@ -1744,66 +1744,80 @@ def create_awards_monument(mats):
 def create_career_software_campus(mats):
     group = root("EnvPolishCareerSoftwareHouse")
 
-    cube("CareerCampus_CivicFoundation", group, (0, 0.12, 0), (19.2, 0.24, 12.2), mats["stone_shadow"], bevel=0.08)
-    cube("CareerCampus_RouteForecourt", group, (0, 0.28, -6.55), (13.8, 0.18, 2.0), mats["paper"], bevel=0.045)
-    cube("CareerCampus_DeliveryWing", group, (-5.2, 3.02, 0.24), (6.25, 5.75, 7.35), mats["stone_shadow"], bevel=0.068)
-    cube("CareerCampus_EngineeringWing", group, (5.25, 3.02, 0.24), (6.25, 5.75, 7.35), mats["stone"], bevel=0.068)
-    cube("CareerCampus_CentralAtrium", group, (0, 3.16, -1.1), (4.58, 5.95, 4.8), mats["glass"], bevel=0.04)
-    cube("CareerCampus_AtriumDarkFrame", group, (0, 3.16, -3.62), (5.15, 6.15, 0.34), mats["dark"], bevel=0.032)
-    cube("CareerCampus_AtriumGlassFace", group, (0, 3.16, -3.86), (4.15, 4.85, 0.08), mats["glass"], bevel=0.01)
-    cube("CareerCampus_EntryCanopy", group, (0, 3.42, -5.1), (8.4, 0.36, 1.28), mats["dark"], bevel=0.034)
-    cube("CareerCampus_EntryGlow", group, (0, 3.16, -5.72), (6.35, 0.08, 0.06), mats["screen"], bevel=0.004)
-    cube("CareerCampus_ReceptionPortal", group, (0, 1.82, -4.74), (5.7, 2.82, 0.34), mats["dark"], bevel=0.026)
-    cube("CareerCampus_ReceptionGlass", group, (0, 1.82, -4.96), (4.15, 1.86, 0.08), mats["glass"], bevel=0.008)
-    cube("CareerCampus_RoadsideLobbyFrame", group, (9.42, 2.7, -0.9), (0.24, 4.42, 5.25), mats["dark"], bevel=0.026)
-    cube("CareerCampus_RoadsideLobbyGlass", group, (9.56, 2.7, -0.9), (0.08, 3.18, 4.1), mats["glass"], bevel=0.008)
-    cube("CareerCampus_RoadsideArrivalCanopy", group, (9.9, 3.88, -0.9), (1.0, 0.3, 5.35), mats["dark"], bevel=0.02)
-    cube("CareerCampus_RoadsideInterviewPortal", group, (9.62, 1.5, -2.38), (0.08, 1.58, 1.6), mats["screen"], bevel=0.006)
-    for index, z in enumerate([-2.8, -1.55, -0.3, 0.95, 2.2]):
-        cube(f"CareerCampus_RoadsideTeamWindow_{index}", group, (9.64, 2.84, z), (0.055, 0.62, 0.72), mats["glass"], bevel=0.005)
-        cube(f"CareerCampus_RoadsideSprintLine_{index}", group, (9.7, 1.1, z), (0.045, 0.1, 0.52), [mats["screen"], mats["mint"], mats["aqua"], mats["mint"], mats["screen"]][index], bevel=0.002)
+    cube("CareerCampus_GroundedPlinth", group, (0, 0.12, -0.22), (19.0, 0.24, 12.0), mats["stone_shadow"], bevel=0.08)
+    cube("CareerCampus_RoadArrivalWalk", group, (0, 0.3, -6.36), (13.4, 0.16, 1.45), mats["paper"], bevel=0.04)
+    cube("CareerCampus_MainOfficeBar", group, (0, 3.08, 0.05), (13.65, 5.82, 7.0), mats["stone_shadow"], bevel=0.075)
+    cube("CareerCampus_DeliveryWing", group, (-5.9, 3.28, -0.05), (4.55, 6.18, 7.45), mats["stone"], bevel=0.064)
+    cube("CareerCampus_EngineeringWing", group, (5.9, 3.28, -0.05), (4.55, 6.18, 7.45), mats["stone"], bevel=0.064)
+    cube("CareerCampus_CentralAtriumFrame", group, (0, 3.42, -3.4), (5.4, 6.55, 0.34), mats["dark"], bevel=0.03)
+    cube("CareerCampus_CentralAtriumGlass", group, (0, 3.32, -3.65), (4.36, 5.1, 0.09), mats["glass"], bevel=0.008)
+    cube("CareerCampus_ReceptionPortico", group, (0, 2.08, -4.78), (6.05, 3.44, 0.38), mats["dark"], bevel=0.028)
+    cube("CareerCampus_ReceptionWarmBackWall", group, (0, 1.86, -4.94), (4.38, 2.42, 0.08), mats["stone"], bevel=0.01)
+    cube("CareerCampus_ReceptionDoorGlassLeft", group, (-1.04, 1.7, -5.04), (1.72, 2.02, 0.08), mats["glass"], bevel=0.008)
+    cube("CareerCampus_ReceptionDoorGlassRight", group, (1.04, 1.7, -5.04), (1.72, 2.02, 0.08), mats["glass"], bevel=0.008)
+    cube("CareerCampus_ReceptionDoorCenterMullion", group, (0, 1.7, -5.1), (0.08, 2.1, 0.07), mats["dark"], bevel=0.003)
+    cube("CareerCampus_ReceptionDoorHandleLeft", group, (-0.18, 1.62, -5.16), (0.05, 0.46, 0.035), mats["paper"], bevel=0.002)
+    cube("CareerCampus_ReceptionDoorHandleRight", group, (0.18, 1.62, -5.16), (0.05, 0.46, 0.035), mats["paper"], bevel=0.002)
+    cube("CareerCampus_EntryCanopy", group, (0, 3.8, -5.32), (8.5, 0.34, 1.28), mats["dark"], bevel=0.028)
+    cube("CareerCampus_EntryCanopySoffit", group, (0, 3.56, -5.46), (7.72, 0.08, 0.92), mats["stone"], bevel=0.01)
+    cube("CareerCampus_EntryLight", group, (0, 3.52, -5.98), (6.3, 0.08, 0.06), mats["screen"], bevel=0.004)
+    cube("CareerCampus_PublicLobbyMat", group, (0, 0.38, -5.62), (4.8, 0.06, 0.72), mats["stone_shadow"], bevel=0.018)
+    for index, z in enumerate([-6.72, -7.1, -7.48]):
+        cube(f"CareerCampus_EntryStep_{index}", group, (0, 0.2 + index * 0.045, z), (5.6 - index * 0.62, 0.12, 0.34), mats["paper"], bevel=0.022)
 
-    for side, x_center, mat_key in [("Delivery", -5.2, "screen"), ("Engineering", 5.25, "mint")]:
-        for row, y in enumerate([1.35, 2.28, 3.21, 4.14]):
-            cube(f"CareerCampus_{side}_FloorBand_{row}", group, (x_center, y + 0.36, -3.6), (5.1, 0.08, 0.08), mats["dark"], bevel=0.004)
-            for col, x_offset in enumerate([-1.9, -0.65, 0.65, 1.9]):
-                cube(
-                    f"CareerCampus_{side}_OfficeWindow_{row}_{col}",
-                    group,
-                    (x_center + x_offset, y, -3.72),
-                    (0.78, 0.48, 0.07),
-                    mats["glass"],
-                    bevel=0.006
-                )
-        cube(f"CareerCampus_{side}_RoofCap", group, (x_center, 6.02, 0.24), (6.75, 0.36, 7.72), mats["dark"], bevel=0.026)
-        cube(f"CareerCampus_{side}_VerticalAccent", group, (x_center + (-2.96 if side == "Delivery" else 2.96), 3.2, -3.84), (0.16, 4.65, 0.08), mats[mat_key], bevel=0.004)
+    for side, x_center, accent in [("Delivery", -5.9, mats["screen"]), ("Engineering", 5.9, mats["mint"])]:
+        cube(f"CareerCampus_{side}_RoofCap", group, (x_center, 6.52, -0.05), (5.05, 0.36, 7.9), mats["dark"], bevel=0.024)
+        cube(f"CareerCampus_{side}_EntrancePier", group, (x_center, 2.96, -4.0), (4.65, 5.45, 0.32), mats["dark"], bevel=0.022)
+        cube(f"CareerCampus_{side}_VerticalIdentityBand", group, (x_center, 3.22, -4.2), (0.18, 4.55, 0.08), accent, bevel=0.004)
+        for row, y in enumerate([1.34, 2.18, 3.02, 3.86, 4.7]):
+            cube(f"CareerCampus_{side}_FrontFloorBand_{row}", group, (x_center, y + 0.32, -4.08), (3.75, 0.07, 0.07), mats["dark"], bevel=0.003)
+            for col, x_offset in enumerate([-1.35, -0.45, 0.45, 1.35]):
+                cube(f"CareerCampus_{side}_FrontWindow_{row}_{col}", group, (x_center + x_offset, y, -4.16), (0.58, 0.44, 0.07), mats["glass"], bevel=0.005)
 
-    for index, x in enumerate([-1.6, -0.8, 0, 0.8, 1.6]):
-        cube(f"CareerCampus_AtriumMullion_{index}", group, (x, 3.16, -3.95), (0.08, 4.6, 0.06), mats["dark"], bevel=0.003)
-    for index, y in enumerate([1.52, 2.28, 3.04, 3.8, 4.56]):
-        cube(f"CareerCampus_AtriumCodeLine_{index}", group, (0, y, -4.03), (3.1 - (index % 2) * 0.42, 0.055, 0.045), [mats["screen"], mats["mint"], mats["aqua"], mats["screen"], mats["mint"]][index], bevel=0.002)
+    for index, x in enumerate([-1.6, -0.8, 0.0, 0.8, 1.6]):
+        cube(f"CareerCampus_AtriumMullion_{index}", group, (x, 3.32, -3.75), (0.075, 4.7, 0.06), mats["dark"], bevel=0.003)
+    for index, y in enumerate([1.48, 2.18, 2.88, 3.58, 4.28]):
+        cube(f"CareerCampus_AtriumWorkLine_{index}", group, (0, y, -3.83), (3.2 - (index % 2) * 0.36, 0.052, 0.045), [mats["screen"], mats["mint"], mats["aqua"], mats["screen"], mats["mint"]][index], bevel=0.002)
+    for index, x in enumerate([-1.18, -0.38, 0.42, 1.22]):
+        cube(f"CareerCampus_LobbyTurnstile_{index}", group, (x, 0.86, -4.98), (0.12, 0.62, 0.18), mats["dark"], bevel=0.006)
+        cube(f"CareerCampus_LobbyTurnstileLight_{index}", group, (x, 1.22, -5.08), (0.14, 0.08, 0.035), [mats["screen"], mats["mint"], mats["aqua"], mats["screen"]][index], bevel=0.002)
 
-    cube("CareerCampus_Skybridge", group, (0, 5.54, 0.1), (11.2, 0.48, 1.08), mats["glass"], bevel=0.022)
-    cube("CareerCampus_SkybridgeRail", group, (0, 5.86, -0.58), (11.65, 0.12, 0.08), mats["mint"], bevel=0.004)
-    cube("CareerCampus_Boardroom", group, (0, 7.02, -1.2), (6.1, 1.7, 2.12), mats["glass"], bevel=0.024)
-    cube("CareerCampus_BoardroomRoof", group, (0, 8.05, -1.2), (6.55, 0.34, 2.52), mats["dark"], bevel=0.024)
-    cube("CareerCampus_DeliveryTower", group, (-8.32, 5.14, 0.82), (1.42, 9.65, 2.8), mats["stone_shadow"], bevel=0.038)
-    cube("CareerCampus_DeliveryTowerGlass", group, (-7.46, 4.82, -0.08), (0.08, 6.15, 1.16), mats["glass"], bevel=0.005)
-    cube("CareerCampus_EngineeringTower", group, (8.38, 5.14, 0.82), (1.42, 9.65, 2.8), mats["stone"], bevel=0.038)
-    cube("CareerCampus_EngineeringTowerGlass", group, (7.5, 4.82, -0.08), (0.08, 6.15, 1.16), mats["glass"], bevel=0.005)
-    cube("CareerCampus_TowerCapDelivery", group, (-8.32, 10.18, 0.82), (1.82, 0.38, 3.2), mats["dark"], bevel=0.026)
-    cube("CareerCampus_TowerCapEngineering", group, (8.38, 10.18, 0.82), (1.82, 0.38, 3.2), mats["dark"], bevel=0.026)
+    cube("CareerCampus_SideWallLeft", group, (-8.35, 3.0, -0.05), (0.28, 5.45, 6.6), mats["stone_shadow"], bevel=0.028)
+    cube("CareerCampus_SideWallRight", group, (8.35, 3.0, -0.05), (0.28, 5.45, 6.6), mats["stone_shadow"], bevel=0.028)
+    for side, x, material in [("Left", -8.52, mats["screen"]), ("Right", 8.52, mats["mint"])]:
+        cube(f"CareerCampus_{side}_SideCanopy", group, (x, 4.86, -0.05), (0.2, 0.28, 5.4), mats["dark"], bevel=0.014)
+        for row, y in enumerate([1.44, 2.28, 3.12, 3.96]):
+            for col, z in enumerate([-2.18, -0.72, 0.74, 2.2]):
+                cube(f"CareerCampus_{side}_SideWindow_{row}_{col}", group, (x, y, z), (0.065, 0.46, 0.68), mats["glass"], bevel=0.005)
+        cube(f"CareerCampus_{side}_TeamTrace", group, (x, 2.15, -3.06), (0.065, 0.08, 1.42), material, bevel=0.003)
 
-    cube("CareerCampus_CodeReviewWall", group, (-6.96, 2.25, 4.12), (2.5, 2.75, 0.22), mats["dark"], bevel=0.02)
-    for index, y in enumerate([1.28, 1.76, 2.24, 2.72, 3.2]):
-        cube(f"CareerCampus_CodeReviewLine_{index}", group, (-6.96, y, 4.0), (1.68 - index * 0.12, 0.055, 0.055), [mats["screen"], mats["mint"], mats["aqua"], mats["screen"], mats["mint"]][index], bevel=0.002)
+    cube("CareerCampus_RearServiceFacade", group, (0, 2.92, 3.72), (13.3, 5.25, 0.28), mats["stone_shadow"], bevel=0.026)
+    cube("CareerCampus_RearServiceApron", group, (-4.1, 0.32, 4.72), (3.4, 0.12, 1.34), mats["stone"], bevel=0.02)
+    cube("CareerCampus_RearDeliveryDoor", group, (-4.1, 1.55, 3.92), (1.22, 2.35, 0.12), mats["wood"], bevel=0.014)
+    cube("CareerCampus_RearDeliveryHeader", group, (-4.1, 2.78, 4.0), (1.62, 0.18, 0.08), mats["paper"], bevel=0.004)
+    cube("CareerCampus_RearTeamGlass", group, (1.7, 2.75, 3.94), (5.7, 2.15, 0.1), mats["glass"], bevel=0.008)
+    cube("CareerCampus_RearTeamBench", group, (1.7, 1.16, 4.08), (4.8, 0.18, 0.16), mats["wood"], bevel=0.008)
+    cube("CareerCampus_RearHeader", group, (0, 5.65, 3.98), (13.6, 0.28, 0.32), mats["dark"], bevel=0.014)
+    for index, x in enumerate([-1.0, 0.4, 1.8, 3.2]):
+        cube(f"CareerCampus_RearSprintBoard_{index}", group, (x, 2.78, 4.08), (0.1, 1.92, 0.07), [mats["screen"], mats["mint"], mats["aqua"], mats["paper"]][index], bevel=0.003)
 
-    cube("CareerCampus_PeopleOpsWing", group, (6.52, 1.52, 4.0), (3.2, 2.55, 1.55), mats["wood"], bevel=0.04)
-    cube("CareerCampus_PeopleOpsGlass", group, (6.52, 1.72, 3.18), (2.4, 1.25, 0.08), mats["glass"], bevel=0.008)
-    cube("CareerCampus_ProductWing", group, (-1.95, 1.52, 4.16), (3.6, 2.55, 1.35), mats["stone"], bevel=0.04)
-    cube("CareerCampus_ProductGlass", group, (-1.95, 1.72, 3.44), (2.6, 1.2, 0.08), mats["glass"], bevel=0.008)
-    for index, x in enumerate([-3.4, -1.7, 0, 1.7, 3.4]):
-        cube(f"CareerCampus_ForecourtStep_{index}", group, (x, 0.44, -6.92), (0.9, 0.08, 0.26), [mats["paper"], mats["mint"], mats["screen"], mats["mint"], mats["paper"]][index], bevel=0.004)
+    cube("CareerCampus_RoofDeck", group, (0, 6.86, -0.18), (14.5, 0.32, 7.9), mats["dark"], bevel=0.026)
+    cube("CareerCampus_RooftopBoardroom", group, (0, 7.92, -1.35), (5.75, 1.64, 2.12), mats["glass"], bevel=0.022)
+    cube("CareerCampus_BoardroomRoof", group, (0, 8.86, -1.35), (6.2, 0.3, 2.5), mats["dark"], bevel=0.018)
+    cube("CareerCampus_RooftopTerraceDeck", group, (0, 7.08, 2.82), (6.2, 0.12, 1.55), mats["stone"], bevel=0.018)
+    for index, x in enumerate([-2.55, -1.35, -0.15, 1.05, 2.25]):
+        cube(f"CareerCampus_RooftopSprintStandup_{index}", group, (x, 7.42, 2.78), (0.42, 0.56, 0.08), [mats["screen"], mats["mint"], mats["aqua"], mats["paper"], mats["screen"]][index], bevel=0.004)
+    cube("CareerCampus_DeliveryTower", group, (-7.35, 7.0, 0.82), (1.22, 7.15, 2.55), mats["stone_shadow"], bevel=0.034)
+    cube("CareerCampus_EngineeringTower", group, (7.35, 7.0, 0.82), (1.22, 7.15, 2.55), mats["stone_shadow"], bevel=0.034)
+    cube("CareerCampus_DeliveryTowerCap", group, (-7.35, 10.78, 0.82), (1.65, 0.32, 2.92), mats["dark"], bevel=0.022)
+    cube("CareerCampus_EngineeringTowerCap", group, (7.35, 10.78, 0.82), (1.65, 0.32, 2.92), mats["dark"], bevel=0.022)
+    for side, x, material in [("Delivery", -7.98, mats["screen"]), ("Engineering", 7.98, mats["mint"])]:
+        for index, y in enumerate([4.6, 5.55, 6.5, 7.45, 8.4]):
+            cube(f"CareerCampus_{side}_TowerWindow_{index}", group, (x, y, 0.05), (0.06, 0.08, 1.05), material, bevel=0.003)
+
+    cube("CareerCampus_AttachedSkywalk", group, (0, 5.6, 1.28), (9.8, 0.36, 0.72), mats["glass"], bevel=0.016)
+    cube("CareerCampus_SkywalkRail", group, (0, 5.88, 0.86), (10.2, 0.1, 0.08), mats["mint"], bevel=0.004)
+    cube("CareerCampus_ForecourtBenchWall", group, (0, 0.72, -6.0), (8.6, 0.72, 0.18), mats["stone"], bevel=0.018)
 
 
 def create_career_software_house(mats):

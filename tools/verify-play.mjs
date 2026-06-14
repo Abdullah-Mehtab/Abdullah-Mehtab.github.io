@@ -175,6 +175,7 @@ try {
     await screenshot(page, `route-approach-${slug(zone.id)}.png`);
   }
   const gate4frCBehindInspection = await captureGate4FRCBehindInspection(page);
+  const gate4frCCareerInspection = await captureGate4FRCCareerInspection(page);
   await page.evaluate(() => {
     const game = window.__portfolioDrive.game;
     game.clearFocus();
@@ -270,6 +271,7 @@ try {
     vehicleGroundingMotion,
     vehicleBodyRoadClipping,
     gate4frCBehindInspection,
+    gate4frCCareerInspection,
     stuntPrototype,
     stuntFull,
     vehicleLights,
@@ -615,6 +617,89 @@ async function captureGate4FRCBehindInspection(page) {
     }, view);
     await delay(260);
     const name = `gate4fr-c-behind-${view.id}.png`;
+    await screenshot(page, name);
+    screenshots.push({ ...sample, name });
+    if (view.hideUi) {
+      await page.evaluate(() => {
+        for (const element of document.querySelectorAll('[data-verify-previous-visibility], .hud, .minimap, .whisper-feed, .circuit-status, #debug-readout')) {
+          if (!element.dataset.verifyPreviousVisibility) continue;
+          element.style.visibility = element.dataset.verifyPreviousVisibility === 'visible' ? '' : element.dataset.verifyPreviousVisibility;
+          delete element.dataset.verifyPreviousVisibility;
+        }
+      });
+    }
+  }
+
+  return { enabled: true, screenshots };
+}
+
+async function captureGate4FRCCareerInspection(page) {
+  const enabled = await page.evaluate(() => window.__portfolioDrive.game.world.goalGate === 'gate-4fr-c-landmark-rebuilds');
+  if (!enabled) return { enabled: false, screenshots: [] };
+
+  const views = [
+    { id: 'front', right: 0, forward: -28, y: 11.6, lookY: 4.1, fov: 49 },
+    { id: 'rear', right: 0, forward: 24, y: 10.2, lookY: 4.0, fov: 50 },
+    { id: 'left', right: -25, forward: 0, y: 10.2, lookY: 4.0, fov: 50 },
+    { id: 'right', right: 25, forward: 0, y: 10.2, lookY: 4.0, fov: 50 },
+    { id: 'close', right: 0, forward: -14.8, y: 5.4, lookY: 3.0, fov: 54 },
+    { id: 'top', right: 0, forward: 0, y: 40, lookY: 0.1, fov: 42 },
+    { id: 'ui-hidden-concept-read', right: 0, forward: -26, y: 10.2, lookY: 3.8, fov: 49, hideUi: true }
+  ];
+  const screenshots = [];
+
+  for (const view of views) {
+    const sample = await page.evaluate((viewSpec) => {
+      const game = window.__portfolioDrive.game;
+      const Vector3 = game.camera.position.constructor;
+      const anchor = { x: 74, z: -60, rotation: -0.65 };
+      const localPoint = (right, forward, y = 0) =>
+        new Vector3(
+          anchor.x + Math.cos(anchor.rotation) * right + Math.sin(anchor.rotation) * forward,
+          y,
+          anchor.z - Math.sin(anchor.rotation) * right + Math.cos(anchor.rotation) * forward
+        );
+
+      const vehiclePoint = localPoint(0, -17.2, 1.08);
+      const direction = localPoint(0, 0, 0).sub(vehiclePoint).setY(0).normalize();
+      const heading = Math.atan2(direction.x, direction.z);
+      game.ui.closePanel?.();
+      game.ui.closeMap?.();
+      game.ui.closeMenu?.();
+      game.vehicle.respawn({ x: vehiclePoint.x, y: 1.08, z: vehiclePoint.z }, heading);
+      game.vehicle.setControls?.({ throttle: 0, brake: 0, steer: 0, boost: false, handbrake: false });
+      game.clearFocus?.();
+
+      const cameraPosition = localPoint(viewSpec.right, viewSpec.forward, viewSpec.y);
+      const lookAt = localPoint(0, 0.02, viewSpec.lookY);
+      game.cameraRig.setCinematic(cameraPosition, lookAt, viewSpec.fov);
+      game.cameraRig.smoothedTarget.copy(lookAt);
+      game.camera.position.copy(cameraPosition);
+      game.camera.fov = viewSpec.fov;
+      game.camera.updateProjectionMatrix();
+      game.camera.lookAt(lookAt);
+
+      const hiddenSelectors = ['.hud', '.minimap', '.whisper-feed', '.circuit-status', '#debug-readout'];
+      for (const element of document.querySelectorAll(hiddenSelectors.join(','))) {
+        if (viewSpec.hideUi) {
+          if (!element.dataset.verifyPreviousVisibility) element.dataset.verifyPreviousVisibility = element.style.visibility || 'visible';
+          element.style.visibility = 'hidden';
+        } else if (element.dataset.verifyPreviousVisibility) {
+          element.style.visibility = element.dataset.verifyPreviousVisibility === 'visible' ? '' : element.dataset.verifyPreviousVisibility;
+          delete element.dataset.verifyPreviousVisibility;
+        }
+      }
+
+      return {
+        id: viewSpec.id,
+        camera: [cameraPosition.x, cameraPosition.y, cameraPosition.z].map((value) => Number(value.toFixed(2))),
+        lookAt: [lookAt.x, lookAt.y, lookAt.z].map((value) => Number(value.toFixed(2))),
+        vehicle: [vehiclePoint.x, vehiclePoint.y, vehiclePoint.z].map((value) => Number(value.toFixed(2))),
+        hiddenUi: Boolean(viewSpec.hideUi)
+      };
+    }, view);
+    await delay(260);
+    const name = `gate4fr-c-career-${view.id}.png`;
     await screenshot(page, name);
     screenshots.push({ ...sample, name });
     if (view.hideUi) {
@@ -10586,11 +10671,19 @@ function assertGate4FRCLandmarkReplacementVerification(result, failures) {
   const authoredAsset = (result.authoredDistrictAssets || []).find((entry) => entry.name === 'EnvPolishBehindEngineeringGarage');
   if (!authoredAsset?.template) failures.push('Gate 4-FR-C Behind replacement failed: EnvPolishBehindEngineeringGarage template missing');
   if (!authoredAsset?.placed) failures.push('Gate 4-FR-C Behind replacement failed: EnvPolishBehindEngineeringGarage not placed');
+  const careerAsset = (result.authoredDistrictAssets || []).find((entry) => entry.name === 'EnvPolishCareerSoftwareHouse');
+  if (!careerAsset?.template) failures.push('Gate 4-FR-C Career replacement failed: EnvPolishCareerSoftwareHouse template missing');
+  if (!careerAsset?.placed) failures.push('Gate 4-FR-C Career replacement failed: EnvPolishCareerSoftwareHouse not placed');
 
   const inspection = result.gate4frCBehindInspection || {};
   if (!inspection.enabled) failures.push('Gate 4-FR-C Behind inspection failed: 360 screenshot pass not enabled');
   if ((inspection.screenshots || []).length !== 7) {
     failures.push(`Gate 4-FR-C Behind inspection failed: screenshots=${(inspection.screenshots || []).length}/7`);
+  }
+  const careerInspection = result.gate4frCCareerInspection || {};
+  if (!careerInspection.enabled) failures.push('Gate 4-FR-C Career inspection failed: 360 screenshot pass not enabled');
+  if ((careerInspection.screenshots || []).length !== 7) {
+    failures.push(`Gate 4-FR-C Career inspection failed: screenshots=${(careerInspection.screenshots || []).length}/7`);
   }
 }
 
