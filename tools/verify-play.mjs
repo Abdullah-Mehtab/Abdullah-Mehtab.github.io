@@ -2,8 +2,8 @@
 // ABOUTME: Captures screenshots, gameplay probes, renderer metrics, and console failures.
 import { createServer } from 'node:http';
 import { existsSync, readFile, statSync } from 'node:fs';
-import { mkdir, writeFile } from 'node:fs/promises';
-import { extname, join, resolve } from 'node:path';
+import { mkdir, rm, writeFile } from 'node:fs/promises';
+import { extname, join, resolve, sep } from 'node:path';
 import puppeteer from 'puppeteer-core';
 import {
   circuitCheckpoints,
@@ -19,7 +19,8 @@ import {
 
 const repoRoot = resolve(import.meta.dirname, '..');
 const chromePath = findChrome();
-const outputDir = resolve(repoRoot, '.codex-tmp', `play-verify-${new Date().toISOString().replace(/[:.]/g, '-')}`);
+const verifyRun = createVerifyRunConfig();
+const outputDir = verifyRun.outputDir;
 let serverInstance = null;
 const baseUrl = process.env.BASE_URL || await startStaticServer();
 const consoleMessages = [];
@@ -86,6 +87,9 @@ const authoredStuntAssets = [
   'EnvPolishStuntArrowFence'
 ];
 
+if (verifyRun.replaceExisting) {
+  await rm(outputDir, { recursive: true, force: true });
+}
 await mkdir(outputDir, { recursive: true });
 
 const browser = await puppeteer.launch({
@@ -258,6 +262,8 @@ try {
   const result = {
     baseUrl,
     outputDir,
+    artifactMode: verifyRun.mode,
+    artifactName: verifyRun.name,
     consoleMessages,
     pageErrors,
     glbAssets: getGlbAssetSizes(),
@@ -302,6 +308,64 @@ try {
   await browser.close();
   if (serverInstance) {
     await new Promise((resolveClose) => serverInstance.close(resolveClose));
+  }
+}
+
+function createVerifyRunConfig() {
+  const explicitOutput = process.env.PLAY_VERIFY_OUTPUT_DIR?.trim();
+  const checkpointName = process.env.PLAY_VERIFY_CHECKPOINT?.trim() || readCliValue('--checkpoint');
+  const tmpRoot = resolve(repoRoot, '.codex-tmp');
+
+  if (explicitOutput) {
+    const outputDir = resolve(repoRoot, explicitOutput);
+    assertTmpOutputPath(outputDir, tmpRoot);
+    return {
+      mode: 'custom',
+      name: explicitOutput,
+      outputDir,
+      replaceExisting: true
+    };
+  }
+
+  if (checkpointName) {
+    const safeName = safeArtifactName(checkpointName);
+    return {
+      mode: 'checkpoint',
+      name: safeName,
+      outputDir: resolve(tmpRoot, 'checkpoints', safeName),
+      replaceExisting: true
+    };
+  }
+
+  return {
+    mode: 'scratch',
+    name: 'play-verify-latest',
+    outputDir: resolve(tmpRoot, 'scratch', 'play-verify-latest'),
+    replaceExisting: true
+  };
+}
+
+function readCliValue(flag) {
+  const exact = process.argv.find((item) => item.startsWith(`${flag}=`));
+  if (exact) return exact.slice(flag.length + 1).trim();
+  const index = process.argv.indexOf(flag);
+  if (index >= 0 && process.argv[index + 1]) return process.argv[index + 1].trim();
+  return '';
+}
+
+function safeArtifactName(value) {
+  return value
+    .toLowerCase()
+    .replace(/[^a-z0-9._-]+/g, '-')
+    .replace(/-+/g, '-')
+    .replace(/^-|-$/g, '')
+    .slice(0, 120) || 'play-verify-checkpoint';
+}
+
+function assertTmpOutputPath(outputDir, tmpRoot) {
+  const normalizedRoot = tmpRoot.endsWith(sep) ? tmpRoot : `${tmpRoot}${sep}`;
+  if (outputDir !== tmpRoot && !outputDir.startsWith(normalizedRoot)) {
+    throw new Error(`PLAY_VERIFY_OUTPUT_DIR must stay inside .codex-tmp: ${outputDir}`);
   }
 }
 

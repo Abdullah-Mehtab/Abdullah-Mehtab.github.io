@@ -6,6 +6,7 @@
   "scripts": {
     "check:site": "node tools/check-site.mjs",
     "check:screenshots": "node tools/check-site.mjs --screenshots",
+    "cleanup:artifacts": "node tools/cleanup-codex-tmp.mjs",
     "play:assets": "node play-assets/tools/build-assets.mjs",
     "play:validate-map": "node play-assets/tools/validate-map.mjs",
     "play:verify": "node tools/verify-play.mjs",
