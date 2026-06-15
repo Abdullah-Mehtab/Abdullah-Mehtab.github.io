@@ -681,69 +681,96 @@ def create_project_cable_reel(mats):
 def create_projects_public_build_hall(mats):
     group = root("EnvPolishProjectsFoundryBuilding")
 
-    cube("ProjectsBuildHall_GroundedPlinth", group, (0, 0.12, -0.16), (19.8, 0.24, 12.6), mats["stone_shadow"], bevel=0.08)
-    cube("ProjectsBuildHall_RoadArrivalWalk", group, (0, 0.3, -6.78), (13.8, 0.16, 1.55), mats["paper"], bevel=0.04)
-    cube("ProjectsBuildHall_MainBuildVolume", group, (-0.4, 3.05, 0.25), (14.9, 5.85, 7.75), mats["brick"], bevel=0.075)
-    cube("ProjectsBuildHall_LeftRepositoryWing", group, (-7.9, 2.72, 0.38), (3.3, 5.2, 7.1), mats["stone"], bevel=0.06)
-    cube("ProjectsBuildHall_RightFabricationWing", group, (7.45, 2.56, 0.34), (3.55, 4.85, 6.7), mats["wood"], bevel=0.062)
+    cube("ProjectsBuildHall_SitePlinth", group, (0, 0.12, -0.1), (20.2, 0.24, 13.2), mats["stone_shadow"], bevel=0.08)
+    cube("ProjectsBuildHall_RoadForecourt", group, (0, 0.31, -6.95), (11.8, 0.16, 1.75), mats["paper"], bevel=0.04)
+    cube("ProjectsBuildHall_MainWorkshopVolume", group, (0, 3.0, 0.18), (14.8, 5.72, 8.25), mats["brick"], bevel=0.075)
+    cube("ProjectsBuildHall_LeftProjectGalleryWing", group, (-7.85, 2.55, 0.08), (3.45, 4.85, 7.52), mats["stone"], bevel=0.062)
+    cube("ProjectsBuildHall_RightFabricationWing", group, (7.85, 2.5, 0.08), (3.45, 4.75, 7.52), mats["wood"], bevel=0.062)
 
-    cube("ProjectsBuildHall_PublicBuildFrame", group, (-0.4, 2.56, -4.16), (11.85, 4.08, 0.42), mats["dark"], bevel=0.036)
-    cube("ProjectsBuildHall_PublicBuildGlass", group, (-0.4, 2.6, -4.44), (9.5, 2.84, 0.1), mats["glass"], bevel=0.012)
-    cube("ProjectsBuildHall_BuildBayPortal", group, (-0.4, 1.58, -4.82), (5.55, 2.58, 0.36), mats["dark"], bevel=0.03)
-    cube("ProjectsBuildHall_BuildBayDoor", group, (-0.4, 1.48, -5.08), (4.1, 1.86, 0.1), mats["amber"], bevel=0.014)
-    cube("ProjectsBuildHall_BuildBayThreshold", group, (-0.4, 0.52, -5.58), (5.1, 0.12, 0.7), mats["stone"], bevel=0.018)
-    cube("ProjectsBuildHall_EntryCanopy", group, (-0.4, 3.88, -5.62), (8.9, 0.34, 1.12), mats["dark"], bevel=0.028)
-    cube("ProjectsBuildHall_EntryCanopySoffit", group, (-0.4, 3.62, -5.74), (8.05, 0.08, 0.82), mats["stone"], bevel=0.01)
-    cube("ProjectsBuildHall_BuildBayGlow", group, (-0.4, 1.46, -5.18), (3.1, 0.08, 0.05), mats["screen"], bevel=0.004)
+    cube("ProjectsBuildHall_FrontMasonryFrame", group, (0, 2.35, -4.35), (12.0, 3.82, 0.42), mats["stone_shadow"], bevel=0.035)
+    cube("ProjectsBuildHall_PublicBuildWindow", group, (0, 2.74, -4.62), (9.4, 1.15, 0.08), mats["glass"], bevel=0.008)
+    cube("ProjectsBuildHall_RollupBayFrame", group, (0, 1.4, -4.76), (5.9, 2.2, 0.28), mats["dark"], bevel=0.026)
+    cube("ProjectsBuildHall_RollupBayDoor", group, (0, 1.28, -4.95), (4.78, 1.64, 0.08), mats["amber"], bevel=0.012)
+    for index, y in enumerate([0.78, 1.12, 1.46, 1.8]):
+        cube(f"ProjectsBuildHall_RollupDoorSlat_{index}", group, (0, y, -5.02), (4.36, 0.045, 0.035), mats["dark"], bevel=0.002)
+    cube("ProjectsBuildHall_PedestrianEntryFrame", group, (-4.65, 1.52, -4.82), (1.48, 2.28, 0.22), mats["dark"], bevel=0.018)
+    cube("ProjectsBuildHall_PedestrianEntryGlass", group, (-4.65, 1.54, -5.0), (0.98, 1.78, 0.06), mats["glass"], bevel=0.006)
+    cube("ProjectsBuildHall_EntryCanopy", group, (-1.6, 3.82, -5.35), (8.8, 0.28, 1.0), mats["dark"], bevel=0.026)
+    cube("ProjectsBuildHall_CanopySoffit", group, (-1.6, 3.58, -5.48), (8.08, 0.08, 0.76), mats["stone"], bevel=0.01)
+    cube("ProjectsBuildHall_FrontBuildThreshold", group, (0, 0.51, -5.6), (6.0, 0.12, 0.72), mats["stone"], bevel=0.018)
+    cube("ProjectsBuildHall_FrontPrototypeGlow", group, (0, 1.02, -5.08), (3.4, 0.06, 0.05), mats["screen"], bevel=0.003)
+    cube("ProjectsBuildHall_FrontAssemblyBench", group, (2.95, 0.88, -5.24), (1.8, 0.32, 0.48), mats["wood"], bevel=0.018)
+    cube("ProjectsBuildHall_FrontPrototypeShell", group, (3.0, 1.28, -5.28), (1.16, 0.48, 0.34), mats["amber"], bevel=0.022)
+    cube("ProjectsBuildHall_FrontToolRail", group, (-3.25, 1.22, -5.18), (1.74, 0.08, 0.05), mats["screen"], bevel=0.004)
 
-    for index, x in enumerate([-4.4, -2.9, -1.4, 1.2, 2.7, 4.2]):
-        cube(f"ProjectsBuildHall_GalleryWindow_{index}", group, (x, 2.82, -4.58), (0.72, 0.96, 0.07), mats["glass"], bevel=0.006)
-    for index, x in enumerate([-3.0, -1.0, 1.0, 3.0]):
-        cube(f"ProjectsBuildHall_ReviewPod_{index}", group, (x, 1.1, -4.64), (0.94, 0.32, 0.07), [mats["mint"], mats["screen"], mats["amber"], mats["mint"]][index], bevel=0.004)
+    for index, x in enumerate([-3.8, -2.0, 2.0, 3.8]):
+        cube(f"ProjectsBuildHall_FrontReviewWindow_{index}", group, (x, 2.82, -4.7), (0.76, 0.78, 0.06), mats["glass"], bevel=0.006)
+    for index, x in enumerate([-3.8, -2.0, 2.0, 3.8]):
+        cube(f"ProjectsBuildHall_FrontReviewSill_{index}", group, (x, 2.32, -4.76), (0.86, 0.08, 0.04), mats["paper"], bevel=0.004)
 
-    cube("ProjectsBuildHall_LeftSideWall", group, (-9.8, 2.82, 0.16), (0.28, 5.28, 6.5), mats["stone_shadow"], bevel=0.026)
-    cube("ProjectsBuildHall_RightSideWall", group, (9.5, 2.72, 0.14), (0.28, 5.08, 6.28), mats["stone_shadow"], bevel=0.026)
-    for side, x, material in [("Left", -9.96, mats["mint"]), ("Right", 9.66, mats["amber"])]:
-        cube(f"ProjectsBuildHall_{side}_SideCanopy", group, (x, 4.72, 0.0), (0.22, 0.28, 5.5), mats["dark"], bevel=0.014)
-        for row, y in enumerate([1.42, 2.22, 3.02, 3.82]):
-            for col, z in enumerate([-2.08, -0.68, 0.72, 2.12]):
-                cube(f"ProjectsBuildHall_{side}_SideWindow_{row}_{col}", group, (x, y, z), (0.065, 0.42, 0.62), mats["glass"], bevel=0.005)
-        cube(f"ProjectsBuildHall_{side}_BuildTrace", group, (x, 2.0, -3.0), (0.06, 0.08, 1.36), material, bevel=0.003)
+    cube("ProjectsBuildHall_LeftElevationWall", group, (-9.72, 2.65, 0.05), (0.3, 5.0, 6.95), mats["stone_shadow"], bevel=0.026)
+    cube("ProjectsBuildHall_LeftRepositoryDoor", group, (-9.92, 1.38, -2.55), (0.08, 1.85, 1.06), mats["dark"], bevel=0.012)
+    cube("ProjectsBuildHall_LeftRepositoryWindowBand", group, (-9.96, 2.9, 0.0), (0.06, 1.08, 4.82), mats["glass"], bevel=0.006)
+    for index, z in enumerate([-2.95, -1.05, 0.85, 2.75]):
+        cube(f"ProjectsBuildHall_LeftWorkshopPier_{index}", group, (-10.02, 2.55, z), (0.08, 4.45, 0.14), mats["brick"], bevel=0.004)
+    for index, z in enumerate([-1.6, 1.55]):
+        cube(f"ProjectsBuildHall_LeftSideWorkbench_{index}", group, (-10.0, 0.9, z), (0.08, 0.46, 1.18), mats["wood"], bevel=0.008)
+    for index, z in enumerate([-2.0, -0.7, 0.6, 1.9]):
+        cube(f"ProjectsBuildHall_LeftRepositoryCommit_{index}", group, (-10.02, 2.92, z), (0.04, 0.82, 0.08), [mats["screen"], mats["mint"], mats["amber"], mats["screen"]][index], bevel=0.002)
+    for index, y in enumerate([1.45, 2.25, 3.05, 3.85]):
+        cube(f"ProjectsBuildHall_LeftFloorBand_{index}", group, (-9.98, y, 0.05), (0.05, 0.06, 5.4), mats["dark"], bevel=0.002)
 
-    cube("ProjectsBuildHall_RearReleaseFacade", group, (-0.2, 2.82, 4.08), (14.2, 5.0, 0.28), mats["stone_shadow"], bevel=0.026)
-    cube("ProjectsBuildHall_RearReleaseGlass", group, (1.6, 2.68, 4.28), (5.7, 2.1, 0.1), mats["glass"], bevel=0.008)
-    cube("ProjectsBuildHall_RearReleaseDoor", group, (-4.6, 1.5, 4.28), (1.35, 2.22, 0.12), mats["wood"], bevel=0.014)
-    cube("ProjectsBuildHall_RearDockApron", group, (-4.6, 0.34, 5.0), (3.7, 0.12, 1.22), mats["stone"], bevel=0.02)
-    cube("ProjectsBuildHall_RearHeader", group, (-0.2, 5.52, 4.36), (14.5, 0.28, 0.28), mats["dark"], bevel=0.014)
-    for index, x in enumerate([-0.9, 0.45, 1.8, 3.15]):
-        cube(f"ProjectsBuildHall_RearReleaseStatus_{index}", group, (x, 2.72, 4.42), (0.1, 1.8, 0.07), [mats["screen"], mats["mint"], mats["amber"], mats["aqua"]][index], bevel=0.003)
+    cube("ProjectsBuildHall_RightElevationWall", group, (9.72, 2.62, 0.05), (0.3, 4.94, 6.95), mats["stone_shadow"], bevel=0.026)
+    cube("ProjectsBuildHall_RightSideBayFrame", group, (9.92, 1.52, -1.55), (0.08, 2.18, 2.58), mats["dark"], bevel=0.014)
+    cube("ProjectsBuildHall_RightSideBayDoor", group, (10.0, 1.36, -1.55), (0.05, 1.56, 1.82), mats["amber"], bevel=0.006)
+    cube("ProjectsBuildHall_RightFabricationWindowBand", group, (9.98, 3.08, 1.55), (0.06, 1.0, 3.2), mats["glass"], bevel=0.006)
+    for index, z in enumerate([-2.85, -0.95, 0.95, 2.85]):
+        cube(f"ProjectsBuildHall_RightWorkshopPier_{index}", group, (10.02, 2.55, z), (0.08, 4.35, 0.14), mats["wood"], bevel=0.004)
+    cube("ProjectsBuildHall_RightMaterialRack", group, (10.03, 0.95, 2.62), (0.08, 0.48, 1.4), mats["dark"], bevel=0.008)
+    for index, y in enumerate([0.82, 1.08, 1.34]):
+        cube(f"ProjectsBuildHall_RightRackShelf_{index}", group, (10.08, y, 2.62), (0.04, 0.06, 1.32), mats["paper"], bevel=0.002)
+    for index, z in enumerate([0.35, 1.2, 2.05, 2.9]):
+        cube(f"ProjectsBuildHall_RightFabricationStatus_{index}", group, (10.04, 3.12, z), (0.04, 0.08, 0.36), [mats["screen"], mats["amber"], mats["mint"], mats["aqua"]][index], bevel=0.002)
+    cube("ProjectsBuildHall_RightVentStackBase", group, (9.9, 4.82, 3.42), (0.16, 1.1, 0.82), mats["dark"], bevel=0.012)
+    cube("ProjectsBuildHall_RightVentStackGlow", group, (10.04, 5.05, 3.42), (0.04, 0.56, 0.48), mats["amber"], bevel=0.002)
 
-    for index, x in enumerate([-5.8, -2.9, 0.0, 2.9, 5.8]):
-        cube(f"ProjectsBuildHall_SawtoothRoofBay_{index}", group, (x, 5.9, -0.14), (2.48, 0.3, 8.1), mats["dark"], rot=(0.11, 0, 0), bevel=0.022)
-        cube(f"ProjectsBuildHall_SkylightStrip_{index}", group, (x + 0.54, 6.18, -1.34), (1.18, 0.16, 2.28), mats["glass"], rot=(0.11, 0, 0), bevel=0.008)
+    cube("ProjectsBuildHall_RearReleaseWall", group, (0, 2.62, 4.4), (14.25, 4.95, 0.3), mats["brick"], bevel=0.026)
+    cube("ProjectsBuildHall_RearReleaseDock", group, (-4.55, 0.36, 5.12), (3.85, 0.12, 1.24), mats["stone"], bevel=0.02)
+    cube("ProjectsBuildHall_RearRollupFrame", group, (-4.55, 1.55, 4.62), (1.75, 2.22, 0.16), mats["dark"], bevel=0.014)
+    cube("ProjectsBuildHall_RearRollupDoor", group, (-4.55, 1.46, 4.76), (1.28, 1.72, 0.06), mats["wood"], bevel=0.008)
+    cube("ProjectsBuildHall_RearReleaseWindow", group, (1.48, 2.74, 4.62), (5.6, 1.52, 0.08), mats["glass"], bevel=0.008)
+    cube("ProjectsBuildHall_RearDispatchCounter", group, (1.48, 1.55, 4.72), (4.72, 0.28, 0.18), mats["paper"], bevel=0.012)
+    for index, x in enumerate([-0.64, 0.76, 2.16, 3.56]):
+        cube(f"ProjectsBuildHall_RearReleaseStatus_{index}", group, (x, 2.76, 4.78), (0.08, 1.14, 0.05), [mats["screen"], mats["mint"], mats["amber"], mats["aqua"]][index], bevel=0.002)
+    for index, x in enumerate([-6.3, -2.2, 2.2, 6.3]):
+        cube(f"ProjectsBuildHall_RearStructuralPier_{index}", group, (x, 2.58, 4.78), (0.18, 4.48, 0.08), mats["stone_shadow"], bevel=0.006)
+    cube("ProjectsBuildHall_RearShippingBench", group, (4.9, 0.9, 4.94), (2.0, 0.46, 0.46), mats["wood"], bevel=0.016)
+    cube("ProjectsBuildHall_RearCrateReady", group, (5.35, 1.31, 5.0), (0.74, 0.56, 0.42), mats["amber"], bevel=0.018)
+    cube("ProjectsBuildHall_RearServiceCanopy", group, (0, 4.98, 4.82), (13.9, 0.26, 0.7), mats["dark"], bevel=0.012)
 
-    cube("ProjectsBuildHall_CentralAssemblyFloor", group, (-0.4, 0.54, 0.02), (9.6, 0.28, 4.75), mats["stone"], bevel=0.04)
-    cube("ProjectsBuildHall_CentralBuildTable", group, (-0.4, 1.02, -0.18), (5.2, 0.54, 1.78), mats["stone_shadow"], bevel=0.038)
-    for index, x in enumerate([-2.2, -0.35, 1.5]):
-        cube(f"ProjectsBuildHall_PrototypeModule_{index}", group, (x, 1.54, -0.18 + index * 0.18), (0.86, 0.68, 0.6), [mats["screen"], mats["amber"], mats["mint"]][index], bevel=0.026)
-        cube(f"ProjectsBuildHall_PrototypeBase_{index}", group, (x, 0.86, -1.28), (1.12, 0.18, 0.46), mats["paper"], bevel=0.014)
+    for index, x in enumerate([-5.6, -2.8, 0, 2.8, 5.6]):
+        cube(f"ProjectsBuildHall_SawtoothRoofBay_{index}", group, (x, 5.9, -0.05), (2.2, 0.26, 8.15), mats["stone_shadow"], rot=(0.12, 0, 0), bevel=0.022)
+        cube(f"ProjectsBuildHall_SkylightStrip_{index}", group, (x + 0.5, 6.18, -1.3), (1.12, 0.14, 2.3), mats["glass"], rot=(0.12, 0, 0), bevel=0.008)
+    cube("ProjectsBuildHall_RoofMonitorRidge", group, (0, 6.02, 3.4), (12.8, 0.16, 0.24), mats["stone"], bevel=0.008)
 
-    for x in [-4.95, 3.85]:
-        cube("ProjectsBuildHall_CranePost", group, (x, 2.9, 2.72), (0.22, 4.9, 0.22), mats["dark"], bevel=0.012)
-    cube("ProjectsBuildHall_CraneBridge", group, (-0.55, 5.16, 2.72), (9.2, 0.28, 0.3), mats["dark"], bevel=0.016)
-    cube("ProjectsBuildHall_CraneWorkLight", group, (-0.55, 4.9, 2.44), (6.7, 0.06, 0.05), mats["amber"], bevel=0.003)
-    cube("ProjectsBuildHall_CraneCable", group, (1.2, 3.64, 2.42), (0.08, 2.18, 0.08), mats["rope"], bevel=0.004)
-    cube("ProjectsBuildHall_CraneLoad", group, (1.2, 2.42, 2.08), (0.92, 0.52, 0.62), mats["amber"], bevel=0.02)
+    cube("ProjectsBuildHall_AssemblyFloor", group, (0, 0.56, 0.1), (9.2, 0.26, 4.4), mats["stone"], bevel=0.04)
+    cube("ProjectsBuildHall_BuildTable", group, (0, 1.0, -0.1), (5.2, 0.5, 1.8), mats["stone_shadow"], bevel=0.038)
+    for index, x in enumerate([-1.7, -0.2, 1.3]):
+        cube(f"ProjectsBuildHall_PrototypeModule_{index}", group, (x, 1.48, -0.2 + index * 0.16), (0.76, 0.58, 0.52), [mats["screen"], mats["amber"], mats["mint"]][index], bevel=0.024)
+        cube(f"ProjectsBuildHall_PrototypeBase_{index}", group, (x, 0.84, -1.15), (1.0, 0.16, 0.42), mats["paper"], bevel=0.012)
 
-    cube("ProjectsBuildHall_FurnaceStack", group, (6.55, 5.15, 2.68), (1.02, 5.5, 1.02), mats["dark"], bevel=0.034)
-    cube("ProjectsBuildHall_FurnaceStackCap", group, (6.55, 8.02, 2.68), (1.42, 0.32, 1.42), mats["amber"], bevel=0.024)
-    cube("ProjectsBuildHall_FurnaceHeatLine", group, (6.55, 4.02, 2.05), (1.12, 0.08, 0.06), mats["screen"], bevel=0.003)
+    cube("ProjectsBuildHall_CranePostLeft", group, (-4.6, 2.9, 2.55), (0.24, 4.8, 0.24), mats["dark"], bevel=0.012)
+    cube("ProjectsBuildHall_CranePostRight", group, (4.6, 2.9, 2.55), (0.24, 4.8, 0.24), mats["dark"], bevel=0.012)
+    cube("ProjectsBuildHall_CraneBridge", group, (0, 5.1, 2.55), (9.4, 0.28, 0.32), mats["dark"], bevel=0.016)
+    cube("ProjectsBuildHall_CraneWorkLight", group, (0, 4.86, 2.34), (6.8, 0.055, 0.045), mats["amber"], bevel=0.003)
+    cube("ProjectsBuildHall_CraneCable", group, (1.35, 3.62, 2.36), (0.07, 2.02, 0.07), mats["rope"], bevel=0.004)
+    cube("ProjectsBuildHall_CraneLoad", group, (1.35, 2.46, 2.04), (0.9, 0.48, 0.58), mats["amber"], bevel=0.02)
 
-    cube("ProjectsBuildHall_PublicShowcaseAtrium", group, (-7.28, 2.22, -3.66), (2.18, 3.34, 1.18), mats["glass"], bevel=0.022)
-    cube("ProjectsBuildHall_ShowcaseRoof", group, (-7.28, 4.04, -3.66), (2.48, 0.26, 1.44), mats["dark"], bevel=0.018)
-    cube("ProjectsBuildHall_RepositorySpine", group, (-8.34, 2.56, 3.6), (0.56, 4.18, 2.52), mats["dark"], bevel=0.026)
-    for index, y in enumerate([1.28, 1.98, 2.68, 3.38]):
-        cube(f"ProjectsBuildHall_RepositoryTrace_{index}", group, (-8.68, y, 2.88), (0.08, 0.07, 1.28), [mats["screen"], mats["mint"], mats["amber"], mats["aqua"]][index], bevel=0.003)
+    cube("ProjectsBuildHall_FurnaceStack", group, (6.25, 5.1, 2.6), (1.05, 5.3, 1.05), mats["dark"], bevel=0.034)
+    cube("ProjectsBuildHall_FurnaceStackCap", group, (6.25, 7.9, 2.6), (1.42, 0.3, 1.42), mats["amber"], bevel=0.024)
+    cube("ProjectsBuildHall_FurnaceHeatSlot", group, (6.25, 4.0, 2.0), (1.02, 0.07, 0.05), mats["screen"], bevel=0.003)
+    cube("ProjectsBuildHall_PublicShowcaseAtrium", group, (-7.15, 2.35, -3.55), (2.0, 3.2, 1.06), mats["glass"], bevel=0.018)
+    cube("ProjectsBuildHall_ShowcaseAtriumCap", group, (-7.15, 4.12, -3.55), (2.34, 0.22, 1.3), mats["dark"], bevel=0.014)
 
 
 def create_projects_foundry_building(mats):
