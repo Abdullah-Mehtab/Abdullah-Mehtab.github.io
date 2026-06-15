@@ -4315,39 +4315,6 @@ export class SetPieces {
     this.createTodoBuildYardComposition(group, todo);
     this.createTodoBuildYardLife(group, todo);
 
-    const career = findZone('career');
-    this.addSign(group, 'CAREER', 'Signal Office', career.position[0] - 10, career.position[2] + 9, -0.35, 0xb6a0ff, 2.4, 'CareerSign');
-    this.addPolishAsset(group, 'EnvPolishCareerOffice', career.position[0] + 1.2, career.position[2] + 0.8, -0.24, 1.08);
-    this.addCompositionPad(group, career.position[0] + 7, career.position[2] - 6, 9, 5.5, this.world.materials.plazaRoad, 0.16, 'CareerOfficeDeck');
-    this.addCompositionPad(group, career.position[0] + 4.2, career.position[2] + 2.2, 18, 10, this.world.materials.paleStone, 0.122, 'CareerSignalPlaza');
-    this.flagPole(group, career.position[0] + 13, career.position[2] - 6, 0xb6a0ff);
-    this.addPolishAsset(group, 'EnvPolishSignalTotem', career.position[0] + 1.4, career.position[2] - 10.8, -0.18, 0.88);
-    this.addSilhouetteAnchor(group, 'EnvPolishSignalSpire', career.position[0] + 10.6, career.position[2] + 2.2, -0.34, 0.86);
-    this.addCompositionAsset(group, 'EnvPolishTerminalBank', career.position[0] + 6.6, career.position[2] + 5.4, -0.38, 0.68);
-    this.addCompositionAsset(group, 'EnvPolishBenchPlanter', career.position[0] - 3.6, career.position[2] + 5.4, 0.42, 0.74);
-    for (let i = 0; i < 7; i += 1) {
-      this.addCareerConnectorMark(
-        group,
-        career.position[0] - 2.8 + i * 2.65,
-        career.position[2] - 1.2 + i * 0.82,
-        1.35,
-        0.14,
-        i % 2 ? this.world.materials.glowPink : this.world.materials.glowBlue,
-        -0.34,
-        'CareerSignalGuideMark'
-      );
-    }
-    this.addYardEdgeDetails(group, career.position[0] + 7, career.position[2] - 6, 9, 5.5);
-    this.addYardEdgeDetails(group, career.position[0] + 4.2, career.position[2] + 2.2, 18, 10);
-    for (const [dx, dz, rotation, scale] of [
-      [4.1, -6.2, 0.12, 0.58],
-      [9.5, -5.0, -0.28, 0.56]
-    ]) {
-      this.addCompositionDetailAsset(group, 'EnvPolishYardSurfaceMarks', career.position[0] + dx, career.position[2] + dz, rotation, scale, 'surfaceMarks');
-    }
-    this.addCompositionDetailAsset(group, 'EnvPolishWorkshopProcessRail', career.position[0] + 7.4, career.position[2] - 8.6, -0.08, 0.6, 'rails');
-    this.createCareerOfficeComposition(group, career);
-
     const circuit = findZone('circuit');
     this.createCircuitStartComposition(group, circuit);
 
