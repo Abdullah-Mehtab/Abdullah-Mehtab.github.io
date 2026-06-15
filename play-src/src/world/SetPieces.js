@@ -4169,9 +4169,6 @@ export class SetPieces {
     this.addCompositionDetailAsset(group, 'EnvPolishWorkshopProcessRail', cv.position[0] - 4.4, cv.position[2] - 4.1, 0.08, 0.62, 'rails');
     this.createCvDocumentLife(group, cv);
 
-    const contact = findZone('contact');
-    this.createHarborComposition(group, contact);
-
     const data = findZone('data-pier');
     this.createDataPierComposition(group, data);
 
