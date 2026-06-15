@@ -2396,7 +2396,28 @@ export class SetPieces {
       stats.lapClockDisks += 1;
       stats.startLightTrees += 1;
       stats.checkeredTimingPanels += 6;
+      stats.raceControlTowers += 1;
+      stats.grandstands += 1;
+      stats.timingFacades += 2;
+      stats.checkpointCrowns += 1;
+      stats.pitWallFacades += 1;
+      stats.raceControlBridges += 1;
+      stats.pitWallRhythms += 4;
+      stats.routeRaceControlPorticos += 1;
+      stats.routeDriveThroughTunnels += 1;
+      stats.routeControlCabins += 1;
+      stats.routeLapSignalStacks += 1;
+      stats.routeCheckpointLaneFrames += 2;
+      stats.routeApproachTimingPortals += 1;
+      stats.routeTimingRibbonWalls += 1;
+      stats.routeApproachControlCabins += 1;
+      stats.routeApproachLapSignalStacks += 1;
+      stats.routeApproachCheckpointLaneFrames += 1;
+      stats.routeStarterArcades += 1;
+      stats.routeSplitTimerBlades += 4;
       stats.routeCountdownTrees += 1;
+      stats.routeCheckeredCrowns += 1;
+      stats.routeRecoveryRailRuns += 2;
     }
 
     stats.signs = 0;
@@ -4243,9 +4264,6 @@ export class SetPieces {
     this.addCompositionDetailAsset(group, 'EnvPolishWorkshopProcessRail', todo.position[0] - 5.4, todo.position[2] - 5.4, 0.38, 0.72, 'rails');
     this.createTodoBuildYardComposition(group, todo);
     this.createTodoBuildYardLife(group, todo);
-
-    const circuit = findZone('circuit');
-    this.createCircuitStartComposition(group, circuit);
 
     const potato = findZone('potato');
     this.addSign(group, 'FARM', 'Potato Counter', potato.position[0] - 11, potato.position[2] + 9, 0.32, 0xc79b56, 2.3, 'PotatoFarmSign');

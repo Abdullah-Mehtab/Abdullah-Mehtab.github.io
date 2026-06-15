@@ -26,6 +26,7 @@ export class StuntPark {
     this.yardDressingRadius = 0;
     this.circuitRingMesh = null;
     this.circuitArrowMesh = null;
+    this.circuitBeaconMesh = null;
     this.circuitMarkerColor = new THREE.Color();
     this.stats = this.createStats();
   }
@@ -41,6 +42,8 @@ export class StuntPark {
       return;
     }
     if (this.world.foundationReplacementMode) {
+      if (!this.world.gate4frMode) return;
+      this.createCircuitTargetMarkers(Math.max(0, circuitCheckpoints.length - 1));
       return;
     }
     this.createCircuitTrackLayout();
@@ -86,6 +89,7 @@ export class StuntPark {
       circuitCheckpointGates: 0,
       circuitTargetRings: 0,
       circuitTargetArrows: 0,
+      circuitTargetBeacons: 0,
       circuitTrackSegments: 0,
       circuitTrackCurbs: 0,
       circuitApexMarkers: 0,
@@ -769,7 +773,7 @@ export class StuntPark {
       color: 0xffffff,
       vertexColors: true,
       transparent: true,
-      opacity: 0.72,
+      opacity: 0.9,
       depthWrite: false,
       side: THREE.DoubleSide,
       polygonOffset: true,
@@ -897,12 +901,11 @@ export class StuntPark {
   }
 
   createCircuitTargetMarkers(targetCount) {
-    const ringGeometry = new THREE.RingGeometry(1.25, 1.72, 6);
+    const ringGeometry = new THREE.RingGeometry(0.82, 1.05, 24);
     const ringMaterial = new THREE.MeshBasicMaterial({
       color: 0xffffff,
-      vertexColors: true,
       transparent: true,
-      opacity: 0.72,
+      opacity: 0.62,
       side: THREE.DoubleSide,
       depthWrite: false
     });
@@ -915,9 +918,8 @@ export class StuntPark {
     const arrowGeometry = createCircuitArrowGeometry();
     const arrowMaterial = new THREE.MeshBasicMaterial({
       color: 0xffffff,
-      vertexColors: true,
       transparent: true,
-      opacity: 0.64,
+      opacity: 0.5,
       depthWrite: false,
       side: THREE.DoubleSide
     });
@@ -927,13 +929,30 @@ export class StuntPark {
     this.circuitArrowMesh.frustumCulled = false;
     this.world.scene.add(this.circuitArrowMesh);
 
+    const beaconMaterial = new THREE.MeshBasicMaterial({
+      color: 0xffffff,
+      transparent: true,
+      opacity: 0.38,
+      depthWrite: false
+    });
+    this.circuitBeaconMesh = new THREE.InstancedMesh(
+      new THREE.CylinderGeometry(0.28, 0.28, 1, 18, 1, true),
+      beaconMaterial,
+      targetCount
+    );
+    this.circuitBeaconMesh.name = 'STUNT_Circuit_Target_Beacons';
+    this.circuitBeaconMesh.renderOrder = 36;
+    this.circuitBeaconMesh.frustumCulled = false;
+    this.world.scene.add(this.circuitBeaconMesh);
+
     this.stats.circuitTargetRings = targetCount;
     this.stats.circuitTargetArrows = targetCount;
+    this.stats.circuitTargetBeacons = targetCount;
     this.updateCircuitMarkers(0);
   }
 
   updateCircuitMarkers(elapsed = 0) {
-    if (!this.circuitRingMesh || !this.circuitArrowMesh) return;
+    if (!this.circuitRingMesh || !this.circuitArrowMesh || !this.circuitBeaconMesh) return;
     const circuit = this.world.circuit || {};
     const activeTarget = circuit.active ? circuit.checkpoint + 1 : 0;
     const targetCount = circuitCheckpoints.length - 1;
@@ -947,22 +966,31 @@ export class StuntPark {
       const passed = circuit.active && targetIndex <= circuit.checkpoint;
       const checkpointPulse = circuit.lastCheckpointIndex === targetIndex ? circuit.checkpointPulse || 0 : 0;
       const pulse = Math.sin(elapsed * 4.6 + index * 0.5) * 0.5 + 0.5;
-      const ringScale = isActive ? 2.25 + pulse * 0.36 : passed ? 0.48 + checkpointPulse * 1.18 : 0.42 + checkpointPulse * 1.1;
-      const arrowScale = isActive ? 1.35 + pulse * 0.18 : passed ? 0.3 + checkpointPulse * 0.72 : 0.22 + checkpointPulse * 0.62;
+      const ringScale = isActive ? 3.25 + pulse * 0.18 : passed ? 0.72 + checkpointPulse * 0.72 : 0.58 + checkpointPulse * 0.66;
+      const arrowScale = isActive ? 1.12 + pulse * 0.08 : passed ? 0.42 + checkpointPulse * 0.56 : 0.34 + checkpointPulse * 0.48;
       const color = isActive ? 0xfff0a0 : (passed || checkpointPulse > 0.01) ? 0x79ffc5 : 0xff9b6d;
       if (checkpointPulse > 0.01) {
         this.stats.checkpointPulseSamples += 1;
         this.stats.maxCheckpointPulse = Math.max(this.stats.maxCheckpointPulse, checkpointPulse);
       }
 
-      this.circuitDummy.position.set(x, 0.36 + (isActive ? pulse * 0.14 : 0) + checkpointPulse * 0.22, z);
-      this.circuitDummy.rotation.set(-Math.PI / 2, 0, rotation);
+      this.circuitDummy.position.set(x, isActive ? 3.65 + pulse * 0.12 : 2.42 + checkpointPulse * 0.18, z);
+      this.circuitDummy.rotation.set(0, rotation, 0);
       this.circuitDummy.scale.setScalar(ringScale);
       this.circuitDummy.updateMatrix();
       this.circuitRingMesh.setMatrixAt(index, this.circuitDummy.matrix);
       this.circuitRingMesh.setColorAt(index, this.circuitMarkerColor.setHex(color));
 
-      const arrowDistance = isActive ? 4.2 + pulse * 0.5 : 3.1 + checkpointPulse * 0.45;
+      const beaconHeight = isActive ? 5.8 + pulse * 0.36 : passed ? 1.8 + checkpointPulse * 1.2 : 1.25 + checkpointPulse * 1.05;
+      const beaconWidth = isActive ? 0.46 + pulse * 0.05 : passed ? 0.42 + checkpointPulse * 0.28 : 0.34 + checkpointPulse * 0.24;
+      this.circuitDummy.position.set(x, 0.32 + beaconHeight / 2, z);
+      this.circuitDummy.rotation.set(0, 0, 0);
+      this.circuitDummy.scale.set(beaconWidth, beaconHeight, beaconWidth);
+      this.circuitDummy.updateMatrix();
+      this.circuitBeaconMesh.setMatrixAt(index, this.circuitDummy.matrix);
+      this.circuitBeaconMesh.setColorAt(index, this.circuitMarkerColor.setHex(color));
+
+      const arrowDistance = isActive ? 3.45 + pulse * 0.32 : 3.1 + checkpointPulse * 0.45;
       this.circuitDummy.position.set(
         x + Math.sin(rotation) * arrowDistance,
         0.5 + (isActive ? pulse * 0.12 : 0) + checkpointPulse * 0.24,
@@ -977,8 +1005,10 @@ export class StuntPark {
 
     this.circuitRingMesh.instanceMatrix.needsUpdate = true;
     this.circuitArrowMesh.instanceMatrix.needsUpdate = true;
+    this.circuitBeaconMesh.instanceMatrix.needsUpdate = true;
     if (this.circuitRingMesh.instanceColor) this.circuitRingMesh.instanceColor.needsUpdate = true;
     if (this.circuitArrowMesh.instanceColor) this.circuitArrowMesh.instanceColor.needsUpdate = true;
+    if (this.circuitBeaconMesh.instanceColor) this.circuitBeaconMesh.instanceColor.needsUpdate = true;
     this.stats.circuitMotionSamples += targetCount;
   }
 

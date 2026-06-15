@@ -14,6 +14,7 @@ import { PotatoFarm } from './PotatoFarm.js';
 import { Props } from './Props.js';
 import { Roads } from './Roads.js';
 import { SetPieces } from './SetPieces.js';
+import { StuntPark } from './StuntPark.js';
 import { Terrain } from './Terrain.js';
 import { Water } from './Water.js';
 import { Zones } from './Zones.js';
@@ -250,6 +251,7 @@ export class World {
     this.roads = new Roads(this);
     this.zonesSystem = new Zones(this);
     this.setPieces = new SetPieces(this);
+    this.stuntPark = this.gate4frMode ? new StuntPark(this) : null;
     this.props = this.blockoutMode ? null : new Props(this);
     this.foliage = this.blockoutMode ? null : new Foliage(this);
     this.potatoFarm = this.blockoutMode ? null : new PotatoFarm(this);
@@ -260,6 +262,7 @@ export class World {
     this.roads.build();
     this.zonesSystem.build();
     this.setPieces.build();
+    this.stuntPark?.build();
     this.potatoFarm?.build();
     this.props?.build();
     this.foliage?.build();
@@ -290,6 +293,7 @@ export class World {
     this.water?.applyQuality?.();
     this.roads?.applyQuality?.();
     this.foliage?.applyQuality?.();
+    this.stuntPark?.applyQuality?.();
     this.setPieces?.applyQuality?.();
     this.atmosphere?.applyQuality?.();
     this.onQualityChange?.(quality);
@@ -576,6 +580,7 @@ export class World {
     this.potatoFarm?.update?.(dt, vehiclePosition);
     this.zonesSystem?.update?.(vehiclePosition);
     this.updateCircuitFeedback(dt);
+    this.stuntPark?.update?.(dt, elapsed, vehiclePosition);
     this.setPieces?.update?.(dt, elapsed, vehiclePosition);
     this.atmosphere?.update?.(dt, elapsed);
     this.updateCollectibles(dt, elapsed);

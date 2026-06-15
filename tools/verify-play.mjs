@@ -3819,6 +3819,9 @@ async function stageVehicleBodyGameplayView(page) {
 async function stageVehicleBodySideView(page) {
   await page.evaluate(() => {
     const game = window.__portfolioDrive.game;
+    game.vehicle.body.setLinvel({ x: 0, y: 0, z: 0 }, true);
+    game.vehicle.body.setAngvel({ x: 0, y: 0, z: 0 }, true);
+    game.vehicle.syncModel?.();
     const position = game.vehicle.position;
     const heading = game.vehicle.heading || 0;
     const sideX = Math.cos(heading);

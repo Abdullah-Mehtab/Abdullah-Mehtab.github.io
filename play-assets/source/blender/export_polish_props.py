@@ -2413,50 +2413,62 @@ def create_circuit_gate(mats):
 
 def create_circuit_time_trial_gate(mats):
     group = root("EnvPolishCircuitTimeTrialGate")
-    cube("CircuitTimeTrial_ApproachApron", group, (0, 0.08, 1.2), (13.8, 0.16, 8.6), mats["stone_shadow"], bevel=0.05)
-    cube("CircuitTimeTrial_DriveLane", group, (0, 0.19, 1.1), (8.8, 0.1, 8.05), mats["rubber"], bevel=0.025)
-    cube("CircuitTimeTrial_StartStripe", group, (0, 0.27, 3.04), (8.2, 0.045, 0.26), mats["paper"], bevel=0.004)
-    cube("CircuitTimeTrial_FinishAmberStripe", group, (0, 0.29, 2.66), (8.2, 0.045, 0.12), mats["amber"], bevel=0.004)
-    for index, x in enumerate([-3.3, -2.2, -1.1, 0, 1.1, 2.2, 3.3]):
-        cube(f"CircuitTimeTrial_CheckerTile_{index}", group, (x, 0.33, 3.32), (0.58, 0.05, 0.34), mats["paper" if index % 2 else "rubber"], bevel=0.003)
-    for index, z in enumerate([-1.55, 0.55, 2.65]):
-        cube(f"CircuitTimeTrial_LaneGuide_{index}", group, (0, 0.31, z), (0.18, 0.045, 0.92), mats["paper"], bevel=0.003)
-    for x in [-4.75, 4.75]:
-        cube("CircuitTimeTrial_LowCurb", group, (x, 0.34, 0.92), (0.22, 0.2, 6.85), mats["paper"], bevel=0.012)
-        cube("CircuitTimeTrial_CurbGlow", group, (x, 0.54, 0.92), (0.08, 0.08, 6.1), mats["amber" if x < 0 else "mint"], bevel=0.004)
-        cube("CircuitTimeTrial_GantryFoot", group, (x, 0.36, 2.8), (0.95, 0.5, 0.95), mats["stone"], bevel=0.038)
-        cube("CircuitTimeTrial_GantryPost", group, (x, 2.22, 2.8), (0.38, 3.55, 0.38), mats["dark"], bevel=0.022)
-        cube("CircuitTimeTrial_GantryPostGlow", group, (x, 2.22, 2.47), (0.09, 2.72, 0.055), mats["mint" if x > 0 else "amber"], bevel=0.004)
-    cube("CircuitTimeTrial_GantryHeader", group, (0, 3.96, 2.8), (10.6, 0.5, 0.58), mats["dark"], bevel=0.03)
-    cube("CircuitTimeTrial_GantryTimingScreen", group, (0, 3.72, 2.44), (4.5, 0.7, 0.08), mats["screen"], bevel=0.008)
-    for index, x in enumerate([-4.0, -3.2, -2.4, 2.4, 3.2, 4.0]):
-        cube(f"CircuitTimeTrial_HeaderChecker_{index}", group, (x, 3.68, 2.36), (0.48, 0.36, 0.06), mats["paper" if index % 2 else "rubber"], bevel=0.003)
-    for index, x in enumerate([-1.05, 0, 1.05]):
-        cube(f"CircuitTimeTrial_StartLight_{index}", group, (x, 3.18, 2.36), (0.46, 0.28, 0.06), [mats["pink"], mats["amber"], mats["mint"]][index], bevel=0.01)
-    cube("CircuitTimeTrial_ControlBoothShell", group, (-5.55, 1.48, -0.58), (3.1, 2.72, 3.35), mats["stone"], bevel=0.045)
-    cube("CircuitTimeTrial_ControlBoothRearWall", group, (-5.55, 1.54, -2.34), (3.05, 2.42, 0.18), mats["stone_shadow"], bevel=0.025)
-    cube("CircuitTimeTrial_ControlBoothSideWall", group, (-7.12, 1.48, -0.58), (0.18, 2.4, 3.2), mats["stone_shadow"], bevel=0.02)
-    cube("CircuitTimeTrial_ControlBoothRoadWindow", group, (-3.96, 1.72, 0.18), (0.1, 1.26, 1.72), mats["glass"], bevel=0.01)
-    cube("CircuitTimeTrial_ControlBoothFrontWindow", group, (-5.55, 1.78, 1.14), (2.1, 1.22, 0.09), mats["glass"], bevel=0.01)
-    cube("CircuitTimeTrial_ControlBoothRoof", group, (-5.55, 3.0, -0.58), (3.62, 0.32, 3.82), mats["wood"], bevel=0.028)
-    cube("CircuitTimeTrial_ControlBoothRoofGlow", group, (-5.55, 2.78, 1.34), (2.68, 0.08, 0.06), mats["amber"], bevel=0.004)
-    cube("CircuitTimeTrial_TimingTower", group, (-5.55, 4.58, -0.72), (1.48, 3.0, 1.42), mats["dark"], bevel=0.03)
-    cube("CircuitTimeTrial_TimingTowerGlass", group, (-5.55, 4.72, 0.03), (1.02, 1.68, 0.08), mats["screen"], bevel=0.008)
-    cube("CircuitTimeTrial_TimingTowerCap", group, (-5.55, 6.24, -0.72), (2.08, 0.32, 1.88), mats["amber"], bevel=0.02)
-    cube("CircuitTimeTrial_LapBoard", group, (5.38, 1.88, -1.2), (1.65, 2.55, 0.32), mats["dark"], bevel=0.026)
-    cube("CircuitTimeTrial_LapBoardScreen", group, (5.38, 2.0, -1.39), (1.1, 1.4, 0.06), mats["screen"], bevel=0.006)
-    for index, y in enumerate([1.42, 1.84, 2.26]):
-        cube(f"CircuitTimeTrial_LapBoardLine_{index}", group, (5.38, y, -1.45), (0.8 - index * 0.1, 0.07, 0.045), [mats["mint"], mats["amber"], mats["paper"]][index], bevel=0.003)
-    cube("CircuitTimeTrial_CountdownTreeMast", group, (5.34, 2.02, 1.52), (0.22, 3.35, 0.18), mats["dark"], bevel=0.012)
-    for index, y in enumerate([1.25, 1.86, 2.47]):
-        cube(f"CircuitTimeTrial_CountdownLamp_{index}", group, (5.34, y, 1.38), (0.55, 0.32, 0.06), [mats["pink"], mats["amber"], mats["mint"]][index], bevel=0.01)
-    cylinder("CircuitTimeTrial_LapClockDisk", group, (-5.55, 4.72, 0.11), 0.5, 0.06, mats["amber"], vertices=20, bevel=0.006)
-    cube("CircuitTimeTrial_LapClockHandVertical", group, (-5.55, 4.72, 0.06), (0.055, 0.72, 0.04), mats["dark"], bevel=0.002)
-    cube("CircuitTimeTrial_LapClockHandHorizontal", group, (-5.55, 4.72, 0.05), (0.62, 0.055, 0.04), mats["dark"], bevel=0.002)
-    for index, x in enumerate([-2.2, 0, 2.2]):
-        cube(f"CircuitTimeTrial_GridBox_{index}", group, (x, 0.32, -2.05), (1.2, 0.055, 0.36), mats["paper"], bevel=0.004)
-    cube("CircuitTimeTrial_RouteArrowShaft", group, (0, 0.34, -2.9), (0.22, 0.06, 1.26), mats["mint"], bevel=0.004)
-    cube("CircuitTimeTrial_RouteArrowHead", group, (0, 0.36, -3.62), (1.0, 0.06, 0.36), mats["mint"], rot=(0, 0.76, 0), bevel=0.004)
+    cube("CircuitControl_SiteApron", group, (0, 0.08, 0.82), (17.2, 0.16, 11.8), mats["stone_shadow"], bevel=0.05)
+    cube("CircuitControl_DriveThroughLane", group, (0, 0.19, 0.92), (8.75, 0.1, 9.4), mats["rubber"], bevel=0.025)
+    cube("CircuitControl_PitServiceDeck", group, (-5.9, 0.23, -0.42), (4.25, 0.18, 7.8), mats["stone"], bevel=0.035)
+    cube("CircuitControl_SpectatorDeck", group, (5.9, 0.23, -0.45), (4.25, 0.18, 7.8), mats["wood"], bevel=0.035)
+    for x in [-4.62, 4.62]:
+        cube("CircuitControl_LaneBarrier", group, (x, 0.42, 0.68), (0.24, 0.32, 8.8), mats["paper"], bevel=0.012)
+        cube("CircuitControl_LaneGlow", group, (x, 0.62, 0.68), (0.07, 0.08, 7.9), mats["amber" if x < 0 else "mint"], bevel=0.004)
+
+    for index, z in enumerate([-2.95, -0.95, 1.05]):
+        cube(f"CircuitControl_CenterLaneMark_{index}", group, (0, 0.31, z), (0.18, 0.045, 0.84), mats["paper"], bevel=0.003)
+    cube("CircuitControl_StartStripe", group, (0, 0.32, 3.45), (8.25, 0.05, 0.24), mats["paper"], bevel=0.004)
+    cube("CircuitControl_FinishAmberStripe", group, (0, 0.34, 3.08), (8.25, 0.05, 0.12), mats["amber"], bevel=0.004)
+    for index, x in enumerate([-3.45, -2.3, -1.15, 0, 1.15, 2.3, 3.45]):
+        cube(f"CircuitControl_CheckerTile_{index}", group, (x, 0.36, 3.76), (0.58, 0.05, 0.34), mats["paper" if index % 2 else "rubber"], bevel=0.003)
+
+    cube("CircuitControl_RaceControlBlock", group, (-5.85, 1.78, -0.65), (3.95, 3.18, 5.25), mats["stone"], bevel=0.055)
+    cube("CircuitControl_RaceControlRearWall", group, (-5.85, 1.86, -3.42), (3.75, 2.92, 0.22), mats["stone_shadow"], bevel=0.026)
+    cube("CircuitControl_RaceControlSideWall", group, (-7.92, 1.76, -0.65), (0.22, 2.9, 5.05), mats["stone_shadow"], bevel=0.02)
+    cube("CircuitControl_RoadFacingGlass", group, (-3.82, 1.92, 0.65), (0.1, 1.46, 2.42), mats["glass"], bevel=0.01)
+    cube("CircuitControl_ControlRoomWindow", group, (-5.85, 2.02, 2.07), (2.58, 1.28, 0.1), mats["glass"], bevel=0.01)
+    cube("CircuitControl_RaceControlRoof", group, (-5.85, 3.48, -0.65), (4.52, 0.36, 5.92), mats["wood"], bevel=0.03)
+    cube("CircuitControl_TimingTower", group, (-5.85, 5.08, -0.95), (1.62, 3.28, 1.52), mats["dark"], bevel=0.032)
+    cube("CircuitControl_TimingTowerGlass", group, (-5.85, 5.12, -0.12), (1.08, 1.76, 0.08), mats["screen"], bevel=0.008)
+    cube("CircuitControl_TimingTowerCap", group, (-5.85, 6.85, -0.95), (2.22, 0.34, 2.0), mats["amber"], bevel=0.02)
+    cylinder("CircuitControl_LapClockDisk", group, (-5.85, 5.18, -0.02), 0.54, 0.06, mats["amber"], vertices=20, bevel=0.006)
+    cube("CircuitControl_LapClockHandVertical", group, (-5.85, 5.18, -0.06), (0.055, 0.72, 0.04), mats["dark"], bevel=0.002)
+    cube("CircuitControl_LapClockHandHorizontal", group, (-5.85, 5.18, -0.07), (0.62, 0.055, 0.04), mats["dark"], bevel=0.002)
+
+    cube("CircuitControl_PitWallMass", group, (5.85, 1.18, -0.56), (3.62, 2.12, 5.05), mats["wood"], bevel=0.045)
+    cube("CircuitControl_PitWallScreen", group, (5.85, 1.86, 2.02), (2.42, 1.0, 0.08), mats["screen"], bevel=0.008)
+    cube("CircuitControl_PitWallRearPanel", group, (5.85, 1.62, -3.13), (2.75, 1.62, 0.12), mats["stone_shadow"], bevel=0.014)
+    for index, y in enumerate([1.35, 1.76, 2.17]):
+        cube(f"CircuitControl_PitWallStatus_{index}", group, (5.85, y, 2.12), (1.58 - index * 0.18, 0.07, 0.045), [mats["mint"], mats["amber"], mats["paper"]][index], bevel=0.003)
+    for index, z in enumerate([-2.52, -1.52, -0.52, 0.48]):
+        cube(f"CircuitControl_PitWallRhythm_{index}", group, (4.02, 1.04, z), (0.09, 1.08, 0.52), mats["paper"], bevel=0.004)
+
+    for x in [-4.72, 4.72]:
+        cube("CircuitControl_StartPortalFoot", group, (x, 0.38, 3.28), (1.05, 0.56, 1.05), mats["stone"], bevel=0.04)
+        cube("CircuitControl_StartPortalPost", group, (x, 2.56, 3.28), (0.46, 4.05, 0.42), mats["dark"], bevel=0.024)
+        cube("CircuitControl_StartPortalGlow", group, (x, 2.56, 2.92), (0.1, 3.1, 0.055), mats["mint" if x > 0 else "amber"], bevel=0.004)
+    cube("CircuitControl_StartPortalHeader", group, (0, 4.58, 3.28), (10.85, 0.56, 0.66), mats["dark"], bevel=0.034)
+    cube("CircuitControl_TimingScreen", group, (0, 4.26, 2.9), (4.86, 0.76, 0.08), mats["screen"], bevel=0.008)
+    for index, x in enumerate([-4.05, -3.24, -2.43, 2.43, 3.24, 4.05]):
+        cube(f"CircuitControl_HeaderChecker_{index}", group, (x, 4.18, 2.82), (0.5, 0.38, 0.06), mats["paper" if index % 2 else "rubber"], bevel=0.003)
+    for index, x in enumerate([-1.1, 0, 1.1]):
+        cube(f"CircuitControl_StartLamp_{index}", group, (x, 3.68, 2.82), (0.48, 0.3, 0.06), [mats["pink"], mats["amber"], mats["mint"]][index], bevel=0.01)
+
+    cube("CircuitControl_ReturnPortalHeader", group, (0, 2.86, -3.82), (8.75, 0.34, 0.48), mats["dark"], bevel=0.026)
+    for x in [-4.25, 4.25]:
+        cube("CircuitControl_ReturnPortalPost", group, (x, 1.52, -3.82), (0.28, 2.48, 0.32), mats["dark"], bevel=0.018)
+    cube("CircuitControl_ReturnTimingStrip", group, (0, 2.62, -4.08), (5.8, 0.1, 0.08), mats["mint"], bevel=0.004)
+    cube("CircuitControl_CheckpointCrown", group, (0, 5.02, 3.0), (5.65, 0.12, 0.1), mats["amber"], bevel=0.005)
+    for index, x in enumerate([-2.05, -0.7, 0.7, 2.05]):
+        cube(f"CircuitControl_SplitTimerBlade_{index}", group, (x, 4.88, 3.0), (0.32, 0.92, 0.08), [mats["paper"], mats["mint"], mats["amber"], mats["paper"]][index], bevel=0.004)
+    cube("CircuitControl_RecoverRailLeft", group, (-7.1, 0.74, -1.8), (0.16, 1.0, 4.1), mats["dark"], bevel=0.008)
+    cube("CircuitControl_RecoverRailRight", group, (7.1, 0.74, -1.8), (0.16, 1.0, 4.1), mats["dark"], bevel=0.008)
 
 def create_stunt_checkpoint(mats):
     group = root("EnvPolishStuntCheckpoint")

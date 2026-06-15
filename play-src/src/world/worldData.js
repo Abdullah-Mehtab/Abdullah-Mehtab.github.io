@@ -439,10 +439,10 @@ export const worldZones = [
     achievement: 'circuit_gate',
     accent: '#ff9b6d',
     startsCircuit: true,
-    summary: 'Circuit foundation stays testable, but final stunt art is deferred.',
+    summary: 'Start the island time-trial route from the timing control gate.',
     lines: [
-      'This gate starts the island loop circuit.',
-      'Follow the checkpoints around the outer loop and return clean.',
+      'Drive through the timing gate to begin the island loop circuit.',
+      'Follow the checkpoint markers around the outer road and return clean.',
     ],
   },
   {
