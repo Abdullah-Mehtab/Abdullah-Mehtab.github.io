@@ -1673,57 +1673,84 @@ def create_cv_records_archive_civic_vault(mats):
 def create_behind_engineering_garage_workshop_hall(mats):
     group = root("EnvPolishBehindEngineeringGarage")
 
-    cube("BehindEngineeringGarage_IntegratedApron", group, (0, 0.12, -1.18), (20.4, 0.24, 12.8), mats["stone_shadow"], bevel=0.075)
-    cube("BehindEngineeringGarage_RoadFacingThreshold", group, (0, 0.27, -7.55), (13.8, 0.16, 1.25), mats["paper"], bevel=0.04)
-    cube("BehindEngineeringGarage_MainWorkshopHall", group, (-0.7, 3.18, 0.12), (14.7, 6.05, 7.55), mats["stone_shadow"], bevel=0.072)
-    cube("BehindEngineeringGarage_ToolArchiveWing", group, (-8.6, 2.52, 0.15), (3.7, 4.82, 6.72), mats["wood"], bevel=0.06)
-    cube("BehindEngineeringGarage_ServiceWing", group, (7.25, 2.68, 0.05), (4.5, 5.12, 6.88), mats["stone"], bevel=0.06)
-    cube("BehindEngineeringGarage_MainRoof", group, (-0.7, 6.4, 0.12), (15.8, 0.44, 8.15), mats["dark"], bevel=0.04)
-    cube("BehindEngineeringGarage_ArchiveRoof", group, (-8.6, 5.18, 0.15), (4.1, 0.36, 7.15), mats["dark"], bevel=0.034)
-    cube("BehindEngineeringGarage_ServiceRoof", group, (7.25, 5.42, 0.05), (4.85, 0.36, 7.32), mats["dark"], bevel=0.034)
-    cube("BehindEngineeringGarage_RoofServiceBlock", group, (-1.2, 7.06, -0.7), (5.6, 0.82, 1.85), mats["stone"], bevel=0.038)
-    cube("BehindEngineeringGarage_RoofServiceWindow", group, (-1.2, 7.08, -1.68), (4.65, 0.42, 0.08), mats["glass"], bevel=0.006)
-    for index, x in enumerate([-5.2, -3.4, 3.0, 4.8]):
-        cube(f"BehindEngineeringGarage_RoofExhaustBox_{index}", group, (x, 6.88, 2.58), (0.94, 0.62, 0.82), mats["stone"], bevel=0.024)
-        cube(f"BehindEngineeringGarage_RoofExhaustCap_{index}", group, (x, 7.22, 2.58), (1.14, 0.12, 0.98), mats["dark"], bevel=0.012)
+    cube("BehindEngineeringGarage_WorkApron", group, (0, 0.12, -5.15), (18.2, 0.24, 5.6), mats["stone_shadow"], bevel=0.075)
+    cube("BehindEngineeringGarage_RoadThreshold", group, (0, 0.28, -7.7), (12.6, 0.18, 0.9), mats["paper"], bevel=0.035)
+    cube("BehindEngineeringGarage_MainWorkshopHall", group, (-0.55, 3.18, 0.02), (14.6, 6.1, 7.35), mats["stone_shadow"], bevel=0.075)
+    cube("BehindEngineeringGarage_ToolArchiveWing", group, (-8.65, 2.42, 0.08), (3.65, 4.55, 6.65), mats["wood"], bevel=0.06)
+    cube("BehindEngineeringGarage_ServiceWing", group, (7.15, 2.55, 0.08), (4.35, 4.82, 6.65), mats["stone"], bevel=0.06)
+    cube("BehindEngineeringGarage_MainRoof", group, (-0.55, 6.45, 0.02), (15.75, 0.42, 8.05), mats["wood"], bevel=0.04)
+    cube("BehindEngineeringGarage_ToolWingRoof", group, (-8.65, 4.95, 0.08), (4.08, 0.3, 7.05), mats["wood"], bevel=0.032)
+    cube("BehindEngineeringGarage_ServiceWingRoof", group, (7.15, 5.12, 0.08), (4.78, 0.3, 7.05), mats["wood"], bevel=0.032)
+    cube("BehindEngineeringGarage_FrontRoofFascia", group, (-0.55, 6.55, -4.1), (16.2, 0.34, 0.32), mats["dark"], bevel=0.016)
+    cube("BehindEngineeringGarage_RearRoofFascia", group, (-0.55, 6.55, 4.1), (16.2, 0.34, 0.32), mats["dark"], bevel=0.016)
+    cube("BehindEngineeringGarage_LeftRoofFascia", group, (-8.75, 6.55, 0.02), (0.32, 0.34, 7.86), mats["dark"], bevel=0.014)
+    cube("BehindEngineeringGarage_RightRoofFascia", group, (7.65, 6.55, 0.02), (0.32, 0.34, 7.86), mats["dark"], bevel=0.014)
 
-    cube("BehindEngineeringGarage_RollupBayFrame", group, (-1.12, 2.82, -4.02), (9.9, 4.7, 0.34), mats["dark"], bevel=0.038)
-    cube("BehindEngineeringGarage_RollupDoor", group, (-1.12, 2.45, -4.25), (7.85, 3.45, 0.12), mats["stone"], bevel=0.022)
-    for index, y in enumerate([1.0, 1.42, 1.84, 2.26, 2.68, 3.1, 3.52]):
-        cube(f"BehindEngineeringGarage_RollupDoorRib_{index}", group, (-1.12, y, -4.34), (7.72, 0.055, 0.07), mats["paper"], bevel=0.003)
-    cube("BehindEngineeringGarage_BuildBayCanopy", group, (-1.12, 5.35, -4.58), (10.8, 0.42, 1.08), mats["dark"], bevel=0.03)
-    cube("BehindEngineeringGarage_BuildBayGlow", group, (-1.12, 5.02, -5.12), (8.9, 0.08, 0.08), mats["screen"], bevel=0.004)
-    cube("BehindEngineeringGarage_ServiceDoor", group, (5.65, 1.76, -4.24), (1.35, 2.78, 0.14), mats["wood"], bevel=0.018)
-    cube("BehindEngineeringGarage_ServiceDoorLight", group, (5.65, 3.35, -4.36), (1.05, 0.1, 0.07), mats["mint"], bevel=0.004)
+    cube("BehindEngineeringGarage_RoofClerestory", group, (-0.55, 7.0, -0.62), (9.8, 0.82, 2.1), mats["stone"], bevel=0.028)
+    cube("BehindEngineeringGarage_RoofClerestoryFrontGlass", group, (-0.55, 7.0, -1.72), (8.8, 0.42, 0.08), mats["glass"], bevel=0.006)
+    cube("BehindEngineeringGarage_RoofClerestoryRearGlass", group, (-0.55, 7.0, 0.48), (8.8, 0.34, 0.08), mats["glass"], bevel=0.006)
+    cube("BehindEngineeringGarage_RoofClerestoryCap", group, (-0.55, 7.48, -0.62), (10.25, 0.18, 2.42), mats["dark"], bevel=0.012)
 
-    cube("BehindEngineeringGarage_PrototypeLiftDeck", group, (-1.22, 0.88, -5.17), (6.3, 0.3, 0.9), mats["dark"], bevel=0.02)
-    cube("BehindEngineeringGarage_PrototypeBodyBuck", group, (-1.22, 1.47, -5.32), (4.35, 0.74, 0.44), mats["amber"], bevel=0.026)
-    cube("BehindEngineeringGarage_PrototypeCabinBuck", group, (0.0, 1.98, -5.42), (1.22, 0.62, 0.2), mats["glass"], bevel=0.014)
-    for index, x in enumerate([-3.12, 0.9]):
-        cube(f"BehindEngineeringGarage_PrototypeWheelBuck_{index}", group, (x, 1.08, -5.45), (0.46, 0.56, 0.12), mats["rubber"], bevel=0.012)
+    cube("BehindEngineeringGarage_RollupBayFrame", group, (-1.05, 2.72, -3.98), (9.8, 4.45, 0.36), mats["dark"], bevel=0.04)
+    cube("BehindEngineeringGarage_RollupDoor", group, (-1.05, 2.34, -4.24), (7.72, 3.22, 0.14), mats["stone"], bevel=0.022)
+    for index, y in enumerate([0.92, 1.32, 1.72, 2.12, 2.52, 2.92, 3.32]):
+        cube(f"BehindEngineeringGarage_RollupDoorRib_{index}", group, (-1.05, y, -4.36), (7.52, 0.055, 0.07), mats["paper"], bevel=0.003)
+    cube("BehindEngineeringGarage_BayCanopy", group, (-1.05, 5.02, -4.72), (10.55, 0.36, 0.92), mats["dark"], bevel=0.026)
+    cube("BehindEngineeringGarage_BayStatusLight", group, (-1.05, 4.68, -5.2), (7.45, 0.08, 0.07), mats["screen"], bevel=0.004)
+    cube("BehindEngineeringGarage_ServiceDoor", group, (5.72, 1.66, -4.2), (1.32, 2.62, 0.14), mats["wood"], bevel=0.018)
+    cube("BehindEngineeringGarage_ServiceDoorCanopy", group, (5.72, 3.1, -4.36), (1.72, 0.18, 0.42), mats["dark"], bevel=0.012)
 
-    cube("BehindEngineeringGarage_DiagnosticsWall", group, (6.2, 2.95, -4.28), (2.5, 3.58, 0.16), mats["dark"], bevel=0.024)
-    for index, y in enumerate([1.55, 2.1, 2.65, 3.2]):
-        cube(f"BehindEngineeringGarage_DiagnosticsStrip_{index}", group, (6.2, y, -4.42), (1.78 - index * 0.12, 0.08, 0.07), [mats["screen"], mats["mint"], mats["aqua"], mats["paper"]][index], bevel=0.003)
-    cube("BehindEngineeringGarage_SourceControlWall", group, (-6.65, 2.78, -4.24), (1.0, 3.45, 0.16), mats["dark"], bevel=0.02)
-    for index, y in enumerate([1.48, 2.0, 2.52, 3.04]):
-        cube(f"BehindEngineeringGarage_SourceBranch_{index}", group, (-6.65, y, -4.38), (0.76 + index * 0.14, 0.08, 0.07), [mats["mint"], mats["screen"], mats["aqua"], mats["paper"]][index], bevel=0.003)
+    cube("BehindEngineeringGarage_PrototypeLiftDeck", group, (-1.1, 0.78, -5.22), (5.9, 0.28, 0.78), mats["dark"], bevel=0.018)
+    cube("BehindEngineeringGarage_PrototypeBodyBuck", group, (-1.1, 1.32, -5.38), (3.9, 0.62, 0.38), mats["amber"], bevel=0.022)
+    cube("BehindEngineeringGarage_PrototypeCabinBuck", group, (-0.02, 1.76, -5.5), (1.08, 0.48, 0.18), mats["glass"], bevel=0.012)
+    for index, x in enumerate([-2.78, 0.58]):
+        cube(f"BehindEngineeringGarage_PrototypeWheelBuck_{index}", group, (x, 0.98, -5.52), (0.4, 0.46, 0.1), mats["rubber"], bevel=0.01)
 
-    for index, x in enumerate([-4.6, -2.3, 0.0, 2.3, 4.6]):
-        cube(f"BehindEngineeringGarage_RoofVentRun_{index}", group, (x, 6.78, 2.35), (1.22, 0.18, 2.4), mats["dark"], bevel=0.012)
-        cube(f"BehindEngineeringGarage_RoofVentGlow_{index}", group, (x, 6.92, 1.24), (0.82, 0.06, 0.06), mats["aqua"], bevel=0.003)
+    cube("BehindEngineeringGarage_DiagnosticsPanel", group, (6.22, 2.6, -4.28), (2.15, 2.9, 0.14), mats["dark"], bevel=0.02)
+    for index, y in enumerate([1.44, 1.94, 2.44, 2.94]):
+        cube(f"BehindEngineeringGarage_DiagnosticsLine_{index}", group, (6.22, y, -4.42), (1.48 - index * 0.1, 0.07, 0.06), [mats["screen"], mats["mint"], mats["aqua"], mats["paper"]][index], bevel=0.003)
+    cube("BehindEngineeringGarage_SourceControlPanel", group, (-6.6, 2.6, -4.24), (1.02, 2.95, 0.14), mats["dark"], bevel=0.018)
+    for index, y in enumerate([1.42, 1.9, 2.38, 2.86]):
+        cube(f"BehindEngineeringGarage_SourceControlBranch_{index}", group, (-6.6, y, -4.38), (0.62 + index * 0.12, 0.07, 0.06), mats["mint"], bevel=0.003)
 
-    cube("BehindEngineeringGarage_RearWall", group, (-0.7, 3.08, 4.0), (12.9, 4.9, 0.24), mats["stone_shadow"], bevel=0.03)
-    cube("BehindEngineeringGarage_RearInspectionWindow", group, (-2.0, 3.18, 4.18), (5.4, 2.2, 0.1), mats["glass"], bevel=0.01)
-    cube("BehindEngineeringGarage_RearDispatchDoor", group, (4.65, 1.72, 4.18), (1.25, 2.55, 0.12), mats["wood"], bevel=0.014)
-    cube("BehindEngineeringGarage_RearHeader", group, (-0.7, 5.78, 4.2), (12.8, 0.32, 0.36), mats["dark"], bevel=0.014)
-    for index, x in enumerate([-4.0, -2.6, -1.2, 0.2]):
-        cube(f"BehindEngineeringGarage_RearProcessLane_{index}", group, (x, 2.8, 4.32), (0.1, 2.1, 0.07), [mats["screen"], mats["mint"], mats["aqua"], mats["paper"]][index], bevel=0.003)
+    cube("BehindEngineeringGarage_RearWall", group, (-0.55, 3.0, 4.02), (13.0, 4.8, 0.26), mats["stone_shadow"], bevel=0.032)
+    cube("BehindEngineeringGarage_RearLoadingDockApron", group, (3.72, 0.36, 4.78), (3.95, 0.18, 1.28), mats["stone"], bevel=0.024)
+    cube("BehindEngineeringGarage_RearLoadingDoorFrame", group, (3.72, 2.12, 4.27), (3.15, 3.42, 0.18), mats["dark"], bevel=0.018)
+    cube("BehindEngineeringGarage_RearLoadingDoor", group, (3.72, 1.98, 4.4), (2.38, 2.72, 0.1), mats["wood"], bevel=0.014)
+    for index, y in enumerate([1.02, 1.42, 1.82, 2.22, 2.62, 3.02]):
+        cube(f"BehindEngineeringGarage_RearDoorRib_{index}", group, (3.72, y, 4.48), (2.18, 0.052, 0.055), mats["paper"], bevel=0.002)
+    cube("BehindEngineeringGarage_RearInspectionWindowFrame", group, (-2.78, 3.12, 4.24), (5.3, 2.18, 0.16), mats["dark"], bevel=0.016)
+    cube("BehindEngineeringGarage_RearInspectionWindow", group, (-2.78, 3.12, 4.36), (4.65, 1.58, 0.08), mats["glass"], bevel=0.008)
+    for index, x in enumerate([-4.36, -3.28, -2.2, -1.12]):
+        cube(f"BehindEngineeringGarage_RearWindowMullion_{index}", group, (x, 3.12, 4.44), (0.06, 1.58, 0.055), mats["screen" if index % 2 else "paper"], bevel=0.002)
+    cube("BehindEngineeringGarage_RearHeader", group, (-0.55, 5.45, 4.24), (12.6, 0.26, 0.28), mats["dark"], bevel=0.012)
+    for index, x in enumerate([-6.55, -4.95, 0.25, 5.9]):
+        cube(f"BehindEngineeringGarage_RearStructuralPier_{index}", group, (x, 3.0, 4.32), (0.22, 4.42, 0.14), mats["wood"], bevel=0.008)
 
-    for index, z in enumerate([-2.2, -0.7, 0.8, 2.3]):
-        cube(f"BehindEngineeringGarage_ServiceWingWindow_{index}", group, (9.54, 2.85, z), (0.08, 0.78, 0.82), mats["glass"], bevel=0.006)
-        cube(f"BehindEngineeringGarage_ArchiveWingWindow_{index}", group, (-10.48, 2.55, z), (0.08, 0.68, 0.72), mats["glass"], bevel=0.006)
-    cube("BehindEngineeringGarage_WorkshopStatusBeacon", group, (4.75, 7.28, -2.42), (0.68, 1.35, 0.68), mats["mint"], bevel=0.018)
+    for index, z in enumerate([-2.2, -0.75, 0.7, 2.15]):
+        cube(f"BehindEngineeringGarage_ServiceWingWindow_{index}", group, (9.4, 2.7, z), (0.08, 0.74, 0.76), mats["glass"], bevel=0.006)
+        cube(f"BehindEngineeringGarage_ServiceWingMullion_{index}", group, (9.46, 2.7, z), (0.05, 0.88, 0.08), mats["dark"], bevel=0.003)
+        cube(f"BehindEngineeringGarage_ToolWingWindow_{index}", group, (-10.34, 2.48, z), (0.08, 0.64, 0.72), mats["glass"], bevel=0.006)
+    for side, x, accent in [("Service", 9.5, mats["screen"]), ("Tool", -10.5, mats["paper"])]:
+        cube(f"BehindEngineeringGarage_{side}SideTopLintel", group, (x, 4.54, -0.02), (0.12, 0.16, 5.78), mats["dark"], bevel=0.004)
+        cube(f"BehindEngineeringGarage_{side}SideBaseTrim", group, (x, 0.82, -0.02), (0.12, 0.14, 5.78), mats["wood"], bevel=0.004)
+        cube(f"BehindEngineeringGarage_{side}SideFrontPier", group, (x, 2.68, -3.03), (0.13, 3.48, 0.16), mats["dark"], bevel=0.004)
+        cube(f"BehindEngineeringGarage_{side}SideMiddlePier", group, (x, 2.68, 0.02), (0.13, 3.48, 0.14), accent, bevel=0.003)
+        cube(f"BehindEngineeringGarage_{side}SideRearPier", group, (x, 2.68, 3.03), (0.13, 3.48, 0.16), mats["dark"], bevel=0.004)
+    cube("BehindEngineeringGarage_ServiceSidePersonnelDoor", group, (9.56, 1.46, -2.9), (0.08, 2.14, 0.92), mats["wood"], bevel=0.012)
+    cube("BehindEngineeringGarage_ServiceSideDoorCanopy", group, (9.62, 2.72, -2.9), (0.12, 0.16, 1.32), mats["dark"], bevel=0.006)
+    cube("BehindEngineeringGarage_ToolSideArchiveDoor", group, (-10.56, 1.42, 2.86), (0.08, 2.05, 0.92), mats["wood"], bevel=0.012)
+    cube("BehindEngineeringGarage_ToolSideDoorCanopy", group, (-10.62, 2.65, 2.86), (0.12, 0.16, 1.28), mats["dark"], bevel=0.006)
+
+    cube("BehindEngineeringGarage_ToolWall", group, (-10.45, 2.4, -2.85), (0.12, 2.55, 1.65), mats["dark"], bevel=0.014)
+    for index, y in enumerate([1.52, 2.12, 2.72]):
+        cube(f"BehindEngineeringGarage_ToolRail_{index}", group, (-10.54, y, -2.85), (0.06, 0.06, 1.35), mats["paper"], bevel=0.003)
+    cube("BehindEngineeringGarage_RoofServiceBlock", group, (-0.75, 7.0, 2.36), (3.55, 0.62, 1.1), mats["stone"], bevel=0.03)
+    cube("BehindEngineeringGarage_RoofServiceWindow", group, (-0.75, 7.1, 1.88), (3.85, 0.36, 0.08), mats["glass"], bevel=0.006)
+    for index, x in enumerate([-5.2, 5.0]):
+        cube(f"BehindEngineeringGarage_ExhaustStack_{index}", group, (x, 7.08, 2.42), (0.48, 0.86, 0.48), mats["stone"], bevel=0.018)
+        cube(f"BehindEngineeringGarage_ExhaustCap_{index}", group, (x, 7.58, 2.42), (0.68, 0.1, 0.68), mats["dark"], bevel=0.01)
+    cube("BehindEngineeringGarage_WorkshopStatusBeacon", group, (4.75, 7.38, -2.38), (0.58, 1.08, 0.58), mats["mint"], bevel=0.016)
 
 
 def create_career_office(mats):
