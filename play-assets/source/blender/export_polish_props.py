@@ -2028,61 +2028,71 @@ def create_career_software_house(mats):
 
 def create_awards_museum_hall(mats):
     group = root("EnvPolishAwardsMuseumHall")
-    cube("AwardsMuseum_SiteTerrace", group, (0, 0.1, -0.25), (14.4, 0.2, 8.9), mats["paper"], bevel=0.055)
-    cube("AwardsMuseum_GalleryHall", group, (0, 2.25, 0.2), (11.2, 4.2, 5.6), mats["stone"], bevel=0.06)
-    cube("AwardsMuseum_LeftArchiveWing", group, (-4.75, 2.1, 0.34), (3.05, 3.75, 5.25), mats["stone_shadow"], bevel=0.055)
-    cube("AwardsMuseum_RightArchiveWing", group, (4.75, 2.1, 0.34), (3.05, 3.75, 5.25), mats["stone_shadow"], bevel=0.055)
-    cube("AwardsMuseum_RearArchiveWall", group, (0, 2.18, 3.18), (11.75, 3.75, 0.5), mats["stone_shadow"], bevel=0.045)
-    cube("AwardsMuseum_FrontPorticoVolume", group, (0, 2.12, -3.02), (8.95, 3.72, 1.18), mats["stone_shadow"], bevel=0.05)
-    cube("AwardsMuseum_FrontGalleryInset", group, (0, 2.15, -3.68), (5.2, 2.85, 0.14), mats["glass"], bevel=0.014)
-    cube("AwardsMuseum_RoadFacingDoor", group, (0, 1.1, -3.78), (1.6, 1.74, 0.14), mats["dark"], bevel=0.012)
-    cube("AwardsMuseum_DoorGlow", group, (0, 2.1, -3.88), (2.2, 0.1, 0.06), mats["amber"], bevel=0.004)
-    cube("AwardsMuseum_EntryLintel", group, (0, 3.95, -3.64), (9.55, 0.42, 0.52), mats["paper"], bevel=0.026)
-    cube("AwardsMuseum_GoldEntablature", group, (0, 4.28, -3.78), (9.2, 0.16, 0.1), mats["gold"], bevel=0.006)
-    for index, x in enumerate([-3.75, -1.25, 1.25, 3.75]):
-        cube(f"AwardsMuseum_PorticoColumn_{index}", group, (x, 1.78, -3.58), (0.46, 3.2, 0.46), mats["paper"], bevel=0.034)
-        cube(f"AwardsMuseum_PorticoBase_{index}", group, (x, 0.34, -3.58), (0.82, 0.28, 0.78), mats["stone_shadow"], bevel=0.024)
-        cube(f"AwardsMuseum_PorticoCapital_{index}", group, (x, 3.3, -3.58), (0.88, 0.26, 0.74), mats["stone_shadow"], bevel=0.024)
-    for index, z in enumerate([-5.18, -4.68, -4.18, -3.68]):
-        cube(f"AwardsMuseum_EntryStep_{index}", group, (0, 0.16 + index * 0.052, z), (8.3 - index * 0.66, 0.13, 0.42), mats["stone"], bevel=0.024)
+    cube("AwardsMuseum_CivicPlinth", group, (0, 0.11, -0.18), (16.8, 0.22, 10.8), mats["stone"], bevel=0.075)
+    cube("AwardsMuseum_RoadArrivalWalk", group, (0, 0.26, -6.05), (10.4, 0.14, 2.1), mats["paper"], bevel=0.035)
+    cube("AwardsMuseum_CeremonialThreshold", group, (0, 0.36, -5.0), (8.4, 0.12, 0.7), mats["gold"], bevel=0.018)
 
-    cube("AwardsMuseum_RoofSlab", group, (0, 4.52, 0.12), (12.5, 0.46, 6.25), mats["wood"], bevel=0.045)
-    cube("AwardsMuseum_RoofStoneCap", group, (0, 4.88, 0.12), (11.4, 0.34, 5.35), mats["stone_shadow"], bevel=0.04)
-    cube("AwardsMuseum_GoldRoofLineFront", group, (0, 5.08, -2.72), (10.8, 0.1, 0.08), mats["gold"], bevel=0.004)
-    cube("AwardsMuseum_GoldRoofLineRear", group, (0, 5.08, 2.86), (10.8, 0.1, 0.08), mats["gold"], bevel=0.004)
-    cube("AwardsMuseum_GoldRoofLineLeft", group, (-6.0, 5.08, 0.08), (0.08, 0.1, 5.25), mats["gold"], bevel=0.004)
-    cube("AwardsMuseum_GoldRoofLineRight", group, (6.0, 5.08, 0.08), (0.08, 0.1, 5.25), mats["gold"], bevel=0.004)
+    cube("AwardsMuseum_MainGalleryBlock", group, (0, 2.74, 0.15), (12.0, 5.05, 6.25), mats["stone_shadow"], bevel=0.07)
+    cube("AwardsMuseum_FrontLimestoneFace", group, (0, 2.7, -3.18), (12.45, 4.92, 0.42), mats["stone"], bevel=0.045)
+    cube("AwardsMuseum_RearArchiveFace", group, (0, 2.64, 3.48), (12.45, 4.78, 0.48), mats["stone_shadow"], bevel=0.045)
+    cube("AwardsMuseum_LeftGalleryWing", group, (-6.35, 2.4, 0.2), (1.65, 4.45, 6.45), mats["stone"], bevel=0.055)
+    cube("AwardsMuseum_RightGalleryWing", group, (6.35, 2.4, 0.2), (1.65, 4.45, 6.45), mats["stone"], bevel=0.055)
+    cube("AwardsMuseum_CentralAtriumVolume", group, (0, 3.32, -2.96), (5.1, 5.65, 0.9), mats["glass"], bevel=0.025)
+    cube("AwardsMuseum_EntryPortalFrame", group, (0, 2.45, -4.02), (5.95, 4.38, 0.46), mats["dark"], bevel=0.028)
+    cube("AwardsMuseum_EntryPortalVoid", group, (0, 2.1, -4.28), (3.7, 3.0, 0.16), mats["glass"], bevel=0.012)
+    cube("AwardsMuseum_DoubleDoorLeft", group, (-0.68, 1.18, -4.42), (1.18, 1.9, 0.08), mats["dark"], bevel=0.012)
+    cube("AwardsMuseum_DoubleDoorRight", group, (0.68, 1.18, -4.42), (1.18, 1.9, 0.08), mats["dark"], bevel=0.012)
+    cube("AwardsMuseum_DoorMedalGlow", group, (0, 2.28, -4.52), (2.4, 0.09, 0.055), mats["amber"], bevel=0.004)
+    cube("AwardsMuseum_PorticoBeam", group, (0, 4.95, -4.06), (11.4, 0.44, 0.62), mats["paper"], bevel=0.03)
+    cube("AwardsMuseum_PorticoGoldLine", group, (0, 5.24, -4.42), (10.2, 0.11, 0.08), mats["gold"], bevel=0.004)
 
-    cube("AwardsMuseum_TrophyRotundaBase", group, (0, 5.72, 0.0), (3.55, 1.5, 2.55), mats["stone"], bevel=0.045)
-    cube("AwardsMuseum_TrophyRotundaGlassFront", group, (0, 5.72, -1.34), (2.42, 0.9, 0.08), mats["glass"], bevel=0.008)
-    cube("AwardsMuseum_TrophyRotundaGlassRear", group, (0, 5.72, 1.34), (2.42, 0.9, 0.08), mats["glass"], bevel=0.008)
-    cube("AwardsMuseum_TrophyRotundaRoof", group, (0, 6.62, 0.0), (4.2, 0.34, 3.05), mats["gold"], bevel=0.04)
-    cube("AwardsMuseum_TrophyCupBowl", group, (0, 7.16, 0.0), (1.45, 0.52, 0.92), mats["gold"], bevel=0.08)
-    cube("AwardsMuseum_TrophyCupStem", group, (0, 6.78, 0.0), (0.28, 0.58, 0.28), mats["gold"], bevel=0.025)
-    cube("AwardsMuseum_TrophyCupBase", group, (0, 6.48, 0.0), (0.92, 0.22, 0.62), mats["stone_shadow"], bevel=0.024)
+    for index, x in enumerate([-4.9, -3.35, 3.35, 4.9]):
+        cube(f"AwardsMuseum_RoadColumn_{index}", group, (x, 2.2, -4.0), (0.52, 3.95, 0.52), mats["paper"], bevel=0.032)
+        cube(f"AwardsMuseum_RoadColumnBase_{index}", group, (x, 0.38, -4.0), (0.92, 0.28, 0.86), mats["stone_shadow"], bevel=0.02)
+        cube(f"AwardsMuseum_RoadColumnCapital_{index}", group, (x, 4.16, -4.0), (0.98, 0.28, 0.86), mats["stone_shadow"], bevel=0.02)
 
-    for index, x in enumerate([-4.05, -2.7, 2.7, 4.05]):
-        cube(f"AwardsMuseum_FrontCertificateCase_{index}", group, (x, 2.42, -3.72), (0.86, 1.2, 0.08), [mats["paper"], mats["gold"], mats["gold"], mats["paper"]][index], bevel=0.008)
-        cube(f"AwardsMuseum_FrontCertificateGlow_{index}", group, (x, 3.18, -3.8), (0.68, 0.08, 0.06), mats["amber"], bevel=0.004)
-    for side, x in [("Left", -6.28), ("Right", 6.28)]:
-        cube(f"AwardsMuseum_{side}SideMuseumWall", group, (x, 2.18, 0.12), (0.44, 3.7, 5.4), mats["stone_shadow"], bevel=0.04)
-        for index, z in enumerate([-1.72, -0.42, 0.88, 2.18]):
-            cube(f"AwardsMuseum_{side}CertificateBay_{index}", group, (x, 2.08, z), (0.08, 0.88, 0.78), [mats["paper"], mats["glass"], mats["gold"], mats["paper"]][index], bevel=0.008)
-            cube(f"AwardsMuseum_{side}GalleryLight_{index}", group, (x, 2.82, z), (0.08, 0.06, 0.58), mats["amber"], bevel=0.003)
-        cube(f"AwardsMuseum_{side}SideCornice", group, (x, 4.1, 0.12), (0.54, 0.22, 5.7), mats["paper"], bevel=0.018)
-    for index, x in enumerate([-4.6, -2.75, -0.9, 0.9, 2.75, 4.6]):
-        cube(f"AwardsMuseum_RearArchiveCase_{index}", group, (x, 2.08, 3.5), (0.9, 1.05, 0.08), [mats["paper"], mats["gold"], mats["glass"], mats["glass"], mats["gold"], mats["paper"]][index], bevel=0.008)
-        cube(f"AwardsMuseum_RearArchiveGlow_{index}", group, (x, 2.86, 3.58), (0.68, 0.08, 0.06), mats["amber"], bevel=0.004)
-    cube("AwardsMuseum_RearServiceDoor", group, (0, 0.92, 3.58), (1.32, 1.35, 0.12), mats["dark"], bevel=0.012)
-    cube("AwardsMuseum_RearCertificateHeader", group, (0, 3.76, 3.56), (7.8, 0.16, 0.08), mats["gold"], bevel=0.004)
-
-    cube("AwardsMuseum_CeremonialWalk", group, (0, 0.24, -6.05), (9.6, 0.14, 1.55), mats["stone"], bevel=0.035)
+    for index, z in enumerate([-5.25, -4.78, -4.31]):
+        cube(f"AwardsMuseum_RoadStep_{index}", group, (0, 0.18 + index * 0.052, z), (8.6 - index * 0.72, 0.13, 0.38), mats["stone"], bevel=0.022)
     for index, x in enumerate([-3.6, -1.8, 0, 1.8, 3.6]):
-        cube(f"AwardsMuseum_WalkInlay_{index}", group, (x, 0.36, -6.08), (0.82, 0.08, 0.92), [mats["paper"], mats["gold"], mats["amber"], mats["gold"], mats["paper"]][index], bevel=0.01)
-    cube("AwardsMuseum_FrontMedalSealBackplate", group, (0, 3.02, -3.86), (2.3, 1.92, 0.12), mats["stone_shadow"], bevel=0.018)
-    cylinder("AwardsMuseum_FrontMedalSeal", group, (0, 3.26, -3.95), 0.76, 0.1, mats["gold"], vertices=24, bevel=0.012)
-    cube("AwardsMuseum_FrontRibbonLeft", group, (-0.28, 2.34, -4.02), (0.22, 0.98, 0.08), mats["amber"], rot=(0, 0, -0.14), bevel=0.004)
-    cube("AwardsMuseum_FrontRibbonRight", group, (0.28, 2.34, -4.02), (0.22, 0.98, 0.08), mats["paper"], rot=(0, 0, 0.14), bevel=0.004)
+        cube(f"AwardsMuseum_ArrivalMedalTile_{index}", group, (x, 0.43, -6.06), (0.82, 0.06, 0.72), [mats["paper"], mats["gold"], mats["amber"], mats["gold"], mats["paper"]][index], bevel=0.006)
+
+    cube("AwardsMuseum_EntablatureBand", group, (0, 4.92, -0.02), (13.4, 0.42, 7.15), mats["wood"], bevel=0.04)
+    cube("AwardsMuseum_UpperStoneCrown", group, (0, 5.38, -0.02), (12.15, 0.46, 6.05), mats["stone"], bevel=0.04)
+    cube("AwardsMuseum_RoofDeck", group, (0, 5.85, -0.02), (10.6, 0.34, 5.2), mats["dark"], bevel=0.035)
+    cube("AwardsMuseum_RoofLanternBase", group, (0, 6.48, -0.35), (4.8, 1.2, 2.55), mats["stone_shadow"], bevel=0.04)
+    cube("AwardsMuseum_RoofLanternGlassFront", group, (0, 6.48, -1.72), (3.75, 0.75, 0.08), mats["glass"], bevel=0.008)
+    cube("AwardsMuseum_RoofLanternGlassRear", group, (0, 6.48, 1.02), (3.75, 0.75, 0.08), mats["glass"], bevel=0.008)
+    cube("AwardsMuseum_RoofLanternCap", group, (0, 7.24, -0.35), (5.35, 0.34, 3.05), mats["gold"], bevel=0.032)
+    cube("AwardsMuseum_RoofMedalPlinth", group, (0, 7.64, -0.35), (1.45, 0.34, 1.05), mats["stone_shadow"], bevel=0.024)
+    cylinder("AwardsMuseum_RoofMedalDisk", group, (0, 8.02, -0.35), 0.72, 0.12, mats["gold"], vertices=28, bevel=0.012)
+
+    for side, x, face_sign in [("Left", -7.28, -1), ("Right", 7.28, 1)]:
+        cube(f"AwardsMuseum_{side}SideWall", group, (x, 2.68, 0.18), (0.46, 4.75, 6.1), mats["stone_shadow"], bevel=0.04)
+        cube(f"AwardsMuseum_{side}SideCornice", group, (x, 4.96, 0.18), (0.6, 0.22, 6.45), mats["paper"], bevel=0.016)
+        cube(f"AwardsMuseum_{side}SideBaseTrim", group, (x, 0.84, 0.18), (0.58, 0.16, 6.3), mats["wood"], bevel=0.006)
+        for row, y in enumerate([1.58, 2.38, 3.18]):
+            cube(f"AwardsMuseum_{side}GalleryBand_{row}", group, (x + face_sign * 0.035, y + 0.32, 0.18), (0.07, 0.06, 5.25), mats["gold"], bevel=0.002)
+        for index, z in enumerate([-2.25, -1.05, 0.15, 1.35, 2.55]):
+            material = [mats["paper"], mats["glass"], mats["gold"], mats["glass"], mats["paper"]][index]
+            cube(f"AwardsMuseum_{side}CertificateCase_{index}", group, (x + face_sign * 0.06, 2.42, z), (0.08, 1.22, 0.72), material, bevel=0.006)
+            cube(f"AwardsMuseum_{side}CaseLight_{index}", group, (x + face_sign * 0.075, 3.18, z), (0.06, 0.055, 0.55), mats["amber"], bevel=0.002)
+
+    cube("AwardsMuseum_RearArchiveDoorFrame", group, (0, 1.82, 3.92), (4.25, 2.86, 0.24), mats["dark"], bevel=0.02)
+    cube("AwardsMuseum_RearArchiveDoor", group, (0, 1.42, 4.08), (2.25, 2.04, 0.08), mats["stone"], bevel=0.012)
+    cube("AwardsMuseum_RearArchiveHeader", group, (0, 3.42, 4.1), (7.7, 0.22, 0.08), mats["gold"], bevel=0.004)
+    cube("AwardsMuseum_RearServiceWalk", group, (0, 0.32, 4.82), (7.2, 0.12, 0.95), mats["paper"], bevel=0.026)
+    for index, x in enumerate([-4.8, -3.2, -1.6, 1.6, 3.2, 4.8]):
+        cube(f"AwardsMuseum_RearRecordWindow_{index}", group, (x, 2.38, 3.98), (0.86, 1.1, 0.08), [mats["glass"], mats["paper"], mats["gold"], mats["gold"], mats["paper"], mats["glass"]][index], bevel=0.006)
+        cube(f"AwardsMuseum_RearRecordLamp_{index}", group, (x, 3.15, 4.06), (0.58, 0.06, 0.05), mats["amber"], bevel=0.002)
+
+    cube("AwardsMuseum_FrontMedalBackplate", group, (0, 3.02, -4.54), (2.45, 2.05, 0.12), mats["stone_shadow"], bevel=0.018)
+    cylinder("AwardsMuseum_FrontMedalSeal", group, (0, 3.26, -4.63), 0.78, 0.1, mats["gold"], vertices=28, bevel=0.012)
+    cube("AwardsMuseum_FrontRibbonLeft", group, (-0.28, 2.34, -4.72), (0.22, 0.98, 0.08), mats["amber"], rot=(0, 0, -0.14), bevel=0.004)
+    cube("AwardsMuseum_FrontRibbonRight", group, (0.28, 2.34, -4.72), (0.22, 0.98, 0.08), mats["paper"], rot=(0, 0, 0.14), bevel=0.004)
+
+    for index, x in enumerate([-4.35, -2.95, 2.95, 4.35]):
+        cube(f"AwardsMuseum_FrontCertificateCase_{index}", group, (x, 2.42, -4.46), (0.78, 1.18, 0.08), [mats["paper"], mats["gold"], mats["gold"], mats["paper"]][index], bevel=0.006)
+        cube(f"AwardsMuseum_FrontCertificateGlow_{index}", group, (x, 3.18, -4.54), (0.58, 0.06, 0.05), mats["amber"], bevel=0.002)
 
 
 def create_todo_board(mats):
