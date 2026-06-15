@@ -2630,6 +2630,35 @@ def create_potato_farm_stand(mats):
     cube("PotatoFarmstead_BlockPotatoEyeB", group, (-7.82, 1.64, -4.76), (0.08, 0.06, 0.04), mats["dark"], bevel=0.003)
     cube("PotatoFarmstead_BlockPotatoLeaf", group, (-7.58, 2.08, -4.55), (0.34, 0.12, 0.22), mats["crop"], rot=(0, 0, 0.2), bevel=0.004)
 
+    cube("PotatoFarmstead_VoxelGateLeftPillar", group, (-8.9, 1.72, -5.1), (0.62, 3.08, 0.56), mats["wood"], bevel=0.01)
+    cube("PotatoFarmstead_VoxelGateRightPillar", group, (-0.28, 1.72, -5.1), (0.62, 3.08, 0.56), mats["wood"], bevel=0.01)
+    cube("PotatoFarmstead_VoxelGateHeader", group, (-4.58, 3.42, -5.1), (9.25, 0.42, 0.58), mats["wood"], bevel=0.014)
+    cube("PotatoFarmstead_VoxelGateGlow", group, (-4.58, 3.2, -5.42), (7.4, 0.08, 0.06), mats["amber"], bevel=0.003)
+    cube("PotatoFarmstead_VoxelGateProduceShelf", group, (-4.58, 1.04, -5.42), (6.95, 0.26, 0.64), mats["wood"], bevel=0.012)
+    for index, x in enumerate([-6.65, -5.8, -4.95, -4.1, -3.25]):
+        cube(f"PotatoFarmstead_VoxelGatePotatoCrate_{index}", group, (x, 1.38, -5.62), (0.52, 0.36, 0.42), [mats["amber"], mats["paper"], mats["amber"], mats["crop"], mats["amber"]][index], bevel=0.012)
+
+    cube("PotatoFarmstead_BlockFarmhouseRoadMass", group, (-5.85, 1.72, -0.92), (4.72, 3.0, 0.54), mats["wood"], bevel=0.012)
+    cube("PotatoFarmstead_BlockFarmhouseRoadRoofLip", group, (-5.85, 3.35, -0.98), (5.18, 0.34, 0.72), mats["stone_shadow"], bevel=0.014)
+    cube("PotatoFarmstead_BlockFarmhouseRoadDoor", group, (-5.85, 0.98, -1.25), (1.0, 1.42, 0.08), mats["dark"], bevel=0.004)
+    for index, x in enumerate([-7.35, -6.55, -5.15, -4.35]):
+        cube(f"PotatoFarmstead_BlockFarmhouseRoadWindow_{index}", group, (x, 1.82, -1.28), (0.48, 0.46, 0.06), [mats["glass"], mats["screen"], mats["paper"], mats["glass"]][index], bevel=0.004)
+
+    cube("PotatoFarmstead_PixelFieldBorderFront", group, (4.1, 0.58, -3.12), (10.4, 0.22, 0.22), mats["wood"], bevel=0.008)
+    cube("PotatoFarmstead_PixelFieldBorderBack", group, (4.1, 0.58, 4.44), (10.4, 0.22, 0.22), mats["wood"], bevel=0.008)
+    cube("PotatoFarmstead_PixelFieldBorderLeft", group, (-1.18, 0.58, 0.66), (0.22, 0.22, 7.35), mats["wood"], bevel=0.008)
+    cube("PotatoFarmstead_PixelFieldBorderRight", group, (9.38, 0.58, 0.66), (0.22, 0.22, 7.35), mats["wood"], bevel=0.008)
+    cube("PotatoFarmstead_PixelWaterCross", group, (4.05, 0.54, 0.66), (9.55, 0.06, 0.42), mats["aqua"], bevel=0.004)
+    cube("PotatoFarmstead_PixelWaterSpine", group, (4.05, 0.56, 0.66), (0.42, 0.07, 7.05), mats["aqua"], bevel=0.004)
+    for plot, (x, z) in enumerate([(1.2, -2.0), (2.6, -2.0), (5.52, -2.0), (6.92, -2.0), (1.2, -0.68), (2.6, -0.68), (5.52, -0.68), (6.92, -0.68), (1.2, 1.96), (2.6, 1.96), (5.52, 1.96), (6.92, 1.96), (1.2, 3.28), (2.6, 3.28), (5.52, 3.28), (6.92, 3.28)]):
+        cube(f"PotatoFarmstead_PixelPotatoMound_{plot}", group, (x, 0.72, z), (0.62, 0.28, 0.52), mats["crop"], bevel=0.008)
+        cube(f"PotatoFarmstead_PixelPotatoBulb_{plot}", group, (x + 0.24, 0.58, z + 0.18), (0.26, 0.2, 0.24), mats["amber"], bevel=0.01)
+
+    cube("PotatoFarmstead_HarvestChestLeft", group, (5.7, 1.02, 4.52), (1.08, 0.86, 0.86), mats["wood"], bevel=0.014)
+    cube("PotatoFarmstead_HarvestChestRight", group, (7.05, 1.02, 4.52), (1.08, 0.86, 0.86), mats["wood"], bevel=0.014)
+    cube("PotatoFarmstead_HarvestChestLatchLeft", group, (5.7, 1.1, 4.02), (0.3, 0.16, 0.06), mats["amber"], bevel=0.003)
+    cube("PotatoFarmstead_HarvestChestLatchRight", group, (7.05, 1.1, 4.02), (0.3, 0.16, 0.06), mats["amber"], bevel=0.003)
+
 
 def create_potato_greenhouse_cluster_study(mats):
     group = root("EnvPolishPotatoFarmStand")
