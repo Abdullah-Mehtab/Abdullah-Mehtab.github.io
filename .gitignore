@@ -1,6 +1,7 @@
 # Editor and local machine state
 .vscode/
 .idea/
+AGENTS.md
 *.swp
 *.swo
 
@@ -37,3 +38,26 @@ build/
 .env
 .env.*
 !.env.example
+
+# Recovered Codex conversation transcript (local only, never push)
+docs/transcript/
+
+# Local agent rules and internal engineering records. This is a public-facing
+# portfolio repo; these are working notes, not part of the published site.
+CLAUDE.md
+docs/stale_artifacts/
+docs/PROJECT_HISTORY_DIGEST.md
+docs/CODE_STATE_AUDIT.md
+docs/CODEBASE_AUDIT-2026-05-28.md
+
+# Internal engineering records - kept locally, never published
+journal/
+GOAL.md
+localbackups/
+
+# Superseded personal CV exports (current pair stays tracked:
+# Abdullah-Mehtab-Resume-v5.pdf and Abdullah-Mehtab-CV-Cyber-v2.pdf)
+/Abdullah-Mehtab-Resume-v2.pdf
+/Abdullah-Mehtab-Resume-v3.pdf
+/Abdullah-Mehtab-Resume-v4.pdf
+/Abdullah-Mehtab-CV-Cyber.pdf
