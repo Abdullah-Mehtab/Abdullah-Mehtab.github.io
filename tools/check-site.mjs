@@ -20,8 +20,8 @@ const protectedRoutes = [
   { route: '/cyber-sentinel.html', file: 'cyber-sentinel.html' },
   { route: '/play/', file: 'play/index.html' },
   { route: '/classic/', file: 'classic/index.html' },
-  { route: '/Abdullah-Mehtab-Resume-v5.pdf', file: 'Abdullah-Mehtab-Resume-v5.pdf' },
-  { route: '/Abdullah-Mehtab-CV-Cyber-v2.pdf', file: 'Abdullah-Mehtab-CV-Cyber-v2.pdf' },
+  { route: '/Abdullah-Mehtab-Master-CV.pdf', file: 'Abdullah-Mehtab-Master-CV.pdf' },
+  { route: '/Abdullah-Mehtab-Cyber-CV.pdf', file: 'Abdullah-Mehtab-Cyber-CV.pdf' },
   { route: '/robots.txt', file: 'robots.txt' },
   { route: '/sitemap.xml', file: 'sitemap.xml' }
 ];
@@ -322,7 +322,7 @@ async function captureScreenshots(baseUrl) {
   await mkdir(outputDir, { recursive: true });
   const browser = await puppeteer.launch({
     executablePath,
-    headless: 'new',
+    headless: true,
     args: ['--no-sandbox', '--disable-setuid-sandbox']
   });
 

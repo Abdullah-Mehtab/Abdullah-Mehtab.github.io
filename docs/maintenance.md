@@ -12,10 +12,11 @@ Do not move these without adding redirects or updating the deployment strategy:
 - `/cv.html`
 - `/todo.html`
 - `/cyber-sentinel.html`
+- `/admin.html`
 - `/play/`
 - `/classic/`
-- `/Abdullah-Mehtab-Resume-v5.pdf`
-- `/Abdullah-Mehtab-CV-Cyber-v2.pdf`
+- `/Abdullah-Mehtab-Master-CV.pdf`
+- `/Abdullah-Mehtab-Cyber-CV.pdf`
 - `/robots.txt`
 - `/sitemap.xml`
 
@@ -27,14 +28,14 @@ Do not move these without adding redirects or updating the deployment strategy:
 - `play-assets/`: local asset generation and validation tools for Portfolio Drive.
 - `classic/`: archival version of the older site, retained so `/classic/` links keep working.
 - `supabase/`: local Supabase schema, migrations, config, and edge function source.
-- `docs/`: maintenance notes and audits.
+- `docs/`: maintenance notes. Only this file is tracked; the audits and history files beside it are git-ignored working notes and never ship.
 
 ## Checks Before Updating
 
 Run these before pushing structural or asset changes:
 
 ```powershell
-npm run test
+npm test
 npm run play:build
 ```
 
@@ -44,7 +45,8 @@ For visual spot checks, run:
 npm run check:screenshots
 ```
 
-Screenshots are written under `.codex-tmp/site-screenshots/`, which is ignored.
+Screenshots are written under `.codex-tmp/site-screenshots/`, which is ignored. The directory name predates the
+current tooling and is kept only because `tools/check-site.mjs` still writes there.
 
 ## Cleanup Rules
 
