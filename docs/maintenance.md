@@ -50,6 +50,6 @@ current tooling and is kept only because `tools/check-site.mjs` still writes the
 
 ## Cleanup Rules
 
-- Keep live PDFs in root while public pages link to them.
+- Keep live PDFs in root while public pages link to them. Their paths are deliberately versionless; the version lives in each link's `download` attribute so the saved file still names it. Updating a CV means replacing the file and bumping that attribute together.
 - Remove local preview logs, archives, dependency folders, and one-off exports from the working copy instead of committing them.
 - Update `sitemap.xml` and `robots.txt` whenever public URL policy changes.

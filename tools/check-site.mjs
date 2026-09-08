@@ -220,6 +220,35 @@ async function checkProtectedRoutes() {
   }
 }
 
+// The CV links deliberately split two things: a stable href so a shared link never dies, and a
+// versioned download filename so the saved file says which version it is. Those two drift apart the
+// moment someone edits one and forgets the other, and nothing else would notice.
+async function checkDownloadNames() {
+  const html = await readFile(resolve(repoRoot, 'cv.html'), 'utf8');
+  // Match every PDF anchor first, so removing the attribute outright is caught too.
+  const anchors = [...html.matchAll(/<a\b[^>]*href="([^"]+\.pdf)"[^>]*>/g)];
+
+  if (anchors.length === 0) {
+    failures.push('cv.html links no PDF downloads at all; the CV downloads were lost.');
+    return;
+  }
+
+  for (const [tag, href] of anchors) {
+    const stem = href.replace(/\.pdf$/, '');
+    const named = tag.match(/\bdownload="([^"]+)"/);
+
+    if (!named) {
+      failures.push(`cv.html links ${href} without download="..."; it would save under the versionless served name instead of saying which version it is.`);
+      continue;
+    }
+
+    const downloadName = named[1];
+    if (!downloadName.startsWith(`${stem}-v`)) {
+      failures.push(`cv.html serves ${href} but would save it as ${downloadName}; the download name must be the href plus a version, e.g. ${stem}-vX.Y.pdf`);
+    }
+  }
+}
+
 async function checkStaticReferences() {
   const files = await walkFiles(repoRoot);
   for (const file of files) {
@@ -347,6 +376,7 @@ async function captureScreenshots(baseUrl) {
 
 async function main() {
   await checkProtectedRoutes();
+  await checkDownloadNames();
   await checkStaticReferences();
 
   const { server, baseUrl } = await startStaticServer();
