@@ -27,8 +27,12 @@ Abdullah-Mehtab-Master-CV.pdf
 Abdullah-Mehtab-Cyber-CV.pdf
 ```
 
-Updating a CV means replacing those two files. Numbered exports kept beside them are a local
-archive and are not published.
+The saved file still carries its version. Each link sets `download="...-vX.Y.pdf"`, so the path stays
+stable while the downloaded file says which version it is.
+
+Updating a CV therefore means two edits: replace the versionless file, and bump the `download`
+filename on that link in `cv.html`. `npm test` fails if the two stop agreeing. Numbered exports kept
+beside them are a local archive and are not published.
 
 ## Highlights
 
