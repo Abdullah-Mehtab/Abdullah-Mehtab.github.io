@@ -27,7 +27,7 @@ Abdullah-Mehtab-Resume-v4.5.pdf
 
 # Future Node/Next.js build and dependency output
 node_modules/
-.codex-tools/
+.claude-tools/
 .next/
 out/
 dist/
@@ -55,9 +55,8 @@ journal/
 GOAL.md
 localbackups/
 
-# Superseded personal CV exports (current pair stays tracked:
-# Abdullah-Mehtab-Resume-v5.pdf and Abdullah-Mehtab-CV-Cyber-v2.pdf)
-/Abdullah-Mehtab-Resume-v2.pdf
-/Abdullah-Mehtab-Resume-v3.pdf
-/Abdullah-Mehtab-Resume-v4.pdf
-/Abdullah-Mehtab-CV-Cyber.pdf
+# Personal CV exports. The two versionless files are the live public routes and stay
+# tracked, so updating a CV means replacing those two files and nothing else. Every
+# numbered export is a local archive of a superseded version and is not published.
+/Abdullah-Mehtab-Master-CV-v*.pdf
+/Abdullah-Mehtab-Cyber-CV-v*.pdf
