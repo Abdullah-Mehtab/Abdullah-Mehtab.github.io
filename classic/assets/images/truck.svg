@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="85" height="60" viewBox="0 0 85 60" role="img" aria-label="Delivery truck">
+  <!-- Faces right: the scenery scrolls right-to-left past it, and the wind lines in animations.css
+       trail off its left side. Light tones on purpose - the CSS applies brightness(0.5) saturate(0),
+       so anything dark here renders as near-black. Bottom 14px is left clear for wheels.svg. -->
+  <rect x="2" y="10" width="48" height="36" rx="2" fill="#e8e8e8"/>
+  <rect x="6" y="15" width="40" height="1.5" fill="#c4c4c4"/>
+  <rect x="27" y="18" width="1.5" height="26" fill="#c4c4c4"/>
+  <path d="M50 23 h14 l10 11 h7 a2 2 0 0 1 2 2 v10 H50 Z" fill="#d2d2d2"/>
+  <path d="M53 26 h10 l8 8 H53 Z" fill="#9a9a9a"/>
+  <rect x="2" y="46" width="80" height="3" rx="1" fill="#adadad"/>
+  <rect x="79" y="38" width="4" height="4" rx="1" fill="#f2f2f2"/>
+</svg>

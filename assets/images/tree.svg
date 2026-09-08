@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="35" height="100" viewBox="0 0 35 100" role="img" aria-label="Roadside tree">
+  <!-- Intrinsic 35x100 because animations.css sets no background-size for .tree and relies on the
+       natural dimensions. Neutral tones: the CSS hue-rotates these into green. -->
+  <rect x="15" y="70" width="5" height="30" rx="1" fill="#6b5a45"/>
+  <polygon points="4,80 17.5,50 31,80" fill="#a6a6a6"/>
+  <polygon points="6,60 17.5,32 29,60" fill="#b4b4b4"/>
+  <polygon points="8,40 17.5,13 27,40" fill="#c2c2c2"/>
+</svg>

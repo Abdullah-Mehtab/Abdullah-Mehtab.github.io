@@ -527,6 +527,16 @@ html {
 }
 
 body.portfolio-v2 {
+  /* animations.css draws the truck scene's mountain and hill with these. That file is shared
+     byte-for-byte with classic/, which defines them in common.css; root pages do not load
+     common.css, so without these the variables are undefined, the box-shadow is dropped as
+     invalid, and the scenery silently disappears with no error anywhere.
+
+     Declared here rather than on :root on purpose: --cyan is themed on body[data-theme], and an
+     alias declared at :root resolves against the base value, freezing the scenery on one colour
+     whatever theme is picked. Declared on the same element as the theme, it follows the theme. */
+  --primary-color: var(--cyan);
+  --text-on-primary: var(--text);
   margin: 0;
   background:
     radial-gradient(circle at 12% 8%, var(--glow-a), transparent 28rem),
