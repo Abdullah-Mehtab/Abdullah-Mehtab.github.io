@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="85" height="15" viewBox="0 0 85 15" role="img" aria-label="Truck wheels">
+  <!-- Sits at the very bottom of the same 85px-wide box as truck.svg, so the hubs line up under
+       the cargo body and the cab. Animated separately from the truck for a slight suspension lag. -->
+  <circle cx="17" cy="7.5" r="7" fill="#dcdcdc"/>
+  <circle cx="17" cy="7.5" r="3" fill="#8a8a8a"/>
+  <circle cx="66" cy="7.5" r="7" fill="#dcdcdc"/>
+  <circle cx="66" cy="7.5" r="3" fill="#8a8a8a"/>
+</svg>

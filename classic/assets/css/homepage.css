@@ -880,7 +880,7 @@ body {
   height: 100px; 
   width: 35px;
   bottom: 0;
-  background: url(https://s3-us-west-2.amazonaws.com/s.cdpn.io/130015/tree.svg) no-repeat;
+  background: url(../images/tree.svg) no-repeat;
   filter: brightness(0.8) sepia(0.4) saturate(1.5) hue-rotate(90deg);
   opacity: 1;
   will-change: transform;
