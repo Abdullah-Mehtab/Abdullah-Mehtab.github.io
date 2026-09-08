@@ -113,6 +113,118 @@
     `;
   }
 
+  const PROBE_TIMEOUT_MS = 8000;
+
+  // A hung request never rejects, so an unbounded probe would sit on "Checking" forever and report
+  // nothing at all. Bounding it turns a hang into a visible failure.
+  function withTimeout(promise, label) {
+    let timer;
+    const limit = new Promise((_, reject) => {
+      timer = setTimeout(() => reject(new Error(`${label} timed out after ${PROBE_TIMEOUT_MS / 1000}s`)), PROBE_TIMEOUT_MS);
+    });
+    return Promise.race([promise, limit]).finally(() => clearTimeout(timer));
+  }
+
+  // Each probe exercises a path the public site depends on, so a silent outage shows up here
+  // instead of looking like a quiet week.
+  const healthChecks = [
+    {
+      label: "Supabase client",
+      detail: "Loaded from the jsDelivr CDN. If this fails, comments fall back to nothing.",
+      async run() {
+        if (!await getSupabase()) throw new Error("client did not load");
+        return "Loaded";
+      }
+    },
+    {
+      label: "Public comment reads",
+      detail: "Exactly what a visitor's browser does on every page.",
+      async run() {
+        const supabase = await getSupabase();
+        if (!supabase) throw new Error("no client");
+        const { error, count } = await supabase
+          .from("comments")
+          .select("id", { count: "exact", head: true })
+          .eq("status", "approved");
+        if (error) throw error;
+        return `Reachable, ${count || 0} approved`;
+      }
+    },
+    {
+      label: "Visitor-proof function",
+      detail: "Edge function that records analytics and hashes visitor IPs.",
+      async run() {
+        const endpoint = config.visitorProofEndpoint;
+        if (!endpoint) throw new Error("no endpoint configured");
+        const url = new URL(endpoint);
+        url.searchParams.set("page_slug", "play");
+        url.searchParams.set("event_type", "potato_summon_count");
+        const response = await fetch(url, {
+          headers: {
+            apikey: config.supabaseAnonKey,
+            authorization: `Bearer ${config.supabaseAnonKey}`
+          },
+          signal: AbortSignal.timeout(PROBE_TIMEOUT_MS)
+        });
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+        return "Responding";
+      }
+    },
+    {
+      label: "Moderation access",
+      detail: "Needs an admin sign-in. Row-level security decides, not this page.",
+      async run() {
+        const supabase = await getSupabase();
+        if (!supabase) throw new Error("no client");
+        const { data: sessionData } = await supabase.auth.getSession();
+        if (!sessionData.session) return { idle: true, text: "Not signed in" };
+        const { error, count } = await supabase
+          .from("comments")
+          .select("id", { count: "exact", head: true })
+          .eq("status", "pending");
+        if (error) throw error;
+        return `Granted, ${count || 0} pending`;
+      }
+    }
+  ];
+
+  function renderHealth(rows) {
+    const list = document.querySelector("[data-admin-health]");
+    if (!list) return;
+    list.innerHTML = rows.map((row) => `
+      <li class="health-row">
+        <div>
+          <span class="health-label">${escapeHtml(row.label)}</span>
+          <span class="health-detail">${escapeHtml(row.detail)}</span>
+        </div>
+        <span class="health-state ${escapeHtml(row.state)}">${escapeHtml(row.text)}</span>
+      </li>
+    `).join("");
+  }
+
+  async function checkHealth() {
+    renderHealth(healthChecks.map((check) => ({
+      label: check.label,
+      detail: check.detail,
+      state: "is-checking",
+      text: "Checking"
+    })));
+
+    const rows = [];
+    for (const check of healthChecks) {
+      try {
+        const outcome = await withTimeout(check.run(), check.label);
+        rows.push(outcome && outcome.idle
+          ? { label: check.label, detail: check.detail, state: "is-idle", text: outcome.text }
+          : { label: check.label, detail: check.detail, state: "is-ok", text: outcome });
+      } catch (error) {
+        const reason = String((error && error.message) || error).slice(0, 60);
+        rows.push({ label: check.label, detail: check.detail, state: "is-down", text: `Down: ${reason}` });
+      }
+    }
+    renderHealth(rows);
+  }
+
   async function loadComments() {
     const supabase = await getSupabase();
     if (!supabase) {
@@ -226,10 +338,17 @@
     const list = document.querySelector("[data-admin-comments]");
     const refresh = document.querySelector("[data-admin-refresh]");
     const refreshVisitors = document.querySelector("[data-admin-refresh-visitors]");
+    const refreshHealth = document.querySelector("[data-admin-refresh-health]");
     const signout = document.querySelector("[data-admin-signout]");
     const emailInput = login ? login.querySelector("input[name='email']") : null;
 
     if (emailInput && config.adminEmailHint) emailInput.placeholder = config.adminEmailHint;
+
+    // Before the early return on purpose: a client that will not load is exactly the outage this
+    // panel exists to show, and returning first would leave it stuck on its placeholder.
+    if (refreshHealth) refreshHealth.addEventListener("click", checkHealth);
+    await checkHealth();
+
     if (!supabase) {
       setStatus("Supabase config is missing.");
       return;
@@ -241,10 +360,14 @@
       const { error } = await supabase.auth.signInWithOtp({
         email,
         options: {
+          // Without this, Supabase defaults to creating a user for any address typed into this
+          // public form and emailing them a signup confirmation. That let a stranger send mail
+          // from this project and fill its user table, so unknown addresses must be refused.
+          shouldCreateUser: false,
           emailRedirectTo: window.location.href.split("#")[0]
         }
       });
-      setStatus(error ? "Magic link failed." : "Magic link sent. Check your email.");
+      setStatus(error ? "That address cannot sign in here." : "If that address can moderate, a sign-in link is on its way.");
     });
 
     refresh.addEventListener("click", loadComments);

@@ -2489,9 +2489,55 @@ body[data-motion="off"] .cursor-effects {
   gap: 18px;
 }
 
-.admin-visitors {
+.admin-visitors,
+.admin-health {
   grid-column: 1 / -1;
 }
+
+.health-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 2px;
+}
+
+.health-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--line);
+}
+
+.health-row:last-child {
+  border-bottom: 0;
+}
+
+.health-label {
+  display: block;
+  color: var(--text);
+}
+
+.health-detail {
+  display: block;
+  color: var(--muted);
+  font-size: 0.84rem;
+}
+
+.health-state {
+  font-weight: 600;
+  font-size: 0.76rem;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  text-align: right;
+}
+
+.health-state.is-ok { color: var(--green); }
+.health-state.is-down { color: var(--rose); }
+.health-state.is-checking { color: var(--amber); }
+.health-state.is-idle { color: var(--muted); }
 
 .admin-panel,
 .admin-comment {

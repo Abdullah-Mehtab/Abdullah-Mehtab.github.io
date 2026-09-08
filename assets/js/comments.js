@@ -68,6 +68,10 @@
     };
   }
 
+  function isSupabaseConfigured() {
+    return Boolean(config.supabaseUrl && config.supabaseAnonKey);
+  }
+
   async function getSupabase() {
     if (!config.supabaseUrl || !config.supabaseAnonKey) return null;
     if (!supabaseClientPromise) {
@@ -96,7 +100,12 @@
     if (!supabase) {
       return {
         mode: "local",
-        comments: readLocal(key)
+        comments: readLocal(key),
+        // A configured backend that will not load is an outage. Reporting nothing here would make
+        // it look identical to a thread nobody has posted in.
+        warning: isSupabaseConfigured()
+          ? "Comments are offline right now, not empty. Try again shortly."
+          : ""
       };
     }
 
@@ -113,7 +122,7 @@
       return {
         mode: "local",
         comments: readLocal(key),
-        warning: ""
+        warning: "Comments could not be loaded right now, not empty. Try again shortly."
       };
     }
 
@@ -126,6 +135,11 @@
   async function saveComment(key, payload) {
     const supabase = await getSupabase();
     if (!supabase) {
+      if (isSupabaseConfigured()) {
+        // Saving locally here would report success for a comment that never left the browser and
+        // that the site owner would never receive.
+        throw new Error("comment-backend-unreachable");
+      }
       const comments = readLocal(key);
       comments.unshift({
         id: window.crypto && crypto.randomUUID ? crypto.randomUUID() : String(Date.now()),
@@ -159,14 +173,15 @@
     const note = root.querySelector(".comment-note");
     if (!list) return;
 
-    if (note && result.mode === "local") {
-      note.textContent = result.warning || "";
-    } else if (note) {
-      note.textContent = "Comments are moderated before they show up.";
+    if (note) {
+      note.textContent = result.warning
+        || (result.mode === "local" ? "" : "Comments are moderated before they show up.");
     }
 
     if (!result.comments.length) {
-      list.innerHTML = '<div class="comment-item"><p>No comments yet. Suspiciously quiet.</p></div>';
+      list.innerHTML = result.warning
+        ? '<div class="comment-item"><p>Comments are not loading. That is a connection problem, not an empty thread.</p></div>'
+        : '<div class="comment-item"><p>No comments yet. Suspiciously quiet.</p></div>';
       return;
     }
 
@@ -240,7 +255,7 @@
           : result.message;
         loadComments(key).then((loaded) => render(root, loaded));
       } catch (error) {
-        status.textContent = "Comment failed. Try again later.";
+        status.textContent = "Comment did not send. The server is not reachable right now, so nothing was saved.";
       }
     });
   }
