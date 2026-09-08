@@ -49,3 +49,8 @@ jobs:
       - run: npm run test
 
       - run: npm run play:build
+
+      # Last on purpose: a new advisory should not mask a genuine build or test failure.
+      # --audit-level=high keeps the gate meaningful rather than permanently red over an
+      # informational advisory in a build-only tool.
+      - run: npm audit --audit-level=high
