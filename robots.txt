@@ -1,6 +1,5 @@
 User-agent: *
 Allow: /
 Disallow: /classic/
-Disallow: /admin.html
 
 Sitemap: https://abdullah-mehtab.github.io/sitemap.xml
