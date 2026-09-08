@@ -5,6 +5,7 @@
   "type": "module",
   "scripts": {
     "check:site": "node tools/check-site.mjs",
+    "dev:site": "node tools/serve-site.mjs",
     "check:screenshots": "node tools/check-site.mjs --screenshots",
     "cleanup:artifacts": "node tools/cleanup-codex-tmp.mjs",
     "play:assets": "node play-assets/tools/build-assets.mjs",
@@ -21,12 +22,7 @@
     "three": "^0.183.2"
   },
   "devDependencies": {
-    "@gltf-transform/cli": "^4.3.0",
-    "@gltf-transform/core": "^4.3.0",
-    "@gltf-transform/extensions": "^4.3.0",
-    "@gltf-transform/functions": "^4.3.0",
-    "puppeteer-core": "^24.43.1",
-    "sharp": "^0.34.5",
+    "puppeteer-core": "^25.10.0",
     "vite": "^7.2.4"
   }
 }
