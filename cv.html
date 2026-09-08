@@ -1,4 +1,8 @@
 <!DOCTYPE html>
+<!--
+  Web CV. Updating either PDF is a two-step edit with a rule attached — see the comment above the
+  download links in the #downloads section near the bottom of this file before changing them.
+-->
 <html lang="en">
   <head>
     <meta charset="utf-8">
@@ -279,6 +283,25 @@
               <h2>PDF versions.</h2>
             </div>
           </div>
+          <!--
+            UPDATING A CV — two edits, both required.
+
+            1. Replace the file. The href is a permanent public URL and must stay versionless.
+               Never put a version number back into it: these links are handed out in job
+               applications and a moved path is a dead link in someone's inbox.
+
+            2. Bump the version in that link's download="..." attribute. The path stays stable, but
+               the attribute is what names the file on the visitor's disk, so it is the only thing
+               telling them which version they downloaded.
+
+            Keep the numbered original beside the live file (Abdullah-Mehtab-Master-CV-v5.9.pdf and
+            so on). Those are git-ignored and act as the archive.
+
+            `npm test` fails if a link loses its download attribute, carries a versionless name, or
+            names something that is not the href plus a version. It CANNOT tell that a replaced PDF
+            still claims the old version, because the archive is git-ignored and CI has nothing to
+            compare against. Step 2 is on you.
+          -->
           <div class="cv-downloads">
             <article class="download-card">
               <p class="eyebrow">General</p>
