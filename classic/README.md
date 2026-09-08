@@ -15,7 +15,6 @@ This is my personal resume website showcasing my professional experience, projec
 │   ├── js/           # JavaScript files
 │   ├── images/       # Image assets
 │   └── fonts/        # Custom fonts
-└── config.toml       # Configuration file
 ```
 
 ## Features
