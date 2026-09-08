@@ -3,11 +3,48 @@
 
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
-  "Access-Control-Allow-Methods": "GET, POST, OPTIONS"
-};
+const SITE_ORIGIN = "https://abdullah-mehtab.github.io";
+
+// Local static servers used while developing the site and /play.
+const LOCAL_ORIGIN = /^https?:\/\/(?:localhost|127\.0\.0\.1)(?::\d+)?$/;
+
+function isAllowedOrigin(origin: string) {
+  return origin === SITE_ORIGIN || LOCAL_ORIGIN.test(origin);
+}
+
+// Echo back only an origin we recognise. A browser discards the response otherwise, which stops
+// another site's page reading these analytics. On its own that would not stop the write, only the
+// reading of the reply, so POST also checks the origin explicitly below.
+function corsHeadersFor(request: Request) {
+  const origin = request.headers.get("origin") || "";
+  return {
+    "Access-Control-Allow-Origin": isAllowedOrigin(origin) ? origin : SITE_ORIGIN,
+    "Vary": "Origin",
+    "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+    "Access-Control-Allow-Methods": "GET, POST, OPTIONS"
+  };
+}
+
+// One IP can legitimately produce a burst while exploring /play, so the ceiling is well above
+// normal use and only bites on flooding. The visitor_events_ip_hash_idx index keeps the count cheap.
+const RATE_LIMIT_WINDOW_MS = 60 * 60 * 1000;
+const RATE_LIMIT_MAX_EVENTS = 120;
+
+async function isRateLimited(supabase: ReturnType<typeof createClient>, ipHash: string) {
+  // No IP to key on. Analytics is an optional feature, so a missing signal must not block everyone.
+  if (!ipHash) return false;
+
+  const since = new Date(Date.now() - RATE_LIMIT_WINDOW_MS).toISOString();
+  const { count, error } = await supabase
+    .from("visitor_events")
+    .select("id", { count: "exact", head: true })
+    .eq("ip_hash", ipHash)
+    .gte("created_at", since);
+
+  // A failed check must not silently drop real traffic.
+  if (error) return false;
+  return Number(count) >= RATE_LIMIT_MAX_EVENTS;
+}
 
 const allowedEventTypes = new Set([
   "page_view",
@@ -87,6 +124,8 @@ async function hasRecentDuplicate(
 }
 
 Deno.serve(async (request) => {
+  const corsHeaders = corsHeadersFor(request);
+
   if (request.method === "OPTIONS") {
     return new Response("ok", { headers: corsHeaders });
   }
@@ -142,6 +181,17 @@ Deno.serve(async (request) => {
     });
   }
 
+  // Refuse writes coming from another site's page. A browser always sends Origin on a cross-origin
+  // POST, so a present-but-unrecognised value is the case worth blocking. A missing Origin means a
+  // non-browser caller, which CORS cannot police at all — the rate limit below bounds those.
+  const requestOrigin = request.headers.get("origin") || "";
+  if (requestOrigin && !isAllowedOrigin(requestOrigin)) {
+    return new Response(JSON.stringify({ error: "origin_not_allowed" }), {
+      status: 403,
+      headers: { ...corsHeaders, "content-type": "application/json" }
+    });
+  }
+
   const payload = {
     page_slug: clean(body.page_slug, 120, /[^a-zA-Z0-9_-]/g) || "home",
     event_type: cleanEventType(body.event_type),
@@ -162,6 +212,13 @@ Deno.serve(async (request) => {
     language: clean(body.language, 40, /[^a-zA-Z0-9_-]/g),
     platform: clean(body.platform, 80)
   };
+
+  if (await isRateLimited(supabase, payload.ip_hash)) {
+    return new Response(JSON.stringify({ error: "rate_limited" }), {
+      status: 429,
+      headers: { ...corsHeaders, "content-type": "application/json", "retry-after": "3600" }
+    });
+  }
 
   const isDuplicate = await hasRecentDuplicate(supabase, payload);
   if (isDuplicate) {
