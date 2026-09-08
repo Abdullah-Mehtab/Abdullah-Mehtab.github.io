@@ -362,7 +362,7 @@ export const worldZones = [
     achievement: 'skills_terminal',
     accent: '#92ffea',
     summary: 'Technical skills stop on the west service foundation.',
-    actions: [{ label: 'Resume PDF', href: '../Abdullah-Mehtab-Resume-v5.pdf' }],
+    actions: [{ label: 'Resume PDF', href: '../Abdullah-Mehtab-Master-CV.pdf' }],
   },
   {
     id: 'awards',
@@ -401,8 +401,8 @@ export const worldZones = [
     ],
     actions: [
       { label: 'Open CV Page', href: '../cv.html' },
-      { label: 'Resume PDF', href: '../Abdullah-Mehtab-Resume-v5.pdf' },
-      { label: 'Cyber CV PDF', href: '../Abdullah-Mehtab-CV-Cyber-v2.pdf' },
+      { label: 'Resume PDF', href: '../Abdullah-Mehtab-Master-CV.pdf' },
+      { label: 'Cyber CV PDF', href: '../Abdullah-Mehtab-Cyber-CV.pdf' },
     ],
   },
   {
@@ -484,7 +484,7 @@ export const worldZones = [
       'Engine room: Three.js visuals, Rapier physics, local resume data, and Supabase-backed counters.',
       'The repository link opens the source behind the drive world.',
     ],
-    actions: [{ label: 'Repository', href: 'https://github.com/Abdullah-Mehtab/Abdullah-Mehtab' }],
+    actions: [{ label: 'Repository', href: 'https://github.com/Abdullah-Mehtab/Abdullah-Mehtab.github.io' }],
   },
   {
     id: 'data-pier',
