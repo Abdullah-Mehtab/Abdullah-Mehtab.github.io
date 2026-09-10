@@ -1,0 +1,628 @@
+/* ABOUTME: The cinematic chapter treatment: typography, grade, and the chapter block. */
+/* ABOUTME: Opt-in per page via body.film, so it can be removed by deleting one link tag. */
+
+/*
+  Every colour here derives from a theme token rather than being written out, so all eighteen
+  themes grade this treatment without a per-theme block. A new theme stays a block of values.
+
+  Nothing in here creates content. Anything that moves is inside a
+  prefers-reduced-motion: no-preference query, so the static rendering is the real design and
+  motion is an enhancement on top. Firefox stable still ships scroll-driven animation behind a
+  flag, so a meaningful share of readers get the static version regardless of their settings.
+*/
+
+@font-face {
+  font-family: "Archivo";
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url("../fonts/archivo-400-latin.woff2") format("woff2");
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+
+@font-face {
+  font-family: "Archivo";
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url("../fonts/archivo-400-latin-ext.woff2") format("woff2");
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+
+@font-face {
+  font-family: "Archivo";
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: url("../fonts/archivo-700-latin.woff2") format("woff2");
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+
+@font-face {
+  font-family: "Archivo";
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: url("../fonts/archivo-700-latin-ext.woff2") format("woff2");
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+
+@font-face {
+  font-family: "IBM Plex Mono";
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url("../fonts/ibm-plex-mono-400-latin.woff2") format("woff2");
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+
+@font-face {
+  font-family: "IBM Plex Mono";
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url("../fonts/ibm-plex-mono-400-latin-ext.woff2") format("woff2");
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+
+@font-face {
+  font-family: "Instrument Serif";
+  font-style: italic;
+  font-weight: 400;
+  font-display: swap;
+  src: url("../fonts/instrument-serif-italic-latin.woff2") format("woff2");
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+
+@font-face {
+  font-family: "Instrument Serif";
+  font-style: italic;
+  font-weight: 400;
+  font-display: swap;
+  src: url("../fonts/instrument-serif-italic-latin-ext.woff2") format("woff2");
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+
+:root {
+  --face-display: "Archivo", system-ui, sans-serif;
+  --face-mono: "IBM Plex Mono", ui-monospace, "Cascadia Mono", Consolas, monospace;
+  --face-italic: "Instrument Serif", Georgia, "Times New Roman", serif;
+
+  --film-grain: 0.05;
+  --film-vignette: 0.55;
+  --film-rule: 1px;
+}
+
+/*
+  These four derive from theme tokens, so they MUST be declared on the same element the themes
+  write to. A custom property alias resolves where it is declared: put "var(--cyan)" on :root and
+  it freezes to the :root default, because every theme overrides --cyan on body[data-theme]
+  instead. This exact mistake previously froze the scenery on a single colour in every theme.
+*/
+body.film {
+  --scene-line: var(--line);
+  --scene-line-strong: color-mix(in srgb, var(--cyan) 22%, transparent);
+  --scene-accent: var(--cyan);
+  --scene-glow: var(--glow-a);
+}
+
+/* The two light themes need a heavier grain and a lighter vignette to read at all. */
+body.film[data-theme="light"],
+body.film[data-theme="paper"] {
+  --film-grain: 0.08;
+  --film-vignette: 0.22;
+}
+
+body.film {
+  font-family: var(--face-display);
+  font-weight: 400;
+  letter-spacing: -0.005em;
+}
+
+
+/*
+  One dedicated element carries grain, grid and vignette.
+
+  It cannot be done with body::before or body::after: portfolio-v2.css already uses both, and
+  ::after is the cursor trail, which is a protected feature. It also cannot be done by setting
+  background-image on body, because the themed backdrop is a three-layer "background" shorthand
+  and any background-image declaration replaces all three, leaving the page blank.
+*/
+.film-grade {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background:
+    repeating-linear-gradient(to right, var(--scene-line) 0 1px, transparent 1px 120px),
+    repeating-linear-gradient(to bottom, var(--scene-line) 0 1px, transparent 1px 120px),
+    radial-gradient(ellipse at 50% 42%, transparent 38%, rgba(0, 0, 0, var(--film-vignette)) 100%);
+}
+
+.film-grade::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  opacity: var(--film-grain);
+  background-image: url("data:image/svg+xml;utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3'/%3E%3C/filter%3E%3Crect width='140' height='140' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+
+body.film main,
+body.film .site-header,
+body.film .site-footer {
+  position: relative;
+  z-index: 2;
+}
+
+/*
+  Metadata voice. Every eyebrow, step number and tag becomes monospace at a small size with wide
+  tracking, which is what separates a chapter from a marketing section.
+*/
+body.film .eyebrow,
+body.film .chapter-meta,
+body.film .case-step > span,
+body.film .tag,
+body.film .stat-card span {
+  font-family: var(--face-mono);
+  text-transform: uppercase;
+  letter-spacing: 0.2em;
+  font-size: 0.7rem;
+  color: var(--muted);
+}
+
+body.film .chapter-meta {
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+  margin: 0 0 1.75rem;
+  color: var(--scene-accent);
+}
+
+body.film .chapter-meta::after {
+  content: "";
+  flex: 1;
+  height: var(--film-rule);
+  background: var(--scene-line);
+}
+
+/* Display voice. */
+body.film h1,
+body.film h2,
+body.film h3 {
+  font-family: var(--face-display);
+  font-weight: 700;
+  letter-spacing: -0.03em;
+}
+
+body.film .case-hero h1 {
+  font-size: clamp(2.1rem, 5vw, 4.25rem);
+  line-height: 0.98;
+  margin: 0 0 1.5rem;
+  text-wrap: balance;
+}
+
+body.film h2 {
+  font-size: clamp(1.6rem, 3.2vw, 2.6rem);
+  line-height: 1.06;
+}
+
+/* The one italic line per chapter. */
+body.film .chapter-line {
+  font-family: var(--face-italic);
+  font-style: italic;
+  font-weight: 400;
+  font-size: clamp(1.3rem, 2.6vw, 2.1rem);
+  line-height: 1.25;
+  letter-spacing: 0;
+  color: var(--muted);
+  margin: 0 0 2rem;
+  max-width: 34ch;
+}
+
+body.film .page-lede,
+body.film .case-panel p,
+body.film .case-step p,
+body.film .decision-list li {
+  font-family: var(--face-display);
+  font-size: 1.02rem;
+  line-height: 1.7;
+}
+
+/* The hero, and the scene behind it. */
+body.film .case-hero {
+  position: relative;
+  overflow: hidden;
+  padding-block: clamp(3.5rem, 11vh, 8rem) clamp(3rem, 9vh, 6rem);
+}
+
+body.film .chapter-scene {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  overflow: hidden;
+}
+
+body.film .case-hero > .section-inner {
+  position: relative;
+  z-index: 1;
+}
+
+/*
+  One scene type, because one chapter exists. A second is a second block here plus a data-scene
+  value, never a redesign.
+*/
+body.film .chapter-scene[data-scene="grid"]::before {
+  content: "";
+  position: absolute;
+  left: -50%;
+  right: -50%;
+  top: 52%;
+  bottom: -30%;
+  background-image:
+    repeating-linear-gradient(to right, var(--scene-line-strong) 0 1px, transparent 1px 96px),
+    repeating-linear-gradient(to bottom, var(--scene-line-strong) 0 1px, transparent 1px 96px);
+  transform: perspective(320px) rotateX(64deg);
+  transform-origin: top center;
+  -webkit-mask-image: linear-gradient(to bottom, rgba(0, 0, 0, 0.85), transparent 62%);
+  mask-image: linear-gradient(to bottom, rgba(0, 0, 0, 0.85), transparent 62%);
+}
+
+body.film .chapter-scene[data-scene="grid"]::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: 52%;
+  width: min(52rem, 90vw);
+  height: 18rem;
+  transform: translate(-50%, -55%);
+  background: radial-gradient(ellipse at center, var(--scene-glow), transparent 68%);
+}
+
+/*
+  Key terms. The existing stat cards become a rule-separated row: hairlines and space instead of
+  four bordered boxes, which is the single biggest difference between this and a card grid.
+*/
+body.film .case-metrics .stat-card {
+  background: none;
+  border: 0;
+  border-top: var(--film-rule) solid var(--scene-line);
+  border-radius: 0;
+  padding: 1.1rem 1.25rem 0 0;
+  box-shadow: none;
+}
+
+body.film .case-metrics .stat-card strong {
+  font-family: var(--face-display);
+  font-weight: 700;
+  font-size: clamp(1.3rem, 2.2vw, 1.75rem);
+  letter-spacing: -0.02em;
+  color: var(--text);
+  display: block;
+  margin-bottom: 0.5rem;
+}
+
+body.film .case-metrics .stat-card span {
+  display: block;
+  text-transform: none;
+  letter-spacing: 0.01em;
+  font-family: var(--face-display);
+  font-size: 0.9rem;
+  line-height: 1.5;
+}
+
+/* Panels lose their boxes for the same reason. */
+body.film .case-panel {
+  background: none;
+  border: 0;
+  border-top: var(--film-rule) solid var(--scene-line);
+  border-radius: 0;
+  padding: 1.6rem 0 0;
+  box-shadow: none;
+}
+
+body.film .case-panel h2 {
+  margin: 0.5rem 0 1rem;
+  max-width: 22ch;
+}
+
+/* Steps: the number does the work, at size, in mono. */
+body.film .case-step {
+  background: none;
+  border: 0;
+  border-top: var(--film-rule) solid var(--scene-line);
+  border-radius: 0;
+  padding: 1.25rem 0 0;
+  box-shadow: none;
+}
+
+body.film .case-step > span {
+  display: block;
+  font-size: 1.5rem;
+  letter-spacing: 0.06em;
+  color: var(--scene-accent);
+  opacity: 0.75;
+  margin-bottom: 0.75rem;
+}
+
+body.film .case-step h3 {
+  font-size: 1.15rem;
+  margin: 0 0 0.6rem;
+}
+
+body.film .decision-list {
+  list-style: none;
+  padding: 0;
+  margin: 0.5rem 0 0;
+}
+
+body.film .decision-list li {
+  padding: 0.7rem 0 0.7rem 1.5rem;
+  border-bottom: var(--film-rule) solid var(--scene-line);
+  position: relative;
+}
+
+body.film .decision-list li::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 1.35rem;
+  width: 0.6rem;
+  height: var(--film-rule);
+  background: var(--scene-accent);
+}
+
+body.film .tag-list {
+  margin-top: 1.5rem;
+}
+
+body.film .tag {
+  background: none;
+  border: var(--film-rule) solid var(--scene-line);
+  border-radius: 0;
+  padding: 0.4rem 0.7rem;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  body.film .chapter-scene[data-scene="grid"]::before {
+    animation: film-grid-drift 26s linear infinite;
+  }
+
+  @keyframes film-grid-drift {
+    from { background-position: 0 0, 0 0; }
+    to { background-position: 0 0, 0 96px; }
+  }
+}
+
+@media (max-width: 760px) {
+  body.film .chapter-line {
+    max-width: none;
+  }
+
+  body.film .chapter-scene[data-scene="grid"]::before {
+    top: 60%;
+  }
+}
+
+/*
+  The shared chrome is styled for the rest of the site: a pale gradient bar and rounded pills.
+  Both fight a film grade, so film pages flatten them. Scoped to body.film, so no other page
+  changes and removing the stylesheet restores the original chrome exactly.
+*/
+body.film .site-header {
+  --nav-top-bg: transparent;
+  --nav-top-text: var(--text);
+  background: color-mix(in srgb, var(--bg-deep) 82%, transparent);
+  border-bottom: var(--film-rule) solid var(--scene-line);
+  backdrop-filter: blur(10px);
+}
+
+body.film .site-nav .brand {
+  font-family: var(--face-display);
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: var(--text);
+}
+
+body.film .nav-links a {
+  font-family: var(--face-mono);
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.16em;
+  color: var(--muted);
+}
+
+body.film .nav-links a:hover,
+body.film .nav-links a[aria-current="page"] {
+  color: var(--scene-accent);
+}
+
+body.film .button,
+body.film .style-toggle {
+  border-radius: 0;
+  font-family: var(--face-mono);
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.16em;
+  border: var(--film-rule) solid var(--scene-line);
+  background: none;
+}
+
+body.film .button.primary {
+  border-color: var(--scene-accent);
+  color: var(--scene-accent);
+}
+
+/* The click-to-load video facade read as an empty hole rather than a frame. */
+body.film .case-video {
+  border-radius: 0;
+  border: var(--film-rule) solid var(--scene-line);
+  background: color-mix(in srgb, var(--bg-deep) 55%, transparent);
+  display: grid;
+  place-items: center;
+  min-height: 16rem;
+}
+
+body.film .video-play {
+  border-radius: 0;
+  border: var(--film-rule) solid var(--scene-accent);
+  background: none;
+  color: var(--scene-accent);
+  font-family: var(--face-mono);
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.16em;
+  padding: 0.8rem 1.2rem;
+}
+
+/*
+  The reset control is a button, and the blanket button rule above stripped its fill, which made
+  a working control look disabled. It keeps a surface of its own.
+*/
+body.film [data-style-reset] {
+  background: color-mix(in srgb, var(--scene-accent) 14%, transparent);
+  border-color: var(--scene-accent);
+  color: var(--text);
+}
+
+body.film .style-panel {
+  border-radius: 0;
+  border: var(--film-rule) solid var(--scene-line);
+}
+
+body.film .style-panel label,
+body.film .style-panel .style-label {
+  font-family: var(--face-mono);
+  text-transform: uppercase;
+  letter-spacing: 0.16em;
+  font-size: 0.66rem;
+}
+
+body.film .style-panel select {
+  border-radius: 0;
+  font-family: var(--face-display);
+}
+
+
+/* Fixed chrome: which act you are in, and how far through. */
+.film-chrome {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 40;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.6rem clamp(1rem, 4vw, 2.5rem);
+  font-family: var(--face-mono);
+  font-size: 0.66rem;
+  text-transform: uppercase;
+  letter-spacing: 0.18em;
+  color: var(--muted);
+  background: color-mix(in srgb, var(--bg-deep) 88%, transparent);
+  border-top: var(--film-rule) solid var(--scene-line);
+  backdrop-filter: blur(10px);
+  pointer-events: none;
+}
+
+/* The progress bar is the chrome's own top edge, drawn from a property JS keeps current. */
+.film-chrome::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: calc(var(--film-rule) * -1);
+  height: 2px;
+  width: var(--film-progress, 0%);
+  background: var(--scene-accent);
+}
+
+.film-chrome-act {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.film-chrome-progress {
+  color: var(--scene-accent);
+  flex: none;
+}
+
+/* The section rail. */
+.film-rail {
+  position: fixed;
+  right: clamp(0.75rem, 2vw, 1.5rem);
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 40;
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+  align-items: flex-end;
+}
+
+.film-rail-dot {
+  --dot: 7px;
+  position: relative;
+  display: block;
+  width: var(--dot);
+  height: var(--dot);
+  border: var(--film-rule) solid var(--scene-line);
+  border-radius: 50%;
+  background: none;
+}
+
+.film-rail-dot.is-active {
+  background: var(--scene-accent);
+  border-color: var(--scene-accent);
+}
+
+.film-rail-label {
+  position: absolute;
+  right: calc(100% + 0.7rem);
+  top: 50%;
+  transform: translateY(-50%);
+  white-space: nowrap;
+  font-family: var(--face-mono);
+  font-size: 0.62rem;
+  text-transform: uppercase;
+  letter-spacing: 0.16em;
+  color: var(--muted);
+  background: color-mix(in srgb, var(--bg-deep) 92%, transparent);
+  border: var(--film-rule) solid var(--scene-line);
+  padding: 0.3rem 0.55rem;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.film-rail-dot:hover .film-rail-label,
+.film-rail-dot:focus-visible .film-rail-label {
+  opacity: 1;
+}
+
+/* Footer clears the fixed chrome. */
+body.film .site-footer {
+  padding-bottom: 4rem;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .film-chrome::before {
+    transition: width 180ms linear;
+  }
+
+  .film-rail-dot {
+    transition: background-color 220ms ease, border-color 220ms ease;
+  }
+
+  .film-rail-label {
+    transition: opacity 160ms ease;
+  }
+}
+
+/* The rail needs width that a phone does not have. The chrome still works. */
+@media (max-width: 900px) {
+  .film-rail {
+    display: none;
+  }
+}
