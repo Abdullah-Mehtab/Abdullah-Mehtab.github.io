@@ -7,7 +7,10 @@
   if (!body || !body.classList.contains("film")) return;
 
   const main = document.querySelector("main");
-  const sections = main ? Array.from(main.querySelectorAll(":scope > section")) : [];
+  // Acts wrap their section in a pinning element, so a plain child selector would miss them.
+  const sections = main
+    ? Array.from(main.querySelectorAll(":scope > section, :scope > .act > section"))
+    : [];
   if (sections.length === 0) return;
 
   // Sections carry no titles of their own, so the rail is labelled from whatever heading each
@@ -56,6 +59,10 @@
     const percent = Math.max(0, Math.min(100, Math.round(ratio * 100)));
     progressEl.textContent = String(percent).padStart(3, "0");
     body.style.setProperty("--film-progress", `${percent}%`);
+
+    // The stage floor advances with the reader. Wrapping at one grid cell keeps the travel
+    // seamless however far the page runs, so the space never reaches an end.
+    body.style.setProperty("--film-depth", String((window.scrollY * 0.45) % 110));
 
     // Active section is the last one whose top has passed the upper third of the viewport,
     // which matches where a reader's attention actually sits.
