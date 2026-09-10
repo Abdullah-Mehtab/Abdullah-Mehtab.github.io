@@ -133,10 +133,56 @@ body.film {
   inset: 0;
   z-index: 0;
   pointer-events: none;
-  background:
-    repeating-linear-gradient(to right, var(--scene-line) 0 1px, transparent 1px 120px),
-    repeating-linear-gradient(to bottom, var(--scene-line) 0 1px, transparent 1px 120px),
-    radial-gradient(ellipse at 50% 42%, transparent 38%, rgba(0, 0, 0, var(--film-vignette)) 100%);
+  perspective: 620px;
+  perspective-origin: 50% 42%;
+  background: radial-gradient(ellipse at 50% 42%, transparent 38%, rgba(0, 0, 0, var(--film-vignette)) 100%);
+}
+
+/*
+  The floor. It is one plane laid back in 3D and pushed toward the camera as the reader scrolls,
+  which is what turns vertical scrolling into the feeling of moving forward through a space.
+  --film-depth is written by film.js; with no JS it simply sits at its resting depth and the page
+  still reads correctly.
+*/
+.film-stage-floor {
+  position: absolute;
+  left: -60%;
+  right: -60%;
+  top: 42%;
+  height: 220vh;
+  transform-style: preserve-3d;
+  transform: rotateX(74deg) translateY(calc(var(--film-depth, 0) * 1px));
+  background-image:
+    repeating-linear-gradient(to right, var(--scene-line-strong) 0 1px, transparent 1px 110px),
+    repeating-linear-gradient(to bottom, var(--scene-line-strong) 0 1px, transparent 1px 110px);
+  -webkit-mask-image: linear-gradient(to bottom, rgba(0, 0, 0, 0.9), transparent 55%);
+  mask-image: linear-gradient(to bottom, rgba(0, 0, 0, 0.9), transparent 55%);
+}
+
+/* The ceiling, mirrored, so the reader is inside the space rather than above it. */
+.film-stage-ceiling {
+  position: absolute;
+  left: -60%;
+  right: -60%;
+  bottom: 58%;
+  height: 220vh;
+  transform-style: preserve-3d;
+  transform: rotateX(-74deg) translateY(calc(var(--film-depth, 0) * -1px));
+  background-image:
+    repeating-linear-gradient(to right, var(--scene-line) 0 1px, transparent 1px 110px),
+    repeating-linear-gradient(to bottom, var(--scene-line) 0 1px, transparent 1px 110px);
+  -webkit-mask-image: linear-gradient(to top, rgba(0, 0, 0, 0.55), transparent 55%);
+  mask-image: linear-gradient(to top, rgba(0, 0, 0, 0.55), transparent 55%);
+}
+
+.film-stage-glow {
+  position: absolute;
+  left: 50%;
+  top: 42%;
+  width: min(60rem, 92vw);
+  height: 22rem;
+  transform: translate(-50%, -50%);
+  background: radial-gradient(ellipse at center, var(--scene-glow), transparent 70%);
 }
 
 .film-grade::before {
@@ -147,8 +193,22 @@ body.film {
   background-image: url("data:image/svg+xml;utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3'/%3E%3C/filter%3E%3Crect width='140' height='140' filter='url(%23n)'/%3E%3C/svg%3E");
 }
 
+
+.film-grade::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  opacity: var(--film-grain);
+  background-image: url("data:image/svg+xml;utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3'/%3E%3C/filter%3E%3Crect width='140' height='140' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+
+/*
+  Lift the document above the stage. The header is deliberately absent: it is already fixed at
+  z-index 30 site-wide, and naming it here overrode that and made the nav scroll away on this
+  page and nowhere else. main and the footer are relative at z-index 1 by default, so raising
+  them to 2 only has to clear the stage at z-index 0.
+*/
 body.film main,
-body.film .site-header,
 body.film .site-footer {
   position: relative;
   z-index: 2;
@@ -230,17 +290,7 @@ body.film .decision-list li {
 
 /* The hero, and the scene behind it. */
 body.film .case-hero {
-  position: relative;
-  overflow: hidden;
   padding-block: clamp(3.5rem, 11vh, 8rem) clamp(3rem, 9vh, 6rem);
-}
-
-body.film .chapter-scene {
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
-  z-index: 0;
-  overflow: hidden;
 }
 
 body.film .case-hero > .section-inner {
@@ -252,32 +302,7 @@ body.film .case-hero > .section-inner {
   One scene type, because one chapter exists. A second is a second block here plus a data-scene
   value, never a redesign.
 */
-body.film .chapter-scene[data-scene="grid"]::before {
-  content: "";
-  position: absolute;
-  left: -50%;
-  right: -50%;
-  top: 52%;
-  bottom: -30%;
-  background-image:
-    repeating-linear-gradient(to right, var(--scene-line-strong) 0 1px, transparent 1px 96px),
-    repeating-linear-gradient(to bottom, var(--scene-line-strong) 0 1px, transparent 1px 96px);
-  transform: perspective(320px) rotateX(64deg);
-  transform-origin: top center;
-  -webkit-mask-image: linear-gradient(to bottom, rgba(0, 0, 0, 0.85), transparent 62%);
-  mask-image: linear-gradient(to bottom, rgba(0, 0, 0, 0.85), transparent 62%);
-}
 
-body.film .chapter-scene[data-scene="grid"]::after {
-  content: "";
-  position: absolute;
-  left: 50%;
-  top: 52%;
-  width: min(52rem, 90vw);
-  height: 18rem;
-  transform: translate(-50%, -55%);
-  background: radial-gradient(ellipse at center, var(--scene-glow), transparent 68%);
-}
 
 /*
   Key terms. The existing stat cards become a rule-separated row: hairlines and space instead of
@@ -383,24 +408,9 @@ body.film .tag {
   padding: 0.4rem 0.7rem;
 }
 
-@media (prefers-reduced-motion: no-preference) {
-  body.film .chapter-scene[data-scene="grid"]::before {
-    animation: film-grid-drift 26s linear infinite;
-  }
-
-  @keyframes film-grid-drift {
-    from { background-position: 0 0, 0 0; }
-    to { background-position: 0 0, 0 96px; }
-  }
-}
-
 @media (max-width: 760px) {
   body.film .chapter-line {
     max-width: none;
-  }
-
-  body.film .chapter-scene[data-scene="grid"]::before {
-    top: 60%;
   }
 }
 
@@ -624,5 +634,40 @@ body.film .site-footer {
 @media (max-width: 900px) {
   .film-rail {
     display: none;
+  }
+}
+
+/*
+  Acts. A pinned screen inside a taller wrapper: the reader scrolls the wrapper's height but the
+  screen holds still, so the scroll reads as time passing rather than as the page moving. This is
+  the difference between travelling through a chapter and scrolling an article.
+
+  Sticky is supported everywhere and needs no JS. Where the viewport is too short to hold a screen
+  the wrapper collapses and the content returns to normal flow, which is also what happens for a
+  reader who has asked for reduced motion.
+*/
+.act {
+  position: relative;
+  height: 240vh;
+}
+
+body.film .act-pin {
+  position: sticky;
+  top: 0;
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  overflow: hidden;
+}
+
+@media (max-width: 900px), (max-height: 700px), (prefers-reduced-motion: reduce) {
+  .act {
+    height: auto;
+  }
+
+  body.film .act-pin {
+    position: static;
+    min-height: 0;
+    display: block;
   }
 }
