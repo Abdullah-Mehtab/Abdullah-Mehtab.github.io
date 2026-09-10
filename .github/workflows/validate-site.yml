@@ -6,6 +6,7 @@ on:
       - main
     paths:
       - '*.html'
+      - 'chapters/**'
       - 'assets/**'
       - 'classic/**'
       - 'play/**'
@@ -19,6 +20,7 @@ on:
   pull_request:
     paths:
       - '*.html'
+      - 'chapters/**'
       - 'assets/**'
       - 'classic/**'
       - 'play/**'
