@@ -18,6 +18,7 @@ const protectedRoutes = [
   { route: '/cv.html', file: 'cv.html' },
   { route: '/todo.html', file: 'todo.html' },
   { route: '/cyber-sentinel.html', file: 'cyber-sentinel.html' },
+  { route: '/chapters/cyber-sentinel.html', file: 'chapters/cyber-sentinel.html' },
   { route: '/play/', file: 'play/index.html' },
   { route: '/classic/', file: 'classic/index.html' },
   { route: '/Abdullah-Mehtab-Master-CV.pdf', file: 'Abdullah-Mehtab-Master-CV.pdf' },
@@ -49,6 +50,7 @@ const ignoredDirs = new Set([
   '.migration-safety',
   '.vscode',
   'docs',
+  'drafts',
   'localbackups',
   'node_modules',
   'supabase'
@@ -249,6 +251,83 @@ async function checkDownloadNames() {
   }
 }
 
+// cyber-sentinel.html is a redirect stub: the page moved to chapters/ but the old path stays live
+// because two portfolio actions inside play-src/src/world/worldData.js still point at it, and those
+// are protected. A stub that stops redirecting serves an almost-empty page and looks fine, so the
+// refresh target and the visible link are checked against each other and against the file on disk.
+async function checkRedirectStub() {
+  const stubFile = 'cyber-sentinel.html';
+  const html = await readFile(resolve(repoRoot, stubFile), 'utf8');
+
+  const refresh = html.match(/<meta\s+http-equiv="refresh"\s+content="\d+;\s*url=([^"]+)"/i);
+  const anchor = html.match(/<a\s+href="([^"]+)"/i);
+
+  if (!refresh) {
+    failures.push(`${stubFile} lost its meta refresh; the old URL would serve a dead end.`);
+    return;
+  }
+  if (!anchor) {
+    failures.push(`${stubFile} lost its fallback link; a reader who blocks refreshes has no way out.`);
+    return;
+  }
+  if (refresh[1] !== anchor[1]) {
+    failures.push(`${stubFile} refreshes to ${refresh[1]} but links to ${anchor[1]}; they must name the same page.`);
+    return;
+  }
+
+  const target = resolve(repoRoot, refresh[1]);
+  if (!await fileExists(target)) {
+    failures.push(`${stubFile} redirects to ${refresh[1]}, which does not exist.`);
+  }
+}
+
+// Em-dashes and en-dashes are banned from published copy: they read as machine-written to the
+// people this site is aimed at. classic/ is exempt because it is a frozen archive, and play/ is
+// generated output. Char codes, not literals, so this file never trips its own check.
+async function checkDashes() {
+  const EM = String.fromCharCode(0x2014);
+  const EN = String.fromCharCode(0x2013);
+  const files = (await walkFiles(repoRoot))
+    .filter((file) => extname(file).toLowerCase() === '.html')
+    .filter((file) => {
+      const shown = toDisplayPath(file);
+      return !shown.startsWith('classic/') && !shown.startsWith('play/');
+    });
+
+  for (const file of files) {
+    const content = await readFile(file, 'utf8');
+    content.split(/\r?\n/).forEach((line, index) => {
+      if (!line.includes(EM) && !line.includes(EN)) return;
+      const which = line.includes(EM) ? 'em-dash' : 'en-dash';
+      failures.push(
+        `${toDisplayPath(file)}:${index + 1} uses an ${which}; published copy must use a colon, comma, full stop or brackets instead.`
+      );
+    });
+  }
+}
+
+// Themes are declared on body[data-theme], so a custom property in film.css that aliases one
+// must also live on body. A "var(--cyan)" written inside :root resolves against the :root default
+// and freezes to a single colour in all eighteen themes, while still looking correct in whichever
+// theme was used to build it. That has now happened twice: once to the scenery, once to the
+// chapter accents. film.css keeps constants in :root and everything derived on body.film, and
+// this enforces the split cheaply, without needing a browser.
+async function checkFilmTokenScope() {
+  const file = resolve(repoRoot, 'assets/css/film.css');
+  if (!await fileExists(file)) return;
+
+  const css = await readFile(file, 'utf8');
+  const start = css.indexOf(':root {');
+  if (start === -1) return;
+
+  const block = css.slice(start, css.indexOf('}', start));
+  for (const match of block.matchAll(/(--[a-z0-9-]+)\s*:\s*([^;]*var\([^;]*)/gi)) {
+    failures.push(
+      `assets/css/film.css declares ${match[1]} in :root using ${match[2].trim()}; a token that aliases a theme value must be declared on body.film or it freezes to the :root default in every theme.`
+    );
+  }
+}
+
 async function checkStaticReferences() {
   const files = await walkFiles(repoRoot);
   for (const file of files) {
@@ -377,6 +456,9 @@ async function captureScreenshots(baseUrl) {
 async function main() {
   await checkProtectedRoutes();
   await checkDownloadNames();
+  await checkRedirectStub();
+  await checkDashes();
+  await checkFilmTokenScope();
   await checkStaticReferences();
 
   const { server, baseUrl } = await startStaticServer();

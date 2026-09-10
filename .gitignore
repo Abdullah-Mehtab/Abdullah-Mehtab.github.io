@@ -50,6 +50,10 @@ docs/PROJECT_HISTORY_DIGEST.md
 docs/CODE_STATE_AUDIT.md
 docs/CODEBASE_AUDIT-2026-05-28.md
 
+# Page copy drafted before it becomes a real page. The owner edits these by hand;
+# they are working documents, never part of the published site.
+drafts/
+
 # Internal engineering records - kept locally, never published
 journal/
 GOAL.md
