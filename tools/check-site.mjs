@@ -328,6 +328,48 @@ async function checkFilmTokenScope() {
   }
 }
 
+async function checkFilmActPacing() {
+  const cssFile = resolve(repoRoot, 'assets/css/film.css');
+  const jsFile = resolve(repoRoot, 'assets/js/film.js');
+  if (!await fileExists(cssFile) || !await fileExists(jsFile)) return;
+
+  const css = await readFile(cssFile, 'utf8');
+  const js = await readFile(jsFile, 'utf8');
+
+  // Three numbers decide whether a chapter reads correctly, and nothing else can catch them.
+  // Measured in screens: an act's pin takes one screen of scrolling to travel away, its copy
+  // reaches zero `fade` screens after it releases, and the next act's copy starts arriving
+  // `headStart` screens before its own wrapper reaches the top. So the wrappers may overlap
+  // by at most 1 - fade - headStart.
+  //
+  // Set the overlap above that and two columns of live text share the same pixels. Set it far
+  // below and the chapter fills with half empty transition frames. Both faults shipped during
+  // this page's build, both were found by eye rather than by a check, and both cost a rebuild.
+  const overlap = css.match(/\.act \+ \.act \{\s*margin-top:\s*-([0-9.]+)vh/);
+  const fade = css.match(/--leaving:\s*clamp\(0,\s*calc\(var\(--exit,\s*0\)\s*\/\s*([0-9.]+)\)/);
+  const headStart = js.match(/const phaseSpan = vh \* ([0-9.]+);/);
+
+  if (!overlap || !fade || !headStart) {
+    failures.push(
+      'The chapter act pacing values could not be read. One of the act overlap in assets/css/film.css, the exit fade window, or the arrival head start in assets/js/film.js has been renamed or restructured, so the check that keeps two frames off the same screen is no longer measuring anything.'
+    );
+    return;
+  }
+
+  const overlapScreens = Number(overlap[1]) / 100;
+  const budget = 1 - Number(fade[1]) - Number(headStart[1]);
+  if (overlapScreens > budget + 1e-9) {
+    failures.push(
+      `Chapter acts overlap by ${overlap[1]}vh, but a ${fade[1]} screen exit fade and a ${headStart[1]} screen arrival head start leave room for only ${(budget * 100).toFixed(1)}vh. Two acts would be legible in the same pixels at some scroll position.`
+    );
+  }
+  if (overlapScreens < budget - 0.25) {
+    failures.push(
+      `Chapter acts overlap by only ${overlap[1]}vh against a budget of ${(budget * 100).toFixed(1)}vh, which leaves more than a quarter screen of scrolling with no act legible at all between every pair of frames.`
+    );
+  }
+}
+
 async function checkStaticReferences() {
   const files = await walkFiles(repoRoot);
   for (const file of files) {
@@ -459,6 +501,7 @@ async function main() {
   await checkRedirectStub();
   await checkDashes();
   await checkFilmTokenScope();
+  await checkFilmActPacing();
   await checkStaticReferences();
 
   const { server, baseUrl } = await startStaticServer();

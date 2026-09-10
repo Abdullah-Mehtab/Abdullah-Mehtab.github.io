@@ -1,14 +1,25 @@
-/* ABOUTME: The cinematic chapter treatment: typography, grade, and the chapter block. */
-/* ABOUTME: Opt-in per page via body.film, so it can be removed by deleting one link tag. */
+/* ABOUTME: The cinematic chapter treatment: one grid, one type scale, one stage, one set of chrome. */
+/* ABOUTME: Opt-in per page via body.film, so deleting one link tag returns the page to the site design. */
 
 /*
-  Every colour here derives from a theme token rather than being written out, so all eighteen
-  themes grade this treatment without a per-theme block. A new theme stays a block of values.
+  How this file is organised, and the rules it holds itself to.
 
-  Nothing in here creates content. Anything that moves is inside a
-  prefers-reduced-motion: no-preference query, so the static rendering is the real design and
-  motion is an enhancement on top. Firefox stable still ships scroll-driven animation behind a
-  flag, so a meaningful share of readers get the static version regardless of their settings.
+  1. TOKENS. Everything measurable is a token. Nothing below invents a size, a colour or a
+     spacing value inline. A new theme stays a block of theme values and changes nothing here.
+  2. GRID. One twelve column grid, one container inset, one gutter. Frames place content on
+     that grid by column number. No frame narrows a box by moving its margin, because doing
+     that throws away the container inset and puts text against the viewport edge.
+  3. STAGE. One fixed element behind the document. It never touches body::before or
+     body::after: portfolio-v2.css owns both, and ::after is the cursor trail.
+  4. FRAMES. Four act layouts, chosen per act by data-frame. Adding an act means copying an
+     act block and picking a frame; it is never a design decision.
+  5. CHROME, then MOTION last. Everything that moves is inside prefers-reduced-motion, so the
+     static rendering is the real design.
+
+  Stacking contract, because this page shares a stylesheet with the site chrome. Owned by
+  portfolio-v2.css: header 30, style panel 40, skip link 45, cursor canvas 999. Owned here:
+  stage 0, act numeral 0 within its pin, document content 2, chapter chrome 25. Nothing here
+  goes above 25, so the header, the style panel and the cursor trail all stay on top.
 */
 
 @font-face {
@@ -83,104 +94,279 @@
   unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
 }
 
+/* ============================================================================
+   1. TOKENS
+   ========================================================================= */
+
+/*
+  Values no theme touches. The faces, the grid, the spacing scale and the type scale are
+  constants of this treatment, so they belong at :root where they cost one resolution.
+*/
 :root {
   --face-display: "Archivo", system-ui, sans-serif;
   --face-mono: "IBM Plex Mono", ui-monospace, "Cascadia Mono", Consolas, monospace;
   --face-italic: "Instrument Serif", Georgia, "Times New Roman", serif;
 
-  --film-grain: 0.05;
-  --film-vignette: 0.55;
+  /* Grid. The inset is the page left and right margin and is the same on every section. */
+  --film-inset: clamp(20px, 5vw, 76px);
+  --film-gap: clamp(14px, 1.9vw, 26px);
   --film-rule: 1px;
+
+  /*
+    Spacing. Eight steps, each roughly one and a half times the last. Every margin and every
+    pad in this file is one of these, which is what stops a section being spaced by eye.
+  */
+  --s1: 0.25rem;
+  --s2: 0.5rem;
+  --s3: 0.85rem;
+  --s4: 1.35rem;
+  --s5: 2.1rem;
+  --s6: 3.4rem;
+  --s7: 5.5rem;
+  --s8: 8.5rem;
+
+  /* Type. One scale, with wide contrast between the display sizes and the metadata size. */
+  --t-meta: 0.68rem;
+  --t-small: 0.82rem;
+  --t-body: 1.03rem;
+  --t-lede: clamp(1.08rem, 1.6vw, 1.4rem);
+  --t-h3: clamp(1.15rem, 1.7vw, 1.45rem);
+  --t-h2: clamp(1.7rem, 3.4vw, 2.7rem);
+  --t-h2-wide: clamp(2rem, 5.2vw, 4.4rem);
+  --t-h1: clamp(2.5rem, 8.2vw, 7rem);
+  --t-numeral: clamp(16rem, 42vw, 40rem);
+
+  /* Fixed chrome heights, so acts can treat them as gutters instead of guessing. */
+  --film-header-h: 65px;
+
+  --film-grain: 0.05;
+  --film-vignette: 0.5;
 }
 
 /*
-  These four derive from theme tokens, so they MUST be declared on the same element the themes
-  write to. A custom property alias resolves where it is declared: put "var(--cyan)" on :root and
-  it freezes to the :root default, because every theme overrides --cyan on body[data-theme]
-  instead. This exact mistake previously froze the scenery on a single colour in every theme.
+  Anything derived from a theme token MUST be declared here and not at :root. A custom
+  property alias resolves where it is declared, so var(--cyan) written at :root freezes to the
+  :root default and never sees a theme, because themes override --cyan on body[data-theme].
+  That exact mistake previously froze this page's scenery on one colour in all eighteen
+  themes. tools/check-site.mjs fails the build if a :root rule in this file contains var().
 */
 body.film {
+  /*
+    The stage, per scene. These four values are what make an act a different place rather
+    than the same place in a different colour: how hard the room converges, where its
+    horizon sits, and how dark its corners are. Two reviewers in a row described four
+    declared scenes as one static backdrop, because until now the only thing that actually
+    changed between them was the accent hue and a line spacing nobody could see.
+  */
+  --stage-perspective: 620px;
+  --stage-lift: 0px;
+
+  /* The empty band outside the container, once --max has capped the container width. It is
+     the only part of the frame guaranteed to hold no text at any scroll position. It is
+     declared here rather than at :root for the reason above: nothing in this file resolves a
+     var() at :root, so that the rule has no exceptions to remember. */
+  --film-gutter: max(var(--film-inset), calc((100vw - var(--max)) / 2));
+
   --scene-line: var(--line);
-  --scene-line-strong: color-mix(in srgb, var(--cyan) 22%, transparent);
+  --scene-line-strong: color-mix(in srgb, var(--cyan) 72%, transparent);
   --scene-accent: var(--cyan);
-  --scene-glow: var(--glow-a);
+  --scene-glow: color-mix(in srgb, var(--cyan) 13%, transparent);
+  /* Which way the key light falls. It mirrors between rooms, which is a change nobody can
+     miss, and it costs one number per scene. */
+  --stage-shaft: 1;
+  --stage-brightness: 1;
 }
 
-/* The two light themes need a heavier grain and a lighter vignette to read at all. */
+/* The two light themes need more grain and far less vignette to read as film rather than mud. */
 body.film[data-theme="light"],
 body.film[data-theme="paper"] {
-  --film-grain: 0.08;
-  --film-vignette: 0.22;
+  --film-grain: 0.075;
+  --film-vignette: 0.2;
 }
-
-body.film {
-  font-family: var(--face-display);
-  font-weight: 400;
-  letter-spacing: -0.005em;
-}
-
 
 /*
-  One dedicated element carries grain, grid and vignette.
+  Each act names a scene, and a scene is only ever a different accent that the theme already
+  defines. Four scenes across eighteen themes therefore cost four rules, not seventy two.
+*/
+/* Streams: a tight corridor. Hard convergence, low horizon, runs along the travel. */
+body.film[data-scene="streams"] {
+  --scene-line-strong: color-mix(in srgb, var(--green) 74%, transparent);
+  --scene-glow: color-mix(in srgb, var(--green) 15%, transparent);
+  --stage-perspective: 360px;
+  --stage-lift: 44px;
+  --stage-shaft: -1;
+  --film-vignette: 0.66;
+  --stage-brightness: 0.8;
+}
 
-  It cannot be done with body::before or body::after: portfolio-v2.css already uses both, and
-  ::after is the cursor trail, which is a protected feature. It also cannot be done by setting
-  background-image on body, because the themed backdrop is a three-layer "background" shorthand
-  and any background-image declaration replaces all three, leaving the page blank.
+/* Lattice: a hall. Shallow convergence, high horizon, and the ceiling comes into play. */
+body.film[data-scene="lattice"] {
+  --scene-line-strong: color-mix(in srgb, var(--violet) 66%, transparent);
+  --scene-glow: color-mix(in srgb, var(--violet) 16%, transparent);
+  --stage-perspective: 620px;
+  --stage-lift: -44px;
+  --film-vignette: 0.34;
+  --stage-brightness: 1.25;
+}
+
+/* Strata: a low seam. The floor takes the frame and the ceiling all but closes. */
+body.film[data-scene="strata"] {
+  --scene-line-strong: color-mix(in srgb, var(--amber) 62%, transparent);
+  --scene-glow: color-mix(in srgb, var(--amber) 14%, transparent);
+  --stage-perspective: 440px;
+  --stage-lift: 96px;
+  --stage-shaft: -1;
+  --film-vignette: 0.74;
+  --stage-brightness: 0.62;
+}
+
+
+/* ============================================================================
+   2. GRID
+   ========================================================================= */
+
+/*
+  One container, on every section, including the ones that are not acts. A reader should be
+  able to draw a straight line down the left edge of the page from the wordmark to the footer.
+*/
+body.film .section-inner,
+body.film .site-footer-inner {
+  width: min(var(--max), calc(100% - var(--film-inset) * 2));
+  margin-inline: auto;
+}
+
+/*
+  A section opts into the grid by carrying data-frame, and its children are then placed by
+  column number in section 4. Sections without a frame stay in normal flow, which is what the
+  comment block and the footer want. Below the frame breakpoint every frame is one column and
+  every placement is switched off, so a narrow screen is a plain vertical read.
+*/
+body.film [data-frame] {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  row-gap: var(--s5);
+}
+
+@media (min-width: 901px) {
+  body.film [data-frame] {
+    grid-template-columns: repeat(12, minmax(0, 1fr));
+    column-gap: var(--film-gap);
+    row-gap: var(--s4);
+    align-content: center;
+  }
+}
+
+
+/* ============================================================================
+   3. STAGE
+   ========================================================================= */
+
+/*
+  One dedicated fixed element carries the whole grade.
+
+  It cannot be body::before or body::after: portfolio-v2.css already uses both and ::after is
+  the cursor trail, a protected feature. It also cannot be a background-image on body, because
+  the themed backdrop is a three layer background shorthand and any background-image
+  declaration replaces all three layers, leaving the page blank.
 */
 .film-grade {
   position: fixed;
   inset: 0;
   z-index: 0;
   pointer-events: none;
-  perspective: 620px;
-  perspective-origin: 50% 42%;
-  background: radial-gradient(ellipse at 50% 42%, transparent 38%, rgba(0, 0, 0, var(--film-vignette)) 100%);
+  perspective: var(--stage-perspective);
+  perspective-origin: 50% 63%;
+  background: radial-gradient(ellipse at 50% 63%, transparent 34%, rgba(0, 0, 0, var(--film-vignette)) 100%);
 }
 
 /*
-  The floor. It is one plane laid back in 3D and pushed toward the camera as the reader scrolls,
-  which is what turns vertical scrolling into the feeling of moving forward through a space.
-  --film-depth is written by film.js; with no JS it simply sits at its resting depth and the page
-  still reads correctly.
+  The floor is one plane laid back in 3D and pushed toward the camera as the reader scrolls,
+  which is what turns vertical scrolling into travelling forward. It moves with translateY
+  along the rotated plane, not translateZ, which would travel along the plane normal and rise
+  instead. --film-depth is written by film.js; with no JS the plane sits at its resting depth
+  and the page still reads correctly.
 */
-.film-stage-floor {
+.film-room {
   position: absolute;
-  left: -60%;
-  right: -60%;
-  top: 42%;
-  height: 220vh;
+  inset: 0;
   transform-style: preserve-3d;
-  transform: rotateX(74deg) translateY(calc(var(--film-depth, 0) * 1px));
-  background-image:
-    repeating-linear-gradient(to right, var(--scene-line-strong) 0 1px, transparent 1px 110px),
-    repeating-linear-gradient(to bottom, var(--scene-line-strong) 0 1px, transparent 1px 110px);
-  -webkit-mask-image: linear-gradient(to bottom, rgba(0, 0, 0, 0.9), transparent 55%);
-  mask-image: linear-gradient(to bottom, rgba(0, 0, 0, 0.9), transparent 55%);
+  transform: translateY(var(--stage-lift));
+  /* The chapter's rooms end where the chapter does. Past the last act the page is a comment
+     thread and a footer, and a receding perspective grid behind a form is not atmosphere,
+     it is a set of lines through someone's placeholder text. */
+  opacity: var(--stage-presence, 1);
 }
 
-/* The ceiling, mirrored, so the reader is inside the space rather than above it. */
+.film-stage-floor,
 .film-stage-ceiling {
   position: absolute;
   left: -60%;
   right: -60%;
-  bottom: 58%;
   height: 220vh;
   transform-style: preserve-3d;
-  transform: rotateX(-74deg) translateY(calc(var(--film-depth, 0) * -1px));
   background-image:
-    repeating-linear-gradient(to right, var(--scene-line) 0 1px, transparent 1px 110px),
-    repeating-linear-gradient(to bottom, var(--scene-line) 0 1px, transparent 1px 110px);
-  -webkit-mask-image: linear-gradient(to top, rgba(0, 0, 0, 0.55), transparent 55%);
-  mask-image: linear-gradient(to top, rgba(0, 0, 0, 0.55), transparent 55%);
+    repeating-linear-gradient(to right, var(--scene-line-strong) 0 1px, transparent 1px 110px),
+    repeating-linear-gradient(to bottom, var(--scene-line-strong) 0 1px, transparent 1px 110px);
+}
+
+.film-stage-floor {
+  top: 63%;
+  transform: rotateX(74deg) translateY(calc(var(--film-depth, 0) * 1px));
+  /*
+    Fade only the first sliver, which is the far distance. Everything after it is the floor
+    the reader is actually looking at. Fading half the plane instead left the grid invisible
+    at every scroll position and made the page's whole premise decorative.
+  */
+  -webkit-mask-image: linear-gradient(to bottom, transparent 0, rgba(0, 0, 0, 1) 5%);
+  mask-image: linear-gradient(to bottom, transparent 0, rgba(0, 0, 0, 1) 5%);
+}
+
+/* The ceiling, mirrored, so the reader is inside the space rather than looking down on it. */
+.film-stage-ceiling {
+  bottom: 37%;
+  transform: rotateX(-74deg) translateY(calc(var(--film-depth, 0) * -1px));
+  opacity: 0.28;
+  -webkit-mask-image: linear-gradient(to top, transparent 0, rgba(0, 0, 0, 1) 6%);
+  mask-image: linear-gradient(to top, transparent 0, rgba(0, 0, 0, 1) 6%);
+}
+
+.film-stage-wall {
+  position: absolute;
+  top: -70%;
+  bottom: -70%;
+  width: 240vh;
+  transform-style: preserve-3d;
+  background-image:
+    repeating-linear-gradient(to right, var(--scene-line-strong) 0 1px, transparent 1px 110px),
+    repeating-linear-gradient(to bottom, var(--scene-line-strong) 0 1px, transparent 1px 110px);
+  opacity: 0.55;
+}
+
+/* Each wall hinges on the screen edge nearest the reader and recedes from there, so its
+   strongest ruling is at the edge of the frame and it fades into the distance. */
+.film-stage-wall[data-side="left"] {
+  left: 0;
+  transform-origin: left center;
+  transform: rotateY(76deg) translateX(calc(var(--film-depth, 0) * -1px));
+  -webkit-mask-image: linear-gradient(to right, rgba(0, 0, 0, 0.9), transparent 42%);
+  mask-image: linear-gradient(to right, rgba(0, 0, 0, 0.9), transparent 42%);
+}
+
+.film-stage-wall[data-side="right"] {
+  right: 0;
+  transform-origin: right center;
+  transform: rotateY(-76deg) translateX(calc(var(--film-depth, 0) * 1px));
+  -webkit-mask-image: linear-gradient(to left, rgba(0, 0, 0, 0.9), transparent 42%);
+  mask-image: linear-gradient(to left, rgba(0, 0, 0, 0.9), transparent 42%);
 }
 
 .film-stage-glow {
   position: absolute;
   left: 50%;
-  top: 42%;
-  width: min(60rem, 92vw);
-  height: 22rem;
+  top: 63%;
+  opacity: var(--stage-brightness, 1);
+  width: min(62rem, 92vw);
+  height: 24rem;
   transform: translate(-50%, -50%);
   background: radial-gradient(ellipse at center, var(--scene-glow), transparent 70%);
 }
@@ -193,20 +379,26 @@ body.film {
   background-image: url("data:image/svg+xml;utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3'/%3E%3C/filter%3E%3Crect width='140' height='140' filter='url(%23n)'/%3E%3C/svg%3E");
 }
 
-
-.film-grade::before {
-  content: "";
-  position: absolute;
-  inset: 0;
-  opacity: var(--film-grain);
-  background-image: url("data:image/svg+xml;utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3'/%3E%3C/filter%3E%3Crect width='140' height='140' filter='url(%23n)'/%3E%3C/svg%3E");
+body.film .theme-layer.layer-b {
+  transform:
+    translate3d(calc((var(--act-now, 0) - 0.5) * 30vw), 0, 0)
+    scaleX(var(--stage-shaft, 1));
 }
 
 /*
-  Lift the document above the stage. The header is deliberately absent: it is already fixed at
-  z-index 30 site-wide, and naming it here overrode that and made the nav scroll away on this
-  page and nowhere else. main and the footer are relative at z-index 1 by default, so raising
-  them to 2 only has to clear the stage at z-index 0.
+  The site draws its own fixed 54px grid behind every page. On a chapter it is a second grid
+  competing with the stage's, at a different scale and in a different perspective, and two
+  grids read as neither. The stage provides this page's grid; suppressing the content here
+  restores it the moment this stylesheet is removed.
+*/
+body.film::before {
+  content: none;
+}
+
+/*
+  Lift the document above the stage. The header is deliberately absent from this rule: it is
+  already fixed at z-index 30 site wide, and naming it here overrode that and made the nav
+  scroll away on this page and nowhere else.
 */
 body.film main,
 body.film .site-footer {
@@ -214,30 +406,214 @@ body.film .site-footer {
   z-index: 2;
 }
 
+
+/* ============================================================================
+   4. ACTS AND FRAMES
+   ========================================================================= */
+
 /*
-  Metadata voice. Every eyebrow, step number and tag becomes monospace at a small size with wide
-  tracking, which is what separates a chapter from a marketing section.
+  An act is a pinned screen inside a taller wrapper. The reader scrolls the wrapper height
+  while the screen holds still, so scrolling reads as time passing rather than as the page
+  moving. Sticky needs no JavaScript and is supported everywhere; where the viewport is too
+  short to hold a screen the wrapper collapses and the content returns to normal flow, which
+  is also what a reader who asked for reduced motion gets.
+*/
+.act {
+  position: relative;
+  /*
+    A pin one viewport tall always takes a full viewport of scrolling to travel off screen, so
+    only the height above 100vh is a hold: 175vh holds the frame for 75vh and spends 100vh
+    letting it go. Five screens of scrolling for five paragraphs was the previous answer, and
+    a reviewer counted whole viewports across which nothing changed at all.
+  */
+  height: 175vh;
+}
+
+/*
+  Acts overlap, and this number is arithmetic rather than taste.
+
+  Measure everything in screens. An act's wrapper is 1.75 screens, so it holds for 0.75 and
+  then takes a full screen to travel away. Its copy is gone 0.12 of a screen after it
+  releases, and the next frame's copy starts arriving 0.2 of a screen before its own wrapper
+  reaches the top. So the next wrapper may start anywhere up to
+
+      1 screen - 0.12 fade - 0.2 head start = 0.68 screens
+
+  early without the two frames sharing a screen. The three are tuned to meet exactly: fade
+  0.08, head start 0.30, overlap 0.62, so the outgoing frame reaches zero on the same scroll
+  position the next one starts arriving and there is no depth at which the chapter is blank.
+  An act costs 1.13 screens of scroll and holds for 0.75 of them.
+
+  Set it too low and the chapter fills with transition: at -55vh a reviewer sampling eight
+  depths landed on a half arrived frame four times. Set it above 0.68 and two columns of live
+  text share the same pixels, which a different reviewer called the worst fault on the page.
+  tools/check-site.mjs cannot catch either; .claude-tools/audit-handoff.mjs sweeps for both.
+*/
+.act + .act {
+  margin-top: -62vh;
+}
+
+/*
+  Everything after the last act is ordinary flow, and it has to be, because the arrival gate
+  that lets acts overlap safely only exists inside an act. Pinning the closing address as a
+  short act put half a screen of its own empty frame between the outro and the thread, and
+  giving it automatic height let the comment block ride up over the last act's pin.
+
+  It needs no gate: the outro's first line reaches the bottom of the screen at almost exactly
+  the moment the last act's copy reaches zero, so the handoff happens on its own.
+*/
+
+body.film .act-pin {
+  position: sticky;
+  top: 0;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  box-sizing: border-box;
+  /* The fixed header is a gutter, not an overlay. Reserving it here is why nothing arrives
+     at the top of a frame cut through the middle of its letters. Masking the top of the pin
+     was the previous answer and it faded live text instead. */
+  padding-top: calc(var(--film-header-h) + var(--s5));
+  padding-bottom: var(--s6);
+}
+
+/* Content sits above the stage without needing a scrim behind every paragraph. */
+body.film .act-pin > .section-inner {
+  position: relative;
+  z-index: 1;
+}
+
+/*
+  The frames. An act picks one and nothing else about an act is a layout decision. The numbers
+  below are column positions on the twelve column grid and nothing else. They only apply above
+  the frame breakpoint; narrower than that every frame is a single stacked column.
+*/
+@media (min-width: 901px) {
+  /* Title card: the name at full width, then two columns of equal weight beneath it. */
+  body.film [data-frame="title"] > .chapter-meta,
+  body.film [data-frame="title"] > h1 {
+    grid-column: 1 / -1;
+  }
+
+  body.film [data-frame="title"] > .chapter-line,
+  body.film [data-frame="title"] > .hero-actions {
+    grid-column: 1 / span 5;
+  }
+
+  /* The lede runs to the last column so it sets in three lines rather than five. */
+  body.film [data-frame="title"] > .page-lede {
+    grid-column: 7 / span 6;
+  }
+
+  body.film [data-frame="title"] > .case-video {
+    grid-column: 7 / span 5;
+  }
+
+  body.film [data-frame="title"] > .hero-actions,
+  body.film [data-frame="title"] > .case-video {
+    align-self: start;
+  }
+
+  /*
+    The component strip closes the title card. It was a section of its own between two acts,
+    which meant 170px of content in a full height band and no way for the acts either side
+    to overlap across it.
+  */
+  body.film [data-frame="title"] > .case-metrics {
+    grid-column: 1 / -1;
+    margin-top: var(--s5);
+  }
+
+  /* Pair: two equal columns, the second dropped a step so the frame is not a symmetric box. */
+  body.film [data-frame="pair"] > :nth-child(1) {
+    grid-column: 1 / span 9;
+  }
+
+  body.film [data-frame="pair"] > :nth-child(2) {
+    grid-column: 6 / span 7;
+    margin-top: var(--s6);
+  }
+
+  /* Sequence: a heading over a run of numbered steps that share one rule. */
+  body.film [data-frame="sequence"] > .section-heading {
+    grid-column: 1 / span 10;
+  }
+
+  body.film [data-frame="sequence"] > .case-flow {
+    grid-column: 1 / -1;
+  }
+
+  /*
+    Split: one wide column of argument against one narrow column of result, both flush at the
+    top. The proportion is what distinguishes this frame from the pair above; adding a drop
+    as well left an empty column down the middle and squeezed the result into 380px.
+  */
+  body.film [data-frame="split"] > :nth-child(1) {
+    grid-column: 1 / span 7;
+  }
+
+  body.film [data-frame="split"] > :nth-child(2) {
+    grid-column: 8 / span 5;
+  }
+
+  /* Coda: the closing address, with its exits held to the right. */
+  body.film [data-frame="coda"] > .chapter-meta {
+    grid-column: 1 / -1;
+  }
+
+  body.film [data-frame="coda"] > h2 {
+    grid-column: 1 / span 7;
+  }
+
+  body.film [data-frame="coda"] > .chapter-close-links {
+    grid-column: 9 / span 4;
+    align-self: end;
+  }
+
+  /* Single: one column, at the same measure as every frame above it. */
+  body.film [data-frame="single"] > * {
+    grid-column: 1 / -1;
+  }
+}
+
+
+
+/* ============================================================================
+   5. TYPE
+   ========================================================================= */
+
+body.film {
+  font-family: var(--face-display);
+  font-weight: 400;
+  letter-spacing: -0.005em;
+}
+
+/*
+  The metadata voice: mono, small, widely tracked. It is what separates a chapter from a
+  marketing section, and it is the only voice on the page allowed to be uppercase.
 */
 body.film .eyebrow,
 body.film .chapter-meta,
 body.film .case-step > span,
-body.film .tag,
-body.film .stat-card span {
+body.film .tag {
   font-family: var(--face-mono);
+  font-weight: 400;
   text-transform: uppercase;
   letter-spacing: 0.2em;
-  font-size: 0.7rem;
-  color: var(--muted);
+  font-size: var(--t-meta);
+  color: color-mix(in srgb, var(--text) 62%, transparent);
 }
 
 body.film .chapter-meta {
   display: flex;
   align-items: center;
-  gap: 0.85rem;
-  margin: 0 0 1.75rem;
+  gap: var(--s3);
+  margin: 0;
   color: var(--scene-accent);
 }
 
+/* The rule finishes the line to the edge of the grid, which is what makes it read as a slate. */
 body.film .chapter-meta::after {
   content: "";
   flex: 1;
@@ -245,144 +621,200 @@ body.film .chapter-meta::after {
   background: var(--scene-line);
 }
 
-/* Display voice. */
+body.film .eyebrow {
+  margin: 0 0 var(--s3);
+}
+
 body.film h1,
 body.film h2,
 body.film h3 {
   font-family: var(--face-display);
   font-weight: 700;
-  letter-spacing: -0.03em;
-}
-
-body.film .case-hero h1 {
-  font-size: clamp(2.1rem, 5vw, 4.25rem);
-  line-height: 0.98;
-  margin: 0 0 1.5rem;
+  letter-spacing: -0.035em;
   text-wrap: balance;
 }
 
-body.film h2 {
-  font-size: clamp(1.6rem, 3.2vw, 2.6rem);
-  line-height: 1.06;
+body.film .case-hero h1 {
+  font-size: var(--t-h1);
+  line-height: 0.92;
+  margin: var(--s2) 0 var(--s3);
 }
 
-/* The one italic line per chapter. */
+body.film h2 {
+  font-size: var(--t-h2);
+  line-height: 1.04;
+  margin: 0 0 var(--s4);
+}
+
+/*
+  A heading has to be sized against the column it sits in, not against the window. Sized off
+  the viewport, one scale cannot serve both a heading that runs the full grid and one in a
+  four column outcome panel: at 66px the narrow panel set one word per line, which is what a
+  wall of orphans looks like. Container units give every panel the same optical size.
+*/
+body.film .case-panel {
+  container-type: inline-size;
+}
+
+body.film .case-panel h2 {
+  font-size: clamp(1.45rem, 8cqi, 3.2rem);
+}
+
+/* A heading that owns the whole grid can be the largest thing in the frame after the title. */
+body.film .section-heading h2 {
+  font-size: var(--t-h2-wide);
+}
+
+body.film h3 {
+  font-size: var(--t-h3);
+  line-height: 1.2;
+  margin: 0 0 var(--s3);
+}
+
+/* One italic line per chapter, and only one. It is the chapter premise, not a subtitle. */
 body.film .chapter-line {
   font-family: var(--face-italic);
   font-style: italic;
   font-weight: 400;
-  font-size: clamp(1.3rem, 2.6vw, 2.1rem);
-  line-height: 1.25;
+  font-size: clamp(1.35rem, 2.4vw, 2.05rem);
+  line-height: 1.2;
   letter-spacing: 0;
-  color: var(--muted);
-  margin: 0 0 2rem;
-  max-width: 34ch;
+  color: var(--text);
+  margin: 0;
+  text-wrap: balance;
 }
 
 body.film .page-lede,
-body.film .case-panel p,
-body.film .case-step p,
-body.film .decision-list li {
+body.film .case-panel p:not(.eyebrow),
+body.film .case-step p:not(.eyebrow),
+body.film .decision-list li,
+body.film .footer-note {
   font-family: var(--face-display);
-  font-size: 1.02rem;
-  line-height: 1.7;
+  font-size: var(--t-body);
+  line-height: 1.65;
+  color: var(--muted);
 }
 
-/* The hero, and the scene behind it. */
-body.film .case-hero {
-  padding-block: clamp(3.5rem, 11vh, 8rem) clamp(3rem, 9vh, 6rem);
+body.film .page-lede {
+  font-size: var(--t-lede);
+  line-height: 1.55;
+  margin: 0;
 }
 
-body.film .case-hero > .section-inner {
-  position: relative;
-  z-index: 1;
+body.film p {
+  margin: 0;
 }
+
+
+/* ============================================================================
+   6. COMPONENTS
+   ========================================================================= */
 
 /*
-  One scene type, because one chapter exists. A second is a second block here plus a data-scene
-  value, never a redesign.
+  Every boxed component on this page loses its box. Hairlines and space carry the structure
+  instead, which is the largest single difference between a chapter and a card grid.
 */
-
-
-/*
-  Key terms. The existing stat cards become a rule-separated row: hairlines and space instead of
-  four bordered boxes, which is the single biggest difference between this and a card grid.
-*/
+body.film .case-panel,
+body.film .case-step,
 body.film .case-metrics .stat-card {
   background: none;
   border: 0;
   border-top: var(--film-rule) solid var(--scene-line);
   border-radius: 0;
-  padding: 1.1rem 1.25rem 0 0;
   box-shadow: none;
+  min-height: 0;
+  padding: var(--s4) 0 0;
 }
 
 body.film .case-metrics .stat-card strong {
+  display: block;
   font-family: var(--face-display);
   font-weight: 700;
-  font-size: clamp(1.3rem, 2.2vw, 1.75rem);
+  font-size: clamp(1.2rem, 1.9vw, 1.6rem);
   letter-spacing: -0.02em;
   color: var(--text);
-  display: block;
-  margin-bottom: 0.5rem;
+  margin-bottom: var(--s2);
 }
 
 body.film .case-metrics .stat-card span {
   display: block;
-  text-transform: none;
-  letter-spacing: 0.01em;
   font-family: var(--face-display);
-  font-size: 0.9rem;
-  line-height: 1.5;
+  font-size: var(--t-small);
+  line-height: 1.45;
+  text-transform: none;
+  letter-spacing: 0;
+  color: var(--muted);
 }
 
-/* Panels lose their boxes for the same reason. */
-body.film .case-panel {
-  background: none;
-  border: 0;
-  border-top: var(--film-rule) solid var(--scene-line);
-  border-radius: 0;
-  padding: 1.6rem 0 0;
-  box-shadow: none;
+/* The heading's own bottom margin would stack on top of the grid's row gap. */
+body.film .section-heading {
+  margin-bottom: 0;
 }
 
-body.film .case-panel h2 {
-  margin: 0.5rem 0 1rem;
-  max-width: 22ch;
+/*
+  The step run is the one genuinely spatial thing in this chapter, so it is drawn as a flow
+  rather than set as four more columns of prose: one unbroken rule across the run, a node on
+  the rule under each number, and the nodes arriving left to right as the act plays. Four
+  separately ruled columns was the previous answer and it was indistinguishable from the
+  definition row further up the page.
+*/
+body.film .case-flow {
+  position: relative;
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  column-gap: var(--film-gap);
+  align-items: start;
+  padding-top: var(--s4);
 }
 
-/* Steps: the number does the work, at size, in mono. */
-body.film .case-step {
-  background: none;
-  border: 0;
-  border-top: var(--film-rule) solid var(--scene-line);
-  border-radius: 0;
-  padding: 1.25rem 0 0;
-  box-shadow: none;
+body.film .case-flow::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 0;
+  height: var(--film-rule);
+  background: linear-gradient(to right, var(--scene-line), var(--scene-line) 86%, transparent);
+}
+
+body.film .case-flow .case-step {
+  position: relative;
+  border-top: 0;
+  padding-top: var(--s4);
+}
+
+body.film .case-flow .case-step::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: calc(var(--s4) * -1 - 3px);
+  width: 7px;
+  height: 7px;
+  background: var(--scene-accent);
 }
 
 body.film .case-step > span {
   display: block;
-  font-size: 1.5rem;
-  letter-spacing: 0.06em;
-  color: var(--scene-accent);
-  opacity: 0.75;
-  margin-bottom: 0.75rem;
-}
-
-body.film .case-step h3 {
+  min-height: 0;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: none;
+  font-weight: 400;
   font-size: 1.15rem;
-  margin: 0 0 0.6rem;
+  letter-spacing: 0.08em;
+  color: var(--scene-accent);
+  margin-bottom: var(--s3);
 }
 
 body.film .decision-list {
   list-style: none;
   padding: 0;
-  margin: 0.5rem 0 0;
+  margin: 0;
 }
 
 body.film .decision-list li {
-  padding: 0.7rem 0 0.7rem 1.5rem;
+  padding: var(--s3) 0 var(--s3) var(--s4);
   border-bottom: var(--film-rule) solid var(--scene-line);
   position: relative;
 }
@@ -391,38 +823,111 @@ body.film .decision-list li::before {
   content: "";
   position: absolute;
   left: 0;
-  top: 1.35rem;
+  top: 1.55em;
   width: 0.6rem;
   height: var(--film-rule);
   background: var(--scene-accent);
 }
 
 body.film .tag-list {
-  margin-top: 1.5rem;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0 var(--s4);
+  margin-top: var(--s4);
+  border-top: var(--film-rule) solid var(--scene-line);
+  padding-top: var(--s3);
 }
 
 body.film .tag {
+  position: relative;
   background: none;
-  border: var(--film-rule) solid var(--scene-line);
+  border: 0;
   border-radius: 0;
-  padding: 0.4rem 0.7rem;
+  padding: 0 0 0 var(--s4);
 }
 
-@media (max-width: 760px) {
-  body.film .chapter-line {
-    max-width: none;
-  }
+body.film .tag::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 0.62em;
+  width: 0.55rem;
+  height: var(--film-rule);
+  background: var(--scene-accent);
 }
 
 /*
-  The shared chrome is styled for the rest of the site: a pale gradient bar and rounded pills.
-  Both fight a film grade, so film pages flatten them. Scoped to body.film, so no other page
-  changes and removing the stylesheet restores the original chrome exactly.
+  The video facade is a caption until it is a video. Held as an empty 16 by 9 frame it was
+  the largest object in the title card and carried nothing: this video has no usable poster
+  frame, so the frame was a rectangle of background with a button parked in it. It becomes a
+  rule and a control, which is honest about being a link, and it takes its real proportions
+  the moment it has something to show.
+*/
+body.film .case-video {
+  position: relative;
+  aspect-ratio: auto;
+  min-height: 0;
+  display: block;
+  border: 0;
+  border-top: var(--film-rule) solid var(--scene-line);
+  border-radius: 0;
+  padding: var(--s3) 0 0;
+  background: none;
+  box-shadow: none;
+  isolation: isolate;
+}
+
+/* The facade's own decoration is a hardcoded blue wash that fights every theme, and there
+   is no frame left for it to sit in. */
+body.film .lite-video::before,
+body.film .lite-video::after {
+  content: none;
+}
+
+body.film .video-play {
+  min-height: 0;
+  border: 0;
+  border-radius: 0;
+  background: none;
+  box-shadow: none;
+  padding: 0;
+  color: var(--scene-accent);
+  font-family: var(--face-mono);
+  font-size: var(--t-meta);
+  text-transform: uppercase;
+  letter-spacing: 0.18em;
+}
+
+body.film .video-play-icon {
+  width: 15px;
+  height: 15px;
+  border-radius: 0;
+  box-shadow: none;
+  background: var(--scene-accent);
+  clip-path: polygon(0 0, 0 100%, 100% 50%);
+}
+
+body.film .case-video.is-playing {
+  aspect-ratio: 16 / 9;
+  border: var(--film-rule) solid var(--scene-line);
+  padding: 0;
+}
+
+body.film .hero-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--s2);
+}
+
+/*
+  Site chrome. The shared header is a pale gradient bar with rounded pills, which fights a film
+  grade, so film pages flatten it. Scoped to body.film, so removing this stylesheet restores
+  the original chrome exactly and no other page changes.
 */
 body.film .site-header {
   --nav-top-bg: transparent;
   --nav-top-text: var(--text);
-  background: color-mix(in srgb, var(--bg-deep) 82%, transparent);
+  background: color-mix(in srgb, var(--bg-deep) 95%, transparent);
   border-bottom: var(--film-rule) solid var(--scene-line);
   backdrop-filter: blur(10px);
 }
@@ -434,9 +939,10 @@ body.film .site-nav .brand {
   color: var(--text);
 }
 
-body.film .nav-links a {
+body.film .nav-links a,
+body.film .mobile-nav a {
   font-family: var(--face-mono);
-  font-size: 0.72rem;
+  font-size: var(--t-meta);
   text-transform: uppercase;
   letter-spacing: 0.16em;
   color: var(--muted);
@@ -448,14 +954,16 @@ body.film .nav-links a[aria-current="page"] {
 }
 
 body.film .button,
+body.film .nav-toggle,
 body.film .style-toggle {
   border-radius: 0;
   font-family: var(--face-mono);
-  font-size: 0.72rem;
+  font-size: var(--t-meta);
   text-transform: uppercase;
   letter-spacing: 0.16em;
   border: var(--film-rule) solid var(--scene-line);
   background: none;
+  color: var(--text);
 }
 
 body.film .button.primary {
@@ -463,31 +971,9 @@ body.film .button.primary {
   color: var(--scene-accent);
 }
 
-/* The click-to-load video facade read as an empty hole rather than a frame. */
-body.film .case-video {
-  border-radius: 0;
-  border: var(--film-rule) solid var(--scene-line);
-  background: color-mix(in srgb, var(--bg-deep) 55%, transparent);
-  display: grid;
-  place-items: center;
-  min-height: 16rem;
-}
-
-body.film .video-play {
-  border-radius: 0;
-  border: var(--film-rule) solid var(--scene-accent);
-  background: none;
-  color: var(--scene-accent);
-  font-family: var(--face-mono);
-  font-size: 0.72rem;
-  text-transform: uppercase;
-  letter-spacing: 0.16em;
-  padding: 0.8rem 1.2rem;
-}
-
 /*
-  The reset control is a button, and the blanket button rule above stripped its fill, which made
-  a working control look disabled. It keeps a surface of its own.
+  The reset control is a button, so the blanket rule above stripped its fill and made a working
+  control look disabled. It keeps a surface of its own.
 */
 body.film [data-style-reset] {
   background: color-mix(in srgb, var(--scene-accent) 14%, transparent);
@@ -513,161 +999,629 @@ body.film .style-panel select {
   font-family: var(--face-display);
 }
 
-
-/* Fixed chrome: which act you are in, and how far through. */
-.film-chrome {
-  position: fixed;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  z-index: 40;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 1rem;
-  padding: 0.6rem clamp(1rem, 4vw, 2.5rem);
-  font-family: var(--face-mono);
-  font-size: 0.66rem;
-  text-transform: uppercase;
-  letter-spacing: 0.18em;
-  color: var(--muted);
-  background: color-mix(in srgb, var(--bg-deep) 88%, transparent);
+/*
+  The tail. Without these the grade stops at the last act and the site design reappears
+  underneath it: rounded comment boxes and a pale gradient footer.
+*/
+body.film [data-frame="single"] > .eyebrow {
   border-top: var(--film-rule) solid var(--scene-line);
-  backdrop-filter: blur(10px);
-  pointer-events: none;
+  padding-top: var(--s3);
+  margin-bottom: var(--s4);
 }
 
-/* The progress bar is the chrome's own top edge, drawn from a property JS keeps current. */
-.film-chrome::before {
-  content: "";
-  position: absolute;
-  left: 0;
-  top: calc(var(--film-rule) * -1);
-  height: 2px;
-  width: var(--film-progress, 0%);
-  background: var(--scene-accent);
+body.film [data-comments] h2,
+body.film [data-comments] h3 {
+  font-family: var(--face-display);
+  font-weight: 700;
+  font-size: clamp(1.45rem, 2.9vw, 2.4rem);
+  line-height: 1.06;
+  letter-spacing: -0.03em;
+  margin: 0 0 var(--s3);
 }
 
-.film-chrome-act {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.film-chrome-progress {
-  color: var(--scene-accent);
-  flex: none;
-}
-
-/* The section rail. */
-.film-rail {
-  position: fixed;
-  right: clamp(0.75rem, 2vw, 1.5rem);
-  top: 50%;
-  transform: translateY(-50%);
-  z-index: 40;
-  display: flex;
-  flex-direction: column;
-  gap: 0.85rem;
-  align-items: flex-end;
-}
-
-.film-rail-dot {
-  --dot: 7px;
-  position: relative;
-  display: block;
-  width: var(--dot);
-  height: var(--dot);
-  border: var(--film-rule) solid var(--scene-line);
-  border-radius: 50%;
+body.film .comment-shell {
   background: none;
+  border: 0;
+  border-radius: 0;
+  padding: 0;
+  box-shadow: none;
 }
 
-.film-rail-dot.is-active {
-  background: var(--scene-accent);
-  border-color: var(--scene-accent);
-}
-
-.film-rail-label {
-  position: absolute;
-  right: calc(100% + 0.7rem);
-  top: 50%;
-  transform: translateY(-50%);
-  white-space: nowrap;
+body.film .comment-note,
+body.film .comment-status {
   font-family: var(--face-mono);
-  font-size: 0.62rem;
+  font-size: var(--t-meta);
   text-transform: uppercase;
   letter-spacing: 0.16em;
   color: var(--muted);
+}
+
+body.film [data-comments] input,
+body.film [data-comments] textarea {
+  border-radius: 0;
+  border: 0;
+  border-bottom: 2px solid color-mix(in srgb, var(--text) 30%, transparent);
+  background: none;
+  padding-left: 0;
+  padding-right: 0;
+  color: var(--text);
+  font-family: var(--face-display);
+}
+
+/* Placeholders at half strength on near black are a guess, not a label. */
+body.film [data-comments] input::placeholder,
+body.film [data-comments] textarea::placeholder {
+  color: var(--muted);
+  opacity: 0.9;
+  font-family: var(--face-mono);
+  font-size: var(--t-meta);
+  letter-spacing: 0.06em;
+}
+
+body.film [data-comments] input:focus-visible,
+body.film [data-comments] textarea:focus-visible {
+  outline: none;
+  border-bottom-color: var(--scene-accent);
+}
+
+body.film .comment-item,
+body.film .comment-empty,
+body.film [data-comments] > * {
+  border-radius: 0;
+  border-color: var(--scene-line);
+  background: none;
+  box-shadow: none;
+}
+
+body.film [data-comments] textarea {
+  resize: vertical;
+  min-height: 7rem;
+}
+
+body.film [data-comments] .comment-form {
+  display: grid;
+  gap: var(--s4);
+  max-width: 46rem;
+}
+
+body.film [data-comments] .comment-form label {
+  display: grid;
+  gap: var(--s2);
+}
+
+body.film [data-comments] button {
+  justify-self: start;
+  padding: var(--s3) var(--s5);
+}
+
+body.film [data-comments] .comment-list {
+  margin-top: var(--s6);
+  display: grid;
+  gap: var(--s4);
+}
+
+body.film [data-comments] .comment-item {
+  border: 0;
+  border-top: var(--film-rule) solid var(--scene-line);
+  padding: var(--s4) 0 0;
+}
+
+body.film .site-footer {
   background: color-mix(in srgb, var(--bg-deep) 92%, transparent);
-  border: var(--film-rule) solid var(--scene-line);
-  padding: 0.3rem 0.55rem;
-  opacity: 0;
+  border-top: var(--film-rule) solid var(--scene-line);
+}
+
+body.film .site-footer h2 {
+  font-size: clamp(1.4rem, 2.6vw, 2.1rem);
+}
+
+body.film .site-footer h3 {
+  font-family: var(--face-mono);
+  font-weight: 400;
+  font-size: var(--t-meta);
+  text-transform: uppercase;
+  letter-spacing: 0.2em;
+  color: var(--muted);
+}
+
+body.film .site-footer a {
+  font-family: var(--face-display);
+}
+
+body.film .chapter-close {
+  padding-block: var(--s7) var(--s6);
+}
+
+body.film .chapter-close + .section {
+  padding-top: 0;
+}
+
+/* The component strip carries the same four column rhythm as the step run below it. */
+body.film .case-metrics {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  column-gap: var(--film-gap);
+  row-gap: var(--s4);
+  align-items: start;
+}
+
+/* The exits finish the grid rather than stopping short of it. */
+body.film .chapter-close-links {
+  display: flex;
+  gap: var(--s2);
+  flex-wrap: wrap;
+  margin: 0;
+}
+
+/* Only once the exits have a column of their own. Stacked, they belong at the left margin
+   like everything else, and right aligning them there reads as an accidental indent. */
+@media (min-width: 901px) {
+  body.film .chapter-close-links {
+    justify-content: flex-end;
+  }
+}
+
+
+/* ============================================================================
+   7. CHROME
+   ========================================================================= */
+
+/*
+  The running head. Something has to say which chapter this is at every scroll position,
+  including the handoffs, where by design no section is legible. It sits in the gutter,
+  which is the one band of the frame that provably never holds text at any width, and it
+  reads vertically because a horizontal label at the foot of the screen is the reference
+  page's device and this should not be.
+*/
+.film-spine {
+  position: fixed;
+  left: 0;
+  top: 50%;
+  width: var(--film-gutter);
+  transform: translateY(-50%);
+  z-index: 24;
+  display: grid;
+  place-items: center;
   pointer-events: none;
 }
 
-.film-rail-dot:hover .film-rail-label,
-.film-rail-dot:focus-visible .film-rail-label {
-  opacity: 1;
+.film-spine span {
+  writing-mode: vertical-rl;
+  transform: rotate(180deg);
+  white-space: nowrap;
+  font-family: var(--face-mono);
+  font-size: 0.6rem;
+  text-transform: uppercase;
+  letter-spacing: 0.32em;
+  color: color-mix(in srgb, var(--text) 58%, transparent);
 }
 
-/* Footer clears the fixed chrome. */
-body.film .site-footer {
-  padding-bottom: 4rem;
-}
-
-@media (prefers-reduced-motion: no-preference) {
-  .film-chrome::before {
-    transition: width 180ms linear;
-  }
-
-  .film-rail-dot {
-    transition: background-color 220ms ease, border-color 220ms ease;
-  }
-
-  .film-rail-label {
-    transition: opacity 160ms ease;
-  }
-}
-
-/* The rail needs width that a phone does not have. The chrome still works. */
-@media (max-width: 900px) {
-  .film-rail {
+/* Below this the gutter is too narrow to hold it without touching the copy. */
+@media (max-width: 1180px) {
+  .film-spine {
     display: none;
   }
 }
 
 /*
-  Acts. A pinned screen inside a taller wrapper: the reader scrolls the wrapper's height but the
-  screen holds still, so the scroll reads as time passing rather than as the page moving. This is
-  the difference between travelling through a chapter and scrolling an article.
-
-  Sticky is supported everywhere and needs no JS. Where the viewport is too short to hold a screen
-  the wrapper collapses and the content returns to normal flow, which is also what happens for a
-  reader who has asked for reduced motion.
+  A soft matte under the header. Type scrolling behind fixed chrome has to go somewhere, and
+  terminating on a hard horizontal edge reads as a rendering fault rather than as content
+  passing underneath: on a phone, six frames in eight opened on a line of display type sliced
+  through its x-height. Content dissolves into this instead of being cut by it.
 */
-.act {
-  position: relative;
-  height: 240vh;
+.film-matte {
+  position: fixed;
+  left: 0;
+  right: 0;
+  top: var(--film-header-h);
+  height: 1.5rem;
+  z-index: 24;
+  pointer-events: none;
+  background: linear-gradient(
+    to bottom,
+    var(--bg-deep) 0%,
+    color-mix(in srgb, var(--bg-deep) 74%, transparent) 40%,
+    color-mix(in srgb, var(--bg-deep) 34%, transparent) 72%,
+    transparent 100%
+  );
 }
 
-body.film .act-pin {
-  position: sticky;
-  top: 0;
-  min-height: 100vh;
-  display: flex;
-  align-items: center;
-  overflow: hidden;
+/*
+  One piece of fixed chrome: reading progress, drawn as a hairline along the bottom edge of
+  the header. Rejected alternative, and what was here before: a caption bar pinned along the
+  bottom of the screen carrying the act name and an N of N counter, a tick rail down the right
+  edge, and a "scroll to begin" cue. Each permanently occupied part of every viewport, the bar
+  cut phone headings in half as they passed behind it, and between them they accounted for
+  most of what a reviewer recognised as another site's kit. The chapter names its own parts in
+  its own headings and its length is legible from the hairline.
+*/
+.film-progress {
+  position: fixed;
+  left: 0;
+  top: var(--film-header-h);
+  z-index: 25;
+  height: 2px;
+  width: var(--film-progress, 0%);
+  background: var(--scene-accent);
+  pointer-events: none;
 }
 
-@media (max-width: 900px), (max-height: 700px), (prefers-reduced-motion: reduce) {
+/* ============================================================================
+   8. MOTION
+   ========================================================================= */
+
+/*
+  Everything that moves lives below this line, inside a reduced-motion query, so the static
+  rendering above is the real design. Firefox still ships scroll-driven animation behind a
+  flag, so the choreography is driven by film.js writing --act rather than by CSS timelines.
+  All of it also depends on .is-choreographed, which only JavaScript adds.
+*/
+@media (min-width: 901px) and (min-height: 641px) and (prefers-reduced-motion: no-preference) {
+  /*
+    An act holds at full presence for the whole time it is pinned and only fades once it is
+    genuinely travelling off screen, which is what --exit measures. Driving this from --act
+    instead left a frame dimmed while it was still perfectly still and still the only thing
+    on screen. Only the exit is animated: content is already there when its act begins, so
+    animating an entry would mean hiding something the reader can already see.
+  */
+  /*
+    Arrival. Each part of a frame comes in on its own beat, timed off --phase, which starts
+    while the frame is still climbing into view and finishes halfway through the hold. That
+    is what a pin is for: without it the reader is held still in front of a page that has
+    already finished, which is what a reviewer counted whole viewports of.
+
+    The default state is arrived. All of this is inside is-choreographed and inside a reduced
+    motion query, so with no JavaScript, or with motion turned down, every word is on screen
+    from the start.
+  */
+  body.film.is-choreographed .act-pin .case-flow::before {
+    transform: scaleX(clamp(0, calc((var(--phase, 1) - 0.04) / 0.44), 1));
+    transform-origin: left;
+  }
+
+  body.film.is-choreographed .act-pin [data-frame]:not([data-frame="title"]) > *:not(.case-flow),
+  body.film.is-choreographed .act-pin .case-flow > * {
+    --arrive: clamp(0, calc((var(--phase, 1) - var(--beat, 0) * 0.1) / 0.08), 1);
+    opacity: var(--arrive);
+    transform: translateY(calc((1 - var(--arrive)) * 1.6rem));
+    will-change: opacity, transform;
+  }
+
+  /*
+    The title card is exempt. It is the first thing on the page and there is no scroll behind
+    it, so timing its arrival to scroll means landing on a half drawn hero.
+
+    Beats. Six is more parts than any frame here has, and an unlisted part simply leads.
+  */
+  body.film.is-choreographed .act-pin [data-frame] > *:nth-child(2),
+  body.film.is-choreographed .act-pin .case-flow > *:nth-child(1) { --beat: 1; }
+  body.film.is-choreographed .act-pin [data-frame] > *:nth-child(3),
+  body.film.is-choreographed .act-pin .case-flow > *:nth-child(2) { --beat: 2; }
+  body.film.is-choreographed .act-pin [data-frame] > *:nth-child(4),
+  body.film.is-choreographed .act-pin .case-flow > *:nth-child(3) { --beat: 3; }
+  body.film.is-choreographed .act-pin [data-frame] > *:nth-child(5),
+  body.film.is-choreographed .act-pin .case-flow > *:nth-child(4) { --beat: 4; }
+  body.film.is-choreographed .act-pin [data-frame] > *:nth-child(n + 6) { --beat: 5; }
+
+  body.film.is-choreographed .act-pin > .section-inner {
+    --leaving: clamp(0, calc(var(--exit, 0) / 0.08), 1);
+    opacity: calc(1 - var(--leaving));
+    /*
+      Two movements in one transform. The dolly runs on --act across the whole hold: a slow
+      push in, small enough that nothing reflows and every word is exactly as legible at the
+      end as at the start, which is what a held frame should do instead of assembling itself
+      in front of the reader. The exit runs on --leaving and takes over at release.
+    */
+    transform:
+      translateY(calc(var(--enter, 0) * -1px + var(--act, 0) * -1.1rem + var(--leaving) * -4rem))
+      scale(calc(1 + var(--act, 0) * 0.016 - var(--leaving) * 0.06));
+    will-change: opacity, transform;
+  }
+
+  /*
+    The numeral is what the pin transforms. It drifts across the frame and grows as the act
+    runs, so being held in place still shows the reader something moving, which was the whole
+    point of pinning. A pin that transforms nothing is a stuck page.
+  */
+  /*
+    What a pin transforms is the space, not an object in it. The floor and ceiling keep
+    rushing past while the copy is held still, and the key light swells as an act runs, so
+    being held in place still reads as travelling forward. Rejected alternative: a graphic
+    object inside the frame, twice. One collided with the copy and one was read by two
+    separate reviewers as a broken form control; a continuous field can be neither.
+  */
+  body.film.is-choreographed .film-stage-glow {
+    transform:
+      translate(-50%, -50%)
+      translateX(calc((var(--act-now, 0) - 0.5) * 26vw))
+      scale(calc(0.78 + var(--act-now, 0) * 0.5));
+    opacity: calc(var(--stage-brightness, 1) * (0.6 + var(--act-now, 0) * 0.4));
+    will-change: transform, opacity;
+  }
+
+  body.film.is-choreographed .nav-links a {
+    opacity: 0.62;
+    transition: opacity 220ms ease;
+  }
+
+  body.film .site-header:hover .nav-links a,
+  body.film .site-header:focus-within .nav-links a,
+  body.film .nav-links a:hover,
+  body.film .nav-links a[aria-current="page"] {
+    opacity: 1;
+  }
+
+  .film-progress {
+    transition: width 180ms linear;
+  }
+
+  /* The cut between two rooms. Long enough to read as a camera move, short enough that it
+     has finished before the incoming frame's copy has arrived. */
+  .film-room {
+    transition: transform 700ms cubic-bezier(0.2, 0.7, 0.2, 1);
+  }
+
+  .film-grade {
+    transition: perspective 700ms cubic-bezier(0.2, 0.7, 0.2, 1);
+  }
+
+  .film-stage-ceiling {
+    transition: opacity 700ms ease;
+  }
+
+  .film-stage-glow {
+    transition: width 700ms ease, height 700ms ease;
+  }
+
+}
+
+
+/* ============================================================================
+   9. NARROW AND SHORT VIEWPORTS
+   ========================================================================= */
+
+/*
+  Below this width, or on a screen too short to hold a frame, acts stop pinning and the
+  chapter becomes an ordinary vertical read. The same happens for a reader who asked for
+  reduced motion, which is why the query lists all three together.
+*/
+@media (min-width: 901px) and (min-height: 641px) {
+  /*
+    Two systems can animate an element in, and only one may. Above this breakpoint the act
+    choreography owns arrival, so the site-wide reveal observer is switched off for anything
+    inside an act; below it, the reveal observer is the only one running.
+  */
+  body.film .act .reveal {
+    opacity: 1;
+    transform: none;
+    /* Its transition has to go as well as its values. Left in place it applies to the act
+       choreography's own opacity, which is written on every scroll frame, so arrival lags
+       the scroll by half a second and settles at whatever the reader stopped at. */
+    transition: none;
+  }
+}
+
+@media (max-width: 900px), (max-height: 640px), (prefers-reduced-motion: reduce) {
   .act {
     height: auto;
+  }
+
+  .act + .act {
+    margin-top: 0;
+  }
+
+  /* A display headline half dissolved through a translucent bar reads as a rendering fault
+     rather than as content scrolling behind chrome. On a phone the bar is solid, and the
+     matte below it is long enough to dissolve a line of display type rather than clip it. */
+  body.film .site-header {
+    background: var(--bg-deep);
+  }
+
+  body.film .act .act-pin {
+    min-height: 100svh;
   }
 
   body.film .act-pin {
     position: static;
     min-height: 0;
     display: block;
+    overflow: visible;
+    padding-top: var(--s6);
+    padding-bottom: var(--s6);
+  }
+
+  /* With no pin reserving it, the fixed header sits on top of the first line of the page. It
+     is 65px at every width, so main clears it once rather than every act clearing it. */
+  body.film main {
+    padding-top: var(--film-header-h);
+  }
+
+  /*
+    One composed section at a time, on the phone too. Sticky pinning is the wrong mechanism
+    here, because a frame whose content is taller than a phone screen would have its foot
+    clipped and unreachable, so each act simply claims a screen and centres what it holds.
+    A section with more in it than that grows instead of being cut.
+
+    Rejected alternative: scroll snapping. The scroll container on this page is the document,
+    and snap on the document scroller behaves differently across the engines this site is
+    read in, which is not a thing to discover from a recruiter's phone.
+  */
+  body.film .act .act-pin {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    min-height: calc(100svh - var(--film-header-h));
+  }
+
+  /* The rooms are the same rooms, seen from closer: at 390px the grid cells and the
+     convergence of a 620px perspective are both too large for anything to read as a space. */
+  /* Scaling the room down shrinks its ruling too, and at 0.52 the lattice ran at roughly
+     the line height of the body copy and interfered with it. */
+  .film-room {
+    transform: translateY(calc(var(--stage-lift) * 0.6)) scale(0.78);
+  }
+
+  .film-stage-wall {
+    opacity: 0.3;
+  }
+
+  /*
+    The title card is still a title card on a phone. Unwound into the same even stack as
+    every other section it had no opening at all, which is most of what separates a chapter
+    from a dark blog post on the device most of these links are opened on.
+  */
+  body.film .case-hero.act-pin {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    min-height: calc(100svh - var(--film-header-h));
+    padding-top: var(--s5);
+  }
+
+  body.film .case-hero h1 {
+    font-size: clamp(3rem, 13vw, 4.5rem);
+  }
+
+  body.film [data-frame="title"] > .case-metrics {
+    margin-top: var(--s6);
+  }
+
+  body.film .act-pin::before {
+    font-size: clamp(9rem, 30vw, 16rem);
+    opacity: 0.7;
+  }
+
+}
+
+/* The step run and the component strip are inner grids, not frames, so they collapse here. */
+@media (max-width: 900px) {
+  body.film .case-flow,
+  body.film .case-metrics {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    row-gap: var(--s5);
+  }
+
+  /* One rule per step instead of one rule across the run: the connector spans only the
+     first row, so at two columns its nodes would hang under later rows on nothing. */
+  body.film .case-flow {
+    padding-top: 0;
+  }
+
+  body.film .case-flow::before,
+  body.film .case-flow .case-step::before {
+    content: none;
+  }
+
+  body.film .case-flow .case-step {
+    border-top: var(--film-rule) solid var(--scene-line);
+  }
+}
+
+/* Three lines of tracked mono is a paragraph, not a slate. */
+@media (max-width: 700px) {
+  body.film .chapter-meta {
+    letter-spacing: 0.12em;
+    font-size: 0.6rem;
+  }
+}
+
+@media (max-width: 420px) {
+  body.film .case-flow,
+  body.film .case-metrics {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+/*
+  Four places, not four hues. The floor and ceiling are the same two planes throughout; what
+  changes per act is how they are ruled, and each ruling behaves differently once the plane
+  is moving: lines along the direction of travel rush, lines across it sweep past. This is a
+  field rather than an object, so it cannot collide with the copy at any scroll position and
+  cannot be mistaken for a broken element, which two earlier attempts at scene objects were.
+*/
+
+/* Streams: runs along the direction of travel, converging on the vanishing point. */
+body.film[data-scene="streams"] .film-stage-wall {
+  background-image: repeating-linear-gradient(to right, var(--scene-line-strong) 0 1px, transparent 1px 40px);
+}
+
+body.film[data-scene="streams"] .film-stage-floor,
+body.film[data-scene="streams"] .film-stage-ceiling {
+  background-image: repeating-linear-gradient(to right, var(--scene-line-strong) 0 1px, transparent 1px 40px);
+}
+
+/* Lattice: rules meeting rules. */
+body.film[data-scene="lattice"] .film-stage-wall {
+  background-image:
+    repeating-linear-gradient(58deg, var(--scene-line-strong) 0 1px, transparent 1px 72px),
+    repeating-linear-gradient(-58deg, var(--scene-line-strong) 0 1px, transparent 1px 72px);
+}
+
+body.film[data-scene="lattice"] .film-stage-floor,
+body.film[data-scene="lattice"] .film-stage-ceiling {
+  background-image:
+    repeating-linear-gradient(58deg, var(--scene-line-strong) 0 1px, transparent 1px 72px),
+    repeating-linear-gradient(-58deg, var(--scene-line-strong) 0 1px, transparent 1px 72px);
+}
+
+/* Strata: bands across the direction of travel, so they sweep toward the reader. */
+body.film[data-scene="strata"] .film-stage-wall {
+  background-image: repeating-linear-gradient(to bottom, var(--scene-line-strong) 0 2px, transparent 2px 58px);
+}
+
+body.film[data-scene="strata"] .film-stage-floor,
+body.film[data-scene="strata"] .film-stage-ceiling {
+  background-image: repeating-linear-gradient(to bottom, var(--scene-line-strong) 0 2px, transparent 2px 58px);
+}
+
+/* The ceiling is not a constant either: it closes in over the last act and lifts over the
+   third, which is the cheapest way to make two acts feel like two different rooms. */
+body.film[data-scene="lattice"] .film-stage-ceiling {
+  opacity: 0.4;
+}
+
+body.film[data-scene="strata"] .film-stage-ceiling {
+  opacity: 0.12;
+}
+
+/* The key light is in a different place in each act. */
+body.film[data-scene="streams"] .film-stage-glow {
+  width: min(38rem, 62vw);
+  height: 30rem;
+}
+
+body.film[data-scene="lattice"] .film-stage-glow {
+  width: min(74rem, 96vw);
+  height: 20rem;
+}
+
+body.film[data-scene="strata"] .film-stage-glow {
+  width: min(44rem, 70vw);
+  height: 34rem;
+}
+
+/*
+  On a phone the header stops floating. There is no scroll position at which a fixed bar
+  does not sit on top of something, and on a 390px screen that something is a display
+  headline four times out of eight; a matte turns the cut into a fade but cannot remove it.
+  A chapter is read top to bottom and the navigation is one footer away.
+*/
+@media (max-width: 900px) {
+  body.film .site-header {
+    position: static;
+  }
+
+  /* Nothing is fixed over the page, so there is nothing to dissolve into, and the progress
+     hairline belongs at the top of the viewport rather than under a bar that has gone. */
+  .film-matte {
+    display: none;
+  }
+
+  .film-progress {
+    top: 0;
+  }
+
+  body.film main {
+    padding-top: 0;
   }
 }
