@@ -328,7 +328,7 @@ async function checkFilmTokenScope() {
   }
 }
 
-async function checkFilmActPacing() {
+async function checkFilmActHandoff() {
   const cssFile = resolve(repoRoot, 'assets/css/film.css');
   const jsFile = resolve(repoRoot, 'assets/js/film.js');
   if (!await fileExists(cssFile) || !await fileExists(jsFile)) return;
@@ -336,36 +336,38 @@ async function checkFilmActPacing() {
   const css = await readFile(cssFile, 'utf8');
   const js = await readFile(jsFile, 'utf8');
 
-  // Three numbers decide whether a chapter reads correctly, and nothing else can catch them.
-  // Measured in screens: an act's pin takes one screen of scrolling to travel away, its copy
-  // reaches zero `fade` screens after it releases, and the next act's copy starts arriving
-  // `headStart` screens before its own wrapper reaches the top. So the wrappers may overlap
-  // by at most 1 - fade - headStart.
+  // Two structural facts carry the handoff between chapter acts, and breaking either one is
+  // invisible in a diff.
   //
-  // Set the overlap above that and two columns of live text share the same pixels. Set it far
-  // below and the chapter fills with half empty transition frames. Both faults shipped during
-  // this page's build, both were found by eye rather than by a check, and both cost a rebuild.
-  const overlap = css.match(/\.act \+ \.act \{\s*margin-top:\s*-([0-9.]+)vh/);
-  const fade = css.match(/--leaving:\s*clamp\(0,\s*calc\(var\(--exit,\s*0\)\s*\/\s*([0-9.]+)\)/);
-  const headStart = js.match(/const phaseSpan = vh \* ([0-9.]+);/);
+  // This replaced an arithmetic check over three tuned numbers: how far the act wrappers
+  // overlapped, how fast the outgoing copy faded, and how early the incoming copy arrived.
+  // That check could only work while the copy's opacity was computed from scroll position,
+  // and it passed a page with the title card and the next act printed on top of each other
+  // once the copy started latching instead. The numbers are gone; these two facts are what
+  // the page actually relies on now.
 
-  if (!overlap || !fade || !headStart) {
+  // 1. Acts must not overlap. A negative margin between them puts two pinned screens in the
+  //    same band, and with a latched reveal both are at full opacity there.
+  const overlap = css.match(/\.act \+ \.act \{[^}]*margin-top:\s*-([0-9.]+)(vh|px|rem|em)/);
+  if (overlap) {
     failures.push(
-      'The chapter act pacing values could not be read. One of the act overlap in assets/css/film.css, the exit fade window, or the arrival head start in assets/js/film.js has been renamed or restructured, so the check that keeps two frames off the same screen is no longer measuring anything.'
-    );
-    return;
-  }
-
-  const overlapScreens = Number(overlap[1]) / 100;
-  const budget = 1 - Number(fade[1]) - Number(headStart[1]);
-  if (overlapScreens > budget + 1e-9) {
-    failures.push(
-      `Chapter acts overlap by ${overlap[1]}vh, but a ${fade[1]} screen exit fade and a ${headStart[1]} screen arrival head start leave room for only ${(budget * 100).toFixed(1)}vh. Two acts would be legible in the same pixels at some scroll position.`
+      `assets/css/film.css pulls chapter acts back over each other by ${overlap[1]}${overlap[2]}. Acts hand off by one pin scrolling away as the next climbs in; overlapping them puts two acts' copy in the same pixels, which the owner reported as the worst fault on the page.`
     );
   }
-  if (overlapScreens < budget - 0.25) {
+
+  // 2. The reveal must latch. It arrives once and is never taken off again: copy whose
+  //    opacity or position is recomputed from scroll offset runs backwards when the reader
+  //    scrolls back, and the text visibly twitches against the scrollbar.
+  const latches = /classList\.add\(["']is-arrived["']\)/.test(js);
+  const unlatches = /classList\.(remove|toggle)\(["']is-arrived["']/.test(js);
+  if (!latches) {
     failures.push(
-      `Chapter acts overlap by only ${overlap[1]}vh against a budget of ${(budget * 100).toFixed(1)}vh, which leaves more than a quarter screen of scrolling with no act legible at all between every pair of frames.`
+      'assets/js/film.js no longer adds the is-arrived class that reveals the copy in a chapter act, so either the reveal has been rewritten or it is dead. A reveal driven by a scroll-derived value instead of a latched class reverses when the reader scrolls back.'
+    );
+  }
+  if (unlatches) {
+    failures.push(
+      'assets/js/film.js removes or toggles the is-arrived class. It must only ever be added: copy that has been shown to a reader has to stay shown, whatever they do with the wheel.'
     );
   }
 }
@@ -501,7 +503,7 @@ async function main() {
   await checkRedirectStub();
   await checkDashes();
   await checkFilmTokenScope();
-  await checkFilmActPacing();
+  await checkFilmActHandoff();
   await checkStaticReferences();
 
   const { server, baseUrl } = await startStaticServer();

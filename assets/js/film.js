@@ -42,6 +42,31 @@
   // every act renders at full presence, so a reader with no JavaScript sees the whole chapter.
   body.classList.add("is-choreographed");
 
+  // Copy latches. It arrives once, and from then on it stays exactly where it is however the
+  // reader moves the wheel.
+  //
+  // It used to be driven by --phase, a value recomputed from the act's rect on every scroll
+  // frame, which runs backwards as readily as forwards: scrolling back a little took every
+  // paragraph part of the way out again, and the reader saw the text twitching against the
+  // scrollbar. The arrival span was also 0.08 of a 108px phase, so the whole of it happened
+  // inside nine pixels of scrolling; it read as a flash rather than as choreography, and it
+  // meant twenty-nine pixels separated a full frame from an empty one.
+  //
+  // How far below the fold a pin is when its copy arrives. A quarter screen means the frame
+  // is already composed by the time the reader reaches it, rather than assembling itself in
+  // front of them. Acts no longer overlap, so this is free to be generous: there is no second
+  // act sharing those pixels for it to collide with.
+  const arriveHeadStart = window.innerHeight * 0.25;
+  const arrive = new IntersectionObserver((entries) => {
+    for (const entry of entries) {
+      if (!entry.isIntersecting) continue;
+      entry.target.classList.add("is-arrived");
+      // Never unset. That is the whole point, and unobserving says so in code.
+      arrive.unobserve(entry.target);
+    }
+  }, { rootMargin: `0px 0px ${Math.round(arriveHeadStart)}px 0px` });
+  for (const pin of main.querySelectorAll(".act-pin")) arrive.observe(pin);
+
   let ticking = false;
 
   function clamp(value) {
@@ -79,53 +104,17 @@
     const staged = !body.classList.contains("scene-live");
     if (staged) put(body, "--film-depth", String(Math.round((window.scrollY * 0.45) % 110)));
 
-    // Three measures per act, because they answer three different questions and one property
-    // was doing all three jobs badly.
-    //
-    //   --phase  when the act's content arrives. It starts while the frame is still coming
-    //            into view and finishes halfway through the hold, so the frame is never
-    //            blank on arrival and the pin still has something left to do.
-    //   --act    how far through its hold the act is, 0 as it pins and 1 as it releases.
-    //   --exit   how far the frame has actually travelled off screen, which is the only
-    //            honest trigger for fading it: a frame that is still pinned is still the
-    //            only thing the reader can see, so it must not dim.
+    // One measure per act: --act, how far through its hold it is, 0 as it pins and 1 as it
+    // releases. The stage glow reads it through --act-now. There were three, and the other two
+    // computed the copy's opacity and position from scroll offset, which is why the copy ran
+    // backwards when the reader did.
     for (const act of acts) {
       const rect = act.getBoundingClientRect();
-      // An act shorter than the viewport has no hold. Left negative, it inverts the arrival
-      // span and the whole frame settles at an arbitrary opacity.
+      // An act shorter than the viewport never pins, so it has no hold to be part way through.
       const travel = Math.max(rect.height - vh, 0);
 
-      // Arrival happens entirely on the way in, over the three tenths of a screen before
-      // this act's wrapper reaches the top. That head start is not a preference: it is
-      // exactly what the overlap arithmetic in film.css leaves, so the previous frame
-      // reaches zero on the same scroll position this one starts arriving. Spreading the beats into the hold instead was measurably worse: at
-      // 0.85 of the hold, 63% of scroll depths showed a fully composed frame, and at zero
-      // 82% do (.claude-tools/audit-handoff.mjs). What a held frame does instead is dolly,
-      // which never leaves a word half drawn.
-      // The arrival span, and it is the width of the blank window between acts.
-      //
-      // The pacing arithmetic in tools/check-site.mjs keeps two acts off the same pixels by
-      // making the outgoing copy reach zero exactly as the incoming copy starts arriving. The
-      // consequence nobody had noticed is that the incoming copy then takes this long to
-      // become readable, and for that whole span the frame has no legible text in it: at 0.3
-      // screens that is 270px of scroll showing a scrim over an empty room, which is the worst
-      // frame on the page. A shorter arrival closes the window without breaking the rule, and
-      // buys room in the same budget to raise the overlap, which closes it almost completely.
-      const phaseSpan = vh * 0.12;
-      put(act, "--phase", clamp((-rect.top + vh * 0.3) / phaseSpan).toFixed(2));
       put(act, "--act", travel > 0 ? clamp(-rect.top / travel).toFixed(2) : "1");
 
-      // An act with no travel never pins, so it has no exit either: it is ordinary flow and
-      // fading it would only open a gap in front of whatever follows.
-      const pin = act.querySelector("section");
-      const top = pin ? pin.getBoundingClientRect().top : 0;
-      put(act, "--exit", travel > 0 ? clamp(-top / vh).toFixed(2) : "0");
-
-      // How far the frame still has to travel before it pins. Cancelling it means a frame
-      // is drawn where it will hold from the moment it becomes legible, instead of arriving
-      // centred in a pin that is still half below the fold, with a third of the screen
-      // empty above it and its last line cut off by the bottom edge.
-      put(act, "--enter", String(Math.max(0, Math.round(top / 4) * 4)));
     }
 
     // The stage takes its character from whichever act is nearest the middle of the screen, so

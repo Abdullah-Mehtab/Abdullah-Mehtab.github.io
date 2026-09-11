@@ -422,62 +422,45 @@ body.film .site-footer {
   position: relative;
   /*
     A pin one viewport tall always takes a full viewport of scrolling to travel off screen, so
-    only the height above 100vh is a hold: this holds the frame for 188vh and spends 100vh
+    only the height above 100vh is a hold: this holds the frame for 140vh and spends 100vh
     letting it go.
 
     It was 175vh, which gave each act 113vh of scroll to own. The camera's whole move for an
     act happens inside that, so at 113vh a flick of the wheel carried the reader most of the
     way through a set: the owner's words were "it takes me TOO FAR inside TOO QUICKLY".
     Doubling the scroll an act owns halves the distance covered per turn of the wheel without
-    changing a single camera move.
-
-    The overlap below stays where it is. It is already exactly at the arithmetic limit that
-    tools/check-site.mjs enforces, and raising it is what breaks the handoff between acts.
+    changing a single camera move. Four acts at this height run to within a few screens of
+    what the shorter acts plus their overlap used to cost, so removing the overlap did not
+    lengthen the page.
   */
-  height: 288vh;
+  height: 240vh;
 }
 
 /*
-  Acts overlap, and this number is arithmetic rather than taste.
+  Acts do not overlap, and the handoff is structural rather than arithmetic.
 
-  Measure everything in screens. An act's wrapper is 1.75 screens, so it holds for 0.75 and
-  then takes a full screen to travel away. Its copy is gone 0.12 of a screen after it
-  releases, and the next frame's copy starts arriving 0.2 of a screen before its own wrapper
-  reaches the top. So the next wrapper may start anywhere up to
+  They used to, by 62vh, so that one frame dissolved into the next. Three numbers had to agree
+  for that to work: the overlap, an exit fade driven by how far the outgoing frame had
+  travelled, and a head start on the incoming copy's arrival. tools/check-site.mjs enforced
+  the relationship because nothing else could.
 
-      1 screen - 0.12 fade - 0.2 head start = 0.68 screens
+  It came apart when the copy stopped being driven by scroll position. A reveal that latches
+  is up as soon as its act is on screen, and inside a 62vh overlap that put the title card and
+  the next act's copy in the same pixels at full opacity. The arithmetic still passed, because
+  it models an arrival that fades in over a scroll span and there is no longer one.
 
-  early without the two frames sharing a screen. The three are tuned to meet exactly: fade
-  0.08, head start 0.30, overlap 0.62, so the outgoing frame reaches zero on the same scroll
-  position the next one starts arriving and there is no depth at which the chapter is blank.
-  An act costs 1.13 screens of scroll and holds for 0.75 of them.
-
-  Set it too low and the chapter fills with transition: at -55vh a reviewer sampling eight
-  depths landed on a half arrived frame four times. Set it above 0.68 and two columns of live
-  text share the same pixels, which a different reviewer called the worst fault on the page.
-  tools/check-site.mjs cannot catch either; .claude-tools/audit-handoff.mjs sweeps for both.
+  Without the overlap each act owns its own scroll outright: its pin holds at the top, then
+  unsticks and travels away while the next act's pin climbs into the frame from below. Two
+  acts are on screen during that handoff, which is what makes it read as a move rather than a
+  cut, but they are in different bands of the screen instead of on top of each other. Nothing
+  has to be tuned against anything else, so there is nothing left to get wrong.
 */
-/*
-  Left at 62vh. Raising it to 80vh, which the pacing budget in tools/check-site.mjs allows
-  once the arrival span is short, put two acts' copy on the same screen: the budget models the
-  copy fading out, and the outgoing act's copy does not fade, it travels. The blank window
-  between acts is closed by shortening the arrival instead, in assets/js/film.js.
-
-  The value below is read by that check with a regular expression, so nothing may come between
-  the brace and the declaration.
-*/
-.act + .act {
-  margin-top: -62vh;
-}
 
 /*
   Everything after the last act is ordinary flow, and it has to be, because the arrival gate
   that lets acts overlap safely only exists inside an act. Pinning the closing address as a
   short act put half a screen of its own empty frame between the outro and the thread, and
   giving it automatic height let the comment block ride up over the last act's pin.
-
-  It needs no gate: the outro's first line reaches the bottom of the screen at almost exactly
-  the moment the last act's copy reaches zero, so the handoff happens on its own.
 */
 
 body.film .act-pin {
@@ -1278,33 +1261,50 @@ body.film .chapter-close-links {
 */
 @media (min-width: 901px) and (min-height: 641px) and (prefers-reduced-motion: no-preference) {
   /*
-    An act holds at full presence for the whole time it is pinned and only fades once it is
-    genuinely travelling off screen, which is what --exit measures. Driving this from --act
-    instead left a frame dimmed while it was still perfectly still and still the only thing
-    on screen. Only the exit is animated: content is already there when its act begins, so
-    animating an entry would mean hiding something the reader can already see.
+    An act holds at full presence for the whole time it is on screen. It does not fade at
+    all: it leaves by scrolling away, the way a pinned block does once its wrapper runs out.
   */
   /*
-    Arrival. Each part of a frame comes in on its own beat, timed off --phase, which starts
-    while the frame is still climbing into view and finishes halfway through the hold. That
-    is what a pin is for: without it the reader is held still in front of a page that has
-    already finished, which is what a reviewer counted whole viewports of.
+    Arrival, and it latches. Each part of a frame comes in on its own beat when film.js adds
+    .is-arrived to the pin, and nothing takes that class off again.
 
-    The default state is arrived. All of this is inside is-choreographed and inside a reduced
-    motion query, so with no JavaScript, or with motion turned down, every word is on screen
-    from the start.
+    It used to be a clamp over --phase, a value recomputed from the act's position on every
+    scroll frame. A scroll-derived property runs backwards as readily as forwards, so
+    scrolling back a little took every paragraph part of the way out again and the reader
+    watched the text twitch against the scrollbar. A class added once cannot do that. The old
+    arrival also spanned 0.08 of a 108px phase, so it happened inside nine pixels of
+    scrolling: a flash, not choreography, and twenty-nine pixels separated a full frame from
+    an empty one.
+
+    All of this is inside is-choreographed and inside a reduced motion query, so with no
+    JavaScript, or with motion turned down, every word is on screen from the start.
   */
   body.film.is-choreographed .act-pin .case-flow::before {
-    transform: scaleX(clamp(0, calc((var(--phase, 1) - 0.04) / 0.44), 1));
+    transform: scaleX(0);
     transform-origin: left;
+    transition: transform 900ms cubic-bezier(0.2, 0.65, 0.25, 1) 140ms;
+  }
+
+  body.film.is-choreographed .act-pin.is-arrived .case-flow::before {
+    transform: scaleX(1);
   }
 
   body.film.is-choreographed .act-pin [data-frame]:not([data-frame="title"]) > *:not(.case-flow),
   body.film.is-choreographed .act-pin .case-flow > * {
-    --arrive: clamp(0, calc((var(--phase, 1) - var(--beat, 0) * 0.1) / 0.08), 1);
-    opacity: var(--arrive);
-    transform: translateY(calc((1 - var(--arrive)) * 1.6rem));
+    opacity: 0;
+    transform: translateY(1.6rem);
+    /* The beat is a delay now rather than an offset into a scroll span, so the stagger is
+       read in time and does not depend on how fast the reader is scrolling. */
+    transition:
+      opacity 640ms ease calc(var(--beat, 0) * 90ms),
+      transform 640ms cubic-bezier(0.2, 0.65, 0.25, 1) calc(var(--beat, 0) * 90ms);
     will-change: opacity, transform;
+  }
+
+  body.film.is-choreographed .act-pin.is-arrived [data-frame]:not([data-frame="title"]) > *:not(.case-flow),
+  body.film.is-choreographed .act-pin.is-arrived .case-flow > * {
+    opacity: 1;
+    transform: none;
   }
 
   /*
@@ -1323,20 +1323,19 @@ body.film .chapter-close-links {
   body.film.is-choreographed .act-pin .case-flow > *:nth-child(4) { --beat: 4; }
   body.film.is-choreographed .act-pin [data-frame] > *:nth-child(n + 6) { --beat: 5; }
 
-  body.film.is-choreographed .act-pin > .section-inner {
-    --leaving: clamp(0, calc(var(--exit, 0) / 0.08), 1);
-    opacity: calc(1 - var(--leaving));
-    /*
-      Two movements in one transform. The dolly runs on --act across the whole hold: a slow
-      push in, small enough that nothing reflows and every word is exactly as legible at the
-      end as at the start, which is what a held frame should do instead of assembling itself
-      in front of the reader. The exit runs on --leaving and takes over at release.
-    */
-    transform:
-      translateY(calc(var(--enter, 0) * -1px + var(--act, 0) * -1.1rem + var(--leaving) * -4rem))
-      scale(calc(1 + var(--act, 0) * 0.016 - var(--leaving) * 0.06));
-    will-change: opacity, transform;
-  }
+  /*
+    Nothing here moves the copy. The pin is sticky, so the browser already holds it in place
+    while its act owns the scroll and lets it travel away afterwards.
+
+    Three things used to move it and all three are gone. An exit fade on --exit existed only
+    to keep two overlapping acts off each other's pixels, and the acts no longer overlap. A
+    dolly on --act pushed the copy slowly through the whole hold, which is the same reported
+    fault as the reveal: a held frame is held. And --enter translated an arriving frame up by
+    however far its pin still had to travel, so that it was drawn where it would eventually
+    hold; without the overlap and the fade to cover it, that lifted the incoming act's copy
+    straight on top of the outgoing act's, 720px of it at the worst depth measured.
+  */
+
 
   /*
     The numeral is what the pin transforms. It drifts across the frame and grows as the act
@@ -1424,10 +1423,6 @@ body.film .chapter-close-links {
 @media (max-width: 900px), (max-height: 640px), (prefers-reduced-motion: reduce) {
   .act {
     height: auto;
-  }
-
-  .act + .act {
-    margin-top: 0;
   }
 
   /* A display headline half dissolved through a translucent bar reads as a rendering fault
