@@ -8,7 +8,7 @@
 //
 // So it is drawn as a real graph with a real fork, not as a row of boxes. The camera enters at
 // the agents and comes out past the fork, which is why this act is the one worth flying.
-import { THREE, clamp01, ease, edgedBox, glow, motes, painted, panel, repeated, seeded, solid, thread, wire } from "../kit.js";
+import { THREE, clamp01, drift, ease, edgedBox, glow, motes, painted, panel, repeated, seeded, solid, thread, wire } from "../kit.js";
 
 // z runs away from the camera, so the pipeline is laid out in depth and the reader travels it.
 const NODES = {
@@ -197,7 +197,18 @@ export function buildPipeline(palette) {
   flanges.userData.ambient = true;
   group.add(flanges);
 
-  group.scale.setScalar(0.42);
+  group.scale.setScalar(0.62);
+
+  // Records in transit: log lines, index shards, couplings. The things that are actually
+  // moving through a pipeline, rather than scenery that could belong to any page.
+  const cargo = drift([
+    new THREE.BoxGeometry(12, 1.1, 0.5),
+    new THREE.BoxGeometry(8, 8, 0.6),
+    new THREE.CylinderGeometry(2.6, 2.6, 3.2, 8),
+    new THREE.BoxGeometry(5, 2.4, 5)
+  ], 12, accent, palette.lightRoom ? 0.22 : 0.28, 63);
+  cargo.object.userData.ambient = true;
+  group.add(cargo.object);
 
   const dust = [];
   for (let i = 0; i < 420; i++) dust.push((random() - 0.5) * 260, (random() - 0.5) * 170, 140 - random() * 340);
@@ -250,6 +261,7 @@ export function buildPipeline(palette) {
       }
 
       air.rotation.z = t * 0.01;
+      cargo.update(t);
     },
     // The signature shot. The camera starts above and behind the agents and ends past the
     // fork, so the reader is inside the pipeline rather than looking at a diagram of it.
@@ -263,9 +275,9 @@ export function buildPipeline(palette) {
       // scaled, so a move that ends past the manager leaves the camera four units from a
       // twelve-unit box and the act renders as one wireframe filling the frame.
       return {
-        dx: -10 + 12 * k,
-        dy: 16 - 18 * k,
-        dz: 76 - 92 * k,
+        dx: -14 + 18 * k,
+        dy: 24 - 30 * k,
+        dz: 120 - 150 * k,
         df: -4 + 8 * k
       };
     }

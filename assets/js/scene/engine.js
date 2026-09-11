@@ -105,11 +105,11 @@ function readPalette(body, actCount) {
 //   of two plates on the same pixels, the nearer one keeps its name and the further one loses it.
 const NAMEPLATE_EDGE_FADE = 0.07;
 const NAMEPLATE_OVERLAP = 0.06;
-// The left edge of the art lane, in clip space. film.css gives the copy columns one to eight
-// of twelve when the scene is live, and that container is centred at a maximum of 1180px, so
-// the copy's right edge lands here. A nameplate reaching past it is a second caption landing
-// on the page's own headline, which is the one thing the lane exists to prevent.
-const COPY_LANE_EDGE = 0.3;
+// The right edge of the reading column, in clip space. film.css gives the copy six of twelve
+// columns when the scene is live, in a container capped at 1180px and centred, so on a wide
+// frame the words end around here. A nameplate is kept clear of it; the geometry itself is
+// not, because passing behind the copy is what flying into a set looks like.
+const COPY_LANE_EDGE = 0.1;
 
 function screenBox(node, camera, probe) {
   const params = node.geometry && node.geometry.parameters;
@@ -338,11 +338,13 @@ export function mountFilm({ canvas, buildStations }) {
 
   // Sets sit off to one side so the copy has the other half of the frame. On a phone the copy
   // fills the width, so they move to the centre and drop below it instead.
-  // Where each set sits in the frame. The copy column runs down the left of a desktop frame
-  // and most of its height, so a set belongs in the right third and slightly above the middle,
-  // which is also where the eye goes after it finishes a heading.
-  const DESKTOP_OFFSET = [38, 34, 34, 34];
-  const DESKTOP_LIFT = [16, 10, 6, 10];
+  // Where each set sits relative to the dolly track. Small numbers on purpose: a set parked
+  // far off to one side can only slide past the edge of the frame, which is what the first
+  // version did. Sitting near the track means the camera's own travel carries the reader into
+  // the set rather than past it, and the copy keeps its legibility from the scrim behind it
+  // rather than from the set being somewhere else.
+  const DESKTOP_OFFSET = [16, 18, 12, 15];
+  const DESKTOP_LIFT = [10, 6, 2, 6];
   // On a phone the sets drop below the reader's line of sight rather than sitting behind the
   // heading they belong to.
   const NARROW_LIFT = -26;
@@ -353,6 +355,10 @@ export function mountFilm({ canvas, buildStations }) {
     stations = buildStations(palette, THREE);
     stations.forEach((station, i) => {
       station.group.position.set(offsets[i] || 0, lifts[i] || 0, -i * STATION_GAP);
+      // Each set chooses its own size for a desktop frame. Remembering it here is what lets a
+      // phone stand them all down by a fixed fraction without the reduction compounding every
+      // time the window is measured again.
+      station.group.userData.baseScale = station.group.scale.x || 1;
       scene.add(station.group);
     });
     ambience = buildTrackAmbience(scene, palette, stations.length);
@@ -389,7 +395,7 @@ export function mountFilm({ canvas, buildStations }) {
     height = window.innerHeight;
     narrow = width <= 820;
     // A tall narrow frame crops a wide set, so the camera stands further back on a phone.
-    aspectPullback = Math.max(0, 1 - width / height) * 74;
+    aspectPullback = Math.max(0, 1 - width / height) * 92;
     renderer.setPixelRatio(Math.min(narrow ? 1.4 : 1.75, window.devicePixelRatio || 1));
     renderer.setSize(width, height, false);
     camera.aspect = width / height;
@@ -399,6 +405,8 @@ export function mountFilm({ canvas, buildStations }) {
     stations.forEach((station, i) => {
       station.group.position.setX(offsets[i] || 0);
       station.group.position.setY(lifts[i] || 0);
+      const base = station.group.userData.baseScale || 1;
+      station.group.scale.setScalar(narrow ? base * 0.6 : base);
     });
     const tops = acts.map((act) => Math.round(act.getBoundingClientRect().top + window.scrollY));
     // The chapter ends with its last act, not with the element that contains it. The comment
@@ -459,6 +467,7 @@ export function mountFilm({ canvas, buildStations }) {
 
   // ——— the loop ———
   const roomColour = new THREE.Color();
+  let arrival = 0;
   const nameplateProbe = new THREE.Vector3();
   const nameplates = [];
   // Where the camera is on the track, published for the frame audit. A set leaving the frame
@@ -507,7 +516,12 @@ export function mountFilm({ canvas, buildStations }) {
     state.travel = travel;
     state.progress = progress;
 
-    const here = stations[index].mod(reduced ? 1 : held, time);
+    // The last station never travels, because there is nothing after it to travel to. Feeding
+    // its move the full progress rather than the hold is what keeps it moving through its
+    // second half instead of parking. Without this the closing act is a still frame for the
+    // last 45% of its scroll, which is what "round 4 is STATIC" described.
+    const heldHere = index >= last ? (reduced ? 1 : progress) : (reduced ? 1 : held);
+    const here = stations[index].mod(heldHere, time);
     const next = stations[Math.min(index + 1, last)].mod(0, time);
     const dx = lerp(here.dx, next.dx, travel);
     const dy = lerp(here.dy, next.dy, travel);
@@ -526,11 +540,11 @@ export function mountFilm({ canvas, buildStations }) {
     // The look target leads the camera down the track and answers the pointer at more than
     // twice the camera's own swing, which is what makes a still frame feel hand-held.
     const kick = Math.sin(travel * Math.PI);
-    // How much of the set's sideways offset the camera follows. Below 1 the camera stays
-    // nearer the middle of the track and the set sits out to one side of the frame, which is
-    // the whole point: the left two thirds belong to the copy. Raising this walks the camera
-    // across until the set is centred and the words are on top of it.
-    const aimX = lerp(offsets[index] || 0, offsets[Math.min(index + 1, last)] || 0, travel) * 0.18;
+    // How much of the set's sideways offset the camera follows. Near 1 the camera looks
+    // straight at the set and flies into it; near 0 it stays on the track and the set drifts
+    // past the edge. It was 0.18, and "the model moves towards the right side when scrolling
+    // in" is the exact description of what 0.18 does.
+    const aimX = lerp(offsets[index] || 0, offsets[Math.min(index + 1, last)] || 0, travel) * 0.62;
     camera.lookAt(
       aimX + dx * 0.4 + smoothPointerX * 4,
       dy * 0.5 - smoothPointerY * 2.6,
@@ -567,9 +581,18 @@ export function mountFilm({ canvas, buildStations }) {
 
     // The sets end with the chapter. Past the last act the page is a comment form and a
     // footer, and a 3D scene behind a text input is not atmosphere.
-    const past = clamp01((smoothScroll + height - chapterBottom) / (height * 0.7));
-    const base = narrow ? 0.92 : 1;
-    canvas.style.opacity = ((1 - past) * base).toFixed(3);
+    // Measured from the last act's bottom edge rather than from where it enters the frame, so
+    // the fade is complete exactly when that edge leaves the top of the screen and not a
+    // screen and a half later. Fading over a longer distance but finishing late put the scene
+    // behind the comment form; this fades over the same distance and finishes on time.
+    const toEnd = chapterBottom - smoothScroll;
+    const past = clamp01((height * 1.4 - toEnd) / (height * 1.4));
+    const base = narrow ? 0.72 : 1;
+    // The opening fade in as well as the fade out, both written here. Doing the fade in with a
+    // CSS transition on the same property meant every per-frame write chased a moving target,
+    // and left the scene painting at 0.41 behind the comment form three screens past the end.
+    arrival = Math.min(1, arrival + 0.03);
+    canvas.style.opacity = ((1 - past) * base * arrival).toFixed(3);
 
     if (!painted) {
       painted = true;

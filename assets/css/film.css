@@ -1648,12 +1648,14 @@ body.film[data-scene="strata"] .film-stage-glow {
   height: 100%;
   pointer-events: none;
   opacity: 0;
-  transition: opacity 900ms ease;
 }
 
-body.scene-live .chapter-scene {
-  opacity: 1;
-}
+/*
+  No transition here. The engine writes this element's opacity every frame to fade the scene
+  out as the chapter ends, and a 900ms transition on the same property turns each of those
+  writes into a chase: the scene was still at 0.41 three screens after the last act, painting
+  behind the comment form. The fade in at the start is the engine's own, in the same place.
+*/
 
 /*
   The receding floor, the ceiling, the side walls and the vignette were a CSS
@@ -1685,99 +1687,85 @@ body.scene-live .film-stage-glow {
   Type needs a ground to sit on once there is a moving scene behind it, or the
   copy reads as floating over a video.
 
-  The scrim goes here, on the fixed layer that already sits between the canvas
-  and the document, and not on the copy itself. As a pseudo-element inside
-  .section-inner it painted over the words rather than under them: the acts are
-  transformed, so the stacking context it was negative-indexed against was not
-  the one anybody expected. A fixed layer has no such argument to have. It is
-  also one gradient for the page rather than one per frame.
+  It is a background on the pinned section, not an overlay of any kind. Two
+  earlier attempts put it on a pseudo-element of the copy block, first at
+  z-index -1 and then at 0 with the children lifted to 1, and both painted over
+  the words. A test that filled the scrim with flat red is what settled it. A
+  background-image cannot have that argument: backgrounds paint before content,
+  always, with no stacking context to reason about.
+
+  The ellipse sits over the copy column and fades out well before the middle of
+  the frame, so the scene keeps the rest of the screen and the camera can fly
+  into a set instead of having to stay out of the way of the text.
 */
-body.scene-live .film-grade {
-  background: linear-gradient(
-    100deg,
-    var(--bg-deep, #060b12) 12%,
-    color-mix(in srgb, var(--bg-deep, #060b12) 88%, transparent) 44%,
-    color-mix(in srgb, var(--bg-deep, #060b12) 34%, transparent) 60%,
-    transparent 74%
+body.scene-live .act > section {
+  background-image: radial-gradient(
+    ellipse 38% 42% at 27% 50%,
+    color-mix(in srgb, var(--bg-deep, #060b12) 86%, transparent) 0%,
+    color-mix(in srgb, var(--bg-deep, #060b12) 58%, transparent) 54%,
+    transparent 78%
   );
 }
 
-@media (prefers-reduced-motion: reduce) {
-  .chapter-scene {
-    transition: none;
-  }
-}
-
 /*
-  The art lane.
+  The reading column.
 
-  With a scene behind the page the composition has a third element, and it needs
-  a column of its own. Without this the copy spans all twelve columns, the set
-  has nowhere to be, and the only available answer is to put geometry behind
-  paragraphs: which is how the first cut ended up with a Raspberry Pi board
-  crossing the word "Suricata".
+  This used to be an art lane: the copy took columns one to eight and the set
+  was pushed into nine to twelve. That is why the owner's verdict was that the
+  model "moves towards the right side when scrolling in" instead of being
+  something you go into. A set parked in a quarter of the frame can only ever
+  slide past the edge of it.
 
-  So when, and only when, the scene is actually painting, every frame pulls its
-  content into the left two thirds and columns nine to twelve belong to the set.
+  So the copy narrows to about 640px, which is half the grid, and the rest of
+  the frame belongs to the scene. The camera aims most of the way at each set
+  rather than a fifth of the way, and the sets sit near the middle of the track,
+  so scrolling carries the reader into them. The scrim above keeps the words
+  legible while geometry passes behind and around them.
+
   With no WebGL none of this applies and the frames keep their full measure,
   which is the layout that ships today.
-
-  Below the frame breakpoint the copy takes the whole width and the sets move to
-  the centre and drop below it, handled in the engine rather than here.
 */
 @media (min-width: 901px) {
   body.film.scene-live [data-frame="title"] > .chapter-meta,
   body.film.scene-live [data-frame="title"] > h1,
-  body.film.scene-live [data-frame="title"] > .case-metrics {
-    grid-column: 1 / span 8;
+  body.film.scene-live [data-frame="title"] > .chapter-line,
+  body.film.scene-live [data-frame="title"] > .page-lede,
+  body.film.scene-live [data-frame="title"] > .hero-actions,
+  body.film.scene-live [data-frame="title"] > .case-video {
+    grid-column: 1 / span 7;
   }
 
-  body.film.scene-live [data-frame="title"] > .chapter-line,
-  body.film.scene-live [data-frame="title"] > .hero-actions {
+  /*
+    The two horizontal strips keep the full measure. Folded into six columns they stack two by
+    two, which added about 190px to a frame that has 900px to fit in, and the act stopped
+    being fully composed at a fifth of its scroll depths. They sit low in the frame where the
+    set is not, so their width costs the scene nothing.
+  */
+  body.film.scene-live [data-frame="title"] > .case-metrics,
+  body.film.scene-live [data-frame="sequence"] > .case-flow {
+    grid-column: 1 / -1;
+  }
+
+  body.film.scene-live [data-frame="pair"] > :nth-child(1),
+  body.film.scene-live [data-frame="pair"] > :nth-child(2),
+  body.film.scene-live [data-frame="sequence"] > .section-heading,
+  /* The argument and the result stay side by side. Stacked in one narrow column they were
+     nearly two hundred pixels taller than the frame they live in. */
+  body.film.scene-live [data-frame="split"] > :nth-child(1) {
     grid-column: 1 / span 4;
   }
 
-  body.film.scene-live [data-frame="title"] > .page-lede,
-  body.film.scene-live [data-frame="title"] > .case-video {
+  body.film.scene-live [data-frame="split"] > :nth-child(2) {
     grid-column: 5 / span 4;
   }
 
-  body.film.scene-live [data-frame="pair"] > :nth-child(1) {
-    grid-column: 1 / span 7;
-  }
-
-  body.film.scene-live [data-frame="pair"] > :nth-child(2) {
-    grid-column: 3 / span 6;
-  }
-
-  body.film.scene-live [data-frame="sequence"] > .section-heading {
-    grid-column: 1 / span 7;
-  }
-
-  body.film.scene-live [data-frame="sequence"] > .case-flow {
-    grid-column: 1 / span 8;
-  }
-
-  body.film.scene-live [data-frame="split"] > :nth-child(1) {
-    grid-column: 1 / span 5;
-  }
-
-  body.film.scene-live [data-frame="split"] > :nth-child(2) {
-    grid-column: 6 / span 3;
-  }
-
   body.film.scene-live [data-frame="coda"] > .chapter-meta,
-  body.film.scene-live [data-frame="coda"] > h2 {
+  body.film.scene-live [data-frame="coda"] > h2,
+  body.film.scene-live [data-frame="coda"] > .chapter-close-links,
+  body.film.scene-live [data-frame="single"] > * {
     grid-column: 1 / span 6;
   }
 
-  body.film.scene-live [data-frame="coda"] > .chapter-close-links {
-    grid-column: 1 / span 8;
-  }
-
-  body.film.scene-live [data-frame="single"] > * {
-    grid-column: 1 / span 8;
-  }
 }
 
 /*
@@ -1790,17 +1778,16 @@ body.scene-live .film-grade {
   off below 820px; this is the other half of that decision.
 */
 @media (max-width: 900px) {
-  body.scene-live .chapter-scene {
-    opacity: 0.92;
-  }
-
-  body.scene-live .film-grade {
-    background: linear-gradient(
-      180deg,
-      var(--bg-deep, #060b12) 0%,
-      color-mix(in srgb, var(--bg-deep, #060b12) 66%, transparent) 22%,
-      color-mix(in srgb, var(--bg-deep, #060b12) 66%, transparent) 78%,
-      var(--bg-deep, #060b12) 100%
+  /* On a phone the copy is the whole width, so its scrim is a full ellipse
+     rather than one weighted to the left. */
+  /* On a phone the copy is the whole width, so its ground is a full ellipse
+     rather than one weighted to the left. */
+  body.scene-live .act > section {
+    background-image: radial-gradient(
+      ellipse 96% 58% at 50% 50%,
+      color-mix(in srgb, var(--bg-deep, #060b12) 94%, transparent) 0%,
+      color-mix(in srgb, var(--bg-deep, #060b12) 78%, transparent) 58%,
+      transparent 88%
     );
   }
 }

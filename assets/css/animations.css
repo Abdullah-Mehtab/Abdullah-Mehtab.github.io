@@ -234,6 +234,12 @@ body {
   background: transparent;
 }
 
+/*
+  Mountains are rock, and rock is grey wherever the theme goes. They were
+  var(--primary-color), which made a mountain range the same flat blue as a
+  button. The peaks are box-shadow spreads on a 2px dot, and the whole element
+  is rotated 130deg, so "up the mountain" in local coordinates is +y.
+*/
 .mountain {
   position: absolute;
   right: -900px;
@@ -241,16 +247,35 @@ body {
   width: 2px;
   height: 2px;
   box-shadow: 
-    0 0 0 50px var(--primary-color),
-    60px 50px 0 70px var(--primary-color),
-    90px 90px 0 50px var(--primary-color),
-    250px 250px 0 50px var(--primary-color),
-    290px 320px 0 50px var(--primary-color),
-    320px 400px 0 50px var(--primary-color);
+    0 0 0 50px #6d7280,
+    60px 50px 0 70px #6d7280,
+    90px 90px 0 50px #6d7280,
+    250px 250px 0 50px #6d7280,
+    290px 320px 0 50px #6d7280,
+    320px 400px 0 50px #6d7280;
   transform: rotate(130deg);
   animation: mtn 20s linear infinite;
   opacity: 1;
   will-change: transform;
+}
+
+/*
+  Snow, as a second smaller set of caps riding on the same peaks. Each cap sits
+  a little further along local +y than its peak, which is up the slope once the
+  130deg rotation is applied, and is inset so rock still shows around it.
+*/
+.mountain::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  box-shadow: 
+    0 26px 0 26px #eaf1f7,
+    60px 86px 0 38px #eaf1f7,
+    90px 118px 0 26px #eaf1f7,
+    250px 278px 0 26px #eaf1f7,
+    290px 348px 0 26px #eaf1f7,
+    320px 426px 0 27px #eaf1f7;
 }
 
 .hill {
@@ -260,13 +285,14 @@ body {
   width: 400px;
   border-radius: 50%;
   height: 20px;
+  /* Grass, so a fixed dark green rather than the theme's accent. */
   box-shadow: 
-    0 0 0 50px var(--primary-color),
-    -20px 0 0 20px var(--primary-color),
-    -90px 0 0 50px var(--primary-color),
-    250px 0 0 50px var(--primary-color),
-    290px 0 0 50px var(--primary-color),
-    620px 0 0 50px var(--primary-color);
+    0 0 0 50px #24512f,
+    -20px 0 0 20px #24512f,
+    -90px 0 0 50px #24512f,
+    250px 0 0 50px #1d4527,
+    290px 0 0 50px #1d4527,
+    620px 0 0 50px #24512f;
   animation: hill 4s 2s linear infinite;
   opacity: 1;
   will-change: transform;
@@ -278,7 +304,9 @@ body {
   width: 35px;
   bottom: 0;
   background: url(../images/tree.svg) no-repeat;
-  filter: brightness(0.8) sepia(0.4) saturate(1.5) hue-rotate(90deg);
+  /* No hue-rotate. It turned the whole image one hue, trunk included, which is
+     why the trunks were the same green as the needles. tree.svg carries its own
+     colours: brown trunk, three greens for the tiers. */
   opacity: 1;
   will-change: transform;
 }

@@ -5,7 +5,7 @@
 // nobody reads has not detected anything. Both panels are drawn with the 2D canvas API at load
 // time, which is the only way to get real charts and real type into a WebGL scene without
 // shipping an image, and this site self-hosts everything it renders anyway.
-import { THREE, clamp01, ease, edgedBox, glow, motes, painted, panel, repeated, seeded, solid, thread, wire } from "../kit.js";
+import { THREE, clamp01, drift, ease, edgedBox, glow, motes, painted, panel, repeated, seeded, solid, thread, wire } from "../kit.js";
 
 const ROWS = [
   ["12:04:18", "5710", "Attempt to login using a non-existent user", "5"],
@@ -248,7 +248,7 @@ export function buildOutputs(palette) {
 
   // Two full-size documents would fill the whole frame and the copy would be reading through
   // a dashboard. They stay legible as objects at this size, which is all they need to be.
-  group.scale.setScalar(0.33);
+  group.scale.setScalar(0.5);
 
   // ——— the operations room ———
   // A back wall and a run of desks, both very dim. Two screens hanging in nothing read as an
@@ -273,6 +273,16 @@ export function buildOutputs(palette) {
   );
   wall.userData.ambient = true;
   group.add(wall);
+
+  // Envelopes and chart columns, which is what everything upstream finally turns into.
+  const output = drift([
+    new THREE.BoxGeometry(10, 6.5, 0.5),
+    new THREE.BoxGeometry(2.4, 12, 2.4),
+    new THREE.BoxGeometry(2.4, 7, 2.4),
+    new THREE.CylinderGeometry(4, 4, 0.8, 12)
+  ], 12, accent, palette.lightRoom ? 0.22 : 0.28, 77);
+  output.object.userData.ambient = true;
+  group.add(output.object);
 
   const halo = glow(accent, 190, 0);
   halo.userData.ambient = true;
@@ -325,16 +335,22 @@ export function buildOutputs(palette) {
       }
 
       air.rotation.y = -t * 0.014;
+      output.update(t);
     },
     // Close by pulling back off both panels: the chapter ends on the whole output rather than
     // on a detail of it.
-    // Close by easing back off both panels, so the chapter ends on the whole output rather
-    // than on a detail of it.
-    mod: (p) => ({
-      dx: 4 - 6 * ease(p),
-      dy: 0 + 4 * ease(p),
-      dz: 20 + 16 * ease(p),
-      df: 0
-    })
+    // Forward, all the way through. This move used to increase dz, which walks the camera
+    // backwards while the reader scrolls forwards, and that is exactly what it looked like.
+    // It now closes in on the dashboard and then drifts between the two screens, which is
+    // also why the engine feeds this act its full progress rather than just its hold.
+    mod: (p) => {
+      const k = ease(p);
+      return {
+        dx: -8 + 18 * k,
+        dy: 12 - 16 * k,
+        dz: 92 - 60 * k,
+        df: 0
+      };
+    }
   };
 }

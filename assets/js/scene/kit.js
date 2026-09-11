@@ -169,6 +169,78 @@ export function repeated(geometry, placements, faceColor, lineColor, lineOpacity
   return group;
 }
 
+// A flock of small wireframe objects that tumble and drift on their own, in one draw call.
+//
+// Every set needs matter in the air around it or it reads as a model on a turntable, and the
+// obvious way to get it, one mesh per object, costs one draw call each. Instead every object's
+// edges are baked into a single buffer and the buffer is rewritten each frame from each
+// object's own rotation and bob. Ten objects, one draw call, and they move independently.
+//
+// The shapes passed in are the point of it: this is where a set says what it is made of. A
+// rack room has alert triangles and packets going past, a pipeline has log lines and pipe
+// sections, and neither of them has a floating platonic solid in it.
+export function drift(geometries, count, color, opacity, seed) {
+  const random = seeded(seed || 3);
+  const items = [];
+  let total = 0;
+
+  for (let i = 0; i < count; i++) {
+    const source = new THREE.EdgesGeometry(geometries[i % geometries.length], 12).attributes.position;
+    const base = new Float32Array(source.count * 3);
+    for (let v = 0; v < source.count; v++) {
+      base[v * 3] = source.getX(v);
+      base[v * 3 + 1] = source.getY(v);
+      base[v * 3 + 2] = source.getZ(v);
+    }
+    items.push({
+      base,
+      offset: total,
+      home: new THREE.Vector3((random() - 0.5) * 260, (random() - 0.5) * 170, (random() - 0.5) * 220),
+      scale: 0.7 + random() * 1.9,
+      spin: (random() - 0.5) * 0.5,
+      tilt: random() * Math.PI,
+      phase: random() * Math.PI * 2,
+      sway: 2 + random() * 5
+    });
+    total += source.count;
+  }
+
+  const positions = new Float32Array(total * 3);
+  const geometry = new THREE.BufferGeometry();
+  geometry.setAttribute("position", new THREE.BufferAttribute(positions, 3));
+  const object = new THREE.LineSegments(geometry, new THREE.LineBasicMaterial({
+    color, transparent: true, opacity: opacity === undefined ? 0.3 : opacity
+  }));
+
+  const spot = new THREE.Object3D();
+  const vertex = new THREE.Vector3();
+
+  return {
+    object,
+    update(t) {
+      for (const item of items) {
+        spot.position.set(
+          item.home.x,
+          item.home.y + Math.sin(t * 0.3 + item.phase) * item.sway,
+          item.home.z
+        );
+        spot.rotation.set(item.tilt + t * item.spin * 0.7, t * item.spin, item.tilt * 0.5);
+        spot.scale.setScalar(item.scale);
+        spot.updateMatrix();
+        for (let v = 0; v < item.base.length; v += 3) {
+          vertex.set(item.base[v], item.base[v + 1], item.base[v + 2]).applyMatrix4(spot.matrix);
+          const at = (item.offset + v / 3) * 3;
+          positions[at] = vertex.x;
+          positions[at + 1] = vertex.y;
+          positions[at + 2] = vertex.z;
+        }
+      }
+      geometry.attributes.position.needsUpdate = true;
+      geometry.computeBoundingSphere();
+    }
+  };
+}
+
 // A travelling pulse along a fixed path. Three of the four sets are about data moving from one
 // box to another, and this is the only thing on screen that says so.
 export function pulse(color, size) {

@@ -4,7 +4,7 @@
 // The hardware is not decoration here. Cyber Sentinel's own repository says it runs on a
 // Raspberry Pi 5 under Kali Linux, and the fact a full SIEM fits on a 85mm board is the
 // project's actual claim. So the title act is the board, and the camera tilts down into it.
-import { THREE, clamp01, ease, edgedBox, glow, motes, painted, panel, repeated, seeded, solid, wire } from "../kit.js";
+import { THREE, clamp01, drift, ease, edgedBox, glow, motes, painted, panel, repeated, seeded, solid, wire } from "../kit.js";
 
 const BOARD_W = 85;
 const BOARD_D = 56;
@@ -212,6 +212,18 @@ export function buildBoard(palette) {
   air.userData.ambient = true;
   group.add(air);
 
+  // Components, loose in the air around the bench: chip bodies, a fan blade, a length of pin
+  // header, a heatsink fin. The same parts the board is made of, not floating platonic solids.
+  const spares = drift([
+    new THREE.BoxGeometry(9, 2, 9),
+    new THREE.BoxGeometry(2.2, 1.2, 14),
+    new THREE.CylinderGeometry(4.4, 4.4, 1.2, 8),
+    new THREE.BoxGeometry(14, 5, 0.6),
+    new THREE.BoxGeometry(5, 5, 5)
+  ], 11, accent, palette.lightRoom ? 0.24 : 0.3, 91);
+  spares.object.userData.ambient = true;
+  group.add(spares.object);
+
   const halo = glow(accent, 150, palette.lightRoom ? 0.1 : 0.2);
   halo.userData.ambient = true;
   halo.position.set(0, 4, -40);
@@ -225,7 +237,7 @@ export function buildBoard(palette) {
   // Sized to the right third of a 1440 frame with the copy in the left half. The board is 85mm
   // of real hardware and the frame at this distance is about 100 units across, so at full size
   // it sits behind the words instead of beside them.
-  group.scale.setScalar(0.31);
+  group.scale.setScalar(0.5);
 
   return {
     group,
@@ -252,6 +264,7 @@ export function buildBoard(palette) {
 
       blades.rotation.y = t * 6;
       air.rotation.y = t * 0.02;
+      spares.update(t);
 
       // Power light comes up once the cooler has landed, then breathes.
       const powered = ease(clamp01((build - 0.5) * 4));
@@ -269,10 +282,12 @@ export function buildBoard(palette) {
     // Arrive looking down on the board and end level with it, close enough that the header
     // pins and the cooler fins have real size. The distances are small because the whole set
     // is 53 units wide: a bigger move flies straight past it, which is what the first cut did.
+    // Down and in. Starts above and back from the board and ends close over the header, so
+    // the reader arrives looking at a whole board and leaves able to count the pins.
     mod: (p) => ({
-      dx: -4 + 8 * ease(p),
-      dy: 10 - 6 * ease(p),
-      dz: 24 - 20 * ease(p),
+      dx: -6 + 10 * ease(p),
+      dy: 26 - 22 * ease(p),
+      dz: 54 - 46 * ease(p),
       df: 0
     })
   };

@@ -9,7 +9,7 @@
 // The machines are racks rather than monitors. Twelve flat screens floating at eye height read
 // as a node diagram of a network; cabinets with rack units in them read as a room, and the room
 // is the point: this kind of monitoring is usually assumed to need one.
-import { THREE, clamp01, ease, edgedBox, glow, motes, painted, panel, repeated, seeded, wire } from "../kit.js";
+import { THREE, clamp01, drift, ease, edgedBox, glow, motes, painted, panel, repeated, seeded, wire } from "../kit.js";
 
 const THREATS = [
   "aggressive scan",
@@ -226,6 +226,16 @@ export function buildLan(palette) {
 
     return { head, label, y, z, at: random() };
   });
+  // Traffic is the one thing in this chapter with no manufactured shape, so it is the one
+  // thing drawn as particles rather than as edges. Hardware has millimetres and gets sharp
+  // geometry; an attack in flight has none, and a swarm of dots is what it looks like. Every
+  // lane's swarm lives in one buffer, so all seven cost a single draw call.
+  const SWARM = 16;
+  const swarmPositions = new Float32Array(THREATS.length * SWARM * 3);
+  const swarm = motes(Array.from(swarmPositions), accent, 2.6, 0.75);
+  swarm.geometry.setAttribute("position", new THREE.BufferAttribute(swarmPositions, 3));
+  group.add(swarm);
+
   const trails = new THREE.LineSegments(
     new THREE.BufferGeometry().setFromPoints(trailPoints),
     new THREE.LineBasicMaterial({ color: accent, transparent: true, opacity: 0.16 })
@@ -242,6 +252,17 @@ export function buildLan(palette) {
   backRow.userData.ambient = true;
   group.add(backRow);
 
+  // Packets and alerts in the air: flat cells going past, and the triangle every console in
+  // the world uses to mean something is wrong.
+  const traffic = drift([
+    new THREE.BoxGeometry(7, 3, 0.6),
+    new THREE.ConeGeometry(4, 6, 3),
+    new THREE.BoxGeometry(3, 3, 3),
+    new THREE.BoxGeometry(11, 1.4, 1.4)
+  ], 13, accent, palette.lightRoom ? 0.22 : 0.28, 47);
+  traffic.object.userData.ambient = true;
+  group.add(traffic.object);
+
   const pool = glow(accent, 1, palette.lightRoom ? 0.05 : 0.12);
   pool.scale.set(300, 70, 1);
   pool.position.set(50, -46, -60);
@@ -254,7 +275,7 @@ export function buildLan(palette) {
   air.userData.ambient = true;
   group.add(air);
 
-  group.scale.setScalar(0.34);
+  group.scale.setScalar(0.5);
 
   const WATCHED_FROM = 0.42;
 
@@ -305,16 +326,41 @@ export function buildLan(palette) {
         const burst = stopped ? Math.max(0, 1 - (x - stopAt) / -40) : 0;
         lane.head.scale.setScalar(stopped ? 4 + burst * 9 : 5.5 + Math.sin(t * 6 + i) * 0.8);
         lane.head.material.opacity = stopped ? Math.max(0.1, 0.9 - burst * 0.7) : 0.9;
+
+        // The swarm trails its own head while the stream is running, and scatters outward from
+        // the manager once the stream is being caught there.
+        const headX = stopped ? stopAt : x;
+        for (let s = 0; s < SWARM; s++) {
+          const at = (i * SWARM + s) * 3;
+          const back = s * 3.4;
+          const wobble = Math.sin(t * 3 + s * 1.7 + i) * 2.2;
+          if (stopped) {
+            const spread = burst * (6 + s * 1.4);
+            swarmPositions[at] = headX + Math.cos(s * 2.4 + t) * spread;
+            swarmPositions[at + 1] = lane.y + Math.sin(s * 1.9 + t) * spread;
+            swarmPositions[at + 2] = lane.z + Math.cos(s * 3.1) * spread * 0.6;
+          } else {
+            swarmPositions[at] = headX + back;
+            swarmPositions[at + 1] = lane.y + wobble * (s / SWARM);
+            swarmPositions[at + 2] = lane.z + Math.cos(t * 2 + s) * 1.6 * (s / SWARM);
+          }
+        }
       }
 
+      swarm.geometry.attributes.position.needsUpdate = true;
+      swarm.geometry.computeBoundingSphere();
+      swarm.material.opacity = 0.75 - watched * 0.25;
       trails.material.opacity = 0.16 * (1 - watched * 0.55);
       air.rotation.y = t * 0.015;
+      traffic.update(t);
     },
     // Track right across the room as the racks come up, ending on the manager.
+    // Into the room and along it. The camera enters the aisle as the racks come up and ends
+    // in front of the manager, rather than watching the room slide past.
     mod: (p) => ({
-      dx: -18 + 30 * ease(p),
-      dy: 10 - 12 * ease(p),
-      dz: 40 - 16 * ease(p),
+      dx: -20 + 34 * ease(p),
+      dy: 14 - 16 * ease(p),
+      dz: 62 - 54 * ease(p),
       df: 3 - 5 * ease(p)
     })
   };
