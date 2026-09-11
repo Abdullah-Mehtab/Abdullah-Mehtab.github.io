@@ -1625,3 +1625,182 @@ body.film[data-scene="strata"] .film-stage-glow {
     padding-top: 0;
   }
 }
+
+/* ============================================================================
+   THE 3D LAYER
+   ============================================================================
+   The chapter's sets are drawn by assets/js/scene/, on one canvas behind the
+   document. Everything in this block is about what happens to the CSS stage
+   above once that canvas is actually painting.
+
+   .scene-live is added by the engine after its first successful frame, never
+   before. So a browser with no WebGL, a module that fails to parse, or a
+   device the engine turns itself down on all keep the CSS stage and the
+   chapter reads exactly as it did. That is the fallback, and it is the page
+   that currently ships rather than something built for the occasion.
+*/
+.chapter-scene {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  display: block;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 900ms ease;
+}
+
+body.scene-live .chapter-scene {
+  opacity: 1;
+}
+
+/*
+  The receding floor, the ceiling, the side walls and the vignette were a CSS
+  attempt at the depth the canvas now draws properly. Two grids stacked on each
+  other is why the owner's verdict on the last version was "filled with GRIDs
+  everywhere". They stay in the markup because they are the fallback; they are
+  simply not drawn on top of a scene that has real geometry in it.
+*/
+/*
+  The header's backdrop blur costs nothing over a static page and a great deal over a canvas
+  that repaints every frame: the blur is recomputed across the full width of the header on
+  each of them. Its own background is already 95% opaque, so it was buying five per cent of
+  translucency for a per-frame full-width filter.
+*/
+body.film.scene-live .site-header {
+  backdrop-filter: none;
+}
+
+body.scene-live .film-room,
+body.scene-live .film-stage-glow {
+  /* Removed from the page, not faded out. At opacity 0 the floor, the ceiling, both walls
+     and the glow are still laid out, still transformed in 3D and still painted every frame,
+     behind a canvas that covers them completely. Taking them out of the tree was worth
+     twenty frames a second under a 4x CPU throttle. */
+  display: none;
+}
+
+/*
+  Type needs a ground to sit on once there is a moving scene behind it, or the
+  copy reads as floating over a video.
+
+  The scrim goes here, on the fixed layer that already sits between the canvas
+  and the document, and not on the copy itself. As a pseudo-element inside
+  .section-inner it painted over the words rather than under them: the acts are
+  transformed, so the stacking context it was negative-indexed against was not
+  the one anybody expected. A fixed layer has no such argument to have. It is
+  also one gradient for the page rather than one per frame.
+*/
+body.scene-live .film-grade {
+  background: linear-gradient(
+    100deg,
+    var(--bg-deep, #060b12) 12%,
+    color-mix(in srgb, var(--bg-deep, #060b12) 88%, transparent) 44%,
+    color-mix(in srgb, var(--bg-deep, #060b12) 34%, transparent) 60%,
+    transparent 74%
+  );
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .chapter-scene {
+    transition: none;
+  }
+}
+
+/*
+  The art lane.
+
+  With a scene behind the page the composition has a third element, and it needs
+  a column of its own. Without this the copy spans all twelve columns, the set
+  has nowhere to be, and the only available answer is to put geometry behind
+  paragraphs: which is how the first cut ended up with a Raspberry Pi board
+  crossing the word "Suricata".
+
+  So when, and only when, the scene is actually painting, every frame pulls its
+  content into the left two thirds and columns nine to twelve belong to the set.
+  With no WebGL none of this applies and the frames keep their full measure,
+  which is the layout that ships today.
+
+  Below the frame breakpoint the copy takes the whole width and the sets move to
+  the centre and drop below it, handled in the engine rather than here.
+*/
+@media (min-width: 901px) {
+  body.film.scene-live [data-frame="title"] > .chapter-meta,
+  body.film.scene-live [data-frame="title"] > h1,
+  body.film.scene-live [data-frame="title"] > .case-metrics {
+    grid-column: 1 / span 8;
+  }
+
+  body.film.scene-live [data-frame="title"] > .chapter-line,
+  body.film.scene-live [data-frame="title"] > .hero-actions {
+    grid-column: 1 / span 4;
+  }
+
+  body.film.scene-live [data-frame="title"] > .page-lede,
+  body.film.scene-live [data-frame="title"] > .case-video {
+    grid-column: 5 / span 4;
+  }
+
+  body.film.scene-live [data-frame="pair"] > :nth-child(1) {
+    grid-column: 1 / span 7;
+  }
+
+  body.film.scene-live [data-frame="pair"] > :nth-child(2) {
+    grid-column: 3 / span 6;
+  }
+
+  body.film.scene-live [data-frame="sequence"] > .section-heading {
+    grid-column: 1 / span 7;
+  }
+
+  body.film.scene-live [data-frame="sequence"] > .case-flow {
+    grid-column: 1 / span 8;
+  }
+
+  body.film.scene-live [data-frame="split"] > :nth-child(1) {
+    grid-column: 1 / span 5;
+  }
+
+  body.film.scene-live [data-frame="split"] > :nth-child(2) {
+    grid-column: 6 / span 3;
+  }
+
+  body.film.scene-live [data-frame="coda"] > .chapter-meta,
+  body.film.scene-live [data-frame="coda"] > h2 {
+    grid-column: 1 / span 6;
+  }
+
+  body.film.scene-live [data-frame="coda"] > .chapter-close-links {
+    grid-column: 1 / span 8;
+  }
+
+  body.film.scene-live [data-frame="single"] > * {
+    grid-column: 1 / span 8;
+  }
+}
+
+/*
+  Phones.
+
+  There is no art lane on a 390px screen: the copy is the whole width, so a set
+  beside it is a set behind it. Rather than pretend otherwise, the scene becomes
+  a backdrop there, held well back and washed down, and the words keep the
+  foreground. The engine already centres the sets and stands the camera further
+  off below 820px; this is the other half of that decision.
+*/
+@media (max-width: 900px) {
+  body.scene-live .chapter-scene {
+    opacity: 0.92;
+  }
+
+  body.scene-live .film-grade {
+    background: linear-gradient(
+      180deg,
+      var(--bg-deep, #060b12) 0%,
+      color-mix(in srgb, var(--bg-deep, #060b12) 66%, transparent) 22%,
+      color-mix(in srgb, var(--bg-deep, #060b12) 66%, transparent) 78%,
+      var(--bg-deep, #060b12) 100%
+    );
+  }
+}
