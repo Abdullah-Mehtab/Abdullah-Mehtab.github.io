@@ -132,8 +132,22 @@
   --t-lede: clamp(1.08rem, 1.6vw, 1.4rem);
   --t-h3: clamp(1.15rem, 1.7vw, 1.45rem);
   --t-h2: clamp(1.7rem, 3.4vw, 2.7rem);
-  --t-h2-wide: clamp(2rem, 5.2vw, 4.4rem);
-  --t-h1: clamp(2.5rem, 8.2vw, 7rem);
+  /*
+    The two display sizes are bounded by the height of the frame as well as its width.
+
+    A chapter act is a pinned screen, so its budget is vertical, and these were sized on vw
+    alone. On a wide, short window that is backwards: the screen gets wider, the type gets
+    bigger, and the room it has to fit in gets smaller. At 1440x900 the wide heading came out
+    at 70px and wrapped to seven lines, 513px of the 747px the pin can hold, which pushed the
+    pin past the viewport. A sticky element taller than the viewport does not hold with its
+    top at zero: it scrolls until its bottom is flush with the bottom of the screen, so the
+    top of the heading ends up above the fold and behind the header.
+
+    The vh terms are what the frame can actually afford, measured against the tallest frame
+    in this chapter. They only bind on a short window; on a tall one the vw term still wins.
+  */
+  --t-h2-wide: clamp(2rem, min(5.2vw, 6.2vh), 4.4rem);
+  --t-h1: clamp(2.5rem, min(8.2vw, 11.4vh), 7rem);
   --t-numeral: clamp(16rem, 42vw, 40rem);
 
   /* Fixed chrome heights, so acts can treat them as gutters instead of guessing. */
@@ -1715,7 +1729,7 @@ body.scene-live .film-stage-glow {
 */
 body.scene-live .act > section {
   background-image: radial-gradient(
-    ellipse 38% 42% at 27% 50%,
+    ellipse 38% 62% at 27% 48%,
     color-mix(in srgb, var(--bg-deep, #060b12) 86%, transparent) 0%,
     color-mix(in srgb, var(--bg-deep, #060b12) 58%, transparent) 54%,
     transparent 78%

@@ -372,6 +372,63 @@ async function checkFilmActHandoff() {
   }
 }
 
+// A chapter act is a pinned screen, and a sticky element taller than the viewport does not
+// hold with its top at zero: it scrolls until its bottom is flush with the bottom of the
+// screen, which puts its top above the fold and behind the fixed header. The reader sees a
+// heading cut through the middle of its first line.
+//
+// Nothing static can catch this. It depends on how many lines the copy wraps to at the
+// rendered type size, so it comes back the next time anyone lengthens a heading. Measured at
+// 1440x900, which is the size every other measurement on this page uses.
+async function checkFilmFrameFit(baseUrl) {
+  const executablePath = findChromeExecutable();
+  if (!executablePath) {
+    warnings.push('Skipping the chapter frame fit check because Chrome/Edge was not found. Set CHROME_PATH to enable it.');
+    return;
+  }
+
+  const files = (await walkFiles(repoRoot)).filter((file) => extname(file) === '.html');
+  const routes = [];
+  for (const file of files) {
+    const html = await readFile(file, 'utf8');
+    if (!/<body[^>]*class="[^"]*\bfilm\b/.test(html)) continue;
+    routes.push('/' + toDisplayPath(file));
+  }
+  // Fail closed. A check that finds nothing to look at and reports success is
+  // indistinguishable from a check that looked and found everything fine.
+  if (routes.length === 0) {
+    failures.push('The chapter frame fit check found no page carrying the film body class, so it measured nothing. Either the class was renamed or the check can no longer find the chapter pages.');
+    return;
+  }
+
+  const { default: puppeteer } = await import('puppeteer-core');
+  const browser = await puppeteer.launch({
+    executablePath,
+    headless: true,
+    args: ['--no-sandbox', '--disable-setuid-sandbox']
+  });
+  try {
+    const page = await browser.newPage();
+    await page.setViewport({ width: 1440, height: 900, deviceScaleFactor: 1 });
+    for (const route of routes) {
+      await page.goto(`${baseUrl}${route}`, { waitUntil: 'networkidle2' });
+      const tall = await page.evaluate(() => {
+        const pins = [...document.querySelectorAll('main > .act .act-pin')];
+        return pins
+          .map((pin, i) => ({ act: i + 1, over: Math.round(pin.getBoundingClientRect().height - window.innerHeight) }))
+          .filter((row) => row.over > 1);
+      });
+      for (const row of tall) {
+        failures.push(
+          `${route} act ${row.act} needs ${row.over}px more than the screen is tall, so its pinned frame cannot hold with its top at the header line and the first line of its heading is cut off. Shorten the heading, or give that frame less to carry.`
+        );
+      }
+    }
+  } finally {
+    await browser.close();
+  }
+}
+
 async function checkStaticReferences() {
   const files = await walkFiles(repoRoot);
   for (const file of files) {
@@ -509,6 +566,7 @@ async function main() {
   const { server, baseUrl } = await startStaticServer();
   try {
     await smokeTestRoutes(baseUrl);
+    await checkFilmFrameFit(baseUrl);
     if (args.has('--screenshots')) {
       await captureScreenshots(baseUrl);
     }
