@@ -19,10 +19,22 @@ import { clamp01, lerp, ease, motes, seeded } from "./kit.js";
 
 const STATION_GAP = 420;
 const CAM_BACK = 62;
-const HOLD = 0.55;
-const SCROLL_DAMPING = 0.1;
+// Less of each act parked, more of it travelling. With the act's scroll doubled, holding for
+// 55% of it would mean a very long still frame followed by the same quick flight; at 0.46 the
+// extra scroll goes into the move, which is where the reader wanted it.
+const HOLD = 0.46;
+// A longer glide. At 0.1 the camera is within a pixel of the scroll position in about twenty
+// frames; at 0.065 it keeps moving for roughly half a second after the wheel stops, which is
+// the difference between following a scroll and flowing with it.
+const SCROLL_DAMPING = 0.065;
 const POINTER_DAMPING = 0.04;
 const BASE_FOV = 55;
+const AIM_FOLLOW = 0.62;
+// How far the camera swings away from the sets through the middle of a flight, in world units.
+const FLIGHT_SWING = 46;
+// The camera's fixed height below the frame breakpoint, chosen so every set sits in the band
+// film.css reserves above the copy.
+const NARROW_EYE = 34;
 
 // Hue offsets, in degrees, applied to the theme's own accent to give each act its own colour.
 // Owner decision, 2026-09-11: the theme sets the palette and the acts shift within it, chosen
@@ -260,7 +272,7 @@ function buildTrackAmbience(scene, palette, stationCount) {
   const span = stationCount * STATION_GAP + 500;
 
   const dust = [];
-  for (let i = 0; i < 1100; i++) {
+  for (let i = 0; i < 2600; i++) {
     dust.push((random() - 0.5) * 340, (random() - 0.5) * 200, 140 - random() * span);
   }
   const field = motes(dust, palette.ink, 1.1, palette.lightRoom ? 0.22 : 0.3);
@@ -270,7 +282,7 @@ function buildTrackAmbience(scene, palette, stationCount) {
   // makes when you stop being able to read it.
   const rowPoints = [];
   const rows = [];
-  for (let i = 0; i < 40; i++) {
+  for (let i = 0; i < 90; i++) {
     const side = random() < 0.5 ? -1 : 1;
     const ox = side * (34 + random() * 150);
     const oy = (random() - 0.5) * 170;
@@ -291,7 +303,7 @@ function buildTrackAmbience(scene, palette, stationCount) {
 
   // Packet ticks: short segments lying along the direction of travel, so they streak past.
   const tickPoints = [];
-  for (let i = 0; i < 150; i++) {
+  for (let i = 0; i < 340; i++) {
     const side = random() < 0.5 ? -1 : 1;
     const x = side * (26 + random() * 170);
     const y = (random() - 0.5) * 190;
@@ -343,7 +355,7 @@ export function mountFilm({ canvas, buildStations }) {
   // version did. Sitting near the track means the camera's own travel carries the reader into
   // the set rather than past it, and the copy keeps its legibility from the scrim behind it
   // rather than from the set being somewhere else.
-  const DESKTOP_OFFSET = [16, 18, 12, 15];
+  const DESKTOP_OFFSET = [16, 18, 12, 40];
   const DESKTOP_LIFT = [10, 6, 2, 6];
   // On a phone the sets drop below the reader's line of sight rather than sitting behind the
   // heading they belong to.
@@ -406,8 +418,18 @@ export function mountFilm({ canvas, buildStations }) {
       station.group.position.setX(offsets[i] || 0);
       station.group.position.setY(lifts[i] || 0);
       const base = station.group.userData.baseScale || 1;
-      station.group.scale.setScalar(narrow ? base * 0.6 : base);
+      station.group.scale.setScalar(narrow ? base * 0.72 : base);
     });
+
+    // The log rows and packet ticks live on the track rather than inside a station, so they
+    // never moved when the sets were lifted into the phone's band: they were the edge the
+    // audit kept finding inside the copy at 390px, not the sets. Dust stays, because soft
+    // points put no edge behind a word.
+    if (ambience) {
+      ambience.logs.visible = !narrow;
+      ambience.ticks.visible = !narrow;
+    }
+
     const tops = acts.map((act) => Math.round(act.getBoundingClientRect().top + window.scrollY));
     // The chapter ends with its last act, not with the element that contains it. The comment
     // thread and the closing links live inside main too, so measuring from main's bottom left
@@ -531,9 +553,28 @@ export function mountFilm({ canvas, buildStations }) {
     smoothPointerX = lerp(smoothPointerX, pointerX, POINTER_DAMPING);
     smoothPointerY = lerp(smoothPointerY, pointerY, POINTER_DAMPING);
 
+    // The flight swings wide of the set it is leaving instead of going through it.
+    //
+    // A dolly track puts every station on one line, so travelling from one to the next means
+    // passing through the geometry of the one behind. Two frames in a review were the inside
+    // of a server rack and the inside of a circuit board for exactly that reason: not a
+    // framing mistake at either station, but the straight line between them.
+    //
+    // Lifting the camera over each set fixed that and caused a worse fault: the sets sweep
+    // down across the copy column as the camera climbs, and the edge a set put inside the
+    // word "Detect" went to three times its budget. Swinging sideways, away from the side the
+    // sets are on, clears the same geometry and moves everything further from the words
+    // rather than across them.
+    const arc = Math.sin(travel * Math.PI);
+    const swing = arc * FLIGHT_SWING;
+    // On a phone the camera holds its height for the whole chapter. Each set's move descends
+    // toward its subject, which is right on a wide screen and wrong on a narrow one: the copy
+    // does not move out of the way there, so the set simply sinks into it. Holding the height
+    // keeps every set in the band above the words while its move still carries the reader in.
+    const eyeY = narrow ? NARROW_EYE : dy;
     camera.position.set(
-      dx + smoothPointerX * 2.6,
-      dy - smoothPointerY * 1.8,
+      dx - swing + smoothPointerX * 2.6,
+      eyeY - smoothPointerY * 1.8,
       -along * STATION_GAP + CAM_BACK + dz + aspectPullback + intro * 150
     );
 
@@ -544,10 +585,18 @@ export function mountFilm({ canvas, buildStations }) {
     // straight at the set and flies into it; near 0 it stays on the track and the set drifts
     // past the edge. It was 0.18, and "the model moves towards the right side when scrolling
     // in" is the exact description of what 0.18 does.
-    const aimX = lerp(offsets[index] || 0, offsets[Math.min(index + 1, last)] || 0, travel) * 0.62;
+    //
+    // A station may lower it for itself. One act here has a second column of copy beside the
+    // set rather than above it, and following that set all the way puts a lit screen behind a
+    // paragraph; the measurement is a sixteen per cent contrast drop on one line.
+    const followHere = stations[index].aimFollow === undefined ? AIM_FOLLOW : stations[index].aimFollow;
+    const followNext = stations[Math.min(index + 1, last)].aimFollow === undefined
+      ? AIM_FOLLOW
+      : stations[Math.min(index + 1, last)].aimFollow;
+    const aimX = lerp((offsets[index] || 0) * followHere, (offsets[Math.min(index + 1, last)] || 0) * followNext, travel);
     camera.lookAt(
-      aimX + dx * 0.4 + smoothPointerX * 4,
-      dy * 0.5 - smoothPointerY * 2.6,
+      aimX + dx * 0.4 - swing + smoothPointerX * 4,
+      eyeY * 0.5 - smoothPointerY * 2.6,
       camera.position.z - 150
     );
     camera.rotateZ(Math.sin(along * 2.1) * 0.01 + kick * 0.03);
@@ -587,7 +636,10 @@ export function mountFilm({ canvas, buildStations }) {
     // behind the comment form; this fades over the same distance and finishes on time.
     const toEnd = chapterBottom - smoothScroll;
     const past = clamp01((height * 1.4 - toEnd) / (height * 1.4));
-    const base = narrow ? 0.72 : 1;
+    // A phone scene at 0.72 was measured safe for the text (0.40 of a 1.6 edge budget) and
+    // read as a watermark rather than an object. The budget had more than half of itself
+    // spare, so the geometry takes some of it back.
+    const base = narrow ? 0.95 : 1;
     // The opening fade in as well as the fade out, both written here. Doing the fade in with a
     // CSS transition on the same property meant every per-frame write chased a moving target,
     // and left the scene painting at 0.41 behind the comment form three screens past the end.

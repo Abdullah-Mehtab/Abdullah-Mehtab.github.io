@@ -8,19 +8,27 @@
 //
 // So it is drawn as a real graph with a real fork, not as a row of boxes. The camera enters at
 // the agents and comes out past the fork, which is why this act is the one worth flying.
-import { THREE, clamp01, drift, ease, edgedBox, glow, motes, painted, panel, repeated, seeded, solid, thread, wire } from "../kit.js";
+import { THREE, clamp01, drift, ease, edgedBox, glow, motes, nameplate, painted, panel, repeated, seeded, solid, thread, wire } from "../kit.js";
 
 // z runs away from the camera, so the pipeline is laid out in depth and the reader travels it.
+//
+// Every node carries a `form` as well as a size, and that is the point of this act. When each
+// node was a box, the flow could only be read by reading nine labels, so the moment a label
+// was camouflaged against the wireframe behind it the structure stopped making sense. A
+// collector, a store, a shipper and a fork do not look alike, and now they do not.
+//
+// The z spacing is even, near to far, so the graph reads as an ordered sequence rather than a
+// cloud. The two branches of the fork are the only nodes that share a depth.
 const NODES = {
-  agents: { at: [-26, 10, 86], size: [16, 12, 12], label: "Agents", sub: "endpoints" },
-  suricata: { at: [34, -20, 64], size: [20, 14, 14], label: "Suricata", sub: "network alerts" },
-  manager: { at: [0, 2, 30], size: [30, 30, 26], label: "Wazuh Manager", sub: "rules, decoders" },
-  alerts: { at: [-6, -12, 2], size: [22, 2, 16], label: "alerts.json", sub: "" },
-  filebeat: { at: [10, 12, -24], size: [18, 14, 14], label: "Filebeat", sub: "ships events" },
-  elastic: { at: [-18, -8, -52], size: [26, 24, 22], label: "Elasticsearch", sub: "index, search" },
-  logstash: { at: [12, 6, -80], size: [24, 20, 18], label: "Logstash", sub: "the fork" },
-  email: { at: [-34, 30, -114], size: [26, 18, 4], label: "HTML email alerts", sub: "" },
-  kibana: { at: [44, -18, -114], size: [30, 20, 4], label: "Kibana dashboards", sub: "" }
+  agents:   { at: [-30, 12, 92], size: [18, 13, 13], form: "cluster", label: "Agents", sub: "endpoints" },
+  suricata: { at: [36, -20, 66], size: [20, 14, 14], form: "sensor", label: "Suricata", sub: "network alerts" },
+  manager:  { at: [0, 2, 34], size: [30, 32, 26], form: "rules", label: "Wazuh Manager", sub: "rules, decoders" },
+  alerts:   { at: [-8, -14, 4], size: [22, 3, 17], form: "file", label: "alerts.json", sub: "" },
+  filebeat: { at: [12, 13, -26], size: [18, 14, 14], form: "shipper", label: "Filebeat", sub: "ships events" },
+  elastic:  { at: [-20, -8, -56], size: [26, 24, 24], form: "store", label: "Elasticsearch", sub: "index, search" },
+  logstash: { at: [12, 6, -86], size: [24, 22, 18], form: "fork", label: "Logstash", sub: "the fork" },
+  email:    { at: [-36, 30, -120], size: [26, 18, 4], form: "screen", label: "HTML email alerts", sub: "" },
+  kibana:   { at: [46, -18, -120], size: [30, 20, 4], form: "screen", label: "Kibana dashboards", sub: "" }
 };
 
 const EDGES = [
@@ -41,80 +49,92 @@ export function buildPipeline(palette) {
   const random = seeded(41);
   const probe = new THREE.Vector3();
 
-  function nameplate(text, sub) {
-    const plate = panel(painted(640, 128, (g, w, h) => {
-      g.clearRect(0, 0, w, h);
-      g.fillStyle = "#" + accent.getHexString();
-      g.textBaseline = "middle";
-      g.textAlign = "center";
-      g.font = "600 46px Archivo, 'Segoe UI', sans-serif";
-      g.fillText(text, w / 2, sub ? 48 : h / 2);
-      if (sub) {
-        g.globalAlpha = 0.6;
-        g.font = "400 30px 'IBM Plex Mono', ui-monospace, monospace";
-        g.fillText(sub, w / 2, 96);
-        g.globalAlpha = 1;
-      }
-    }), 40, 8, 0);
-    plate.userData.caption = text;
-    // Three of the nine nodes name the whole flow, and those are the ones a phone keeps.
-    plate.userData.primary = text === "Wazuh Manager" || text === "Elasticsearch" || text === "Logstash";
-    return plate;
+  // Every nameplate comes from kit.nameplate, which paints a ground behind the words. Without
+  // it a label is legible over empty space and invisible over a dense wireframe, which is
+  // where most of these end up.
+  function plate(text, sub) {
+    const made = nameplate(text, sub, accent, palette.deep, 40);
+    // Three of the nine name the whole flow, and those are the ones a phone keeps.
+    made.userData.primary = text === "Wazuh Manager" || text === "Elasticsearch" || text === "Logstash";
+    return made;
   }
-
-  // Stretched in depth. Nine nodes within eighty units read as one oblique plane rather than
-  // a space, because nothing near is much bigger on screen than anything far.
-  const DEPTH_STRETCH = 1.35;
 
   const built = {};
   const order = Object.keys(NODES);
   order.forEach((key, i) => {
     const spec = NODES[key];
     const node = new THREE.Group();
-    const body = edgedBox(spec.size[0], spec.size[1], spec.size[2], face, accent, 0.95);
-    node.add(body);
+    const [w, h, d] = spec.size;
 
-    // Elasticsearch is a stack of indices and the manager is a stack of rules, so both are
-    // built as stacked plates rather than as a faceted polyhedron. The polyhedron is the
-    // reference site's own device, and it is a benchmark, never a source.
-    if (key === "elastic" || key === "manager") {
+    // One silhouette per job. A reader should be able to follow the flow with every nameplate
+    // covered, which is the test this act kept failing.
+    if (spec.form === "cluster") {
+      // Several small machines reporting as one: the agents are a group, not a box.
+      const units = [[-w * 0.34, h * 0.2, 0], [w * 0.3, h * 0.26, -d * 0.2], [0, -h * 0.24, d * 0.18]];
+      node.add(repeated(new THREE.BoxGeometry(w * 0.5, h * 0.42, d * 0.5), units, face, accent, 0.9));
+    } else if (spec.form === "sensor") {
+      // A tap on the wire: a body with a dish looking out of it.
+      node.add(edgedBox(w * 0.7, h * 0.7, d * 0.7, face, accent, 0.95));
+      const dish = wire(new THREE.ConeGeometry(w * 0.5, h * 0.7, 14, 1, true), accent, 0.7);
+      dish.rotation.x = -Math.PI / 2;
+      dish.position.z = d * 0.6;
+      node.add(dish);
+    } else if (spec.form === "rules") {
+      // An ordered stack that events are pushed down through.
+      node.add(edgedBox(w * 0.62, h, d * 0.62, face, accent, 0.95));
+      for (let i = 0; i < 7; i++) {
+        const plate = wire(new THREE.BoxGeometry(w * (0.9 - Math.abs(i - 3) * 0.06), 1, d * 0.8), accent, 0.55);
+        plate.position.y = -h * 0.38 + i * (h * 0.76 / 6);
+        node.add(plate);
+      }
+    } else if (spec.form === "file") {
+      // A thin slab with lines of text on it, and a folded corner.
+      node.add(edgedBox(w, h, d, face, accent, 0.95));
+      for (let l = 0; l < 5; l++) {
+        const row = solid(new THREE.PlaneGeometry(w * 0.7 - (l % 3) * 3, 0.8), accent, 0.55);
+        row.rotation.x = -Math.PI / 2;
+        row.position.set(-w * 0.06 + (l % 3), h * 0.6, -d * 0.28 + l * (d * 0.14));
+        node.add(row);
+      }
+    } else if (spec.form === "shipper") {
+      // A funnel: wide in, narrow out, pointed the way the data goes.
+      const funnel = wire(new THREE.CylinderGeometry(w * 0.5, w * 0.16, d, 12, 1, true), accent, 0.85);
+      funnel.rotation.x = Math.PI / 2;
+      node.add(funnel);
+      node.add(edgedBox(w * 0.3, h * 0.3, d * 0.35, face, accent, 0.9));
+    } else if (spec.form === "store") {
+      // Stacked indices. A database is a pile of shards, not a shipping crate.
       const stack = new THREE.Group();
-      const count = key === "elastic" ? 7 : 9;
-      for (let l = 0; l < count; l++) {
-        const radius = spec.size[0] * (key === "elastic" ? 0.5 - Math.abs(l - (count - 1) / 2) * 0.03 : 0.42);
-        const disc = wire(
-          key === "elastic"
-            ? new THREE.CylinderGeometry(radius, radius, 0.9, 14)
-            : new THREE.BoxGeometry(radius * 2, 0.9, radius * 2),
-          accent,
-          0.45
-        );
-        disc.position.y = -spec.size[1] * 0.36 + l * (spec.size[1] * 0.72 / (count - 1));
+      for (let i = 0; i < 6; i++) {
+        const r = w * (0.46 - Math.abs(i - 2.5) * 0.025);
+        const disc = wire(new THREE.CylinderGeometry(r, r, h * 0.1, 16), accent, 0.6);
+        disc.position.y = -h * 0.38 + i * (h * 0.76 / 5);
         stack.add(disc);
       }
       node.add(stack);
       node.userData.cage = stack;
+    } else if (spec.form === "fork") {
+      // The split itself, built into the node: one trunk, two arms.
+      node.add(edgedBox(w * 0.5, h * 0.5, d * 0.6, face, accent, 0.95));
+      for (const side of [-1, 1]) {
+        const arm = wire(new THREE.BoxGeometry(w * 0.14, h * 0.14, d * 0.9), accent, 0.75);
+        arm.position.set(side * w * 0.36, side * h * 0.3, -d * 0.5);
+        arm.rotation.y = side * 0.5;
+        node.add(arm);
+      }
+    } else {
+      node.add(edgedBox(w, h, d, face, accent, 0.95));
     }
+
     // The two outputs are screens, not solids: they face the camera and they are lit.
-    if (key === "email" || key === "kibana") {
-      const glass = solid(new THREE.PlaneGeometry(spec.size[0] - 3, spec.size[1] - 3), accent, 0.12);
-      glass.position.z = spec.size[2] / 2 + 0.1;
+    if (spec.form === "screen") {
+      const glass = solid(new THREE.PlaneGeometry(w - 3, h - 3), accent, 0.12);
+      glass.position.z = d / 2 + 0.1;
       node.add(glass);
       node.userData.glass = glass;
     }
-    if (key === "alerts") {
-      // A file, drawn as a thin slab with lines of text on it.
-      const lines = new THREE.Group();
-      for (let l = 0; l < 5; l++) {
-        const row = solid(new THREE.PlaneGeometry(14 - (l % 3) * 3, 0.7), accent, 0.5);
-        row.rotation.x = -Math.PI / 2;
-        row.position.set(-2 + (l % 3), 1.2, -5 + l * 2.4);
-        lines.add(row);
-      }
-      node.add(lines);
-    }
 
-    const label = nameplate(spec.label, spec.sub);
+    const label = plate(spec.label, spec.sub);
     // Staggering was not enough: a flown graph puts nodes behind each other constantly, and
     // two plates six units apart in world space are one plate in screen space at forty units
     // of depth. So a node is named when the camera is near it and unnamed when it is not,
@@ -122,26 +142,20 @@ export function buildPipeline(palette) {
     label.position.set(0, spec.size[1] / 2 + 7 + (i % 2) * 7, 0);
     node.add(label);
 
-    node.position.set(spec.at[0], spec.at[1], spec.at[2] * DEPTH_STRETCH);
+    node.position.set(spec.at[0], spec.at[1], spec.at[2]);
     group.add(node);
 
-    // Only the three nodes that hold something get a halo. Nine of them lit the whole set
-    // evenly and cost nine draw calls to say nothing about which parts matter.
-    let halo = null;
-    if (key === "manager" || key === "elastic" || key === "logstash") {
-      halo = glow(accent, spec.size[0] * 2.4, 0);
-      halo.userData.ambient = true;
-      halo.position.copy(node.position);
-      group.add(halo);
-    }
+    // No per-node halo at all. Three of them were a draw call each to put a soft glow behind
+    // a node that already reads, and the act is at the draw-call ceiling.
+    const halo = null;
 
     built[key] = { node, label, halo, spec, at: i / order.length };
   });
 
   // ——— the edges ———
   const paths = EDGES.map(([fromKey, toKey], i) => {
-    const from = new THREE.Vector3(NODES[fromKey].at[0], NODES[fromKey].at[1], NODES[fromKey].at[2] * DEPTH_STRETCH);
-    const to = new THREE.Vector3(NODES[toKey].at[0], NODES[toKey].at[1], NODES[toKey].at[2] * DEPTH_STRETCH);
+    const from = new THREE.Vector3(...NODES[fromKey].at);
+    const to = new THREE.Vector3(...NODES[toKey].at);
     const mid = from.clone().lerp(to, 0.5);
     // Bowing the two fork branches apart is what makes the fork legible from inside it.
     mid.x += (to.x - from.x) * 0.18;
@@ -163,14 +177,18 @@ export function buildPipeline(palette) {
   // Long runs of trunking either side of the flight path. They are what gives the fly-through
   // its speed: the nodes are ahead and barely move, and these stream past the frame edges.
   const conduit = [];
-  for (let i = 0; i < 5; i++) {
-    conduit.push([54 + (i % 3) * 40, -46 + (i % 3) * 52, 40 - i * 56, 0, 0, 0]);
+  // Further out, so they frame the graph instead of crossing it.
+  for (let i = 0; i < 7; i++) {
+    conduit.push([76 + (i % 3) * 40, -66 + (i % 4) * 48, 46 - i * 46, 0, 0, 0]);
   }
   // Round, not rectangular. They are conduit runs, and a square girder is a different object
   // with a different job.
-  const pipe = new THREE.CylinderGeometry(3.6, 3.6, 150, 10, 1, true);
+  const pipe = new THREE.CylinderGeometry(2.2, 2.2, 150, 8, 1, true);
   pipe.rotateX(Math.PI / 2);
-  const trunking = repeated(pipe, conduit, face, accent, 0.2);
+  // Dimmer and thinner than the graph. These were the brightest, longest objects in the act
+  // and the eye followed them instead of the flow: scenery has to sit behind the subject, not
+  // in front of it.
+  const trunking = repeated(pipe, conduit, face, accent, 0.1);
   trunking.userData.ambient = true;
   group.add(trunking);
 
@@ -192,7 +210,7 @@ export function buildPipeline(palette) {
   }
   const flanges = new THREE.LineSegments(
     new THREE.BufferGeometry().setFromPoints(flangePoints),
-    new THREE.LineBasicMaterial({ color: accent, transparent: true, opacity: 0.26 })
+    new THREE.LineBasicMaterial({ color: accent, transparent: true, opacity: 0.13 })
   );
   flanges.userData.ambient = true;
   group.add(flanges);
@@ -201,17 +219,19 @@ export function buildPipeline(palette) {
 
   // Records in transit: log lines, index shards, couplings. The things that are actually
   // moving through a pipeline, rather than scenery that could belong to any page.
+  // Records in transit: a log line, a document, an index page, a batch. All flat, because a
+  // wireframe cylinder in the air is a hexagonal prism and belongs to somebody else's page.
   const cargo = drift([
     new THREE.BoxGeometry(12, 1.1, 0.5),
     new THREE.BoxGeometry(8, 8, 0.6),
-    new THREE.CylinderGeometry(2.6, 2.6, 3.2, 8),
-    new THREE.BoxGeometry(5, 2.4, 5)
-  ], 12, accent, palette.lightRoom ? 0.22 : 0.28, 63);
+    new THREE.BoxGeometry(6, 7, 0.5),
+    new THREE.BoxGeometry(10, 0.8, 4)
+  ], 26, accent, palette.lightRoom ? 0.22 : 0.28, 63);
   cargo.object.userData.ambient = true;
   group.add(cargo.object);
 
   const dust = [];
-  for (let i = 0; i < 420; i++) dust.push((random() - 0.5) * 260, (random() - 0.5) * 170, 140 - random() * 340);
+  for (let i = 0; i < 860; i++) dust.push((random() - 0.5) * 260, (random() - 0.5) * 170, 140 - random() * 340);
   const air = motes(dust, accent, 1.2, 0.32);
   air.userData.ambient = true;
   group.add(air);
@@ -263,22 +283,21 @@ export function buildPipeline(palette) {
       air.rotation.z = t * 0.01;
       cargo.update(t);
     },
-    // The signature shot. The camera starts above and behind the agents and ends past the
-    // fork, so the reader is inside the pipeline rather than looking at a diagram of it.
-    // The signature shot. The camera starts behind and above the agents and ends between the
-    // two branches of the fork, so the reader is inside the pipeline looking at where it
-    // splits. It must not overshoot: the whole graph is 200 units deep once scaled, and a
-    // longer move leaves the camera in empty space with the set behind it.
+    // Establish, then enter.
+    //
+    // The camera used to start moving on the first frame of the act and cover 150 units before
+    // the reader had seen what the graph was, so it read as clutter going past. It now holds
+    // back far enough to take the whole flow in one view for the first third, and only then
+    // descends into it. Nothing about the geometry changed to fix that; where the camera
+    // stands while a reader is reading is the fix.
     mod: (p) => {
-      const k = ease(p);
-      // Into the graph, not through and out of it. The whole thing is 84 units deep once
-      // scaled, so a move that ends past the manager leaves the camera four units from a
-      // twelve-unit box and the act renders as one wireframe filling the frame.
+      const settle = ease(clamp01(p / 0.34));
+      const enter = ease(clamp01((p - 0.34) / 0.66));
       return {
-        dx: -14 + 18 * k,
-        dy: 24 - 30 * k,
-        dz: 120 - 150 * k,
-        df: -4 + 8 * k
+        dx: -6 - 8 * settle + 22 * enter,
+        dy: 30 - 6 * settle - 26 * enter,
+        dz: 210 - 26 * settle - 118 * enter,
+        df: -6 + 4 * settle + 8 * enter
       };
     }
   };

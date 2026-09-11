@@ -5,7 +5,7 @@
 // nobody reads has not detected anything. Both panels are drawn with the 2D canvas API at load
 // time, which is the only way to get real charts and real type into a WebGL scene without
 // shipping an image, and this site self-hosts everything it renders anyway.
-import { THREE, clamp01, drift, ease, edgedBox, glow, motes, painted, panel, repeated, seeded, solid, thread, wire } from "../kit.js";
+import { THREE, clamp01, drift, ease, edgedBox, glow, motes, nameplate, painted, panel, repeated, seeded, solid, thread, wire } from "../kit.js";
 
 const ROWS = [
   ["12:04:18", "5710", "Attempt to login using a non-existent user", "5"],
@@ -211,7 +211,7 @@ export function buildOutputs(palette) {
   group.add(dashboard);
 
   const email = display(emailTexture("#" + accent.getHexString(), palette.lightRoom), 44, 51, 2.6);
-  email.position.set(52, -26, 22);
+  email.position.set(96, -26, 22);
   email.rotation.y = -0.34;
   group.add(email);
 
@@ -220,15 +220,7 @@ export function buildOutputs(palette) {
   const source = edgedBox(18, 15, 14, face, accent, 0.9);
   source.position.set(16, -44, -30);
   group.add(source);
-  const sourceLabel = panel(painted(512, 80, (g, w, h) => {
-    g.clearRect(0, 0, w, h);
-    g.fillStyle = "#" + accent.getHexString();
-    g.font = "600 40px Archivo, 'Segoe UI', sans-serif";
-    g.textAlign = "center";
-    g.textBaseline = "middle";
-    g.fillText("Logstash", w / 2, h / 2);
-  }), 32, 5, 0);
-  sourceLabel.userData.caption = "Logstash";
+  const sourceLabel = nameplate("Logstash", "", accent, palette.deep, 32);
   sourceLabel.userData.primary = true;
   sourceLabel.position.set(16, -30, -30);
   group.add(sourceLabel);
@@ -248,23 +240,42 @@ export function buildOutputs(palette) {
 
   // Two full-size documents would fill the whole frame and the copy would be reading through
   // a dashboard. They stay legible as objects at this size, which is all they need to be.
-  group.scale.setScalar(0.5);
+  group.scale.setScalar(0.42);
 
   // ——— the operations room ———
   // A back wall and a run of desks, both very dim. Two screens hanging in nothing read as an
   // illustration of screens; two screens on a wall above a desk read as somewhere an alert
   // gets looked at, which is the act's whole point.
   const desks = repeated(new THREE.BoxGeometry(60, 8, 30), [
-    [10, -84, -40],
-    [80, -88, -66],
-    [150, -80, -30]
+    [40, -84, -40], [110, -88, -66], [180, -80, -30],
+    [-30, -86, -78], [70, -90, -110], [150, -84, -140], [-100, -82, -46]
   ], face, accent, 0.18);
   desks.userData.ambient = true;
   group.add(desks);
 
+  // A desk with nothing on it is a slab. Small monitors and seat backs, one shape each at
+  // varying scale, turn the run of slabs into somewhere people sit.
+  const posts = repeated(new THREE.BoxGeometry(14, 9, 1.4), [
+    [30, -70, -40, 0, 0.2, 0, 1, 1, 1],
+    [58, -72, -40, 0, -0.1, 0, 0.8, 0.9, 1],
+    [104, -74, -66, 0, 0.3, 0, 1.1, 1, 1],
+    [-36, -72, -78, 0, -0.2, 0, 0.9, 1, 1],
+    [160, -70, -140, 0, 0.1, 0, 1, 1.1, 1]
+  ], face, accent, 0.2);
+  posts.userData.ambient = true;
+  group.add(posts);
+
+  const seats = repeated(new THREE.BoxGeometry(9, 11, 2), [
+    [36, -92, -14, 0, 0.3, 0, 1, 1, 1],
+    [112, -94, -40, 0, -0.2, 0, 1, 0.9, 1],
+    [-28, -92, -52, 0, 0.15, 0, 0.9, 1, 1]
+  ], face, accent, 0.16);
+  seats.userData.ambient = true;
+  group.add(seats);
+
   const wallPoints = [];
-  for (let i = 0; i < 7; i++) {
-    const x = -30 + i * 52;
+  for (let i = 0; i < 13; i++) {
+    const x = -90 + i * 46;
     wallPoints.push(new THREE.Vector3(x, -110, -150), new THREE.Vector3(x, 110, -150));
   }
   const wall = new THREE.LineSegments(
@@ -275,22 +286,24 @@ export function buildOutputs(palette) {
   group.add(wall);
 
   // Envelopes and chart columns, which is what everything upstream finally turns into.
+  // Envelopes and chart columns, which is what everything upstream finally turns into, plus a
+  // report page. Flat parts only.
   const output = drift([
     new THREE.BoxGeometry(10, 6.5, 0.5),
     new THREE.BoxGeometry(2.4, 12, 2.4),
     new THREE.BoxGeometry(2.4, 7, 2.4),
-    new THREE.CylinderGeometry(4, 4, 0.8, 12)
-  ], 12, accent, palette.lightRoom ? 0.22 : 0.28, 77);
+    new THREE.BoxGeometry(7, 9, 0.5)
+  ], 26, accent, palette.lightRoom ? 0.22 : 0.28, 77);
   output.object.userData.ambient = true;
   group.add(output.object);
 
-  const halo = glow(accent, 190, 0);
+  const halo = glow(accent, 120, 0);
   halo.userData.ambient = true;
   halo.position.set(0, 0, -70);
   group.add(halo);
 
   const dust = [];
-  for (let i = 0; i < 300; i++) dust.push((random() - 0.5) * 280, (random() - 0.5) * 180, (random() - 0.5) * 200);
+  for (let i = 0; i < 640; i++) dust.push((random() - 0.5) * 280, (random() - 0.5) * 180, (random() - 0.5) * 200);
   const air = motes(dust, accent, 1.15, 0.3);
   air.userData.ambient = true;
   group.add(air);
@@ -299,8 +312,16 @@ export function buildOutputs(palette) {
     group,
     // Two screens the reader is meant to read, so they stay whole inside the frame.
     contained: true,
+    // This is the only act whose copy sits in two columns beside the set rather than above
+    // it, so the camera follows this set less far than the others and it stays on its own
+    // side of the frame. Following it the usual amount puts a lit dashboard behind a
+    // paragraph, which measures as a sixteen per cent contrast drop on that line.
+    aimFollow: 0.26,
     update(t, p) {
-      const shown = clamp01(p * 1.6 + 0.36);
+      // Both screens are most of the way in by the time the act arrives. Ramping them from
+      // almost nothing left the opening third of this act, which is its establishing view,
+      // with nothing established.
+      const shown = clamp01(p * 1.5 + 0.55);
       const a = ease(clamp01(shown / 0.45));
       const b = ease(clamp01((shown - 0.3) / 0.45));
 
@@ -316,13 +337,17 @@ export function buildOutputs(palette) {
         unit.rotation.y = sway + Math.sin(t * 0.28 + phase) * 0.035;
       }
       show(dashboard, a, 16, -20, 12, 0, 0.24);
-      show(email, b, 52, 22, -26, 2, -0.34);
+      show(email, b, 96, 22, -26, 2, -0.34);
 
       const sourceIn = ease(clamp01(shown * 3));
       source.scale.setScalar(Math.max(0.001, sourceIn));
       source.rotation.y = t * 0.3;
       sourceLabel.material.opacity = sourceIn * 0.9;
-      halo.material.opacity = sourceIn * (palette.lightRoom ? 0.08 : 0.16);
+      // Tied to the screens rather than to the source node. It used to come up with the
+      // Logstash box, which meant a 190-unit soft glow filled the frame while the only thing
+      // inside it was one small monitor: scenery louder than the subject, at the one depth
+      // where the act had least to show.
+      halo.material.opacity = Math.min(a, b) * (palette.lightRoom ? 0.06 : 0.12);
 
       for (let i = 0; i < feeds.length; i++) {
         const feed = feeds[i];
@@ -339,16 +364,17 @@ export function buildOutputs(palette) {
     },
     // Close by pulling back off both panels: the chapter ends on the whole output rather than
     // on a detail of it.
-    // Forward, all the way through. This move used to increase dz, which walks the camera
-    // backwards while the reader scrolls forwards, and that is exactly what it looked like.
-    // It now closes in on the dashboard and then drifts between the two screens, which is
-    // also why the engine feeds this act its full progress rather than just its hold.
+    // Both screens in one view first, then in toward them. This act is also the one where a
+    // second column of copy sits beside the set rather than above it, so the camera stays a
+    // little further right throughout: the screens belong on the set's own side of the frame
+    // and never in the column the "Outcome" paragraph occupies.
     mod: (p) => {
-      const k = ease(p);
+      const settle = ease(clamp01(p / 0.34));
+      const enter = ease(clamp01((p - 0.34) / 0.66));
       return {
-        dx: -8 + 18 * k,
-        dy: 12 - 16 * k,
-        dz: 92 - 60 * k,
+        dx: -18 - 4 * settle + 22 * enter,
+        dy: 10 - 2 * settle - 12 * enter,
+        dz: 118 - 12 * settle - 46 * enter,
         df: 0
       };
     }

@@ -1,12 +1,20 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="85" height="60" viewBox="0 0 85 60" role="img" aria-label="Delivery truck">
   <!-- Faces right: the scenery scrolls right-to-left past it, and the wind lines in animations.css
-       trail off its left side. Light tones on purpose - the CSS applies brightness(0.5) saturate(0),
-       so anything dark here renders as near-black. Bottom 14px is left clear for wheels.svg. -->
-  <rect x="2" y="10" width="48" height="36" rx="2" fill="#e8e8e8"/>
-  <rect x="6" y="15" width="40" height="1.5" fill="#c4c4c4"/>
-  <rect x="27" y="18" width="1.5" height="26" fill="#c4c4c4"/>
-  <path d="M50 23 h14 l10 11 h7 a2 2 0 0 1 2 2 v10 H50 Z" fill="#d2d2d2"/>
-  <path d="M53 26 h10 l8 8 H53 Z" fill="#9a9a9a"/>
-  <rect x="2" y="46" width="80" height="3" rx="1" fill="#adadad"/>
-  <rect x="79" y="38" width="4" height="4" rx="1" fill="#f2f2f2"/>
+       trail off its left side. Bottom 14px is left clear for wheels.svg.
+
+       Coloured here rather than greyed out in CSS. animations.css used to apply saturate(0),
+       which is why this shipped as a grey silhouette; it now applies a per-theme hue rotation
+       instead, so this base red becomes a different truck on each of the eighteen themes.
+       Keep the body one hue and everything else near-neutral: the rotation moves every colour
+       in the file together, so a saturated blue windscreen becomes a pink one on a green
+       theme. Glass, lamp and marker are greys that barely move. -->
+  <rect x="2" y="10" width="48" height="36" rx="2" fill="#c8402c"/>
+  <rect x="2" y="10" width="48" height="6" rx="2" fill="#e0573f"/>
+  <rect x="6" y="20" width="40" height="1.5" fill="#8f2a1c"/>
+  <rect x="27" y="23" width="1.5" height="21" fill="#8f2a1c"/>
+  <path d="M50 23 h14 l10 11 h7 a2 2 0 0 1 2 2 v10 H50 Z" fill="#d94a33"/>
+  <path d="M53 26 h10 l8 8 H53 Z" fill="#c9d2d6"/>
+  <rect x="2" y="46" width="80" height="3" rx="1" fill="#5e2118"/>
+  <rect x="79" y="37" width="4" height="5" rx="1" fill="#f4efe2"/>
+  <rect x="2" y="40" width="3" height="4" rx="1" fill="#e8e2d6"/>
 </svg>

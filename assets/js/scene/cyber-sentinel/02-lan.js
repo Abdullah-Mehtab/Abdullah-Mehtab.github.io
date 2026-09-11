@@ -9,7 +9,7 @@
 // The machines are racks rather than monitors. Twelve flat screens floating at eye height read
 // as a node diagram of a network; cabinets with rack units in them read as a room, and the room
 // is the point: this kind of monitoring is usually assumed to need one.
-import { THREE, clamp01, drift, ease, edgedBox, glow, motes, painted, panel, repeated, seeded, wire } from "../kit.js";
+import { THREE, clamp01, drift, ease, edgedBox, glow, motes, nameplate, painted, panel, repeated, seeded, wire } from "../kit.js";
 
 const THREATS = [
   "aggressive scan",
@@ -89,13 +89,35 @@ export function buildLan(palette) {
   );
   group.add(detail);
 
-  // Three units pulled forward out of the faces, which is what a rack in use looks like.
+  // Units pulled forward out of the faces, at the heights they actually sit at, and in two
+  // depths: a 1U switch is not a 2U server. More cabinets of the same shape is not more to
+  // look at; different things in them is.
   const proud = [];
-  for (let i = 0; i < 3; i++) {
-    const [x, y, z] = spots[i * 2];
-    proud.push([x, y + 8 - i * 14, z + RACK_D / 2 + 1.6]);
+  const bays = [[8, 1], [-6, 2], [20, 1], [-20, 2], [-2, 1]];
+  spots.forEach(([x, y, z], i) => {
+    const [dy, units] = bays[i % bays.length];
+    proud.push([x, y + dy, z + RACK_D / 2 + 1.4, 0, 0, 0, 1, units, 1]);
+  });
+  group.add(repeated(new THREE.BoxGeometry(RACK_W - 4, 3.2, 4.4), proud, face, accent, 0.75));
+
+  // Cable bundles looping out of the back of the front row and into the floor.
+  const loomPoints = [];
+  for (const [x, y, z] of spots.slice(0, 5)) {
+    for (let c = 0; c < 3; c++) {
+      const ox = x - RACK_W / 2 + 4 + c * 5;
+      const curve = new THREE.QuadraticBezierCurve3(
+        new THREE.Vector3(ox, y + 14 - c * 3, z - RACK_D / 2),
+        new THREE.Vector3(ox + 6, y - 18, z - RACK_D - 10),
+        new THREE.Vector3(ox + 2, y - RACK_H / 2, z - RACK_D - 2)
+      );
+      const along = curve.getPoints(10);
+      for (let i = 0; i < along.length - 1; i++) loomPoints.push(along[i], along[i + 1]);
+    }
   }
-  group.add(repeated(new THREE.BoxGeometry(RACK_W - 4, 3.4, 4), proud, face, accent, 0.7));
+  group.add(new THREE.LineSegments(
+    new THREE.BufferGeometry().setFromPoints(loomPoints),
+    new THREE.LineBasicMaterial({ color: accent, transparent: true, opacity: 0.28 })
+  ));
 
   // One status strip per rack. Nearly dark while nothing is watching, up once the agents
   // report: the whole act in one material.
@@ -150,15 +172,7 @@ export function buildLan(palette) {
     new THREE.LineBasicMaterial({ color: accent, transparent: true, opacity: 0.5 })
   );
   manager.add(frame);
-  const managerLabel = panel(painted(512, 96, (g, w, h) => {
-    g.clearRect(0, 0, w, h);
-    g.fillStyle = "#" + accent.getHexString();
-    g.font = "600 46px Archivo, 'Segoe UI', sans-serif";
-    g.textBaseline = "middle";
-    g.textAlign = "center";
-    g.fillText("Wazuh Manager", w / 2, h / 2);
-  }), 42, 8, 0);
-  managerLabel.userData.caption = "Wazuh Manager";
+  const managerLabel = nameplate("Wazuh Manager", "", accent, palette.deep, 42);
   managerLabel.userData.primary = true;
   managerLabel.position.set(0, 24, 0);
   manager.add(managerLabel);
@@ -210,13 +224,7 @@ export function buildLan(palette) {
     head.position.set(206, y, z);
     group.add(head);
 
-    const label = panel(painted(384, 64, (g, w, h) => {
-      g.clearRect(0, 0, w, h);
-      g.fillStyle = "#" + accent.getHexString();
-      g.font = "500 40px 'IBM Plex Mono', ui-monospace, monospace";
-      g.textBaseline = "middle";
-      g.fillText(name, 8, h / 2);
-    }), 33, 5.5, 0.7);
+    const label = nameplate(name, "", accent, palette.deep, 33);
     label.userData.caption = name;
     // It enters from off-frame and leaves at the manager: being half on screen is what it is
     // doing, not a composition fault. The frame audit skips these for that reason.
@@ -234,6 +242,10 @@ export function buildLan(palette) {
   const swarmPositions = new Float32Array(THREATS.length * SWARM * 3);
   const swarm = motes(Array.from(swarmPositions), accent, 2.6, 0.75);
   swarm.geometry.setAttribute("position", new THREE.BufferAttribute(swarmPositions, 3));
+  // Same reason as the flock in kit.js: an exact bounding sphere per frame is a second pass
+  // over every point, for a frustum test on something that is always in shot.
+  swarm.geometry.boundingSphere = new THREE.Sphere(new THREE.Vector3(), 320);
+  swarm.frustumCulled = false;
   group.add(swarm);
 
   const trails = new THREE.LineSegments(
@@ -247,19 +259,22 @@ export function buildLan(palette) {
   // light on the floor. No grid: a receding grid is what the version before this one drew
   // everywhere, and it is what the owner rejected it for.
   const far = [];
-  for (let i = 0; i < 5; i++) far.push([-40 + i * 30, -6, -150]);
+  for (let i = 0; i < 9; i++) far.push([-70 + i * 30, -6, -150]);
+  for (let i = 0; i < 7; i++) far.push([-54 + i * 34, -10, -216]);
   const backRow = repeated(new THREE.BoxGeometry(24, 68, 26), far, face, accent, 0.16);
   backRow.userData.ambient = true;
   group.add(backRow);
 
   // Packets and alerts in the air: flat cells going past, and the triangle every console in
   // the world uses to mean something is wrong.
+  // Frames going past: a packet, a blade, a patch panel, a cable tray. Flat parts from a rack
+  // room, not floating solids.
   const traffic = drift([
     new THREE.BoxGeometry(7, 3, 0.6),
-    new THREE.ConeGeometry(4, 6, 3),
-    new THREE.BoxGeometry(3, 3, 3),
+    new THREE.BoxGeometry(12, 1.6, 5),
+    new THREE.BoxGeometry(9, 0.9, 9),
     new THREE.BoxGeometry(11, 1.4, 1.4)
-  ], 13, accent, palette.lightRoom ? 0.22 : 0.28, 47);
+  ], 24, accent, palette.lightRoom ? 0.22 : 0.28, 47);
   traffic.object.userData.ambient = true;
   group.add(traffic.object);
 
@@ -270,7 +285,7 @@ export function buildLan(palette) {
   group.add(pool);
 
   const dust = [];
-  for (let i = 0; i < 260; i++) dust.push((random() - 0.5) * 300, (random() - 0.5) * 160, (random() - 0.5) * 200);
+  for (let i = 0; i < 560; i++) dust.push((random() - 0.5) * 300, (random() - 0.5) * 160, (random() - 0.5) * 200);
   const air = motes(dust, accent, 1.1, 0.3);
   air.userData.ambient = true;
   group.add(air);
@@ -348,20 +363,24 @@ export function buildLan(palette) {
       }
 
       swarm.geometry.attributes.position.needsUpdate = true;
-      swarm.geometry.computeBoundingSphere();
       swarm.material.opacity = 0.75 - watched * 0.25;
       trails.material.opacity = 0.16 * (1 - watched * 0.55);
       air.rotation.y = t * 0.015;
       traffic.update(t);
     },
     // Track right across the room as the racks come up, ending on the manager.
-    // Into the room and along it. The camera enters the aisle as the racks come up and ends
-    // in front of the manager, rather than watching the room slide past.
-    mod: (p) => ({
-      dx: -20 + 34 * ease(p),
-      dy: 14 - 16 * ease(p),
-      dz: 62 - 54 * ease(p),
-      df: 3 - 5 * ease(p)
-    })
+    // Take in the room, then walk into it. The first third frames the whole rank of racks so
+    // the reader knows where they are; the rest moves down the aisle toward the manager as it
+    // arrives.
+    mod: (p) => {
+      const settle = ease(clamp01(p / 0.34));
+      const enter = ease(clamp01((p - 0.34) / 0.66));
+      return {
+        dx: -26 - 4 * settle + 36 * enter,
+        dy: 18 - 2 * settle - 18 * enter,
+        dz: 104 - 14 * settle - 26 * enter,
+        df: 3 - 5 * enter
+      };
+    }
   };
 }

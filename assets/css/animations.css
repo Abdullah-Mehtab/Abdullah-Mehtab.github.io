@@ -260,23 +260,34 @@ body {
 }
 
 /*
-  Snow, as a second smaller set of caps riding on the same peaks. Each cap sits
-  a little further along local +y than its peak, which is up the slope once the
-  130deg rotation is applied, and is inset so rock still shows around it.
+  Snow on the peaks.
+
+  A box-shadow spread is a square, and this element is rotated 130deg, so every
+  shadow renders as a diamond: that is how the peaks themselves are drawn. Two
+  earlier attempts got this wrong. Offsetting each cap along local +y put it up
+  AND to the left once the rotation was applied, so the caps hung off the side
+  of their own mountains as loose white diamonds. Clipping the pseudo-element
+  to fix that removed every shadow, because the element itself is 2px across
+  and a clip applies to the shadows too.
+
+  The offsets below are along the one local direction that renders as straight
+  up the screen for a 130deg rotation, which is (-0.766, +0.643). Each cap is
+  a third of its peak's spread, lifted eight tenths of it, so it caps the rock
+  rather than covering it. Do not offset these by eye.
 */
 .mountain::after {
   content: '';
   position: absolute;
   inset: 0;
-  border-radius: inherit;
   box-shadow: 
-    0 26px 0 26px #eaf1f7,
-    60px 86px 0 38px #eaf1f7,
-    90px 118px 0 26px #eaf1f7,
-    250px 278px 0 26px #eaf1f7,
-    290px 348px 0 26px #eaf1f7,
-    320px 426px 0 27px #eaf1f7;
+    -31px 26px 0 17px #dde7f0,
+    17px 86px 0 24px #dde7f0,
+    59px 116px 0 17px #dde7f0,
+    219px 276px 0 17px #dde7f0,
+    259px 346px 0 17px #dde7f0,
+    289px 426px 0 17px #dde7f0
 }
+
 
 .hill {
   position: absolute;
@@ -329,14 +340,21 @@ body {
   bottom: 0px;
   right: 50%;
   position: absolute;
-  background: #eee;
-  filter: brightness(0.5) saturate(0.9) hue-rotate(180deg);
 }
+/*
+  The truck takes a different colour on every theme, and it is the only part of this scene
+  that does. The mountains are rock and the trees are trees wherever the theme goes, but a
+  truck is painted, and a grey one was the deadest thing on the page.
+
+  One rotation of a single red base rather than eighteen SVGs. --truck-shift lives in each
+  theme's own token block in portfolio-v2.css, so adding a theme means adding one more line
+  where all its other colours already are.
+*/
 .truck {
   background: url(../images/truck.svg) no-repeat;
   background-size: contain;
   height: 60px;
-  filter: brightness(0.5) saturate(0.) hue-rotate(180deg);
+  filter: brightness(0.86) saturate(1.05) hue-rotate(var(--truck-shift, 0deg));
 }
 .truck:before {
   content: " ";
@@ -346,10 +364,12 @@ body {
     -30px 28px 0 1.5px #fff,
      -35px 18px 0 1.5px #fff;
 }
+/* Rubber is rubber. The wheels stay dark and take no hue from the theme. */
 .wheels {
   background: url(../images/wheels.svg) no-repeat;
   height: 15px;
   margin-bottom: 0;
+  filter: brightness(0.42) saturate(0.2);
 }
 
 .tree  { animation: tree 3s 0.000s linear infinite; }

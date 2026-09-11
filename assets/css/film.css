@@ -422,11 +422,19 @@ body.film .site-footer {
   position: relative;
   /*
     A pin one viewport tall always takes a full viewport of scrolling to travel off screen, so
-    only the height above 100vh is a hold: 175vh holds the frame for 75vh and spends 100vh
-    letting it go. Five screens of scrolling for five paragraphs was the previous answer, and
-    a reviewer counted whole viewports across which nothing changed at all.
+    only the height above 100vh is a hold: this holds the frame for 188vh and spends 100vh
+    letting it go.
+
+    It was 175vh, which gave each act 113vh of scroll to own. The camera's whole move for an
+    act happens inside that, so at 113vh a flick of the wheel carried the reader most of the
+    way through a set: the owner's words were "it takes me TOO FAR inside TOO QUICKLY".
+    Doubling the scroll an act owns halves the distance covered per turn of the wheel without
+    changing a single camera move.
+
+    The overlap below stays where it is. It is already exactly at the arithmetic limit that
+    tools/check-site.mjs enforces, and raising it is what breaks the handoff between acts.
   */
-  height: 175vh;
+  height: 288vh;
 }
 
 /*
@@ -448,6 +456,15 @@ body.film .site-footer {
   depths landed on a half arrived frame four times. Set it above 0.68 and two columns of live
   text share the same pixels, which a different reviewer called the worst fault on the page.
   tools/check-site.mjs cannot catch either; .claude-tools/audit-handoff.mjs sweeps for both.
+*/
+/*
+  Left at 62vh. Raising it to 80vh, which the pacing budget in tools/check-site.mjs allows
+  once the arrival span is short, put two acts' copy on the same screen: the budget models the
+  copy fading out, and the outgoing act's copy does not fade, it travels. The blank window
+  between acts is closed by shortening the arrival instead, in assets/js/film.js.
+
+  The value below is read by that check with a regular expression, so nothing may come between
+  the brace and the declaration.
 */
 .act + .act {
   margin-top: -62vh;
@@ -537,7 +554,7 @@ body.film .act-pin > .section-inner {
 
   /* Sequence: a heading over a run of numbered steps that share one rule. */
   body.film [data-frame="sequence"] > .section-heading {
-    grid-column: 1 / span 10;
+    grid-column: 1 / span 8;
   }
 
   body.film [data-frame="sequence"] > .case-flow {
@@ -602,7 +619,10 @@ body.film .tag {
   text-transform: uppercase;
   letter-spacing: 0.2em;
   font-size: var(--t-meta);
-  color: color-mix(in srgb, var(--text) 62%, transparent);
+  /* Was 62%, which measured 2.9:1 against the page at this size: under the 4.5:1 floor for
+     body text, and it has been the worst-contrast line on the chapter through six reviews.
+     Small letter-spaced mono needs more ink than a paragraph does, not less. */
+  color: color-mix(in srgb, var(--text) 86%, transparent);
 }
 
 body.film .chapter-meta {
@@ -1743,7 +1763,12 @@ body.scene-live .act > section {
   */
   body.film.scene-live [data-frame="title"] > .case-metrics,
   body.film.scene-live [data-frame="sequence"] > .case-flow {
-    grid-column: 1 / -1;
+    /* Wider than the reading column because four cards in six columns stack two by two and
+       add two hundred pixels to a frame that has nine hundred to fit in. Not the full twelve,
+       though: at full width the right-hand cards sit in the set's own third of the frame, and
+       a set passing behind them measured three times the edge budget inside the word
+       "Detect". Ten columns fits the row and leaves the set somewhere to be. */
+    grid-column: 1 / span 8;
   }
 
   body.film.scene-live [data-frame="pair"] > :nth-child(1),
@@ -1755,8 +1780,11 @@ body.scene-live .act > section {
     grid-column: 1 / span 4;
   }
 
+  /* The result column stops at the same place the single-column acts do, so the set has the
+     same clear third of the frame here as it does everywhere else. Running it to column
+     eight is what put a lit dashboard behind the last two lines of this paragraph. */
   body.film.scene-live [data-frame="split"] > :nth-child(2) {
-    grid-column: 5 / span 4;
+    grid-column: 5 / span 3;
   }
 
   body.film.scene-live [data-frame="coda"] > .chapter-meta,
@@ -1778,13 +1806,25 @@ body.scene-live .act > section {
   off below 820px; this is the other half of that decision.
 */
 @media (max-width: 900px) {
-  /* On a phone the copy is the whole width, so its scrim is a full ellipse
-     rather than one weighted to the left. */
-  /* On a phone the copy is the whole width, so its ground is a full ellipse
-     rather than one weighted to the left. */
+  /*
+    No reserved band, in the end.
+
+    Reserving the top of the title card for the set works at the top of the page and nowhere
+    else: below the frame breakpoint the acts are ordinary flow, so the copy scrolls up
+    through whatever band is reserved for it and lands on the set anyway. Three attempts at
+    widening the band made the measurement worse, not better.
+
+    What works on a phone is what the measurements support: the camera holds one height so
+    every set stays in the upper part of the window, the copy carries its own ground, and the
+    track's log rows and packet ticks are dropped because they are the only things with hard
+    edges that were never inside a set and so never moved out of the way.
+  */
+
+  /* The copy's ground is a full ellipse here rather than one weighted to the left, and it
+     sits low, under the copy, so the band above it stays clear. */
   body.scene-live .act > section {
     background-image: radial-gradient(
-      ellipse 96% 58% at 50% 50%,
+      ellipse 108% 62% at 50% 58%,
       color-mix(in srgb, var(--bg-deep, #060b12) 94%, transparent) 0%,
       color-mix(in srgb, var(--bg-deep, #060b12) 78%, transparent) 58%,
       transparent 88%

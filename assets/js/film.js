@@ -102,7 +102,16 @@
       // 0.85 of the hold, 63% of scroll depths showed a fully composed frame, and at zero
       // 82% do (.claude-tools/audit-handoff.mjs). What a held frame does instead is dolly,
       // which never leaves a word half drawn.
-      const phaseSpan = vh * 0.3;
+      // The arrival span, and it is the width of the blank window between acts.
+      //
+      // The pacing arithmetic in tools/check-site.mjs keeps two acts off the same pixels by
+      // making the outgoing copy reach zero exactly as the incoming copy starts arriving. The
+      // consequence nobody had noticed is that the incoming copy then takes this long to
+      // become readable, and for that whole span the frame has no legible text in it: at 0.3
+      // screens that is 270px of scroll showing a scrim over an empty room, which is the worst
+      // frame on the page. A shorter arrival closes the window without breaking the rule, and
+      // buys room in the same budget to raise the overlap, which closes it almost completely.
+      const phaseSpan = vh * 0.12;
       put(act, "--phase", clamp((-rect.top + vh * 0.3) / phaseSpan).toFixed(2));
       put(act, "--act", travel > 0 ? clamp(-rect.top / travel).toFixed(2) : "1");
 
@@ -144,10 +153,29 @@
     if (staged) put(body, "--act-now", nearest ? nearest.style.getPropertyValue("--act") || "0" : "0");
   }
 
+  // Thirty times a second, not sixty.
+  //
+  // Every measure this writes feeds a CSS transition that runs for 700ms, so halving the rate
+  // changes nothing a reader can see. What it does change is the cost: each pass reads eight
+  // layout rectangles and writes four custom properties per act, and a custom property write
+  // invalidates the style of everything below it. Measured at a 4x CPU throttle, this file was
+  // the difference between 117fps with it blocked and 35fps with it running.
+  const MIN_GAP = 33;
+  let lastRun = 0;
+
   function onScroll() {
     if (ticking) return;
     ticking = true;
-    window.requestAnimationFrame(update);
+    window.requestAnimationFrame((now) => {
+      if (now - lastRun < MIN_GAP) {
+        ticking = false;
+        // Still due: come back on the next frame rather than dropping this scroll entirely.
+        window.requestAnimationFrame(() => { ticking = false; onScroll(); });
+        return;
+      }
+      lastRun = now;
+      update();
+    });
   }
 
   window.addEventListener("scroll", onScroll, { passive: true });

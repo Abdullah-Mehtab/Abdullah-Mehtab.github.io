@@ -33,6 +33,7 @@
 }
 
 body[data-theme="professional"] {
+  --truck-shift: 0deg;
   --bg: #08111f;
   --bg-mid: #0d1d31;
   --bg-deep: #050911;
@@ -62,12 +63,14 @@ body[data-theme="professional"] {
 
 body[data-theme="dark"],
 body.portfolio-v2:not([data-theme]) {
+  --truck-shift: 196deg;
   --bg: #07111c;
   --bg-mid: #0b1726;
   --bg-deep: #060b12;
 }
 
 body[data-theme="light"] {
+  --truck-shift: 28deg;
   --bg: #f2f0ea;
   --bg-mid: #e5e2d8;
   --bg-deep: #d6d1c5;
@@ -97,6 +100,7 @@ body[data-theme="light"] {
 }
 
 body[data-theme="forest"] {
+  --truck-shift: 96deg;
   --bg: #07140e;
   --bg-mid: #0d2419;
   --bg-deep: #040b08;
@@ -125,6 +129,7 @@ body[data-theme="forest"] {
 }
 
 body[data-theme="space"] {
+  --truck-shift: 252deg;
   --bg: #050713;
   --bg-mid: #0b102b;
   --bg-deep: #03040a;
@@ -153,6 +158,7 @@ body[data-theme="space"] {
 }
 
 body[data-theme="terminal"] {
+  --truck-shift: 112deg;
   --bg: #020704;
   --bg-mid: #04110a;
   --bg-deep: #010302;
@@ -181,6 +187,7 @@ body[data-theme="terminal"] {
 }
 
 body[data-theme="cyber"] {
+  --truck-shift: 292deg;
   --bg: #090713;
   --bg-mid: #140b27;
   --bg-deep: #06040c;
@@ -209,6 +216,7 @@ body[data-theme="cyber"] {
 }
 
 body[data-theme="ocean"] {
+  --truck-shift: 178deg;
   --bg: #06131a;
   --bg-mid: #082637;
   --bg-deep: #030a0f;
@@ -237,6 +245,7 @@ body[data-theme="ocean"] {
 }
 
 body[data-theme="ember"] {
+  --truck-shift: 12deg;
   --bg: #140805;
   --bg-mid: #271008;
   --bg-deep: #080302;
@@ -265,6 +274,7 @@ body[data-theme="ember"] {
 }
 
 body[data-theme="arctic"] {
+  --truck-shift: 188deg;
   --bg: #08131a;
   --bg-mid: #102535;
   --bg-deep: #03090e;
@@ -293,6 +303,7 @@ body[data-theme="arctic"] {
 }
 
 body[data-theme="royal"] {
+  --truck-shift: 266deg;
   --bg: #0b0717;
   --bg-mid: #17102e;
   --bg-deep: #05030b;
@@ -321,6 +332,7 @@ body[data-theme="royal"] {
 }
 
 body[data-theme="noir"] {
+  --truck-shift: 0deg;
   --bg: #050607;
   --bg-mid: #0b0e10;
   --bg-deep: #020303;
@@ -349,6 +361,7 @@ body[data-theme="noir"] {
 }
 
 body[data-theme="blueprint"] {
+  --truck-shift: 212deg;
   --bg: #061426;
   --bg-mid: #0b213c;
   --bg-deep: #030916;
@@ -377,6 +390,7 @@ body[data-theme="blueprint"] {
 }
 
 body[data-theme="aurora"] {
+  --truck-shift: 148deg;
   --bg: #040b11;
   --bg-mid: #0b1821;
   --bg-deep: #020507;
@@ -405,6 +419,7 @@ body[data-theme="aurora"] {
 }
 
 body[data-theme="rain"] {
+  --truck-shift: 204deg;
   --bg: #060a0f;
   --bg-mid: #111926;
   --bg-deep: #030507;
@@ -433,6 +448,7 @@ body[data-theme="rain"] {
 }
 
 body[data-theme="signal"] {
+  --truck-shift: 44deg;
   --bg: #07080b;
   --bg-mid: #11131a;
   --bg-deep: #020304;
@@ -461,6 +477,7 @@ body[data-theme="signal"] {
 }
 
 body[data-theme="lab"] {
+  --truck-shift: 164deg;
   --bg: #04130f;
   --bg-mid: #0a251f;
   --bg-deep: #020806;
@@ -489,6 +506,7 @@ body[data-theme="lab"] {
 }
 
 body[data-theme="paper"] {
+  --truck-shift: 22deg;
   --bg: #eef1f2;
   --bg-mid: #e0e7eb;
   --bg-deep: #d1d9de;

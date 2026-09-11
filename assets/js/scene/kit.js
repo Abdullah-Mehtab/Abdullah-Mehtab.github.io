@@ -129,6 +129,9 @@ export function panel(texture, worldWidth, worldHeight, opacity) {
 
 // Many copies of one shape as two draw calls instead of two per copy: an InstancedMesh for
 // the bodies and a single LineSegments holding every copy's edges, baked into one buffer.
+//
+// A placement is [x, y, z, rotX, rotY, rotZ, scaleX, scaleY, scaleZ]; everything after the
+// position is optional, and a single scale value applies to all three axes.
 // Eleven heatsink fins and twelve endpoint machines were sixty-six draw calls between them,
 // which was a third of the worst frame on the page.
 export function repeated(geometry, placements, faceColor, lineColor, lineOpacity) {
@@ -139,6 +142,11 @@ export function repeated(geometry, placements, faceColor, lineColor, lineOpacity
   placements.forEach((at, i) => {
     slot.position.set(at[0], at[1], at[2]);
     slot.rotation.set(at[3] || 0, at[4] || 0, at[5] || 0);
+    // Per-copy scale, so one call can carry parts of genuinely different proportions. Seven
+    // connector housings of seven sizes were seven meshes and fourteen draw calls before this;
+    // they are one shape at seven scales, and the draw calls it frees pay for shapes that are
+    // actually different.
+    slot.scale.set(at[6] === undefined ? 1 : at[6], at[7] === undefined ? (at[6] === undefined ? 1 : at[6]) : at[7], at[8] === undefined ? (at[6] === undefined ? 1 : at[6]) : at[8]);
     slot.updateMatrix();
     bodies.setMatrixAt(i, slot.matrix);
   });
@@ -169,6 +177,57 @@ export function repeated(geometry, placements, faceColor, lineColor, lineOpacity
   return group;
 }
 
+// A nameplate: the set's own words, painted into a canvas with a ground behind them.
+//
+// The ground is the part that matters. A label with no backing is legible against empty space
+// and invisible against a dense wireframe, and a reviewer found exactly that: a caption that
+// nothing was covering and nobody could read. Painting a soft dark pill behind the type means
+// the label carries its own contrast wherever it ends up, instead of depending on what the
+// camera happens to have put behind it.
+export function nameplate(text, sub, accent, deep, worldWidth) {
+  const width = 640;
+  const height = sub ? 150 : 104;
+  const texture = painted(width, height, (g, w, h) => {
+    g.clearRect(0, 0, w, h);
+
+    g.font = "600 46px Archivo, 'Segoe UI', sans-serif";
+    const titleWidth = g.measureText(text).width;
+    g.font = "400 30px 'IBM Plex Mono', ui-monospace, monospace";
+    const subWidth = sub ? g.measureText(sub).width : 0;
+    const boxWidth = Math.min(w - 8, Math.max(titleWidth, subWidth) + 48);
+    const left = (w - boxWidth) / 2;
+
+    const ground = g.createLinearGradient(left, 0, left + boxWidth, 0);
+    const shade = "#" + deep.getHexString();
+    ground.addColorStop(0, shade + "00");
+    ground.addColorStop(0.16, shade + "d8");
+    ground.addColorStop(0.84, shade + "d8");
+    ground.addColorStop(1, shade + "00");
+    g.fillStyle = ground;
+    g.fillRect(left, 6, boxWidth, h - 12);
+
+    // A rule under the words rather than a box around them: a border would read as a badge.
+    g.fillStyle = "#" + accent.getHexString();
+    g.globalAlpha = 0.4;
+    g.fillRect(left + 18, h - 12, boxWidth - 36, 2);
+    g.globalAlpha = 1;
+
+    g.textBaseline = "middle";
+    g.textAlign = "center";
+    g.font = "600 46px Archivo, 'Segoe UI', sans-serif";
+    g.fillText(text, w / 2, sub ? 46 : h / 2 - 3);
+    if (sub) {
+      g.globalAlpha = 0.62;
+      g.font = "400 30px 'IBM Plex Mono', ui-monospace, monospace";
+      g.fillText(sub, w / 2, 96);
+      g.globalAlpha = 1;
+    }
+  });
+  const plate = panel(texture, worldWidth, (worldWidth * height) / width, 0);
+  plate.userData.caption = text;
+  return plate;
+}
+
 // A flock of small wireframe objects that tumble and drift on their own, in one draw call.
 //
 // Every set needs matter in the air around it or it reads as a model on a turntable, and the
@@ -195,8 +254,8 @@ export function drift(geometries, count, color, opacity, seed) {
     items.push({
       base,
       offset: total,
-      home: new THREE.Vector3((random() - 0.5) * 260, (random() - 0.5) * 170, (random() - 0.5) * 220),
-      scale: 0.7 + random() * 1.9,
+      home: new THREE.Vector3((random() - 0.5) * 340, (random() - 0.5) * 210, (random() - 0.5) * 280),
+      scale: 0.5 + random() * 1.1,
       spin: (random() - 0.5) * 0.5,
       tilt: random() * Math.PI,
       phase: random() * Math.PI * 2,
@@ -211,6 +270,10 @@ export function drift(geometries, count, color, opacity, seed) {
   const object = new THREE.LineSegments(geometry, new THREE.LineBasicMaterial({
     color, transparent: true, opacity: opacity === undefined ? 0.3 : opacity
   }));
+  // Fixed once, generously. Recomputing it every frame walks every vertex a second time
+  // purely so the frustum test can be exact, and the flock never leaves this radius.
+  geometry.boundingSphere = new THREE.Sphere(new THREE.Vector3(), 320);
+  object.frustumCulled = false;
 
   const spot = new THREE.Object3D();
   const vertex = new THREE.Vector3();
@@ -236,7 +299,6 @@ export function drift(geometries, count, color, opacity, seed) {
         }
       }
       geometry.attributes.position.needsUpdate = true;
-      geometry.computeBoundingSphere();
     }
   };
 }

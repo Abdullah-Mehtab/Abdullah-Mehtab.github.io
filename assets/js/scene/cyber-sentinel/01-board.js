@@ -4,7 +4,7 @@
 // The hardware is not decoration here. Cyber Sentinel's own repository says it runs on a
 // Raspberry Pi 5 under Kali Linux, and the fact a full SIEM fits on a 85mm board is the
 // project's actual claim. So the title act is the board, and the camera tilts down into it.
-import { THREE, clamp01, drift, ease, edgedBox, glow, motes, painted, panel, repeated, seeded, solid, wire } from "../kit.js";
+import { THREE, clamp01, drift, ease, edgedBox, glow, motes, nameplate, painted, panel, repeated, seeded, solid, wire } from "../kit.js";
 
 const BOARD_W = 85;
 const BOARD_D = 56;
@@ -47,25 +47,13 @@ export function buildBoard(palette) {
   ), 0.05);
 
   // ——— silicon ———
-  const soc = edgedBox(15, 2.4, 15, face, accent, 1);
-  soc.position.set(-2, 2, 2);
-  part(soc, 0.16);
-  const socLid = solid(new THREE.PlaneGeometry(13, 13), accent, 0.14);
-  socLid.rotation.x = -Math.PI / 2;
-  socLid.position.set(-2, 3.25, 2);
-  part(socLid, 0.18);
-
-  const ram = edgedBox(11, 1.8, 11, face, accent, 0.9);
-  ram.position.set(-17, 1.7, -3);
-  part(ram, 0.2);
-
-  const rp1 = edgedBox(9, 1.6, 9, face, accent, 0.9);
-  rp1.position.set(14, 1.6, 14);
-  part(rp1, 0.22);
-
-  const pmic = edgedBox(5, 1.2, 5, face, accent, 0.75);
-  pmic.position.set(-30, 1.4, 6);
-  part(pmic, 0.24);
+  // One chip shape at three sizes rather than three meshes. A 10mm unit box scales to the
+  // SoC, the RAM and the southbridge, and the whole of it is two draw calls.
+  part(repeated(new THREE.BoxGeometry(10, 1, 10), [
+    [-2, 2, 2, 0, 0, 0, 1.5, 2.4, 1.5],
+    [-17, 1.7, -3, 0, 0, 0, 1.1, 1.8, 1.1],
+    [14, 1.6, 14, 0, 0, 0, 0.9, 1.6, 0.9]
+  ], face, accent, 0.95), 0.16);
 
   // ——— the 2x20 header ———
   // Fifty-one millimetres of pins is the most recognisable thing on the board, and it is worth
@@ -90,29 +78,17 @@ export function buildBoard(palette) {
   part(header, 0.3);
 
   // ——— ports, all on the two real edges ———
-  const ethernet = edgedBox(16, 13.5, 21, face, accent, 0.95);
-  ethernet.position.set(36, 7.5, -18);
-  part(ethernet, 0.38);
-
-  const usbUpper = edgedBox(15, 15.5, 17, face, accent, 0.95);
-  usbUpper.position.set(36, 8.5, 0);
-  part(usbUpper, 0.42);
-  const usbLower = edgedBox(15, 15.5, 17, face, accent, 0.95);
-  usbLower.position.set(36, 8.5, 18);
-  part(usbLower, 0.46);
-
-  for (let i = 0; i < 2; i++) {
-    const hdmi = edgedBox(7.2, 3.4, 6.4, face, accent, 0.9);
-    hdmi.position.set(-25 + i * 13.5, 2.6, 26);
-    part(hdmi, 0.5 + i * 0.03);
-  }
-  const usbc = edgedBox(9, 3.4, 7.4, face, accent, 0.9);
-  usbc.position.set(-38, 2.6, 24);
-  part(usbc, 0.56);
-
-  const pcie = edgedBox(3, 2.6, 18, face, accent, 0.7);
-  pcie.position.set(30, 2.1, -1);
-  part(pcie, 0.58);
+  // Ethernet, two USB stacks, two micro-HDMI, USB-C and the PCIe connector: seven housings of
+  // seven different proportions, all one box at seven scales.
+  part(repeated(new THREE.BoxGeometry(10, 10, 10), [
+    [36, 7.5, -18, 0, 0, 0, 1.6, 1.35, 2.1],
+    [36, 8.5, 0, 0, 0, 0, 1.5, 1.55, 1.7],
+    [36, 8.5, 18, 0, 0, 0, 1.5, 1.55, 1.7],
+    [-25, 2.6, 26, 0, 0, 0, 0.72, 0.34, 0.64],
+    [-11.5, 2.6, 26, 0, 0, 0, 0.72, 0.34, 0.64],
+    [-38, 2.6, 24, 0, 0, 0, 0.9, 0.34, 0.74],
+    [30, 2.1, -1, 0, 0, 0, 0.3, 0.26, 1.8]
+  ], face, accent, 0.95), 0.4);
 
   // ——— power light ———
   const led = glow(accent, 5, 0);
@@ -128,14 +104,12 @@ export function buildBoard(palette) {
   fanRing.rotation.x = Math.PI / 2;
   fanRing.position.set(-4, 14.5, 12);
   cooler.add(fanRing);
-  const blades = new THREE.Group();
+  const bladeSpots = [];
   for (let i = 0; i < 7; i++) {
-    const blade = solid(new THREE.PlaneGeometry(6.6, 2.1), accent, 0.4);
-    blade.rotation.y = (i / 7) * Math.PI * 2;
-    blade.rotation.x = 0.5;
-    blade.position.set(Math.cos((i / 7) * Math.PI * 2) * 3.4, 0, Math.sin((i / 7) * Math.PI * 2) * 3.4);
-    blades.add(blade);
+    const a = (i / 7) * Math.PI * 2;
+    bladeSpots.push([Math.cos(a) * 3.4, 0, Math.sin(a) * 3.4, 0.5, a, 0]);
   }
+  const blades = repeated(new THREE.BoxGeometry(6.6, 0.2, 2.1), bladeSpots, face, accent, 0.55);
   blades.position.copy(fanRing.position);
   cooler.add(blades);
   cooler.position.y = 6;
@@ -145,22 +119,9 @@ export function buildBoard(palette) {
   // Type has to be painted into a canvas to exist in a WebGL scene at all. Three labels, set
   // in the page's own display face, because a scene with no words in it reads as a screensaver.
   function callout(text, sub) {
-    const texture = painted(512, 128, (g, w, h) => {
-      g.clearRect(0, 0, w, h);
-      g.fillStyle = "#" + accent.getHexString();
-      g.font = "600 44px Archivo, 'Segoe UI', sans-serif";
-      g.textBaseline = "middle";
-      g.fillText(text, 16, 44);
-      g.globalAlpha = 0.62;
-      g.font = "400 28px 'IBM Plex Mono', ui-monospace, monospace";
-      g.fillText(sub, 16, 92);
-      g.globalAlpha = 1;
-      g.fillRect(0, 8, 4, 104);
-    });
-    const plate = panel(texture, 34, 8.5, 0);
-    plate.userData.caption = text;
-    return plate;
+    return nameplate(text, sub, accent, palette.deep, 34);
   }
+
   const labels = [
     { mesh: callout("BCM2712", "quad Arm Cortex-A76"), pos: [34, 24, 6], at: 0.56 },
     { mesh: callout("2x20 GPIO", "header, 2.54mm pitch"), pos: [30, 4, -36], at: 0.62 },
@@ -186,10 +147,9 @@ export function buildBoard(palette) {
   // volumes well back, and a soft pool of light underneath where the surface would be. Not a
   // grid, and not a floor plane with lines on it; those are what the CSS version drew.
   const bench = repeated(new THREE.BoxGeometry(26, 10, 18), [
-    [-84, -34, -70],
-    [-50, -30, -96],
-    [64, -36, -84],
-    [96, -28, -60]
+    [-84, -34, -70], [-50, -30, -96], [64, -36, -84], [96, -28, -60],
+    [-118, -32, -58], [22, -38, -112], [132, -34, -92], [-16, -30, -134],
+    [78, -30, -136], [-96, -36, -118]
   ], face, accent, 0.22);
   bench.userData.ambient = true;
   group.add(bench);
@@ -205,7 +165,7 @@ export function buildBoard(palette) {
   // be: it is what the CSS version drew everywhere, and it is what the owner rejected it for.
   // The board hangs in fog and dust, and its own edges do all the drawing.
   const dust = [];
-  for (let i = 0; i < 220; i++) {
+  for (let i = 0; i < 520; i++) {
     dust.push((random() - 0.5) * 260, -20 + random() * 110, (random() - 0.5) * 220);
   }
   const air = motes(dust, accent, 1.3, 0.42);
@@ -214,13 +174,17 @@ export function buildBoard(palette) {
 
   // Components, loose in the air around the bench: chip bodies, a fan blade, a length of pin
   // header, a heatsink fin. The same parts the board is made of, not floating platonic solids.
+  // Chips, ribbon strips, a header offcut, a heatsink fin, a blank board. Flat rectangular
+  // parts, all of them, because a wireframe cylinder or cone reads as a hexagonal prism or a
+  // diamond, and floating platonic solids are the benchmark's ambient vocabulary rather than
+  // this project's.
   const spares = drift([
-    new THREE.BoxGeometry(9, 2, 9),
-    new THREE.BoxGeometry(2.2, 1.2, 14),
-    new THREE.CylinderGeometry(4.4, 4.4, 1.2, 8),
-    new THREE.BoxGeometry(14, 5, 0.6),
-    new THREE.BoxGeometry(5, 5, 5)
-  ], 11, accent, palette.lightRoom ? 0.24 : 0.3, 91);
+    new THREE.BoxGeometry(9, 1.6, 9),
+    new THREE.BoxGeometry(2.2, 1, 14),
+    new THREE.BoxGeometry(16, 0.8, 5),
+    new THREE.BoxGeometry(14, 4, 0.6),
+    new THREE.BoxGeometry(11, 0.7, 7)
+  ], 22, accent, palette.lightRoom ? 0.24 : 0.3, 91);
   spares.object.userData.ambient = true;
   group.add(spares.object);
 
@@ -270,7 +234,7 @@ export function buildBoard(palette) {
       const powered = ease(clamp01((build - 0.5) * 4));
       led.material.opacity = powered * (0.65 + Math.sin(t * 2.2) * 0.35);
       led.scale.setScalar(4 + powered * 2);
-      socLid.material.opacity = 0.08 + powered * 0.12 + Math.sin(t * 1.4) * 0.03;
+
 
       const labelIn = (at) => ease(clamp01((build - at) * 7));
       for (const label of labels) label.mesh.material.opacity = labelIn(label.at) * 0.95;
@@ -282,13 +246,18 @@ export function buildBoard(palette) {
     // Arrive looking down on the board and end level with it, close enough that the header
     // pins and the cooler fins have real size. The distances are small because the whole set
     // is 53 units wide: a bigger move flies straight past it, which is what the first cut did.
-    // Down and in. Starts above and back from the board and ends close over the header, so
-    // the reader arrives looking at a whole board and leaves able to count the pins.
-    mod: (p) => ({
-      dx: -6 + 10 * ease(p),
-      dy: 26 - 22 * ease(p),
-      dz: 54 - 46 * ease(p),
-      df: 0
-    })
+    // Establish, then descend. The whole board is readable for the first third of the act;
+    // after that the camera drops toward the header until the pins have real size. Doing the
+    // whole descent from the first frame meant the reader never saw a whole board at all.
+    mod: (p) => {
+      const settle = ease(clamp01(p / 0.34));
+      const enter = ease(clamp01((p - 0.34) / 0.66));
+      return {
+        dx: -8 - 2 * settle + 14 * enter,
+        dy: 30 - 4 * settle - 20 * enter,
+        dz: 82 - 10 * settle - 28 * enter,
+        df: 0
+      };
+    }
   };
 }
