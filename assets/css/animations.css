@@ -235,59 +235,32 @@ body {
 }
 
 /*
-  Mountains are rock, and rock is grey wherever the theme goes. They were
-  var(--primary-color), which made a mountain range the same flat blue as a
-  button. The peaks are box-shadow spreads on a 2px dot, and the whole element
-  is rotated 130deg, so "up the mountain" in local coordinates is +y.
+  The mountain range.
+
+  It is an SVG of triangles now. It used to be six box-shadow spreads on a 2px element rotated
+  130deg, and a box-shadow spread is a square: every peak was a diamond, and the snow caps
+  added on top of them were smaller diamonds that hung off the side of the rock rather than
+  capping it. Three attempts to place those caps by arithmetic all produced the same wrong
+  shape, because the shape was wrong before it was placed.
+
+  Rock and snow are fixed colours, not theme tokens. A mountain is grey wherever the theme
+  goes, and the range was var(--primary-color) before this, which made it the same flat blue
+  as a button.
 */
 .mountain {
   position: absolute;
   right: -900px;
-  bottom: -20px;
-  width: 2px;
-  height: 2px;
-  box-shadow: 
-    0 0 0 50px #6d7280,
-    60px 50px 0 70px #6d7280,
-    90px 90px 0 50px #6d7280,
-    250px 250px 0 50px #6d7280,
-    290px 320px 0 50px #6d7280,
-    320px 400px 0 50px #6d7280;
-  transform: rotate(130deg);
+  bottom: -6px;
+  width: 2000px;
+  /* 120, not 150. .loop-wrapper is 125px with overflow hidden and this sits 6px below its
+     floor, so anything taller than 119px has its peaks cut off square. */
+  height: 120px;
+  background: url(../images/mountains.svg) no-repeat left bottom;
+  background-size: 2000px 120px;
   animation: mtn 20s linear infinite;
   opacity: 1;
   will-change: transform;
 }
-
-/*
-  Snow on the peaks.
-
-  A box-shadow spread is a square, and this element is rotated 130deg, so every
-  shadow renders as a diamond: that is how the peaks themselves are drawn. Two
-  earlier attempts got this wrong. Offsetting each cap along local +y put it up
-  AND to the left once the rotation was applied, so the caps hung off the side
-  of their own mountains as loose white diamonds. Clipping the pseudo-element
-  to fix that removed every shadow, because the element itself is 2px across
-  and a clip applies to the shadows too.
-
-  The offsets below are along the one local direction that renders as straight
-  up the screen for a 130deg rotation, which is (-0.766, +0.643). Each cap is
-  a third of its peak's spread, lifted eight tenths of it, so it caps the rock
-  rather than covering it. Do not offset these by eye.
-*/
-.mountain::after {
-  content: '';
-  position: absolute;
-  inset: 0;
-  box-shadow: 
-    -31px 26px 0 17px #dde7f0,
-    17px 86px 0 24px #dde7f0,
-    59px 116px 0 17px #dde7f0,
-    219px 276px 0 17px #dde7f0,
-    259px 346px 0 17px #dde7f0,
-    289px 426px 0 17px #dde7f0
-}
-
 
 .hill {
   position: absolute;
@@ -342,19 +315,22 @@ body {
   position: absolute;
 }
 /*
-  The truck takes a different colour on every theme, and it is the only part of this scene
+  The truck takes a different livery on every theme, and it is the only part of this scene
   that does. The mountains are rock and the trees are trees wherever the theme goes, but a
   truck is painted, and a grey one was the deadest thing on the page.
 
-  One rotation of a single red base rather than eighteen SVGs. --truck-shift lives in each
-  theme's own token block in portfolio-v2.css, so adding a theme means adding one more line
-  where all its other colours already are.
+  One painted livery per theme in assets/images/truck-<theme>.svg, rather than one file
+  filtered eighteen ways. A CSS hue-rotate moves every colour in a file by the same angle, so
+  cab, cargo box, glass and chassis stay locked to each other and every theme got the same
+  flat truck in another shade. Each livery paints its nine parts separately, so a theme
+  changes which truck drives past rather than which filter is over it. --truck-art lives in
+  each theme's own token block in portfolio-v2.css, beside all its other colours; a theme
+  without one falls back to the professional truck rather than to a grey silhouette.
 */
 .truck {
-  background: url(../images/truck.svg) no-repeat;
+  background: var(--truck-art, url(../images/truck-professional.svg)) no-repeat;
   background-size: contain;
   height: 60px;
-  filter: brightness(0.86) saturate(1.05) hue-rotate(var(--truck-shift, 0deg));
 }
 .truck:before {
   content: " ";
@@ -415,8 +391,8 @@ body {
   100%   { }
 }
 @keyframes mtn {
-  0%   { transform: translate(1350px) rotate(130deg); opacity: 1; }
-  100% { transform: translate(-4000px) rotate(130deg); opacity: 1; }
+  0%   { transform: translate(1350px); opacity: 1; }
+  100% { transform: translate(-4000px); opacity: 1; }
 }
 @keyframes hill {
   0%   { transform: translate(1350px); opacity: 1; }

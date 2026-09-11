@@ -1,0 +1,51 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="2000" height="120" viewBox="0 0 2000 120" preserveAspectRatio="none" role="img" aria-label="Mountain range">
+  <!-- Drawn as triangles on purpose. animations.css used to build these from box-shadow
+       spreads on a 2px element rotated 130deg, and a box-shadow spread is a square: every
+       peak came out a diamond and every snow cap a smaller diamond hanging off the side of
+       it. A cap here is the peak's own triangle cut at the snowline, so its edges sit on the
+       rock's edges and nothing overhangs.
+
+       Two ranges: a paler one behind carrying the snow, a darker one in front with none. The
+       darker range is what keeps the rock from out-shouting the truck, which is the subject
+       of this strip. The height is 120 because the strip that clips this is 125 tall and the
+       element sits 6px low, so a taller peak would be beheaded rather than drawn.
+
+       Both side edges fall mid-slope, so the range reads as continuous as it travels. -->
+  <g fill="#6a707c">
+    <polygon points="-334,120 -170,42 -6,120"/>
+    <polygon points="-102,120 27,46 156,120"/>
+    <polygon points="25,120 190,46 355,120"/>
+    <polygon points="293,120 410,25 527,120"/>
+    <polygon points="484,120 607,33 730,120"/>
+    <polygon points="648,120 758,48 868,120"/>
+    <polygon points="812,120 974,39 1136,120"/>
+    <polygon points="1091,120 1197,24 1303,120"/>
+    <polygon points="1292,120 1404,18 1516,120"/>
+    <polygon points="1413,120 1548,26 1683,120"/>
+    <polygon points="1600,120 1764,15 1928,120"/>
+    <polygon points="1815,120 1945,42 2075,120"/>
+    <polygon points="2009,120 2151,28 2293,120"/>
+  </g>
+  <g fill="#d3dce6">
+    <polygon points="375,54 410,25 445,54"/>
+    <polygon points="570,59 607,33 644,59"/>
+    <polygon points="1165,53 1197,24 1229,53"/>
+    <polygon points="1370,49 1404,18 1438,49"/>
+    <polygon points="1508,54 1548,26 1588,54"/>
+    <polygon points="1715,46 1764,15 1813,46"/>
+    <polygon points="2108,56 2151,28 2194,56"/>
+  </g>
+  <g fill="#4d525c">
+    <polygon points="-384,120 -170,54 44,120"/>
+    <polygon points="-172,120 41,83 254,120"/>
+    <polygon points="102,120 302,80 502,120"/>
+    <polygon points="343,120 513,70 683,120"/>
+    <polygon points="595,120 761,86 927,120"/>
+    <polygon points="756,120 958,58 1160,120"/>
+    <polygon points="1032,120 1175,79 1318,120"/>
+    <polygon points="1301,120 1439,78 1577,120"/>
+    <polygon points="1476,120 1633,54 1790,120"/>
+    <polygon points="1686,120 1876,57 2066,120"/>
+    <polygon points="1979,120 2162,79 2345,120"/>
+  </g>
+</svg>
