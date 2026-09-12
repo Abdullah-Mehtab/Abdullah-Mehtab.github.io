@@ -313,10 +313,13 @@ export function buildOutputs(palette) {
     // Two screens the reader is meant to read, so they stay whole inside the frame.
     contained: true,
     // This is the only act whose copy sits in two columns beside the set rather than above
-    // it, so the camera follows this set less far than the others and it stays on its own
-    // side of the frame. Following it the usual amount puts a lit dashboard behind a
-    // paragraph, which measures as a sixteen per cent contrast drop on that line.
-    aimFollow: 0.26,
+    // it, so the camera follows this set a little less far than the others. At 0.26 it barely
+    // followed at all: the closing set slid to within a tenth of the frame edge while it was
+    // still growing, which is the reader watching it leave rather than arriving at it. The
+    // reason for the low value was a lit dashboard landing behind a paragraph, worth a sixteen
+    // per cent contrast drop on one line, and that is what the contrast floor in
+    // .claude-tools/audit-scene-frame.mjs exists to catch if it returns.
+    aimFollow: 0.78,
     update(t, p) {
       // Both screens are most of the way in by the time the act arrives. Ramping them from
       // almost nothing left the opening third of this act, which is its establishing view,

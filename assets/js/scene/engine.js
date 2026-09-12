@@ -22,6 +22,11 @@ const CAM_BACK = 62;
 // Less of each act parked, more of it travelling. With the act's scroll doubled, holding for
 // 55% of it would mean a very long still frame followed by the same quick flight; at 0.46 the
 // extra scroll goes into the move, which is where the reader wanted it.
+//
+// Raising it to 0.58 to match the pin release was tried, on the theory that the camera was
+// crossing the copy while it was still being read. It made the same measurement worse, 2.69 to
+// 3.49: what crosses the words is act three's own set growing as the camera closes on it, not
+// the flight to the next one.
 const HOLD = 0.46;
 // A longer glide. At 0.1 the camera is within a pixel of the scroll position in about twenty
 // frames; at 0.065 it keeps moving for roughly half a second after the wheel stops, which is
@@ -31,7 +36,18 @@ const POINTER_DAMPING = 0.04;
 const BASE_FOV = 55;
 const AIM_FOLLOW = 0.62;
 // How far the camera swings away from the sets through the middle of a flight, in world units.
-const FLIGHT_SWING = 46;
+//
+// Zero, on the owner's repeated verdict. This existed so the flight would clear the set it was
+// leaving rather than passing through its geometry, after a review called two inside-the-rack
+// frames a fault. The owner wants the opposite and has said so from the first pass: "we can
+// literally go INTO the models and see the geometry", and later, of what the swing produces,
+// "it just floats off to the right". Swinging sideways while closing on a set is exactly what
+// makes it leave the frame edgeways instead of being arrived at, measured at 1.15, 4.90 and
+// 2.15 of the way to the frame edge on the first three acts.
+const FLIGHT_SWING = 0;
+// How far the camera closes on the final set, as a fraction of the gap between stations. It
+// has no next station to travel to, so without this it never approaches the closing set at all.
+const LAST_APPROACH = 0.34;
 // The camera's fixed height below the frame breakpoint, chosen so every set sits in the band
 // film.css reserves above the copy.
 const NARROW_EYE = 34;
@@ -356,7 +372,7 @@ export function mountFilm({ canvas, buildStations }) {
   // the set rather than past it, and the copy keeps its legibility from the scrim behind it
   // rather than from the set being somewhere else.
   const DESKTOP_OFFSET = [16, 18, 12, 40];
-  const DESKTOP_LIFT = [10, 6, 2, 6];
+  const DESKTOP_LIFT = [10, 6, 20, 6];
   // On a phone the sets drop below the reader's line of sight rather than sitting behind the
   // heading they belong to.
   const NARROW_LIFT = -26;
@@ -531,7 +547,18 @@ export function mountFilm({ canvas, buildStations }) {
     // Hold on the set, then fly. Easing only the travel half means the camera leaves and
     // arrives gently but never creeps while the reader is stationary and reading.
     const held = clamp01(progress / HOLD);
-    const travel = index >= last ? 0 : ease(clamp01((progress - HOLD) / (1 - HOLD)));
+    const flight = ease(clamp01((progress - HOLD) / (1 - HOLD)));
+
+    // The last station has nowhere to fly to, and parking the camera there for the whole act
+    // is what made the closing set a distant still: 33% of the frame at its biggest, and that
+    // biggest arriving at the final sample of the act, so the reader never arrived at it
+    // before the chapter ended. It gets a short approach of its own instead, which closes most
+    // of the resting gap without carrying the camera out the far side of the set.
+    const atLast = index >= last;
+    const travel = atLast ? flight * LAST_APPROACH : flight;
+    // There is no next station to blend toward at the end, and blending toward itself would
+    // pull its own move back to its resting pose as the reader arrives.
+    const blend = atLast ? 0 : travel;
     const along = index + travel;
 
     state.index = index;
@@ -542,13 +569,13 @@ export function mountFilm({ canvas, buildStations }) {
     // its move the full progress rather than the hold is what keeps it moving through its
     // second half instead of parking. Without this the closing act is a still frame for the
     // last 45% of its scroll, which is what "round 4 is STATIC" described.
-    const heldHere = index >= last ? (reduced ? 1 : progress) : (reduced ? 1 : held);
+    const heldHere = atLast ? (reduced ? 1 : progress) : (reduced ? 1 : held);
     const here = stations[index].mod(heldHere, time);
     const next = stations[Math.min(index + 1, last)].mod(0, time);
-    const dx = lerp(here.dx, next.dx, travel);
-    const dy = lerp(here.dy, next.dy, travel);
-    const dz = lerp(here.dz, next.dz, travel);
-    const df = lerp(here.df, next.df, travel);
+    const dx = lerp(here.dx, next.dx, blend);
+    const dy = lerp(here.dy, next.dy, blend);
+    const dz = lerp(here.dz, next.dz, blend);
+    const df = lerp(here.df, next.df, blend);
 
     smoothPointerX = lerp(smoothPointerX, pointerX, POINTER_DAMPING);
     smoothPointerY = lerp(smoothPointerY, pointerY, POINTER_DAMPING);
@@ -565,7 +592,7 @@ export function mountFilm({ canvas, buildStations }) {
     // word "Detect" went to three times its budget. Swinging sideways, away from the side the
     // sets are on, clears the same geometry and moves everything further from the words
     // rather than across them.
-    const arc = Math.sin(travel * Math.PI);
+    const arc = Math.sin(blend * Math.PI);
     const swing = arc * FLIGHT_SWING;
     // On a phone the camera holds its height for the whole chapter. Each set's move descends
     // toward its subject, which is right on a wide screen and wrong on a narrow one: the copy
@@ -580,7 +607,7 @@ export function mountFilm({ canvas, buildStations }) {
 
     // The look target leads the camera down the track and answers the pointer at more than
     // twice the camera's own swing, which is what makes a still frame feel hand-held.
-    const kick = Math.sin(travel * Math.PI);
+    const kick = Math.sin(blend * Math.PI);
     // How much of the set's sideways offset the camera follows. Near 1 the camera looks
     // straight at the set and flies into it; near 0 it stays on the track and the set drifts
     // past the edge. It was 0.18, and "the model moves towards the right side when scrolling
@@ -593,7 +620,7 @@ export function mountFilm({ canvas, buildStations }) {
     const followNext = stations[Math.min(index + 1, last)].aimFollow === undefined
       ? AIM_FOLLOW
       : stations[Math.min(index + 1, last)].aimFollow;
-    const aimX = lerp((offsets[index] || 0) * followHere, (offsets[Math.min(index + 1, last)] || 0) * followNext, travel);
+    const aimX = lerp((offsets[index] || 0) * followHere, (offsets[Math.min(index + 1, last)] || 0) * followNext, blend);
     camera.lookAt(
       aimX + dx * 0.4 - swing + smoothPointerX * 4,
       eyeY * 0.5 - smoothPointerY * 2.6,
@@ -605,7 +632,7 @@ export function mountFilm({ canvas, buildStations }) {
 
     // The room crossfades with the camera, so the change of air happens during the flight
     // rather than snapping at the act boundary.
-    roomColour.copy(palette.rooms[index]).lerp(palette.rooms[Math.min(index + 1, last)], travel);
+    roomColour.copy(palette.rooms[index]).lerp(palette.rooms[Math.min(index + 1, last)], blend);
     renderer.setClearColor(roomColour, 1);
     if (scene.fog) scene.fog.color.copy(roomColour);
 
