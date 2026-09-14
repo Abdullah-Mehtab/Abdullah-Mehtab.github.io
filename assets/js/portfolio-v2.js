@@ -97,12 +97,32 @@
     const header = document.querySelector(".site-header");
     if (!header) return;
 
+    // Read once per frame, and write only when the answer changes.
+    //
+    // This ran on every scroll event and read window.scrollY, which forces the browser to
+    // recalculate layout whenever anything has dirtied style since the last frame. On a page
+    // that writes a custom property or two per frame, that is every frame, and profiling a
+    // scripted scroll through the chapter put this function and the layout it forces at about
+    // a fifth of all frame time, well above the whole 3D layer.
+    //
+    // Same behaviour: the class ends up in the same state at the same scroll position.
+    let scrolled = null;
+    let pending = false;
+
     function updateHeader() {
-      header.classList.toggle("is-scrolled", window.scrollY > 80);
+      pending = false;
+      const past = window.scrollY > 80;
+      if (past === scrolled) return;
+      scrolled = past;
+      header.classList.toggle("is-scrolled", past);
     }
 
     updateHeader();
-    window.addEventListener("scroll", updateHeader, { passive: true });
+    window.addEventListener("scroll", () => {
+      if (pending) return;
+      pending = true;
+      window.requestAnimationFrame(updateHeader);
+    }, { passive: true });
   }
 
   function ensureBackdrop() {

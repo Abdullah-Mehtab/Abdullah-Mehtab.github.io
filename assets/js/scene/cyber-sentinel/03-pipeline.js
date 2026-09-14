@@ -59,6 +59,7 @@ export function buildPipeline(palette) {
   const face = palette.face;
   const random = seeded(41);
   const probe = new THREE.Vector3();
+  const beadProbe = new THREE.Vector3();
 
   // Every nameplate comes from kit.nameplate, which paints a ground behind the words. Without
   // it a label is legible over empty space and invisible over a dense wireframe, which is
@@ -164,6 +165,16 @@ export function buildPipeline(palette) {
   });
 
   // ——— the edges ———
+  //
+  // All eight in one line buffer and all eight beads in one point buffer, which is two draw
+  // calls instead of sixteen. This act is the densest on the page and the whole chapter sits
+  // against a hard ceiling of 120 draw calls a frame; bringing the flow's nodes close enough
+  // together to read as a sequence put more of them on screen at once and took it over.
+  //
+  // What that costs: the edges come up together rather than one after another. The nodes still
+  // arrive in order, which is what carries the sense of the flow being drawn, and an edge
+  // cannot precede the node it leaves anyway.
+  const edgePoints = [];
   const paths = EDGES.map(([fromKey, toKey], i) => {
     const from = new THREE.Vector3(...NODES[fromKey].at);
     const to = new THREE.Vector3(...NODES[toKey].at);
@@ -172,17 +183,25 @@ export function buildPipeline(palette) {
     mid.x += (to.x - from.x) * 0.18;
     mid.y += 6 + (fromKey === "logstash" ? (toKey === "email" ? 10 : -10) : 0);
     const curve = new THREE.QuadraticBezierCurve3(from, mid, to);
-    const line = thread(curve.getPoints(30), accent, 0);
-    group.add(line);
-
-    const beads = [];
-    for (let b = 0; b < 1; b++) {
-      const bead = glow(accent, 4, 0);
-      group.add(bead);
-      beads.push({ bead, offset: random() });
-    }
-    return { line, beads, curve, at: i / EDGES.length };
+    const along = curve.getPoints(30);
+    for (let p = 0; p < along.length - 1; p++) edgePoints.push(along[p], along[p + 1]);
+    return { curve, offset: random(), at: i / EDGES.length };
   });
+
+  const edges = new THREE.LineSegments(
+    new THREE.BufferGeometry().setFromPoints(edgePoints),
+    new THREE.LineBasicMaterial({ color: accent, transparent: true, opacity: 0, depthWrite: false })
+  );
+  group.add(edges);
+
+  const beadPositions = new Float32Array(EDGES.length * 3);
+  const beads = motes(Array.from(beadPositions), accent, 5.5, 0);
+  beads.geometry.setAttribute("position", new THREE.BufferAttribute(beadPositions, 3));
+  // Same reason as the swarm in act two: an exact bounding sphere per frame is a second pass
+  // over every point for a frustum test on something that is always in shot.
+  beads.geometry.boundingSphere = new THREE.Sphere(new THREE.Vector3(), 160);
+  beads.frustumCulled = false;
+  group.add(beads);
 
   // ——— conduit ———
   // Long runs of trunking either side of the flight path. They are what gives the fly-through
@@ -265,17 +284,19 @@ export function buildPipeline(palette) {
         const k = ease(clamp01((drawn - item.at * 0.8) / 0.18));
         item.node.visible = k > 0.01;
         item.node.scale.setScalar(Math.max(0.001, k));
-        // Named within about eighty units, gone by two hundred and forty. It was fifty and a
-        // hundred and forty, which named at most three nodes at a time: that is right for a
-        // graph the reader is inside and wrong for one they are looking at, and the far half of
-        // this flow spent the whole act outside it. Two plates landing on each other is handled
+        // Named out to about two hundred and fifty units, gone by three hundred and fifty. It
+        // was fifty and a hundred and forty, which named at most three nodes at a time: that is
+        // right for a graph the reader is inside and wrong for one they are looking at. The far
+        // end of this flow sits around a hundred and sixty units out at the establishing depth,
+        // and at the old falloff its plates never came above half opacity, which means the room
+        // showing through the ground they are painted on. Two plates landing on each other is handled
         // where it can be handled, in the engine, which hides the further of any two that
         // overlap on screen.
         let near = 1;
         if (camera) {
           item.node.getWorldPosition(probe);
           const range = probe.distanceTo(camera.position);
-          near = clamp01(1.5 - Math.max(0, range - 80) / 160);
+          near = clamp01(1.8 - Math.max(0, range - 90) / 200);
         }
         item.label.material.opacity = k * 0.95 * near;
         if (item.halo) item.halo.material.opacity = k * 0.16 * (0.85 + Math.sin(t * 1.3 + item.at * 9) * 0.15);
@@ -286,17 +307,20 @@ export function buildPipeline(palette) {
         }
       }
 
+      // One opacity for the whole edge buffer, taken from the last edge to arrive, so the flow
+      // is not drawn before the nodes it joins.
+      const edgesIn = ease(clamp01((drawn - 0.8) / 0.16));
+      edges.material.opacity = edgesIn * 0.42;
+      beads.material.opacity = edgesIn * 0.75;
       for (let i = 0; i < paths.length; i++) {
         const path = paths[i];
-        const k = ease(clamp01((drawn - path.at * 0.8) / 0.16));
-        path.line.material.opacity = k * 0.42;
-        for (const { bead, offset } of path.beads) {
-          const along = (t * 0.3 + offset + i * 0.13) % 1;
-          bead.position.copy(path.curve.getPoint(along));
-          bead.material.opacity = k * (0.35 + Math.sin(along * Math.PI) * 0.6);
-          bead.scale.setScalar(2.5 + Math.sin(along * Math.PI) * 2.5);
-        }
+        const along = (t * 0.3 + path.offset + i * 0.13) % 1;
+        path.curve.getPoint(along, beadProbe);
+        beadPositions[i * 3] = beadProbe.x;
+        beadPositions[i * 3 + 1] = beadProbe.y;
+        beadPositions[i * 3 + 2] = beadProbe.z;
       }
+      beads.geometry.attributes.position.needsUpdate = true;
 
       air.rotation.z = t * 0.01;
       cargo.update(t);

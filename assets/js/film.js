@@ -261,30 +261,38 @@
     const staged = !body.classList.contains("scene-live");
     if (staged) put(body, "--film-depth", String(Math.round((window.scrollY * 0.45) % 110)));
 
+    // Every rectangle this pass needs, read before anything is written.
+    //
+    // A custom property write dirties style for the subtree it is on, and the next
+    // getBoundingClientRect then has to recalculate layout before it can answer. Reading each
+    // act, writing to it, and reading the next one makes the browser do that once per act, and
+    // it showed up as a sixth of all frame time under a profiler. Read everything, then write
+    // everything, and it happens once.
+    const rects = acts.map((act) => act.getBoundingClientRect());
+    const lastRect = rects[rects.length - 1];
+
     // One measure per act: --act, how far through its hold it is, 0 as it pins and 1 as it
     // releases. The stage glow reads it through --act-now. There were three, and the other two
     // computed the copy's opacity and position from scroll offset, which is why the copy ran
     // backwards when the reader did.
-    for (const act of acts) {
-      const rect = act.getBoundingClientRect();
-      // An act shorter than the viewport never pins, so it has no hold to be part way through.
-      const travel = Math.max(rect.height - vh, 0);
-
-      put(act, "--act", travel > 0 ? clamp(-rect.top / travel).toFixed(2) : "1");
-
-    }
-
-    // The stage takes its character from whichever act is nearest the middle of the screen, so
-    // the space changes as the chapter advances instead of being one backdrop throughout.
+    //
+    // The stage also takes its character from whichever act is nearest the middle of the
+    // screen, so the space changes as the chapter advances instead of being one backdrop.
     let nearest = null;
     let nearestDistance = Infinity;
-    for (const act of acts) {
-      const rect = act.getBoundingClientRect();
+    for (let i = 0; i < acts.length; i++) {
+      const rect = rects[i];
       const distance = Math.abs(rect.top + rect.height / 2 - vh / 2);
       if (distance < nearestDistance) {
         nearestDistance = distance;
-        nearest = act;
+        nearest = acts[i];
       }
+    }
+    for (let i = 0; i < acts.length; i++) {
+      const rect = rects[i];
+      // An act shorter than the viewport never pins, so it has no hold to be part way through.
+      const travel = Math.max(rect.height - vh, 0);
+      put(acts[i], "--act", travel > 0 ? clamp(-rect.top / travel).toFixed(2) : "1");
     }
     const scene = nearest && nearest.dataset.scene ? nearest.dataset.scene : "horizon";
     if (body.dataset.scene !== scene) body.dataset.scene = scene;
@@ -306,7 +314,7 @@
 
     // The rooms end with the chapter. Past the last act the page is a comment thread and a
     // footer, and perspective rays behind a form read as lines through its placeholder.
-    const last = acts[acts.length - 1].getBoundingClientRect();
+    const last = lastRect;
 
     // Past the last act the copy goes back to the full measure, because there is no set left
     // for it to be leaving room for: the canvas has faded out by then.
