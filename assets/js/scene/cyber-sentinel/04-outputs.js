@@ -250,14 +250,20 @@ export function buildOutputs(palette) {
     return { line, bead, curve, offset: i * 0.5 };
   });
 
-  // Two full-size documents would fill the whole frame and the copy would be reading through
-  // a dashboard. They stay legible as objects at this size, which is all they need to be.
   // Sized so the whole subject fits the lane the copy leaves, at the distance the camera
-  // actually reaches. At 0.42 it was 64 units wide and 93 tall, which needs 89 units of
-  // standoff to fit; the camera closes to about 55, so the set was cut by the frame at 20 of
-  // the depths this act is read at. This act is marked contained because the reader is meant
-  // to read what is on its two screens, and a screen half off the frame is not readable.
-  group.scale.setScalar(0.3);
+  // actually reaches. This act is marked contained because the reader is meant to read what is
+  // on its two screens, and a screen half off the frame is not readable.
+  //
+  // It was 0.3, which is where it ended up while the engine's standoff was measured against the
+  // camera's own x rather than the direction it was pointing. That asked for 85 units of
+  // clearance for a subject the camera was already turned most of the way towards, and the
+  // chapter closed on two screens filling 17.6% of the frame with their text too small to read.
+  // With the standoff measured against the axis, the same containment allows this.
+  //
+  // The ceiling is the copy, not the frame. Bigger means the camera stands further back to keep
+  // the subject whole, which slides it towards the middle of the screen, and at 0.6 the
+  // dashboard prints across the Outcome paragraph on a 1440 wide screen.
+  group.scale.setScalar(0.52);
 
   // ——— the operations room ———
   // A back wall and a run of desks, both very dim. Two screens hanging in nothing read as an
@@ -333,13 +339,15 @@ export function buildOutputs(palette) {
     // frame while the copy keeps the left.
     //
     // This is the only act whose copy sits in two columns beside the set rather than above it,
-    // so it has the narrowest art lane on the page. The value was 0.26, then 0.78, then 1, and
-    // at every one of them either the dashboard was printed across the Outcome paragraph or
-    // the set slid off the frame. Neither was really about this number: the camera was aiming
-    // at a point a fixed 150 units ahead, so the aim weakened as it closed, and the offset was
-    // measured from an origin that sits 16 units left of the screens. With both of those fixed
-    // in the engine, a low value here now means what it says.
-    aimFollow: 0.68,
+    // so it has the narrowest art lane on the page: on a 1440 wide screen those two columns end
+    // at 52% of the width, and everything the set has is what is left.
+    //
+    // It is this low because of what the number really trades. Following the set turns the
+    // camera towards it, which lets the camera stand nearer and makes the subject bigger, and
+    // at the same time carries the subject towards the middle of the frame and onto the copy.
+    // Measured at 0.30 the screens covered 12% of a line of the Outcome paragraph; at 0.22,
+    // 0.8%; here, nothing. What pays for it is standoff, and the subject's scale pays that back.
+    aimFollow: 0.12,
     update(t, p, camera) {
       // Both screens are most of the way in by the time the act arrives. Ramping them from
       // almost nothing left the opening third of this act, which is its establishing view,
@@ -405,17 +413,19 @@ export function buildOutputs(palette) {
       air.rotation.y = -t * 0.014;
       output.update(t);
     },
-    // Close by pulling back off both panels: the chapter ends on the whole output rather than
-    // on a detail of it.
-    // Both screens in one view first, then in toward them. This act is also the one where a
-    // second column of copy sits beside the set rather than above it, so the camera stays a
-    // little further right throughout: the screens belong on the set's own side of the frame
-    // and never in the column the "Outcome" paragraph occupies.
+    // Both screens in one view throughout: the chapter ends on the whole output rather than on
+    // a detail of it, and the camera closes what containment leaves it.
+    //
+    // The sideways part of the move keeps the screens out of the column the "Outcome" paragraph
+    // occupies, by standing the camera left of the track while the act is being read and
+    // returning it to the track by the end. It used to swing twice as far, from -18 out to -22
+    // and back, which cost the subject size at every depth in the middle of the act: the camera
+    // was moving away from it sideways faster than it was closing on it.
     mod: (p) => {
       const settle = ease(clamp01(p / 0.34));
       const enter = ease(clamp01((p - 0.34) / 0.66));
       return {
-        dx: -18 - 4 * settle + 22 * enter,
+        dx: -10 - 3 * settle + 13 * enter,
         dy: 10 - 2 * settle - 12 * enter,
         dz: 118 - 6 * settle - 18 * enter,
         df: 0

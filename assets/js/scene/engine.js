@@ -469,14 +469,21 @@ export function mountFilm({ canvas, buildStations }) {
   // Small numbers were deliberate at the time, because a set parked far to one side could only
   // slide past the edge of the frame. That was true while the offset was applied to an origin
   // and the camera aimed at a fixed point 150 units ahead; both of those are now measured.
-  // Act four is the narrow one. Its subject is 45 units across and it is the only act whose
-  // copy runs to seven of twelve columns, so a lane that fits the other three leaves its right
-  // edge outside the frame at any distance the camera can usefully reach.
-  const DESKTOP_OFFSET = [42, 42, 34, 48];
+  // Act four is the narrow one. It is the only act whose copy runs to seven of twelve columns,
+  // so its subject has the least screen to sit in. It sat at 48 and came back to 34: a set that
+  // is contained pays for every unit of sideways offset in standoff, because the standoff has
+  // to hold the far edge of the subject inside a frustum the offset has pushed it towards. At
+  // 48 the closing subject needed 85 units of clearance and filled a sixth of the frame.
+  const DESKTOP_OFFSET = [42, 42, 34, 34];
   // How far above the track each set sits. Lifting act four clear of its copy was tried, at 24,
   // and it moved the set off the top of the frame instead: its camera ends the act four units
   // below the track, so every unit of lift is a unit the set climbs away from it.
-  const DESKTOP_LIFT = [10, 6, 20, 10];
+  //
+  // It sat at 10, which was right while the subject was a third of its present size and could
+  // hang above the copy. Now that it is tall enough to reach down past the Outcome paragraph,
+  // the lift is what keeps its lower corner off those lines, and containment is what stops it
+  // going higher: at 10 the top of the dashboard is against the top of the frame.
+  const DESKTOP_LIFT = [10, 6, 20, 6];
   // On a phone the sets drop below the reader's line of sight rather than sitting behind the
   // heading they belong to.
   const NARROW_LIFT = -26;
@@ -484,6 +491,9 @@ export function mountFilm({ canvas, buildStations }) {
   let lifts = DESKTOP_LIFT.slice();
   // Set by dock() from the closing set's own depth. See LAST_ARRIVE.
   let lastApproach = 0;
+  // How much of the closing set's own dolly move the engine lets it keep. One when it fits
+  // inside what containment allows, which is the ordinary case. See dock().
+  let lastClose = 1;
   // Set by dock(): how far ahead each set's middle sits, so the look target can reach it, and
   // where the camera rests in front of it, so the lateral move knows where it started.
   const aimReach = [];
@@ -543,7 +553,8 @@ export function mountFilm({ canvas, buildStations }) {
     return { near, far, left, right, bottom, top, massX: weight > 0 ? weightX / weight : 0 };
   }
 
-  // The nearest the camera may come to a set and still have all of it inside the frame.
+  // The nearest the camera's resting place may sit to a set's near face and still have all of
+  // the set inside the frame.
   //
   // A set that declares itself contained is one the reader is meant to read, so the engine has
   // to honour that rather than leaving it to a test to notice afterwards. Act four's two
@@ -551,17 +562,46 @@ export function mountFilm({ canvas, buildStations }) {
   // between 82 and 102 units of standoff; the camera was closing to 24 and losing the dashboard
   // off the top and the right of the frame.
   //
+  // Answered for the near face, not for the middle of the set. A set is a box with depth, and
+  // its widest angle is always its near corners: measuring the extents at the middle and then
+  // parking the camera half a depth nearer says a 35 unit deep subject fits when its near face
+  // is a fifth outside the frame on both sides.
+  //
   // Measured from the subject's own extents against the frustum the camera will actually have
   // at the end of the act, including whatever field of view the set's own move asks for.
-  function keepBack(station, body) {
+  //
+  // The frustum is symmetric about the direction the camera is pointing, not about the camera's
+  // own x, and the camera turns toward the set by aimFollow. Measuring the set's displacement
+  // from the camera's position instead of from that axis is the same class of mistake as a
+  // constant in here describing a value the stylesheet computes: two parts of the engine
+  // disagreeing about one number. It cost the closing act most of its size. Its subject sits
+  // 47.5 units off the camera's x, which asked for 85 units of standoff, while the camera was
+  // already turned far enough to be looking at a point 32 of those 47.5 units across.
+  //
+  // At distance d the axis has moved sideways by slope * d, and the frustum has opened to
+  // half * d, so the two sides give d >= (offset + extent) / (half +/- slope). With no turn at
+  // all the slopes are zero and this is the distance the old form returned.
+  function keepBack(station, body, index) {
     const end = station.mod(1, 0);
     const fov = (BASE_FOV + end.df) * Math.PI / 180;
     const halfV = Math.tan(fov / 2);
-    const halfH = Math.tan(Math.atan(halfV * Math.max(1, camera.aspect || 1.6)));
+    const halfH = halfV * Math.max(1, camera.aspect || 1.6);
     const midX = (body.left + body.right) / 2;
     const midY = (body.bottom + body.top) / 2;
-    const needH = (Math.abs(midX - end.dx) + (body.right - body.left) / 2) / halfH;
-    const needV = (Math.abs(midY - end.dy) + (body.top - body.bottom) / 2) / halfV;
+    const follow = station.aimFollow === undefined ? AIM_FOLLOW : station.aimFollow;
+    // The same target the frame loop aims at, and the same distance ahead it puts it. Nothing
+    // flies through the closing set, so its lateral carry is zero here.
+    const aimDepth = Math.max(70, REST_GAP + (body.near - body.far) / 2);
+    const slopeX = ((offsets[index] || 0) * follow - end.dx * 0.6) / aimDepth;
+    const slopeY = (-end.dy * 0.5) / aimDepth;
+    const reach = (offset, extent, half, slope) => {
+      const opening = Math.max(0.05, half - Math.abs(slope));
+      const away = (Math.abs(offset) + extent) / (half + Math.abs(slope));
+      const toward = (extent - Math.abs(offset)) / opening;
+      return Math.max(away, toward, 0);
+    };
+    const needH = reach(midX - end.dx, (body.right - body.left) / 2, halfH, slopeX);
+    const needV = reach(midY - end.dy, (body.top - body.bottom) / 2, halfV, slopeY);
     // A tenth of margin. Stopping exactly at the distance where the set fits leaves no room for
     // the pointer's own sway, which moves the camera 2.6 units sideways and 1.8 vertically, and
     // leaves the reading lane exactly as wide as the set rather than wide enough to place it in.
@@ -587,7 +627,13 @@ export function mountFilm({ canvas, buildStations }) {
     station.group.position.z += rest - REST_GAP - body.near;
     // The offset is a statement about where the reader sees the set, so it is applied to what
     // the reader sees rather than to the origin the set was built around.
-    station.group.position.x += (offsets[index] || 0) - body.massX;
+    const slide = (offsets[index] || 0) - body.massX;
+    station.group.position.x += slide;
+    // body was measured before that slide, and the standoff below is dominated by how far the
+    // subject sits off the camera's axis, so it has to be asked about where the set ended up.
+    body.left += slide;
+    body.right += slide;
+    body.massX += slide;
 
     // The closing set also decides how far the camera may travel toward it. Everything needed
     // is here and nowhere else: how deep its subject is, and how much of the closing its own
@@ -598,9 +644,22 @@ export function mountFilm({ canvas, buildStations }) {
       let closing = REST_GAP + depth - LAST_ARRIVE - byItsOwnMove;
       // A contained set is never approached past the distance at which it still fits the frame.
       // The distance is to the middle of the subject, so the near face is half its depth nearer.
+      lastClose = 1;
       if (station.contained) {
-        const floor = keepBack(station, body) - depth / 2;
-        closing = Math.min(closing, REST_GAP - byItsOwnMove - floor);
+        // Already a near-face distance, which is what REST_GAP is measured in too.
+        const floor = keepBack(station, body, index);
+        // Everything the camera is allowed to close, counting both ways it can close.
+        const allowed = REST_GAP - floor;
+        closing = Math.min(closing, allowed - byItsOwnMove);
+        // A set's own move can spend the whole allowance by itself, and holding back only the
+        // track travel then stops nothing: the camera closed past the floor on the set's own
+        // dolly and the subject was cut by the top and the bottom of the frame while the engine
+        // still called it contained. Scaling the move down lands it exactly on the floor, which
+        // keeps the arrival moving rather than stalling it partway.
+        if (byItsOwnMove > Math.max(0, allowed)) {
+          lastClose = Math.max(0, allowed) / byItsOwnMove;
+          closing = 0;
+        }
       }
       lastApproach = clamp01(closing / STATION_GAP);
     }
@@ -823,7 +882,14 @@ export function mountFilm({ canvas, buildStations }) {
     // before the chapter ended. It gets a short approach of its own instead, which closes most
     // of the resting gap without carrying the camera out the far side of the set.
     const atLast = index >= last;
-    const travel = atLast ? flight * lastApproach : flight;
+    // Driven by the whole act, not by the part of it after the hold. Every other act holds
+    // still while it is read and then flies, because the flight is a journey to somewhere
+    // else. The closing act's move is not a journey, it is the arrival, and its own set mod is
+    // already fed the full progress for exactly that reason. Leaving the track on the flight
+    // fraction meant the camera did not start closing until 46% of the act had gone by, so the
+    // frame at 45% was the furthest of the four sampled: the set 24% narrower than at the
+    // opening frame with a quarter of the screen empty beside it.
+    const travel = atLast ? progress * lastApproach : flight;
     // There is no next station to blend toward at the end, and blending toward itself would
     // pull its own move back to its resting pose as the reader arrives.
     const blend = atLast ? 0 : travel;
@@ -842,7 +908,9 @@ export function mountFilm({ canvas, buildStations }) {
     const next = stations[Math.min(index + 1, last)].mod(0, time);
     const dx = lerp(here.dx, next.dx, blend);
     const dy = lerp(here.dy, next.dy, blend);
-    const dz = lerp(here.dz, next.dz, blend);
+    // At the last station next is the same station's opening pose, so this is its own move
+    // scaled by however much of it containment leaves, and an untouched lerp everywhere else.
+    const dz = atLast ? lerp(next.dz, here.dz, lastClose) : lerp(here.dz, next.dz, blend);
     const df = lerp(here.df, next.df, blend);
 
     smoothPointerX = frozen ? pointerX : lerp(smoothPointerX, pointerX, POINTER_DAMPING);

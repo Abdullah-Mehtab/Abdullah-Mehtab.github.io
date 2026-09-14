@@ -655,6 +655,154 @@ async function checkFilmEdgeChrome(baseUrl) {
   }
 }
 
+// How much of the frame the chapter's closing set must fill at the last frame of its act.
+//
+// The closing act is the only one the camera does not fly through, so size is the only way it
+// can read as arrived at rather than watched from across the room. It was measured at 17.6% of
+// the frame, its biggest, at the final sample of the act, while the three acts before it
+// reached 96%, 100% and 52%. A quarter is the line below which it is a detail in a room.
+const CLOSING_SET_SHARE = 0.25;
+// How far outside the frame a set that declares itself contained may reach, as a share of the
+// frame's width. A contained set is one whose surfaces the reader is meant to read, and a
+// screen with its top row of text past the edge is not readable. Not zero, because the pointer
+// moves the camera a little and the margin that allows for is the engine's business.
+const CONTAINED_SPILL = 0.02;
+
+// The closing set is big enough to be the subject, and a contained one is whole.
+//
+// Both numbers come out of the engine's own docking arithmetic, which is easy to get wrong in a
+// way nothing on the page complains about: the standoff that keeps a set inside the frame was
+// measured from the camera's own x while the camera was already turned towards the set, and
+// against the middle of the set rather than its near face. The first cost the closing act half
+// its size, the second called a subject contained while its near corners were a fifth outside
+// the frame.
+async function checkFilmClosingSet(baseUrl) {
+  const executablePath = findChromeExecutable();
+  if (!executablePath) {
+    warnings.push('Skipping the chapter closing set check because Chrome/Edge was not found. Set CHROME_PATH to enable it.');
+    return;
+  }
+
+  const routes = await filmRoutes();
+  if (routes.length === 0) {
+    failures.push('The chapter closing set check found no page carrying the film body class, so it measured nothing. Either the class was renamed or the check can no longer find the chapter pages.');
+    return;
+  }
+
+  const { default: puppeteer } = await import('puppeteer-core');
+  const browser = await puppeteer.launch({
+    executablePath,
+    headless: true,
+    args: ['--no-sandbox', '--disable-setuid-sandbox', '--enable-unsafe-swiftshader', '--use-gl=angle']
+  });
+  try {
+    const page = await browser.newPage();
+    await page.setCacheEnabled(false);
+    await page.setViewport({ width: 1440, height: 900, deviceScaleFactor: 1 });
+    for (const route of routes) {
+      await page.goto(`${baseUrl}${route}?still&scene-debug`, { waitUntil: 'networkidle2' });
+      await page.evaluate(() => new Promise((done) => setTimeout(done, 1800)));
+      const published = await page.evaluate(() => Boolean(window.chapterFilm));
+      if (!published) {
+        failures.push(`${route} did not publish its scene through ?scene-debug, so the closing set could not be measured. A chapter page has to keep that seam for this check to mean anything.`);
+        continue;
+      }
+      const end = await page.evaluate(() => {
+        const acts = [...document.querySelectorAll('main > .act')];
+        const last = acts[acts.length - 1];
+        if (!last) return null;
+        const top = Math.round(last.getBoundingClientRect().top + window.scrollY);
+        const span = Number(last.dataset.stationSpan) || Math.round(last.getBoundingClientRect().height);
+        return top + span;
+      });
+      if (end === null) {
+        failures.push(`${route} carries the film body class but has no acts, so there is no closing set to measure.`);
+        continue;
+      }
+      await page.evaluate((to) => window.scrollTo(0, to), end);
+      // The camera follows a damped scroll value and arrives over about 45 frames, so this has
+      // to settle in frames. Waiting in milliseconds measures where the camera used to be.
+      await page.evaluate(() => new Promise((done) => {
+        let n = 0;
+        const tick = () => (++n > 50 ? done() : requestAnimationFrame(tick));
+        requestAnimationFrame(tick);
+      }));
+      const shot = await page.evaluate(() => {
+        const film = window.chapterFilm;
+        const camera = film.camera;
+        const station = film.stations[film.stations.length - 1];
+        let min = null;
+        let max = null;
+        station.group.updateMatrixWorld(true);
+        station.group.traverse((node) => {
+          if (!node.isMesh && !node.isLine && !node.isLineSegments && !node.isPoints) return;
+          // Dust, glow and captions are the room, not the subject, and they are authored to
+          // run past the frame on purpose.
+          for (let p = node; p && p !== station.group.parent; p = p.parent) {
+            if (p.userData && (p.userData.ambient || p.userData.caption)) return;
+          }
+          if (!node.geometry) return;
+          if (!node.geometry.boundingBox) node.geometry.computeBoundingBox();
+          const bb = node.geometry.boundingBox;
+          node.updateWorldMatrix(true, false);
+          for (let c = 0; c < 8; c++) {
+            const v = bb.min.clone();
+            if (c & 1) v.x = bb.max.x;
+            if (c & 2) v.y = bb.max.y;
+            if (c & 4) v.z = bb.max.z;
+            v.applyMatrix4(node.matrixWorld);
+            if (!min) { min = v.clone(); max = v.clone(); } else { min.min(v); max.max(v); }
+          }
+        });
+        if (!min) return null;
+        let x0 = Infinity;
+        let y0 = Infinity;
+        let x1 = -Infinity;
+        let y1 = -Infinity;
+        for (let c = 0; c < 8; c++) {
+          const v = min.clone();
+          if (c & 1) v.x = max.x;
+          if (c & 2) v.y = max.y;
+          if (c & 4) v.z = max.z;
+          // A corner behind the camera projects to nonsense, so say so rather than measure it.
+          if (v.clone().applyMatrix4(camera.matrixWorldInverse).z > -0.1) return { behind: true };
+          v.project(camera);
+          x0 = Math.min(x0, v.x); x1 = Math.max(x1, v.x);
+          y0 = Math.min(y0, v.y); y1 = Math.max(y1, v.y);
+        }
+        const width = Math.max(0, Math.min(1, x1) - Math.max(-1, x0)) / 2;
+        const height = Math.max(0, Math.min(1, y1) - Math.max(-1, y0)) / 2;
+        return {
+          behind: false,
+          contained: Boolean(station.contained),
+          share: width * height,
+          spill: Math.max(0, -1 - x0, x1 - 1, -1 - y0, y1 - 1) / 2
+        };
+      });
+      if (!shot) {
+        failures.push(`${route} closing set has nothing in it that is not dust or a caption, so the chapter ends on an empty room.`);
+        continue;
+      }
+      if (shot.behind) {
+        failures.push(`${route} ends with part of its closing set behind the camera, so the chapter closes on a room the reader has already flown through.`);
+        continue;
+      }
+      if (shot.share < CLOSING_SET_SHARE) {
+        failures.push(
+          `${route} closing set fills ${(shot.share * 100).toFixed(1)}% of the last frame of its act, floor ${CLOSING_SET_SHARE * 100}%. The chapter ends on a subject the reader watches from across the room instead of one they arrived at.`
+        );
+      }
+      if (shot.contained && shot.spill > CONTAINED_SPILL) {
+        failures.push(
+          `${route} closing set says it is contained but ${(shot.spill * 100).toFixed(1)}% of the frame's width of it is outside the frame, ceiling ${CONTAINED_SPILL * 100}%. Its surfaces are what the reader is meant to read, and the engine's standoff is not keeping them whole.`
+        );
+      }
+    }
+  } finally {
+    await browser.close();
+  }
+}
+
 async function checkStaticReferences() {
   const files = await walkFiles(repoRoot);
   for (const file of files) {
@@ -795,6 +943,7 @@ async function main() {
     await smokeTestRoutes(baseUrl);
     await checkFilmFrameFit(baseUrl);
     await checkFilmEdgeChrome(baseUrl);
+    await checkFilmClosingSet(baseUrl);
     if (args.has('--screenshots')) {
       await captureScreenshots(baseUrl);
     }
