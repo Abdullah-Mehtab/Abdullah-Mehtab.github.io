@@ -198,12 +198,25 @@ export function nameplate(text, sub, accent, deep, worldWidth) {
     const left = (w - boxWidth) / 2;
 
     const ground = g.createLinearGradient(left, 0, left + boxWidth, 0);
-    const shade = "#" + deep.getHexString();
-    // Opaque through the middle where the words are, so the plate is a ground rather than a
-    // tint over whatever geometry the label happens to be in front of.
+    // Darker than the page's own ground, not equal to it.
+    //
+    // Each act lifts its room's clear colour away from the background by up to 5% lightness, so
+    // a plate painted in the background colour converges with the room it is standing in on the
+    // brighter acts: measured at 3.12:1 for Filebeat and 3.22:1 for DDoS, against 7.76:1 for the
+    // same plate style in the darkest act. Taking it below the darkest room puts the ink above
+    // the floor everywhere instead of only where the room happens to help.
+    const plate = deep.clone();
+    const paleGround = deep.getHSL({ h: 0, s: 0, l: 0 }).l > 0.5;
+    plate.offsetHSL(0, 0, paleGround ? 0.1 : -0.06);
+    const shade = "#" + plate.getHexString();
+    // Fully opaque through the middle where the words are, so the plate is a ground rather than
+    // a tint over whatever geometry the label happens to be in front of. At f0 the six per cent
+    // showing through was enough to take a plate sitting on its own node's wireframe to 4.4:1,
+    // and darkening the ground did not move that: the fault was what was visible through it,
+    // not what colour it was.
     ground.addColorStop(0, shade + "00");
-    ground.addColorStop(0.16, shade + "f0");
-    ground.addColorStop(0.84, shade + "f0");
+    ground.addColorStop(0.16, shade + "ff");
+    ground.addColorStop(0.84, shade + "ff");
     ground.addColorStop(1, shade + "00");
     g.fillStyle = ground;
     g.fillRect(left, 6, boxWidth, h - 12);

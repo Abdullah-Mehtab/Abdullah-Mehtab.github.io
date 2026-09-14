@@ -19,16 +19,27 @@ import { THREE, clamp01, drift, ease, edgedBox, glow, motes, nameplate, painted,
 //
 // The z spacing is even, near to far, so the graph reads as an ordered sequence rather than a
 // cloud. The two branches of the fork are the only nodes that share a depth.
+//
+// The run used to be 212 units deep, which at this scale is more depth than the frame holds
+// from anywhere the camera can stand: a reader got two of the nine names at a time and never
+// saw the shape of the flow, only pieces of it. The far half was also outside the distance at
+// which a node is named at all, so Filebeat's plate never came up to a readable opacity.
+//
+// It is 117 deep now, and no wider across than the frame can hold: the fork's two branches were
+// 100 units apart, which put one of them outside the frame at every depth the whole flow was
+// visible from. The sequence still runs away from the reader and the whole of it is in one
+// frame at the act's establishing depth. Depth is what makes this a flow
+// rather than a diagram; more of it than the frame can hold makes it neither.
 const NODES = {
-  agents:   { at: [-30, 12, 92], size: [18, 13, 13], form: "cluster", label: "Agents", sub: "endpoints" },
-  suricata: { at: [36, -20, 66], size: [20, 14, 14], form: "sensor", label: "Suricata", sub: "network alerts" },
-  manager:  { at: [0, 2, 34], size: [30, 32, 26], form: "rules", label: "Wazuh Manager", sub: "rules, decoders" },
-  alerts:   { at: [-8, -14, 4], size: [22, 3, 17], form: "file", label: "alerts.json", sub: "" },
-  filebeat: { at: [12, 13, -26], size: [18, 14, 14], form: "shipper", label: "Filebeat", sub: "ships events" },
-  elastic:  { at: [-20, -8, -56], size: [26, 24, 24], form: "store", label: "Elasticsearch", sub: "index, search" },
-  logstash: { at: [12, 6, -86], size: [24, 22, 18], form: "fork", label: "Logstash", sub: "the fork" },
-  email:    { at: [-36, 30, -120], size: [26, 18, 4], form: "screen", label: "HTML email alerts", sub: "" },
-  kibana:   { at: [46, -18, -120], size: [30, 20, 4], form: "screen", label: "Kibana dashboards", sub: "" }
+  agents:   { at: [-30, 15, 51], size: [18, 13, 13], form: "cluster", label: "Agents", sub: "endpoints" },
+  suricata: { at: [35, -25, 36], size: [20, 14, 14], form: "sensor", label: "Suricata", sub: "network alerts" },
+  manager:  { at: [0, 2, 19], size: [30, 32, 26], form: "rules", label: "Wazuh Manager", sub: "rules, decoders" },
+  alerts:   { at: [-11, -18, 2], size: [22, 3, 17], form: "file", label: "alerts.json", sub: "" },
+  filebeat: { at: [16, 17, -14], size: [18, 14, 14], form: "shipper", label: "Filebeat", sub: "ships events" },
+  elastic:  { at: [-22, -10, -31], size: [26, 24, 24], form: "store", label: "Elasticsearch", sub: "index, search" },
+  logstash: { at: [16, 8, -47], size: [24, 22, 18], form: "fork", label: "Logstash", sub: "the fork" },
+  email:    { at: [-31, 34, -66], size: [26, 18, 4], form: "screen", label: "HTML email alerts", sub: "" },
+  kibana:   { at: [40, -21, -66], size: [30, 20, 4], form: "screen", label: "Kibana dashboards", sub: "" }
 };
 
 const EDGES = [
@@ -238,6 +249,9 @@ export function buildPipeline(palette) {
 
   return {
     group,
+    // This act is a sequence, so a reader has to be able to see most of it at once. Nine nodes
+    // strung out over more depth than the frame holds is nine details, not a flow.
+    partsTogether: 0.7,
     update(t, p, camera) {
       // The graph draws itself from the agents forward, so the reader watches the flow being
       // laid down in the direction it actually flows.
@@ -251,13 +265,17 @@ export function buildPipeline(palette) {
         const k = ease(clamp01((drawn - item.at * 0.8) / 0.18));
         item.node.visible = k > 0.01;
         item.node.scale.setScalar(Math.max(0.001, k));
-        // Named within about fifty units, gone by a hundred and forty. At most three nodes
-        // carry a name at once, so no two plates can be read on top of each other.
+        // Named within about eighty units, gone by two hundred and forty. It was fifty and a
+        // hundred and forty, which named at most three nodes at a time: that is right for a
+        // graph the reader is inside and wrong for one they are looking at, and the far half of
+        // this flow spent the whole act outside it. Two plates landing on each other is handled
+        // where it can be handled, in the engine, which hides the further of any two that
+        // overlap on screen.
         let near = 1;
         if (camera) {
           item.node.getWorldPosition(probe);
           const range = probe.distanceTo(camera.position);
-          near = clamp01(1.35 - Math.max(0, range - 52) / 88);
+          near = clamp01(1.5 - Math.max(0, range - 80) / 160);
         }
         item.label.material.opacity = k * 0.95 * near;
         if (item.halo) item.halo.material.opacity = k * 0.16 * (0.85 + Math.sin(t * 1.3 + item.at * 9) * 0.15);

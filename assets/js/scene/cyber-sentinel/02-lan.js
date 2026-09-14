@@ -318,7 +318,13 @@ export function buildLan(palette) {
 
   group.scale.setScalar(0.5);
 
-  const WATCHED_FROM = 0.42;
+  // When the manager arrives, as a fraction of the act.
+  //
+  // It was 0.42, and the camera has left its resting frame by 0.46 and is between the cabinets
+  // by 0.56, so the object this act is about appeared as the reader was being carried past it
+  // and was never seen at size with its own name on it. The act still opens on a room nobody is
+  // watching, which is the point of it, and the room has its own plate for that stretch now.
+  const WATCHED_FROM = 0.16;
 
   return {
     group,
