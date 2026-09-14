@@ -17,8 +17,31 @@
 import * as THREE from "../../vendor/three/three.module.min.js";
 import { clamp01, lerp, ease, motes, seeded } from "./kit.js";
 
-const STATION_GAP = 420;
+// How far apart the sets sit along the track.
+//
+// At 420 the camera came out the far side of each set with the next one still 180 to 300 units
+// ahead, and a set that far off carries under 2% of the pixels: the last fifth to third of
+// every act was an empty room. The plan promised the opposite, that the next set is visible in
+// the distance before arrival, and the distance is why it was not.
+//
+// The arithmetic, since it is not obvious: the camera leaves set i at its far face and the next
+// near face is STATION_GAP + dz0(i) - dz0(i+1) - depth(i) further on. With the four sets here
+// that is the gap minus 120, 238 and 172.
+const STATION_GAP = 340;
 const CAM_BACK = 62;
+// How far in front of the camera the nearest face of a parked set sits, in world units.
+//
+// This number is the whole difference between reading beside a subject and reading beside a
+// smudge. Every set was authored with its own absolute parking distance in its mod's dz, and
+// those distances put the near face 128, 148, 197 and 167 units away at each act's opening
+// frame, where the sets carried between 0.9% and 7.3% of the pixels. The owner described all
+// three of the far ones separately: act two's servers "appear as if they're hiding BACK", act
+// three "starts off TOO far away", act four's monitors "BARELY visible".
+//
+// Rather than retune four dz values against a constant none of them can see, the engine docks
+// each set: it measures where the camera will actually rest and slides the set along the track
+// until this gap is true. A new chapter's set file therefore never has to know CAM_BACK.
+const REST_GAP = 78;
 // Less of each act parked, more of it travelling. With the act's scroll doubled, holding for
 // 55% of it would mean a very long still frame followed by the same quick flight; at 0.46 the
 // extra scroll goes into the move, which is where the reader wanted it.
@@ -45,9 +68,15 @@ const AIM_FOLLOW = 0.62;
 // makes it leave the frame edgeways instead of being arrived at, measured at 1.15, 4.90 and
 // 2.15 of the way to the frame edge on the first three acts.
 const FLIGHT_SWING = 0;
-// How far the camera closes on the final set, as a fraction of the gap between stations. It
-// has no next station to travel to, so without this it never approaches the closing set at all.
-const LAST_APPROACH = 0.34;
+// How much of the closing set is still in front of the camera when the chapter ends, in world
+// units. The last station has no next station to fly to, so its approach is worked out from its
+// own depth instead of being a fraction picked by hand.
+//
+// A fixed 0.34 of the station gap was that fraction, and it carried the camera 18 units out the
+// far side of the last set: at the final frame 18 of 21 parts were behind the camera and the
+// chapter closed on an empty room. The owner's words were "as soon as it reaches the point
+// where its nearing us, BOOM the act ends and we were NEVER able to zoom inside".
+const LAST_ARRIVE = 43;
 // The camera's fixed height below the frame breakpoint, chosen so every set sits in the band
 // film.css reserves above the copy.
 const NARROW_EYE = 34;
@@ -283,6 +312,28 @@ function disposeGroup(group) {
 // sets is log lines and packets, so that is what fills the space: rows of a log seen edge on,
 // and short bright ticks strung down the track. Both are one buffer each, so the whole track
 // costs three draw calls instead of ninety.
+// How many times its resting length a packet tick is drawn at the fastest part of a flight.
+const STREAK_STRETCH = 26;
+// Below this the streaks are at rest and the buffer is left alone, so a reader parked in front
+// of a set is not paying for a geometry upload every frame.
+const STREAK_IDLE = 0.02;
+
+// Rewrites the far end of every tick along z. Only the end moves, so a streak grows out behind
+// its own starting point instead of sliding up the track.
+function stretchStreaks(ticks, amount) {
+  const factor = 1 + amount * STREAK_STRETCH;
+  if (Math.abs(factor - (ticks.userData.drawnAt || 1)) < STREAK_IDLE) return;
+  ticks.userData.drawnAt = factor;
+  const position = ticks.geometry.getAttribute("position");
+  const lengths = ticks.userData.lengths;
+  const array = position.array;
+  for (let i = 0; i < lengths.length; i++) {
+    const end = i * 6 + 3;
+    array[end + 2] = array[i * 6 + 2] + lengths[i] * factor;
+  }
+  position.needsUpdate = true;
+}
+
 function buildTrackAmbience(scene, palette, stationCount) {
   const random = seeded(7);
   const span = stationCount * STATION_GAP + 500;
@@ -318,19 +369,43 @@ function buildTrackAmbience(scene, palette, stationCount) {
   scene.add(logs);
 
   // Packet ticks: short segments lying along the direction of travel, so they streak past.
+  //
+  // They are also the only thing between two sets. The sets are 78 to 264 units deep and sit a
+  // station apart, so the camera leaves one and is in open track for a fifth to a third of
+  // every act, where the frame carried under 2% of its pixels. Fog and a shorter station gap
+  // each recovered about a point of that and neither filled it, because at 150 units a set
+  // drawn in thin lines is simply small.
+  //
+  // So the track answers the camera instead: each tick stretches along the direction of travel
+  // and brightens in proportion to how fast the camera is moving, which is the one moment the
+  // frame has nothing else in it. Built from the ticks rather than as a new effect because
+  // they already lie along z and already sit exactly where the void is.
   const tickPoints = [];
-  for (let i = 0; i < 340; i++) {
-    const side = random() < 0.5 ? -1 : 1;
-    const x = side * (26 + random() * 170);
+  const tickLengths = [];
+  for (let i = 0; i < 900; i++) {
+    // Clear of the reading column, on the set's side of the frame.
+    //
+    // Streaks radiate from the point the camera is travelling toward, so a field centred on the
+    // track throws them straight across the copy: spread evenly they were the largest thing the
+    // scene put inside the words, at four times the edge budget, and pulling them toward the
+    // track made that worse rather than better because the track is where the vanishing point
+    // is. They start where the copy ends instead.
+    const x = 44 + random() * 190;
     const y = (random() - 0.5) * 190;
     const z = 120 - random() * span;
     const length = 3 + random() * 9;
+    tickLengths.push(length);
     tickPoints.push(x, y, z, x, y, z + length);
   }
   const ticks = new THREE.LineSegments(
     new THREE.BufferGeometry().setAttribute("position", new THREE.Float32BufferAttribute(tickPoints, 3)),
     new THREE.LineBasicMaterial({ color: palette.accents[2], transparent: true, opacity: 0.34 })
   );
+  ticks.userData.lengths = tickLengths;
+  // Nothing here moves between frames except along z, and the far ends of the streaks run well
+  // past the box the starting points describe. Culling against the resting box would drop the
+  // whole field the moment it stretched.
+  ticks.frustumCulled = false;
   scene.add(ticks);
 
   return { field, logs, ticks };
@@ -366,18 +441,114 @@ export function mountFilm({ canvas, buildStations }) {
 
   // Sets sit off to one side so the copy has the other half of the frame. On a phone the copy
   // fills the width, so they move to the centre and drop below it instead.
-  // Where each set sits relative to the dolly track. Small numbers on purpose: a set parked
-  // far off to one side can only slide past the edge of the frame, which is what the first
-  // version did. Sitting near the track means the camera's own travel carries the reader into
-  // the set rather than past it, and the copy keeps its legibility from the scrim behind it
-  // rather than from the set being somewhere else.
-  const DESKTOP_OFFSET = [16, 18, 12, 40];
-  const DESKTOP_LIFT = [10, 6, 20, 6];
+  //
+  // How far right the set's visible weight sits, in world units. dock() applies it to the
+  // weight rather than to the origin the set was built around, so the number means the same
+  // thing for every set: these four put each one between 0.4 and 0.5 of the way from the
+  // middle of the frame to its right edge, which is the middle of the lane the copy leaves.
+  //
+  // They were 16, 18, 12 and 40, which is a different framing per act and none of them chosen.
+  // Small numbers were deliberate at the time, because a set parked far to one side could only
+  // slide past the edge of the frame. That was true while the offset was applied to an origin
+  // and the camera aimed at a fixed point 150 units ahead; both of those are now measured.
+  const DESKTOP_OFFSET = [42, 42, 34, 42];
+  // How far above the track each set sits. Lifting act four clear of its copy was tried, at 24,
+  // and it moved the set off the top of the frame instead: its camera ends the act four units
+  // below the track, so every unit of lift is a unit the set climbs away from it.
+  const DESKTOP_LIFT = [10, 6, 20, 10];
   // On a phone the sets drop below the reader's line of sight rather than sitting behind the
   // heading they belong to.
   const NARROW_LIFT = -26;
   let offsets = DESKTOP_OFFSET.slice();
   let lifts = DESKTOP_LIFT.slice();
+  // Set by dock() from the closing set's own depth. See LAST_ARRIVE.
+  let lastApproach = 0;
+  // Set by dock(): how far ahead each set's middle sits, so the look target can reach it, and
+  // where the camera rests in front of it, so the lateral move knows where it started.
+  const aimReach = [];
+  const restZ = [];
+
+  // Slides a set along the track until its nearest face sits REST_GAP in front of where the
+  // camera actually parks in front of it.
+  //
+  // The camera's resting z is the station's own z, plus CAM_BACK, plus whatever the set's mod
+  // asks for at the opening of its act. Only the set knows the second, only the engine knows
+  // the first two, and before this nothing put them together: the result was four different
+  // reading distances, none of them chosen.
+  //
+  // Ambient matter is excluded. Drift and dust extend a long way past the subject in every
+  // direction, and docking to the nearest speck would park the camera in the haze.
+  // Written to be safe to run again: it puts the set back on the track before measuring, so a
+  // resize or a theme change cannot dock a set that is already docked and push it twice.
+  // True when this node, or anything it hangs from inside the set, is drift, dust or a label.
+  // Marking sits on whichever object the set happened to add, so a group can be ambient while
+  // the meshes inside it carry nothing, and checking only the node lets a drift flock 70 units
+  // behind the subject decide where the subject is.
+  function isAtmosphere(node, root) {
+    for (let n = node; n && n !== root.parent; n = n.parent) {
+      if (n.userData && (n.userData.ambient || n.userData.caption)) return true;
+    }
+    return false;
+  }
+
+  // Where a set's actual subject is: the z range of it, nearest face first, and the x its
+  // visible weight sits at. Weighted by the size of each part, because a set is not centred on
+  // the middle of the box around it. Act four's two screens sit 16 units to the right of the
+  // origin its author placed, so its offset of 40 put its subject at 56.
+  function substance(group) {
+    let near = -Infinity;
+    let far = Infinity;
+    let weightX = 0;
+    let weight = 0;
+    group.traverse((node) => {
+      if (!node.geometry || isAtmosphere(node, group)) return;
+      if (!node.geometry.boundingBox) node.geometry.computeBoundingBox();
+      const box = node.geometry.boundingBox.clone().applyMatrix4(node.matrixWorld);
+      near = Math.max(near, box.max.z);
+      far = Math.min(far, box.min.z);
+      const size = (box.max.x - box.min.x) * (box.max.y - box.min.y) + 1;
+      weightX += ((box.min.x + box.max.x) / 2) * size;
+      weight += size;
+    });
+    if (near === -Infinity) return null;
+    return { near, far, massX: weight > 0 ? weightX / weight : 0 };
+  }
+
+  // Slides a set along the track until its nearest face sits REST_GAP in front of where the
+  // camera actually parks in front of it.
+  //
+  // The camera's resting z is the station's own z, plus CAM_BACK, plus whatever the set's mod
+  // asks for at the opening of its act. Only the set knows the second, only the engine knows
+  // the first two, and before this nothing put them together: the result was four different
+  // reading distances, none of them chosen.
+  //
+  // Written to be safe to run again: it puts the set back on the track before measuring, so a
+  // resize or a theme change cannot dock a set that is already docked and push it twice.
+  function dock(station, index) {
+    station.group.position.z = -index * STATION_GAP;
+    station.group.updateMatrixWorld(true);
+    const body = substance(station.group);
+    if (!body) return;
+    const rest = -index * STATION_GAP + CAM_BACK + station.mod(0, 0).dz;
+    station.group.position.z += rest - REST_GAP - body.near;
+    // The offset is a statement about where the reader sees the set, so it is applied to what
+    // the reader sees rather than to the origin the set was built around.
+    station.group.position.x += (offsets[index] || 0) - body.massX;
+
+    // The closing set also decides how far the camera may travel toward it. Everything needed
+    // is here and nowhere else: how deep its subject is, and how much of the closing its own
+    // move already does. Adding those separately is what put the camera out the far side.
+    if (index === stations.length - 1) {
+      const depth = body.near - body.far;
+      const byItsOwnMove = station.mod(0, 0).dz - station.mod(1, 0).dz;
+      lastApproach = clamp01((REST_GAP + depth - LAST_ARRIVE - byItsOwnMove) / STATION_GAP);
+    }
+    // How far in front of the resting camera the middle of this set sits. The look target uses
+    // it so that aiming at a set means aiming at where the set actually is, and the lateral
+    // move uses it to know how far into the set the camera has come.
+    aimReach[index] = REST_GAP + (body.near - body.far) / 2;
+    restZ[index] = rest;
+  }
 
   function buildWorld() {
     stations = buildStations(palette, THREE);
@@ -391,7 +562,11 @@ export function mountFilm({ canvas, buildStations }) {
     });
     ambience = buildTrackAmbience(scene, palette, stations.length);
     renderer.setClearColor(palette.rooms[0], 1);
-    scene.fog = new THREE.FogExp2(palette.rooms[0].clone(), 0.0042);
+    // The fog is what makes an act a place, and it is also what hid the next set during a
+    // flight. At 0.0042 a set 220 units ahead was 57% fogged out; at 0.003 it is 34%, measured
+    // to roughly double what the transit frames carry. Lower still flattens the depth and
+    // costs the room its colour, for gains that had already stopped arriving by 0.0024.
+    scene.fog = new THREE.FogExp2(palette.rooms[0].clone(), 0.003);
   }
 
   function teardownWorld() {
@@ -435,6 +610,9 @@ export function mountFilm({ canvas, buildStations }) {
       station.group.position.setY(lifts[i] || 0);
       const base = station.group.userData.baseScale || 1;
       station.group.scale.setScalar(narrow ? base * 0.72 : base);
+      // After the scale, because a set standing down to 0.72 has a nearer face than the one
+      // that was measured at full size.
+      dock(station, i);
     });
 
     // The log rows and packet ticks live on the track rather than inside a station, so they
@@ -555,7 +733,7 @@ export function mountFilm({ canvas, buildStations }) {
     // before the chapter ended. It gets a short approach of its own instead, which closes most
     // of the resting gap without carrying the camera out the far side of the set.
     const atLast = index >= last;
-    const travel = atLast ? flight * LAST_APPROACH : flight;
+    const travel = atLast ? flight * lastApproach : flight;
     // There is no next station to blend toward at the end, and blending toward itself would
     // pull its own move back to its resting pose as the reader arrives.
     const blend = atLast ? 0 : travel;
@@ -594,15 +772,54 @@ export function mountFilm({ canvas, buildStations }) {
     // rather than across them.
     const arc = Math.sin(blend * Math.PI);
     const swing = arc * FLIGHT_SWING;
+    // The z this frame, written once because the lateral move has to know it before the camera
+    // is placed.
+    const camZ = (z) => -along * STATION_GAP + CAM_BACK + z + aspectPullback + intro * 150;
     // On a phone the camera holds its height for the whole chapter. Each set's move descends
     // toward its subject, which is right on a wide screen and wrong on a narrow one: the copy
     // does not move out of the way there, so the set simply sinks into it. Holding the height
     // keeps every set in the band above the words while its move still carries the reader in.
     const eyeY = narrow ? NARROW_EYE : dy;
+
+    // The camera moves sideways onto the set as it closes on it.
+    //
+    // A set has to be off to one side while the reader is reading, so the copy has the rest of
+    // the frame, and it has to be dead ahead at the moment the camera goes through it, or the
+    // camera goes past it instead. Those are different places, and a fixed offset can only be
+    // one of them: pushing the sets out to where they belonged during the hold turned act one's
+    // fly-through into a slide past the frame edge, measured at 0.97 of the way out while the
+    // set was still growing.
+    //
+    // So the offset says where the set sits while it is being read beside, and this carries the
+    // camera onto its axis as it arrives. At rest the camera is on the track and the set is in
+    // the art lane; at the set's own middle the camera is on the set's axis and inside it.
+    //
+    // The closing set is the exception. Nothing flies through it: the chapter ends in front of
+    // it, so the camera stays off its axis and it keeps the art lane beside the two columns of
+    // copy this act puts there. Moving onto it put its own heading behind a lit screen.
+    // The move rises from nothing at the resting frame to all of it at the set's own middle,
+    // then returns to nothing by the time the camera reaches the next station. It has to close
+    // by then: keyed on the current station alone it was still at full strength when the index
+    // flipped and dropped to zero in one frame, which is a sideways jump of 68 world units and
+    // measured as a 170 unit lurch at the act one boundary.
+    //
+    // Measured against the real distance between this resting place and the next one, not
+    // against STATION_GAP. Each set declares its own standoff in its mod, so those two differ
+    // by up to a hundred units: normalising by the gap left the move still at 55% of full
+    // strength when the station index flipped, and the jump came back at the next boundary.
+    const nextRest = index + 1 <= last ? restZ[index + 1] : (restZ[index] || 0) - STATION_GAP;
+    const span = Math.max(1, (restZ[index] || 0) - nextRest);
+    const peakAt = clamp01((aimReach[index] || 1) / span);
+    const along01 = clamp01(((restZ[index] || 0) - camZ(dz)) / span);
+    const closed = atLast ? 0 : ease(along01 < peakAt
+      ? along01 / Math.max(0.001, peakAt)
+      : (1 - along01) / Math.max(0.001, 1 - peakAt));
+    const ontoSet = closed * ((offsets[index] || 0) - dx);
+
     camera.position.set(
-      dx - swing + smoothPointerX * 2.6,
+      dx + ontoSet - swing + smoothPointerX * 2.6,
       eyeY - smoothPointerY * 1.8,
-      -along * STATION_GAP + CAM_BACK + dz + aspectPullback + intro * 150
+      camZ(dz)
     );
 
     // The look target leads the camera down the track and answers the pointer at more than
@@ -621,10 +838,16 @@ export function mountFilm({ canvas, buildStations }) {
       ? AIM_FOLLOW
       : stations[Math.min(index + 1, last)].aimFollow;
     const aimX = lerp((offsets[index] || 0) * followHere, (offsets[Math.min(index + 1, last)] || 0) * followNext, blend);
+    // How far ahead the camera's look target sits. It has to follow the set, not stay at a
+    // constant: aiming at a point 150 units ahead turns a 40 unit sideways offset into 15
+    // degrees, which is most of the way to the frame edge once the camera has closed to 65
+    // units. The closing set was measured 90% off screen for exactly that reason, while the
+    // value meant to control it, aimFollow, was already at its maximum.
+    const aimDepth = Math.max(70, aimReach[index] || 150);
     camera.lookAt(
-      aimX + dx * 0.4 - swing + smoothPointerX * 4,
+      aimX + (dx + ontoSet) * 0.4 - swing + smoothPointerX * 4,
       eyeY * 0.5 - smoothPointerY * 2.6,
-      camera.position.z - 150
+      camera.position.z - aimDepth
     );
     camera.rotateZ(Math.sin(along * 2.1) * 0.01 + kick * 0.03);
     camera.fov = BASE_FOV + df + kick * 10;
@@ -637,10 +860,17 @@ export function mountFilm({ canvas, buildStations }) {
     if (scene.fog) scene.fog.color.copy(roomColour);
 
     if (ambience && !reduced) {
-      // The log rows drift up the way a tail scrolls; the packet ticks pulse rather than move,
-      // because anything travelling at the camera's own speed looks nailed to the lens.
+      // The log rows drift up the way a tail scrolls.
       ambience.logs.position.y = (time * 1.6) % 12;
-      ambience.ticks.material.opacity = 0.26 + Math.sin(time * 2.4) * 0.1;
+      // The ticks stretch into streaks through the middle of a flight and settle back to short
+      // marks at either end of it, so the empty track between two sets reads as speed rather
+      // than as nothing. Driven by the eased flight rather than by a measured frame-to-frame
+      // speed, which would make the effect depend on the frame rate.
+      stretchStreaks(ambience.ticks, arc);
+      // Bright enough to carry a transit frame, dim enough to read through. Act three's copy is
+      // the widest on the page, four columns of it, and at 0.4 the lit streaks behind it took
+      // one line to 3.56:1 against a 4.5:1 floor.
+      ambience.ticks.material.opacity = 0.26 + Math.sin(time * 2.4) * 0.1 + arc * 0.22;
     }
 
     // Only the sets within reach of the camera run or draw. Everything else is one visible

@@ -283,20 +283,26 @@ export function buildPipeline(palette) {
       air.rotation.z = t * 0.01;
       cargo.update(t);
     },
-    // Establish, then enter.
+    // Establish, then lean in. The flight through the graph is the track's job, not this one's.
     //
     // The camera used to start moving on the first frame of the act and cover 150 units before
     // the reader had seen what the graph was, so it read as clutter going past. It now holds
     // back far enough to take the whole flow in one view for the first third, and only then
     // descends into it. Nothing about the geometry changed to fix that; where the camera
     // stands while a reader is reading is the fix.
+    //
+    // The closing move was 144 units, which was most of the way through a graph 264 deep. Once
+    // the engine docked every set at one reading distance, that sweep put the camera inside
+    // this one by a third of the way through the act, and the remaining two thirds were an
+    // empty room: measured 17.5% of the frame carrying something at 35%, then 0.8% at 70%.
+    // The flight to act four already travels the whole graph, so the hold only has to lean in.
     mod: (p) => {
       const settle = ease(clamp01(p / 0.34));
       const enter = ease(clamp01((p - 0.34) / 0.66));
       return {
         dx: -6 - 8 * settle + 22 * enter,
         dy: 30 - 6 * settle - 26 * enter,
-        dz: 210 - 26 * settle - 118 * enter,
+        dz: 210 - 14 * settle - 38 * enter,
         df: -6 + 4 * settle + 8 * enter
       };
     }

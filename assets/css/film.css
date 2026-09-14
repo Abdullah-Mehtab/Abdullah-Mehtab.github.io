@@ -1782,11 +1782,21 @@ body.scene-live .act > section {
 
   body.film.scene-live [data-frame="pair"] > :nth-child(1),
   body.film.scene-live [data-frame="pair"] > :nth-child(2),
-  body.film.scene-live [data-frame="sequence"] > .section-heading,
   /* The argument and the result stay side by side. Stacked in one narrow column they were
      nearly two hundred pixels taller than the frame they live in. */
   body.film.scene-live [data-frame="split"] > :nth-child(1) {
     grid-column: 1 / span 4;
+  }
+
+  /*
+    The architecture heading gets six columns, not four.
+    At four it was 376px wide holding 55.8px type, which set "A practical monitoring flow."
+    as six lines with the word "flow." alone on the last one, and the top of it was clipped by
+    the header during the handoff. Six columns sets the same words in three lines and still
+    stops well short of the lane the set uses.
+  */
+  body.film.scene-live [data-frame="sequence"] > .section-heading {
+    grid-column: 1 / span 6;
   }
 
   /* The result column stops at the same place the single-column acts do, so the set has the

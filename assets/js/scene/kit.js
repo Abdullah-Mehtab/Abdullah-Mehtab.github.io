@@ -254,7 +254,13 @@ export function drift(geometries, count, color, opacity, seed) {
     items.push({
       base,
       offset: total,
-      home: new THREE.Vector3((random() - 0.5) * 340, (random() - 0.5) * 210, (random() - 0.5) * 280),
+      // Biased to the set's own side of the frame rather than spread evenly around it.
+      //
+      // Spread evenly it reached 170 units either way, which on a frame whose left half is the
+      // reading column meant a flock of lit quads behind every paragraph. It was the largest
+      // remaining thing the scene put inside the words, above the sets themselves, and a
+      // review had already called the flock louder than the board it surrounds.
+      home: new THREE.Vector3(-34 + random() * 290, (random() - 0.5) * 210, (random() - 0.5) * 280),
       scale: 0.5 + random() * 1.1,
       spin: (random() - 0.5) * 0.5,
       tilt: random() * Math.PI,

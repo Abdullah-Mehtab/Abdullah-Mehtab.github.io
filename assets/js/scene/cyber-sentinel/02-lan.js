@@ -136,6 +136,17 @@ export function buildLan(palette) {
 
   const endpoints = spots.map(([x, y, z]) => ({ at: new THREE.Vector3(x, y + RACK_H / 2 - 6, z) }));
 
+  // The room names itself while it is still the subject.
+  //
+  // The manager does not exist for the first 42% of this act, by design: its arrival is the
+  // act. But its nameplate was the only one here, so for most of the act the reader was
+  // looking at nine unlabelled cabinets with streams crossing them and nothing saying what
+  // the place was. This plate holds the first half and hands over as the manager comes up.
+  const roomLabel = nameplate("Unwatched LAN", "no agents reporting", accent, palette.deep, 52);
+  roomLabel.userData.primary = true;
+  roomLabel.position.set(26, 52, 8);
+  group.add(roomLabel);
+
   // ——— the manager ———
   // It is not there at the start of the act. It arrives, and that arrival is the act.
   // A stack of rules in an open frame, not a faceted polyhedron with a cube inside it. The
@@ -176,7 +187,10 @@ export function buildLan(palette) {
   managerLabel.userData.primary = true;
   managerLabel.position.set(0, 24, 0);
   manager.add(managerLabel);
-  manager.position.set(118, 8, 10);
+  // Close enough to the racks to be in the same room as them. At x 118 the set was a rank of
+  // cabinets ending at 70 and an appliance starting at 105, with nothing in between: the
+  // "so much blank space left for NOTHING" the owner described in this act.
+  manager.position.set(96, 8, 10);
   group.add(manager);
 
   const managerGlow = glow(accent, 78, 0);
@@ -217,14 +231,26 @@ export function buildLan(palette) {
   const trailPoints = [];
   const lanes = THREATS.map((name, i) => {
     const y = 58 - i * 15;
-    const z = 34 - i * 8;
+    // Every lane crosses in front of the racks, and in front of the manager's own face.
+    //
+    // They used to run from z 34 to z -14 while the front row of cabinets spans -20 to 8, so
+    // three streams passed in front of the racks and four went straight through them. The
+    // owner read that as a depth bug, which is fair: "some beads go THROUGH server, some float
+    // in front of them? Whats with the inconsistency?" Nothing was sorting them wrongly. They
+    // were put there. Two units apart keeps the lanes separable without any of them reaching
+    // the cabinets.
+    const z = 40 - i * 2;
     trailPoints.push(new THREE.Vector3(206, y, z), new THREE.Vector3(-46, y, z));
 
     const head = glow(accent, 7, 0.9);
     head.position.set(206, y, z);
     group.add(head);
 
-    const label = nameplate(name, "", accent, palette.deep, 33);
+    // Wide enough to read at the depth the act establishes from. At 33 units the plate was a
+    // 13 pixel cap height at 0.55 opacity, which is why the streams looked like decoration:
+    // the reader could see seven things crossing the room and could not tell what any of them
+    // was, and the labels are the only thing that makes them attacks rather than particles.
+    const label = nameplate(name, "", accent, palette.deep, 44);
     label.userData.caption = name;
     // It enters from off-frame and leaves at the manager: being half on screen is what it is
     // doing, not a composition fault. The frame audit skips these for that reason.
@@ -309,7 +335,12 @@ export function buildLan(palette) {
         rules[i].material.opacity = 0.3 + pulse * 0.45 * watched;
         rules[i].rotation.y = Math.sin(t * 0.2 + i) * 0.08;
       }
-      managerLabel.material.opacity = watched * 0.95;
+      // Up as soon as the thing it names exists. Tied straight to `watched` it read 0.18 at
+      // the halfway point of the act, so the object that gives this act its subject spent most
+      // of the act unnamed.
+      managerLabel.material.opacity = ease(clamp01(watched * 2.2)) * 0.95;
+      // One subject at a time: the room's plate goes as the manager's arrives.
+      roomLabel.material.opacity = (1 - ease(clamp01(watched * 1.8))) * 0.9;
       managerGlow.material.opacity = watched * 0.28 * (0.8 + Math.sin(t * 1.7) * 0.2);
 
       strips.material.opacity = 0.06 + Math.sin(t * 1.6) * 0.025 + watched * 0.5;
@@ -335,7 +366,7 @@ export function buildLan(palette) {
         const stopped = x <= stopAt;
         lane.head.position.set(stopped ? stopAt : x, lane.y, lane.z);
         lane.label.position.set((stopped ? stopAt : x) + 26, lane.y + 6, lane.z);
-        lane.label.material.opacity = 0.55 + (stopped ? 0.35 : 0);
+        lane.label.material.opacity = 0.82 + (stopped ? 0.18 : 0);
 
         // A caught stream flares and goes out. An uncaught one just keeps going.
         const burst = stopped ? Math.max(0, 1 - (x - stopAt) / -40) : 0;
@@ -368,7 +399,10 @@ export function buildLan(palette) {
       air.rotation.y = t * 0.015;
       traffic.update(t);
     },
-    // Track right across the room as the racks come up, ending on the manager.
+    // Track right across the room as the racks come up, ending on the manager. The camera has
+    // to travel further right than the set's own offset suggests: the room is 126 units wide
+    // and its weight sits at the manager end, so a camera that stops short leaves the manager,
+    // which is the thing the act is about, at three quarters of the way to the frame edge.
     // Take in the room, then walk into it. The first third frames the whole rank of racks so
     // the reader knows where they are; the rest moves down the aisle toward the manager as it
     // arrives.
@@ -376,7 +410,7 @@ export function buildLan(palette) {
       const settle = ease(clamp01(p / 0.34));
       const enter = ease(clamp01((p - 0.34) / 0.66));
       return {
-        dx: -26 - 4 * settle + 36 * enter,
+        dx: -26 - 4 * settle + 54 * enter,
         dy: 18 - 2 * settle - 18 * enter,
         dz: 104 - 14 * settle - 26 * enter,
         df: 3 - 5 * enter

@@ -205,24 +205,32 @@ export function buildOutputs(palette) {
     return unit;
   }
 
+  // The email sits below the dashboard's right half rather than alongside it.
+  //
+  // This act has the narrowest art lane on the page: it is the only one whose copy runs to
+  // seven of twelve columns, and in two columns at that. Side by side the two screens made the
+  // subject 64 world units across and the dashboard, the widest and brightest thing in the
+  // chapter, was the left one, so its edge landed across the Outcome heading at three times
+  // that heading's edge budget. Stacking them squarely instead made the subject 123 units tall
+  // against a frame that is wider than it is high, and the set fell off the top instead.
   const dashboard = display(dashboardTexture("#" + accent.getHexString(), palette.ink, palette.lightRoom), 96, 60, 3.4);
-  dashboard.position.set(16, 12, -10);
+  dashboard.position.set(24, 20, -10);
   dashboard.rotation.y = 0.24;
   group.add(dashboard);
 
   const email = display(emailTexture("#" + accent.getHexString(), palette.lightRoom), 44, 51, 2.6);
-  email.position.set(96, -26, 22);
+  email.position.set(60, -30, 22);
   email.rotation.y = -0.34;
   group.add(email);
 
   // Where both of them come from. Without it the act is two posters; with it, it is the end
   // of the pipeline the previous act flew through.
   const source = edgedBox(18, 15, 14, face, accent, 0.9);
-  source.position.set(16, -44, -30);
+  source.position.set(-18, -28, -30);
   group.add(source);
   const sourceLabel = nameplate("Logstash", "", accent, palette.deep, 32);
   sourceLabel.userData.primary = true;
-  sourceLabel.position.set(16, -30, -30);
+  sourceLabel.position.set(-18, -14, -30);
   group.add(sourceLabel);
 
   const feeds = [dashboard, email].map((target, i) => {
@@ -240,7 +248,12 @@ export function buildOutputs(palette) {
 
   // Two full-size documents would fill the whole frame and the copy would be reading through
   // a dashboard. They stay legible as objects at this size, which is all they need to be.
-  group.scale.setScalar(0.42);
+  // Sized so the whole subject fits the lane the copy leaves, at the distance the camera
+  // actually reaches. At 0.42 it was 64 units wide and 93 tall, which needs 89 units of
+  // standoff to fit; the camera closes to about 55, so the set was cut by the frame at 20 of
+  // the depths this act is read at. This act is marked contained because the reader is meant
+  // to read what is on its two screens, and a screen half off the frame is not readable.
+  group.scale.setScalar(0.3);
 
   // ——— the operations room ———
   // A back wall and a run of desks, both very dim. Two screens hanging in nothing read as an
@@ -312,14 +325,17 @@ export function buildOutputs(palette) {
     group,
     // Two screens the reader is meant to read, so they stay whole inside the frame.
     contained: true,
-    // This is the only act whose copy sits in two columns beside the set rather than above
-    // it, so the camera follows this set a little less far than the others. At 0.26 it barely
-    // followed at all: the closing set slid to within a tenth of the frame edge while it was
-    // still growing, which is the reader watching it leave rather than arriving at it. The
-    // reason for the low value was a lit dashboard landing behind a paragraph, worth a sixteen
-    // per cent contrast drop on one line, and that is what the contrast floor in
-    // .claude-tools/audit-scene-frame.mjs exists to catch if it returns.
-    aimFollow: 0.78,
+    // How much of this set's offset the camera follows. Low, so the set keeps the right of the
+    // frame while the copy keeps the left.
+    //
+    // This is the only act whose copy sits in two columns beside the set rather than above it,
+    // so it has the narrowest art lane on the page. The value was 0.26, then 0.78, then 1, and
+    // at every one of them either the dashboard was printed across the Outcome paragraph or
+    // the set slid off the frame. Neither was really about this number: the camera was aiming
+    // at a point a fixed 150 units ahead, so the aim weakened as it closed, and the offset was
+    // measured from an origin that sits 16 units left of the screens. With both of those fixed
+    // in the engine, a low value here now means what it says.
+    aimFollow: 0.68,
     update(t, p) {
       // Both screens are most of the way in by the time the act arrives. Ramping them from
       // almost nothing left the opening third of this act, which is its establishing view,
@@ -377,7 +393,7 @@ export function buildOutputs(palette) {
       return {
         dx: -18 - 4 * settle + 22 * enter,
         dy: 10 - 2 * settle - 12 * enter,
-        dz: 118 - 12 * settle - 46 * enter,
+        dz: 118 - 6 * settle - 18 * enter,
         df: 0
       };
     }

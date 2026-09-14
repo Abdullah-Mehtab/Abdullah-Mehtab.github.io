@@ -249,13 +249,19 @@ export function buildBoard(palette) {
     // Establish, then descend. The whole board is readable for the first third of the act;
     // after that the camera drops toward the header until the pins have real size. Doing the
     // whole descent from the first frame meant the reader never saw a whole board at all.
+    //
+    // The closing move was 38 units out of a resting 78, which took the camera to 40 from the
+    // board's near face while it was still parked. This set is marked contained, and at 40
+    // units it does not fit: nearly a third of it was off the frame at the depths the title is
+    // read at. The flight into it does the rest of the closing, and being inside it then is
+    // the point.
     mod: (p) => {
       const settle = ease(clamp01(p / 0.34));
       const enter = ease(clamp01((p - 0.34) / 0.66));
       return {
         dx: -8 - 2 * settle + 14 * enter,
         dy: 30 - 4 * settle - 20 * enter,
-        dz: 82 - 10 * settle - 28 * enter,
+        dz: 82 - 5 * settle - 13 * enter,
         df: 0
       };
     }
