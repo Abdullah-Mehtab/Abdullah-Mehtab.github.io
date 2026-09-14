@@ -393,7 +393,20 @@ body.film [data-frame] {
   background-image: url("data:image/svg+xml;utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3'/%3E%3C/filter%3E%3Crect width='140' height='140' filter='url(%23n)'/%3E%3C/svg%3E");
 }
 
+/*
+  The site's second backdrop layer is moved by the chapter, and its own drawing is dropped.
+
+  It carries a white 115 degree diagonal and a repeating 80px vertical ruling. Behind an act the
+  scene covers both; below the last act the canvas has faded to nothing and they are the only
+  thing in the right half of the frame, which is a white band across the comment column and a
+  ruling down the page. Same reason the site's 54px grid is suppressed above: two grids at two
+  scales read as neither, and this one is answering nothing on a chapter.
+
+  The glow layers either side of it keep their backgrounds, because a wash of the theme's own
+  colour is what stops the tail of the page going flat.
+*/
 body.film .theme-layer.layer-b {
+  background: none;
   transform:
     translate3d(calc((var(--act-now, 0) - 0.5) * 30vw), 0, 0)
     scaleX(var(--stage-shaft, 1));
@@ -1339,8 +1352,18 @@ body.film-still *::after {
   background: var(--bg-deep);
 }
 
+/*
+  The top edge sits under the header, not behind it.
+
+  At top: 0 it was a 14px bar at z-index 26 underneath a 65px fixed header at z-index 30, so it
+  was never visible at any scroll position and the upper boundary of the film was the site's
+  navigation bar. Putting it below the header gives the frame a real top edge without covering
+  the nav, and it carries the same act-coloured hairline as the bottom one so the two read as a
+  pair rather than as one bar and one accident.
+*/
 .film-bar[data-film-bar="top"] {
-  top: 0;
+  top: var(--film-header-h);
+  box-shadow: inset 0 -1px 0 color-mix(in srgb, var(--scene-accent) 34%, transparent);
 }
 
 .film-bar[data-film-bar="bottom"] {
@@ -2014,7 +2037,11 @@ body.scene-live .act > section {
        add two hundred pixels to a frame that has nine hundred to fit in. Not the full twelve,
        though: at full width the right-hand cards sit in the set's own third of the frame, and
        a set passing behind them measured three times the edge budget inside the word
-       "Detect". Ten columns fits the row and leaves the set somewhere to be. */
+       "Detect".
+
+       Seven columns was tried, to get the fourth card away from the next act's set as it
+       approaches. It made that worse rather than better: the cards wrap to shorter lines, so
+       the same overlap covers a larger share of one. The approaching set dims instead. */
     grid-column: 1 / span 8;
   }
 
@@ -2037,11 +2064,31 @@ body.scene-live .act > section {
     grid-column: 1 / span 6;
   }
 
-  /* The result column stops at the same place the single-column acts do, so the set has the
-     same clear third of the frame here as it does everywhere else. Running it to column
-     eight is what put a lit dashboard behind the last two lines of this paragraph. */
+  /* The result column, and the narrowest thing on the page for a reason.
+
+     This act's set is 46 world units across and it is the only act that spends its whole length
+     beside its copy rather than above it, so the lane left over here is the tightest on the
+     page. At three columns the copy ran to 806px and the Kibana dashboard was printed across
+     30% of a line of it at the handoff, measured by .claude-tools/audit-lit-panels.mjs. Two
+     columns hands the set the 86px it needs.
+
+     Running it to column eight, which is where it started, put the dashboard behind the last
+     two lines of the same paragraph. */
   body.film.scene-live [data-frame="split"] > :nth-child(2) {
-    grid-column: 5 / span 3;
+    grid-column: 5 / span 2;
+  }
+
+  /*
+    The reading lane exists so a set has somewhere to be. Below the last act there is no set:
+    the canvas has faded out entirely by then, and holding the copy in six of twelve columns
+    left the closing address and the whole comment thread in the left half of the frame with
+    the right 55% empty. Past the chapter the page is an ordinary page again.
+  */
+  body.film.scene-live.past-chapter [data-frame="coda"] > .chapter-meta,
+  body.film.scene-live.past-chapter [data-frame="coda"] > h2,
+  body.film.scene-live.past-chapter [data-frame="coda"] > .chapter-close-links,
+  body.film.scene-live.past-chapter [data-frame="single"] > * {
+    grid-column: 1 / span 12;
   }
 
   body.film.scene-live [data-frame="coda"] > .chapter-meta,

@@ -223,6 +223,10 @@ export function buildOutputs(palette) {
   email.rotation.y = -0.34;
   group.add(email);
 
+  // Where each screen rests, recorded once so the per-frame sway has something to sway around
+  // rather than a second copy of the coordinates.
+  for (const unit of [dashboard, email]) unit.userData.home = unit.position.clone();
+
   // Where both of them come from. Without it the act is two posters; with it, it is the end
   // of the pipeline the previous act flew through.
   const source = edgedBox(18, 15, 14, face, accent, 0.9);
@@ -336,7 +340,7 @@ export function buildOutputs(palette) {
     // measured from an origin that sits 16 units left of the screens. With both of those fixed
     // in the engine, a low value here now means what it says.
     aimFollow: 0.68,
-    update(t, p) {
+    update(t, p, camera) {
       // Both screens are most of the way in by the time the act arrives. Ramping them from
       // almost nothing left the opening third of this act, which is its establishing view,
       // with nothing established.
@@ -344,19 +348,37 @@ export function buildOutputs(palette) {
       const a = ease(clamp01(shown / 0.45));
       const b = ease(clamp01((shown - 0.3) / 0.45));
 
-      function show(unit, k, baseX, driftX, baseY, phase, sway) {
+      // The screens come on as the reader arrives at them.
+      //
+      // They were lit at 55% from the first frame of the act, which also means lit through the
+      // whole flight toward it, because a station's progress is zero until its act begins. A
+      // brightly painted dashboard travelling across the previous act covered nearly half a
+      // line of its copy. Driven by how close the camera is rather than by progress, because
+      // the approach happens while this act's progress is still zero.
+      //
+      // The shells, arms and feeds keep their own fade, so the set arrives as a built thing
+      // whose screens then come on, rather than materialising all at once.
+      const away = camera ? Math.abs(camera.position.z - group.position.z) : 0;
+      const lit = clamp01((170 - away) / 90);
+
+      // A screen's resting place is where it was built, not a second copy of the number here.
+      // The two disagreed: the set was moved to fit the lane its copy leaves and this went on
+      // putting both screens back where they used to be, every frame, so the set stayed 46
+      // units wide when it had been made narrower.
+      function show(unit, k, driftX, phase, sway) {
+        const home = unit.userData.home;
         unit.visible = k > 0.01;
         unit.scale.setScalar(Math.max(0.001, 0.9 + k * 0.1));
-        unit.userData.glass.material.opacity = k;
+        unit.userData.glass.material.opacity = k * lit;
         unit.userData.shell.material.opacity = k;
         unit.userData.shell.children[0].material.opacity = k * 0.85;
         unit.userData.arm.material.opacity = k * 0.45;
-        unit.position.x = baseX + (1 - k) * driftX;
-        unit.position.y = baseY + Math.sin(t * 0.42 + phase) * 1.4;
+        unit.position.x = home.x + (1 - k) * driftX;
+        unit.position.y = home.y + Math.sin(t * 0.42 + phase) * 1.4;
         unit.rotation.y = sway + Math.sin(t * 0.28 + phase) * 0.035;
       }
-      show(dashboard, a, 16, -20, 12, 0, 0.24);
-      show(email, b, 96, 22, -26, 2, -0.34);
+      show(dashboard, a, -20, 0, 0.24);
+      show(email, b, 22, 2, -0.34);
 
       const sourceIn = ease(clamp01(shown * 3));
       source.scale.setScalar(Math.max(0.001, sourceIn));

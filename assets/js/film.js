@@ -174,7 +174,10 @@
   // bar and the arrows scroll too, and a reader pressing End should land at the end.
   for (const event of ["wheel", "touchstart", "keydown", "pointerdown"]) {
     window.addEventListener(event, (e) => {
-      if (e.target === play || (play.contains && play.contains(e.target))) return;
+      // A wheel or key event on the window has the window as its target, which is not a Node,
+      // and Node.contains throws on it rather than returning false.
+      const from = e.target instanceof Node ? e.target : null;
+      if (from && (from === play || play.contains(from))) return;
       stopPlaying();
     }, { passive: true, capture: true });
   }
@@ -304,6 +307,14 @@
     // The rooms end with the chapter. Past the last act the page is a comment thread and a
     // footer, and perspective rays behind a form read as lines through its placeholder.
     const last = acts[acts.length - 1].getBoundingClientRect();
+
+    // Past the last act the copy goes back to the full measure, because there is no set left
+    // for it to be leaving room for: the canvas has faded out by then.
+    const pastChapter = last.bottom < vh * 0.5;
+    if (body.classList.contains("past-chapter") !== pastChapter) {
+      body.classList.toggle("past-chapter", pastChapter);
+    }
+
     if (staged) put(body, "--stage-presence", (1 - clamp((vh - last.bottom) / (vh * 0.6)) * 0.85).toFixed(3));
 
     // The running act's own progress, published where the stage can read it. The stage is a
