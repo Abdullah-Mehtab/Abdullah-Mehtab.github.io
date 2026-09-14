@@ -10,42 +10,71 @@
        of this strip. The height is 120 because the strip that clips this is 125 tall and the
        element sits 6px low, so a taller peak would be beheaded rather than drawn.
 
-       Both side edges fall mid-slope, so the range reads as continuous as it travels. -->
+       This is a seamless tile, and the three <use> of each range are what make it one. The
+       peaks are authored across roughly -390 to 2345, so the viewBox cuts several of them
+       mid-slope at both ends. Drawing each range again one tile to the left and one to the
+       right means whatever leaves the right edge arrives at the left edge in the same place,
+       so a repeated copy joins onto this one with no step in the skyline. Without them the
+       range ends in a 55px vertical cliff at each of its own edges, which is what a reader
+       saw twice per pass. Paired with repeat-x and a translate of exactly 2000px in
+       animations.css; change the width here and that translate has to change with it. -->
+  <defs>
+    <g id="mtn-back">
+      <polygon points="-334,120 -170,42 -6,120"/>
+      <polygon points="-102,120 27,46 156,120"/>
+      <polygon points="25,120 190,46 355,120"/>
+      <polygon points="293,120 410,25 527,120"/>
+      <polygon points="484,120 607,33 730,120"/>
+      <polygon points="648,120 758,48 868,120"/>
+      <polygon points="812,120 974,39 1136,120"/>
+      <polygon points="1091,120 1197,24 1303,120"/>
+      <polygon points="1292,120 1404,18 1516,120"/>
+      <polygon points="1413,120 1548,26 1683,120"/>
+      <polygon points="1600,120 1764,15 1928,120"/>
+      <polygon points="1815,120 1945,42 2075,120"/>
+      <polygon points="2009,120 2151,28 2293,120"/>
+    </g>
+    <g id="mtn-snow">
+      <polygon points="375,54 410,25 445,54"/>
+      <polygon points="570,59 607,33 644,59"/>
+      <polygon points="1165,53 1197,24 1229,53"/>
+      <polygon points="1370,49 1404,18 1438,49"/>
+      <polygon points="1508,54 1548,26 1588,54"/>
+      <polygon points="1715,46 1764,15 1813,46"/>
+      <polygon points="2108,56 2151,28 2194,56"/>
+    </g>
+    <g id="mtn-front">
+      <polygon points="-384,120 -170,54 44,120"/>
+      <polygon points="-172,120 41,83 254,120"/>
+      <polygon points="102,120 302,80 502,120"/>
+      <polygon points="343,120 513,70 683,120"/>
+      <polygon points="595,120 761,86 927,120"/>
+      <polygon points="756,120 958,58 1160,120"/>
+      <!-- Base runs to 1390, not 1318. The two ranges all bottom out together around
+           x=1298, and at 1318 this triangle left the union 5.7px tall there: the element
+           sits 6px below the strip floor, so the range disappeared for five columns and the
+           ground line showed through a slit. A longer shoulder costs nothing and the union
+           never touches the floor. -->
+      <polygon points="1032,120 1175,79 1390,120"/>
+      <polygon points="1301,120 1439,78 1577,120"/>
+      <polygon points="1476,120 1633,54 1790,120"/>
+      <polygon points="1686,120 1876,57 2066,120"/>
+      <polygon points="1979,120 2162,79 2345,120"/>
+    </g>
+  </defs>
   <g fill="#6a707c">
-    <polygon points="-334,120 -170,42 -6,120"/>
-    <polygon points="-102,120 27,46 156,120"/>
-    <polygon points="25,120 190,46 355,120"/>
-    <polygon points="293,120 410,25 527,120"/>
-    <polygon points="484,120 607,33 730,120"/>
-    <polygon points="648,120 758,48 868,120"/>
-    <polygon points="812,120 974,39 1136,120"/>
-    <polygon points="1091,120 1197,24 1303,120"/>
-    <polygon points="1292,120 1404,18 1516,120"/>
-    <polygon points="1413,120 1548,26 1683,120"/>
-    <polygon points="1600,120 1764,15 1928,120"/>
-    <polygon points="1815,120 1945,42 2075,120"/>
-    <polygon points="2009,120 2151,28 2293,120"/>
+    <use href="#mtn-back" x="-2000"/>
+    <use href="#mtn-back"/>
+    <use href="#mtn-back" x="2000"/>
   </g>
   <g fill="#d3dce6">
-    <polygon points="375,54 410,25 445,54"/>
-    <polygon points="570,59 607,33 644,59"/>
-    <polygon points="1165,53 1197,24 1229,53"/>
-    <polygon points="1370,49 1404,18 1438,49"/>
-    <polygon points="1508,54 1548,26 1588,54"/>
-    <polygon points="1715,46 1764,15 1813,46"/>
-    <polygon points="2108,56 2151,28 2194,56"/>
+    <use href="#mtn-snow" x="-2000"/>
+    <use href="#mtn-snow"/>
+    <use href="#mtn-snow" x="2000"/>
   </g>
   <g fill="#4d525c">
-    <polygon points="-384,120 -170,54 44,120"/>
-    <polygon points="-172,120 41,83 254,120"/>
-    <polygon points="102,120 302,80 502,120"/>
-    <polygon points="343,120 513,70 683,120"/>
-    <polygon points="595,120 761,86 927,120"/>
-    <polygon points="756,120 958,58 1160,120"/>
-    <polygon points="1032,120 1175,79 1318,120"/>
-    <polygon points="1301,120 1439,78 1577,120"/>
-    <polygon points="1476,120 1633,54 1790,120"/>
-    <polygon points="1686,120 1876,57 2066,120"/>
-    <polygon points="1979,120 2162,79 2345,120"/>
+    <use href="#mtn-front" x="-2000"/>
+    <use href="#mtn-front"/>
+    <use href="#mtn-front" x="2000"/>
   </g>
 </svg>

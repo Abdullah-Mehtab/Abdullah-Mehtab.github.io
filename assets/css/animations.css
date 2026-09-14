@@ -249,15 +249,22 @@ body {
 */
 .mountain {
   position: absolute;
-  right: -900px;
+  left: 0;
   bottom: -6px;
-  width: 2000px;
+  /* One strip wide plus one whole tile. The range is a repeating tile travelling left, so the
+     element has to carry a spare tile off the right edge for the next one to come from, and
+     the animation has to move by exactly one tile width. Any other distance puts a jump in
+     the skyline once per loop. It was a single 2000px image sliding 5350px, which left the
+     strip with no mountain at all for seven seconds in every twenty. */
+  width: calc(100% + 2000px);
   /* 120, not 150. .loop-wrapper is 125px with overflow hidden and this sits 6px below its
      floor, so anything taller than 119px has its peaks cut off square. */
   height: 120px;
-  background: url(../images/mountains.svg) no-repeat left bottom;
+  background: url(../images/mountains.svg) repeat-x left bottom;
   background-size: 2000px 120px;
-  animation: mtn 20s linear infinite;
+  /* 7.5s for 2000px is the same 267px/s the range travelled before, which is a little under
+     half the speed of the trees. The range is the far distance and has to read that way. */
+  animation: mtn 7.5s linear infinite;
   opacity: 1;
   will-change: transform;
 }
@@ -390,9 +397,10 @@ body {
   50%   { transform: translateY(3px) }
   100%   { }
 }
+/* Exactly one tile of mountains.svg. See .mountain. */
 @keyframes mtn {
-  0%   { transform: translate(1350px); opacity: 1; }
-  100% { transform: translate(-4000px); opacity: 1; }
+  0%   { transform: translateX(0); }
+  100% { transform: translateX(-2000px); }
 }
 @keyframes hill {
   0%   { transform: translate(1350px); opacity: 1; }

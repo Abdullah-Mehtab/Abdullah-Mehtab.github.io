@@ -306,6 +306,103 @@ async function checkDashes() {
   }
 }
 
+// The truck strip's mountain range is a repeating tile, and three files have to agree on its
+// width for the loop to be invisible: the tile's own width in mountains.svg, the
+// background-size in animations.css, and the distance the mtn keyframes travel. Before this
+// they did not: a single non-repeating image slid 5350px in 20s, which left the strip with no
+// mountain at all for seven seconds in every twenty, and cut the skyline off with a 55px
+// vertical cliff at each of its own edges twice per pass.
+//
+// The artwork has to hold two properties as well, and neither is visible in a diff: the
+// skyline has to match at the two tile edges, or the repeat shows a step, and it has to stay
+// above the strip's own clip line, or the ground shows through a slit between two peaks.
+async function checkTruckStripLoop() {
+  const cssFile = resolve(repoRoot, 'assets/css/animations.css');
+  const svgFile = resolve(repoRoot, 'assets/images/mountains.svg');
+  if (!await fileExists(cssFile) || !await fileExists(svgFile)) {
+    failures.push('The truck strip loop check needs assets/css/animations.css and assets/images/mountains.svg, and at least one of them is missing.');
+    return;
+  }
+
+  const css = await readFile(cssFile, 'utf8');
+  const rule = css.match(/\.mountain\s*\{([\s\S]*?)\}/);
+  const keyframes = css.match(/@keyframes\s+mtn\s*\{([\s\S]*?)\}\s*\}/) || css.match(/@keyframes\s+mtn\s*\{([\s\S]*?)\n\}/);
+  if (!rule || !keyframes) {
+    failures.push('assets/css/animations.css no longer has both a .mountain rule and mtn keyframes, so the truck strip loop could not be checked.');
+    return;
+  }
+
+  const size = rule[1].match(/background-size:\s*(\d+)px\s+(\d+)px/);
+  const repeats = /background:[^;]*\brepeat-x\b/.test(rule[1]);
+  const travel = keyframes[1].match(/translateX\(\s*-(\d+)px\s*\)/);
+  const sits = rule[1].match(/bottom:\s*(-?\d+)px/);
+  if (!size || !travel || !sits) {
+    failures.push('assets/css/animations.css .mountain must set background-size in pixels, a bottom offset in pixels, and mtn must translateX a pixel distance, so that the tile width, the clip line and the travel can be compared.');
+    return;
+  }
+  const tile = Number(size[1]);
+  const tall = Number(size[2]);
+  const clip = Math.max(0, -Number(sits[1]));
+
+  if (!repeats) {
+    failures.push('assets/css/animations.css .mountain does not repeat-x its background. A single tile runs out before the loop comes round, and the strip shows no mountain at all for part of every pass.');
+  }
+  if (Number(travel[1]) !== tile) {
+    failures.push(`assets/css/animations.css moves the mountain range ${travel[1]}px per loop while its tile is ${tile}px wide. The travel has to be exactly one tile or the skyline jumps once per loop.`);
+  }
+
+  // The skyline the artwork actually draws, as the union of its triangles, with the copies one
+  // tile either side that make the tile seamless.
+  const svg = await readFile(svgFile, 'utf8');
+  const box = svg.match(/viewBox="0 0 (\d+) (\d+)"/);
+  if (!box || Number(box[1]) !== tile || Number(box[2]) !== tall) {
+    failures.push(`assets/images/mountains.svg is ${box ? `${box[1]}x${box[2]}` : 'not on a 0 0 w h viewBox'} while animations.css draws it at ${tile}x${tall}. A scaled tile makes every measurement below meaningless.`);
+    return;
+  }
+  const triangles = [...svg.matchAll(/points="([^"]+)"/g)]
+    .map((match) => match[1].trim().split(/[\s,]+/).map(Number))
+    .filter((n) => n.length === 6 && n[0] < n[2] && n[2] < n[4]);
+  if (triangles.length < 3) {
+    failures.push('assets/images/mountains.svg has fewer than three left-to-right triangles, so its skyline could not be read. Either the artwork changed shape or this check can no longer read it.');
+    return;
+  }
+  // Where the artwork is actually painted, read from the file rather than assumed. What makes
+  // the tile seamless is that each range is drawn again one tile to the left and one to the
+  // right, and that is a <use x> per copy. Measuring the polygon list as if those copies were
+  // always there would report a seamless tile however the file draws it.
+  const uses = [...svg.matchAll(/<use\b[^>]*>/g)].map((tag) => Number((tag[0].match(/\sx="(-?\d+)"/) || [0, 0])[1]));
+  const drawn = [...new Set(uses.length ? uses : [0])];
+  if (uses.length && /<polygon/.test(svg.replace(/<defs>[\s\S]*<\/defs>/, ''))) {
+    failures.push('assets/images/mountains.svg mixes polygons drawn directly with polygons drawn through <use>, and this check reads only one of those. Put every triangle in the defs block or this measurement is not describing the file.');
+    return;
+  }
+  const topAt = (x) => {
+    let top = tall;
+    for (const [ax, ay, bx, by, cx, cy] of triangles) {
+      for (const shift of drawn) {
+        const a = ax + shift, b = bx + shift, c = cx + shift;
+        if (x < a || x > c) continue;
+        const y = x <= b ? ay + (x - a) / (b - a) * (by - ay) : by + (x - b) / (c - b) * (cy - by);
+        if (y < top) top = y;
+      }
+    }
+    return top;
+  };
+  let lowest = { height: Infinity, x: 0 };
+  for (let x = 0; x < tile; x++) {
+    const height = tall - topAt(x);
+    if (height < lowest.height) lowest = { height, x };
+  }
+  // A tile edge that does not match its opposite edge is the vertical cliff, measured.
+  const seam = Math.abs((tall - topAt(0)) - (tall - topAt(tile - 1)));
+  if (seam > 2) {
+    failures.push(`assets/images/mountains.svg is ${seam.toFixed(1)}px taller at one edge of the tile than the other, so every repeat shows a vertical step in the skyline. Draw each range again at -${tile} and +${tile} so what leaves one edge arrives at the other.`);
+  }
+  if (lowest.height <= clip + 4) {
+    failures.push(`assets/images/mountains.svg drops to ${lowest.height.toFixed(1)}px at x=${lowest.x}, and animations.css hides the bottom ${clip}px of it. The range vanishes there and the ground line shows through a slit between two peaks.`);
+  }
+}
+
 // Themes are declared on body[data-theme], so a custom property in film.css that aliases one
 // must also live on body. A "var(--cyan)" written inside :root resolves against the :root default
 // and freezes to a single colour in all eighteen themes, while still looking correct in whichever
@@ -571,6 +668,7 @@ async function main() {
   await checkRedirectStub();
   await checkDashes();
   await checkFilmTokenScope();
+  await checkTruckStripLoop();
   await checkFilmActHandoff();
   await checkStaticReferences();
 
