@@ -199,9 +199,11 @@ export function nameplate(text, sub, accent, deep, worldWidth) {
 
     const ground = g.createLinearGradient(left, 0, left + boxWidth, 0);
     const shade = "#" + deep.getHexString();
+    // Opaque through the middle where the words are, so the plate is a ground rather than a
+    // tint over whatever geometry the label happens to be in front of.
     ground.addColorStop(0, shade + "00");
-    ground.addColorStop(0.16, shade + "d8");
-    ground.addColorStop(0.84, shade + "d8");
+    ground.addColorStop(0.16, shade + "f0");
+    ground.addColorStop(0.84, shade + "f0");
     ground.addColorStop(1, shade + "00");
     g.fillStyle = ground;
     g.fillRect(left, 6, boxWidth, h - 12);
@@ -212,12 +214,23 @@ export function nameplate(text, sub, accent, deep, worldWidth) {
     g.fillRect(left + 18, h - 12, boxWidth - 36, 2);
     g.globalAlpha = 1;
 
+    // The words are ink, not accent. The accent is the hue the whole room is painted in, so a
+    // name written in it is the same colour as everything behind it: measured at 2.92:1 for the
+    // stream labels and 3.06:1 for the graph's, against plates in act one that reach 6.88:1
+    // because their ground happens to be darker. The rule under the words keeps the accent,
+    // which is where it reads as a colour rather than as camouflage.
+    //
+    // Taken from the ground rather than passed in, so it is right on all eighteen themes: two
+    // of them are light, and light ink on a pale plate is the same fault the other way round.
+    const pale = deep.getHSL({ h: 0, s: 0, l: 0 }).l > 0.5;
+    g.fillStyle = pale ? "#0b0f14" : "#f2f7fb";
+
     g.textBaseline = "middle";
     g.textAlign = "center";
     g.font = "600 46px Archivo, 'Segoe UI', sans-serif";
     g.fillText(text, w / 2, sub ? 46 : h / 2 - 3);
     if (sub) {
-      g.globalAlpha = 0.62;
+      g.globalAlpha = 0.78;
       g.font = "400 30px 'IBM Plex Mono', ui-monospace, monospace";
       g.fillText(sub, w / 2, 96);
       g.globalAlpha = 1;
