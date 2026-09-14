@@ -193,6 +193,11 @@ export function buildBoard(palette) {
   halo.position.set(0, 4, -40);
   group.add(halo);
 
+  // What each of those is worth once the board is fully built. The update dims them while it
+  // is not.
+  const haloLit = halo.material.opacity;
+  const poolLit = pool.material.opacity;
+
   // Tilted up towards the camera rather than lying flat. A board seen from a shallow angle is
   // a grey parallelogram: the components have no height against it and the header disappears
   // entirely. At about forty degrees every part keeps its own silhouette.
@@ -229,6 +234,18 @@ export function buildBoard(palette) {
       blades.rotation.y = t * 6;
       air.rotation.y = t * 0.02;
       spares.update(t);
+
+      // The light in the room comes up with the board rather than being there before it.
+      //
+      // These two are the biggest things in this act's air by a long way, and they were at full
+      // strength on the frame the page lands on, where the board is only half assembled. Measured
+      // with .claude-tools/audit-landing-weight.mjs: inside the board's own part of the frame the
+      // scenery changed 1.45 million units of luma against the subject's 2.46, so the first thing
+      // a reader saw was a glow with a part-built board inside it. Tied to the build they are
+      // quiet while it arrives and full once it is there.
+      const lit = 0.34 + 0.66 * build;
+      halo.material.opacity = haloLit * lit;
+      pool.material.opacity = poolLit * lit;
 
       // Power light comes up once the cooler has landed, then breathes.
       const powered = ease(clamp01((build - 0.5) * 4));

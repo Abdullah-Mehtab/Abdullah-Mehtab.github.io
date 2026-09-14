@@ -1216,6 +1216,15 @@ export function mountFilm({ canvas, buildStations }) {
     // The hue each act paints its room in, for .claude-tools/audit-act-colour.mjs to compare
     // against what the page furniture is painted in.
     get actAccents() { return palette.accents.map((c) => c.getHexString()); },
+    // Hold the frame where it is, and draw one when asked.
+    //
+    // For .claude-tools/audit-landing-weight.mjs, which hides part of a set and photographs what
+    // is left to find out whether an act's subject or its scenery is the louder thing in the
+    // frame. Each set's own update writes visibility onto its parts every frame, so with the
+    // loop running anything a tool hides is drawn again before the shot is taken, and two acts
+    // measured as having a subject that changes nothing at all.
+    pause() { running = false; },
+    render() { renderer.render(scene, camera); },
     stop() {
       running = false;
       themeWatcher.disconnect();
