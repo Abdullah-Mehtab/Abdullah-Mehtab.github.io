@@ -162,11 +162,16 @@ function readPalette(body, actCount) {
 //   of two plates on the same pixels, the nearer one keeps its name and the further one loses it.
 const NAMEPLATE_EDGE_FADE = 0.07;
 const NAMEPLATE_OVERLAP = 0.06;
-// The right edge of the reading column, in clip space. film.css gives the copy six of twelve
-// columns when the scene is live, in a container capped at 1180px and centred, so on a wide
-// frame the words end around here. A nameplate is kept clear of it; the geometry itself is
-// not, because passing behind the copy is what flying into a set looks like.
-const COPY_LANE_EDGE = 0.1;
+// The right edge of the reading column, in clip space. A nameplate is kept clear of it; the
+// geometry itself is not, because passing behind the copy is what flying into a set looks like.
+//
+// Measured from the container rather than pinned. This was 0.1, a number that described where
+// the words ended while the container was capped at 1180px and centred, and it stopped being
+// true the moment the container was anchored to the page's left inset instead: on a 1920 screen
+// the copy's right edge moved 310px left and every plate in the band it vacated was still being
+// faded for standing where the copy was not. A constant in here describing a value the
+// stylesheet computes is two authorities over one number, and this is what that costs.
+const COPY_LANE_FALLBACK = 0.1;
 
 function screenBox(node, camera, probe) {
   const params = node.geometry && node.geometry.parameters;
@@ -213,7 +218,7 @@ function headingRects(now) {
   return headingCache;
 }
 
-function keepNameplatesLegible(stations, camera, probe, plates, narrow, width, height, now) {
+function keepNameplatesLegible(stations, camera, probe, plates, narrow, width, height, now, laneEdge) {
   plates.length = 0;
   // A phone has no art lane: the copy is the whole width, so any nameplate can land on the
   // page's own heading. Dropping all of them fixed that and cost every act its specificity:
@@ -257,7 +262,7 @@ function keepNameplatesLegible(stations, camera, probe, plates, narrow, width, h
     // And the same treatment for the copy's side of the frame, on a wide screen where the
     // copy has a column of its own.
     if (!narrow) {
-      const intoLane = COPY_LANE_EDGE - plate.box.minX;
+      const intoLane = laneEdge - plate.box.minX;
       if (intoLane > 0) plate.node.material.opacity *= Math.max(0, 1 - (intoLane / own) / 0.35);
     }
   }
@@ -648,8 +653,24 @@ export function mountFilm({ canvas, buildStations }) {
   let chapterBottom = 0;
   let narrow = false;
   let aspectPullback = 0;
+  // See COPY_LANE_FALLBACK. Read on resize rather than per frame: the container only moves when
+  // the window does, and reading a rect in the frame loop after the renderer has written to the
+  // canvas forces a layout recalculation every frame.
+  let copyLaneEdge = COPY_LANE_FALLBACK;
 
   function measure() {
+    // Before the writes below, not after. A custom-property or canvas-size write dirties style,
+    // and the next getBoundingClientRect then pays for a full recalculation.
+    //
+    // The container holds twelve columns and the copy takes six of them, which is half the
+    // container less half a gap. Half is close enough and errs narrow, and erring narrow lets a
+    // plate sit nearer the words rather than fading one that is nowhere near them.
+    const column = document.querySelector("main .act .section-inner");
+    if (column) {
+      const box = column.getBoundingClientRect();
+      copyLaneEdge = box.width > 0 ? ((box.left + box.width / 2) / window.innerWidth) * 2 - 1 : COPY_LANE_FALLBACK;
+    }
+
     width = window.innerWidth;
     height = window.innerHeight;
     narrow = width <= 820;
@@ -960,7 +981,7 @@ export function mountFilm({ canvas, buildStations }) {
       if (near) stations[i].update(time, reduced ? 1 : stationProgress(i), camera);
     }
 
-    keepNameplatesLegible(stations, camera, nameplateProbe, nameplates, narrow, width, height, now);
+    keepNameplatesLegible(stations, camera, nameplateProbe, nameplates, narrow, width, height, now, copyLaneEdge);
 
     renderer.render(scene, camera);
 
