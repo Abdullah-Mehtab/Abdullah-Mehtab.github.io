@@ -31,12 +31,19 @@ import { THREE, clamp01, drift, ease, edgedBox, glow, motes, nameplate, painted,
 // frame at the act's establishing depth. Depth is what makes this a flow
 // rather than a diagram; more of it than the frame can hold makes it neither.
 const NODES = {
-  agents:   { at: [-30, 15, 51], size: [18, 13, 13], form: "cluster", label: "Agents", sub: "endpoints" },
+  // Left of the middle, and clear of the reading column. At -30 its plate straddled the edge of
+  // that column at the one depth it is biggest, and the lane fade took it to 0.77 opacity: the
+  // room then shows through the ground the words are painted on and it measured 4.43:1 against
+  // a 4.5 floor. The same thing, further along the flow, is why Elasticsearch moved.
+  agents:   { at: [-14, 15, 51], size: [18, 13, 13], form: "cluster", label: "Agents", sub: "endpoints" },
   suricata: { at: [35, -25, 36], size: [20, 14, 14], form: "sensor", label: "Suricata", sub: "network alerts" },
   manager:  { at: [0, 2, 19], size: [30, 32, 26], form: "rules", label: "Wazuh Manager", sub: "rules, decoders" },
   alerts:   { at: [-11, -18, 2], size: [22, 3, 17], form: "file", label: "alerts.json", sub: "" },
   filebeat: { at: [16, 17, -14], size: [18, 14, 14], form: "shipper", label: "Filebeat", sub: "ships events" },
-  elastic:  { at: [-22, -10, -31], size: [26, 24, 24], form: "store", label: "Elasticsearch", sub: "index, search" },
+  // Left of the flow's middle but not out in the reading column. At -22 its plate sat over the
+  // words at every depth the camera could see it from, so the lane fade took it to nothing and
+  // the one node here that stores anything was never named.
+  elastic:  { at: [-6, -10, -31], size: [26, 24, 24], form: "store", label: "Elasticsearch", sub: "index, search" },
   logstash: { at: [16, 8, -47], size: [24, 22, 18], form: "fork", label: "Logstash", sub: "the fork" },
   email:    { at: [-31, 34, -66], size: [26, 18, 4], form: "screen", label: "HTML email alerts", sub: "" },
   kibana:   { at: [40, -21, -66], size: [30, 20, 4], form: "screen", label: "Kibana dashboards", sub: "" }
@@ -298,7 +305,11 @@ export function buildPipeline(palette) {
           const range = probe.distanceTo(camera.position);
           near = clamp01(1.8 - Math.max(0, range - 90) / 200);
         }
-        item.label.material.opacity = k * 0.95 * near;
+        // Fully opaque, not 0.95. These plates are painted with a ground that is solid through
+        // the middle precisely so the node behind cannot show through the words, and five per
+        // cent of a node's own lit wireframe is enough to undo it: "Agents" sits on its own
+        // cluster and read 4.42:1 against a 4.5 floor at the one depth it is biggest.
+        item.label.material.opacity = k * near;
         if (item.halo) item.halo.material.opacity = k * 0.16 * (0.85 + Math.sin(t * 1.3 + item.at * 9) * 0.15);
 
         if (item.node.userData.cage) item.node.userData.cage.rotation.y = t * 0.2;

@@ -803,6 +803,178 @@ async function checkFilmClosingSet(baseUrl) {
   }
 }
 
+// Where in each act to look for nameplates. Seven depths an act, all inside the part of it the
+// camera spends in front of its own set: past about 60% the camera is in flight to the next
+// station and an act's own labels are behind it, so a sample there measures the next act. Even
+// spacing out to 0.95 looked more thorough and missed a plate whose whole window is at 30%.
+const PLATE_DEPTHS = [0.05, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6];
+// How much of the smaller of two plates may be covered by the other before they are two labels
+// on the same pixels rather than two labels near each other. The engine works to the same
+// number, so this fails when that pass stops working, not when it is merely tight.
+const PLATE_OVERLAP = 0.06;
+// Below this a plate's own ground is translucent enough that the room shows through the words
+// it is carrying, so a label that never reaches it has been made and never shown.
+const PLATE_SOLID = 0.75;
+
+// Every label that exists is readable somewhere, and no two are ever on the same pixels.
+//
+// Owner ruling, 2026-09-14: a thing that was made to be shown is shown. The engine used to
+// resolve two plates landing on each other by zeroing the further one and never reconsidering,
+// which left act three's "Agents" at opacity zero at five of six sampled depths and act two's
+// "Unwatched LAN" never solid anywhere. It displaces before it eliminates now, and this is what
+// stops that quietly going back to elimination.
+async function checkFilmNameplates(baseUrl) {
+  const executablePath = findChromeExecutable();
+  if (!executablePath) {
+    warnings.push('Skipping the chapter nameplate check because Chrome/Edge was not found. Set CHROME_PATH to enable it.');
+    return;
+  }
+
+  const routes = await filmRoutes();
+  if (routes.length === 0) {
+    failures.push('The chapter nameplate check found no page carrying the film body class, so it measured nothing. Either the class was renamed or the check can no longer find the chapter pages.');
+    return;
+  }
+
+  const { default: puppeteer } = await import('puppeteer-core');
+  const browser = await puppeteer.launch({
+    executablePath,
+    headless: true,
+    args: ['--no-sandbox', '--disable-setuid-sandbox', '--enable-unsafe-swiftshader', '--use-gl=angle']
+  });
+  try {
+    const page = await browser.newPage();
+    await page.setCacheEnabled(false);
+    await page.setViewport({ width: 1440, height: 900, deviceScaleFactor: 1 });
+    for (const route of routes) {
+      await page.goto(`${baseUrl}${route}?still&scene-debug`, { waitUntil: 'networkidle2' });
+      await page.evaluate(() => new Promise((done) => setTimeout(done, 1800)));
+      if (!await page.evaluate(() => Boolean(window.chapterFilm))) {
+        failures.push(`${route} did not publish its scene through ?scene-debug, so its nameplates could not be measured.`);
+        continue;
+      }
+      const bands = await page.evaluate(() => [...document.querySelectorAll('main > .act')].map((act) => ({
+        top: Math.round(act.getBoundingClientRect().top + window.scrollY),
+        span: Number(act.dataset.stationSpan) || Math.round(act.getBoundingClientRect().height)
+      })));
+      // What each set asks for. A set that is a sequence says so, and says how much of itself a
+      // reader has to be able to take in at once; the rest hand one subject to the next on
+      // purpose, and counting their labels together would be counting that handover as a fault.
+      const asks = await page.evaluate(() => window.chapterFilm.stations.map((station) => station.partsTogether || 0));
+      const best = new Map();
+      const stacked = [];
+      // Per act: how many of its own labels are legible at the same time, at its best depth.
+      const together = new Map();
+      const owned = new Map();
+      for (const band of bands) {
+        for (const depth of PLATE_DEPTHS) {
+          await page.evaluate((to) => window.scrollTo(0, to), Math.round(band.top + band.span * depth));
+          // The camera arrives over about 45 frames, so this settles in frames, not milliseconds.
+          await page.evaluate(() => new Promise((done) => {
+            let n = 0;
+            const tick = () => (++n > 50 ? done() : requestAnimationFrame(tick));
+            requestAnimationFrame(tick);
+          }));
+          const seen = await page.evaluate(() => {
+            const film = window.chapterFilm;
+            const camera = film.camera;
+            camera.updateMatrixWorld();
+            const out = [];
+            film.stations.forEach((station, si) => {
+              if (!station.group.visible) return;
+              station.group.traverse((node) => {
+                if (!node.userData || !node.userData.caption || !node.material) return;
+                if (node.material.opacity <= 0.08) return;
+                const params = node.geometry && node.geometry.parameters;
+                if (!params) return;
+                const hw = (params.width || 1) / 2;
+                const hh = (params.height || 1) / 2;
+                node.updateWorldMatrix(true, false);
+                let x0 = Infinity;
+                let y0 = Infinity;
+                let x1 = -Infinity;
+                let y1 = -Infinity;
+                let ok = true;
+                for (let c = 0; c < 4; c++) {
+                  const v = new (camera.position.constructor)(c === 0 || c === 3 ? -hw : hw, c < 2 ? -hh : hh, 0);
+                  v.applyMatrix4(node.matrixWorld);
+                  // Behind the camera projects to nonsense, so this plate is not on screen.
+                  if (v.clone().applyMatrix4(camera.matrixWorldInverse).z > -0.1) { ok = false; break; }
+                  v.project(camera);
+                  x0 = Math.min(x0, v.x); x1 = Math.max(x1, v.x);
+                  y0 = Math.min(y0, v.y); y1 = Math.max(y1, v.y);
+                }
+                if (!ok) return;
+                if (x1 <= -1 || x0 >= 1 || y1 <= -1 || y0 >= 1) return;
+                out.push({
+                  act: si + 1,
+                  text: node.userData.caption,
+                  opacity: node.material.opacity,
+                  // A label that crosses the room and leaves is bright for part of its own
+                  // journey and dim for the rest of it, and which part four scroll depths land
+                  // on says nothing. The sets mark these themselves.
+                  transient: Boolean(node.userData.transient),
+                  x0, x1, y0, y1
+                });
+              });
+            });
+            return out;
+          });
+          const solidHere = new Map();
+          for (const plate of seen) {
+            if (plate.transient) continue;
+            const key = `act ${plate.act} "${plate.text}"`;
+            best.set(key, Math.max(best.get(key) || 0, plate.opacity));
+            if (!owned.has(plate.act)) owned.set(plate.act, new Set());
+            owned.get(plate.act).add(plate.text);
+            if (plate.opacity >= PLATE_SOLID) solidHere.set(plate.act, (solidHere.get(plate.act) || 0) + 1);
+          }
+          for (const [act, count] of solidHere) {
+            together.set(act, Math.max(together.get(act) || 0, count));
+          }
+          for (let i = 0; i < seen.length; i++) {
+            for (let j = i + 1; j < seen.length; j++) {
+              const a = seen[i];
+              const b = seen[j];
+              const w = Math.min(a.x1, b.x1) - Math.max(a.x0, b.x0);
+              const h = Math.min(a.y1, b.y1) - Math.max(a.y0, b.y0);
+              if (w <= 0 || h <= 0) continue;
+              const smaller = Math.min((a.x1 - a.x0) * (a.y1 - a.y0), (b.x1 - b.x0) * (b.y1 - b.y0));
+              if (smaller > 0 && w * h > smaller * PLATE_OVERLAP) {
+                stacked.push(`"${a.text}" and "${b.text}" at ${Math.round(depth * 100)}% through act ${a.act}`);
+              }
+            }
+          }
+        }
+      }
+      if (best.size === 0) {
+        failures.push(`${route} drew no nameplates at any sampled depth, so either the sets stopped labelling themselves or this check stopped finding them.`);
+        continue;
+      }
+      for (const line of stacked.slice(0, 4)) {
+        failures.push(`${route} draws two nameplates on the same pixels: ${line}. The engine displaces a plate that lands on another and hides it only when there is nowhere to put it, so this means that pass is not running.`);
+      }
+      for (const [act, names] of owned) {
+        const share = asks[act - 1] || 0;
+        if (share <= 0) continue;
+        const most = together.get(act) || 0;
+        const floor = Math.ceil(names.size * share);
+        if (most < floor) {
+          failures.push(
+            `${route} act ${act} never has more than ${most} of its ${names.size} labels legible at once, floor ${floor}. The engine moves a label that lands on another out of the way and hides it only when there is nowhere to put it, so this means it is hiding them instead.`
+          );
+        }
+      }
+      const faint = [...best].filter(([, opacity]) => opacity < PLATE_SOLID);
+      for (const [key, opacity] of faint.slice(0, 4)) {
+        failures.push(`${route} nameplate ${key} never comes above ${opacity.toFixed(2)} opacity at any sampled depth, floor ${PLATE_SOLID}. Below that the room shows through the ground the words are painted on, so a label that was made is never shown.`);
+      }
+    }
+  } finally {
+    await browser.close();
+  }
+}
+
 async function checkStaticReferences() {
   const files = await walkFiles(repoRoot);
   for (const file of files) {
@@ -944,6 +1116,7 @@ async function main() {
     await checkFilmFrameFit(baseUrl);
     await checkFilmEdgeChrome(baseUrl);
     await checkFilmClosingSet(baseUrl);
+    await checkFilmNameplates(baseUrl);
     if (args.has('--screenshots')) {
       await captureScreenshots(baseUrl);
     }

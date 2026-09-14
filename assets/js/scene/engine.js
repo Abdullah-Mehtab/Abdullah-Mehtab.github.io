@@ -162,6 +162,27 @@ function readPalette(body, actCount) {
 //   of two plates on the same pixels, the nearer one keeps its name and the further one loses it.
 const NAMEPLATE_EDGE_FADE = 0.07;
 const NAMEPLATE_OVERLAP = 0.06;
+// Scratch for the plate displacement pass, which needs the camera's own axes to move a label
+// straight up the screen. Module level because this runs every frame.
+const plateRight = new THREE.Vector3();
+const plateUp = new THREE.Vector3();
+const plateAhead = new THREE.Vector3();
+const plateScale = new THREE.Vector3();
+const plateNudge = new THREE.Vector3();
+// Where a plate may go when another one is already on its pixels, in order of preference, as
+// multiples of its own height along the screen's up and of its own width along the screen's
+// right.
+const PLATE_SLOTS = [["y", 1], ["y", -1], ["y", 1.9], ["y", -1.9], ["x", 1], ["x", -1]];
+
+// One plate width or height in world units, taken from the plate's own geometry rather than
+// from how large it looks this frame. Deriving a step from the screen box made it depend on the
+// measurement it was about to change, and the chosen position then flickered between frames.
+function platePitch(node, axis) {
+  const params = node.geometry && node.geometry.parameters;
+  const own = Math.max(0.5, (params && params[axis]) || 1);
+  node.getWorldScale(plateScale);
+  return own * (axis === "width" ? plateScale.x : plateScale.y);
+}
 // The right edge of the reading column, in clip space. A nameplate is kept clear of it; the
 // geometry itself is not, because passing behind the copy is what flying into a set looks like.
 //
@@ -236,6 +257,29 @@ function keepNameplatesLegible(stations, camera, probe, plates, narrow, width, h
     if (!station.group.visible) continue;
     station.group.traverse((node) => {
       if (!node.userData || !node.userData.caption || !node.material) return;
+      // Whatever this plate was moved by to get out of another plate's way last frame, taken
+      // off before anything is measured.
+      //
+      // Put back by assignment, not by subtracting the shift again. Adding a float and taking it
+      // off once a frame does not return the same number, and the creep shows: two captures of
+      // the same frozen frame differed by 0.245% of their pixels, where the whole point of that
+      // mode is that they do not differ at all.
+      //
+      // And if the plate is not where this pass left it, its set has assigned it a new place
+      // since, which is now its home. Subtracting the shift there moves it backwards by the
+      // shift instead, and the next frame it is somewhere else again: act two's threat labels
+      // are positioned absolutely every frame from the time, and the result was a plate that
+      // appeared and vanished on alternate frames with the camera standing still.
+      const shift = node.userData.plateShift;
+      const home = node.userData.plateHome;
+      if (shift && home) {
+        const asLeft = Math.abs(node.position.x - home.x - shift.x) < 1e-6
+          && Math.abs(node.position.y - home.y - shift.y) < 1e-6
+          && Math.abs(node.position.z - home.z - shift.z) < 1e-6;
+        if (asLeft) node.position.copy(home);
+      }
+      if (shift) shift.set(0, 0, 0);
+      node.userData.plateHome = (home || new THREE.Vector3()).copy(node.position);
       if (node.material.opacity <= 0.02) return;
       const box = screenBox(node, camera, probe);
       if (!box) return;
@@ -245,10 +289,20 @@ function keepNameplatesLegible(stations, camera, probe, plates, narrow, width, h
         node.material.depthTest = false;
         node.renderOrder = 12;
       }
-      plates.push({ node, box, range: node.userData.range });
+      plates.push({ node, box, range: node.userData.range, primary: Boolean(node.userData.primary) });
     });
   }
   if (plates.length === 0) return;
+
+  // Adds a world offset to a plate and remembers the total, so several passes can move the same
+  // plate and the frame after this can put it back exactly where its set left it.
+  const nudge = (node, by) => {
+    if (!node.userData.plateShift) node.userData.plateShift = new THREE.Vector3();
+    node.userData.plateShift.add(by);
+    node.position.add(by);
+  };
+
+  camera.matrixWorld.extractBasis(plateRight, plateUp, plateAhead);
 
   // Clip space runs -1 to 1, so a plate is whole while its box stays inside that. The overflow
   // is measured against the plate's own size rather than the screen's: a narrow plate hanging
@@ -259,8 +313,14 @@ function keepNameplatesLegible(stations, camera, probe, plates, narrow, width, h
     const out = Math.max(0, -1 - plate.box.minX, plate.box.maxX - 1, -1 - plate.box.minY, plate.box.maxY - 1);
     if (out > 0) plate.node.material.opacity *= Math.max(0, 1 - (out / own) / NAMEPLATE_EDGE_FADE);
 
-    // And the same treatment for the copy's side of the frame, on a wide screen where the
-    // copy has a column of its own.
+    // And the same treatment for the copy's side of the frame, on a wide screen where the copy
+    // has a column of its own.
+    //
+    // Moving a plate out of the column rather than fading it was tried and reverted on
+    // 2026-09-14: it rescued act three's "Elasticsearch" and pushed that plate onto "Filebeat",
+    // which then lost the overlap pass and was drawn at no depth at all. A label's place in the
+    // frame comes from where its node is, and a node on the copy's side of a flow is a layout
+    // decision, not something to work around here.
     if (!narrow) {
       const intoLane = laneEdge - plate.box.minX;
       if (intoLane > 0) plate.node.material.opacity *= Math.max(0, 1 - (intoLane / own) / 0.35);
@@ -284,18 +344,82 @@ function keepNameplatesLegible(stations, camera, probe, plates, narrow, width, h
     }
   }
 
-  plates.sort((a, b) => a.range - b.range);
-  for (let i = 0; i < plates.length; i++) {
-    if (plates[i].node.material.opacity <= 0.02) continue;
-    for (let j = i + 1; j < plates.length; j++) {
-      if (plates[j].node.material.opacity <= 0.02) continue;
-      const a = plates[i].box;
-      const b = plates[j].box;
-      const w = Math.min(a.maxX, b.maxX) - Math.max(a.minX, b.minX);
-      const h = Math.min(a.maxY, b.maxY) - Math.max(a.minY, b.minY);
+  // Two plates on the same pixels: move the further one out of the way before giving up on it.
+  //
+  // This used to be elimination and nothing else, and it read as a bug rather than a policy.
+  // Act three's "Agents" plate sat at opacity zero at five of six sampled depths because a
+  // nearer plate covered the same pixels, so the label for the node that act begins at was
+  // almost never drawn at all. External labelling practice says the same thing in cartography
+  // and in 3D annotation: try the candidate positions around the anchor in order of preference
+  // first, and drop a label only when none of them is free.
+  //
+  // The candidates are its own place, then one plate height above, then one below. Two are
+  // enough for a set with this few labels, and a plate further from its node than that needs a
+  // leader line to stay attached to what it names, which is a bigger change than this.
+  //
+  // Plates are placed nearest first, and a plate its set marks as primary is placed before any
+  // of them: it is the one that names the set, so when something has to go it is never that.
+  plates.sort((a, b) => (a.primary === b.primary ? a.range - b.range : (a.primary ? -1 : 1)));
+  const placed = [];
+  const covers = (box) => {
+    const own = (box.maxX - box.minX) * (box.maxY - box.minY);
+    for (const other of placed) {
+      const w = Math.min(box.maxX, other.maxX) - Math.max(box.minX, other.minX);
+      const h = Math.min(box.maxY, other.maxY) - Math.max(box.minY, other.minY);
       if (w <= 0 || h <= 0) continue;
-      const smaller = Math.min((a.maxX - a.minX) * (a.maxY - a.minY), (b.maxX - b.minX) * (b.maxY - b.minY));
-      if (smaller > 0 && w * h > smaller * NAMEPLATE_OVERLAP) plates[j].node.material.opacity = 0;
+      const smaller = Math.min(own, (other.maxX - other.minX) * (other.maxY - other.minY));
+      if (smaller > 0 && w * h > smaller * NAMEPLATE_OVERLAP) return true;
+    }
+    return false;
+  };
+  for (const plate of plates) {
+    if (plate.node.material.opacity <= 0.02) continue;
+    if (!covers(plate.box)) {
+      placed.push(plate.box);
+      continue;
+    }
+    // One plate height, taken from the plate's own geometry rather than from how tall it looks
+    // this frame. Deriving it from the screen box made the step depend on the measurement it
+    // was about to change, and the chosen slot then flickered between frames: the same frozen
+    // frame captured twice differed by 0.245% of its pixels, where it had been exactly equal.
+    const lift = platePitch(plate.node, "height") * 1.15;
+    const sideways = platePitch(plate.node, "width") * 0.62;
+    let settled = false;
+    // Up, down, further up, further down, then across. Vertical first because a label above or
+    // below its node still reads as belonging to it, and a label beside it can look like it is
+    // naming its neighbour.
+    //
+    // Whichever of them worked last frame is tried before any of the others. Without that the
+    // pass has a two frame cycle in it: which slots are free depends on where the plates placed
+    // before this one ended up, so a plate could find a slot on one frame and none on the next
+    // with the camera not having moved at all. It showed up as act two's DDoS plate appearing
+    // and disappearing on alternate frames, and as a frozen frame that was no longer identical
+    // to itself, 0.119% of its pixels different between two captures.
+    const slots = PLATE_SLOTS.slice();
+    const lastSlot = plate.node.userData.plateSlot;
+    if (lastSlot !== undefined && slots[lastSlot]) slots.unshift(slots.splice(lastSlot, 1)[0]);
+    for (let slot = 0; slot < slots.length; slot++) {
+      const [axis, step] = slots[slot];
+      if (axis === "y") plateNudge.copy(plateUp).multiplyScalar(lift * step);
+      else plateNudge.copy(plateRight).multiplyScalar(sideways * step);
+      nudge(plate.node, plateNudge);
+      const moved = screenBox(plate.node, camera, probe);
+      if (moved && !covers(moved)) {
+        plate.box = moved;
+        placed.push(moved);
+        // Remembered against the unreordered list, so it still means the same slot next frame.
+        plate.node.userData.plateSlot = slots === undefined ? slot : PLATE_SLOTS.findIndex(
+          (candidate) => candidate[0] === axis && candidate[1] === step
+        );
+        settled = true;
+        break;
+      }
+      plateNudge.negate();
+      nudge(plate.node, plateNudge);
+    }
+    if (!settled) {
+      plate.node.material.opacity = 0;
+      plate.node.userData.plateSlot = undefined;
     }
   }
 }
