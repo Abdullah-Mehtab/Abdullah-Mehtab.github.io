@@ -2064,18 +2064,18 @@ body.scene-live .act > section {
     grid-column: 1 / span 6;
   }
 
-  /* The result column, and the narrowest thing on the page for a reason.
+  /* The result column. Three, not two.
 
-     This act's set is 46 world units across and it is the only act that spends its whole length
-     beside its copy rather than above it, so the lane left over here is the tightest on the
-     page. At three columns the copy ran to 806px and the Kibana dashboard was printed across
-     30% of a line of it at the handoff, measured by .claude-tools/audit-lit-panels.mjs. Two
-     columns hands the set the 86px it needs.
+     Two was tried, to hand the set the 86px it needed to keep the Kibana dashboard off the
+     copy at the handoff. It bought that at a price nobody would take: the paragraph in this
+     column came out at 19 characters a line. A column narrowed until the set clears it is a
+     column nobody wants to read, and the overlap it was avoiding is handled where it belongs,
+     by when the screens light up.
 
      Running it to column eight, which is where it started, put the dashboard behind the last
      two lines of the same paragraph. */
   body.film.scene-live [data-frame="split"] > :nth-child(2) {
-    grid-column: 5 / span 2;
+    grid-column: 5 / span 3;
   }
 
   /*

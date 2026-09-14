@@ -467,7 +467,7 @@ export function mountFilm({ canvas, buildStations }) {
   // Act four is the narrow one. Its subject is 45 units across and it is the only act whose
   // copy runs to seven of twelve columns, so a lane that fits the other three leaves its right
   // edge outside the frame at any distance the camera can usefully reach.
-  const DESKTOP_OFFSET = [42, 42, 34, 34];
+  const DESKTOP_OFFSET = [42, 42, 34, 48];
   // How far above the track each set sits. Lifting act four clear of its copy was tried, at 24,
   // and it moved the set off the top of the frame instead: its camera ends the act four units
   // below the track, so every unit of lift is a unit the set climbs away from it.

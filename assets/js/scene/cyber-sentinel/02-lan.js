@@ -183,15 +183,23 @@ export function buildLan(palette) {
     new THREE.LineBasicMaterial({ color: accent, transparent: true, opacity: 0.5 })
   );
   manager.add(frame);
+  // The plate hangs beside the manager, not on it.
+  //
+  // It was a child of the manager group, and that group turns continuously, so the plate turned
+  // with it and spent half of every revolution showing the reader its back: the words reversed
+  // and tilted. The turn is the manager doing its job, an ordered stack of rules with an event
+  // being pushed down through it, so the plate comes off the turning thing rather than the turn
+  // coming off the set.
   const managerLabel = nameplate("Wazuh Manager", "", accent, palette.deep, 42);
   managerLabel.userData.primary = true;
   managerLabel.position.set(0, 24, 0);
-  manager.add(managerLabel);
+  group.add(managerLabel);
   // Close enough to the racks to be in the same room as them. At x 118 the set was a rank of
   // cabinets ending at 70 and an appliance starting at 105, with nothing in between: the
   // "so much blank space left for NOTHING" the owner described in this act.
   manager.position.set(96, 8, 10);
   group.add(manager);
+  managerLabel.position.set(manager.position.x, manager.position.y + 24, manager.position.z);
 
   const managerGlow = glow(accent, 78, 0);
   managerGlow.position.copy(manager.position);
@@ -332,6 +340,7 @@ export function buildLan(palette) {
       const watched = ease(clamp01((p - WATCHED_FROM) / 0.3));
 
       manager.scale.setScalar(0.02 + watched * 0.98);
+      managerLabel.scale.setScalar(0.3 + watched * 0.7);
       manager.visible = watched > 0.02;
       manager.rotation.y = t * 0.18;
       // The rule stack turns as one and each plate breathes on its own beat: an event is

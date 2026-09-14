@@ -353,13 +353,15 @@ export function buildOutputs(palette) {
       // They were lit at 55% from the first frame of the act, which also means lit through the
       // whole flight toward it, because a station's progress is zero until its act begins. A
       // brightly painted dashboard travelling across the previous act covered nearly half a
-      // line of its copy. Driven by how close the camera is rather than by progress, because
-      // the approach happens while this act's progress is still zero.
+      // line of its copy.
+      //
+      // Driven by this act's own progress. How close the camera is was tried instead and leaves
+      // the handoff lit, which is the one moment the dashboard and the paragraph beside it are
+      // both at their furthest and land on each other.
       //
       // The shells, arms and feeds keep their own fade, so the set arrives as a built thing
       // whose screens then come on, rather than materialising all at once.
-      const away = camera ? Math.abs(camera.position.z - group.position.z) : 0;
-      const lit = clamp01((170 - away) / 90);
+      const lit = ease(clamp01((p - 0.08) / 0.22));
 
       // A screen's resting place is where it was built, not a second copy of the number here.
       // The two disagreed: the set was moved to fit the lane its copy leaves and this went on
