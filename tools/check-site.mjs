@@ -47,6 +47,9 @@ const ignoredDirs = new Set([
   '.git',
   '.codex-tmp',
   '.codex-tools',
+  // This era's equivalent of .codex-tools, and git-ignored for the same reason. Without it the
+  // browser checks measure scratch fixtures that exist on one machine and not in CI.
+  '.claude-tools',
   '.migration-safety',
   '.vscode',
   'docs',
@@ -474,6 +477,18 @@ async function checkFilmActHandoff() {
 // screen, which puts its top above the fold and behind the fixed header. The reader sees a
 // heading cut through the middle of its first line.
 //
+// Every page that carries the film body class, which is what makes a page a chapter.
+async function filmRoutes() {
+  const files = (await walkFiles(repoRoot)).filter((file) => extname(file) === '.html');
+  const routes = [];
+  for (const file of files) {
+    const html = await readFile(file, 'utf8');
+    if (!/<body[^>]*class="[^"]*\bfilm\b/.test(html)) continue;
+    routes.push('/' + toDisplayPath(file));
+  }
+  return routes;
+}
+
 // Nothing static can catch this. It depends on how many lines the copy wraps to at the
 // rendered type size, so it comes back the next time anyone lengthens a heading.
 // The screens this is measured on. 1440x900 is the size every other measurement on this page
@@ -493,13 +508,7 @@ async function checkFilmFrameFit(baseUrl) {
     return;
   }
 
-  const files = (await walkFiles(repoRoot)).filter((file) => extname(file) === '.html');
-  const routes = [];
-  for (const file of files) {
-    const html = await readFile(file, 'utf8');
-    if (!/<body[^>]*class="[^"]*\bfilm\b/.test(html)) continue;
-    routes.push('/' + toDisplayPath(file));
-  }
+  const routes = await filmRoutes();
   // Fail closed. A check that finds nothing to look at and reports success is
   // indistinguishable from a check that looked and found everything fine.
   if (routes.length === 0) {
@@ -529,6 +538,115 @@ async function checkFilmFrameFit(baseUrl) {
           failures.push(
             `${route} act ${row.act} needs ${row.over}px more than a ${size.width}x${size.height} screen is tall, so its pinned frame cannot hold with its top at the header line and the first line of its heading is cut off. Shorten the heading, or give that frame less to carry.`
           );
+        }
+      }
+    }
+  } finally {
+    await browser.close();
+  }
+}
+
+// The widths this is measured at, and why these two. 1181 is the narrowest screen that still
+// shows the rail and the running head, so it is where they come closest to the copy. 2560 is
+// where the fault this catches was visible: the gutter is max(--film-inset, (100vw - --max)/2)
+// and grows without limit, so chrome centred inside a container as wide as the gutter walked
+// 340px in from the right edge of that screen while measuring 0px from the edge at 1440.
+const EDGE_CHROME_SIZES = [
+  { width: 1181, height: 800 },
+  { width: 2560, height: 1440 }
+];
+// How far a piece of edge chrome may sit from the edge it is pinned to, as a share of the
+// screen width. At 6% of 2560 it is already 154px in, which no reader would call an edge.
+const EDGE_CHROME_SHARE = 0.06;
+// How far the reading column's left edge may sit right of the wordmark's, in pixels. The two
+// come from different rules and will never be to the pixel; 64 is about one indent, past which
+// the eye stops reading them as one edge.
+const COLUMN_EDGE_DRIFT = 64;
+
+async function checkFilmEdgeChrome(baseUrl) {
+  const executablePath = findChromeExecutable();
+  if (!executablePath) {
+    warnings.push('Skipping the chapter edge chrome check because Chrome/Edge was not found. Set CHROME_PATH to enable it.');
+    return;
+  }
+  const routes = await filmRoutes();
+  if (routes.length === 0) {
+    failures.push('The chapter edge chrome check found no page carrying the film body class, so it measured nothing.');
+    return;
+  }
+
+  const { default: puppeteer } = await import('puppeteer-core');
+  const browser = await puppeteer.launch({
+    executablePath,
+    headless: true,
+    args: ['--no-sandbox', '--disable-setuid-sandbox']
+  });
+  try {
+    const page = await browser.newPage();
+    for (const size of EDGE_CHROME_SIZES) {
+      await page.setViewport({ width: size.width, height: size.height, deviceScaleFactor: 1 });
+      for (const route of routes) {
+        await page.goto(`${baseUrl}${route}`, { waitUntil: 'networkidle2' });
+        const marks = await page.evaluate(() => {
+          // The mark a reader sees, not the box it is positioned in. A container pinned to
+          // the edge and as wide as the gutter measures 0px from the edge however far inside
+          // it the dots actually sit, which is how this went unnoticed.
+          const ink = (selector, from) => {
+            const root = document.querySelector(selector);
+            if (!root) return null;
+            const inside = [...root.querySelectorAll('*')].filter((el) => el.childElementCount === 0);
+            const marks = (inside.length ? inside : [root]).filter((el) => {
+              const box = el.getBoundingClientRect();
+              const style = getComputedStyle(el);
+              return box.width >= 1 && box.height >= 1 && style.visibility !== 'hidden' && Number(style.opacity) > 0.05;
+            });
+            if (!marks.length) return null;
+            return Math.min(...marks.map((el) => {
+              const box = el.getBoundingClientRect();
+              return from === 'right' ? innerWidth - box.right : box.left;
+            }));
+          };
+          // The reading column against the page's own left edge. film.css says a reader should
+          // be able to draw a straight line down the left edge of the page from the wordmark
+          // to the footer, and a container capped at --max and centred cannot keep that: the
+          // stage behind it is the whole viewport, so every pixel of leftover width becomes
+          // dead screen on the left that the scene never grows on the right. Measured at 130px
+          // in on a 1440 screen, 370px at 1920 and 1130px at 3440, against a wordmark that
+          // stayed at 56px.
+          const brand = document.querySelector('.site-nav .brand, .site-header .brand, header a');
+          const column = document.querySelector('main .act .section-inner') || document.querySelector('main .section-inner');
+          const straight = brand && column
+            ? Math.round(column.getBoundingClientRect().left - brand.getBoundingClientRect().left)
+            : null;
+          return {
+            'act rail': ink('.film-act-nav', 'right'),
+            'running head': ink('.film-spine', 'left'),
+            'play control': ink('.film-play', 'right'),
+            straight
+          };
+        });
+        const straight = marks.straight;
+        delete marks.straight;
+        if (straight === null) {
+          failures.push(`${route} has no wordmark or no reading column that this check can find at ${size.width}x${size.height}, so the page's left edge could not be measured.`);
+        } else if (straight > COLUMN_EDGE_DRIFT) {
+          failures.push(
+            `${route} sets its reading column ${straight}px right of the wordmark above it on a ${size.width}px screen, ceiling ${COLUMN_EDGE_DRIFT}px. A column centred inside a capped container walks inward as the window grows while the scene behind it stays full width, so the whole composition slides to one side and the other side goes dead. Anchor the container to the page inset instead of centring it.`
+          );
+        }
+        // Fail closed. All three are built by film.js on every chapter page, so none of them
+        // being measurable means the selectors moved, not that the page is fine.
+        if (Object.values(marks).every((value) => value === null)) {
+          failures.push(`${route} showed none of the act rail, running head or play control at ${size.width}x${size.height}, so nothing could be measured. Either film.js stopped building them or this check can no longer find them.`);
+          continue;
+        }
+        for (const [name, value] of Object.entries(marks)) {
+          if (value === null) continue;
+          if (value / size.width > EDGE_CHROME_SHARE) {
+            failures.push(
+              `${route} puts the ${name} ${Math.round(value)}px from its own edge on a ${size.width}px screen, ${((value / size.width) * 100).toFixed(1)}% of the width against a ceiling of ${EDGE_CHROME_SHARE * 100}%. Edge chrome centred in a gutter walks toward the middle of the page as the window grows; pin it to the edge instead.`
+            );
+          }
         }
       }
     }
@@ -676,6 +794,7 @@ async function main() {
   try {
     await smokeTestRoutes(baseUrl);
     await checkFilmFrameFit(baseUrl);
+    await checkFilmEdgeChrome(baseUrl);
     if (args.has('--screenshots')) {
       await captureScreenshots(baseUrl);
     }

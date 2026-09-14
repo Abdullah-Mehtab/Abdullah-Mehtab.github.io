@@ -242,11 +242,24 @@ body.film[data-scene="strata"] {
 /*
   One container, on every section, including the ones that are not acts. A reader should be
   able to draw a straight line down the left edge of the page from the wordmark to the footer.
+
+  Anchored to the left inset, not centred, and that is the whole point of the rule. The stage
+  behind this container is the full viewport: a canvas has no max width and no margins. Centring
+  the copy inside a capped container while the scene fills the screen means the page grows a
+  dead band on the left that the scene never grows on the right, and it grows without limit.
+  Measured: the copy's left edge sat 130px in at 1440, 370px at 1920 and 1130px at 3440, while
+  the wordmark above it stayed at 56px and the set behind it stayed where it was. The whole
+  composition slid right as the window widened, which is what "everything is pointing towards
+  the right side of the screen" describes.
+
+  margin-inline: <inset> auto, not a plain inset, so nothing changes below the cap: at those
+  widths the container is already 100% minus two insets and the auto end resolves to the same
+  inset, which is the centred layout this replaces.
 */
 body.film .section-inner,
 body.film .site-footer-inner {
   width: min(var(--max), calc(100% - var(--film-inset) * 2));
-  margin-inline: auto;
+  margin-inline: var(--film-inset) auto;
 }
 
 /*
@@ -1202,12 +1215,19 @@ body.film .chapter-close-links {
   which is the one band of the frame that provably never holds text at any width, and it
   reads vertically because a horizontal label at the foot of the screen is the reference
   page's device and this should not be.
+
+  It sits AT the inner edge of the gutter, not centred in it. The gutter is
+  max(--film-inset, (100vw - --max)/2), so it grows without limit as the window does: a
+  container pinned to the edge and as wide as the gutter with its content centred put this
+  57px from the edge at 1440 and 557px from it at 3440, which is a running head floating in
+  the middle of the page. The same offset as the play control keeps the three pieces of edge
+  chrome on one line, and at the 1181px width where this first appears the gutter is 59px
+  wide against a 24px mark, so the promise that it never touches the copy still holds.
 */
 .film-spine {
   position: fixed;
-  left: 0;
+  left: var(--s4);
   top: 50%;
-  width: var(--film-gutter);
   transform: translateY(-50%);
   z-index: 24;
   display: grid;
@@ -1379,11 +1399,12 @@ body.film-still *::after {
   a reader reaches for it. The name is absolutely positioned so a long one cannot widen the
   gutter and push the reading column.
 */
+/* At the inner edge of the gutter rather than centred in it, for the reason on .film-spine:
+   centring walked the dots 340px in from the right edge of a 2560px screen. */
 .film-act-nav {
   position: fixed;
-  right: 0;
+  right: var(--s4);
   top: 50%;
-  width: var(--film-gutter);
   transform: translateY(-50%);
   z-index: 26;
   display: grid;
