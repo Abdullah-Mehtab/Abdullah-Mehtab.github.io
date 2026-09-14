@@ -26,16 +26,170 @@
     if (name === "film-progress") progressBar = element;
   }
 
-  // The running head, from whatever the page called itself. A chapter that does not name
-  // itself here simply does not get one.
+  // The frame gets an edge. Two bars, top and bottom, so the page reads as something being
+  // projected rather than as a document that happens to move. They sit outside main so the
+  // reading column is unaffected, and they are the first thing a reader stops noticing.
+  for (const edge of ["top", "bottom"]) {
+    const bar = document.createElement("div");
+    bar.className = "film-bar";
+    bar.dataset.filmBar = edge;
+    bar.setAttribute("aria-hidden", "true");
+    body.appendChild(bar);
+  }
+
+  // The running head. It names the act the reader is in, not the chapter: the chapter's name
+  // is the first thing on the page and the reader already has it, while four acts of a film
+  // with nothing saying which one this is leaves them counting screens.
+  //
+  // In words, never numbered. Owner ruling, 2026-09-11: no chapter or act numbering anywhere
+  // a reader can see.
+  let spineLabel = null;
   if (main.dataset.chapter) {
     const spine = document.createElement("div");
     spine.className = "film-spine";
     spine.setAttribute("aria-hidden", "true");
-    const label = document.createElement("span");
-    label.textContent = main.dataset.chapter;
-    spine.appendChild(label);
+    spineLabel = document.createElement("span");
+    spineLabel.textContent = main.dataset.chapter;
+    spine.appendChild(spineLabel);
     body.appendChild(spine);
+  }
+
+  // A way to get to an act without scrolling past the ones before it.
+  //
+  // Built from the acts rather than written out, so adding a chapter act is a markup block with
+  // an id and a name on it and nothing else. An act without both is skipped rather than given a
+  // control that goes nowhere.
+  const jumpable = acts.filter((act) => act.id && act.dataset.actName);
+  let railItems = [];
+  if (jumpable.length > 1) {
+    const rail = document.createElement("nav");
+    rail.className = "film-act-nav";
+    rail.dataset.actNav = "";
+    rail.setAttribute("aria-label", "Jump to a part of this chapter");
+    for (const act of jumpable) {
+      const link = document.createElement("a");
+      link.href = "#" + act.id;
+      link.className = "film-act-nav-item";
+      // The name is the accessible name and the visible label on hover. The dot alone is a dot.
+      link.setAttribute("aria-label", act.dataset.actName);
+      const dot = document.createElement("span");
+      dot.className = "film-act-nav-dot";
+      dot.setAttribute("aria-hidden", "true");
+      const text = document.createElement("span");
+      text.className = "film-act-nav-label";
+      text.textContent = act.dataset.actName;
+      link.append(dot, text);
+      rail.appendChild(link);
+      railItems.push({ link, act });
+    }
+    body.appendChild(rail);
+  }
+
+  // The first screen is a title card, and a title card looks finished. This says it is not.
+  let scrollCue = null;
+  {
+    const cue = document.createElement("div");
+    cue.className = "film-scroll-cue";
+    cue.dataset.scrollCue = "";
+    cue.setAttribute("aria-hidden", "true");
+    const word = document.createElement("span");
+    word.textContent = "Scroll";
+    const line = document.createElement("span");
+    line.className = "film-scroll-cue-line";
+    cue.append(word, line);
+    body.appendChild(cue);
+    scrollCue = cue;
+  }
+
+  // A control that plays the film, so a reader can watch it rather than drive it.
+  //
+  // In, per owner decision 2026-09-11. It scrolls by time rather than by wheel, and it gives
+  // way the instant the reader touches anything: a page that keeps moving under someone who is
+  // trying to stop it is worse than no control at all. It stops itself at the end of the last
+  // act, because past that the page is a comment form and a footer.
+  //
+  // Written as scroll, not as a second camera path. The whole film is a function of scroll
+  // position, so anything that moves the scroll gets every piece of it for free.
+  const play = document.createElement("button");
+  play.type = "button";
+  play.className = "film-play";
+  play.dataset.filmPlay = "";
+  play.setAttribute("aria-label", "Play this chapter");
+  const playIcon = document.createElement("span");
+  playIcon.className = "film-play-icon";
+  playIcon.setAttribute("aria-hidden", "true");
+  const playWord = document.createElement("span");
+  playWord.className = "film-play-word";
+  playWord.textContent = "Play";
+  play.append(playIcon, playWord);
+  body.appendChild(play);
+
+  // Pixels per second. Slow enough to read a heading at, and the film's own damping does the
+  // rest: the camera is already following this at its own pace.
+  const PLAY_SPEED = 108;
+  let playing = false;
+  let playFrom = 0;
+  let playAt = 0;
+
+  function playEnd() {
+    const last = acts[acts.length - 1];
+    return last.getBoundingClientRect().top + window.scrollY + last.offsetHeight - window.innerHeight;
+  }
+
+  function stopPlaying() {
+    if (!playing) return;
+    playing = false;
+    body.classList.remove("is-playing");
+    play.setAttribute("aria-label", "Play this chapter");
+    playWord.textContent = "Play";
+  }
+
+  function stepPlay(now) {
+    if (!playing) return;
+    const seconds = (now - playAt) / 1000;
+    playAt = now;
+    playFrom += PLAY_SPEED * seconds;
+    const end = playEnd();
+    if (playFrom >= end) {
+      window.scrollTo(0, end);
+      stopPlaying();
+      return;
+    }
+    window.scrollTo(0, Math.round(playFrom));
+    window.requestAnimationFrame(stepPlay);
+  }
+
+  play.addEventListener("click", () => {
+    if (playing) { stopPlaying(); return; }
+    playing = true;
+    playFrom = window.scrollY;
+    playAt = performance.now();
+    body.classList.add("is-playing");
+    play.setAttribute("aria-label", "Stop playing this chapter");
+    playWord.textContent = "Stop";
+    window.requestAnimationFrame(stepPlay);
+  });
+
+  // Anything the reader does takes the film back off them. Keydown is listed because the space
+  // bar and the arrows scroll too, and a reader pressing End should land at the end.
+  for (const event of ["wheel", "touchstart", "keydown", "pointerdown"]) {
+    window.addEventListener(event, (e) => {
+      if (e.target === play || (play.contains && play.contains(e.target))) return;
+      stopPlaying();
+    }, { passive: true, capture: true });
+  }
+
+  // ?still: one scroll position, one frame, every time.
+  //
+  // The engine freezes its own clock and drops the camera's damping for this, and that got two
+  // captures of the same depth from a tenth of their pixels apart down to a fiftieth. The rest
+  // was the document: the reveal is a CSS transition with a stagger of up to 275ms, so copy is
+  // still arriving a second after a jump. Everything is put in its settled state here and all
+  // transitions are turned off, which is blunt and is the point.
+  if (/[?&]still(?:=|&|$)/.test(window.location.search)) {
+    body.classList.add("film-still");
+    for (const el of document.querySelectorAll(".reveal")) el.classList.add("is-visible");
+    for (const pin of main.querySelectorAll(".act-pin")) pin.classList.add("is-arrived");
   }
 
   // Choreography is opt-in on this class, which only exists once this file has run. Without it
@@ -131,6 +285,21 @@
     }
     const scene = nearest && nearest.dataset.scene ? nearest.dataset.scene : "horizon";
     if (body.dataset.scene !== scene) body.dataset.scene = scene;
+
+    // The running head and the rail both follow whichever act the reader is in, which is the
+    // one nearest the middle of the screen, the same act the room's colour is taken from.
+    if (spineLabel && nearest && nearest.dataset.actName && spineLabel.textContent !== nearest.dataset.actName) {
+      spineLabel.textContent = nearest.dataset.actName;
+    }
+    for (const item of railItems) {
+      const here = item.act === nearest;
+      if ((item.link.getAttribute("aria-current") === "true") === here) continue;
+      if (here) item.link.setAttribute("aria-current", "true");
+      else item.link.removeAttribute("aria-current");
+    }
+
+    // The cue has done its job the moment the reader scrolls, and saying so twice is nagging.
+    if (scrollCue) put(scrollCue, "--cue-shown", window.scrollY > vh * 0.25 ? "0" : "1");
 
     // The rooms end with the chapter. Past the last act the page is a comment thread and a
     // footer, and perspective rays behind a form read as lines through its placeholder.

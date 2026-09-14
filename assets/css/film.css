@@ -1244,13 +1244,19 @@ body.film .chapter-close-links {
 }
 
 /*
-  One piece of fixed chrome: reading progress, drawn as a hairline along the bottom edge of
-  the header. Rejected alternative, and what was here before: a caption bar pinned along the
-  bottom of the screen carrying the act name and an N of N counter, a tick rail down the right
-  edge, and a "scroll to begin" cue. Each permanently occupied part of every viewport, the bar
-  cut phone headings in half as they passed behind it, and between them they accounted for
-  most of what a reviewer recognised as another site's kit. The chapter names its own parts in
-  its own headings and its length is legible from the hairline.
+  Reading progress, drawn as a hairline along the bottom edge of the header.
+
+  What was here before and is not coming back: a caption bar pinned along the bottom of the
+  screen carrying the act name and an N of N counter. It permanently occupied part of every
+  viewport, it cut phone headings in half as they passed behind it, and together with a tick
+  rail and a cue it accounted for most of what a reviewer recognised as another site's kit.
+
+  A way to jump between acts, a cue and a play control have since returned, because a reader
+  who wants the architecture should not have to scroll past everything before it, and a film
+  with no way to play it is a page that merely moves. They are built to avoid what got the
+  first versions removed: the rail lives in the gutter, which is the one band of the frame that
+  provably never holds text, and shows a name only on hover or focus; the cue is gone a quarter
+  of a screen in; and neither carries a number, per the owner's ruling of 2026-09-11.
 */
 .film-progress {
   position: fixed;
@@ -1261,6 +1267,238 @@ body.film .chapter-close-links {
   width: var(--film-progress, 0%);
   background: var(--scene-accent);
   pointer-events: none;
+}
+
+/*
+  ?still. A debug mode, and the only place on this site that reaches for !important: the point
+  of it is that nothing is allowed to still be arriving, so it has to beat every transition on
+  the page including ones written after it.
+*/
+body.film-still *,
+body.film-still *::before,
+body.film-still *::after {
+  transition: none !important;
+  animation: none !important;
+}
+
+/*
+  Short screens get a tighter vertical rhythm.
+
+  Every act is pinned to the height of the screen, and a pin taller than the screen does not
+  hold at the top: it scrolls until its bottom is flush with the bottom of the viewport, which
+  puts its heading above the fold and behind the header. At 1366x768 the opening act ran 35px
+  over and the problem act 71px; at 1280x720 it was 67px and 115px. Both are ordinary laptop
+  screens.
+
+  The type already answers the screen's height, because every display size is clamped against
+  vh as well as vw. The spacing was not, and it is what tips a frame over: the header gutter,
+  the pad under the last line, and the gap between the two panels together come to more than a
+  fifth of a 720px screen.
+
+  Every margin and pad in this file is one of these eight steps, so the frame tightens as a
+  whole rather than one value at a time being nudged until a number goes green. The three
+  smallest steps are left alone: they set the space inside a line of type, not between blocks.
+*/
+@media (max-height: 880px) {
+  body.film {
+    --s4: 1.1rem;
+    --s5: 1.6rem;
+    --s6: 2.4rem;
+    --s7: 3.8rem;
+  }
+}
+
+@media (max-height: 790px) {
+  body.film {
+    --s3: 0.7rem;
+    --s4: 0.9rem;
+    --s5: 1.15rem;
+    --s6: 1.5rem;
+    --s7: 2.6rem;
+  }
+
+  /* The pin's own gutter above the copy, on top of the header it already reserves. On a short
+     screen the header is a larger share of the frame, so the extra breathing room goes first. */
+  body.film .act-pin {
+    padding-top: calc(var(--film-header-h) + var(--s3));
+  }
+}
+
+/*
+  The frame's own edge. Two bars, and they are the reason the page reads as something being
+  projected rather than as a document that moves. Deliberately thin: this is an edge, not
+  cinema bars, and every pixel of height here is a pixel the acts have to fit inside.
+*/
+.film-bar {
+  position: fixed;
+  left: 0;
+  right: 0;
+  height: 14px;
+  z-index: 26;
+  pointer-events: none;
+  background: var(--bg-deep);
+}
+
+.film-bar[data-film-bar="top"] {
+  top: 0;
+}
+
+.film-bar[data-film-bar="bottom"] {
+  bottom: 0;
+  /* The lower edge gets a hairline of the act's own colour. It is the only place on the page
+     where the room's colour meets the frame, and it is what stops the bar reading as the page
+     simply ending. */
+  box-shadow: inset 0 1px 0 color-mix(in srgb, var(--scene-accent) 34%, transparent);
+}
+
+/*
+  The act rail. It lives in the right gutter, opposite the running head, and it is dots until
+  a reader reaches for it. The name is absolutely positioned so a long one cannot widen the
+  gutter and push the reading column.
+*/
+.film-act-nav {
+  position: fixed;
+  right: 0;
+  top: 50%;
+  width: var(--film-gutter);
+  transform: translateY(-50%);
+  z-index: 26;
+  display: grid;
+  justify-items: center;
+  gap: var(--s3);
+}
+
+.film-act-nav-item {
+  position: relative;
+  display: grid;
+  place-items: center;
+  padding: 0.35rem 0.5rem;
+  text-decoration: none;
+  border: 0;
+}
+
+.film-act-nav-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  border: 1px solid color-mix(in srgb, var(--text) 42%, transparent);
+  background: transparent;
+  transition: background 220ms ease, border-color 220ms ease, transform 220ms ease;
+}
+
+.film-act-nav-item[aria-current="true"] .film-act-nav-dot {
+  background: var(--scene-accent);
+  border-color: var(--scene-accent);
+  transform: scale(1.5);
+}
+
+.film-act-nav-item:hover .film-act-nav-dot,
+.film-act-nav-item:focus-visible .film-act-nav-dot {
+  border-color: var(--scene-accent);
+}
+
+.film-act-nav-label {
+  position: absolute;
+  right: calc(100% + var(--s2));
+  white-space: nowrap;
+  font-family: var(--face-mono);
+  font-size: 0.6rem;
+  text-transform: uppercase;
+  letter-spacing: 0.24em;
+  color: color-mix(in srgb, var(--text) 78%, transparent);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 180ms ease;
+}
+
+.film-act-nav-item:hover .film-act-nav-label,
+.film-act-nav-item:focus-visible .film-act-nav-label {
+  opacity: 1;
+}
+
+/* Same rule as the running head: below this the gutter cannot hold it clear of the copy. */
+@media (max-width: 1180px) {
+  .film-act-nav {
+    display: none;
+  }
+}
+
+/*
+  The cue on the first screen. A title card looks finished, and this says it is not. It is
+  written to be gone rather than dismissed: film.js drops --cue-shown to 0 a quarter of a
+  screen in and it never comes back.
+*/
+.film-scroll-cue {
+  position: fixed;
+  left: 50%;
+  bottom: calc(14px + var(--s4));
+  transform: translateX(-50%);
+  z-index: 26;
+  display: grid;
+  justify-items: center;
+  gap: var(--s2);
+  pointer-events: none;
+  font-family: var(--face-mono);
+  font-size: 0.6rem;
+  text-transform: uppercase;
+  letter-spacing: 0.3em;
+  color: color-mix(in srgb, var(--text) 62%, transparent);
+  opacity: var(--cue-shown, 1);
+  transition: opacity 420ms ease;
+}
+
+.film-scroll-cue-line {
+  width: 1px;
+  height: 34px;
+  background: linear-gradient(to bottom, var(--scene-accent), transparent);
+}
+
+/*
+  The play control. Bottom right, out of the reading column at every width, and it says what
+  it will do in a word as well as in a shape.
+*/
+.film-play {
+  position: fixed;
+  right: var(--s4);
+  bottom: calc(14px + var(--s3));
+  z-index: 27;
+  display: grid;
+  grid-auto-flow: column;
+  align-items: center;
+  gap: var(--s2);
+  padding: 0.5rem 0.85rem;
+  border: 1px solid color-mix(in srgb, var(--scene-accent) 52%, transparent);
+  border-radius: 0;
+  background: color-mix(in srgb, var(--bg-deep) 82%, transparent);
+  color: var(--scene-accent);
+  font-family: var(--face-mono);
+  font-size: 0.62rem;
+  text-transform: uppercase;
+  letter-spacing: 0.22em;
+  cursor: pointer;
+  transition: border-color 200ms ease, background 200ms ease;
+}
+
+.film-play:hover,
+.film-play:focus-visible {
+  border-color: var(--scene-accent);
+  background: color-mix(in srgb, var(--scene-accent) 12%, var(--bg-deep));
+}
+
+.film-play-icon {
+  width: 0;
+  height: 0;
+  border-left: 7px solid currentColor;
+  border-top: 5px solid transparent;
+  border-bottom: 5px solid transparent;
+}
+
+/* While it is playing the shape is a stop, because that is what pressing it now does. */
+body.is-playing .film-play-icon {
+  width: 8px;
+  height: 8px;
+  border: 0;
+  background: currentColor;
 }
 
 /* ============================================================================

@@ -378,8 +378,17 @@ async function checkFilmActHandoff() {
 // heading cut through the middle of its first line.
 //
 // Nothing static can catch this. It depends on how many lines the copy wraps to at the
-// rendered type size, so it comes back the next time anyone lengthens a heading. Measured at
-// 1440x900, which is the size every other measurement on this page uses.
+// rendered type size, so it comes back the next time anyone lengthens a heading.
+// The screens this is measured on. 1440x900 is the size every other measurement on this page
+// uses; the other two are the laptop screens the chapter was failing on while it passed here.
+// At 1366x768 the opening act ran 35px over and the problem act 71px, and at 1280x720 it was
+// 67px and 115px, none of which a check that only ever looked at one height could see.
+const FRAME_FIT_SIZES = [
+  { width: 1440, height: 900 },
+  { width: 1366, height: 768 },
+  { width: 1280, height: 720 }
+];
+
 async function checkFilmFrameFit(baseUrl) {
   const executablePath = findChromeExecutable();
   if (!executablePath) {
@@ -409,19 +418,21 @@ async function checkFilmFrameFit(baseUrl) {
   });
   try {
     const page = await browser.newPage();
-    await page.setViewport({ width: 1440, height: 900, deviceScaleFactor: 1 });
-    for (const route of routes) {
-      await page.goto(`${baseUrl}${route}`, { waitUntil: 'networkidle2' });
-      const tall = await page.evaluate(() => {
-        const pins = [...document.querySelectorAll('main > .act .act-pin')];
-        return pins
-          .map((pin, i) => ({ act: i + 1, over: Math.round(pin.getBoundingClientRect().height - window.innerHeight) }))
-          .filter((row) => row.over > 1);
-      });
-      for (const row of tall) {
-        failures.push(
-          `${route} act ${row.act} needs ${row.over}px more than the screen is tall, so its pinned frame cannot hold with its top at the header line and the first line of its heading is cut off. Shorten the heading, or give that frame less to carry.`
-        );
+    for (const size of FRAME_FIT_SIZES) {
+      await page.setViewport({ width: size.width, height: size.height, deviceScaleFactor: 1 });
+      for (const route of routes) {
+        await page.goto(`${baseUrl}${route}`, { waitUntil: 'networkidle2' });
+        const tall = await page.evaluate(() => {
+          const pins = [...document.querySelectorAll('main > .act .act-pin')];
+          return pins
+            .map((pin, i) => ({ act: i + 1, over: Math.round(pin.getBoundingClientRect().height - window.innerHeight) }))
+            .filter((row) => row.over > 1);
+        });
+        for (const row of tall) {
+          failures.push(
+            `${route} act ${row.act} needs ${row.over}px more than a ${size.width}x${size.height} screen is tall, so its pinned frame cannot hold with its top at the header line and the first line of its heading is cut off. Shorten the heading, or give that frame less to carry.`
+          );
+        }
       }
     }
   } finally {

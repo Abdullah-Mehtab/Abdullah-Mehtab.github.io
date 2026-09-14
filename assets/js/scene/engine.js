@@ -417,6 +417,19 @@ export function mountFilm({ canvas, buildStations }) {
   if (acts.length === 0) return null;
 
   const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  // ?still holds the clock at zero and takes the camera off its damping, so the frame at a
+  // given scroll position is the same frame every time.
+  //
+  // It exists because every screenshot taken of this page was a race: the fans turn, the beads
+  // travel, the streams cross the room, and the camera is still arriving for about 45 frames
+  // after a jump. Two captures at the same scroll position differed in a tenth of their pixels,
+  // which makes a pixel comparison between two builds meaningless and makes every tool here
+  // wait out an animation it cannot see the end of.
+  //
+  // Not the same as reduced motion, which also pins every set to its finished state. A still
+  // frame has to be the frame at this depth, not the last frame of the act.
+  const still = /[?&]still(?:=|&|$)/.test(window.location.search);
+  const frozen = reduced || still;
 
   // Ask for the context here rather than letting the renderer ask. Three logs an error to the
   // console before it throws, and a reader whose browser has no WebGL has done nothing wrong:
@@ -683,6 +696,19 @@ export function mountFilm({ canvas, buildStations }) {
 
   // ——— the loop ———
   const roomColour = new THREE.Color();
+  // The act's own colour, handed to the document so the page furniture is painted in it.
+  //
+  // The rooms have changed hue per act since the scene was built, and the rules, eyebrows,
+  // numerals and the progress hairline stayed one blue in all four: --scene-accent is declared
+  // once in film.css and the per-scene blocks only override tokens that feed elements
+  // .scene-live hides. A reader saw the room change and the page not.
+  //
+  // Written here rather than given a second set of values in CSS. The hue comes from
+  // ACT_HUE_SHIFT applied to the live theme, so a stylesheet cannot know it without being told,
+  // and two authorities over one colour is how they drift apart. The stylesheet keeps its own
+  // default for the case this code never runs: no WebGL, and the page is the page.
+  const actColour = new THREE.Color();
+  let writtenAccent = "";
   let arrival = 0;
   const nameplateProbe = new THREE.Vector3();
   const nameplates = [];
@@ -693,7 +719,7 @@ export function mountFilm({ canvas, buildStations }) {
   let smoothScroll = window.scrollY;
   // Autoplay: the film opens by settling into the first set rather than starting parked in it.
   // Owner decision, 2026-09-11. It runs once, and reduced motion skips it entirely.
-  let intro = reduced ? 0 : 1;
+  let intro = frozen ? 0 : 1;
   const start = performance.now();
   let running = true;
   let painted = false;
@@ -710,9 +736,9 @@ export function mountFilm({ canvas, buildStations }) {
     window.requestAnimationFrame(frame);
     if (document.hidden) return;
 
-    const time = reduced ? 0 : (now - start) / 1000;
+    const time = frozen ? 0 : (now - start) / 1000;
     const y = window.scrollY;
-    smoothScroll = Math.abs(y - smoothScroll) < 0.1 || reduced ? y : lerp(smoothScroll, y, SCROLL_DAMPING);
+    smoothScroll = Math.abs(y - smoothScroll) < 0.1 || frozen ? y : lerp(smoothScroll, y, SCROLL_DAMPING);
     intro = intro < 0.001 ? 0 : intro * 0.94;
 
     let index = 0;
@@ -755,8 +781,8 @@ export function mountFilm({ canvas, buildStations }) {
     const dz = lerp(here.dz, next.dz, blend);
     const df = lerp(here.df, next.df, blend);
 
-    smoothPointerX = lerp(smoothPointerX, pointerX, POINTER_DAMPING);
-    smoothPointerY = lerp(smoothPointerY, pointerY, POINTER_DAMPING);
+    smoothPointerX = frozen ? pointerX : lerp(smoothPointerX, pointerX, POINTER_DAMPING);
+    smoothPointerY = frozen ? pointerY : lerp(smoothPointerY, pointerY, POINTER_DAMPING);
 
     // The flight swings wide of the set it is leaving instead of going through it.
     //
@@ -859,6 +885,16 @@ export function mountFilm({ canvas, buildStations }) {
     renderer.setClearColor(roomColour, 1);
     if (scene.fog) scene.fog.color.copy(roomColour);
 
+    // Only when it has actually moved. Writing a custom property on the body invalidates style
+    // for the whole document, and doing that every frame cost 27ms a frame the last time
+    // something here tried it.
+    actColour.copy(palette.accents[index]).lerp(palette.accents[Math.min(index + 1, last)], blend);
+    const accent = actColour.getHexString();
+    if (accent !== writtenAccent) {
+      writtenAccent = accent;
+      body.style.setProperty("--scene-accent", "#" + accent);
+    }
+
     if (ambience && !reduced) {
       // The log rows drift up the way a tail scrolls.
       ambience.logs.position.y = (time * 1.6) % 12;
@@ -900,7 +936,7 @@ export function mountFilm({ canvas, buildStations }) {
     // The opening fade in as well as the fade out, both written here. Doing the fade in with a
     // CSS transition on the same property meant every per-frame write chased a moving target,
     // and left the scene painting at 0.41 behind the comment form three screens past the end.
-    arrival = Math.min(1, arrival + 0.03);
+    arrival = frozen ? 1 : Math.min(1, arrival + 0.03);
     canvas.style.opacity = ((1 - past) * base * arrival).toFixed(3);
 
     if (!painted) {
@@ -921,11 +957,15 @@ export function mountFilm({ canvas, buildStations }) {
     camera,
     get stations() { return stations; },
     state,
+    // The hue each act paints its room in, for .claude-tools/audit-act-colour.mjs to compare
+    // against what the page furniture is painted in.
+    get actAccents() { return palette.accents.map((c) => c.getHexString()); },
     stop() {
       running = false;
       themeWatcher.disconnect();
       teardownWorld();
       renderer.dispose();
+      body.style.removeProperty("--scene-accent");
       body.classList.remove("scene-live");
     }
   };
