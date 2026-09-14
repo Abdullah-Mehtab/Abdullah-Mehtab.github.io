@@ -294,16 +294,24 @@
       const travel = Math.max(rect.height - vh, 0);
       put(acts[i], "--act", travel > 0 ? clamp(-rect.top / travel).toFixed(2) : "1");
     }
+    // Past the last act the page is a comment thread and a footer. Computed here, from the
+    // rectangles already read at the top of this pass, because three things below need it.
+    const pastChapter = lastRect.bottom < vh * 0.5;
+
     const scene = nearest && nearest.dataset.scene ? nearest.dataset.scene : "horizon";
     if (body.dataset.scene !== scene) body.dataset.scene = scene;
 
     // The running head and the rail both follow whichever act the reader is in, which is the
     // one nearest the middle of the screen, the same act the room's colour is taken from.
-    if (spineLabel && nearest && nearest.dataset.actName && spineLabel.textContent !== nearest.dataset.actName) {
-      spineLabel.textContent = nearest.dataset.actName;
-    }
+    //
+    // Past the last act they name nothing: the reader is in a comment thread three screens
+    // below the chapter, and a spine still reading OUTCOME over it is furniture that outlived
+    // what it was describing.
+    const inChapter = !pastChapter && nearest;
+    const spineText = inChapter && nearest.dataset.actName ? nearest.dataset.actName : "";
+    if (spineLabel && spineLabel.textContent !== spineText) spineLabel.textContent = spineText;
     for (const item of railItems) {
-      const here = item.act === nearest;
+      const here = inChapter && item.act === nearest;
       if ((item.link.getAttribute("aria-current") === "true") === here) continue;
       if (here) item.link.setAttribute("aria-current", "true");
       else item.link.removeAttribute("aria-current");
@@ -318,7 +326,6 @@
 
     // Past the last act the copy goes back to the full measure, because there is no set left
     // for it to be leaving room for: the canvas has faded out by then.
-    const pastChapter = last.bottom < vh * 0.5;
     if (body.classList.contains("past-chapter") !== pastChapter) {
       body.classList.toggle("past-chapter", pastChapter);
     }
