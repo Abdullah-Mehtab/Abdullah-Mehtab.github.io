@@ -211,9 +211,13 @@ export function buildLan(palette) {
   // than switching on.
   const links = [];
   const bundles = [];
+  // Sized from the racks rather than from a three that happened to match nine of them. With a
+  // rack added to each row the fixed form reported three full bundles and quietly left the last
+  // two cabinets reporting to nothing.
+  const perBundle = Math.ceil(endpoints.length / 3);
   for (let b = 0; b < 3; b++) {
     const points = [];
-    for (let i = b * 3; i < Math.min(b * 3 + 3, endpoints.length); i++) {
+    for (let i = b * perBundle; i < Math.min(b * perBundle + perBundle, endpoints.length); i++) {
       const from = endpoints[i].at.clone();
       const to = manager.position.clone();
       const mid = from.clone().lerp(to, 0.5);
