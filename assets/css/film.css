@@ -757,12 +757,21 @@ body.film p {
   Every boxed component on this page loses its box. Hairlines and space carry the structure
   instead, which is the largest single difference between a chapter and a card grid.
 */
+/*
+  The rule above each panel carries the act's colour.
+
+  Every act writes --scene-accent, and until now only two things on the page resolved it: the
+  step numerals, which exist in act three alone, and the primary button, which exists in act one
+  alone. So two of the four acts changed the colour of their room and put none of it on the page
+  beside it, which is the one place a reader can compare the two. This rule is in every act, in
+  every panel, and it is a hairline, so it carries the hue without competing with the words.
+*/
 body.film .case-panel,
 body.film .case-step,
 body.film .case-metrics .stat-card {
   background: none;
   border: 0;
-  border-top: var(--film-rule) solid var(--scene-line);
+  border-top: var(--film-rule) solid color-mix(in srgb, var(--scene-accent) 52%, var(--scene-line));
   border-radius: 0;
   box-shadow: none;
   min-height: 0;
