@@ -152,6 +152,11 @@
 
   /* Fixed chrome heights, so acts can treat them as gutters instead of guessing. */
   --film-header-h: 65px;
+  /* The letterbox bars. Named here because the progress hairline shares their top edge and has
+     to be drawn on them rather than under them, and two rules holding the same number by
+     coincidence is how it ended up underneath in the first place. */
+  --film-bar-h: 14px;
+  --film-bar-z: 26;
 
   --film-grain: 0.05;
   --film-vignette: 0.5;
@@ -1334,7 +1339,12 @@ body.film .chapter-close-links {
   position: fixed;
   left: 0;
   top: var(--film-header-h);
-  z-index: 25;
+  /* Above the top letterbox bar, not under it. Both are anchored to the bottom of the header:
+     the bar is 14px of the page's own ground and was painted straight over this, so the film
+     had a progress indicator that was invisible at every scroll position on every screen. It
+     reads as a line running along the frame's top edge now, which is where a film would put
+     it. */
+  z-index: calc(var(--film-bar-z) + 1);
   height: 2px;
   width: var(--film-progress, 0%);
   background: var(--scene-accent);
@@ -1405,8 +1415,8 @@ body.film-still *::after {
   position: fixed;
   left: 0;
   right: 0;
-  height: 14px;
-  z-index: 26;
+  height: var(--film-bar-h);
+  z-index: var(--film-bar-z);
   pointer-events: none;
   background: var(--bg-deep);
 }

@@ -561,6 +561,10 @@ const EDGE_CHROME_SHARE = 0.06;
 // How far the reading column's left edge may sit right of the wordmark's, in pixels. The two
 // come from different rules and will never be to the pixel; 64 is about one indent, past which
 // the eye stops reading them as one edge.
+// How much of a piece of chrome's own rectangle has to change when it is hidden, before the
+// page can be said to be drawing it. Low on purpose: a two pixel hairline inside the fourteen
+// pixel letterbox bar changes a seventh of the bar's rectangle and that is the whole of it.
+const CHROME_DRAWN_SHARE = 0.02;
 const COLUMN_EDGE_DRIFT = 64;
 
 async function checkFilmEdgeChrome(baseUrl) {
@@ -674,6 +678,96 @@ async function checkFilmEdgeChrome(baseUrl) {
             );
           }
         }
+
+        // Every piece of chrome the film builds actually changes the pixels where it is.
+        //
+        // The progress indicator was built, positioned, given the act's colour and updated on
+        // every scroll, and no reader ever saw it: it sits at the bottom edge of the header at
+        // z-index 25 and the top letterbox bar sits at the same place, 14px of the page's own
+        // ground, at 26. Every check the page had asked whether a thing existed and where its
+        // box was. None asked whether it reached the reader.
+        //
+        // Measured by hiding one piece at a time and comparing only its own rectangle, so a
+        // piece that is drawn but identical to what is behind it fails and a piece that merely
+        // moved the layout does not. visibility, not display: the film reads the acts' own
+        // rects to drive the camera.
+        const shotOf = async () => page.screenshot({ encoding: 'base64' });
+        const differsInside = (a, b, rect) => page.evaluate(async ([one, two, box]) => {
+          const read = async (data) => {
+            const img = new Image();
+            img.src = 'data:image/png;base64,' + data;
+            await img.decode();
+            const canvas = document.createElement('canvas');
+            canvas.width = img.width;
+            canvas.height = img.height;
+            const ctx = canvas.getContext('2d', { willReadFrequently: true });
+            ctx.drawImage(img, 0, 0);
+            return { px: ctx.getImageData(0, 0, canvas.width, canvas.height).data, w: canvas.width, h: canvas.height };
+          };
+          const first = await read(one);
+          const second = await read(two);
+          const x0 = Math.max(0, Math.floor(box[0]));
+          const y0 = Math.max(0, Math.floor(box[1]));
+          const x1 = Math.min(first.w - 1, Math.ceil(box[2]));
+          const y1 = Math.min(first.h - 1, Math.ceil(box[3]));
+          let moved = 0;
+          let total = 0;
+          for (let y = y0; y <= y1; y++) {
+            for (let x = x0; x <= x1; x++) {
+              const i = (y * first.w + x) * 4;
+              total++;
+              const d = Math.abs(first.px[i] - second.px[i]) + Math.abs(first.px[i + 1] - second.px[i + 1]) + Math.abs(first.px[i + 2] - second.px[i + 2]);
+              if (d > 8) moved++;
+            }
+          }
+          return total > 0 ? moved / total : 0;
+        }, [a, b, rect]);
+
+        // Partway through the film, so anything whose size tracks the scroll is not at zero.
+        await page.evaluate(() => {
+          document.documentElement.style.scrollBehavior = 'auto';
+          window.scrollTo(0, Math.round(document.documentElement.scrollHeight * 0.5));
+        });
+        await page.evaluate(() => new Promise((done) => setTimeout(done, 600)));
+        const pieces = await page.evaluate(() => [...document.querySelectorAll('.film-progress, .film-spine, .film-act-nav, .film-play, .film-bar')]
+          .map((el, i) => {
+            el.dataset.filmChromeId = String(i);
+            const rect = el.getBoundingClientRect();
+            return {
+              id: String(i),
+              name: el.className.split(' ').find((c) => c.startsWith('film-')) || el.tagName.toLowerCase(),
+              rect: [rect.left, rect.top, rect.right, rect.bottom],
+              width: rect.width,
+              height: rect.height
+            };
+          }));
+        if (pieces.length === 0) {
+          failures.push(`${route} builds none of the film's own chrome at ${size.width}x${size.height}, so whether any of it reaches the reader could not be measured.`);
+        }
+        const withAll = await shotOf();
+        for (const piece of pieces) {
+          if (piece.width < 1 || piece.height < 1) {
+            failures.push(`${route} draws its ${piece.name} at ${Math.round(piece.width)}x${Math.round(piece.height)} halfway through the film, so there is nothing of it on screen.`);
+            continue;
+          }
+          await page.evaluate((id) => {
+            document.querySelector(`[data-film-chrome-id="${id}"]`).style.visibility = 'hidden';
+          }, piece.id);
+          const without = await shotOf();
+          await page.evaluate((id) => {
+            document.querySelector(`[data-film-chrome-id="${id}"]`).style.visibility = '';
+          }, piece.id);
+          const share = await differsInside(withAll, without, piece.rect);
+          if (share < CHROME_DRAWN_SHARE) {
+            failures.push(
+              `${route} builds a ${piece.name} halfway through the film that changes ${(share * 100).toFixed(1)}% of its own ${Math.round(piece.width)}x${Math.round(piece.height)} rectangle, floor ${CHROME_DRAWN_SHARE * 100}%. It is positioned, coloured and updated, and nothing of it reaches the reader: something is painted over it.`
+            );
+          }
+        }
+        await page.evaluate(() => {
+          document.querySelectorAll('[data-film-chrome-id]').forEach((el) => { delete el.dataset.filmChromeId; });
+          window.scrollTo(0, 0);
+        });
       }
     }
   } finally {
