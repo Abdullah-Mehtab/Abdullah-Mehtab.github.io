@@ -161,6 +161,10 @@
 
   play.addEventListener("click", () => {
     if (playing) { stopPlaying(); return; }
+    // Nothing to play from here, and playing anyway means scrolling backwards to the end of the
+    // last act. The control is hidden past that point as well; this is the half of it that does
+    // not depend on a class having been applied yet.
+    if (window.scrollY >= playEnd()) return;
     playing = true;
     playFrom = window.scrollY;
     playAt = performance.now();

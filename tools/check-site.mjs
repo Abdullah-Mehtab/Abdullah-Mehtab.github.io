@@ -587,6 +587,32 @@ async function checkFilmEdgeChrome(baseUrl) {
       await page.setViewport({ width: size.width, height: size.height, deviceScaleFactor: 1 });
       for (const route of routes) {
         await page.goto(`${baseUrl}${route}`, { waitUntil: 'networkidle2' });
+        // The copy scrolls under the header, so the header has to be opaque.
+        //
+        // It was 95% of the page's ground mixed with transparent, with a blur behind it, and
+        // the chapter's own title read straight through it as the reader left the first act:
+        // measured as a luma spread of 5.2 in a band of the bar carrying none of the bar's own
+        // ink, against 1 to 2 for the room's dither. A blur softens what shows through; it does
+        // not stop it.
+        await page.evaluate(() => new Promise((done) => setTimeout(done, 400)));
+        const seeThrough = await page.evaluate(() => {
+          const bar = document.querySelector('.site-header');
+          if (!bar) return 'missing';
+          const background = getComputedStyle(bar).backgroundColor;
+          if (background === 'transparent') return background;
+          // Two serialisations, and reading only the first is how this check passed a header
+          // that was 95% opaque: a color-mix comes back as color(srgb r g b / a), not as rgba().
+          const slash = background.lastIndexOf('/');
+          const alpha = slash >= 0
+            ? Number(background.slice(slash + 1, background.lastIndexOf(')')))
+            : (background.startsWith('rgba') ? Number(background.slice(background.lastIndexOf(',') + 1, -1)) : 1);
+          return Number.isFinite(alpha) && alpha < 0.999 ? background : null;
+        });
+        if (seeThrough === 'missing') {
+          failures.push(`${route} has no site header, so the check that copy cannot read through it measured nothing.`);
+        } else if (seeThrough) {
+          failures.push(`${route} draws its fixed header at ${seeThrough}, which is not opaque. The page's own copy scrolls under that bar and reads through it.`);
+        }
         const marks = await page.evaluate(() => {
           // The mark a reader sees, not the box it is positioned in. A container pinned to
           // the edge and as wide as the gutter measures 0px from the edge however far inside
@@ -1060,6 +1086,75 @@ async function checkFilmNameplates(baseUrl) {
   }
 }
 
+// The play control never takes a reader backwards, and is not offered where there is nothing
+// to play.
+//
+// It plays the chapter by moving the scroll, and it stops itself at the bottom of the last act
+// because past that the page is a comment form and a footer. Pressed from below that point it
+// was scrolling the reader back up to it: measured at 932px of travel in the wrong direction,
+// from a control sitting in full view at the foot of the page.
+async function checkFilmPlayControl(baseUrl) {
+  const executablePath = findChromeExecutable();
+  if (!executablePath) {
+    warnings.push('Skipping the chapter play control check because Chrome/Edge was not found. Set CHROME_PATH to enable it.');
+    return;
+  }
+
+  const routes = await filmRoutes();
+  if (routes.length === 0) {
+    failures.push('The chapter play control check found no page carrying the film body class, so it measured nothing. Either the class was renamed or the check can no longer find the chapter pages.');
+    return;
+  }
+
+  const { default: puppeteer } = await import('puppeteer-core');
+  const browser = await puppeteer.launch({
+    executablePath,
+    headless: true,
+    args: ['--no-sandbox', '--disable-setuid-sandbox', '--enable-unsafe-swiftshader', '--use-gl=angle']
+  });
+  try {
+    const page = await browser.newPage();
+    await page.setCacheEnabled(false);
+    await page.setViewport({ width: 1440, height: 900, deviceScaleFactor: 1 });
+    for (const route of routes) {
+      await page.goto(`${baseUrl}${route}`, { waitUntil: 'networkidle2' });
+      await page.evaluate(() => new Promise((done) => setTimeout(done, 1500)));
+      const has = await page.evaluate(() => Boolean(document.querySelector('.film-play')));
+      if (!has) {
+        failures.push(`${route} has no play control, so this check measured nothing. It is one of the pieces this form carries and it was built.`);
+        continue;
+      }
+      // The foot of the page, which is past the last act and past anything the film plays.
+      await page.evaluate(() => window.scrollTo(0, document.documentElement.scrollHeight - window.innerHeight));
+      await page.evaluate(() => new Promise((done) => setTimeout(done, 600)));
+      const offered = await page.evaluate(() => {
+        const el = document.querySelector('.film-play');
+        const style = window.getComputedStyle(el);
+        const box = el.getBoundingClientRect();
+        return style.display !== 'none'
+          && style.visibility !== 'hidden'
+          && Number(style.opacity) > 0.05
+          && box.width > 0
+          && box.height > 0;
+      });
+      if (offered) {
+        failures.push(`${route} still offers its play control below the last act, where there is nothing left to play. A control that is visible is a control a reader will press.`);
+      }
+      const moved = await page.evaluate(async () => {
+        const before = window.scrollY;
+        document.querySelector('.film-play').click();
+        await new Promise((done) => setTimeout(done, 900));
+        return Math.round(window.scrollY - before);
+      });
+      if (moved < -2) {
+        failures.push(`${route} play control scrolls the reader ${Math.abs(moved)}px back up the page when it is pressed from below the last act. Pressing play should never move a reader backwards.`);
+      }
+    }
+  } finally {
+    await browser.close();
+  }
+}
+
 async function checkStaticReferences() {
   const files = await walkFiles(repoRoot);
   for (const file of files) {
@@ -1202,6 +1297,7 @@ async function main() {
     await checkFilmEdgeChrome(baseUrl);
     await checkFilmClosingSet(baseUrl);
     await checkFilmNameplates(baseUrl);
+    await checkFilmPlayControl(baseUrl);
     if (args.has('--screenshots')) {
       await captureScreenshots(baseUrl);
     }

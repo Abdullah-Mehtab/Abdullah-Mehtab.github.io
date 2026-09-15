@@ -979,9 +979,15 @@ body.film .hero-actions {
 body.film .site-header {
   --nav-top-bg: transparent;
   --nav-top-text: var(--text);
-  background: color-mix(in srgb, var(--bg-deep) 95%, transparent);
+  /*
+    Opaque, and the blur is gone with it. At 95% the chapter's own title read straight through
+    this bar as the reader left the first act: a ghost of "Cyber Sentinel" across the wordmark
+    and the nav, measured as a luma spread of 5.2 in a band of the bar carrying none of its own
+    ink, against 1 to 2 for the room's dither behind it. A backdrop blur softens what shows
+    through and does not stop it, and once the bar is opaque there is nothing for it to blur.
+  */
+  background: var(--bg-deep);
   border-bottom: var(--film-rule) solid var(--scene-line);
-  backdrop-filter: blur(10px);
 }
 
 body.film .site-nav .brand {
@@ -1530,6 +1536,17 @@ body.film-still *::after {
   letter-spacing: 0.22em;
   cursor: pointer;
   transition: border-color 200ms ease, background 200ms ease;
+}
+
+/*
+  Gone once the reader is past the last act, because there is nothing left for it to play. It
+  used to sit there in full view at the foot of the page and scroll whoever pressed it 932px
+  back up to the bottom of the chapter, which is the one thing a play control must never do.
+*/
+body.film.past-chapter .film-play {
+  opacity: 0;
+  pointer-events: none;
+  visibility: hidden;
 }
 
 .film-play:hover,
