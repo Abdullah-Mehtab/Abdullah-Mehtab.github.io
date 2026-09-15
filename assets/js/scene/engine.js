@@ -622,15 +622,19 @@ export function mountFilm({ canvas, buildStations }) {
   // to hold the far edge of the subject inside a frustum the offset has pushed it towards. At
   // 48 the closing subject needed 85 units of clearance and filled a sixth of the frame.
   const DESKTOP_OFFSET = [42, 42, 34, 34];
-  // How far above the track each set sits. Lifting act four clear of its copy was tried, at 24,
-  // and it moved the set off the top of the frame instead: its camera ends the act four units
-  // below the track, so every unit of lift is a unit the set climbs away from it.
+  // How far above the track each set sits.
   //
-  // It sat at 10, which was right while the subject was a third of its present size and could
-  // hang above the copy. Now that it is tall enough to reach down past the Outcome paragraph,
-  // the lift is what keeps its lower corner off those lines, and containment is what stops it
-  // going higher: at 10 the top of the dashboard is against the top of the frame.
-  const DESKTOP_LIFT = [10, 6, 20, 6];
+  // This no longer decides where a set sits in the frame. The camera looks at the height a
+  // set's own weight is at, so a set lifted higher is looked at higher and lands in the same
+  // band of the frame either way. What is left is the angle: the lift against where the set's
+  // own move leaves the camera is how far above or below its subject the reader ends up.
+  //
+  // Acts one, two and four end their move roughly level with their subject. Act three sat at
+  // 20 while its camera ends 2 units below the track, so the reader finished 23 units under a
+  // set they are meant to read across, and the tower spread far enough from that angle to push
+  // its own labels into the header and into each other: five of its eight were legible at once
+  // against a floor of six. At 8 it is looked at the way the other three are.
+  const DESKTOP_LIFT = [10, 6, 8, 6];
   // On a phone the sets drop below the reader's line of sight rather than sitting behind the
   // heading they belong to.
   const NARROW_LIFT = -26;
@@ -645,6 +649,11 @@ export function mountFilm({ canvas, buildStations }) {
   // where the camera rests in front of it, so the lateral move knows where it started.
   const aimReach = [];
   const restZ = [];
+  // The height each set's own weight sits at, and the point on the track its middle sits at,
+  // both in world units. Together they are the place the camera looks at while it is in front
+  // of that set. See the look target in the frame loop.
+  const aimHeights = [];
+  const aimZ = [];
 
   // Slides a set along the track until its nearest face sits REST_GAP in front of where the
   // camera actually parks in front of it.
@@ -669,7 +678,7 @@ export function mountFilm({ canvas, buildStations }) {
     return false;
   }
 
-  // Where a set's actual subject is: the z range of it, nearest face first, and the x its
+  // Where a set's actual subject is: the z range of it, nearest face first, and the x and y its
   // visible weight sits at. Weighted by the size of each part, because a set is not centred on
   // the middle of the box around it. Act four's two screens sit 16 units to the right of the
   // origin its author placed, so its offset of 40 put its subject at 56.
@@ -681,6 +690,7 @@ export function mountFilm({ canvas, buildStations }) {
     let bottom = Infinity;
     let top = -Infinity;
     let weightX = 0;
+    let weightY = 0;
     let weight = 0;
     group.traverse((node) => {
       if (!node.geometry || isAtmosphere(node, group)) return;
@@ -694,10 +704,20 @@ export function mountFilm({ canvas, buildStations }) {
       top = Math.max(top, box.max.y);
       const size = (box.max.x - box.min.x) * (box.max.y - box.min.y) + 1;
       weightX += ((box.min.x + box.max.x) / 2) * size;
+      weightY += ((box.min.y + box.max.y) / 2) * size;
       weight += size;
     });
     if (near === -Infinity) return null;
-    return { near, far, left, right, bottom, top, massX: weight > 0 ? weightX / weight : 0 };
+    return {
+      near,
+      far,
+      left,
+      right,
+      bottom,
+      top,
+      massX: weight > 0 ? weightX / weight : 0,
+      massY: weight > 0 ? weightY / weight : (bottom + top) / 2
+    };
   }
 
   // The nearest the camera's resting place may sit to a set's near face and still have all of
@@ -740,7 +760,7 @@ export function mountFilm({ canvas, buildStations }) {
     // flies through the closing set, so its lateral carry is zero here.
     const aimDepth = Math.max(70, REST_GAP + (body.near - body.far) / 2);
     const slopeX = ((offsets[index] || 0) * follow - end.dx * 0.6) / aimDepth;
-    const slopeY = (-end.dy * 0.5) / aimDepth;
+    const slopeY = ((aimHeights[index] || 0) - end.dy) / aimDepth;
     const reach = (offset, extent, half, slope) => {
       const opening = Math.max(0.05, half - Math.abs(slope));
       const away = (Math.abs(offset) + extent) / (half + Math.abs(slope));
@@ -781,6 +801,10 @@ export function mountFilm({ canvas, buildStations }) {
     body.left += slide;
     body.right += slide;
     body.massX += slide;
+    // Nothing slides a set vertically, so its weight is already at the height it will be read
+    // at. Written before keepBack is asked anything, because the standoff that keeps a set
+    // whole depends on how far the camera is turned towards it, and that is now this number.
+    aimHeights[index] = body.massY;
 
     // The closing set also decides how far the camera may travel toward it. Everything needed
     // is here and nowhere else: how deep its subject is, and how much of the closing its own
@@ -815,6 +839,9 @@ export function mountFilm({ canvas, buildStations }) {
     // move uses it to know how far into the set the camera has come.
     aimReach[index] = REST_GAP + (body.near - body.far) / 2;
     restZ[index] = rest;
+    // The same middle, said as a place on the track rather than as a distance from the camera,
+    // so the look target can stay on it while the camera closes. See the frame loop.
+    aimZ[index] = rest - aimReach[index];
   }
 
   function buildWorld() {
@@ -1143,15 +1170,49 @@ export function mountFilm({ canvas, buildStations }) {
       ? AIM_FOLLOW
       : stations[Math.min(index + 1, last)].aimFollow;
     const aimX = lerp((offsets[index] || 0) * followHere, (offsets[Math.min(index + 1, last)] || 0) * followNext, blend);
-    // How far ahead the camera's look target sits. It has to follow the set, not stay at a
-    // constant: aiming at a point 150 units ahead turns a 40 unit sideways offset into 15
-    // degrees, which is most of the way to the frame edge once the camera has closed to 65
-    // units. The closing set was measured 90% off screen for exactly that reason, while the
-    // value meant to control it, aimFollow, was already at its maximum.
-    const aimDepth = Math.max(70, aimReach[index] || 150);
+    // How far ahead the look target sits: the distance to this set's own middle, measured from
+    // wherever the camera has got to, and sliding to the next set's middle during the flight.
+    //
+    // It has to follow the set rather than stay at a constant. Aiming at a point 150 units
+    // ahead turns a 40 unit sideways offset into 15 degrees, which is most of the way to the
+    // frame edge once the camera has closed to 65 units: the closing set was measured 90% off
+    // screen for that reason, while the value meant to control it, aimFollow, was already at
+    // its maximum.
+    //
+    // Then it was the distance to the set's middle from the camera's resting place, which is
+    // right only while the camera is still resting. Every set's move closes that gap while its
+    // act is read, so the target stayed where the camera started and the subject drifted off
+    // it. Act three closes from 110 units to 72 and its subject was 8.8 world units clear of
+    // the look ray by the end, which is a ninth of the frame with the set already high in it.
+    // The floor keeps the target ahead of the camera during a flight, where the set's own
+    // middle ends up behind it.
+    const aimMiddle = lerp(aimZ[index] || 0, aimZ[Math.min(index + 1, last)] || 0, blend);
+    const aimDepth = Math.max(70, camera.position.z - aimMiddle);
+    // The height the camera looks at, which is the height the set's own weight sits at.
+    //
+    // This was half the camera's own height, and that is the same class of mistake as aiming at
+    // a point a fixed distance ahead: a look target derived from where the camera is rather
+    // than from where the subject is. Every set's move descends the camera through its act, so
+    // the aim descended with it and the subject climbed the frame while the reader was still
+    // reading the act's words. Act three descends 32 units against a lift of 20 and its subject
+    // walked from the middle of the frame to a quarter of the way down it, with half the frame
+    // empty underneath; act four descends 14 against a lift of 6 and was the only act that held
+    // still, which is what made it look like act three's fault alone.
+    //
+    // Retuning the four descents was the other option and it is four authorities over one
+    // behaviour: the next set written for the next chapter would arrive with no idea that its
+    // dy curve is also a framing decision. This is one authority, and a set that wants to be
+    // read from above or below says so by where it puts its own weight.
+    //
+    // A narrow screen keeps the old form on purpose. There the sets are dropped below the
+    // reader's line of sight rather than sitting behind the words, and looking straight at them
+    // would pull them back up into the copy.
+    const aimY = narrow
+      ? eyeY * 0.5
+      : lerp(aimHeights[index] || 0, aimHeights[Math.min(index + 1, last)] || 0, blend);
     camera.lookAt(
       aimX + (dx + ontoSet) * 0.4 - swing + smoothPointerX * 4,
-      eyeY * 0.5 - smoothPointerY * 2.6,
+      aimY - smoothPointerY * 2.6,
       camera.position.z - aimDepth
     );
     camera.rotateZ(Math.sin(along * 2.1) * 0.01 + kick * 0.03);
@@ -1248,6 +1309,14 @@ export function mountFilm({ canvas, buildStations }) {
     // measured as having a subject that changes nothing at all.
     pause() { running = false; },
     render() { renderer.render(scene, camera); },
+    // Hand the frame back, so the camera can be driven to the next place to measure without
+    // reloading the page for it. Checking running first, because asking twice would leave two
+    // frame loops running against one scene.
+    resume() {
+      if (running) return;
+      running = true;
+      window.requestAnimationFrame(frame);
+    },
     stop() {
       running = false;
       themeWatcher.disconnect();

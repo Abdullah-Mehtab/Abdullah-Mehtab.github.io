@@ -133,11 +133,20 @@ const NODES = {
   // the one node here that stores anything was never named.
   elastic:  { at: [-6, -10, -31], size: [26, 24, 24], form: "store", label: "Elasticsearch", sub: "index, search" },
   logstash: { at: [16, 8, -47], size: [24, 22, 18], form: "fork", label: "Logstash", sub: "the fork" },
-  email:    { at: [-31, 34, -66], size: [26, 18, 4], form: "screen", art: "mail", label: "HTML email alerts", sub: "" },
+  // Brought in from x -31. That was clear of the copy while this set sat high in the frame; once
+  // the camera started looking at the set rather than at its own height, the set came down and
+  // this screen's left edge landed inside the last word of the act's own heading.
+  email:    { at: [-18, 34, -66], size: [26, 18, 4], form: "screen", art: "mail", label: "HTML email alerts", sub: "" },
   // Brought in from x 40. Out there the dashboard's own plane crossed the right edge of the
   // frame at every depth this act is read from, so the one node the act is named for was never
   // once seen whole.
-  kibana:   { at: [27, -21, -66], size: [30, 20, 4], form: "screen", art: "board", label: "Kibana dashboards", sub: "" }
+  //
+  // Raised from y -21 for the same reason the email screen moved: it was the lowest thing on
+  // the set's right side, and with the set no longer riding high it swept across the Alert
+  // paragraph on the way past, covering a ninth of a line. The two screens still sit in
+  // opposite corners of the flow, which is what tells a reader one is a message and one is a
+  // chart before either is legible.
+  kibana:   { at: [27, -8, -66], size: [30, 20, 4], form: "screen", art: "board", label: "Kibana dashboards", sub: "" }
 };
 
 const EDGES = [

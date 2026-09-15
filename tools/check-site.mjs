@@ -829,6 +829,231 @@ async function checkFilmClosingSet(baseUrl) {
   }
 }
 
+// Where in each act to look. The camera holds still in front of its set for the first 46% of an
+// act and flies for the rest, and a set leaving the frame during a flight is the flight. These
+// four are all inside the hold, which is the part a reader is stationary in front of.
+const HEIGHT_DEPTHS = [0, 0.15, 0.3, 0.45];
+// Where the subject's middle may sit, as a share of the frame measured from the top. Half is
+// the neutral answer and a third down is the cinematographic one, so the band runs from a third
+// to a little below the middle.
+const SUBJECT_BAND = [0.35, 0.62];
+// How far that middle may move across the reading window. This is the one that matters: every
+// act's opening frame was already right and none of them stayed right, because each set's move
+// descends the camera through its act while the camera aimed at a height derived from its own.
+// Six per cent of the frame is 54 pixels at 900 high.
+const SUBJECT_DRIFT = 0.06;
+// Within this much of an edge, the subject's middle stops meaning anything: what is measured
+// then is the middle of the part still in shot, and that moves when the subject grows as
+// readily as when the composition does. A subject this close to one edge is judged on the
+// other one instead.
+const SUBJECT_EDGE = 0.06;
+// How much of the frame may be empty on the side away from the edge the subject is running off.
+// A set filling the frame and running off the top is a camera that has arrived. A set running
+// off the top with half the frame empty underneath is a camera aiming at itself, which is what
+// act three did for the whole second half of its hold.
+const SUBJECT_OVERRUN = 0.2;
+
+// A set holds its place in the frame while its act is read.
+//
+// The vertical twin of the standoff that keeps the closing set whole, and it exists because
+// nothing measured this axis. Eighteen deterministic sweeps and five gates all measured where a
+// set sits across the frame, because the complaint they were written for was that everything
+// leaned right; the owner then found a set floating at the top of the frame with the space
+// beneath it empty and no number in this repository could report it.
+//
+// Measured from pixels rather than from the geometry's bounding boxes, and the difference is
+// not academic: the two disagree by up to 0.13 of the frame on this page, because a box around
+// a sparse wireframe reaches further than anything drawn inside it. The question is where the
+// subject appears, so the answer has to come from what was drawn.
+async function checkFilmSubjectHeight(baseUrl) {
+  const executablePath = findChromeExecutable();
+  if (!executablePath) {
+    warnings.push('Skipping the chapter subject height check because Chrome/Edge was not found. Set CHROME_PATH to enable it.');
+    return;
+  }
+
+  const routes = await filmRoutes();
+  if (routes.length === 0) {
+    failures.push('The chapter subject height check found no page carrying the film body class, so it measured nothing. Either the class was renamed or the check can no longer find the chapter pages.');
+    return;
+  }
+
+  const { default: puppeteer } = await import('puppeteer-core');
+  const browser = await puppeteer.launch({
+    executablePath,
+    headless: true,
+    args: ['--no-sandbox', '--disable-setuid-sandbox', '--enable-unsafe-swiftshader', '--use-gl=angle']
+  });
+  try {
+    const page = await browser.newPage();
+    await page.setCacheEnabled(false);
+    // One size. The field of view is vertical, so how much of a set fits up and down the frame
+    // does not change with the width of the window.
+    await page.setViewport({ width: 1440, height: 900, deviceScaleFactor: 1 });
+    for (const route of routes) {
+      await page.goto(`${baseUrl}${route}?still&scene-debug`, { waitUntil: 'networkidle2' });
+      await page.evaluate(() => new Promise((done) => setTimeout(done, 1800)));
+      const seam = await page.evaluate(() => Boolean(window.chapterFilm)
+        && typeof window.chapterFilm.pause === 'function'
+        && typeof window.chapterFilm.render === 'function'
+        && typeof window.chapterFilm.resume === 'function');
+      if (!seam) {
+        failures.push(`${route} did not publish a scene that can be held still through ?scene-debug, so where its sets sit in the frame could not be measured. A chapter page has to keep that seam for this check to mean anything.`);
+        continue;
+      }
+      // The page's own layer is taken out of every shot. What is being measured is where the
+      // set sits, and a paragraph is not part of the set.
+      await page.evaluate(() => {
+        document.querySelectorAll('main, header, footer').forEach((el) => { el.style.visibility = 'hidden'; });
+        document.querySelectorAll('*').forEach((el) => {
+          if (getComputedStyle(el).position === 'fixed' && el.tagName !== 'CANVAS') el.style.visibility = 'hidden';
+        });
+      });
+      const bands = await page.evaluate(() => [...document.querySelectorAll('main > .act')].map((act, i) => ({
+        act: i + 1,
+        top: Math.round(act.getBoundingClientRect().top + window.scrollY),
+        span: Number(act.dataset.stationSpan) || Math.round(act.getBoundingClientRect().height)
+      })));
+      if (bands.length === 0) {
+        failures.push(`${route} carries the film body class but has no acts, so there are no sets to measure.`);
+        continue;
+      }
+
+      for (const band of bands) {
+        let opened = null;
+        for (const depth of HEIGHT_DEPTHS) {
+          await page.evaluate((to) => window.scrollTo(0, to), Math.round(band.top + band.span * depth));
+          // The camera arrives over about 45 frames, so this settles in frames, not in
+          // milliseconds. Waiting in milliseconds measures where the camera used to be.
+          await page.evaluate(() => new Promise((done) => {
+            let n = 0;
+            const tick = () => (++n > 50 ? done() : requestAnimationFrame(tick));
+            requestAnimationFrame(tick);
+          }));
+          // The film has to be held still before anything is hidden. Its loop writes each
+          // station group's visibility every frame and each set's update writes visibility on
+          // its own parts, so with it running anything hidden here is drawn again before the
+          // shot is taken.
+          await page.evaluate(() => window.chapterFilm.pause());
+          const draw = (mode) => page.evaluate(([i, what]) => {
+            window.chapterFilm.stations.forEach((station, si) => {
+              station.group.traverse((node) => {
+                if (node.userData.filmWasVisible === undefined) node.userData.filmWasVisible = node.visible;
+                if (what === 'restore') {
+                  node.visible = node.userData.filmWasVisible;
+                  delete node.userData.filmWasVisible;
+                  return;
+                }
+                if (node === station.group) {
+                  node.visible = what !== 'none' && si === i;
+                  return;
+                }
+                // Dust, drift and labels spread across the whole frame by design. Counting
+                // them would say every act fills its frame from edge to edge.
+                const scenery = Boolean(node.userData.ambient || node.userData.caption);
+                node.visible = node.userData.filmWasVisible && !scenery;
+              });
+            });
+            if (what !== 'restore') window.chapterFilm.render();
+          }, [band.act - 1, mode]);
+
+          await draw('none');
+          const empty = await page.screenshot({ encoding: 'base64' });
+          await draw('subject');
+          const subject = await page.screenshot({ encoding: 'base64' });
+          // Put every part back the way the film left it, not merely back on: a set hides its
+          // own parts as it builds, and switching them all on would hand the next depth a set
+          // in a state it never reaches on its own.
+          await draw('restore');
+          await page.evaluate(() => window.chapterFilm.resume());
+
+          // Where the act's own subject is, as the difference between the frame with it drawn
+          // and the same camera in an empty room. Against a control frame rather than against
+          // the room's colour, because the track carries its own drifting matter through every
+          // frame and a threshold against a colour counts that as part of the act.
+          const shape = await page.evaluate(async ([a, b]) => {
+            const read = async (data) => {
+              const img = new Image();
+              img.src = 'data:image/png;base64,' + data;
+              await img.decode();
+              const canvas = document.createElement('canvas');
+              canvas.width = img.width;
+              canvas.height = img.height;
+              const ctx = canvas.getContext('2d', { willReadFrequently: true });
+              ctx.drawImage(img, 0, 0);
+              return { px: ctx.getImageData(0, 0, canvas.width, canvas.height).data, w: canvas.width, h: canvas.height };
+            };
+            const one = await read(a);
+            const two = await read(b);
+            const luma = (px, i) => px[i] * 0.299 + px[i + 1] * 0.587 + px[i + 2] * 0.114;
+            const rows = new Array(one.h).fill(0);
+            for (let y = 0; y < one.h; y++) {
+              for (let x = 0; x < one.w; x++) {
+                const i = (y * one.w + x) * 4;
+                const d = Math.abs(luma(one.px, i) - luma(two.px, i));
+                // Below this is the room's own dither, not something drawn in front of it.
+                if (d > 3) rows[y] += d;
+              }
+            }
+            // Smoothed, then cut at two per cent of the brightest row. A single bright speck
+            // cannot reach that, and it sits below the fall-off where a fraction of a point
+            // moves the reported edge of the subject by a tenth of the frame.
+            const window = Math.max(6, Math.round(rows.length / 90));
+            const smooth = rows.map((_, y) => {
+              let sum = 0;
+              for (let i = Math.max(0, y - window); i <= Math.min(rows.length - 1, y + window); i++) sum += rows[i];
+              return sum / (window * 2 + 1);
+            });
+            const peak = Math.max(...smooth);
+            if (peak <= 0) return null;
+            const floor = peak * 0.02;
+            const lo = smooth.findIndex((v) => v >= floor);
+            if (lo < 0) return null;
+            const hi = smooth.length - 1 - [...smooth].reverse().findIndex((v) => v >= floor);
+            return { lo: lo / rows.length, hi: (hi + 1) / rows.length };
+          }, [subject, empty]);
+
+          const at = `${route} act ${band.act} at ${Math.round(depth * 100)}% through it`;
+          if (!shape) {
+            failures.push(`${at}: its own set draws nothing at all, at a depth the camera is still parked in front of it. A set that is not there cannot be what the act is about.`);
+            continue;
+          }
+          const middle = (shape.lo + shape.hi) / 2;
+          const above = shape.lo;
+          const below = 1 - shape.hi;
+          const atTop = above <= SUBJECT_EDGE;
+          const atBottom = below <= SUBJECT_EDGE;
+          if (opened === null) opened = { middle, atTop, atBottom };
+
+          // Filling the frame in both directions. There is no composition left to judge and no
+          // empty frame to complain about.
+          if (atTop && atBottom) continue;
+          if (atTop || atBottom) {
+            const opposite = atTop ? below : above;
+            if (opposite > SUBJECT_OVERRUN) {
+              failures.push(`${at}: its set runs off the ${atTop ? 'top' : 'bottom'} of the frame with ${Math.round(opposite * 100)}% of the frame empty at the ${atTop ? 'bottom' : 'top'}, ceiling ${Math.round(SUBJECT_OVERRUN * 100)}%. The reader is still reading this act's words while its subject leaves the frame in one direction and abandons it in the other.`);
+            }
+            continue;
+          }
+          // The act opened on a frame its own set was already larger than, so there is no
+          // middle from that frame to measure this one against.
+          if (opened.atTop || opened.atBottom) continue;
+
+          if (middle < SUBJECT_BAND[0] || middle > SUBJECT_BAND[1]) {
+            failures.push(`${at}: its set's middle sits ${middle.toFixed(2)} down the frame, band ${SUBJECT_BAND[0]} to ${SUBJECT_BAND[1]}, with ${Math.round(above * 100)}% of the frame empty above it and ${Math.round(below * 100)}% below it.`);
+          }
+          const drift = middle - opened.middle;
+          if (Math.abs(drift) > SUBJECT_DRIFT) {
+            failures.push(`${at}: its set has moved ${Math.abs(drift).toFixed(2)} of the frame ${drift < 0 ? 'up' : 'down'} since the frame the act opens on, ceiling ${SUBJECT_DRIFT}. The reader is still reading this act's words while its subject slides ${drift < 0 ? 'out of the top of' : 'down'} the frame.`);
+          }
+        }
+      }
+    }
+  } finally {
+    await browser.close();
+  }
+}
+
 // Where in each act to look for nameplates. Seven depths an act, all inside the part of it the
 // camera spends in front of its own set: past about 60% the camera is in flight to the next
 // station and an act's own labels are behind it, so a sample there measures the next act. Even
@@ -1357,6 +1582,7 @@ async function main() {
     await checkFilmEdgeChrome(baseUrl);
     await checkFilmClosingSet(baseUrl);
     await checkFilmNameplates(baseUrl);
+    await checkFilmSubjectHeight(baseUrl);
     await checkFilmPlayControl(baseUrl);
     if (args.has('--screenshots')) {
       await captureScreenshots(baseUrl);
