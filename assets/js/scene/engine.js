@@ -694,8 +694,19 @@ export function mountFilm({ canvas, buildStations }) {
     let weight = 0;
     group.traverse((node) => {
       if (!node.geometry || isAtmosphere(node, group)) return;
-      if (!node.geometry.boundingBox) node.geometry.computeBoundingBox();
-      const box = node.geometry.boundingBox.clone().applyMatrix4(node.matrixWorld);
+      // An instanced mesh's geometry is one copy at the origin. Asking it for its bounding box
+      // puts sixteen server racks spread across a hundred and thirty units at a single point in
+      // the middle of the room, which is a phantom weight nothing draws. The mesh knows where
+      // its copies are; the geometry does not. Every set built with repeated() is affected, and
+      // that is most of the furniture on this page.
+      let box;
+      if (node.isInstancedMesh) {
+        if (!node.boundingBox) node.computeBoundingBox();
+        box = node.boundingBox.clone().applyMatrix4(node.matrixWorld);
+      } else {
+        if (!node.geometry.boundingBox) node.geometry.computeBoundingBox();
+        box = node.geometry.boundingBox.clone().applyMatrix4(node.matrixWorld);
+      }
       near = Math.max(near, box.max.z);
       far = Math.min(far, box.min.z);
       left = Math.min(left, box.min.x);
@@ -1300,6 +1311,20 @@ export function mountFilm({ canvas, buildStations }) {
     // The hue each act paints its room in, for .claude-tools/audit-act-colour.mjs to compare
     // against what the page furniture is painted in.
     get actAccents() { return palette.accents.map((c) => c.getHexString()); },
+    // Where dock() decided each set's visible weight should sit, in world units.
+    //
+    // For tools/check-site.mjs, which photographs a set on its own and asks whether the ink
+    // landed where the engine put it. The two can disagree without anything looking obviously
+    // wrong: an instanced mesh's geometry is one copy at the origin, so sixteen racks spread
+    // across a room were weighed as a single box in the middle of it, and every set built with
+    // repeated() was docked to a place nothing was drawn.
+    get dockedTo() {
+      return stations.map((station, i) => ({
+        x: offsets[i] || 0,
+        y: aimHeights[i] || 0,
+        z: aimZ[i] === undefined ? -i * STATION_GAP : aimZ[i]
+      }));
+    },
     // Hold the frame where it is, and draw one when asked.
     //
     // For .claude-tools/audit-landing-weight.mjs, which hides part of a set and photographs what

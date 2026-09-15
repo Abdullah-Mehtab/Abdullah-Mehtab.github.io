@@ -829,10 +829,14 @@ async function checkFilmClosingSet(baseUrl) {
   }
 }
 
-// Where in each act to look. The camera holds still in front of its set for the first 46% of an
-// act and flies for the rest, and a set leaving the frame during a flight is the flight. These
-// four are all inside the hold, which is the part a reader is stationary in front of.
-const HEIGHT_DEPTHS = [0, 0.15, 0.3, 0.45];
+// Where in each act to look. The first three are inside the hold, where the camera is parked in
+// front of its own set and a reader is stationary in front of it. The fourth is the transit,
+// where the camera has left this set and the next one is still ahead: the frame still carries
+// this act's words, so it is still a frame a reader stops on.
+const FRAMING_DEPTHS = [0, 0.2, 0.45, 0.7];
+// Up and down the frame, only the hold is judged. A set leaving the frame during a flight is
+// the flight, and the engine's own note says so.
+const FRAMING_HOLD = 0.45;
 // Where the subject's middle may sit, as a share of the frame measured from the top. Half is
 // the neutral answer and a third down is the cinematographic one, so the band runs from a third
 // to a little below the middle.
@@ -852,29 +856,35 @@ const SUBJECT_EDGE = 0.06;
 // off the top with half the frame empty underneath is a camera aiming at itself, which is what
 // act three did for the whole second half of its hold.
 const SUBJECT_OVERRUN = 0.2;
+// Across the frame, how much wider the dead band at one edge may be than the dead band at the
+// other, counting both the scene and the page's own words. A set is not meant to be centred:
+// the copy takes one side of the frame and the set stands in the lane beside it. What this
+// catches is a frame where content runs to one edge and a fifth of the screen at the other has
+// nothing in it at all, which is a composition made for a reader sitting off to one side.
+const EDGE_IMBALANCE = 0.12;
 
-// A set holds its place in the frame while its act is read.
+// Where each act's set sits in the frame, across it and up and down it.
 //
-// The vertical twin of the standoff that keeps the closing set whole, and it exists because
-// nothing measured this axis. Eighteen deterministic sweeps and five gates all measured where a
-// set sits across the frame, because the complaint they were written for was that everything
-// leaned right; the owner then found a set floating at the top of the frame with the space
-// beneath it empty and no number in this repository could report it.
+// It exists because nothing measured the second of those. Eighteen deterministic sweeps and
+// five gates all measured the horizontal axis, because the complaint they were written for was
+// that everything leaned right; the owner then found a set floating at the top of the frame
+// with the space beneath it empty and no number in this repository could report it.
 //
 // Measured from pixels rather than from the geometry's bounding boxes, and the difference is
 // not academic: the two disagree by up to 0.13 of the frame on this page, because a box around
-// a sparse wireframe reaches further than anything drawn inside it. The question is where the
-// subject appears, so the answer has to come from what was drawn.
-async function checkFilmSubjectHeight(baseUrl) {
+// a sparse wireframe reaches further than anything drawn inside it, and a material at three per
+// cent opacity has a bounding box and no pixels. The question is where the set appears, so the
+// answer has to come from what was drawn.
+async function checkFilmSetFraming(baseUrl) {
   const executablePath = findChromeExecutable();
   if (!executablePath) {
-    warnings.push('Skipping the chapter subject height check because Chrome/Edge was not found. Set CHROME_PATH to enable it.');
+    warnings.push('Skipping the chapter set framing check because Chrome/Edge was not found. Set CHROME_PATH to enable it.');
     return;
   }
 
   const routes = await filmRoutes();
   if (routes.length === 0) {
-    failures.push('The chapter subject height check found no page carrying the film body class, so it measured nothing. Either the class was renamed or the check can no longer find the chapter pages.');
+    failures.push('The chapter set framing check found no page carrying the film body class, so it measured nothing. Either the class was renamed or the check can no longer find the chapter pages.');
     return;
   }
 
@@ -888,7 +898,9 @@ async function checkFilmSubjectHeight(baseUrl) {
     const page = await browser.newPage();
     await page.setCacheEnabled(false);
     // One size. The field of view is vertical, so how much of a set fits up and down the frame
-    // does not change with the width of the window.
+    // does not change with the width of the window, and the widest screen is not the one with
+    // the least margin across it either: the fault this caught at 1440 read 16% against a 12%
+    // ceiling, and 20% at 1920 and 2560.
     await page.setViewport({ width: 1440, height: 900, deviceScaleFactor: 1 });
     for (const route of routes) {
       await page.goto(`${baseUrl}${route}?still&scene-debug`, { waitUntil: 'networkidle2' });
@@ -901,14 +913,6 @@ async function checkFilmSubjectHeight(baseUrl) {
         failures.push(`${route} did not publish a scene that can be held still through ?scene-debug, so where its sets sit in the frame could not be measured. A chapter page has to keep that seam for this check to mean anything.`);
         continue;
       }
-      // The page's own layer is taken out of every shot. What is being measured is where the
-      // set sits, and a paragraph is not part of the set.
-      await page.evaluate(() => {
-        document.querySelectorAll('main, header, footer').forEach((el) => { el.style.visibility = 'hidden'; });
-        document.querySelectorAll('*').forEach((el) => {
-          if (getComputedStyle(el).position === 'fixed' && el.tagName !== 'CANVAS') el.style.visibility = 'hidden';
-        });
-      });
       const bands = await page.evaluate(() => [...document.querySelectorAll('main > .act')].map((act, i) => ({
         act: i + 1,
         top: Math.round(act.getBoundingClientRect().top + window.scrollY),
@@ -919,9 +923,26 @@ async function checkFilmSubjectHeight(baseUrl) {
         continue;
       }
 
+      // One layer at a time, by visibility rather than by display: the engine drives the camera
+      // off the acts' own rects, and taking them out of layout would move the camera while it
+      // is being measured. Only main counts as the page's own words. The site header's nav sits
+      // in the right half of every frame at the same brightness as a heading, and counting it
+      // reads the copy's weight as right of centre on a screen where the text is left of it.
+      const showOnly = (layer) => page.evaluate((which) => {
+        for (const el of document.body.children) {
+          if (el.tagName === 'SCRIPT') continue;
+          const isCanvas = el.tagName === 'CANVAS' || el.querySelector('canvas');
+          const isMain = el.tagName === 'MAIN';
+          el.style.visibility = (which === 'scene' ? isCanvas : isMain) ? '' : 'hidden';
+        }
+        document.querySelectorAll('*').forEach((el) => {
+          if (getComputedStyle(el).position === 'fixed' && el.tagName !== 'CANVAS') el.style.visibility = 'hidden';
+        });
+      }, layer);
+
       for (const band of bands) {
         let opened = null;
-        for (const depth of HEIGHT_DEPTHS) {
+        for (const depth of FRAMING_DEPTHS) {
           await page.evaluate((to) => window.scrollTo(0, to), Math.round(band.top + band.span * depth));
           // The camera arrives over about 45 frames, so this settles in frames, not in
           // milliseconds. Waiting in milliseconds measures where the camera used to be.
@@ -957,21 +978,25 @@ async function checkFilmSubjectHeight(baseUrl) {
             if (what !== 'restore') window.chapterFilm.render();
           }, [band.act - 1, mode]);
 
+          await showOnly('scene');
           await draw('none');
           const empty = await page.screenshot({ encoding: 'base64' });
           await draw('subject');
           const subject = await page.screenshot({ encoding: 'base64' });
-          // Put every part back the way the film left it, not merely back on: a set hides its
-          // own parts as it builds, and switching them all on would hand the next depth a set
-          // in a state it never reaches on its own.
+          // The whole scene, not one act's subject: what fills the frame during a transit is
+          // whatever is drawn, including the act ahead and the matter along the track.
           await draw('restore');
           await page.evaluate(() => window.chapterFilm.resume());
+          const scene = await page.screenshot({ encoding: 'base64' });
+          await showOnly('page');
+          const copy = await page.screenshot({ encoding: 'base64' });
 
-          // Where the act's own subject is, as the difference between the frame with it drawn
-          // and the same camera in an empty room. Against a control frame rather than against
-          // the room's colour, because the track carries its own drifting matter through every
-          // frame and a threshold against a colour counts that as part of the act.
-          const shape = await page.evaluate(async ([a, b]) => {
+          // Ink per row and per column: the per pixel luma difference between two shots. For
+          // the set that is the act's subject against the same camera in an empty room, which
+          // is a control frame rather than a threshold against the room's own colour, because
+          // the track carries drifting matter through every frame and a colour threshold counts
+          // that as part of the act.
+          const profile = (a, b) => page.evaluate(async ([one, two]) => {
             const read = async (data) => {
               const img = new Image();
               img.src = 'data:image/png;base64,' + data;
@@ -983,44 +1008,119 @@ async function checkFilmSubjectHeight(baseUrl) {
               ctx.drawImage(img, 0, 0);
               return { px: ctx.getImageData(0, 0, canvas.width, canvas.height).data, w: canvas.width, h: canvas.height };
             };
-            const one = await read(a);
-            const two = await read(b);
+            const first = await read(one);
+            const second = await read(two);
             const luma = (px, i) => px[i] * 0.299 + px[i + 1] * 0.587 + px[i + 2] * 0.114;
-            const rows = new Array(one.h).fill(0);
-            for (let y = 0; y < one.h; y++) {
-              for (let x = 0; x < one.w; x++) {
-                const i = (y * one.w + x) * 4;
-                const d = Math.abs(luma(one.px, i) - luma(two.px, i));
+            const rows = new Array(first.h).fill(0);
+            const cols = new Array(first.w).fill(0);
+            for (let y = 0; y < first.h; y++) {
+              for (let x = 0; x < first.w; x++) {
+                const i = (y * first.w + x) * 4;
+                const d = Math.abs(luma(first.px, i) - luma(second.px, i));
                 // Below this is the room's own dither, not something drawn in front of it.
-                if (d > 3) rows[y] += d;
+                if (d <= 3) continue;
+                rows[y] += d;
+                cols[x] += d;
               }
             }
-            // Smoothed, then cut at two per cent of the brightest row. A single bright speck
+            // Smoothed, then cut at two per cent of the brightest line. A single bright speck
             // cannot reach that, and it sits below the fall-off where a fraction of a point
-            // moves the reported edge of the subject by a tenth of the frame.
-            const window = Math.max(6, Math.round(rows.length / 90));
-            const smooth = rows.map((_, y) => {
+            // moves the reported edge by a tenth of the frame.
+            const bandOf = (series) => {
+              const reach = Math.max(6, Math.round(series.length / 90));
+              const smooth = series.map((_, i) => {
+                let sum = 0;
+                for (let k = Math.max(0, i - reach); k <= Math.min(series.length - 1, i + reach); k++) sum += series[k];
+                return sum / (reach * 2 + 1);
+              });
+              const peak = Math.max(...smooth);
+              if (peak <= 0) return null;
+              const floor = peak * 0.02;
+              const lo = smooth.findIndex((v) => v >= floor);
+              if (lo < 0) return null;
+              const hi = smooth.length - 1 - [...smooth].reverse().findIndex((v) => v >= floor);
+              return { lo: lo / series.length, hi: (hi + 1) / series.length };
+            };
+            return { down: bandOf(rows), across: bandOf(cols) };
+          }, [a, b]);
+
+          // Where a layer's content reaches, across the frame. Measured as distance from the
+          // room's own colour rather than as a difference against an empty room, because what
+          // this answers is whether a reader sees anything at that edge of the screen, and the
+          // fog, the room's gradient and the matter drifting along the track are all things a
+          // reader sees. The ground is read from the frame's own corners rather than assumed,
+          // because each act tints its room.
+          const spread = (shot) => page.evaluate(async (data) => {
+            const img = new Image();
+            img.src = 'data:image/png;base64,' + data;
+            await img.decode();
+            const canvas = document.createElement('canvas');
+            canvas.width = img.width;
+            canvas.height = img.height;
+            const ctx = canvas.getContext('2d', { willReadFrequently: true });
+            ctx.drawImage(img, 0, 0);
+            const px = ctx.getImageData(0, 0, canvas.width, canvas.height).data;
+            const at = (x, y) => {
+              const i = (y * canvas.width + x) * 4;
+              return [px[i], px[i + 1], px[i + 2]];
+            };
+            const corners = [at(2, 2), at(canvas.width - 3, 2), at(2, canvas.height - 3), at(canvas.width - 3, canvas.height - 3)];
+            const ground = [0, 1, 2].map((k) => corners.reduce((sum, p) => sum + p[k], 0) / corners.length);
+            const cols = new Array(canvas.width).fill(0);
+            for (let y = 0; y < canvas.height; y += 2) {
+              for (let x = 0; x < canvas.width; x++) {
+                const i = (y * canvas.width + x) * 4;
+                const d = Math.abs(px[i] - ground[0]) + Math.abs(px[i + 1] - ground[1]) + Math.abs(px[i + 2] - ground[2]);
+                if (d > 24) cols[x] += d;
+              }
+            }
+            const reach = Math.max(8, Math.round(cols.length / 90));
+            const smooth = cols.map((_, i) => {
               let sum = 0;
-              for (let i = Math.max(0, y - window); i <= Math.min(rows.length - 1, y + window); i++) sum += rows[i];
-              return sum / (window * 2 + 1);
+              for (let k = Math.max(0, i - reach); k <= Math.min(cols.length - 1, i + reach); k++) sum += cols[k];
+              return sum / (reach * 2 + 1);
             });
             const peak = Math.max(...smooth);
             if (peak <= 0) return null;
+            // Two per cent of the brightest column. Six was the first answer and it sits inside
+            // a fall-off: act one's drift flock fades away toward the right edge through exactly
+            // that value, and a one point change in the profile moved the reported edge of the
+            // frame by 13% of the screen.
             const floor = peak * 0.02;
             const lo = smooth.findIndex((v) => v >= floor);
             if (lo < 0) return null;
             const hi = smooth.length - 1 - [...smooth].reverse().findIndex((v) => v >= floor);
-            return { lo: lo / rows.length, hi: (hi + 1) / rows.length };
-          }, [subject, empty]);
+            return { lo: lo / cols.length, hi: (hi + 1) / cols.length };
+          }, shot);
 
+          const subjectShape = (await profile(subject, empty)).down;
+          const sceneShape = await spread(scene);
+          const copyShape = await spread(copy);
           const at = `${route} act ${band.act} at ${Math.round(depth * 100)}% through it`;
-          if (!shape) {
+
+          // Across the frame, counting both layers.
+          if (!sceneShape || !copyShape) {
+            failures.push(`${at}: one of the two layers drew nothing, so how the frame is balanced across the screen could not be measured.`);
+          } else {
+            const left = Math.min(sceneShape.lo, copyShape.lo);
+            const right = Math.max(sceneShape.hi, copyShape.hi);
+            const imbalance = left - (1 - right);
+            if (Math.abs(imbalance) > EDGE_IMBALANCE) {
+              failures.push(`${at}: ${Math.round(left * 100)}% of the screen is empty at the left edge against ${Math.round((1 - right) * 100)}% at the right, ceiling ${Math.round(EDGE_IMBALANCE * 100)}% apart. The frame is composed for a reader sitting off to one side of it.`);
+            }
+          }
+
+          // Up and down the frame, the act's own subject only, and only while the camera is
+          // parked in front of it. Past the hold it has flown through and the act's own set is
+          // behind it, so there is nothing of it to place.
+          if (depth > FRAMING_HOLD) continue;
+          if (!subjectShape) {
             failures.push(`${at}: its own set draws nothing at all, at a depth the camera is still parked in front of it. A set that is not there cannot be what the act is about.`);
             continue;
           }
-          const middle = (shape.lo + shape.hi) / 2;
-          const above = shape.lo;
-          const below = 1 - shape.hi;
+          const middle = (subjectShape.lo + subjectShape.hi) / 2;
+          const above = subjectShape.lo;
+          const below = 1 - subjectShape.hi;
           const atTop = above <= SUBJECT_EDGE;
           const atBottom = below <= SUBJECT_EDGE;
           if (opened === null) opened = { middle, atTop, atBottom };
@@ -1582,7 +1682,7 @@ async function main() {
     await checkFilmEdgeChrome(baseUrl);
     await checkFilmClosingSet(baseUrl);
     await checkFilmNameplates(baseUrl);
-    await checkFilmSubjectHeight(baseUrl);
+    await checkFilmSetFraming(baseUrl);
     await checkFilmPlayControl(baseUrl);
     if (args.has('--screenshots')) {
       await captureScreenshots(baseUrl);
