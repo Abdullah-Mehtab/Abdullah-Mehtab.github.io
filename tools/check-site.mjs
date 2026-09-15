@@ -815,6 +815,15 @@ const PLATE_OVERLAP = 0.06;
 // Below this a plate's own ground is translucent enough that the room shows through the words
 // it is carrying, so a label that never reaches it has been made and never shown.
 const PLATE_SOLID = 0.75;
+// The faintest a screen may ever be drawn and still count as shown. Below this its content is a
+// ghost of itself: act three's two screens were capped at 0.29, which was the right strength
+// for the flat tinted planes they used to be and left a painted dashboard barely visible.
+const SCREEN_SHOWN = 0.5;
+// How lit a screen in a contained set has to be at the frame its act lands on, as a share of
+// the brightest it ever gets. A contained set is one the engine holds whole inside the frame,
+// which means that frame is the view of it and there is no later arrival to wait for. A set the
+// camera flies through may assemble as the reader travels.
+const SCREEN_LIT_ON_ARRIVAL = 0.6;
 
 // Every label that exists is readable somewhere, and no two are ever on the same pixels.
 //
@@ -866,6 +875,10 @@ async function checkFilmNameplates(baseUrl) {
       // Per act: how many of its own labels are legible at the same time, at its best depth.
       const together = new Map();
       const owned = new Map();
+      // And what the sets' screens are doing, gathered in the same sweep rather than in a
+      // second one: whether anything is painted on them, the brightest they are ever drawn, and
+      // how lit they are at the frame their own act lands on.
+      const screens = new Map();
       for (const band of bands) {
         for (const depth of PLATE_DEPTHS) {
           await page.evaluate((to) => window.scrollTo(0, to), Math.round(band.top + band.span * depth));
@@ -920,6 +933,37 @@ async function checkFilmNameplates(baseUrl) {
             });
             return out;
           });
+          const glass = await page.evaluate(() => {
+            const out = [];
+            window.chapterFilm.stations.forEach((station, si) => {
+              station.group.traverse((node) => {
+                if (!node.userData || !node.userData.screen) return;
+                let alpha = node.material ? node.material.opacity : 1;
+                for (let p = node.parent; p; p = p.parent) {
+                  if (p.material && p.material.transparent) alpha *= p.material.opacity;
+                  if (!p.visible) alpha = 0;
+                }
+                if (!station.group.visible) alpha = 0;
+                out.push({
+                  act: si + 1,
+                  name: node.userData.screen,
+                  // Something painted on it, rather than a plane of flat tint with a border.
+                  painted: Boolean(node.material && node.material.map),
+                  contained: Boolean(station.contained),
+                  lit: alpha
+                });
+              });
+            });
+            return out;
+          });
+          for (const pane of glass) {
+            const key = `act ${pane.act} "${pane.name}"`;
+            const held = screens.get(key) || { painted: pane.painted, contained: pane.contained, top: 0, arrival: null };
+            held.top = Math.max(held.top, pane.lit);
+            if (pane.act === bands.indexOf(band) + 1 && depth === PLATE_DEPTHS[0]) held.arrival = pane.lit;
+            screens.set(key, held);
+          }
+
           const solidHere = new Map();
           for (const plate of seen) {
             if (plate.transient) continue;
@@ -963,6 +1007,20 @@ async function checkFilmNameplates(baseUrl) {
           failures.push(
             `${route} act ${act} never has more than ${most} of its ${names.size} labels legible at once, floor ${floor}. The engine moves a label that lands on another out of the way and hides it only when there is nowhere to put it, so this means it is hiding them instead.`
           );
+        }
+      }
+      if (screens.size === 0) {
+        failures.push(`${route} marks none of its planes as a screen, so nothing checked what is on them. Either the sets stopped building screens or they stopped saying which ones they are.`);
+      }
+      for (const [key, pane] of screens) {
+        if (!pane.painted) {
+          failures.push(`${route} screen ${key} has nothing painted on it: its material carries no texture. A lit rectangle with a border and a nameplate over it is the loudest empty object a set can have, and both of this chapter's acts about outputs are named for what is meant to be on one.`);
+        }
+        if (pane.top < SCREEN_SHOWN) {
+          failures.push(`${route} screen ${key} is never drawn above ${pane.top.toFixed(2)} opacity at any sampled depth, floor ${SCREEN_SHOWN}. Whatever is painted on it is a ghost of itself.`);
+        }
+        if (pane.contained && pane.top > 0 && pane.arrival !== null && pane.arrival / pane.top < SCREEN_LIT_ON_ARRIVAL) {
+          failures.push(`${route} screen ${key} is at ${((pane.arrival / pane.top) * 100).toFixed(0)}% of its own brightest at the frame its act lands on, floor ${SCREEN_LIT_ON_ARRIVAL * 100}%. Its set is contained, so that frame is the view of it, and the screen is dark in it.`);
         }
       }
       const faint = [...best].filter(([, opacity]) => opacity < PLATE_SOLID);

@@ -7,6 +7,9 @@
 // shipping an image, and this site self-hosts everything it renders anyway.
 import { THREE, clamp01, drift, ease, edgedBox, glow, motes, nameplate, painted, panel, repeated, seeded, solid, thread, wire } from "../kit.js";
 
+// Scratch for the screen lighting, which asks every frame how far the camera is.
+const screenProbe = new THREE.Vector3();
+
 const ROWS = [
   ["12:04:18", "5710", "Attempt to login using a non-existent user", "5"],
   ["12:07:52", "5712", "SSHD brute force trying to get access", "10"],
@@ -186,7 +189,7 @@ export function buildOutputs(palette) {
   // the one device on the page a reviewer called borrowed rather than built. So each output
   // gets a body with a depth, a bezel its content sits inside, and an arm holding it up from
   // the machine that produces it.
-  function display(texture, w, h, depth) {
+  function display(name, texture, w, h, depth) {
     const unit = new THREE.Group();
     const shell = edgedBox(w + 4, h + 4, depth, face, accent, 0.85);
     shell.material.transparent = true;
@@ -194,6 +197,8 @@ export function buildOutputs(palette) {
     unit.add(shell);
     const glass = panel(texture, w, h, 0);
     glass.position.z = depth / 2 + 0.2;
+    // Named so .claude-tools/audit-screen-content.mjs can look inside it.
+    glass.userData.screen = name;
     unit.add(glass);
     // A stalk down to the floor of the set, so the screen is standing rather than hovering.
     const arm = wire(new THREE.BoxGeometry(1.6, 12, 1.6), accent, 0.5);
@@ -213,12 +218,12 @@ export function buildOutputs(palette) {
   // chapter, was the left one, so its edge landed across the Outcome heading at three times
   // that heading's edge budget. Stacking them squarely instead made the subject 123 units tall
   // against a frame that is wider than it is high, and the set fell off the top instead.
-  const dashboard = display(dashboardTexture("#" + accent.getHexString(), palette.ink, palette.lightRoom), 96, 60, 3.4);
+  const dashboard = display("Kibana dashboard", dashboardTexture("#" + accent.getHexString(), palette.ink, palette.lightRoom), 96, 60, 3.4);
   dashboard.position.set(24, 20, -10);
   dashboard.rotation.y = 0.24;
   group.add(dashboard);
 
-  const email = display(emailTexture("#" + accent.getHexString(), palette.lightRoom), 44, 51, 2.6);
+  const email = display("alert email", emailTexture("#" + accent.getHexString(), palette.lightRoom), 44, 51, 2.6);
   email.position.set(60, -30, 22);
   email.rotation.y = -0.34;
   group.add(email);
@@ -352,7 +357,14 @@ export function buildOutputs(palette) {
       // Both screens are most of the way in by the time the act arrives. Ramping them from
       // almost nothing left the opening third of this act, which is its establishing view,
       // with nothing established.
-      const shown = clamp01(p * 1.5 + 0.55);
+      //
+      // The second one was still only 58% of itself at that frame, because the stagger between
+      // them is measured from here and a station's progress sits at zero for the whole of the
+      // previous act's flight. So a reader never watches the stagger play; they land on whatever
+      // it happens to be holding. Raised until the later screen is 86% of itself at the frame
+      // the act lands on, which keeps a difference between the two without opening the act on
+      // half an email.
+      const shown = clamp01(p * 1.5 + 0.62);
       const a = ease(clamp01(shown / 0.45));
       const b = ease(clamp01((shown - 0.3) / 0.45));
 
@@ -368,8 +380,30 @@ export function buildOutputs(palette) {
       // both at their furthest and land on each other.
       //
       // The shells, arms and feeds keep their own fade, so the set arrives as a built thing
-      // whose screens then come on, rather than materialising all at once.
-      const lit = ease(clamp01((p - 0.08) / 0.22));
+      // whose screens come up with it rather than materialising all at once.
+      //
+      // Lit by how close the camera is, not by this act's own progress, and the difference is
+      // the whole point. This act is a wide: the frame the reader lands on is the one where the
+      // whole of it is in shot, and it was two dark rectangles with a nameplate over them, at 0%
+      // of their own brightest, measured with .claude-tools/audit-screen-content.mjs. That frame
+      // is also where a deep link and the act rail both land.
+      //
+      // Its own progress cannot say when that frame is. A station's progress is zero for the
+      // whole of the previous act's flight as well as at its own opening, so a ramp on p either
+      // lights the screens before the reader arrives or after, and lighting them early is what
+      // put a painted dashboard across half a line of act three's copy.
+      //
+      // Distance can say it, and the window comes from measuring the approach rather than from
+      // guessing: 206 units out at 80% through act three, 132 at 90%, 106 by the time the act
+      // begins and 95 at the end. Act three's copy is gone at 93%. So this is dark until the
+      // camera is inside 124 and full by 108, which is after the words have left and before the
+      // reader has arrived.
+      let lit = 1;
+      if (camera) {
+        screenProbe.set(0, 0, 0);
+        dashboard.getWorldPosition(screenProbe);
+        lit = ease(clamp01((124 - screenProbe.distanceTo(camera.position)) / 16));
+      }
 
       // A screen's resting place is where it was built, not a second copy of the number here.
       // The two disagreed: the set was moved to fit the lane its copy leaves and this went on

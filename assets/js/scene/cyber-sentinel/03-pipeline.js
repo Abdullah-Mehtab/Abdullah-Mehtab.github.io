@@ -10,6 +10,94 @@
 // the agents and comes out past the fork, which is why this act is the one worth flying.
 import { THREE, clamp01, drift, ease, edgedBox, glow, motes, nameplate, painted, panel, repeated, seeded, solid, thread, wire } from "../kit.js";
 
+// The two outputs of this flow, painted rather than left as lit rectangles.
+//
+// They are the same two things act four ends on, and they are deliberately smaller and simpler
+// here. This act is the map: a reader at this distance can see that one output is a message and
+// the other is a board of numbers, and that is the whole job. Act four is where they are close
+// enough to read a rule id off. Painting the full dashboard twice would make the closing act a
+// second look at a picture rather than an arrival at one.
+//
+// Left blank, they were the loudest empty objects in the chapter: a bright bordered rectangle
+// with a nameplate over it and nothing inside, measured at a luma spread of 4.4 against a floor
+// of 10 with .claude-tools/audit-screen-content.mjs.
+function mailTexture(accent, deep) {
+  const pale = deep.getHSL({ h: 0, s: 0, l: 0 }).l > 0.5;
+  const wash = pale ? "#ffffff" : "#0a1119";
+  const ink = "#" + accent.getHexString();
+  return painted(384, 266, (g, w, h) => {
+    g.fillStyle = wash;
+    g.fillRect(0, 0, w, h);
+    g.fillStyle = ink;
+    g.fillRect(0, 0, w, 46);
+    g.fillStyle = wash;
+    g.font = "600 24px Archivo, 'Segoe UI', sans-serif";
+    g.textBaseline = "middle";
+    g.fillText("Cyber Sentinel alert", 16, 24);
+
+    g.fillStyle = ink;
+    g.globalAlpha = 0.7;
+    g.font = "400 18px 'IBM Plex Mono', ui-monospace, monospace";
+    g.fillText("level 10  ·  pi5-sensor-01", 16, 78);
+    g.globalAlpha = 1;
+    g.font = "500 20px 'IBM Plex Mono', ui-monospace, monospace";
+    g.fillText("SSHD brute force", 16, 112);
+
+    // Body lines, drawn as rules rather than as type: at the size this is read from, letters
+    // would be a grey smear and a rule is honestly a rule.
+    g.globalAlpha = 0.34;
+    const lines = [300, 268, 320, 214, 286, 180];
+    for (let i = 0; i < lines.length; i++) g.fillRect(16, 146 + i * 20, lines[i], 6);
+    g.globalAlpha = 1;
+    g.globalAlpha = 0.5;
+    g.fillRect(16, h - 26, 96, 12);
+    g.globalAlpha = 1;
+  });
+}
+
+function boardTexture(accent, deep) {
+  const pale = deep.getHSL({ h: 0, s: 0, l: 0 }).l > 0.5;
+  const wash = pale ? "#ffffff" : "#0a1119";
+  const ink = "#" + accent.getHexString();
+  return painted(420, 280, (g, w, h) => {
+    g.fillStyle = wash;
+    g.fillRect(0, 0, w, h);
+    g.fillStyle = ink;
+    g.globalAlpha = 0.16;
+    g.fillRect(0, 0, w, 40);
+    g.globalAlpha = 1;
+    g.fillStyle = ink;
+    g.font = "600 22px Archivo, 'Segoe UI', sans-serif";
+    g.textBaseline = "middle";
+    g.fillText("Kibana", 14, 20);
+    g.globalAlpha = 0.6;
+    g.font = "400 16px 'IBM Plex Mono', ui-monospace, monospace";
+    g.fillText("alerts, 24h", w - 110, 20);
+    g.globalAlpha = 1;
+
+    const bars = [22, 41, 30, 58, 74, 47, 33, 66, 88, 52, 36, 61];
+    for (let i = 0; i < bars.length; i++) {
+      g.globalAlpha = 0.38 + (bars[i] / 88) * 0.5;
+      g.fillRect(16 + i * 22, 168 - bars[i], 15, bars[i]);
+    }
+    g.globalAlpha = 1;
+
+    // A short table under the chart, again as rules: three alerts, the level column picked out.
+    g.globalAlpha = 0.2;
+    g.fillRect(14, 186, w - 28, 2);
+    g.globalAlpha = 1;
+    for (let r = 0; r < 3; r++) {
+      const y = 204 + r * 26;
+      g.globalAlpha = 0.34;
+      g.fillRect(14, y, 58, 8);
+      g.fillRect(88, y, 176 - r * 22, 8);
+      g.globalAlpha = 0.85;
+      g.fillRect(w - 46, y - 2, 26, 12);
+      g.globalAlpha = 1;
+    }
+  });
+}
+
 // z runs away from the camera, so the pipeline is laid out in depth and the reader travels it.
 //
 // Every node carries a `form` as well as a size, and that is the point of this act. When each
@@ -45,8 +133,11 @@ const NODES = {
   // the one node here that stores anything was never named.
   elastic:  { at: [-6, -10, -31], size: [26, 24, 24], form: "store", label: "Elasticsearch", sub: "index, search" },
   logstash: { at: [16, 8, -47], size: [24, 22, 18], form: "fork", label: "Logstash", sub: "the fork" },
-  email:    { at: [-31, 34, -66], size: [26, 18, 4], form: "screen", label: "HTML email alerts", sub: "" },
-  kibana:   { at: [40, -21, -66], size: [30, 20, 4], form: "screen", label: "Kibana dashboards", sub: "" }
+  email:    { at: [-31, 34, -66], size: [26, 18, 4], form: "screen", art: "mail", label: "HTML email alerts", sub: "" },
+  // Brought in from x 40. Out there the dashboard's own plane crossed the right edge of the
+  // frame at every depth this act is read from, so the one node the act is named for was never
+  // once seen whole.
+  kibana:   { at: [27, -21, -66], size: [30, 20, 4], form: "screen", art: "board", label: "Kibana dashboards", sub: "" }
 };
 
 const EDGES = [
@@ -145,10 +236,15 @@ export function buildPipeline(palette) {
       node.add(edgedBox(w, h, d, face, accent, 0.95));
     }
 
-    // The two outputs are screens, not solids: they face the camera and they are lit.
+    // The two outputs are screens, not solids: they face the camera, they are lit, and they
+    // carry what they are for.
     if (spec.form === "screen") {
-      const glass = solid(new THREE.PlaneGeometry(w - 3, h - 3), accent, 0.12);
+      const art = spec.art === "board" ? boardTexture(accent, palette.deep) : mailTexture(accent, palette.deep);
+      const glass = panel(art, w - 3, h - 3, 0.12);
       glass.position.z = d / 2 + 0.1;
+      // Named so .claude-tools/audit-screen-content.mjs can look inside it. Only the set knows
+      // which of its planes is a screen and which is a panel of light.
+      glass.userData.screen = spec.label;
       node.add(glass);
       node.userData.glass = glass;
     }
@@ -314,7 +410,11 @@ export function buildPipeline(palette) {
 
         if (item.node.userData.cage) item.node.userData.cage.rotation.y = t * 0.2;
         if (item.node.userData.glass) {
-          item.node.userData.glass.material.opacity = 0.1 + k * 0.16 + Math.sin(t * 2 + item.at * 4) * 0.03;
+          // Up from a ceiling of 0.29. That was the right strength for a plane of flat tint,
+          // which is what these were: at a quarter opacity a painted screen is a ghost of one,
+          // and the point of painting them is that a reader can see the flow ends in a message
+          // and a board of numbers rather than in two lit rectangles.
+          item.node.userData.glass.material.opacity = 0.3 + k * 0.52 + Math.sin(t * 2 + item.at * 4) * 0.05;
         }
       }
 

@@ -404,7 +404,14 @@ function keepNameplatesLegible(stations, camera, probe, plates, narrow, width, h
       else plateNudge.copy(plateRight).multiplyScalar(sideways * step);
       nudge(plate.node, plateNudge);
       const moved = screenBox(plate.node, camera, probe);
-      if (moved && !covers(moved)) {
+      // Inside the frame as well as clear of the other plates. The edge fade runs before this
+      // pass, so a plate that was comfortably inside can be moved out by it and there is
+      // nothing afterwards to notice: one depth showed a nameplate cut by the frame's own edge
+      // the first time a set's geometry moved under this.
+      const whole = moved
+        && moved.minX >= -1 && moved.maxX <= 1
+        && moved.minY >= -1 && moved.maxY <= 1;
+      if (whole && !covers(moved)) {
         plate.box = moved;
         placed.push(moved);
         // Remembered against the unreordered list, so it still means the same slot next frame.
