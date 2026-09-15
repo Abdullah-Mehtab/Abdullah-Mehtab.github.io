@@ -1248,6 +1248,119 @@ async function checkFilmSetFraming(baseUrl) {
   }
 }
 
+// How much of its eventual strength a part of a sequence has to have at the frame its act
+// opens on, and how far into the act "eventual" is measured.
+//
+// Asked only of a set that declares partsTogether, and that restriction is what makes the rule
+// honest rather than convenient. A set assembling as the reader descends is a device this page
+// uses on purpose: act two's whole story is a rack room nobody is watching and then the moment
+// agents start reporting, so its attack lanes arriving late is the act. Applied to every set
+// the rule failed three of the four, and tuning a threshold until only the suspected one came
+// out would have been fitting the check to the answer.
+//
+// partsTogether is a set saying a reader has to take it in at once. The frame they take it in
+// at is the one the act opens on: the frame the act rail lands on, the frame a deep link lands
+// on, and the frame the act's heading is read beside. Act three's heading is "Open-source
+// components wired into a practical monitoring flow" and the eight edges that sentence names
+// were at opacity zero for the first 30% of the act, with four of its nine nodes missing too.
+const SEQUENCE_OPENING_SHARE = 0.3;
+const SEQUENCE_SETTLED = 0.45;
+
+// A set that has to be read as a sequence has the whole of itself in the frame its act opens on.
+async function checkFilmSequenceOpening(baseUrl) {
+  const executablePath = findChromeExecutable();
+  if (!executablePath) {
+    warnings.push('Skipping the chapter sequence opening check because Chrome/Edge was not found. Set CHROME_PATH to enable it.');
+    return;
+  }
+  const routes = await filmRoutes();
+  if (routes.length === 0) {
+    failures.push('The chapter sequence opening check found no page carrying the film body class, so it measured nothing.');
+    return;
+  }
+
+  const { default: puppeteer } = await import('puppeteer-core');
+  const browser = await puppeteer.launch({
+    executablePath,
+    headless: true,
+    args: ['--no-sandbox', '--disable-setuid-sandbox', '--enable-unsafe-swiftshader', '--use-gl=angle']
+  });
+  try {
+    const page = await browser.newPage();
+    await page.setCacheEnabled(false);
+    await page.setViewport({ width: 1440, height: 900, deviceScaleFactor: 1 });
+    for (const route of routes) {
+      await page.goto(`${baseUrl}${route}?still&scene-debug`, { waitUntil: 'networkidle2' });
+      await page.evaluate(() => new Promise((done) => setTimeout(done, 1800)));
+      if (!await page.evaluate(() => Boolean(window.chapterFilm))) {
+        failures.push(`${route} did not publish its scene through ?scene-debug, so its sequences could not be measured.`);
+        continue;
+      }
+      const bands = await page.evaluate(() => [...document.querySelectorAll('main > .act')].map((act, i) => ({
+        act: i + 1,
+        top: Math.round(act.getBoundingClientRect().top + window.scrollY),
+        span: Number(act.dataset.stationSpan) || Math.round(act.getBoundingClientRect().height)
+      })));
+      const sequences = await page.evaluate(() => window.chapterFilm.stations.map((station) => station.partsTogether || 0));
+
+      // Every drawable part of a set, keyed by its path through the graph so the same part can
+      // be matched between two depths. Captions are left out: a label fading up as the camera
+      // nears is what a label is for, and checkFilmNameplates owns them. Scale counts as well
+      // as opacity, because bringing a part in by scaling it up from nothing is the other way
+      // a set does this and a part scaled to nothing is not drawn however opaque it claims.
+      const readAt = async (index, depth, band) => {
+        await page.evaluate((to) => window.scrollTo(0, to), Math.round(band.top + band.span * depth));
+        await page.evaluate(() => new Promise((done) => {
+          let n = 0;
+          const tick = () => (++n > 50 ? done() : requestAnimationFrame(tick));
+          requestAnimationFrame(tick);
+        }));
+        return page.evaluate((i) => {
+          const root = window.chapterFilm.stations[i].group;
+          const out = [];
+          const walk = (node, path) => {
+            if (node.userData && (node.userData.caption || node.userData.ambient)) return;
+            if ((node.isMesh || node.isLine || node.isLineSegments || node.isPoints) && node.material) {
+              const materials = Array.isArray(node.material) ? node.material : [node.material];
+              const opacity = Math.max(...materials.map((m) => (m.transparent ? m.opacity : 1)));
+              let scale = 1;
+              for (let q = node; q && q !== root.parent; q = q.parent) scale *= q.scale.x;
+              out.push({ path, shown: opacity * Math.min(1, scale) });
+            }
+            node.children.forEach((child, c) => walk(child, `${path}/${c}`));
+          };
+          walk(root, '');
+          return out;
+        }, index);
+      };
+
+      for (const band of bands) {
+        const index = band.act - 1;
+        if (!sequences[index]) continue;
+        const opening = await readAt(index, 0, band);
+        const settled = await readAt(index, SEQUENCE_SETTLED, band);
+        if (settled.length === 0) {
+          failures.push(`${route} act ${band.act} declares itself a sequence and has no drawable parts, so nothing could be measured.`);
+          continue;
+        }
+        const wasShown = new Map(opening.map((part) => [part.path, part.shown]));
+        const missing = settled.filter((part) => {
+          if (part.shown < 0.05) return false;
+          const before = wasShown.get(part.path);
+          return before !== undefined && before / part.shown < SEQUENCE_OPENING_SHARE;
+        });
+        if (missing.length) {
+          failures.push(
+            `${route} act ${band.act} declares itself a sequence and opens on a frame missing ${missing.length} of its own ${settled.length} parts, each drawn below ${Math.round(SEQUENCE_OPENING_SHARE * 100)}% of the strength it reaches by ${Math.round(SEQUENCE_SETTLED * 100)}% through the act while the camera is still parked. A sequence has to be taken in at once, and this is the frame the act rail and a deep link both land on.`
+          );
+        }
+      }
+    }
+  } finally {
+    await browser.close();
+  }
+}
+
 // Where in each act to look for nameplates. Seven depths an act, all inside the part of it the
 // camera spends in front of its own set: past about 60% the camera is in flight to the next
 // station and an act's own labels are behind it, so a sample there measures the next act. Even
@@ -1777,6 +1890,7 @@ async function main() {
     await checkFilmClosingSet(baseUrl);
     await checkFilmNameplates(baseUrl);
     await checkFilmSetFraming(baseUrl);
+    await checkFilmSequenceOpening(baseUrl);
     await checkFilmPlayControl(baseUrl);
     if (args.has('--screenshots')) {
       await captureScreenshots(baseUrl);

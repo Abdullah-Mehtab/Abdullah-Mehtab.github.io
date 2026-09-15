@@ -389,7 +389,19 @@ export function buildPipeline(palette) {
       // Already most of a graph when the act arrives. An act whose opening frame is two boxes
       // in fog is a frame with nothing composed in it, which is the single most common finding
       // against the previous version of this page.
-      const drawn = clamp01(p * 1.5 + 0.44);
+      //
+      // It started at 0.44, which is five of the nine nodes and none of the edges, and that is
+      // not most of a graph. This act declares partsTogether, which is a set saying a reader
+      // has to take it in at once, and the frame they take it in at is the one the act opens
+      // on: the frame the act rail lands on, the frame a deep link lands on, and the frame
+      // "Open-source components wired into a practical monitoring flow" is read beside. The
+      // wiring that sentence names was at opacity zero for the first 30% of the act.
+      //
+      // What is left of the device is a settle rather than an assembly: the last node and the
+      // edges come up over the first twentieth of the act rather than over the first third.
+      // The act still changes plenty while it is read, because the camera leans 38 units into
+      // the graph and the traffic runs along the edges the whole time.
+      const drawn = clamp01(p * 1.8 + 0.86);
 
       for (const key of order) {
         const item = built[key];
@@ -427,9 +439,13 @@ export function buildPipeline(palette) {
         }
       }
 
-      // One opacity for the whole edge buffer, taken from the last edge to arrive, so the flow
-      // is not drawn before the nodes it joins.
-      const edgesIn = ease(clamp01((drawn - 0.8) / 0.16));
+      // One opacity for the whole edge buffer. It used to start once the last node was in, at
+      // drawn 0.8, on the reasoning that the flow should not be drawn before the nodes it
+      // joins. The reasoning is sound and the number was not: the nodes are all in by 0.85 and
+      // an act that opens at 0.86 would have had its wiring at a tenth of its strength in the
+      // one frame that has to carry the whole flow. It starts while the last node is arriving
+      // now, which is a line reaching toward a box that is already visibly there.
+      const edgesIn = ease(clamp01((drawn - 0.62) / 0.28));
       edges.material.opacity = edgesIn * 0.42;
       beads.material.opacity = edgesIn * 0.75;
       for (let i = 0; i < paths.length; i++) {
