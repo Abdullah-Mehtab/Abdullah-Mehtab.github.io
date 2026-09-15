@@ -609,6 +609,12 @@ body.film .act-pin > .section-inner {
 
   body.film [data-frame="coda"] > h2 {
     grid-column: 1 / span 7;
+    /* The closing line is the last thing the chapter says and it stands opposite the two exits
+       across a full-width row once the reader is past the chapter. At the ordinary h2 size it
+       was 496px of ink with 450px of nothing between it and the buttons, which reads as a row
+       that was not finished rather than as a closing address. This is the scale the file
+       already keeps for a heading that owns its whole row. */
+    font-size: var(--t-h2-wide);
   }
 
   body.film [data-frame="coda"] > .chapter-close-links {
