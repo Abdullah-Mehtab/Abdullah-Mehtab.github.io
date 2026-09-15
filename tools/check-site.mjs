@@ -872,6 +872,7 @@ async function checkFilmNameplates(baseUrl) {
       const asks = await page.evaluate(() => window.chapterFilm.stations.map((station) => station.partsTogether || 0));
       const best = new Map();
       const stacked = [];
+      const onCopy = [];
       // Per act: how many of its own labels are legible at the same time, at its best depth.
       const together = new Map();
       const owned = new Map();
@@ -888,6 +889,18 @@ async function checkFilmNameplates(baseUrl) {
             const tick = () => (++n > 50 ? done() : requestAnimationFrame(tick));
             requestAnimationFrame(tick);
           }));
+          // Where the page's own words are this frame, in the same pixels, so a plate landing on
+          // a line of copy is caught rather than assumed away.
+          const copy = await page.evaluate(() => [...document.querySelectorAll('main .act h1, main .act h2, main .act h3, main .act p, main .act li')]
+            .filter((el) => {
+              const r = el.getBoundingClientRect();
+              return r.width >= 40 && r.bottom > 0 && r.top < window.innerHeight
+                && Number(getComputedStyle(el).opacity) >= 0.12;
+            })
+            .map((el) => {
+              const r = el.getBoundingClientRect();
+              return [r.left, r.top, r.right, r.bottom];
+            }));
           const seen = await page.evaluate(() => {
             const film = window.chapterFilm;
             const camera = film.camera;
@@ -976,6 +989,17 @@ async function checkFilmNameplates(baseUrl) {
           for (const [act, count] of solidHere) {
             together.set(act, Math.max(together.get(act) || 0, count));
           }
+          for (const plate of seen) {
+            const left = (plate.x0 * 0.5 + 0.5) * 1440;
+            const right = (plate.x1 * 0.5 + 0.5) * 1440;
+            const top = (-plate.y1 * 0.5 + 0.5) * 900;
+            const bottom = (-plate.y0 * 0.5 + 0.5) * 900;
+            for (const rect of copy) {
+              if (right < rect[0] || left > rect[2] || bottom < rect[1] || top > rect[3]) continue;
+              onCopy.push(`"${plate.text}" at ${Math.round(depth * 100)}% through act ${bands.indexOf(band) + 1}`);
+              break;
+            }
+          }
           for (let i = 0; i < seen.length; i++) {
             for (let j = i + 1; j < seen.length; j++) {
               const a = seen[i];
@@ -994,6 +1018,9 @@ async function checkFilmNameplates(baseUrl) {
       if (best.size === 0) {
         failures.push(`${route} drew no nameplates at any sampled depth, so either the sets stopped labelling themselves or this check stopped finding them.`);
         continue;
+      }
+      for (const line of onCopy.slice(0, 4)) {
+        failures.push(`${route} prints a nameplate on a line of the page's own copy: ${line}. The engine treats every block of words as somewhere a label may not sit and moves the label out of the way, so this means that is not happening.`);
       }
       for (const line of stacked.slice(0, 4)) {
         failures.push(`${route} draws two nameplates on the same pixels: ${line}. The engine displaces a plate that lands on another and hides it only when there is nowhere to put it, so this means that pass is not running.`);

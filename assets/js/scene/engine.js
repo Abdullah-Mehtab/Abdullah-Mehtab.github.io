@@ -227,13 +227,25 @@ const HEADING_REFRESH_MS = 140;
 let headingCache = [];
 let headingCachedAt = 0;
 
+// Every block of the page's own words that is on screen, not only its headings.
+//
+// Headings alone was too narrow, and the copy lane fade above does not cover the gap: that fade
+// works off one x, the middle of the reading container, and an act whose copy runs to seven of
+// twelve columns has words a hundred pixels right of it. A nameplate landed on the tail of a
+// paragraph in the closing act for exactly that reason, clear of the lane and on the words.
+//
+// Paragraphs and list items as well as headings, because a label over a line of body copy is
+// the same fault at a smaller size, and the reader is more likely to be reading that line.
 function headingRects(now) {
   if (now - headingCachedAt < HEADING_REFRESH_MS) return headingCache;
   headingCachedAt = now;
   headingCache = [];
-  for (const el of document.querySelectorAll("main .act h1, main .act h2, main .act h3")) {
+  for (const el of document.querySelectorAll("main .act h1, main .act h2, main .act h3, main .act p, main .act li")) {
     const rect = el.getBoundingClientRect();
     if (rect.bottom < 0 || rect.top > window.innerHeight || rect.width < 40) continue;
+    // A block whose own text has been faded out is not copy anyone is reading, and the reveals
+    // on this page leave every act's blocks in the document at all times.
+    if (Number(getComputedStyle(el).opacity) < 0.12) continue;
     headingCache.push(rect);
   }
   return headingCache;
@@ -327,22 +339,23 @@ function keepNameplatesLegible(stations, camera, probe, plates, narrow, width, h
     }
   }
 
-  // Anywhere, wide or narrow: a nameplate over one of the page's own headings goes.
-  const headings = headingRects(now);
-  if (headings.length) {
-    for (const plate of plates) {
-      if (plate.node.material.opacity <= 0.02) continue;
-      const left = (plate.box.minX * 0.5 + 0.5) * width;
-      const right = (plate.box.maxX * 0.5 + 0.5) * width;
-      const top = (-plate.box.maxY * 0.5 + 0.5) * height;
-      const bottom = (-plate.box.minY * 0.5 + 0.5) * height;
-      for (const rect of headings) {
-        if (right < rect.left || left > rect.right || bottom < rect.top || top > rect.bottom) continue;
-        plate.node.material.opacity = 0;
-        break;
-      }
-    }
-  }
+  // The page's own words, in the same clip space the plates are measured in, so the pass below
+  // treats a line of copy as one more thing a label may not sit on.
+  //
+  // This used to be its own pass that zeroed any plate touching a heading, and that was the
+  // wrong shape for the same reason zeroing one of two overlapping plates was: it is the answer
+  // of last resort applied first. A plate over a line of copy has somewhere else to be far more
+  // often than not, and killing it outright cost the closing act its Logstash label, which then
+  // measured 3.81:1 against a 4.5 floor at the only depth it was still drawn.
+  const copy = headingRects(now).map((rect) => ({
+    minX: (rect.left / width) * 2 - 1,
+    maxX: (rect.right / width) * 2 - 1,
+    minY: 1 - (rect.bottom / height) * 2,
+    maxY: 1 - (rect.top / height) * 2,
+    // No tolerance against words. Two plates may touch by a few per cent and still both read;
+    // a label with one corner on a heading is a label on a heading.
+    strict: true
+  }));
 
   // Two plates on the same pixels: move the further one out of the way before giving up on it.
   //
@@ -360,13 +373,16 @@ function keepNameplatesLegible(stations, camera, probe, plates, narrow, width, h
   // Plates are placed nearest first, and a plate its set marks as primary is placed before any
   // of them: it is the one that names the set, so when something has to go it is never that.
   plates.sort((a, b) => (a.primary === b.primary ? a.range - b.range : (a.primary ? -1 : 1)));
-  const placed = [];
+  // Seeded with the copy, so the words are already occupying their own pixels before the first
+  // plate asks for anywhere.
+  const placed = copy.slice();
   const covers = (box) => {
     const own = (box.maxX - box.minX) * (box.maxY - box.minY);
     for (const other of placed) {
       const w = Math.min(box.maxX, other.maxX) - Math.max(box.minX, other.minX);
       const h = Math.min(box.maxY, other.maxY) - Math.max(box.minY, other.minY);
       if (w <= 0 || h <= 0) continue;
+      if (other.strict) return true;
       const smaller = Math.min(own, (other.maxX - other.minX) * (other.maxY - other.minY));
       if (smaller > 0 && w * h > smaller * NAMEPLATE_OVERLAP) return true;
     }
