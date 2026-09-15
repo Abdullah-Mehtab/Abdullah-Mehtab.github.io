@@ -950,13 +950,37 @@ body.film .video-play {
   letter-spacing: 0.18em;
 }
 
+/*
+  A triangle inside a frame, not a bare triangle.
+
+  This control and the film's own play control sit on the same opening screen, in the same
+  accent, in the same uppercase mono, and they do different things: this one opens a video and
+  that one scrolls the chapter. Drawn as two bare triangles they measured 96% alike as pixels,
+  so the only way to tell them apart was to press one. A play triangle inside a screen is the
+  ordinary mark for a video and nothing else on this page wears it.
+*/
 body.film .video-play-icon {
-  width: 15px;
-  height: 15px;
+  position: relative;
+  width: 20px;
+  height: 14px;
+  border: 1px solid var(--scene-accent);
   border-radius: 0;
   box-shadow: none;
-  background: var(--scene-accent);
-  clip-path: polygon(0 0, 0 100%, 100% 50%);
+  background: none;
+  clip-path: none;
+}
+
+body.film .video-play-icon::before {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 0;
+  height: 0;
+  transform: translate(-40%, -50%);
+  border-left: 6px solid var(--scene-accent);
+  border-top: 4px solid transparent;
+  border-bottom: 4px solid transparent;
 }
 
 body.film .case-video.is-playing {

@@ -1124,6 +1124,66 @@ async function checkFilmPlayControl(baseUrl) {
         failures.push(`${route} has no play control, so this check measured nothing. It is one of the pieces this form carries and it was built.`);
         continue;
       }
+      // Two controls that do different things may not wear one costume.
+      //
+      // The opening screen carries both: a bare triangle and an uppercase mono word that opens
+      // a video, and a bare triangle and an uppercase mono word that plays the film. They were
+      // the same icon, the same type treatment and the same accent, so a reader could not tell
+      // which was which until they pressed one.
+      // Compared as pixels, because every other way of asking this measured the wrong thing.
+      // One triangle is a background with a clip-path, the other is three borders on a
+      // zero-sized box, so their computed styles differ completely while a reader sees one
+      // shape; a check built on those styles passes whatever the page looks like. What a reader
+      // has is the rendered mark, so that is what gets compared.
+      const boxes = await page.evaluate(() => {
+        const at = (selector) => {
+          const el = document.querySelector(selector);
+          if (!el) return null;
+          const r = el.getBoundingClientRect();
+          if (r.width < 4 || r.height < 4) return null;
+          return { x: Math.round(r.left), y: Math.round(r.top), width: Math.round(r.width), height: Math.round(r.height) };
+        };
+        return { film: at('.film-play .film-play-icon'), video: at('.video-play .video-play-icon') };
+      });
+      if (boxes.film && boxes.video) {
+        const shots = {};
+        for (const [name, clip] of Object.entries(boxes)) {
+          shots[name] = await page.screenshot({ clip, encoding: 'base64' });
+        }
+        // Both scaled to one small grid before comparing, so this is about shape rather than
+        // about one mark being a couple of pixels bigger than the other.
+        const alike = await page.evaluate(async ([a, b]) => {
+          const grid = 12;
+          const read = async (data) => {
+            const img = new Image();
+            img.src = 'data:image/png;base64,' + data;
+            await img.decode();
+            const c = document.createElement('canvas');
+            c.width = grid;
+            c.height = grid;
+            const ctx = c.getContext('2d', { willReadFrequently: true });
+            ctx.drawImage(img, 0, 0, grid, grid);
+            const px = ctx.getImageData(0, 0, grid, grid).data;
+            const out = [];
+            for (let i = 0; i < px.length; i += 4) {
+              out.push(px[i] * 0.299 + px[i + 1] * 0.587 + px[i + 2] * 0.114);
+            }
+            const lo = Math.min(...out);
+            const hi = Math.max(...out);
+            const span = Math.max(1, hi - lo);
+            return out.map((v) => (v - lo) / span);
+          };
+          const one = await read(a);
+          const two = await read(b);
+          let diff = 0;
+          for (let i = 0; i < one.length; i++) diff += Math.abs(one[i] - two[i]);
+          return Math.round((1 - diff / one.length) * 100);
+        }, [shots.film, shots.video]);
+        if (alike >= 88) {
+          failures.push(`${route} draws the mark on its video control and the mark on its film play control ${alike}% alike as pixels. They sit on the same opening screen in the same colour and the same type and they do different things, so the shape is all a reader has to tell them apart.`);
+        }
+      }
+
       // The foot of the page, which is past the last act and past anything the film plays.
       await page.evaluate(() => window.scrollTo(0, document.documentElement.scrollHeight - window.innerHeight));
       await page.evaluate(() => new Promise((done) => setTimeout(done, 600)));
