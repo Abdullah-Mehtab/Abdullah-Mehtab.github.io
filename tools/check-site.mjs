@@ -1611,6 +1611,106 @@ async function checkFilmTrafficPaths(baseUrl) {
   }
 }
 
+// The band a nameplate may not be drawn in.
+//
+// A plate's dark ground and its words are one canvas texture, painted together by nameplate()
+// in kit.js, so every fade in the engine multiplies both at once. The ground is the whole reason
+// a label survives standing in front of a wireframe, and fading it first is backwards: a third
+// of the way out, act three's "Elasticsearch" and "alerts.json" were grey type on the cage they
+// name with nothing behind them, while two plates beside them were fully drawn. Measured before
+// the fix: eight readings in this band out of 176. After: none.
+//
+// The published practice for labels in a 3D scene is to drop a dimmed one rather than fade it,
+// because a partly faded label is harder to read than no label at all. This holds the engine to
+// that: a plate is legible or it is gone.
+//
+// Not a contrast check. checkFilmNameplates already asks whether a plate's ink separates from
+// its ground, and it asks at the depth each plate is strongest, which is exactly where this
+// fault never appears.
+const PLATE_LEGIBLE = 0.55;
+const PLATE_GONE = 0.02;
+// Where to look. The same window the other plate checks use, plus the start of the flight, since
+// a plate on its way out of frame is the case that produces the band.
+const PLATE_BAND_DEPTHS = [0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7];
+
+// No nameplate is ever drawn with its ground faded out from under its words.
+async function checkFilmPlateLegibility(baseUrl) {
+  const executablePath = findChromeExecutable();
+  if (!executablePath) {
+    warnings.push('Skipping the chapter plate legibility check because Chrome/Edge was not found. Set CHROME_PATH to enable it.');
+    return;
+  }
+  const routes = await filmRoutes();
+  if (routes.length === 0) {
+    failures.push('The chapter plate legibility check found no page carrying the film body class, so it measured nothing.');
+    return;
+  }
+
+  const { default: puppeteer } = await import('puppeteer-core');
+  const browser = await puppeteer.launch({
+    executablePath,
+    headless: true,
+    args: ['--no-sandbox', '--disable-setuid-sandbox', '--enable-unsafe-swiftshader', '--use-gl=angle']
+  });
+  try {
+    const page = await browser.newPage();
+    await page.setCacheEnabled(false);
+    await page.setViewport({ width: 1440, height: 900, deviceScaleFactor: 1 });
+    for (const route of routes) {
+      await page.goto(`${baseUrl}${route}?still&scene-debug`, { waitUntil: 'networkidle2' });
+      await page.evaluate(() => new Promise((done) => setTimeout(done, 1800)));
+      if (!await page.evaluate(() => Boolean(window.chapterFilm))) {
+        failures.push(`${route} did not publish its scene through ?scene-debug, so its plates could not be measured.`);
+        continue;
+      }
+      const bands = await page.evaluate(() => [...document.querySelectorAll('main > .act')].map((act, i) => ({
+        act: i + 1,
+        top: Math.round(act.getBoundingClientRect().top + window.scrollY),
+        span: Number(act.dataset.stationSpan) || Math.round(act.getBoundingClientRect().height)
+      })));
+
+      let readings = 0;
+      const caught = [];
+      for (const band of bands) {
+        for (const depth of PLATE_BAND_DEPTHS) {
+          await page.evaluate((to) => window.scrollTo(0, to), Math.round(band.top + band.span * depth));
+          await page.evaluate(() => new Promise((done) => {
+            let n = 0;
+            const tick = () => (++n > 40 ? done() : requestAnimationFrame(tick));
+            requestAnimationFrame(tick);
+          }));
+          const rows = await page.evaluate((i) => {
+            const out = [];
+            window.chapterFilm.stations[i].group.traverse((node) => {
+              if (!node.userData || !node.userData.caption || !node.material) return;
+              out.push({ text: node.userData.caption, shown: node.material.opacity });
+            });
+            return out;
+          }, band.act - 1);
+          for (const row of rows) {
+            readings++;
+            if (row.shown > PLATE_GONE && row.shown < PLATE_LEGIBLE) {
+              caught.push(`act ${band.act} at ${Math.round(depth * 100)}% "${row.text}" at ${row.shown.toFixed(2)}`);
+            }
+          }
+        }
+      }
+
+      if (readings === 0) {
+        failures.push(`${route} carries the film body class and has no nameplates at any sampled depth, so the plate legibility check measured nothing.`);
+        continue;
+      }
+      if (caught.length) {
+        failures.push(
+          `${route} draws ${caught.length} nameplate${caught.length === 1 ? '' : 's'} with the ground faded out from under the words, between ${PLATE_GONE} and ${PLATE_LEGIBLE} opacity: ${caught.slice(0, 6).join('; ')}. A plate's ground and its words are one texture and fade together, and the ground is what makes the words legible over geometry. A label is legible or it is gone.`
+        );
+      }
+    }
+  } finally {
+    await browser.close();
+  }
+}
+
 // Where in each act to look for nameplates. Seven depths an act, all inside the part of it the
 // camera spends in front of its own set: past about 60% the camera is in flight to the next
 // station and an act's own labels are behind it, so a sample there measures the next act. Even
@@ -2262,6 +2362,7 @@ async function main() {
     await checkFilmSequenceWiring(baseUrl);
     await checkFilmTrafficPaths(baseUrl);
     await checkFilmLabelSize(baseUrl);
+    await checkFilmPlateLegibility(baseUrl);
     await checkFilmPlayControl(baseUrl);
     if (args.has('--screenshots')) {
       await captureScreenshots(baseUrl);

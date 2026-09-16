@@ -162,6 +162,10 @@ function readPalette(body, actCount) {
 //   of two plates on the same pixels, the nearer one keeps its name and the further one loses it.
 const NAMEPLATE_EDGE_FADE = 0.07;
 const NAMEPLATE_OVERLAP = 0.06;
+// The opacity below which a plate is taken away rather than shown faintly. Its ground and its
+// words are one texture and fade together, so a plate in this band is grey type standing on
+// whatever it was meant to be legible against.
+const NAMEPLATE_LEGIBLE = 0.55;
 // Scratch for the plate displacement pass, which needs the camera's own axes to move a label
 // straight up the screen. Module level because this runs every frame.
 const plateRight = new THREE.Vector3();
@@ -444,6 +448,25 @@ function keepNameplatesLegible(stations, camera, probe, plates, narrow, width, h
       plate.node.material.opacity = 0;
       plate.node.userData.plateSlot = undefined;
     }
+  }
+
+  // A plate is legible or it is gone, never half way.
+  //
+  // A nameplate's dark ground and its words are one canvas texture, painted together by
+  // nameplate() in kit.js, so every fade above multiplies both at once. The ground is the whole
+  // reason a label survives being in front of a wireframe, and fading it first is precisely
+  // backwards: at a third of the way out "Elasticsearch" and "alerts.json" were grey type
+  // standing on the cage they name, with nothing behind them, while "Agents" and "Suricata" in
+  // the same frame were fully plated. A reviewer read that as labels nobody had finished.
+  //
+  // The published answer for labels in a 3D scene is to drop a dimmed one rather than fade it,
+  // because a partly faded label is harder to read than no label. So the band between gone and
+  // legible is closed here, after every pass that can dim a plate has had its say. Nothing above
+  // changes: the edge fade, the lane fade and the overlap pass all still decide which plates are
+  // on their way out. This decides that being on the way out is not a state a reader sees.
+  for (const plate of plates) {
+    const shown = plate.node.material.opacity;
+    if (shown > 0 && shown < NAMEPLATE_LEGIBLE) plate.node.material.opacity = 0;
   }
 }
 
