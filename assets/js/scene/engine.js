@@ -1299,6 +1299,12 @@ export function mountFilm({ canvas, buildStations }) {
 
   // Audio placeholder. A track is chosen per page once the sets are built, owner decision
   // 2026-09-11, so nothing is loaded and nothing is wired: this is where it will attach.
+  //
+  // Cyber Sentinel ships silent. Owner ruling, 2026-09-16, made with the finished page in front
+  // of him: sound is a per chapter decision rather than a page wide one, and this chapter is not
+  // the one to take it. So there is no hook, no library and no muted element here to find later
+  // and wonder about. A chapter that wants a track adds the loading and the control here, with
+  // its own ruling, and inherits nothing from this one.
   return {
     // Handed out so a page can expose the scene graph for measurement. Nothing on the page
     // uses these; .claude-tools/audit-scene-frame.mjs projects labels and nodes into screen
