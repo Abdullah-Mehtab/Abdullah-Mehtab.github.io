@@ -617,9 +617,14 @@ body.film .act-pin > .section-inner {
     font-size: var(--t-h2-wide);
   }
 
+  /* The exits are right aligned here and only here, because this is the one layout that gives
+     them a column of their own beside the heading. Held to the right they finish the row the
+     heading opens. In any layout that stacks them under it they belong at the left margin like
+     every other line, and the rule below that stacks them says so again. */
   body.film [data-frame="coda"] > .chapter-close-links {
     grid-column: 9 / span 4;
     align-self: end;
+    justify-content: flex-end;
   }
 
   /* Single: one column, at the same measure as every frame above it. */
@@ -1246,13 +1251,6 @@ body.film .chapter-close-links {
   margin: 0;
 }
 
-/* Only once the exits have a column of their own. Stacked, they belong at the left margin
-   like everything else, and right aligning them there reads as an accidental indent. */
-@media (min-width: 901px) {
-  body.film .chapter-close-links {
-    justify-content: flex-end;
-  }
-}
 
 
 /* ============================================================================
@@ -2183,6 +2181,14 @@ body.scene-live .act > section {
   body.film.scene-live [data-frame="coda"] > .chapter-close-links,
   body.film.scene-live [data-frame="single"] > * {
     grid-column: 1 / span 6;
+  }
+
+  /* Both rules above put the exits on a row of their own under the heading rather than in a
+     column beside it, so the right hand alignment the other layout wants would read here as an
+     accidental indent: a full width heading, then two small buttons a long way from it with
+     nothing in between. Alignment travels with the column each layout grants. */
+  body.film.scene-live [data-frame="coda"] > .chapter-close-links {
+    justify-content: flex-start;
   }
 
 }
