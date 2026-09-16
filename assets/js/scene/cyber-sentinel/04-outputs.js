@@ -396,16 +396,25 @@ export function buildOutputs(palette) {
       // lights the screens before the reader arrives or after, and lighting them early is what
       // put a painted dashboard across half a line of act three's copy.
       //
-      // Distance can say it, and the window comes from measuring the approach rather than from
-      // guessing: 206 units out at 80% through act three, 132 at 90%, 106 by the time the act
-      // begins and 95 at the end. Act three's copy is gone at 93%. So this is dark until the
-      // camera is inside 124 and full by 108, which is after the words have left and before the
-      // reader has arrived.
+      // Distance can say it. The window was 124 to 108, chosen from when act three's copy leaves
+      // the frame, and that was the wrong question: what matters is not whether the words are
+      // still there but whether these two screens are standing on them. Asked properly, by
+      // projecting the screens' own rectangles against every line of copy the way
+      // audit-lit-panels does, the answer is much further out. At 299 units the dashboard covers
+      // 72% of "Email alerting and dashboards make", because act three's fly-through points the
+      // camera where act four happens to sit. By 279 it touches nothing, and it touches nothing
+      // at every distance from there in.
+      //
+      // So: dark beyond 240, full by 190, which is roughly the last quarter of act three. Forty
+      // units inside the boundary rather than up against it, and the check ignores a panel under
+      // 0.15 opacity anyway, so nothing counts until about 232. A reader coming down the track
+      // now sees two lit screens ahead of them instead of two empty frames that switch on once
+      // they have arrived.
       let lit = 1;
       if (camera) {
         screenProbe.set(0, 0, 0);
         dashboard.getWorldPosition(screenProbe);
-        lit = ease(clamp01((124 - screenProbe.distanceTo(camera.position)) / 16));
+        lit = ease(clamp01((240 - screenProbe.distanceTo(camera.position)) / 50));
       }
 
       // A screen's resting place is where it was built, not a second copy of the number here.
