@@ -451,6 +451,23 @@ body.film .site-footer {
   z-index: 2;
 }
 
+/*
+  The truck strip's own bottom rule, which is the one piece of pure black on a page that has
+  none anywhere else.
+
+  The strip itself is not touched and is not ours to touch: it stays exactly as it is on every
+  page including this one, by owner ruling of 2026-09-14, and the mountains, the hills, the
+  trees and the truck are all left alone. Only the 3px #000 it inherits from animations.css is
+  restated here, scoped to this page, because animations.css is shared with five others.
+
+  Worth recording that this is subtler than it was reported: a reviewer found it by reading the
+  stylesheet and said plainly that no frame it was given reached that far down the page. Looked
+  at rendered, the strip reads correctly and only this rule is wrong.
+*/
+body.film .loop-wrapper {
+  border-bottom-color: color-mix(in srgb, var(--text) 12%, transparent);
+}
+
 
 /* ============================================================================
    4. ACTS AND FRAMES
