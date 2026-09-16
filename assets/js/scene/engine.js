@@ -1349,6 +1349,13 @@ export function mountFilm({ canvas, buildStations }) {
     // is really for, never recomputed. It cost an afternoon reading a flat column of numbers as
     // an answer.
     remeasure() { measure(); },
+    // Draw calls in the last frame drawn.
+    //
+    // audit-scene-perf reports the worst frame over a whole scripted scroll, which answers
+    // "is the page inside its budget" and not "which act is spending it". Those are different
+    // questions and the second one decides where a set may grow: the ceiling of 120 is set by
+    // act three, so the room to add detail is in the other three and nothing said so.
+    get drawCalls() { return renderer.info.render.calls; },
     // Hand the frame back, so the camera can be driven to the next place to measure without
     // reloading the page for it. Checking running first, because asking twice would leave two
     // frame loops running against one scene.
