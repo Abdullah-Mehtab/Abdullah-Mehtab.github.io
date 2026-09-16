@@ -288,6 +288,13 @@ export function buildLan(palette) {
     // was, and the labels are the only thing that makes them attacks rather than particles.
     const label = nameplate(name, "", accent, palette.deep, 44);
     label.userData.caption = name;
+    // Atmosphere, not a name to read. Seven attack classes crossing a room at once is a swarm:
+    // a reader is meant to take in that the room is under attack and that these are the kinds
+    // of attack, not to read the seventh one. Three of them never reach the 12px floor that
+    // every other label on the page has to reach, and the owner ruled on 2026-09-16 that they
+    // stay exactly as they are. This marker is what exempts them, so the exemption is a
+    // decision the set states rather than a hole in the check.
+    label.userData.swarm = true;
     // It enters from off-frame and leaves at the manager: being half on screen is what it is
     // doing, not a composition fault. The frame audit skips these for that reason.
     label.userData.transient = true;

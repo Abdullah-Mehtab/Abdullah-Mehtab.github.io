@@ -1616,6 +1616,125 @@ async function checkFilmTrafficPaths(baseUrl) {
 // station and an act's own labels are behind it, so a sample there measures the next act. Even
 // spacing out to 0.95 looked more thorough and missed a plate whose whole window is at 30%.
 const PLATE_DEPTHS = [0.05, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6];
+// The smallest a label's own type may be, in CSS pixels, at the one depth in its act where it is
+// biggest.
+//
+// 12px is the working floor for readable screen text; 14 to 16 is what is actually recommended.
+// In a scene the stake is higher than on a page, because a nameplate is the only thing that makes
+// a shape a component rather than a box: at 8px a reader can see that a word is there and cannot
+// tell which word, so the set is a diagram with the labels rubbed off.
+//
+// The rule is "reaches this somewhere in its own act", not "is never drawn under it". The second
+// form would make every plate grow at every depth and set the engine's displacement pass fighting
+// itself, and it contradicts the owner's ruling of 2026-09-14 that a label only has to be shown
+// somewhere. A label coming up as the camera nears is what a label is for.
+const LABEL_FLOOR = 12;
+// nameplate() in kit.js paints the title at this size into the plate's own canvas, so the ratio
+// of it to that canvas's height turns a plate's height on screen into a type size. Read from the
+// texture rather than assumed, so a plate with a subtitle and one without both measure correctly.
+const LABEL_TITLE_PX = 46;
+
+// Every label a set means as a name is readable somewhere in its own act.
+async function checkFilmLabelSize(baseUrl) {
+  const executablePath = findChromeExecutable();
+  if (!executablePath) {
+    warnings.push('Skipping the chapter label size check because Chrome/Edge was not found. Set CHROME_PATH to enable it.');
+    return;
+  }
+  const routes = await filmRoutes();
+  if (routes.length === 0) {
+    failures.push('The chapter label size check found no page carrying the film body class, so it measured nothing.');
+    return;
+  }
+
+  const { default: puppeteer } = await import('puppeteer-core');
+  const browser = await puppeteer.launch({
+    executablePath,
+    headless: true,
+    args: ['--no-sandbox', '--disable-setuid-sandbox', '--enable-unsafe-swiftshader', '--use-gl=angle']
+  });
+  try {
+    const page = await browser.newPage();
+    await page.setCacheEnabled(false);
+    await page.setViewport({ width: 1440, height: 900, deviceScaleFactor: 1 });
+    for (const route of routes) {
+      await page.goto(`${baseUrl}${route}?still&scene-debug`, { waitUntil: 'networkidle2' });
+      await page.evaluate(() => new Promise((done) => setTimeout(done, 1800)));
+      if (!await page.evaluate(() => Boolean(window.chapterFilm))) {
+        failures.push(`${route} did not publish its scene through ?scene-debug, so its labels could not be sized.`);
+        continue;
+      }
+      const bands = await page.evaluate(() => [...document.querySelectorAll('main > .act')].map((act, i) => ({
+        act: i + 1,
+        top: Math.round(act.getBoundingClientRect().top + window.scrollY),
+        span: Number(act.dataset.stationSpan) || Math.round(act.getBoundingClientRect().height)
+      })));
+
+      const biggest = new Map();
+      for (const band of bands) {
+        const index = band.act - 1;
+        for (const depth of PLATE_DEPTHS) {
+          await page.evaluate((to) => window.scrollTo(0, to), Math.round(band.top + band.span * depth));
+          await page.evaluate(() => new Promise((done) => {
+            let n = 0;
+            const tick = () => (++n > 40 ? done() : requestAnimationFrame(tick));
+            requestAnimationFrame(tick);
+          }));
+          const reading = await page.evaluate(([i, titlePx]) => {
+            const film = window.chapterFilm;
+            const camera = film.camera;
+            const out = [];
+            film.stations[i].group.traverse((node) => {
+              if (!node.userData || !node.userData.caption) return;
+              if (!node.visible || !node.material || node.material.opacity <= 0.02) return;
+              const map = node.material.map;
+              if (!map || !map.image || !node.geometry.parameters) return;
+              // The plate's own height on screen, from the two ends of its vertical axis. A
+              // plate faces the camera, so its height is what the type scales with and its
+              // width is not: a long name and a short one are the same type at the same depth.
+              const h = node.geometry.parameters.height;
+              const Vector = node.position.constructor;
+              const ends = [new Vector(0, h / 2, 0), new Vector(0, -h / 2, 0)].map((v) => {
+                const p = node.localToWorld(v);
+                if (p.clone().applyMatrix4(camera.matrixWorldInverse).z > -0.1) return null;
+                p.project(camera);
+                return (-p.y * 0.5 + 0.5) * window.innerHeight;
+              });
+              if (ends.some((e) => e === null)) return;
+              out.push({
+                text: node.userData.caption,
+                swarm: Boolean(node.userData.swarm),
+                type: (titlePx / map.image.height) * Math.abs(ends[0] - ends[1])
+              });
+            });
+            return out;
+          }, [index, LABEL_TITLE_PX]);
+          for (const plate of reading) {
+            const key = `act ${band.act} "${plate.text}"`;
+            const had = biggest.get(key);
+            if (!had || plate.type > had.type) biggest.set(key, plate);
+          }
+        }
+      }
+
+      const named = [...biggest.entries()].filter(([, plate]) => !plate.swarm);
+      if (named.length === 0) {
+        failures.push(`${route} has no label that is not marked as swarm, so the label size check measured nothing. Either the page lost its labels or every set is claiming its labels are atmosphere.`);
+        continue;
+      }
+      for (const [key, plate] of named) {
+        if (plate.type < LABEL_FLOOR) {
+          failures.push(
+            `${route} ${key} never gets above ${plate.type.toFixed(1)}px of type anywhere in its own act, floor ${LABEL_FLOOR}px. A reader can see a word is there and cannot read it, which leaves the part it names as an unexplained shape. A label a set means as atmosphere rather than as a name says so with userData.swarm.`
+          );
+        }
+      }
+    }
+  } finally {
+    await browser.close();
+  }
+}
+
 // How much of the smaller of two plates may be covered by the other before they are two labels
 // on the same pixels rather than two labels near each other. The engine works to the same
 // number, so this fails when that pass stops working, not when it is merely tight.
@@ -2142,6 +2261,7 @@ async function main() {
     await checkFilmSetFraming(baseUrl);
     await checkFilmSequenceWiring(baseUrl);
     await checkFilmTrafficPaths(baseUrl);
+    await checkFilmLabelSize(baseUrl);
     await checkFilmPlayControl(baseUrl);
     if (args.has('--screenshots')) {
       await captureScreenshots(baseUrl);

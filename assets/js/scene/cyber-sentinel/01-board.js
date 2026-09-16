@@ -118,8 +118,13 @@ export function buildBoard(palette) {
   // ——— callouts ———
   // Type has to be painted into a canvas to exist in a WebGL scene at all. Three labels, set
   // in the page's own display face, because a scene with no words in it reads as a screensaver.
+  // Up from 34. At 34 the Kali Linux callout reached 10.3px of type at the one depth it was
+  // biggest, against a floor of 12, which is a label a reader can see and cannot read. 40 put
+  // it at 12.1, which is the floor with nothing left over, so this is the size that clears it
+  // rather than the size that just reaches it. The three share a width because they are the
+  // same kind of thing said about the same board.
   function callout(text, sub) {
-    return nameplate(text, sub, accent, palette.deep, 34);
+    return nameplate(text, sub, accent, palette.deep, 44);
   }
 
   const labels = [

@@ -237,7 +237,10 @@ export function buildOutputs(palette) {
   const source = edgedBox(18, 15, 14, face, accent, 0.9);
   source.position.set(-18, -28, -30);
   group.add(source);
-  const sourceLabel = nameplate("Logstash", "", accent, palette.deep, 32);
+  // Up from 32. This set stands at 0.52 scale, so 32 units of plate is 16.6 of them on screen
+  // and the only named part in the closing act reached 9.4px of type, the smallest real label
+  // in the chapter by a clear margin.
+  const sourceLabel = nameplate("Logstash", "", accent, palette.deep, 44);
   sourceLabel.userData.primary = true;
   sourceLabel.position.set(-18, -14, -30);
   group.add(sourceLabel);
