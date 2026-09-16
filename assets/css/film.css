@@ -523,6 +523,21 @@ body.film .act-pin {
   padding-bottom: var(--s6);
 }
 
+/*
+  The first frame reserves the band the scroll cue stands in, the same way every pin reserves
+  the header.
+
+  The cue is fixed to the bottom centre of the viewport, which is where a scroll cue belongs,
+  and the title card's four stat cards run the full width of the reading lane straight down to
+  meet it. Measured at 1440: the cue's box started 2px below the last card at 900 high and
+  overlapped it by 17px at 768, and a reviewer read it as a caption belonging to the card row
+  rather than as chrome. It is the only frame this can happen on, because the cue is suppressed
+  once the reader is a quarter of a screen down.
+*/
+body.film .case-hero.act-pin {
+  padding-bottom: calc(var(--s6) + var(--s6));
+}
+
 /* Content sits above the stage without needing a scrim behind every paragraph. */
 body.film .act-pin > .section-inner {
   position: relative;
@@ -1548,6 +1563,31 @@ body.film-still *::after {
   width: 1px;
   height: 34px;
   background: linear-gradient(to bottom, var(--scene-accent), transparent);
+}
+
+/*
+  A shorter tick on a short screen, because the band the title frame reserves for the cue is
+  reserved out of a frame that has to fit as well. At 1440x768 the full length still left the
+  cue 5px inside the last stat card, and taking the frame's own padding any further is what
+  makes act one taller than the screen: checkFilmFrameFit fails at 1440x900 seven pixels in.
+  The cue says the page scrolls either way.
+*/
+@media (max-height: 820px) {
+  .film-scroll-cue-line {
+    height: 16px;
+  }
+}
+
+/*
+  Below this there is no band left to stand in. At 1440x720 even the short tick sits 9px inside
+  the last stat card, and the frame cannot give up more height: act one is already within seven
+  pixels of being taller than a 1440x900 screen. A cue printed on the copy is worse than no cue,
+  and a 720px tall window is one a reader is already scrolling.
+*/
+@media (max-height: 745px) {
+  .film-scroll-cue {
+    display: none;
+  }
 }
 
 /*
