@@ -1413,6 +1413,204 @@ async function checkFilmSequenceWiring(baseUrl) {
   }
 }
 
+// How much of a bead's journey may be spent inside a solid body it is not arriving at.
+//
+// A bead that ends at a component is meant to go into it: that is the flow reaching the thing it
+// flows to, and a reader reads it as arrival. So the bodies a journey's own two ends sit in are
+// exempt, and every other body it enters is a wall it went through. That is a better question
+// than how far along the journey the bead is, which was the first form of this check and could
+// not tell act three's beads from act two's: act three's edges run between node centres and the
+// Wazuh Manager is 32 units across, so a bead is inside it for 40% of the run that arrives at
+// it, which no distance fraction can call arrival without also excusing a bead crossing a rack.
+//
+// The fault: "Some beads go THROUGH the servers, some float in front, inconsistently." Owner,
+// on act two. Nothing was sorting them wrongly. A bead inside an opaque body is hidden by it, so
+// a run that crosses one blinks out partway along and comes back, and a run that does not stays
+// solid. Act two's reporting lines started six units down inside a cabinet and sagged to 32 over
+// cabinets 37 tall: measured at 1.69% of every journey against 0.01% once they were routed over.
+//
+// Not zero, because a path may graze a corner for a frame and a floor of zero is a check that
+// fails on a rounding error.
+const TRAFFIC_THROUGH = 0.005;
+// A sprite that does not move is a fixture, not traffic: act one's power light sits inside the
+// board it is mounted on, which is where a light on a board belongs.
+const TRAFFIC_MOVES = 4;
+// Long enough for the slowest bead on the page to get most of the way along its run.
+const TRAFFIC_FRAMES = 180;
+
+// Nothing a set moves along a path travels through a body it is not arriving at.
+async function checkFilmTrafficPaths(baseUrl) {
+  const executablePath = findChromeExecutable();
+  if (!executablePath) {
+    warnings.push('Skipping the chapter traffic path check because Chrome/Edge was not found. Set CHROME_PATH to enable it.');
+    return;
+  }
+  const routes = await filmRoutes();
+  if (routes.length === 0) {
+    failures.push('The chapter traffic path check found no page carrying the film body class, so it measured nothing.');
+    return;
+  }
+
+  const { default: puppeteer } = await import('puppeteer-core');
+  const browser = await puppeteer.launch({
+    executablePath,
+    headless: true,
+    args: ['--no-sandbox', '--disable-setuid-sandbox', '--enable-unsafe-swiftshader', '--use-gl=angle']
+  });
+  try {
+    const page = await browser.newPage();
+    await page.setCacheEnabled(false);
+    await page.setViewport({ width: 1440, height: 900, deviceScaleFactor: 1 });
+    for (const route of routes) {
+      await page.goto(`${baseUrl}${route}?scene-debug`, { waitUntil: 'networkidle2' });
+      await page.evaluate(() => new Promise((done) => setTimeout(done, 1800)));
+      if (!await page.evaluate(() => Boolean(window.chapterFilm))) {
+        failures.push(`${route} did not publish its scene through ?scene-debug, so its traffic could not be measured.`);
+        continue;
+      }
+      const bands = await page.evaluate(() => [...document.querySelectorAll('main > .act')].map((act, i) => ({
+        act: i + 1,
+        top: Math.round(act.getBoundingClientRect().top + window.scrollY),
+        span: Number(act.dataset.stationSpan) || Math.round(act.getBoundingClientRect().height)
+      })));
+      if (bands.length === 0) {
+        failures.push(`${route} carries the film body class and has no acts, so its traffic could not be measured.`);
+        continue;
+      }
+
+      let measured = 0;
+      for (const band of bands) {
+        const index = band.act - 1;
+        await page.evaluate((to) => window.scrollTo(0, to), Math.round(band.top + band.span * 0.3));
+        await page.evaluate(() => new Promise((done) => {
+          let n = 0;
+          const tick = () => (++n > 40 ? done() : requestAnimationFrame(tick));
+          requestAnimationFrame(tick);
+        }));
+        const reading = await page.evaluate(async ([i, moves, frames]) => {
+          const root = window.chapterFilm.stations[i].group;
+          const apply = (e, x, y, z) => [
+            e[0] * x + e[4] * y + e[8] * z + e[12],
+            e[1] * x + e[5] * y + e[9] * z + e[13],
+            e[2] * x + e[6] * y + e[10] * z + e[14]
+          ];
+          const multiply = (a, b) => {
+            const out = new Array(16);
+            for (let c = 0; c < 4; c++) {
+              for (let q = 0; q < 4; q++) {
+                out[c * 4 + q] = a[q] * b[c * 4] + a[4 + q] * b[c * 4 + 1] + a[8 + q] * b[c * 4 + 2] + a[12 + q] * b[c * 4 + 3];
+              }
+            }
+            return out;
+          };
+          const boxOf = (geometry, elements) => {
+            if (!geometry.boundingBox) geometry.computeBoundingBox();
+            const bb = geometry.boundingBox;
+            const lo = [Infinity, Infinity, Infinity];
+            const hi = [-Infinity, -Infinity, -Infinity];
+            for (let c = 0; c < 8; c++) {
+              const p = apply(elements, c & 1 ? bb.max.x : bb.min.x, c & 2 ? bb.max.y : bb.min.y, c & 4 ? bb.max.z : bb.min.z);
+              for (let a = 0; a < 3; a++) { lo[a] = Math.min(lo[a], p[a]); hi[a] = Math.max(hi[a], p[a]); }
+            }
+            return [lo, hi];
+          };
+
+          // A solid body is a mesh with an opaque material. Those are the only things with a
+          // surface a bead can be hidden behind. Scenery is not one: a bead crossing the back
+          // wall of the room is the room, not a fault.
+          const boxes = [];
+          const movers = [];
+          root.traverse((node) => {
+            if (node.userData && node.userData.ambient) return;
+            if (node.isSprite || node.isPoints) { movers.push(node); return; }
+            if (!node.isMesh || !node.visible) return;
+            const material = Array.isArray(node.material) ? node.material[0] : node.material;
+            if (!material || material.transparent) return;
+            if (node.isInstancedMesh) {
+              for (let k = 0; k < node.count; k++) {
+                boxes.push(boxOf(node.geometry, multiply(node.matrixWorld.elements, [...node.instanceMatrix.array.slice(k * 16, k * 16 + 16)])));
+              }
+            } else {
+              boxes.push(boxOf(node.geometry, node.matrixWorld.elements));
+            }
+          });
+
+          const holds = (b, p) => p[0] >= b[0][0] && p[0] <= b[1][0] && p[1] >= b[0][1] && p[1] <= b[1][1] && p[2] >= b[0][2] && p[2] <= b[1][2];
+          const dist = (a, b) => Math.hypot(a[0] - b[0], a[1] - b[1], a[2] - b[2]);
+
+          // One track per thing that moves: a sprite is one, a point buffer is one per index.
+          const tracks = new Map();
+          const nextFrame = () => new Promise((r) => requestAnimationFrame(r));
+          for (let f = 0; f < frames; f++) {
+            await nextFrame();
+            for (let mi = 0; mi < movers.length; mi++) {
+              const mover = movers[mi];
+              if (!mover.visible) continue;
+              const e = mover.matrixWorld.elements;
+              const push = (key, p) => {
+                if (!tracks.has(key)) tracks.set(key, []);
+                tracks.get(key).push(p);
+              };
+              if (mover.isSprite) {
+                push(`${mi}:s`, [e[12], e[13], e[14]]);
+              } else {
+                const pos = mover.geometry.attributes.position;
+                const range = mover.geometry.drawRange.count;
+                const n = Math.min(pos.count, range === Infinity ? pos.count : range);
+                for (let q = 0; q < n; q++) push(`${mi}:${q}`, apply(e, pos.getX(q), pos.getY(q), pos.getZ(q)));
+              }
+            }
+          }
+
+          let beads = 0;
+          let samples = 0;
+          let through = 0;
+          for (const path of tracks.values()) {
+            // The two ends of the journey: the furthest apart pair on the track. A fixture's
+            // ends are the same point, so its span is nothing and it is not traffic.
+            let a = path[0];
+            let b = path[0];
+            let span = 0;
+            for (const p of path) {
+              for (const q of [path[0], path[path.length - 1]]) {
+                const d = dist(p, q);
+                if (d > span) { span = d; a = p; b = q; }
+              }
+            }
+            for (const p of path) {
+              const d = dist(p, a);
+              if (d > span) { span = d; b = p; }
+            }
+            if (span < moves) continue;
+            beads++;
+            const ends = new Set();
+            boxes.forEach((box, k) => { if (holds(box, a) || holds(box, b)) ends.add(k); });
+            for (const p of path) {
+              samples++;
+              if (boxes.some((box, k) => !ends.has(k) && holds(box, p))) through++;
+            }
+          }
+          return { beads, samples, through };
+        }, [index, TRAFFIC_MOVES, TRAFFIC_FRAMES]);
+
+        if (reading.samples === 0) continue;
+        measured++;
+        const share = reading.through / reading.samples;
+        if (share > TRAFFIC_THROUGH) {
+          failures.push(
+            `${route} act ${band.act} runs a bead through a solid body it is not arriving at, on ${(share * 100).toFixed(2)}% of its journey, ceiling ${(TRAFFIC_THROUGH * 100).toFixed(1)}%. A bead inside an opaque body is hidden by it, so a run that crosses one blinks out partway along and a run that does not stays solid, which is the inconsistency the owner reported against act two.`
+          );
+        }
+      }
+      if (measured === 0) {
+        failures.push(`${route} moves nothing along a path in any of its ${bands.length} acts, so the traffic check measured nothing. A chapter with no traffic is possible, but it has never been this one, and a check that measures nothing has to say so rather than pass.`);
+      }
+    }
+  } finally {
+    await browser.close();
+  }
+}
+
 // Where in each act to look for nameplates. Seven depths an act, all inside the part of it the
 // camera spends in front of its own set: past about 60% the camera is in flight to the next
 // station and an act's own labels are behind it, so a sample there measures the next act. Even
@@ -1943,6 +2141,7 @@ async function main() {
     await checkFilmNameplates(baseUrl);
     await checkFilmSetFraming(baseUrl);
     await checkFilmSequenceWiring(baseUrl);
+    await checkFilmTrafficPaths(baseUrl);
     await checkFilmPlayControl(baseUrl);
     if (args.has('--screenshots')) {
       await captureScreenshots(baseUrl);

@@ -9,7 +9,7 @@
 // The machines are racks rather than monitors. Twelve flat screens floating at eye height read
 // as a node diagram of a network; cabinets with rack units in them read as a room, and the room
 // is the point: this kind of monitoring is usually assumed to need one.
-import { THREE, clamp01, drift, ease, edgedBox, glow, motes, nameplate, painted, panel, repeated, seeded, wire } from "../kit.js";
+import { LAYER, THREE, clamp01, drift, ease, edgedBox, glow, motes, nameplate, painted, panel, repeated, seeded, wire } from "../kit.js";
 
 const THREATS = [
   "aggressive scan",
@@ -24,6 +24,10 @@ const THREATS = [
 const RACK_W = 21;
 const RACK_H = 74;
 const RACK_D = 28;
+// How high a reporting line runs on its way across the room. Above the top of a cabinet by
+// enough that the line, and the bead riding it, clear every cabinet between the one reporting
+// and the manager.
+const ABOVE_ROW = RACK_H / 2 + 22;
 const UNITS = 15;
 
 export function buildLan(palette) {
@@ -114,10 +118,12 @@ export function buildLan(palette) {
       for (let i = 0; i < along.length - 1; i++) loomPoints.push(along[i], along[i + 1]);
     }
   }
-  group.add(new THREE.LineSegments(
+  const loom = new THREE.LineSegments(
     new THREE.BufferGeometry().setFromPoints(loomPoints),
-    new THREE.LineBasicMaterial({ color: accent, transparent: true, opacity: 0.28 })
-  ));
+    new THREE.LineBasicMaterial({ color: accent, transparent: true, opacity: 0.28, depthWrite: false })
+  );
+  loom.renderOrder = LAYER.path;
+  group.add(loom);
 
   // One status strip per rack. Nearly dark while nothing is watching, up once the agents
   // report: the whole act in one material.
@@ -134,7 +140,13 @@ export function buildLan(palette) {
   });
   group.add(strips);
 
-  const endpoints = spots.map(([x, y, z]) => ({ at: new THREE.Vector3(x, y + RACK_H / 2 - 6, z) }));
+  // Where a cabinet's reporting line leaves it: just clear of the top face, not six units down
+  // inside it. Inside the body the bead that runs this line spends the start of every journey
+  // behind an opaque panel, so it appears out of nothing partway up. That is half of what the
+  // owner saw as "some beads go THROUGH the servers, some float in front, inconsistently"; the
+  // other half was the attack lanes, which were moved clear of the cabinets for the same reason.
+  // No sorting rule can help a bead that is inside a box.
+  const endpoints = spots.map(([x, y, z]) => ({ at: new THREE.Vector3(x, y + RACK_H / 2 + 1.5, z) }));
 
   // The room names itself while it is still the subject.
   //
@@ -219,10 +231,21 @@ export function buildLan(palette) {
     const points = [];
     for (let i = b * perBundle; i < Math.min(b * perBundle + perBundle, endpoints.length); i++) {
       const from = endpoints[i].at.clone();
+      // Onto the top of the appliance, not into the middle of it. A line that ends at the centre
+      // of a body spends its last stretch inside that body, and so does the bead on it.
       const to = manager.position.clone();
-      const mid = from.clone().lerp(to, 0.5);
-      mid.y += 18;
-      const curve = new THREE.QuadraticBezierCurve3(from, mid, to);
+      to.y += 19;
+      // Up out of the cabinet, across above the row, then down onto the manager.
+      //
+      // It was one quadratic with its control point 18 above the straight line, and a quadratic
+      // does not pass through its control point: from a cabinet top at 38.5 to the manager at 8
+      // the curve sagged to 32 halfway, and the cabinets it crossed are 37 tall. So the line and
+      // the bead on it went through two or three cabinets on every journey, which is the rest of
+      // what the owner saw. ABOVE_ROW clears the tallest thing in the room, and the two control
+      // points hold the run flat over it instead of sagging into it.
+      const c1 = new THREE.Vector3(from.x, ABOVE_ROW, from.z);
+      const c2 = new THREE.Vector3(to.x, ABOVE_ROW, to.z);
+      const curve = new THREE.CubicBezierCurve3(from, c1, c2, to);
       const along = curve.getPoints(20);
       for (let s = 0; s < along.length - 1; s++) points.push(along[s], along[s + 1]);
       const bead = glow(accent, 3.6, 0);
@@ -231,8 +254,9 @@ export function buildLan(palette) {
     }
     const line = new THREE.LineSegments(
       new THREE.BufferGeometry().setFromPoints(points),
-      new THREE.LineBasicMaterial({ color: accent, transparent: true, opacity: 0 })
+      new THREE.LineBasicMaterial({ color: accent, transparent: true, opacity: 0, depthWrite: false })
     );
+    line.renderOrder = LAYER.path;
     group.add(line);
     bundles.push(line);
   }
@@ -288,8 +312,9 @@ export function buildLan(palette) {
 
   const trails = new THREE.LineSegments(
     new THREE.BufferGeometry().setFromPoints(trailPoints),
-    new THREE.LineBasicMaterial({ color: accent, transparent: true, opacity: 0.16 })
+    new THREE.LineBasicMaterial({ color: accent, transparent: true, opacity: 0.16, depthWrite: false })
   );
+  trails.renderOrder = LAYER.path;
   group.add(trails);
 
   // ——— the room ———

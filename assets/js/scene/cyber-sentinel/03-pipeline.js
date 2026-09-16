@@ -8,7 +8,7 @@
 //
 // So it is drawn as a real graph with a real fork, not as a row of boxes. The camera enters at
 // the agents and comes out past the fork, which is why this act is the one worth flying.
-import { THREE, clamp01, drift, ease, edgedBox, glow, motes, nameplate, painted, panel, repeated, seeded, solid, thread, wire } from "../kit.js";
+import { LAYER, THREE, clamp01, drift, ease, edgedBox, glow, motes, nameplate, painted, panel, repeated, seeded, solid, thread, wire } from "../kit.js";
 
 // The two outputs of this flow, painted rather than left as lit rectangles.
 //
@@ -326,6 +326,7 @@ export function buildPipeline(palette) {
   // This is the wiring the act's heading names, and checkFilmSequenceWiring asks two things of
   // it: that it is drawn at the frame the act opens on, and that nothing drawn here reaches a
   // node that is not drawn. joins says which two nodes each edge runs between, in buffer order.
+  edges.renderOrder = LAYER.path;
   edges.userData.connective = true;
   edges.userData.stride = pointsPerEdge;
   edges.userData.joins = EDGES.map(([fromKey, toKey]) => [built[fromKey].node, built[toKey].node]);

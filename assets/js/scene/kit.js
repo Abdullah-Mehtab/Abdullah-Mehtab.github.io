@@ -37,6 +37,24 @@ function halo() {
   return haloTexture;
 }
 
+// Which layer a piece of transparent matter belongs to.
+//
+// Three.js draws the transparent pass back to front by distance to the camera, and consults
+// renderOrder before distance. Two transparent things at similar depths therefore swap over as
+// the camera moves unless something says which is in front, and the owner watched that happen:
+// "some beads go THROUGH the servers, some float in front, inconsistently". Distance is the
+// camera's opinion. These are the set's.
+//
+// Bodies are deliberately not in here. A lit wireframe sits on an opaque face that occludes
+// what is behind it through the depth test, so its layering is already decided and taking its
+// depth writes away would change how every set looks rather than how its traffic sorts.
+export const LAYER = {
+  path: 1,     // cables, conduit, the line a flow runs along
+  traffic: 2,  // beads and swarms, the matter moving along a path
+  glow: 3,     // halos, which sit in front of the thing they light
+  plate: 4     // nameplates, which are in front of anything
+};
+
 export function solid(geometry, color, opacity) {
   return new THREE.Mesh(geometry, new THREE.MeshBasicMaterial({
     color,
@@ -76,13 +94,14 @@ export function glow(color, size, opacity) {
     blending: THREE.AdditiveBlending
   }));
   sprite.scale.set(size, size, 1);
+  sprite.renderOrder = LAYER.glow;
   return sprite;
 }
 
 export function motes(positions, color, size, opacity) {
   const geometry = new THREE.BufferGeometry();
   geometry.setAttribute("position", new THREE.Float32BufferAttribute(positions, 3));
-  return new THREE.Points(geometry, new THREE.PointsMaterial({
+  const points = new THREE.Points(geometry, new THREE.PointsMaterial({
     color,
     size,
     map: halo(),
@@ -91,14 +110,25 @@ export function motes(positions, color, size, opacity) {
     depthWrite: false,
     blending: THREE.AdditiveBlending
   }));
+  points.renderOrder = LAYER.traffic;
+  return points;
 }
 
 // A line through a list of points, used for every cable and every data path.
 export function thread(points, color, opacity) {
-  return new THREE.Line(
+  const line = new THREE.Line(
     new THREE.BufferGeometry().setFromPoints(points),
-    new THREE.LineBasicMaterial({ color, transparent: true, opacity: opacity === undefined ? 0.5 : opacity })
+    new THREE.LineBasicMaterial({
+      color,
+      transparent: true,
+      opacity: opacity === undefined ? 0.5 : opacity,
+      // A cable is a line with no thickness. Writing depth from one lets it cut a hole in the
+      // traffic running along it, which the reader sees as the traffic blinking.
+      depthWrite: false
+    })
   );
+  line.renderOrder = LAYER.path;
+  return line;
 }
 
 // Text and diagrams are painted into a canvas at load and uploaded once. It is the only way
@@ -250,6 +280,7 @@ export function nameplate(text, sub, accent, deep, worldWidth) {
     }
   });
   const plate = panel(texture, worldWidth, (worldWidth * height) / width, 0);
+  plate.renderOrder = LAYER.plate;
   plate.userData.caption = text;
   return plate;
 }

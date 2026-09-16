@@ -4,7 +4,7 @@
 // The hardware is not decoration here. Cyber Sentinel's own repository says it runs on a
 // Raspberry Pi 5 under Kali Linux, and the fact a full SIEM fits on a 85mm board is the
 // project's actual claim. So the title act is the board, and the camera tilts down into it.
-import { THREE, clamp01, drift, ease, edgedBox, glow, motes, nameplate, painted, panel, repeated, seeded, solid, wire } from "../kit.js";
+import { LAYER, THREE, clamp01, drift, ease, edgedBox, glow, motes, nameplate, painted, panel, repeated, seeded, solid, wire } from "../kit.js";
 
 const BOARD_W = 85;
 const BOARD_D = 56;
@@ -137,8 +137,9 @@ export function buildBoard(palette) {
   // A leader line from the chip callout back to the chip it names.
   const socLeader = new THREE.Line(
     new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(-2, 4, 2), new THREE.Vector3(14, 21, 2)]),
-    new THREE.LineBasicMaterial({ color: accent, transparent: true, opacity: 0 })
+    new THREE.LineBasicMaterial({ color: accent, transparent: true, opacity: 0, depthWrite: false })
   );
+  socLeader.renderOrder = LAYER.path;
   group.add(socLeader);
 
   // ——— the bench ———
