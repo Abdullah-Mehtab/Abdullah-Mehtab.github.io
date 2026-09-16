@@ -219,7 +219,7 @@ export function buildOutputs(palette) {
   // that heading's edge budget. Stacking them squarely instead made the subject 123 units tall
   // against a frame that is wider than it is high, and the set fell off the top instead.
   const dashboard = display("Kibana dashboard", dashboardTexture("#" + accent.getHexString(), palette.ink, palette.lightRoom), 96, 60, 3.4);
-  dashboard.position.set(24, 20, -10);
+  dashboard.position.set(32, 20, -10);
   dashboard.rotation.y = 0.24;
   group.add(dashboard);
 
@@ -467,6 +467,25 @@ export function buildOutputs(palette) {
     // returning it to the track by the end. It used to swing twice as far, from -18 out to -22
     // and back, which cost the subject size at every depth in the middle of the act: the camera
     // was moving away from it sideways faster than it was closing on it.
+    // The frame opens through the act, and that is what lets the camera move at all.
+    //
+    // This act is contained, so the engine will not bring the camera closer than the distance
+    // at which the whole set still fits the frame. That distance was 76.8 units and the set
+    // rests at 78.0, which left 1.2 units of travel for a move that wants 24: the closing act
+    // was six frames of the same picture, and the owner said so.
+    //
+    // A wider frame at the end lowers that floor directly, because what has to fit is the set
+    // against the frustum rather than the set against a fixed angle. Measured by sweeping df at
+    // the end of the act: 0 gives 1.2 units of travel, 8 gives 12.2, 16 gives 21.2, 22 gives
+    // 26.8. The subject does not grow, because the frame opens as fast as the camera closes, and
+    // that is the whole reason this is the affordable answer. Turning the camera toward the set
+    // grows it and was measured putting a lit dashboard across 30% of a line of the Outcome
+    // column, against a ceiling of 2% the page was already at 1.9% of. Owner ruling, 2026-09-16,
+    // with both columns of numbers in front of him: take the movement, leave the size.
+    //
+    // 16 rather than 22. The travel is worth having and the last step buys 5 units for a frame
+    // opened half as wide again, which starts to read as a lens change rather than as an
+    // approach.
     mod: (p) => {
       const settle = ease(clamp01(p / 0.34));
       const enter = ease(clamp01((p - 0.34) / 0.66));
@@ -474,7 +493,10 @@ export function buildOutputs(palette) {
         dx: -10 - 3 * settle + 13 * enter,
         dy: 10 - 2 * settle - 12 * enter,
         dz: 118 - 6 * settle - 18 * enter,
-        df: 0
+        // Opens on the frame the act was written with and widens into the close, on the same
+        // eased term as the rest of the move, so the reader never sees the frame change on
+        // arrival.
+        df: 16 * ease(p)
       };
     }
   };
