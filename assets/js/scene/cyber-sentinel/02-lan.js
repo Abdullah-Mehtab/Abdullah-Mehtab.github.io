@@ -39,27 +39,10 @@ export function buildLan(palette) {
   // ——— the racks ———
   // Two rows, the back one set deeper and offset, so the room has a floor plan rather than a
   // front elevation.
-  //
-  // One bay of the front row is empty, and it is the bay the camera goes through.
-  //
-  // Measured: the camera crosses the front row at set x 25 z 3, which is inside the cabinet that
-  // used to stand at x 34, and the frame there carried 1.2% of its pixels on an edge against a
-  // floor of 3%. From inside an opaque box there is nothing to see: the near faces are behind
-  // the camera and the far ones are culled. Filling the cabinet was tried and made it worse, by
-  // giving the camera something to be inside of instead. Detail on its other faces cannot help
-  // either, for the same reason.
-  //
-  // The aisles between neighbours are five units wide against cabinets twenty-one wide, so there
-  // is no gap in this row a camera could be threaded down. There is now, and an empty bay in a
-  // rack row is the most ordinary thing in a rack room.
-  const EMPTY_BAY = 2;
   const spots = [];
   for (let row = 0; row < 2; row++) {
     const count = row === 0 ? 5 : 4;
-    for (let i = 0; i < count; i++) {
-      if (row === 0 && i === EMPTY_BAY) continue;
-      spots.push([-18 + i * 26 + row * 13, 0, -6 - row * 46]);
-    }
+    for (let i = 0; i < count; i++) spots.push([-18 + i * 26 + row * 13, 0, -6 - row * 46]);
   }
   group.add(repeated(new THREE.BoxGeometry(RACK_W, RACK_H, RACK_D), spots, face, accent, 0.5));
 
