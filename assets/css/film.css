@@ -1627,6 +1627,18 @@ body.film.past-chapter .film-play {
   visibility: hidden;
 }
 
+/*
+  The act rail goes for the same reason, and it was left behind when the play control was dealt
+  with. Past the last act it sat in the right gutter beside the comment form as four hollow dots
+  with none of them current, which is a control describing a thing that is no longer on screen.
+  film.js already drops aria-current there; this is the other half of it.
+*/
+body.film.past-chapter .film-act-nav {
+  opacity: 0;
+  pointer-events: none;
+  visibility: hidden;
+}
+
 .film-play:hover,
 .film-play:focus-visible {
   border-color: var(--scene-accent);
