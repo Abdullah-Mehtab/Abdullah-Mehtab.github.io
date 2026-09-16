@@ -1248,34 +1248,44 @@ async function checkFilmSetFraming(baseUrl) {
   }
 }
 
-// How much of its eventual strength a part of a sequence has to have at the frame its act
-// opens on, and how far into the act "eventual" is measured.
+// How strong a sequence's own wiring has to be at the frame its act opens on, as a share of
+// what it reaches while the camera is still parked in front of it.
+//
+// This asks about the wiring and nothing else, and the narrowing is deliberate. It replaced a
+// check that asked the same question of every drawable part of a sequence, which was more than
+// the fault: how many of act three's nine nodes are up at its opening frame is a draw call
+// decision, nine nodes cost 26 against a ceiling of 120, and the owner ruled on 2026-09-16 that
+// they are not being paid for. Wiring costs nothing, because a set's connective geometry is one
+// buffer that is already being drawn and how much of it appears is a draw range.
 //
 // Asked only of a set that declares partsTogether, and that restriction is what makes the rule
 // honest rather than convenient. A set assembling as the reader descends is a device this page
 // uses on purpose: act two's whole story is a rack room nobody is watching and then the moment
-// agents start reporting, so its attack lanes arriving late is the act. Applied to every set
-// the rule failed three of the four, and tuning a threshold until only the suspected one came
-// out would have been fitting the check to the answer.
+// agents start reporting, so its attack lanes arriving late is the act.
 //
 // partsTogether is a set saying a reader has to take it in at once. The frame they take it in
 // at is the one the act opens on: the frame the act rail lands on, the frame a deep link lands
 // on, and the frame the act's heading is read beside. Act three's heading is "Open-source
 // components wired into a practical monitoring flow" and the eight edges that sentence names
-// were at opacity zero for the first 30% of the act, with four of its nine nodes missing too.
-const SEQUENCE_OPENING_SHARE = 0.3;
-const SEQUENCE_SETTLED = 0.45;
+// were at opacity zero for the first 30% of the act.
+const WIRING_OPENING_SHARE = 0.3;
+const WIRING_SETTLED = 0.45;
+// What counts as a node being there, for the purpose of a line reaching it. Well below the
+// threshold any set should use, so this catches wiring drawn to nothing and never argues with a
+// set about how far into its arrival a box is far enough.
+const JOINED_NODE_DRAWN = 0.05;
 
-// A set that has to be read as a sequence has the whole of itself in the frame its act opens on.
-async function checkFilmSequenceOpening(baseUrl) {
+// A set that has to be read as a sequence draws the wiring its heading names, and draws none of
+// it to a node that is not there.
+async function checkFilmSequenceWiring(baseUrl) {
   const executablePath = findChromeExecutable();
   if (!executablePath) {
-    warnings.push('Skipping the chapter sequence opening check because Chrome/Edge was not found. Set CHROME_PATH to enable it.');
+    warnings.push('Skipping the chapter sequence wiring check because Chrome/Edge was not found. Set CHROME_PATH to enable it.');
     return;
   }
   const routes = await filmRoutes();
   if (routes.length === 0) {
-    failures.push('The chapter sequence opening check found no page carrying the film body class, so it measured nothing.');
+    failures.push('The chapter sequence wiring check found no page carrying the film body class, so it measured nothing.');
     return;
   }
 
@@ -1303,11 +1313,10 @@ async function checkFilmSequenceOpening(baseUrl) {
       })));
       const sequences = await page.evaluate(() => window.chapterFilm.stations.map((station) => station.partsTogether || 0));
 
-      // Every drawable part of a set, keyed by its path through the graph so the same part can
-      // be matched between two depths. Captions are left out: a label fading up as the camera
-      // nears is what a label is for, and checkFilmNameplates owns them. Scale counts as well
-      // as opacity, because bringing a part in by scaling it up from nothing is the other way
-      // a set does this and a part scaled to nothing is not drawn however opaque it claims.
+      // Every piece of connective geometry a set has marked, with how strongly it is drawn and
+      // how much of it is in its own draw range. Scale counts alongside opacity, because
+      // scaling a part up from nothing is the other way a set brings one in, and a part scaled
+      // to nothing is not drawn however opaque its material claims to be.
       const readAt = async (index, depth, band) => {
         await page.evaluate((to) => window.scrollTo(0, to), Math.round(band.top + band.span * depth));
         await page.evaluate(() => new Promise((done) => {
@@ -1315,45 +1324,88 @@ async function checkFilmSequenceOpening(baseUrl) {
           const tick = () => (++n > 50 ? done() : requestAnimationFrame(tick));
           requestAnimationFrame(tick);
         }));
-        return page.evaluate((i) => {
+        return page.evaluate(([i, joinedAt]) => {
           const root = window.chapterFilm.stations[i].group;
-          const out = [];
-          const walk = (node, path) => {
-            if (node.userData && (node.userData.caption || node.userData.ambient)) return;
-            if ((node.isMesh || node.isLine || node.isLineSegments || node.isPoints) && node.material) {
-              const materials = Array.isArray(node.material) ? node.material : [node.material];
-              const opacity = Math.max(...materials.map((m) => (m.transparent ? m.opacity : 1)));
-              let scale = 1;
-              for (let q = node; q && q !== root.parent; q = q.parent) scale *= q.scale.x;
-              out.push({ path, shown: opacity * Math.min(1, scale) });
+          const drawn = (node) => {
+            let scale = 1;
+            for (let q = node; q && q !== root.parent; q = q.parent) {
+              if (!q.visible) return 0;
+              scale *= q.scale.x;
             }
-            node.children.forEach((child, c) => walk(child, `${path}/${c}`));
+            scale = Math.min(1, scale);
+            if (scale <= 0) return 0;
+            // A node a set joins with wiring is usually a group of a face and its lit edges,
+            // and a group has no material. It is drawn if anything under it is.
+            let opacity = 0;
+            node.traverse((child) => {
+              if (!child.visible || !child.material) return;
+              const materials = Array.isArray(child.material) ? child.material : [child.material];
+              for (const m of materials) opacity = Math.max(opacity, m.transparent ? m.opacity : 1);
+            });
+            return opacity * scale;
           };
-          walk(root, '');
+          const out = [];
+          root.traverse((node) => {
+            if (!node.userData || !node.userData.connective) return;
+            const total = node.geometry && node.geometry.attributes.position
+              ? node.geometry.attributes.position.count : 0;
+            const range = node.geometry ? node.geometry.drawRange.count : Infinity;
+            const shownPoints = Math.min(total, range === Infinity ? total : range);
+            const stride = node.userData.stride || total || 1;
+            const joins = node.userData.joins || [];
+            // A drawn run of wiring that reaches a node which is not itself drawn. This is the
+            // concern the whole device was built around: a line arriving at nothing.
+            const reaching = [];
+            const runs = Math.floor(shownPoints / stride);
+            for (let r = 0; r < Math.min(runs, joins.length); r++) {
+              if (joins[r].map(drawn).some((end) => end < joinedAt)) reaching.push(r);
+            }
+            out.push({
+              shown: drawn(node),
+              runs,
+              declaredRuns: joins.length,
+              orphans: reaching
+            });
+          });
           return out;
-        }, index);
+        }, [index, JOINED_NODE_DRAWN]);
       };
 
       for (const band of bands) {
         const index = band.act - 1;
         if (!sequences[index]) continue;
         const opening = await readAt(index, 0, band);
-        const settled = await readAt(index, SEQUENCE_SETTLED, band);
+        const settled = await readAt(index, WIRING_SETTLED, band);
         if (settled.length === 0) {
-          failures.push(`${route} act ${band.act} declares itself a sequence and has no drawable parts, so nothing could be measured.`);
+          failures.push(
+            `${route} act ${band.act} declares itself a sequence and marks nothing as connective, so the wiring its heading names could not be measured. A set that is a flow sets userData.connective on the geometry that joins its parts.`
+          );
           continue;
         }
-        const wasShown = new Map(opening.map((part) => [part.path, part.shown]));
-        const missing = settled.filter((part) => {
-          if (part.shown < 0.05) return false;
-          const before = wasShown.get(part.path);
-          return before !== undefined && before / part.shown < SEQUENCE_OPENING_SHARE;
+        settled.forEach((part, i) => {
+          const before = opening[i];
+          if (!before) return;
+          if (part.shown > 0 && before.shown / part.shown < WIRING_OPENING_SHARE) {
+            failures.push(
+              `${route} act ${band.act} declares itself a sequence and opens on a frame where its wiring is drawn at ${before.shown.toFixed(2)} against the ${part.shown.toFixed(2)} it reaches by ${Math.round(WIRING_SETTLED * 100)}% through the act, while the camera is still parked. That is under ${Math.round(WIRING_OPENING_SHARE * 100)}% of its own strength in the frame the act rail and a deep link both land on, and the frame its heading is read beside.`
+            );
+          }
+          if (before.declaredRuns && before.runs === 0) {
+            failures.push(
+              `${route} act ${band.act} opens on a frame with none of its ${before.declaredRuns} runs of wiring in the draw range, so the flow its heading names is a set of parts with nothing between them.`
+            );
+          }
+          if (before.orphans.length) {
+            failures.push(
+              `${route} act ${band.act} opens on a frame drawing ${before.orphans.length} run${before.orphans.length === 1 ? '' : 's'} of wiring to a part that is not itself drawn, at index ${before.orphans.join(', ')}. A line reaching for something that is not there reads as a fault in the set rather than as a flow being laid down.`
+            );
+          }
+          if (part.orphans.length) {
+            failures.push(
+              `${route} act ${band.act} is still drawing ${part.orphans.length} run${part.orphans.length === 1 ? '' : 's'} of wiring to a part that is not drawn at ${Math.round(WIRING_SETTLED * 100)}% through the act, at index ${part.orphans.join(', ')}.`
+            );
+          }
         });
-        if (missing.length) {
-          failures.push(
-            `${route} act ${band.act} declares itself a sequence and opens on a frame missing ${missing.length} of its own ${settled.length} parts, each drawn below ${Math.round(SEQUENCE_OPENING_SHARE * 100)}% of the strength it reaches by ${Math.round(SEQUENCE_SETTLED * 100)}% through the act while the camera is still parked. A sequence has to be taken in at once, and this is the frame the act rail and a deep link both land on.`
-          );
-        }
       }
     }
   } finally {
@@ -1890,7 +1942,7 @@ async function main() {
     await checkFilmClosingSet(baseUrl);
     await checkFilmNameplates(baseUrl);
     await checkFilmSetFraming(baseUrl);
-    await checkFilmSequenceOpening(baseUrl);
+    await checkFilmSequenceWiring(baseUrl);
     await checkFilmPlayControl(baseUrl);
     if (args.has('--screenshots')) {
       await captureScreenshots(baseUrl);

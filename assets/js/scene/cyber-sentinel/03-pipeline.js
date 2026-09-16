@@ -149,6 +149,15 @@ const NODES = {
   kibana:   { at: [27, -8, -66], size: [30, 20, 4], form: "screen", art: "board", label: "Kibana dashboards", sub: "" }
 };
 
+// How far into its own arrival a node has to be before the edges that reach it may be drawn.
+// A box at a third of its size is unmistakably there, and a line ending inside it reads as a
+// line that found something rather than a line waiting for something.
+const EDGE_JOINS_AT = 0.35;
+// The edge buffer and the beads are at their own full strength from the first frame of the act.
+// What arrives over the act is which edges are in the draw range, not how solid they are.
+const EDGE_STRENGTH = 0.42;
+const BEAD_STRENGTH = 0.75;
+
 const EDGES = [
   ["agents", "manager"],
   ["suricata", "manager"],
@@ -179,6 +188,10 @@ export function buildPipeline(palette) {
   }
 
   const built = {};
+  // How far into its arrival each node is, this frame. The edges read it to decide how much of
+  // themselves may be drawn, and reusing the number the nodes were scaled by is the only way
+  // the two can never disagree.
+  const arrived = {};
   const order = Object.keys(NODES);
   order.forEach((key, i) => {
     const spec = NODES[key];
@@ -283,9 +296,11 @@ export function buildPipeline(palette) {
   // against a hard ceiling of 120 draw calls a frame; bringing the flow's nodes close enough
   // together to read as a sequence put more of them on screen at once and took it over.
   //
-  // What that costs: the edges come up together rather than one after another. The nodes still
-  // arrive in order, which is what carries the sense of the flow being drawn, and an edge
-  // cannot precede the node it leaves anyway.
+  // One buffer does not mean one moment. EDGES is in flow order and every edge contributes the
+  // same number of points, so the first n edges are the first n * pointsPerEdge points of the
+  // buffer and setDrawRange reveals them one at a time. Still one draw call, and each edge can
+  // arrive with the node it reaches. Fading the whole buffer up instead is what put the wiring
+  // at a tenth of its strength in the frame the act's heading is read beside.
   const edgePoints = [];
   const paths = EDGES.map(([fromKey, toKey], i) => {
     const from = new THREE.Vector3(...NODES[fromKey].at);
@@ -300,14 +315,24 @@ export function buildPipeline(palette) {
     return { curve, offset: random(), at: i / EDGES.length };
   });
 
+  // Derived, never assumed: a change to how finely a curve is sampled must not silently start
+  // revealing three quarters of an edge.
+  const pointsPerEdge = edgePoints.length / EDGES.length;
+
   const edges = new THREE.LineSegments(
     new THREE.BufferGeometry().setFromPoints(edgePoints),
-    new THREE.LineBasicMaterial({ color: accent, transparent: true, opacity: 0, depthWrite: false })
+    new THREE.LineBasicMaterial({ color: accent, transparent: true, opacity: EDGE_STRENGTH, depthWrite: false })
   );
+  // This is the wiring the act's heading names, and checkFilmSequenceWiring asks two things of
+  // it: that it is drawn at the frame the act opens on, and that nothing drawn here reaches a
+  // node that is not drawn. joins says which two nodes each edge runs between, in buffer order.
+  edges.userData.connective = true;
+  edges.userData.stride = pointsPerEdge;
+  edges.userData.joins = EDGES.map(([fromKey, toKey]) => [built[fromKey].node, built[toKey].node]);
   group.add(edges);
 
   const beadPositions = new Float32Array(EDGES.length * 3);
-  const beads = motes(Array.from(beadPositions), accent, 5.5, 0);
+  const beads = motes(Array.from(beadPositions), accent, 5.5, BEAD_STRENGTH);
   beads.geometry.setAttribute("position", new THREE.BufferAttribute(beadPositions, 3));
   // Same reason as the swarm in act two: an exact bounding sphere per frame is a second pass
   // over every point for a frustum test on something that is always in shot.
@@ -390,22 +415,24 @@ export function buildPipeline(palette) {
       // in fog is a frame with nothing composed in it, which is the single most common finding
       // against the previous version of this page.
       //
-      // It started at 0.44, which is five of the nine nodes and none of the edges, and that is
-      // not most of a graph. This act declares partsTogether, which is a set saying a reader
-      // has to take it in at once, and the frame they take it in at is the one the act opens
-      // on: the frame the act rail lands on, the frame a deep link lands on, and the frame
-      // "Open-source components wired into a practical monitoring flow" is read beside. The
-      // wiring that sentence names was at opacity zero for the first 30% of the act.
+      // This act declares partsTogether, which is a set saying a reader has to take it in at
+      // once, and the frame they take it in at is the one the act opens on: the frame the act
+      // rail lands on, the frame a deep link lands on, and the frame "Open-source components
+      // wired into a practical monitoring flow" is read beside. The wiring that sentence names
+      // was at opacity zero for the first 30% of the act, which is the fault that was fixed.
       //
-      // What is left of the device is a settle rather than an assembly: the last node and the
-      // edges come up over the first twentieth of the act rather than over the first third.
-      // The act still changes plenty while it is read, because the camera leans 38 units into
-      // the graph and the traffic runs along the edges the whole time.
-      const drawn = clamp01(p * 1.8 + 0.86);
+      // It is not fixed here. Raising this ramp puts more nodes on screen at the opening frame
+      // and each node costs about six draw calls: 0.44 measures 110, 0.60 measures 124, 0.72
+      // measures 130 and 0.86 measures 136, against a hard ceiling of 120. Owner ruling,
+      // 2026-09-16: the nodes keep this ramp and the wiring is paid for out of the draw range
+      // of a buffer that was already being drawn, which costs nothing. How much of a sequence's
+      // nodes are up at its opening frame is deliberately not gated for the same reason.
+      const drawn = clamp01(p * 1.5 + 0.44);
 
       for (const key of order) {
         const item = built[key];
         const k = ease(clamp01((drawn - item.at * 0.8) / 0.18));
+        arrived[key] = k;
         item.node.visible = k > 0.01;
         item.node.scale.setScalar(Math.max(0.001, k));
         // Named out to about two hundred and fifty units, gone by three hundred and fifty. It
@@ -439,15 +466,20 @@ export function buildPipeline(palette) {
         }
       }
 
-      // One opacity for the whole edge buffer. It used to start once the last node was in, at
-      // drawn 0.8, on the reasoning that the flow should not be drawn before the nodes it
-      // joins. The reasoning is sound and the number was not: the nodes are all in by 0.85 and
-      // an act that opens at 0.86 would have had its wiring at a tenth of its strength in the
-      // one frame that has to carry the whole flow. It starts while the last node is arriving
-      // now, which is a line reaching toward a box that is already visibly there.
-      const edgesIn = ease(clamp01((drawn - 0.62) / 0.28));
-      edges.material.opacity = edgesIn * 0.42;
-      beads.material.opacity = edgesIn * 0.75;
+      // How much of the wiring may be drawn. The whole buffer used to fade up together, which
+      // meant the choice was between wiring that reached nodes which were not there yet and
+      // wiring that was not there at all, and the act shipped with the second. Revealing the
+      // buffer a prefix at a time is the third answer and it costs nothing: EDGES runs in flow
+      // order, so an edge never comes before the edges upstream of it, and this loop stops at
+      // the first edge whose two nodes are not both in.
+      let wired = 0;
+      while (wired < EDGES.length
+        && arrived[EDGES[wired][0]] >= EDGE_JOINS_AT
+        && arrived[EDGES[wired][1]] >= EDGE_JOINS_AT) wired++;
+      edges.geometry.setDrawRange(0, wired * pointsPerEdge);
+      edges.visible = wired > 0;
+      beads.geometry.setDrawRange(0, wired);
+      beads.visible = wired > 0;
       for (let i = 0; i < paths.length; i++) {
         const path = paths[i];
         const along = (t * 0.3 + path.offset + i * 0.13) % 1;
