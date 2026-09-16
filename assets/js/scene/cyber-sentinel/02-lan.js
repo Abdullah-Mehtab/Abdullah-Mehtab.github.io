@@ -104,40 +104,6 @@ export function buildLan(palette) {
   });
   group.add(repeated(new THREE.BoxGeometry(RACK_W - 4, 3.2, 4.4), proud, face, accent, 0.75));
 
-  // What is inside a cabinet, because the camera goes through one.
-  //
-  // At 65% through this act the camera is inside the cabinet at x 34, measured. A cabinet is an
-  // opaque box with its detail on the front face, so from inside it there is nothing at all: the
-  // near faces are behind the camera, the far ones are culled, and the frame measured 1.2% of
-  // its pixels on an edge against a floor of 3%. Both a check and a reviewer picked out that one
-  // frame independently, and the reviewer's words were that it says neither rack nor network nor
-  // anything else.
-  //
-  // So the cabinets get the thing they would actually contain: mounted units on their rails,
-  // seven to a cabinet, at real heights and two real depths. They are invisible from outside,
-  // because the body they sit in is opaque and the depth test hides them, so this changes
-  // nothing about any frame except the ones inside the row. All nine cabinets' worth are one
-  // instanced mesh and one line buffer, which is two draw calls for sixty-three objects. This
-  // act is the heaviest on the page at 104 of a ceiling of 120, so that mattered.
-  const guts = [];
-  spots.forEach(([x, y, z], i) => {
-    for (let u = 0; u < 7; u++) {
-      // Uneven, like a rack nobody has tidied: some bays hold a 2U box, some a 1U, some are
-      // empty. An evenly filled cabinet reads as a texture rather than as equipment.
-      const at = (i * 3 + u * 5) % 11;
-      if (at === 4 || at === 9) continue;
-      const tall = at % 3 === 0 ? 2 : 1;
-      guts.push([
-        x,
-        y - 28 + u * 9.4,
-        z + (at % 2 === 0 ? 1 : -2),
-        0, 0, 0,
-        1, tall, at % 4 === 0 ? 0.82 : 1
-      ]);
-    }
-  });
-  group.add(repeated(new THREE.BoxGeometry(RACK_W - 5, 3.4, RACK_D - 7), guts, face, accent, 0.5));
-
   // Cable bundles looping out of the back of the front row and into the floor.
   const loomPoints = [];
   for (const [x, y, z] of spots.slice(0, 5)) {
@@ -152,27 +118,6 @@ export function buildLan(palette) {
       for (let i = 0; i < along.length - 1; i++) loomPoints.push(along[i], along[i + 1]);
     }
   }
-  // Overhead containment, running the length of the room above the aisles.
-  //
-  // The camera travels down an aisle at head height between 60% and 75% of this act, and with
-  // only cabinets either side there is nothing in front of it: the frame measured 1.2% of its
-  // pixels on an edge against a floor of 3%, and a reviewer called it the weakest frame on the
-  // page. Cabinet interiors fixed what the camera sees when it is inside a cabinet; this is what
-  // it sees for the rest of the pass, which is most of it.
-  //
-  // Held at y 30, under the 37 the cabinets reach, so the set's own extents do not change and
-  // nothing about the docking or the framing moves. Pushed into the same buffer the cable loom
-  // already uses, so the whole run is free.
-  for (const ax of [-11, 15, 41, 67]) {
-    for (let s = 0; s < 22; s++) {
-      const z0 = 34 - s * 6;
-      loomPoints.push(new THREE.Vector3(ax - 7, 30, z0), new THREE.Vector3(ax - 7, 30, z0 - 6));
-      loomPoints.push(new THREE.Vector3(ax + 7, 30, z0), new THREE.Vector3(ax + 7, 30, z0 - 6));
-      // A rung every other span, which is what makes it a tray rather than two long lines.
-      if (s % 2 === 0) loomPoints.push(new THREE.Vector3(ax - 7, 30, z0), new THREE.Vector3(ax + 7, 30, z0));
-    }
-  }
-
   const loom = new THREE.LineSegments(
     new THREE.BufferGeometry().setFromPoints(loomPoints),
     new THREE.LineBasicMaterial({ color: accent, transparent: true, opacity: 0.28, depthWrite: false })
