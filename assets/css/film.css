@@ -2069,16 +2069,30 @@ body.scene-live .film-stage-glow {
   background-image cannot have that argument: backgrounds paint before content,
   always, with no stacking context to reason about.
 
-  The ellipse sits over the copy column and fades out well before the middle of
-  the frame, so the scene keeps the rest of the screen and the camera can fly
-  into a set instead of having to stay out of the way of the text.
+  The ellipse sits over the copy column and fades out before the middle of the
+  frame, so the scene keeps the rest of the screen and the camera can fly into a
+  set instead of having to stay out of the way of the text.
+
+  Sized to where the copy actually is, measured rather than guessed. At 1440 the
+  four acts put their words inside x 5% to 52%, 5% to 31%, 5% to 59% and 5% to
+  52% of the frame, and down to y 91% in act two. At 38% wide this was fully
+  transparent by x 57%, which is short of act three's four step columns: their
+  last two ran out past the edge of it and printed over the Elasticsearch
+  cylinder's ribs. A reviewer found that, and the same fault in act one, where a
+  board edge crosses the lede, and in act two behind the headline.
+
+  Contrast was never the problem and is not what this fixes: those frames measure
+  4.85:1 against a floor of 4.5 and 0.05 of the line's own edge against a ceiling
+  of 0.10. The words are legible. They were sitting on a busy pattern, which is a
+  composition fault, and the standard answer for text over busy imagery is a scrim
+  that actually covers the text.
 */
 body.scene-live .act > section {
   background-image: radial-gradient(
-    ellipse 38% 62% at 27% 48%,
-    color-mix(in srgb, var(--bg-deep, #060b12) 86%, transparent) 0%,
-    color-mix(in srgb, var(--bg-deep, #060b12) 58%, transparent) 54%,
-    transparent 78%
+    ellipse 46% 64% at 28% 49%,
+    color-mix(in srgb, var(--bg-deep, #060b12) 88%, transparent) 0%,
+    color-mix(in srgb, var(--bg-deep, #060b12) 62%, transparent) 56%,
+    transparent 82%
   );
 }
 
