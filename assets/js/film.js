@@ -311,8 +311,18 @@
     // Past the last act they name nothing: the reader is in a comment thread three screens
     // below the chapter, and a spine still reading OUTCOME over it is furniture that outlived
     // what it was describing.
+    // The chapter's own name, then where the reader is in it.
+    //
+    // This used to be built as the chapter name and then overwritten with the act name on the
+    // first scroll, so from the moment the title card left the frame the words "Cyber Sentinel"
+    // were nowhere on screen: a reader arriving on a deep link saw "ARCHITECTURE" and a personal
+    // wordmark and had to infer the rest. A running head carries the work on one side and the
+    // section on the other, which is what a book has done for four hundred years, and this page
+    // had half of it.
     const inChapter = !pastChapter && nearest;
-    const spineText = inChapter && nearest.dataset.actName ? nearest.dataset.actName : "";
+    const chapterName = main.dataset.chapter || "";
+    const actName = inChapter && nearest.dataset.actName ? nearest.dataset.actName : "";
+    const spineText = inChapter ? (actName ? `${chapterName} · ${actName}` : chapterName) : "";
     if (spineLabel && spineLabel.textContent !== spineText) spineLabel.textContent = spineText;
     for (const item of railItems) {
       const here = inChapter && item.act === nearest;
