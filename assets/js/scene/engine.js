@@ -1334,6 +1334,15 @@ export function mountFilm({ canvas, buildStations }) {
     // measured as having a subject that changes nothing at all.
     pause() { running = false; },
     render() { renderer.render(scene, camera); },
+    // Lay the sets out again, as a resize would.
+    //
+    // A tool that wants to know what a station constant buys has to change it and see, and the
+    // resize listener will not do it: it returns early when the window has not actually changed
+    // size, which is right for a phone's collapsing URL bar and useless here. Without this a
+    // sweep of aimFollow reports the aim moving and the standoff, which is the thing aimFollow
+    // is really for, never recomputed. It cost an afternoon reading a flat column of numbers as
+    // an answer.
+    remeasure() { measure(); },
     // Hand the frame back, so the camera can be driven to the next place to measure without
     // reloading the page for it. Checking running first, because asking twice would leave two
     // frame loops running against one scene.
