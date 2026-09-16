@@ -124,9 +124,19 @@
   play.append(playIcon, playWord);
   body.appendChild(play);
 
-  // Pixels per second. Slow enough to read a heading at, and the film's own damping does the
-  // rest: the camera is already following this at its own pace.
-  const PLAY_SPEED = 108;
+  // Pixels per second.
+  //
+  // 108 was chosen as "slow enough to read a heading at" and it is far slower than that. An act
+  // is 2160px, so it spent twenty seconds crossing one and one minute twenty reaching the end of
+  // the chapter, moving the view about an eighth of a screen a second. The owner's words were
+  // that it barely moves. Ordinary browsing runs 600 to 1500 px/s and anything under 500 is
+  // classed as slow, so this was a fifth of the bottom of slow: a teleprompter rather than a
+  // film.
+  //
+  // 240 puts an act at nine seconds, which is a real beat for a shot: long enough to take a set
+  // in, short enough to read as travel. Faster than this starts to outrun the copy, which is
+  // what the old number was trying to protect and overprotected by a factor of two.
+  const PLAY_SPEED = 240;
   let playing = false;
   let playFrom = 0;
   let playAt = 0;
