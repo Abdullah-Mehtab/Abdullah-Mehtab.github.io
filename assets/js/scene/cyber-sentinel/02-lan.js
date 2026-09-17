@@ -39,9 +39,28 @@ export function buildLan(palette) {
   // ——— the racks ———
   // Two rows, the back one set deeper and offset, so the room has a floor plan rather than a
   // front elevation.
+  //
+  // Four to a row, not five in front. The fifth stood at x 86, spanning 75.5 to 96.5, and the
+  // manager at 96 reaches 21 units either side of itself: the whole of that cabinet was inside
+  // the manager from the moment it finished growing at 45% of the act, and the manager turns, so
+  // it swept through the cabinet for the rest of the act. The owner saw it in a frame before any
+  // tool did, because nothing here compared two bodies to each other. checkFilmBodyClash does now.
+  //
+  // The room gave way rather than the manager, and the other three ways were measured first.
+  // Moving the manager right to 118 or 120 clears the cabinet and puts the act's own payoff hard
+  // against the right frame edge, because dock() places this set by its own mass and a body that
+  // size moving right moves the whole room left: audit-frame-balance reads 13% of the screen dead
+  // at the right at 70%, ceiling 12, and round 15 of the critic named the same frame. Moving it
+  // forward to z 29 or beyond clears the cabinet in depth and parks it in the seven attack lanes,
+  // which run at z 40 down to z 28 and are placed there deliberately to cross in front of its
+  // face. Shrinking it enough to fit beside a cabinet at 96 is not possible: it would have to
+  // halve.
+  //
+  // Eight cabinets instead of nine costs no draw call, since they are one instanced mesh, and the
+  // reporting bundles size themselves from the row.
   const spots = [];
   for (let row = 0; row < 2; row++) {
-    const count = row === 0 ? 5 : 4;
+    const count = 4;
     for (let i = 0; i < count; i++) spots.push([-18 + i * 26 + row * 13, 0, -6 - row * 46]);
   }
   group.add(repeated(new THREE.BoxGeometry(RACK_W, RACK_H, RACK_D), spots, face, accent, 0.5));
@@ -206,9 +225,11 @@ export function buildLan(palette) {
   managerLabel.userData.primary = true;
   managerLabel.position.set(0, 24, 0);
   group.add(managerLabel);
-  // Close enough to the racks to be in the same room as them. At x 118 the set was a rank of
-  // cabinets ending at 70 and an appliance starting at 105, with nothing in between: the
-  // "so much blank space left for NOTHING" the owner described in this act.
+  // This stays where it is. The room was shortened to make space for it, and the three ways of
+  // moving it instead were all measured and are all worse. See the rack row above for why.
+  //
+  // It reaches 21 units either side of its own centre, so it needs the nearest cabinet's face
+  // outside x 75, and the front row now ends at 70.5.
   manager.position.set(96, 8, 10);
   group.add(manager);
   managerLabel.position.set(manager.position.x, manager.position.y + 24, manager.position.z);

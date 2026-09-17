@@ -2094,6 +2094,192 @@ async function checkFilmNameplates(baseUrl) {
 // because past that the page is a comment form and a footer. Pressed from below that point it
 // was scrolling the reader back up to it: measured at 932px of travel in the wrong direction,
 // from a control sitting in full view at the foot of the page.
+// How far two of a set's solid bodies may be into each other before one is standing inside the
+// other, in the set's own units, and how solid a thing has to be to be asked about at all.
+//
+// The owner found act two's Wazuh Manager rotating through the last cabinet of the front row while
+// every check here was green. Nothing asked. checkFilmTrafficPaths asks whether a bead passes
+// through a body; the framing checks ask what one object does to the frame. Two bodies at one
+// address was nobody's question, and the whole of a cabinet 21 units across was inside the manager
+// for the second half of that act.
+//
+// Two units, because sets stand things against each other on purpose: a lit strip lies on a rack
+// face, a unit stands proud of one. Those share a plane, not a volume. Four units of thickness to
+// count as a body at all, for the same reason.
+const BODY_CLASH = 2;
+const BODY_SOLID = 4;
+// How many depths of each act to sweep. A body that turns sweeps a wider box at forty five degrees
+// than square on, and act two's manager grows from nothing across its act, so one frame is not a
+// reading.
+const BODY_DEPTHS = 13;
+
+// Two boxes, each in its own orientation, by separating axis. Never along the world axes: act one's
+// board is tilted, so a world aligned box around it is a slab of mostly air containing every
+// component standing on it, and that form of this check reported fifteen clashes in act one of
+// which all fifteen were the box rather than the board.
+function bodyOverlap(A, B) {
+  const dot = (u, v) => u.x * v.x + u.y * v.y + u.z * v.z;
+  const t = { x: B.centre.x - A.centre.x, y: B.centre.y - A.centre.y, z: B.centre.z - A.centre.z };
+  const axes = [...A.axes, ...B.axes];
+  for (const a of A.axes) {
+    for (const b of B.axes) {
+      const c = { x: a.y * b.z - a.z * b.y, y: a.z * b.x - a.x * b.z, z: a.x * b.y - a.y * b.x };
+      const len = Math.hypot(c.x, c.y, c.z);
+      if (len > 1e-6) axes.push({ x: c.x / len, y: c.y / len, z: c.z / len });
+    }
+  }
+  let least = Infinity;
+  for (const axis of axes) {
+    const ra = A.half[0] * Math.abs(dot(axis, A.axes[0]))
+      + A.half[1] * Math.abs(dot(axis, A.axes[1]))
+      + A.half[2] * Math.abs(dot(axis, A.axes[2]));
+    const rb = B.half[0] * Math.abs(dot(axis, B.axes[0]))
+      + B.half[1] * Math.abs(dot(axis, B.axes[1]))
+      + B.half[2] * Math.abs(dot(axis, B.axes[2]));
+    const gap = ra + rb - Math.abs(dot(axis, t));
+    if (gap <= 0) return 0;
+    if (gap < least) least = gap;
+  }
+  return least;
+}
+
+// No set draws one solid body inside another.
+async function checkFilmBodyClash(baseUrl) {
+  const executablePath = findChromeExecutable();
+  if (!executablePath) {
+    warnings.push('Skipping the chapter body clash check because Chrome/Edge was not found. Set CHROME_PATH to enable it.');
+    return;
+  }
+  const routes = await filmRoutes();
+  if (routes.length === 0) {
+    failures.push('The chapter body clash check found no page carrying the film body class, so it measured nothing.');
+    return;
+  }
+
+  const { default: puppeteer } = await import('puppeteer-core');
+  const browser = await puppeteer.launch({
+    executablePath,
+    headless: true,
+    args: ['--no-sandbox', '--disable-setuid-sandbox', '--enable-unsafe-swiftshader', '--use-gl=angle']
+  });
+  try {
+    const page = await browser.newPage();
+    await page.setCacheEnabled(false);
+    await page.setViewport({ width: 1440, height: 900, deviceScaleFactor: 1 });
+    for (const route of routes) {
+      await page.goto(`${baseUrl}${route}?scene-debug`, { waitUntil: 'networkidle2' });
+      await page.evaluate(() => new Promise((done) => setTimeout(done, 1800)));
+      await page.evaluate(() => { document.documentElement.style.scrollBehavior = 'auto'; });
+      if (!await page.evaluate(() => Boolean(window.chapterFilm))) {
+        failures.push(route + ' did not publish its scene through ?scene-debug, so its bodies could not be measured.');
+        continue;
+      }
+      const bands = await page.evaluate(() => [...document.querySelectorAll('main > .act')].map((act, i) => ({
+        act: i + 1,
+        top: Math.round(act.getBoundingClientRect().top + window.scrollY),
+        span: Number(act.dataset.stationSpan) || Math.round(act.getBoundingClientRect().height)
+      })));
+      if (bands.length === 0) {
+        failures.push(route + ' carries the film body class and has no acts, so the body clash check measured nothing.');
+        continue;
+      }
+
+      let measured = 0;
+      const caught = [];
+      for (const band of bands) {
+        for (let d = 0; d < BODY_DEPTHS; d++) {
+          const depth = d / (BODY_DEPTHS - 1);
+          await page.evaluate((to) => window.scrollTo(0, to), Math.round(band.top + band.span * depth));
+          await page.evaluate(() => new Promise((done) => {
+            let n = 0;
+            const tick = () => (++n > 40 ? done() : requestAnimationFrame(tick));
+            requestAnimationFrame(tick);
+          }));
+          const bodies = await page.evaluate(([index, solid]) => {
+            const film = window.chapterFilm;
+            if (!film.stations[index]) return [];
+            const g = film.stations[index].group;
+            const s = g.scale.x || 1;
+            const out = [];
+            const obbOf = (bb, m, child, label) => {
+              const e = m.elements;
+              const c = { x: (bb.min.x + bb.max.x) / 2, y: (bb.min.y + bb.max.y) / 2, z: (bb.min.z + bb.max.z) / 2 };
+              const centre = {
+                x: (e[0] * c.x + e[4] * c.y + e[8] * c.z + e[12] - g.position.x) / s,
+                y: (e[1] * c.x + e[5] * c.y + e[9] * c.z + e[13] - g.position.y) / s,
+                z: (e[2] * c.x + e[6] * c.y + e[10] * c.z + e[14] - g.position.z) / s
+              };
+              const axes = [];
+              const half = [];
+              const reach = [(bb.max.x - bb.min.x) / 2, (bb.max.y - bb.min.y) / 2, (bb.max.z - bb.min.z) / 2];
+              for (let a = 0; a < 3; a++) {
+                const col = { x: e[a * 4] / s, y: e[a * 4 + 1] / s, z: e[a * 4 + 2] / s };
+                const len = Math.hypot(col.x, col.y, col.z);
+                if (len < 1e-9) return null;
+                axes.push({ x: col.x / len, y: col.y / len, z: col.z / len });
+                half.push(reach[a] * len);
+              }
+              if (Math.min(half[0], half[1], half[2]) * 2 < solid) return null;
+              return { child, label, centre, axes, half };
+            };
+            g.children.forEach((child, ci) => {
+              let ambient = false;
+              child.traverse((n) => { if (n.userData && (n.userData.ambient || n.userData.caption)) ambient = true; });
+              if (ambient || !child.visible) return;
+              child.updateWorldMatrix(true, true);
+              child.traverse((n) => {
+                if (!n.isMesh && !n.isInstancedMesh) return;
+                if (!n.visible || !n.geometry) return;
+                if (n.material && n.material.opacity !== undefined && n.material.opacity < 0.05) return;
+                if (!n.geometry.boundingBox) n.geometry.computeBoundingBox();
+                if (!n.geometry.boundingBox) return;
+                n.updateWorldMatrix(true, false);
+                if (n.isInstancedMesh) {
+                  for (let k = 0; k < n.count; k++) {
+                    const m = new n.matrixWorld.constructor();
+                    n.getMatrixAt(k, m);
+                    const b = obbOf(n.geometry.boundingBox, m.clone().premultiply(n.matrixWorld), ci, child.type + ' copy ' + k);
+                    if (b) out.push(b);
+                  }
+                } else {
+                  const b = obbOf(n.geometry.boundingBox, n.matrixWorld, ci, child.name || (child.type + ' ' + n.type));
+                  if (b) out.push(b);
+                }
+              });
+            });
+            return out;
+          }, [band.act - 1, BODY_SOLID]);
+
+          measured += bodies.length;
+          for (let a = 0; a < bodies.length; a++) {
+            for (let b = a + 1; b < bodies.length; b++) {
+              if (bodies[a].child === bodies[b].child) continue;
+              const deep = bodyOverlap(bodies[a], bodies[b]);
+              if (deep < BODY_CLASH) continue;
+              caught.push('act ' + band.act + ' at ' + Math.round(depth * 100) + '%: "' + bodies[a].label
+                + '" and "' + bodies[b].label + '" are ' + deep.toFixed(1) + ' units into each other');
+            }
+          }
+        }
+      }
+
+      if (measured === 0) {
+        failures.push(route + ' carries the film body class and published no solid bodies at any depth, so the body clash check measured nothing.');
+        continue;
+      }
+      if (caught.length) {
+        const shown = [...new Set(caught)].slice(0, 5);
+        failures.push(
+          route + ' draws solid bodies inside each other at ' + caught.length + ' sampled pairs: ' + shown.join('; ')
+          + '. A body standing inside another is two models at one address, and a body that turns sweeps through the one it is inside.'
+        );
+      }
+    }
+  } finally {
+    await browser.close();
+  }
+}
+
 async function checkFilmPlayControl(baseUrl) {
   const executablePath = findChromeExecutable();
   if (!executablePath) {
@@ -2364,6 +2550,7 @@ async function main() {
     await checkFilmLabelSize(baseUrl);
     await checkFilmPlateLegibility(baseUrl);
     await checkFilmPlayControl(baseUrl);
+    await checkFilmBodyClash(baseUrl);
     if (args.has('--screenshots')) {
       await captureScreenshots(baseUrl);
     }
