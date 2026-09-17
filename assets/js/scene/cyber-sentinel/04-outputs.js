@@ -235,14 +235,23 @@ export function buildOutputs(palette) {
   // Where both of them come from. Without it the act is two posters; with it, it is the end
   // of the pipeline the previous act flew through.
   const source = edgedBox(18, 15, 14, face, accent, 0.9);
-  source.position.set(-18, -28, -30);
+  source.position.set(6, -28, -30);
   group.add(source);
-  // Up from 32. This set stands at 0.52 scale, so 32 units of plate is 16.6 of them on screen
-  // and the only named part in the closing act reached 9.4px of type, the smallest real label
-  // in the chapter by a clear margin.
-  const sourceLabel = nameplate("Logstash", "", accent, palette.deep, 44);
+  // 60, up from 32 and then from 44, and the node moved right with it.
+  //
+  // This set stands at 0.52 scale, so plate width does not mean what it says here. At 44 the type
+  // came out 12.8px at the one depth it was biggest and softer than that everywhere else: a plate
+  // canvas is 640px wide with 46px type in it, and rendering that into 29px of screen downsamples
+  // the glyphs about four to one, which no filtering fixes. Round 15 of the critic read it as
+  // "grey mush over its own wireframe cube" in four of six frames, and it was right.
+  //
+  // Size alone was not enough. At 60 in the old place the plate reached the copy lane and the
+  // engine's own copy fade pulled it to 0.67 against a floor of 0.75, so it was legible and dim
+  // instead of legible. Moving the node it names from x -18 to x 6 takes both clear of the column:
+  // 17.3px at full strength, against 12.8px at 0.90 before.
+  const sourceLabel = nameplate("Logstash", "", accent, palette.deep, 60);
   sourceLabel.userData.primary = true;
-  sourceLabel.position.set(-18, -14, -30);
+  sourceLabel.position.set(6, -14, -30);
   group.add(sourceLabel);
 
   const feeds = [dashboard, email].map((target, i) => {
