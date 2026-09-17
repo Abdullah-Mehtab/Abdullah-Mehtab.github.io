@@ -2094,6 +2094,157 @@ async function checkFilmNameplates(baseUrl) {
 // because past that the page is a comment form and a footer. Pressed from below that point it
 // was scrolling the reader back up to it: measured at 932px of travel in the wrong direction,
 // from a control sitting in full view at the foot of the page.
+// How far apart two neighbouring acts' colours have to look.
+//
+// Measured as CIEDE2000 between the accents the page actually paints, not as hue degrees. Acts
+// three and four were 22 degrees apart, which a hue check called different and round 15 of the
+// critic could not tell apart at all, because the eye discriminates hue worst across exactly that
+// blue to violet stretch. In perceptual terms they were 8.4 apart while the other two neighbouring
+// pairs were 13.1 and 13.2. Widening act four to +42 degrees puts all three at 13.
+//
+// Ten, which is below what the page holds with room to move and above what a reader could not
+// separate. Neighbours only: acts one and four are never on screen together.
+const ACT_COLOUR_APART = 10;
+
+function actLab([r, g, b]) {
+  const lin = (v) => {
+    const c = v / 255;
+    return c <= 0.04045 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4;
+  };
+  const [R, G, B] = [lin(r), lin(g), lin(b)];
+  const x = (R * 0.4124 + G * 0.3576 + B * 0.1805) / 0.95047;
+  const y = R * 0.2126 + G * 0.7152 + B * 0.0722;
+  const z = (R * 0.0193 + G * 0.1192 + B * 0.9505) / 1.08883;
+  const f = (t) => (t > 0.008856 ? Math.cbrt(t) : 7.787 * t + 16 / 116);
+  const [fx, fy, fz] = [f(x), f(y), f(z)];
+  return [116 * fy - 16, 500 * (fx - fy), 200 * (fy - fz)];
+}
+
+function actDeltaE(l1, l2) {
+  const [L1, a1, b1] = l1;
+  const [L2, a2, b2] = l2;
+  const rad = Math.PI / 180;
+  const C1 = Math.hypot(a1, b1);
+  const C2 = Math.hypot(a2, b2);
+  const Cb = (C1 + C2) / 2;
+  const G = 0.5 * (1 - Math.sqrt(Cb ** 7 / (Cb ** 7 + 25 ** 7)));
+  const ap1 = (1 + G) * a1;
+  const ap2 = (1 + G) * a2;
+  const Cp1 = Math.hypot(ap1, b1);
+  const Cp2 = Math.hypot(ap2, b2);
+  const hue = (b, ap) => {
+    if (b === 0 && ap === 0) return 0;
+    const h = Math.atan2(b, ap) / rad;
+    return h >= 0 ? h : h + 360;
+  };
+  const hp1 = hue(b1, ap1);
+  const hp2 = hue(b2, ap2);
+  const dLp = L2 - L1;
+  const dCp = Cp2 - Cp1;
+  let dhp = 0;
+  if (Cp1 * Cp2 !== 0) {
+    dhp = hp2 - hp1;
+    if (dhp > 180) dhp -= 360;
+    else if (dhp < -180) dhp += 360;
+  }
+  const dHp = 2 * Math.sqrt(Cp1 * Cp2) * Math.sin((dhp / 2) * rad);
+  const Lbp = (L1 + L2) / 2;
+  const Cbp = (Cp1 + Cp2) / 2;
+  let hbp = hp1 + hp2;
+  if (Cp1 * Cp2 !== 0) {
+    if (Math.abs(hp1 - hp2) > 180) hbp += hbp < 360 ? 360 : -360;
+    hbp /= 2;
+  }
+  const T = 1 - 0.17 * Math.cos((hbp - 30) * rad) + 0.24 * Math.cos(2 * hbp * rad)
+    + 0.32 * Math.cos((3 * hbp + 6) * rad) - 0.20 * Math.cos((4 * hbp - 63) * rad);
+  const dTh = 30 * Math.exp(-(((hbp - 275) / 25) ** 2));
+  const Rc = 2 * Math.sqrt(Cbp ** 7 / (Cbp ** 7 + 25 ** 7));
+  const Sl = 1 + (0.015 * (Lbp - 50) ** 2) / Math.sqrt(20 + (Lbp - 50) ** 2);
+  const Sc = 1 + 0.045 * Cbp;
+  const Sh = 1 + 0.015 * Cbp * T;
+  const Rt = -Math.sin(2 * dTh * rad) * Rc;
+  return Math.sqrt((dLp / Sl) ** 2 + (dCp / Sc) ** 2 + (dHp / Sh) ** 2 + Rt * (dCp / Sc) * (dHp / Sh));
+}
+
+// Two acts a reader meets one after the other do not look like the same room.
+async function checkFilmActColour(baseUrl) {
+  const executablePath = findChromeExecutable();
+  if (!executablePath) {
+    warnings.push('Skipping the chapter act colour check because Chrome/Edge was not found. Set CHROME_PATH to enable it.');
+    return;
+  }
+  const routes = await filmRoutes();
+  if (routes.length === 0) {
+    failures.push('The chapter act colour check found no page carrying the film body class, so it measured nothing.');
+    return;
+  }
+
+  const { default: puppeteer } = await import('puppeteer-core');
+  const browser = await puppeteer.launch({
+    executablePath,
+    headless: true,
+    args: ['--no-sandbox', '--disable-setuid-sandbox', '--enable-unsafe-swiftshader', '--use-gl=angle']
+  });
+  try {
+    const page = await browser.newPage();
+    await page.setCacheEnabled(false);
+    await page.setViewport({ width: 1440, height: 900, deviceScaleFactor: 1 });
+    for (const route of routes) {
+      await page.goto(`${baseUrl}${route}?still&scene-debug`, { waitUntil: 'networkidle2' });
+      await page.evaluate(() => new Promise((done) => setTimeout(done, 1800)));
+      await page.evaluate(() => { document.documentElement.style.scrollBehavior = 'auto'; });
+      const bands = await page.evaluate(() => [...document.querySelectorAll('main > .act')].map((act, i) => ({
+        act: i + 1,
+        top: Math.round(act.getBoundingClientRect().top + window.scrollY),
+        span: Number(act.dataset.stationSpan) || Math.round(act.getBoundingClientRect().height)
+      })));
+      if (bands.length < 2) {
+        failures.push(route + ' carries the film body class and has fewer than two acts, so the act colour check measured nothing.');
+        continue;
+      }
+
+      const accents = [];
+      for (const band of bands) {
+        await page.evaluate((to) => window.scrollTo(0, to), Math.round(band.top + band.span * 0.3));
+        await page.evaluate(() => new Promise((done) => {
+          let n = 0;
+          const tick = () => (++n > 40 ? done() : requestAnimationFrame(tick));
+          requestAnimationFrame(tick);
+        }));
+        const rgb = await page.evaluate(() => {
+          const probe = document.createElement('span');
+          probe.style.color = getComputedStyle(document.body).getPropertyValue('--scene-accent').trim();
+          document.body.appendChild(probe);
+          const c = getComputedStyle(probe).color;
+          probe.remove();
+          const parts = c.match(/\d+/g);
+          return parts ? parts.slice(0, 3).map(Number) : null;
+        });
+        if (!rgb) {
+          failures.push(route + ' act ' + band.act + ' does not paint a --scene-accent, so its colour could not be measured.');
+          accents.push(null);
+          continue;
+        }
+        accents.push({ act: band.act, lab: actLab(rgb) });
+      }
+
+      if (accents.some((a) => !a)) continue;
+      for (let i = 0; i + 1 < accents.length; i++) {
+        const apart = actDeltaE(accents[i].lab, accents[i + 1].lab);
+        if (apart < ACT_COLOUR_APART) {
+          failures.push(
+            route + ' acts ' + accents[i].act + ' and ' + accents[i + 1].act + ' are ' + apart.toFixed(1)
+            + ' apart to an eye, floor ' + ACT_COLOUR_APART + '. Two acts a reader meets one after the other read as one room, '
+            + 'and hue degrees will not show it: the eye separates blues worst.'
+          );
+        }
+      }
+    }
+  } finally {
+    await browser.close();
+  }
+}
+
 // How far two of a set's solid bodies may be into each other before one is standing inside the
 // other, in the set's own units, and how solid a thing has to be to be asked about at all.
 //
@@ -2551,6 +2702,7 @@ async function main() {
     await checkFilmPlateLegibility(baseUrl);
     await checkFilmPlayControl(baseUrl);
     await checkFilmBodyClash(baseUrl);
+    await checkFilmActColour(baseUrl);
     if (args.has('--screenshots')) {
       await captureScreenshots(baseUrl);
     }

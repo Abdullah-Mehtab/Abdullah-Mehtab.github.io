@@ -86,7 +86,14 @@ const NARROW_EYE = 34;
 // over a fixed film palette and over one flat colour per theme. Forest gives four greens.
 // Sixteen degrees apart left acts two and three reading as one room in the perceptual
 // difference check. Wider, and the four still sit inside the theme's own hue family.
-const ACT_HUE_SHIFT = [-30, -10, 12, 28];
+//
+// Act four is at 42 rather than 28 because degrees are not what a reader sees. At 28 it sat 22
+// hue degrees from act three, which every check here called different and round 15 of the critic
+// could not separate at all: in CIEDE2000 the two were 8.4 apart while the other two neighbouring
+// pairs were 13.1 and 13.2, because the eye discriminates hue worst across exactly that blue to
+// violet stretch. The gaps are uneven in degrees on purpose, so they are even to an eye: 13.1,
+// 13.2, 13.3. checkFilmActColour holds that, per neighbouring pair, in the same units.
+const ACT_HUE_SHIFT = [-30, -10, 12, 42];
 
 function parseColor(value, fallback) {
   const probe = new THREE.Color();
