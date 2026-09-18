@@ -67,6 +67,17 @@ export function buildLan(palette) {
 
   // Rack units: the horizontal slots down the face of each cabinet. This is the detail that
   // makes a box a rack, and all of them together are one line buffer.
+  //
+  // On the sides as well as the front, because the camera goes down an aisle. Every piece of
+  // detail in this room used to be drawn at z + RACK_D / 2 and nowhere else: the slots, the
+  // plinth vents, the cable managers, the proud bays and the lit strip. So the instant the
+  // camera passed that plane, on its way between two cabinets, every cabinet around it was a
+  // bare box and the frame measured 1.1% of its pixels on an edge against a floor of 3. The
+  // camera was not inside anything. There was nothing to be inside of.
+  //
+  // The lines sit inside each cabinet's own footprint, so the room's extents and its mass do
+  // not move, and neither does where dock() puts it. That is the whole reason this works where
+  // taking a cabinet out or moving one did not.
   const slotPoints = [];
   for (const [x, y, z] of spots) {
     for (let u = 0; u < UNITS; u++) {
@@ -75,6 +86,30 @@ export function buildLan(palette) {
         new THREE.Vector3(x - RACK_W / 2 + 2, uy, z + RACK_D / 2 + 0.2),
         new THREE.Vector3(x + RACK_W / 2 - 2, uy, z + RACK_D / 2 + 0.2)
       );
+      for (const side of [-1, 1]) {
+        const sx = x + side * (RACK_W / 2 + 0.2);
+        slotPoints.push(
+          new THREE.Vector3(sx, uy, z - RACK_D / 2 + 2),
+          new THREE.Vector3(sx, uy, z + RACK_D / 2 - 2)
+        );
+      }
+    }
+    // Uprights on the sides, not only the horizontal runs.
+    //
+    // A horizontal line on a wall the camera is flying along converges to the vanishing point and
+    // stops being a line the moment the wall is edge on, which is exactly the frame this is for:
+    // the aisle is 2.5 world units wide and the cabinets beside the lens are at a grazing angle.
+    // Uprights stay separated across the frame at any angle, which is what makes a corridor read
+    // as a corridor.
+    for (const side of [-1, 1]) {
+      const sx = x + side * (RACK_W / 2 + 0.2);
+      for (let v = 0; v <= 5; v++) {
+        const vz = z - RACK_D / 2 + 2 + v * ((RACK_D - 4) / 5);
+        slotPoints.push(
+          new THREE.Vector3(sx, y - RACK_H / 2 + 2, vz),
+          new THREE.Vector3(sx, y + RACK_H / 2 - 2, vz)
+        );
+      }
     }
   }
   const slots = new THREE.LineSegments(
