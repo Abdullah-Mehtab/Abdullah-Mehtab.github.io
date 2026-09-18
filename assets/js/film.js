@@ -146,9 +146,23 @@
     return last.getBoundingClientRect().top + window.scrollY + last.offsetHeight - window.innerHeight;
   }
 
+  // The root scrolls smoothly by default, and this control cannot.
+  //
+  // portfolio-v2.css sets scroll-behavior: smooth on the root so an anchor jump eases. stepPlay
+  // calls scrollTo once a frame toward a target a few pixels further on, and under that rule each
+  // call starts a fresh easing animation that the next frame replaces before it has travelled.
+  // Measured: 240px a second driven every frame moved the page 0px in two seconds, while a single
+  // scrollTo on the same page reached its target in 750ms. The control has never moved the page.
+  //
+  // So playing turns the easing off for as long as it lasts and puts it back afterwards, rather
+  // than each call asking for an instant scroll, which not every browser accepts as a behavior.
+  const root = document.documentElement;
+  let easedScroll = "";
+
   function stopPlaying() {
     if (!playing) return;
     playing = false;
+    root.style.scrollBehavior = easedScroll;
     body.classList.remove("is-playing");
     play.setAttribute("aria-label", "Play this chapter");
     playWord.textContent = "Play";
@@ -176,6 +190,8 @@
     // not depend on a class having been applied yet.
     if (window.scrollY >= playEnd()) return;
     playing = true;
+    easedScroll = root.style.scrollBehavior;
+    root.style.scrollBehavior = "auto";
     playFrom = window.scrollY;
     playAt = performance.now();
     body.classList.add("is-playing");
@@ -191,7 +207,19 @@
       // A wheel or key event on the window has the window as its target, which is not a Node,
       // and Node.contains throws on it rather than returning false.
       const from = e.target instanceof Node ? e.target : null;
-      if (from && (from === play || play.contains(from))) return;
+      const onControl = Boolean(from) && (from === play || play.contains(from));
+      // The control is exempt only from what leads to its own click, and not from everything a
+      // reader does while the pointer happens to be over it or the button happens to hold focus.
+      //
+      // Pressing play leaves the button focused, so every key the reader then pressed arrived
+      // with the button as its target and was waved through: the arrow keys scrolled the page
+      // while the film kept playing over the top of them, and the film never gave way. Wheel and
+      // touch were already fine, because a reader moves the pointer off the control before using
+      // them. Keyboard activation is the one case that has to stay exempt, since Enter and Space
+      // fire keydown and then click, and stopping on the keydown would let the click start it
+      // straight back up.
+      const activates = event === "keydown" && (e.key === "Enter" || e.key === " " || e.key === "Spacebar");
+      if (onControl && (event === "pointerdown" || event === "touchstart" || activates)) return;
       stopPlaying();
     }, { passive: true, capture: true });
   }

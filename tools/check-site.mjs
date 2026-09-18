@@ -2547,6 +2547,74 @@ async function checkFilmPlayControl(baseUrl) {
       if (moved < -2) {
         failures.push(`${route} play control scrolls the reader ${Math.abs(moved)}px back up the page when it is pressed from below the last act. Pressing play should never move a reader backwards.`);
       }
+
+      // And from the top, where a reader actually presses it: does the page move at all.
+      //
+      // This check used to press play only from below the last act, where the right answer is
+      // that nothing happens, and never once from a position where something should. So it was
+      // green for the whole time the control did nothing, on every run, while the owner pressed
+      // the button and watched the page sit still.
+      //
+      // What it did was real and invisible. portfolio-v2.css sets scroll-behavior: smooth on the
+      // root, and the control calls window.scrollTo once a frame toward a target about four
+      // pixels further on. Each call starts a fresh smooth scroll animation and the next frame
+      // replaces it before it has travelled, so a run of 240px a second moved the page zero. A
+      // single scrollTo on that page reaches 6px after 50ms and its target after 750ms; the same
+      // call repeated every frame reaches nothing.
+      //
+      // Sixty pixels in a second, which a working control clears by a factor of four and a dead
+      // one cannot reach. Not tied to the speed, so retuning the speed cannot quietly disable it.
+      const PLAY_CARRIES = 60;
+      await page.evaluate(() => window.scrollTo(0, 0));
+      await page.evaluate(() => new Promise((done) => setTimeout(done, 700)));
+      const carried = await page.evaluate(async () => {
+        const from = window.scrollY;
+        document.querySelector('.film-play').click();
+        await new Promise((done) => setTimeout(done, 1000));
+        return { from: Math.round(from), to: Math.round(window.scrollY) };
+      });
+      // And the reader can take it back with a key, not only with the wheel.
+      //
+      // Pressing play leaves the button focused, so every keystroke afterwards arrived with the
+      // button as its target, and the exemption that stops the control cancelling its own click
+      // waved all of them through. The arrow keys scrolled while the film played over the top of
+      // them. Wheel and pointer were fine the whole time, which is why nothing caught it.
+      // Pressed on the control while the control holds focus, because that is the state a mouse
+      // click leaves behind and it is the whole reason the fault was invisible. A key dispatched
+      // at the window instead has the window as its target, takes the ordinary path, and passes
+      // whether the page is right or wrong: this check was written that way first and proved
+      // nothing.
+      const gaveWay = await page.evaluate(async () => {
+        const el = document.querySelector('.film-play');
+        el.focus();
+        await new Promise((done) => setTimeout(done, 200));
+        const at = window.scrollY;
+        (document.activeElement || el).dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowDown', bubbles: true }));
+        await new Promise((done) => setTimeout(done, 700));
+        const after = window.scrollY;
+        await new Promise((done) => setTimeout(done, 700));
+        return { still: Math.round(window.scrollY - after), at: Math.round(at), focused: document.activeElement === el };
+      });
+      if (!gaveWay.focused) {
+        failures.push(`${route} play control cannot take keyboard focus, so whether a key stops the film could not be measured.`);
+      }
+      if (gaveWay.still > 8) {
+        failures.push(
+          `${route} keeps playing after the reader presses a key: the page moved another ${gaveWay.still}px. `
+          + 'Anything the reader does has to take the film back off them, and a key is the one that is easy to miss, '
+          + 'because pressing play leaves the control focused and every keystroke then arrives on the control.'
+        );
+      }
+      await page.evaluate(() => { const el = document.querySelector('.film-play'); if (el && el.textContent.trim() === 'Stop') el.click(); });
+
+      const travelled = carried.to - carried.from;
+      if (travelled < PLAY_CARRIES) {
+        failures.push(
+          `${route} play control moves the page ${travelled}px in a second when pressed from the top, floor ${PLAY_CARRIES}px. `
+          + 'A control that says it plays the chapter and leaves the reader where they were is a dead button. '
+          + 'Check scroll-behavior on the root: a per frame scrollTo cannot outrun a smooth scroll animation it restarts every frame.'
+        );
+      }
     }
   } finally {
     await browser.close();
