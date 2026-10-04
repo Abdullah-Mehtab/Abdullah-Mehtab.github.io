@@ -30,6 +30,83 @@ const RACK_D = 28;
 const ABOVE_ROW = RACK_H / 2 + 22;
 const UNITS = 15;
 
+// The front of the Wazuh Manager: drive bays, vents and status lights painted on the box's own
+// faces. The act's main object was a blank cube among racks that carry real detail, and the
+// painting costs nothing the frame can feel: the same mesh and the same material, with a map.
+//
+// Painted, not built. Real 3D bays would add geometry and a draw call or more per frame; the
+// budget has room for that, but a bay seen from the distance the manager is read at is a
+// lighter rectangle with a dark line in it, which is what this is.
+//
+// The left three quarters of the canvas is the front, drawn on all four sides of the box since
+// it turns. The strip at the right is plain ground, which the top and bottom faces are mapped
+// to, so no face shows a front lying on its back. The ground is the face colour the box already
+// had, so the box reads as the same body with detail added and not as a different object.
+const SERVER_FRONT_SHARE = 0.75;
+
+function serverFrontTexture(accent, face, lightRoom) {
+  const ground = "#" + face.getHexString();
+  const ink = "#" + accent.getHexString();
+  // A bay sits a little off the ground in the direction that is away from the room's own light:
+  // lighter on a dark theme, darker on a pale one.
+  const bay = lightRoom ? "#000000" : "#ffffff";
+  const texture = painted(512, 512, (g, w, h) => {
+    g.fillStyle = ground;
+    g.fillRect(0, 0, w, h);
+
+    const frontWidth = w * SERVER_FRONT_SHARE;
+    const margin = 26;
+
+    // Bezel rule across the top and the status lights under it.
+    g.fillStyle = ink;
+    g.globalAlpha = 0.5;
+    g.fillRect(margin, 30, frontWidth - margin * 2, 3);
+    for (let i = 0; i < 3; i++) {
+      g.globalAlpha = i === 0 ? 0.95 : 0.5;
+      g.beginPath();
+      g.arc(margin + 12 + i * 22, 58, 5, 0, Math.PI * 2);
+      g.fill();
+    }
+
+    // Five drive bays: a lighter inset, a dark handle line and an activity light each.
+    for (let i = 0; i < 5; i++) {
+      const y = 92 + i * 56;
+      g.globalAlpha = lightRoom ? 0.07 : 0.06;
+      g.fillStyle = bay;
+      g.fillRect(margin, y, frontWidth - margin * 2, 42);
+      g.globalAlpha = 0.55;
+      g.fillStyle = ink;
+      g.fillRect(margin + 12, y + 17, frontWidth - margin * 2 - 76, 4);
+      g.globalAlpha = i % 2 ? 0.95 : 0.4;
+      g.beginPath();
+      g.arc(frontWidth - margin - 20, y + 21, 5, 0, Math.PI * 2);
+      g.fill();
+    }
+
+    // Vent slots along the bottom, drawn as short rules.
+    g.fillStyle = ink;
+    g.globalAlpha = 0.3;
+    for (let i = 0; i < 14; i++) g.fillRect(margin + i * 20, 392, 8, 64);
+    g.globalAlpha = 1;
+  });
+  texture.colorSpace = THREE.SRGBColorSpace;
+  return texture;
+}
+
+// BoxGeometry lays out six faces of four vertices: +x, -x, +y, -y, +z, -z. Each face takes the
+// whole 0 to 1 square by default. The sides are squeezed into the front's share of it, and the
+// top and bottom are pointed at the plain strip.
+function mapServerFront(geometry) {
+  const uv = geometry.attributes.uv;
+  for (let face = 0; face < 6; face++) {
+    for (let v = face * 4; v < face * 4 + 4; v++) {
+      if (face === 2 || face === 3) uv.setXY(v, 0.9, 0.5);
+      else uv.setXY(v, uv.getX(v) * SERVER_FRONT_SHARE, uv.getY(v));
+    }
+  }
+  uv.needsUpdate = true;
+}
+
 export function buildLan(palette) {
   const group = new THREE.Group();
   const accent = palette.accents[1];
@@ -220,7 +297,15 @@ export function buildLan(palette) {
   // site is benchmark, never a source. This is also the more honest shape: what a Wazuh
   // manager is, is an ordered stack of rules and decoders that events are pushed through.
   const manager = new THREE.Group();
-  manager.add(edgedBox(26, 34, 26, face, accent, 1));
+  const managerBody = edgedBox(26, 34, 26, face, accent, 1);
+  mapServerFront(managerBody.geometry);
+  managerBody.material.map = serverFrontTexture(accent, face, palette.lightRoom);
+  // White, so the painted ground is what shows: the map is multiplied by the material colour.
+  managerBody.material.color.set(0xffffff);
+  // The site check fails any marked body whose material carries no texture, so a manager that
+  // loses its front is a failed build and not a quiet return to a blank cube.
+  managerBody.userData.screen = "Wazuh Manager";
+  manager.add(managerBody);
 
   const rules = [];
   for (let i = 0; i < 9; i++) {
