@@ -2159,8 +2159,8 @@ body.scene-live .film-stage-glow {
 body.scene-live .act > section {
   background-image: radial-gradient(
     ellipse 46% 64% at 28% 49%,
-    color-mix(in srgb, var(--bg-deep, #060b12) 88%, transparent) 0%,
-    color-mix(in srgb, var(--bg-deep, #060b12) 62%, transparent) 56%,
+    color-mix(in srgb, var(--bg-deep, #060b12) 92%, transparent) 0%,
+    color-mix(in srgb, var(--bg-deep, #060b12) 72%, transparent) 56%,
     transparent 82%
   );
 }

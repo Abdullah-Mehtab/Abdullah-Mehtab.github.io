@@ -3023,6 +3023,171 @@ async function captureScreenshots(baseUrl) {
   }
 }
 
+// How much of the scene may be drawn behind the page's own words.
+//
+// A wireframe behind a paragraph passes a contrast check and still reads as busy: act three's
+// cylinder rings through its four step captions, act two's cabinet edges through its copy. The
+// engine fades whatever the scene draws behind a block of copy (clearBehindText in engine.js),
+// and the page's scrim darkens the same region. This holds both to it.
+//
+// Measured as the extra edge the scene puts inside each rendered line of text, as a share of the
+// edge the letters carry themselves: the frame with the scene's contents drawn against the same
+// frame with them hidden, so the room's colour, the scrim and the glyphs are identical in both
+// and the difference is the scene and nothing else. Hiding the canvas instead takes the room's
+// ground away and measures the letters on a different backdrop.
+//
+// The ceiling is a line drawn through two measurements, not a derived number: the worst line in
+// a sweep of four acts read 0.043 with the scene drawn at full strength behind the
+// words, and 0.009 with the fade and the darker scrim. It sits between them.
+const TEXT_EDGE_CEILING = 0.02;
+const TEXT_EDGE_DEPTHS = [0.05, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6];
+
+// No line of the page's copy has much of the scene drawn behind it.
+async function checkFilmTextClear(baseUrl) {
+  const executablePath = findChromeExecutable();
+  if (!executablePath) {
+    warnings.push('Skipping the chapter text clearance check because Chrome/Edge was not found. Set CHROME_PATH to enable it.');
+    return;
+  }
+  const routes = await filmRoutes();
+  if (routes.length === 0) {
+    failures.push('The chapter text clearance check found no page carrying the film body class, so it measured nothing.');
+    return;
+  }
+
+  const { default: puppeteer } = await import('puppeteer-core');
+  const browser = await puppeteer.launch({
+    executablePath,
+    headless: true,
+    args: ['--no-sandbox', '--disable-setuid-sandbox', '--enable-unsafe-swiftshader', '--use-gl=angle']
+  });
+  try {
+    const page = await browser.newPage();
+    await page.setCacheEnabled(false);
+    await page.setViewport({ width: 1440, height: 900, deviceScaleFactor: 1 });
+    for (const route of routes) {
+      await openPage(page, `${baseUrl}${route}?still&scene-debug`, { scene: true });
+      await page.evaluate(() => new Promise((done) => setTimeout(done, 1800)));
+      if (!await page.evaluate(() => Boolean(window.chapterFilm))) {
+        failures.push(`${route} did not publish its scene through ?scene-debug, so the copy could not be measured against it.`);
+        continue;
+      }
+      const bands = await page.evaluate(() => [...document.querySelectorAll('main > .act')].map((act, i) => ({
+        act: i + 1,
+        top: Math.round(act.getBoundingClientRect().top + window.scrollY),
+        span: Number(act.dataset.stationSpan) || Math.round(act.getBoundingClientRect().height)
+      })));
+
+      const settle = () => page.evaluate(() => new Promise((done) => {
+        let n = 0;
+        const tick = () => (++n > 40 ? done() : requestAnimationFrame(tick));
+        requestAnimationFrame(tick);
+      }));
+      let lines = 0;
+      let worst = null;
+      for (const band of bands) {
+        for (const depth of TEXT_EDGE_DEPTHS) {
+          await page.evaluate((to) => window.scrollTo(0, to), Math.round(band.top + band.span * depth));
+          await settle();
+          // One box per rendered line, tight to the glyphs. A block box runs the full width of
+          // its column however short the words are, and would count empty room as text.
+          const boxes = await page.evaluate(() => {
+            const header = document.querySelector('.site-header');
+            const headerBottom = header ? header.getBoundingClientRect().bottom : 0;
+            const found = [];
+            for (const el of document.querySelectorAll('main .act h1, main .act h2, main .act h3, main .act p, main .act li')) {
+              const r = el.getBoundingClientRect();
+              if (r.width < 40 || r.height < 10 || r.bottom < headerBottom || r.top > window.innerHeight) continue;
+              const pin = el.closest('.act-pin');
+              if (pin && !pin.classList.contains('is-arrived')) continue;
+              let opacity = 1;
+              for (let n = el; n && n !== document.documentElement; n = n.parentElement) opacity *= Number(getComputedStyle(n).opacity);
+              if (opacity < 0.85) continue;
+              const run = document.createRange();
+              run.selectNodeContents(el);
+              for (const line of run.getClientRects()) {
+                if (line.width < 24 || line.height < 8 || line.top < headerBottom || line.bottom > window.innerHeight) continue;
+                found.push({
+                  text: el.textContent.trim().slice(0, 34),
+                  rect: [Math.round(line.left), Math.round(line.top), Math.round(line.right), Math.round(line.bottom)]
+                });
+              }
+            }
+            return found;
+          });
+          if (boxes.length === 0) continue;
+          const withScene = await page.screenshot({ encoding: 'base64' });
+          await page.evaluate(() => {
+            window.chapterFilm.scene.traverse((node) => {
+              if (node === window.chapterFilm.scene || !node.visible) return;
+              node.visible = false;
+              node.userData.hiddenForTextCheck = true;
+            });
+          });
+          await page.evaluate(() => new Promise((done) => requestAnimationFrame(() => requestAnimationFrame(done))));
+          const withoutScene = await page.screenshot({ encoding: 'base64' });
+          await page.evaluate(() => {
+            window.chapterFilm.scene.traverse((node) => {
+              if (node.userData && node.userData.hiddenForTextCheck) {
+                node.visible = true;
+                node.userData.hiddenForTextCheck = false;
+              }
+            });
+          });
+          const added = await page.evaluate(async (a, b, rects) => {
+            const read = async (data) => {
+              const img = new Image();
+              img.src = 'data:image/png;base64,' + data;
+              await img.decode();
+              const canvas = document.createElement('canvas');
+              canvas.width = img.width;
+              canvas.height = img.height;
+              const ctx = canvas.getContext('2d', { willReadFrequently: true });
+              ctx.drawImage(img, 0, 0);
+              return ctx.getImageData(0, 0, img.width, img.height);
+            };
+            const energy = (image, x0, y0, x1, y1) => {
+              let total = 0;
+              let counted = 0;
+              for (let y = Math.max(0, y0); y < Math.min(image.height, y1); y++) {
+                for (let x = Math.max(1, x0); x < Math.min(image.width, x1); x++) {
+                  const i = (y * image.width + x) * 4;
+                  const j = i - 4;
+                  total += Math.abs(image.data[i] - image.data[j]) + Math.abs(image.data[i + 1] - image.data[j + 1]) + Math.abs(image.data[i + 2] - image.data[j + 2]);
+                  counted += 3;
+                }
+              }
+              return counted ? total / counted : 0;
+            };
+            const live = await read(a);
+            const bare = await read(b);
+            return rects.map((box) => {
+              const own = energy(bare, ...box.rect);
+              return { text: box.text, share: own > 0 ? (energy(live, ...box.rect) - own) / own : null };
+            });
+          }, withScene, withoutScene, boxes);
+          for (const row of added) {
+            if (row.share === null) continue;
+            lines++;
+            if (!worst || row.share > worst.share) worst = { ...row, act: band.act, depth };
+          }
+        }
+      }
+      if (lines === 0) {
+        failures.push(`${route} showed no line of copy at any sampled depth, so the text clearance check measured nothing.`);
+        continue;
+      }
+      if (worst.share > TEXT_EDGE_CEILING) {
+        failures.push(
+          `${route} puts ${worst.share.toFixed(3)} of a line's own edge inside "${worst.text}" (act ${worst.act} at ${Math.round(worst.depth * 100)}%), ceiling ${TEXT_EDGE_CEILING}, over ${lines} lines. The scene is being drawn behind the copy at full strength: see clearBehindText in engine.js and the scrim in film.css.`
+        );
+      }
+    }
+  } finally {
+    await browser.close();
+  }
+}
+
 async function main() {
   await checkProtectedRoutes();
   await checkDownloadNames();
@@ -3049,6 +3214,7 @@ async function main() {
     await checkFilmTrafficPaths(baseUrl);
     await checkFilmLabelSize(baseUrl);
     await checkFilmPlateLegibility(baseUrl);
+    await checkFilmTextClear(baseUrl);
     await checkFilmPlayControl(baseUrl);
     await checkFilmBodyClash(baseUrl);
     await checkFilmActColour(baseUrl);

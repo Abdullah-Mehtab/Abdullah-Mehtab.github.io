@@ -237,6 +237,7 @@ function screenBox(node, camera, probe) {
 // not move faster than this.
 const HEADING_REFRESH_MS = 140;
 let headingCache = [];
+let headingOpacity = [];
 let headingCachedAt = 0;
 
 // Every block of the page's own words that is on screen, not only its headings.
@@ -252,15 +253,132 @@ function headingRects(now) {
   if (now - headingCachedAt < HEADING_REFRESH_MS) return headingCache;
   headingCachedAt = now;
   headingCache = [];
+  headingOpacity = [];
   for (const el of document.querySelectorAll("main .act h1, main .act h2, main .act h3, main .act p, main .act li")) {
     const rect = el.getBoundingClientRect();
     if (rect.bottom < 0 || rect.top > window.innerHeight || rect.width < 40) continue;
     // A block whose own text has been faded out is not copy anyone is reading, and the reveals
     // on this page leave every act's blocks in the document at all times.
-    if (Number(getComputedStyle(el).opacity) < 0.12) continue;
+    const opacity = Number(getComputedStyle(el).opacity);
+    if (opacity < 0.12) continue;
     headingCache.push(rect);
+    headingOpacity.push(opacity);
   }
   return headingCache;
+}
+
+// ——— the scene behind the words ———
+//
+// A wireframe behind a paragraph is legible by the numbers and still busy: act three's
+// cylinder rings run through its four step captions and act two's cabinet edges through its
+// copy. The page's own scrim darkens that whole region evenly. This is the other half, decided
+// by the owner on 2026-10-05 as both together: wherever the page's words stand, whatever the
+// scene draws behind them is faded in the same pass that draws it.
+//
+// In the fragment shader, per pixel, and not per object. A set's racks are one instanced
+// buffer, so fading an object would fade every rack on the screen and not just the ones behind
+// the text. Rejected: lowering the opacity of whole objects that overlap a text box.
+//
+// The rectangles are the copy's own, the same ones the nameplate pass keeps labels off. They
+// are written once a frame as uniforms, so it costs no draw call and no layout read of its own.
+// A block's amount is its own opacity, so the fade comes in and out with the words.
+const TEXT_CLEAR_SLOTS = 32;
+// How much of what is behind a word is taken away at the middle of its box. Not all of it: the
+// sets are meant to be flown through, and a hole in the shape of a paragraph reads as a mask.
+const TEXT_CLEAR_FADE = 0.7;
+// Pixels over which the fade eases out past a box's edge, so the set does not show a cut.
+const TEXT_CLEAR_FEATHER = 40;
+const TEXT_CLEAR_PAD = 6;
+const textClear = {
+  rects: Array.from({ length: TEXT_CLEAR_SLOTS }, () => new THREE.Vector4()),
+  amounts: new Float32Array(TEXT_CLEAR_SLOTS),
+  bounds: new THREE.Vector4(),
+  room: new THREE.Vector3(),
+  roomOut: { r: 0, g: 0, b: 0 }
+};
+const textClearUniforms = {
+  uTextRects: { value: textClear.rects },
+  uTextAmounts: { value: textClear.amounts },
+  uTextBounds: { value: textClear.bounds },
+  uTextCount: { value: 0 },
+  uTextRoom: { value: textClear.room },
+  uTextScale: { value: 1 },
+  uTextView: { value: 1 }
+};
+const TEXT_CLEAR_DECLARATIONS = `
+uniform vec4 uTextRects[${TEXT_CLEAR_SLOTS}];
+uniform float uTextAmounts[${TEXT_CLEAR_SLOTS}];
+uniform vec4 uTextBounds;
+uniform float uTextCount;
+uniform vec3 uTextRoom;
+uniform float uTextScale;
+uniform float uTextView;
+float textClearAmount() {
+  vec2 p = vec2(gl_FragCoord.x, uTextView * uTextScale - gl_FragCoord.y) / uTextScale;
+  // Most pixels are nowhere near any words, so one box around all of them answers for those.
+  if (p.x < uTextBounds.x || p.y < uTextBounds.y || p.x > uTextBounds.z || p.y > uTextBounds.w) return 0.0;
+  float k = 0.0;
+  for (int i = 0; i < ${TEXT_CLEAR_SLOTS}; i++) {
+    if (float(i) >= uTextCount) break;
+    vec2 d = max(max(uTextRects[i].xy - p, p - uTextRects[i].zw), vec2(0.0));
+    k = max(k, uTextAmounts[i] * (1.0 - smoothstep(0.0, ${TEXT_CLEAR_FEATHER.toFixed(1)}, length(d))));
+  }
+  return k * ${TEXT_CLEAR_FADE.toFixed(2)};
+}
+`;
+
+// Patches every material in a group except the nameplates, which have their own pass for
+// staying off the words. A material that blends loses opacity; one that does not is mixed
+// toward the room's colour, which is what the fog already does with distance. Decided when the
+// material compiles: a material that changes its blending afterwards keeps its first answer.
+function clearBehindText(group) {
+  group.traverse((node) => {
+    if (!node.material || (node.userData && node.userData.caption)) return;
+    for (const material of Array.isArray(node.material) ? node.material : [node.material]) {
+      if (material.userData.clearsBehindText) continue;
+      material.userData.clearsBehindText = true;
+      const blends = material.transparent;
+      material.onBeforeCompile = (shader) => {
+        Object.assign(shader.uniforms, textClearUniforms);
+        shader.fragmentShader = TEXT_CLEAR_DECLARATIONS + shader.fragmentShader.replace(
+          "#include <dithering_fragment>",
+          "#include <dithering_fragment>\n" + (blends
+            ? "gl_FragColor.a *= 1.0 - textClearAmount();"
+            : "gl_FragColor.rgb = mix(gl_FragColor.rgb, uTextRoom, textClearAmount());")
+        );
+      };
+      material.customProgramCacheKey = () => (blends ? "clearBehindTextBlend" : "clearBehindTextMix");
+      material.needsUpdate = true;
+    }
+  });
+}
+
+// Fills the uniforms from the copy that is on screen this frame.
+function feedTextClear(now, roomColour, renderer, viewHeight) {
+  const rects = headingRects(now);
+  const count = Math.min(rects.length, TEXT_CLEAR_SLOTS);
+  let left = 1e9;
+  let top = 1e9;
+  let right = -1e9;
+  let bottom = -1e9;
+  for (let i = 0; i < count; i++) {
+    const rect = rects[i];
+    textClear.rects[i].set(rect.left - TEXT_CLEAR_PAD, rect.top - TEXT_CLEAR_PAD, rect.right + TEXT_CLEAR_PAD, rect.bottom + TEXT_CLEAR_PAD);
+    textClear.amounts[i] = headingOpacity[i];
+    left = Math.min(left, rect.left);
+    top = Math.min(top, rect.top);
+    right = Math.max(right, rect.right);
+    bottom = Math.max(bottom, rect.bottom);
+  }
+  const reach = TEXT_CLEAR_PAD + TEXT_CLEAR_FEATHER;
+  textClear.bounds.set(left - reach, top - reach, right + reach, bottom + reach);
+  textClearUniforms.uTextCount.value = count;
+  // The output colour space, not the working one: the mix happens after the renderer has
+  // converted the colour for the screen.
+  roomColour.getRGB(textClear.roomOut, THREE.SRGBColorSpace);
+  textClear.room.set(textClear.roomOut.r, textClear.roomOut.g, textClear.roomOut.b);
+  textClearUniforms.uTextScale.value = renderer.getPixelRatio();
+  textClearUniforms.uTextView.value = viewHeight;
 }
 
 function keepNameplatesLegible(stations, camera, probe, plates, narrow, width, height, now, laneEdge) {
@@ -897,6 +1015,8 @@ export function mountFilm({ canvas, buildStations }) {
       scene.add(station.group);
     });
     ambience = buildTrackAmbience(scene, palette, stations.length);
+    for (const station of stations) clearBehindText(station.group);
+    for (const part of [ambience.field, ambience.logs, ambience.ticks]) clearBehindText(part);
     renderer.setClearColor(palette.rooms[0], 1);
     // The fog is what makes an act a place, and it is also what hid the next set during a
     // flight. At 0.0042 a set 220 units ahead was 57% fogged out; at 0.003 it is 34%, measured
@@ -1300,6 +1420,7 @@ export function mountFilm({ canvas, buildStations }) {
     }
 
     keepNameplatesLegible(stations, camera, nameplateProbe, nameplates, narrow, width, height, now, copyLaneEdge);
+    feedTextClear(now, roomColour, renderer, height);
 
     renderer.render(scene, camera);
 
