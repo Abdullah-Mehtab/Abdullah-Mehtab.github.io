@@ -599,7 +599,7 @@ async function checkFilmFrameFit(baseUrl) {
     for (const size of FRAME_FIT_SIZES) {
       await page.setViewport({ width: size.width, height: size.height, deviceScaleFactor: 1 });
       for (const route of routes) {
-        await page.goto(`${baseUrl}${route}`, { waitUntil: 'networkidle2' });
+        await openPage(page, `${baseUrl}${route}`);
         const tall = await page.evaluate(() => {
           const pins = [...document.querySelectorAll('main > .act .act-pin')];
           return pins
@@ -662,7 +662,7 @@ async function checkFilmEdgeChrome(baseUrl) {
     for (const size of EDGE_CHROME_SIZES) {
       await page.setViewport({ width: size.width, height: size.height, deviceScaleFactor: 1 });
       for (const route of routes) {
-        await page.goto(`${baseUrl}${route}`, { waitUntil: 'networkidle2' });
+        await openPage(page, `${baseUrl}${route}`);
         // The copy scrolls under the header, so the header has to be opaque.
         //
         // It was 95% of the page's ground mixed with transparent, with a blur behind it, and
@@ -892,7 +892,7 @@ async function checkFilmClosingSet(baseUrl) {
     await page.setCacheEnabled(false);
     await page.setViewport({ width: 1440, height: 900, deviceScaleFactor: 1 });
     for (const route of routes) {
-      await page.goto(`${baseUrl}${route}?still&scene-debug`, { waitUntil: 'networkidle2' });
+      await openPage(page, `${baseUrl}${route}?still&scene-debug`, { scene: true });
       await page.evaluate(() => new Promise((done) => setTimeout(done, 1800)));
       const published = await page.evaluate(() => Boolean(window.chapterFilm));
       if (!published) {
@@ -1069,7 +1069,7 @@ async function checkFilmSetFraming(baseUrl) {
     // ceiling, and 20% at 1920 and 2560.
     await page.setViewport({ width: 1440, height: 900, deviceScaleFactor: 1 });
     for (const route of routes) {
-      await page.goto(`${baseUrl}${route}?still&scene-debug`, { waitUntil: 'networkidle2' });
+      await openPage(page, `${baseUrl}${route}?still&scene-debug`, { scene: true });
       await page.evaluate(() => new Promise((done) => setTimeout(done, 1800)));
       const seam = await page.evaluate(() => Boolean(window.chapterFilm)
         && typeof window.chapterFilm.pause === 'function'
@@ -1372,7 +1372,7 @@ async function checkFilmSequenceWiring(baseUrl) {
     await page.setCacheEnabled(false);
     await page.setViewport({ width: 1440, height: 900, deviceScaleFactor: 1 });
     for (const route of routes) {
-      await page.goto(`${baseUrl}${route}?still&scene-debug`, { waitUntil: 'networkidle2' });
+      await openPage(page, `${baseUrl}${route}?still&scene-debug`, { scene: true });
       await page.evaluate(() => new Promise((done) => setTimeout(done, 1800)));
       if (!await page.evaluate(() => Boolean(window.chapterFilm))) {
         failures.push(`${route} did not publish its scene through ?scene-debug, so its sequences could not be measured.`);
@@ -1534,7 +1534,7 @@ async function checkFilmTrafficPaths(baseUrl) {
     await page.setCacheEnabled(false);
     await page.setViewport({ width: 1440, height: 900, deviceScaleFactor: 1 });
     for (const route of routes) {
-      await page.goto(`${baseUrl}${route}?scene-debug`, { waitUntil: 'networkidle2' });
+      await openPage(page, `${baseUrl}${route}?scene-debug`, { scene: true });
       await page.evaluate(() => new Promise((done) => setTimeout(done, 1800)));
       if (!await page.evaluate(() => Boolean(window.chapterFilm))) {
         failures.push(`${route} did not publish its scene through ?scene-debug, so its traffic could not be measured.`);
@@ -1729,7 +1729,7 @@ async function checkFilmPlateLegibility(baseUrl) {
     await page.setCacheEnabled(false);
     await page.setViewport({ width: 1440, height: 900, deviceScaleFactor: 1 });
     for (const route of routes) {
-      await page.goto(`${baseUrl}${route}?still&scene-debug`, { waitUntil: 'networkidle2' });
+      await openPage(page, `${baseUrl}${route}?still&scene-debug`, { scene: true });
       await page.evaluate(() => new Promise((done) => setTimeout(done, 1800)));
       if (!await page.evaluate(() => Boolean(window.chapterFilm))) {
         failures.push(`${route} did not publish its scene through ?scene-debug, so its plates could not be measured.`);
@@ -1830,7 +1830,7 @@ async function checkFilmLabelSize(baseUrl) {
     await page.setCacheEnabled(false);
     await page.setViewport({ width: 1440, height: 900, deviceScaleFactor: 1 });
     for (const route of routes) {
-      await page.goto(`${baseUrl}${route}?still&scene-debug`, { waitUntil: 'networkidle2' });
+      await openPage(page, `${baseUrl}${route}?still&scene-debug`, { scene: true });
       await page.evaluate(() => new Promise((done) => setTimeout(done, 1800)));
       if (!await page.evaluate(() => Boolean(window.chapterFilm))) {
         failures.push(`${route} did not publish its scene through ?scene-debug, so its labels could not be sized.`);
@@ -1955,7 +1955,7 @@ async function checkFilmNameplates(baseUrl) {
     await page.setCacheEnabled(false);
     await page.setViewport({ width: 1440, height: 900, deviceScaleFactor: 1 });
     for (const route of routes) {
-      await page.goto(`${baseUrl}${route}?still&scene-debug`, { waitUntil: 'networkidle2' });
+      await openPage(page, `${baseUrl}${route}?still&scene-debug`, { scene: true });
       await page.evaluate(() => new Promise((done) => setTimeout(done, 1800)));
       if (!await page.evaluate(() => Boolean(window.chapterFilm))) {
         failures.push(`${route} did not publish its scene through ?scene-debug, so its nameplates could not be measured.`);
@@ -2262,7 +2262,7 @@ async function checkFilmActColour(baseUrl) {
     await page.setCacheEnabled(false);
     await page.setViewport({ width: 1440, height: 900, deviceScaleFactor: 1 });
     for (const route of routes) {
-      await page.goto(`${baseUrl}${route}?still&scene-debug`, { waitUntil: 'networkidle2' });
+      await openPage(page, `${baseUrl}${route}?still&scene-debug`, { scene: true });
       await page.evaluate(() => new Promise((done) => setTimeout(done, 1800)));
       await page.evaluate(() => { document.documentElement.style.scrollBehavior = 'auto'; });
       const bands = await page.evaluate(() => [...document.querySelectorAll('main > .act')].map((act, i) => ({
@@ -2390,7 +2390,7 @@ async function checkFilmBodyClash(baseUrl) {
     await page.setCacheEnabled(false);
     await page.setViewport({ width: 1440, height: 900, deviceScaleFactor: 1 });
     for (const route of routes) {
-      await page.goto(`${baseUrl}${route}?scene-debug`, { waitUntil: 'networkidle2' });
+      await openPage(page, `${baseUrl}${route}?scene-debug`, { scene: true });
       await page.evaluate(() => new Promise((done) => setTimeout(done, 1800)));
       await page.evaluate(() => { document.documentElement.style.scrollBehavior = 'auto'; });
       if (!await page.evaluate(() => Boolean(window.chapterFilm))) {
@@ -2527,7 +2527,7 @@ async function checkFilmPlayControl(baseUrl) {
     await page.setCacheEnabled(false);
     await page.setViewport({ width: 1440, height: 900, deviceScaleFactor: 1 });
     for (const route of routes) {
-      await page.goto(`${baseUrl}${route}`, { waitUntil: 'networkidle2' });
+      await openPage(page, `${baseUrl}${route}`);
       await page.evaluate(() => new Promise((done) => setTimeout(done, 1500)));
       const has = await page.evaluate(() => Boolean(document.querySelector('.film-play')));
       if (!has) {
@@ -2762,6 +2762,30 @@ async function smokeTestRoutes(baseUrl) {
     if (!response.ok) {
       failures.push(`Smoke route ${item.route} returned HTTP ${response.status}`);
     }
+  }
+}
+
+// How every browser check opens a page. It waits for what the checks actually depend on: the
+// load event, the web fonts (copy wraps differently without them, and the frame fit check is
+// a measurement of wrapping), and, for a chapter opened with ?scene-debug, the scene handle.
+//
+// It used to wait for networkidle2, and that cannot be relied on for a page drawing WebGL
+// without a GPU, which is what every CI runner is. Measured on this page with Chrome's GPU
+// switched off: every request had finished inside half a second, and Chrome still had not
+// reported the network idle after 30. With WebGL off as well it reported idle at 1.1s. CI
+// timed out in the first browser check on every push from 2026-09-18 on, so none of the checks
+// after it ever ran there.
+//
+// A scene that never publishes is not swallowed here: the wait ends, and each check's own test
+// of window.chapterFilm reports the failure in its own words.
+async function openPage(page, url, { scene = false } = {}) {
+  await page.goto(url, { waitUntil: 'load' });
+  await page.evaluate(() => document.fonts.ready.then(() => true));
+  if (!scene) return;
+  try {
+    await page.waitForFunction(() => Boolean(window.chapterFilm), { timeout: 30000 });
+  } catch (error) {
+    if (error?.name !== 'TimeoutError') throw error;
   }
 }
 
