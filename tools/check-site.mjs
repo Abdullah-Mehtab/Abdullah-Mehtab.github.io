@@ -310,6 +310,36 @@ async function checkDashes() {
   }
 }
 
+// "Chapter" is what this repository calls a project page while building it. A visitor reads a
+// project called Cyber Sentinel, not a chapter of something. Owner, 2026-09-11: calling them
+// chapters on the front end "is revealing our methodology". Only what a reader can see is
+// checked: text between tags, and the text attributes a screen reader or a hover reads. Class
+// names, data attributes, URLs, comments, scripts and styles keep the word, they are names.
+async function checkNoChapterWordInCopy() {
+  const files = (await walkFiles(repoRoot))
+    .filter((file) => extname(file).toLowerCase() === '.html')
+    .filter((file) => {
+      const shown = toDisplayPath(file);
+      return !shown.startsWith('classic/') && !shown.startsWith('play/');
+    });
+
+  for (const file of files) {
+    const content = await readFile(file, 'utf8');
+    const markup = content
+      .replace(/<!--[\s\S]*?-->/g, '')
+      .replace(/<(script|style)\b[\s\S]*?<\/\1>/gi, '');
+    const seen = [];
+    for (const match of markup.matchAll(/\b(?:aria-label|alt|title)="([^"]*)"/gi)) seen.push(match[1]);
+    for (const text of markup.replace(/<[^>]*>/g, '\n').split(/\r?\n/)) seen.push(text);
+    const hit = seen.find((text) => /\bchapters?\b/i.test(text));
+    if (hit) {
+      failures.push(
+        `${toDisplayPath(file)} shows the word "chapter" to a reader: "${hit.trim().slice(0, 80)}". Name the project, not the repository's word for it.`
+      );
+    }
+  }
+}
+
 // A date range that ends in Present is a claim with an expiry date, and nothing here notices when
 // it passes. The owner's current role is the one fact the site keeps current, and it is shown twice
 // on purpose: on the home timeline and on the CV page, because a recruiter reads both and checks one
@@ -2998,6 +3028,7 @@ async function main() {
   await checkDownloadNames();
   await checkRedirectStub();
   await checkDashes();
+  await checkNoChapterWordInCopy();
   await checkPresentDates();
   await checkPrivateFolders();
   await checkVisitorProofHost();
