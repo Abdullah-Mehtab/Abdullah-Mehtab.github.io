@@ -152,11 +152,18 @@ export function buildBoard(palette) {
   // sat on was a desk with other equipment on it, so that is what is behind it: a few dim
   // volumes well back, and a soft pool of light underneath where the surface would be. Not a
   // grid, and not a floor plane with lines on it; those are what the CSS version drew.
+  // The crates' filled faces sit most of the way into the room's own colour, so what shows of
+  // them is their edges. At the faces' normal offset from the room the crates were the loudest
+  // thing in the act's air, 56% of the board where it stands against 10 to 24% in the other
+  // acts, and one stood behind the title. Lowering only their edge opacity barely moved that
+  // (56% to 53%), because the weight is in the filled faces. Theme aware: the room colour
+  // follows the theme.
+  const benchFace = face.clone().lerp(palette.rooms[0], 0.85);
   const bench = repeated(new THREE.BoxGeometry(26, 10, 18), [
     [-84, -34, -70], [-50, -30, -96], [64, -36, -84], [96, -28, -60],
     [-118, -32, -58], [22, -38, -112], [132, -34, -92], [-16, -30, -134],
     [78, -30, -136], [-96, -36, -118]
-  ], face, accent, 0.22);
+  ], benchFace, accent, 0.22);
   bench.userData.ambient = true;
   group.add(bench);
 
