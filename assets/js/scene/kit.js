@@ -282,6 +282,9 @@ export function nameplate(text, sub, accent, deep, worldWidth) {
   const plate = panel(texture, worldWidth, (worldWidth * height) / width, 0);
   plate.renderOrder = LAYER.plate;
   plate.userData.caption = text;
+  // The title is painted at 46px into a canvas this many pixels tall, so the plate's height on
+  // screen times this is the size of its type on screen. The engine hides a plate under the floor.
+  plate.userData.typeShare = 46 / height;
   return plate;
 }
 

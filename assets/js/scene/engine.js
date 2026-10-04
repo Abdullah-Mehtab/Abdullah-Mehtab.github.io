@@ -174,6 +174,12 @@ const NAMEPLATE_OVERLAP = 0.06;
 // It is the same line the site check calls solid. Set lower, a plate can be drawn in the gap
 // between the two, too faint to read and not faint enough to remove.
 const NAMEPLATE_LEGIBLE = 0.75;
+// The smallest a label's type may be on screen, in CSS pixels, before it is taken away. The site
+// check calls the same figure LABEL_FLOOR. A label under it is a word a reader can see and not
+// read, so it is hidden until the camera has brought it up to size, the same rule as the opacity
+// above. Rejected: growing the plate with distance, which makes every plate large at every depth
+// and sets the displacement pass fighting itself. Decided by the owner on 2026-10-05.
+const NAMEPLATE_TYPE_FLOOR = 12;
 // Scratch for the plate displacement pass, which needs the camera's own axes to move a label
 // straight up the screen. Module level because this runs every frame.
 const plateRight = new THREE.Vector3();
@@ -381,6 +387,18 @@ function feedTextClear(now, roomColour, renderer, viewHeight) {
   textClearUniforms.uTextView.value = viewHeight;
 }
 
+// The size of a plate's type on screen: its vertical axis projected, times the share of the plate
+// the type takes. The axis and not the bounding box of the plate, because a plate on a tilted
+// part is foreshortened, and its box is taller than the words in it. Needs the node's world
+// matrix to be current, which screenBox has just ensured.
+function typePixels(node, camera, probe, height) {
+  const half = node.geometry.parameters.height / 2;
+  probe.set(0, half, 0).applyMatrix4(node.matrixWorld).project(camera);
+  const top = probe.y;
+  probe.set(0, -half, 0).applyMatrix4(node.matrixWorld).project(camera);
+  return node.userData.typeShare * (Math.abs(top - probe.y) / 2) * height;
+}
+
 function keepNameplatesLegible(stations, camera, probe, plates, narrow, width, height, now, laneEdge) {
   plates.length = 0;
   // A phone has no art lane: the copy is the whole width, so any nameplate can land on the
@@ -425,6 +443,13 @@ function keepNameplatesLegible(stations, camera, probe, plates, narrow, width, h
       if (node.material.opacity <= 0.02) return;
       const box = screenBox(node, camera, probe);
       if (!box) return;
+      // Swarm labels are atmosphere and stay as they are, by the owner's ruling of 2026-09-16.
+      // Done here, before any other pass, so a plate about to be hidden does not take the place
+      // of one a reader can read.
+      if (!node.userData.swarm && node.userData.typeShare && typePixels(node, camera, probe, height) < NAMEPLATE_TYPE_FLOOR) {
+        node.material.opacity = 0;
+        return;
+      }
       // Drawn over the set rather than inside it. A caption half behind a monitor stand is a
       // fragment, and depth-sorting a label against the thing it names never ends well.
       if (node.material.depthTest) {

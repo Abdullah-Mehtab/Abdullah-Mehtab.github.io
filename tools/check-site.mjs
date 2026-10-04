@@ -1943,10 +1943,11 @@ const PLATE_DEPTHS = [0.05, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6];
 // a shape a component rather than a box: at 8px a reader can see that a word is there and cannot
 // tell which word, so the set is a diagram with the labels rubbed off.
 //
-// The rule is "reaches this somewhere in its own act", not "is never drawn under it". The second
-// form would make every plate grow at every depth and set the engine's displacement pass fighting
-// itself, and it contradicts the owner's ruling of 2026-09-14 that a label only has to be shown
-// somewhere. A label coming up as the camera nears is what a label is for.
+// Two rules. Each label reaches this somewhere in its own act, which keeps the owner's ruling of
+// 2026-09-14 that every label is shown somewhere. And no label is drawn under it: a plate too
+// small to read is hidden by the engine, not enlarged, so nothing has to grow at every depth and
+// the displacement pass is not set fighting itself. A label coming up as the camera nears is what
+// a label is for. Decided by the owner on 2026-10-05.
 const LABEL_FLOOR = 12;
 // nameplate() in kit.js paints the title at this size into the plate's own canvas, so the ratio
 // of it to that canvas's height turns a plate's height on screen into a type size. Read from the
@@ -1990,6 +1991,7 @@ async function checkFilmLabelSize(baseUrl) {
       })));
 
       const biggest = new Map();
+      const smallDrawn = [];
       for (const band of bands) {
         const index = band.act - 1;
         for (const depth of PLATE_DEPTHS) {
@@ -2033,9 +2035,43 @@ async function checkFilmLabelSize(baseUrl) {
             const had = biggest.get(key);
             if (!had || plate.type > had.type) biggest.set(key, plate);
           }
+          // Every plate drawn right now, whichever act it belongs to. The biggest-in-its-act
+          // reading above cannot see this: act three's labels are visible from inside act two,
+          // a few pixels high, and are only ever sized against act three's own depths.
+          const drawnSmall = await page.evaluate(([titlePx, floor]) => {
+            const film = window.chapterFilm;
+            const camera = film.camera;
+            const out = [];
+            film.scene.traverse((node) => {
+              if (!node.userData || !node.userData.caption || node.userData.swarm) return;
+              if (!node.visible || !node.material || node.material.opacity <= 0.02) return;
+              const map = node.material.map;
+              if (!map || !map.image || !node.geometry.parameters) return;
+              const h = node.geometry.parameters.height;
+              const Vector = node.position.constructor;
+              const ends = [new Vector(0, h / 2, 0), new Vector(0, -h / 2, 0)].map((v) => {
+                const p = node.localToWorld(v);
+                if (p.clone().applyMatrix4(camera.matrixWorldInverse).z > -0.1) return null;
+                p.project(camera);
+                return (-p.y * 0.5 + 0.5) * window.innerHeight;
+              });
+              if (ends.some((e) => e === null)) return;
+              const type = (titlePx / map.image.height) * Math.abs(ends[0] - ends[1]);
+              if (type < floor) out.push({ text: node.userData.caption, type });
+            });
+            return out;
+          }, [LABEL_TITLE_PX, LABEL_FLOOR]);
+          for (const plate of drawnSmall) {
+            smallDrawn.push(`act ${band.act} at ${Math.round(depth * 100)}% "${plate.text}" at ${plate.type.toFixed(1)}px`);
+          }
         }
       }
 
+      if (smallDrawn.length) {
+        failures.push(
+          `${route} draws ${smallDrawn.length} label${smallDrawn.length === 1 ? '' : 's'} under ${LABEL_FLOOR}px of type: ${smallDrawn.slice(0, 6).join('; ')}. A word too small to read is worse than no word, so a label is readable or it is not drawn: see keepNameplatesLegible in engine.js. A label a set means as atmosphere says so with userData.swarm.`
+        );
+      }
       const named = [...biggest.entries()].filter(([, plate]) => !plate.swarm);
       if (named.length === 0) {
         failures.push(`${route} has no label that is not marked as swarm, so the label size check measured nothing. Either the page lost its labels or every set is claiming its labels are atmosphere.`);
