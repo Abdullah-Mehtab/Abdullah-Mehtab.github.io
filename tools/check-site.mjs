@@ -1813,7 +1813,10 @@ async function checkFilmTrafficPaths(baseUrl) {
 // Not a contrast check. checkFilmNameplates already asks whether a plate's ink separates from
 // its ground, and it asks at the depth each plate is strongest, which is exactly where this
 // fault never appears.
-const PLATE_LEGIBLE = 0.55;
+//
+// The top of the band is PLATE_SOLID, the line every other plate check calls solid, not a
+// number of its own. A band with a lower top lets a plate drawn between the two pass here
+// while it still reads as unfinished.
 const PLATE_GONE = 0.02;
 // Where to look. The same window the other plate checks use, plus the start of the flight, since
 // a plate on its way out of frame is the case that produces the band.
@@ -1875,7 +1878,7 @@ async function checkFilmPlateLegibility(baseUrl) {
           }, band.act - 1);
           for (const row of rows) {
             readings++;
-            if (row.shown > PLATE_GONE && row.shown < PLATE_LEGIBLE) {
+            if (row.shown > PLATE_GONE && row.shown < PLATE_SOLID) {
               caught.push(`act ${band.act} at ${Math.round(depth * 100)}% "${row.text}" at ${row.shown.toFixed(2)}`);
             }
           }
@@ -1888,7 +1891,7 @@ async function checkFilmPlateLegibility(baseUrl) {
       }
       if (caught.length) {
         failures.push(
-          `${route} draws ${caught.length} nameplate${caught.length === 1 ? '' : 's'} with the ground faded out from under the words, between ${PLATE_GONE} and ${PLATE_LEGIBLE} opacity: ${caught.slice(0, 6).join('; ')}. A plate's ground and its words are one texture and fade together, and the ground is what makes the words legible over geometry. A label is legible or it is gone.`
+          `${route} draws ${caught.length} nameplate${caught.length === 1 ? '' : 's'} with the ground faded out from under the words, between ${PLATE_GONE} and ${PLATE_SOLID} opacity: ${caught.slice(0, 6).join('; ')}. A plate's ground and its words are one texture and fade together, and the ground is what makes the words legible over geometry. A label is legible or it is gone.`
         );
       }
     }

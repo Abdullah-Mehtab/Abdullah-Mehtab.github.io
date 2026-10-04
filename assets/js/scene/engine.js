@@ -170,9 +170,10 @@ function readPalette(body, actCount) {
 const NAMEPLATE_EDGE_FADE = 0.07;
 const NAMEPLATE_OVERLAP = 0.06;
 // The opacity below which a plate is taken away rather than shown faintly. Its ground and its
-// words are one texture and fade together, so a plate in this band is grey type standing on
-// whatever it was meant to be legible against.
-const NAMEPLATE_LEGIBLE = 0.55;
+// words are one texture and fade together, so under this the room shows through the words.
+// It is the same line the site check calls solid. Set lower, a plate can be drawn in the gap
+// between the two, too faint to read and not faint enough to remove.
+const NAMEPLATE_LEGIBLE = 0.75;
 // Scratch for the plate displacement pass, which needs the camera's own axes to move a label
 // straight up the screen. Module level because this runs every frame.
 const plateRight = new THREE.Vector3();
