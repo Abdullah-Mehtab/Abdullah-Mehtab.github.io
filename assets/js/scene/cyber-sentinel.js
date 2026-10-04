@@ -3,7 +3,7 @@
 //
 // Adding another chapter means copying this file, changing four imports, and adding a canvas to
 // that page. It must never mean editing the engine. If it does, the station contract is wrong,
-// which docs/SCROLL_FILM_PLAN.md lists as a reason to stop and say so.
+// and the contract is what gets fixed, not the engine.
 
 const canvas = document.getElementById("chapter-scene");
 

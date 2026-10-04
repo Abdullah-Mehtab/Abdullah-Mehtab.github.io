@@ -245,7 +245,7 @@ export function buildBoard(palette) {
       //
       // These two are the biggest things in this act's air by a long way, and they were at full
       // strength on the frame the page lands on, where the board is only half assembled. Measured
-      // with .claude-tools/audit-landing-weight.mjs: inside the board's own part of the frame the
+      // by hiding each part in turn and photographing what was left: inside the board's own part of the frame the
       // scenery changed 1.45 million units of luma against the subject's 2.46, so the first thing
       // a reader saw was a glow with a part-built board inside it. Tied to the build they are
       // quiet while it arrives and full once it is there.

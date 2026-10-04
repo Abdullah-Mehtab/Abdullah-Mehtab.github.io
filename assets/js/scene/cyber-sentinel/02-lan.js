@@ -49,8 +49,8 @@ export function buildLan(palette) {
   // The room gave way rather than the manager, and the other three ways were measured first.
   // Moving the manager right to 118 or 120 clears the cabinet and puts the act's own payoff hard
   // against the right frame edge, because dock() places this set by its own mass and a body that
-  // size moving right moves the whole room left: audit-frame-balance reads 13% of the screen dead
-  // at the right at 70%, ceiling 12, and round 15 of the critic named the same frame. Moving it
+  // size moving right moves the whole room left: measured, 13% of the screen sits dead at the
+  // right at 70%, against a ceiling of 12. Moving it
   // forward to z 29 or beyond clears the cabinet in depth and parks it in the seven attack lanes,
   // which run at z 40 down to z 28 and are placed there deliberately to cross in front of its
   // face. Shrinking it enough to fit beside a cabinet at 96 is not possible: it would have to

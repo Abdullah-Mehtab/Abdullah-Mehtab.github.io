@@ -88,8 +88,8 @@ const NARROW_EYE = 34;
 // difference check. Wider, and the four still sit inside the theme's own hue family.
 //
 // Act four is at 42 rather than 28 because degrees are not what a reader sees. At 28 it sat 22
-// hue degrees from act three, which every check here called different and round 15 of the critic
-// could not separate at all: in CIEDE2000 the two were 8.4 apart while the other two neighbouring
+// hue degrees from act three, which every check here called different and which looked
+// like one colour on screen: in CIEDE2000 the two were 8.4 apart while the other two neighbouring
 // pairs were 13.1 and 13.2, because the eye discriminates hue worst across exactly that blue to
 // violet stretch. The gaps are uneven in degrees on purpose, so they are even to an eye: 13.1,
 // 13.2, 13.3. checkFilmActColour holds that, per neighbouring pair, in the same units.
@@ -138,7 +138,7 @@ function readPalette(body, actCount) {
 
   // Each act gets its own air, not just its own objects. The sets occupy about a third of the
   // frame, so two acts whose only difference is the geometry in that third are two versions of
-  // the same room to anyone looking at the whole screen: .claude-tools/audit-scene-difference.mjs
+  // the same room to anyone looking at the whole screen: a perceptual difference measurement
   // put three of the six pairs below the floor for exactly that reason. Tinting the clear
   // colour and the fog is the cheapest honest way to make an act a place.
   // Built in HSL rather than mixed toward the accent. Mixing pulls the whole frame toward the
@@ -1117,7 +1117,7 @@ export function mountFilm({ canvas, buildStations }) {
     // The last station never travels, because there is nothing after it to travel to. Feeding
     // its move the full progress rather than the hold is what keeps it moving through its
     // second half instead of parking. Without this the closing act is a still frame for the
-    // last 45% of its scroll, which is what "round 4 is STATIC" described.
+    // last 45% of its scroll.
     const heldHere = atLast ? (reduced ? 1 : progress) : (reduced ? 1 : held);
     const here = stations[index].mod(heldHere, time);
     const next = stations[Math.min(index + 1, last)].mod(0, time);
@@ -1337,14 +1337,14 @@ export function mountFilm({ canvas, buildStations }) {
   // its own ruling, and inherits nothing from this one.
   return {
     // Handed out so a page can expose the scene graph for measurement. Nothing on the page
-    // uses these; .claude-tools/audit-scene-frame.mjs projects labels and nodes into screen
+    // uses these; the audit tooling projects labels and nodes into screen
     // space with them, which is the only way to check that a nameplate is on screen and not
     // on top of another nameplate. Judging that from a screenshot is guesswork.
     scene,
     camera,
     get stations() { return stations; },
     state,
-    // The hue each act paints its room in, for .claude-tools/audit-act-colour.mjs to compare
+    // The hue each act paints its room in, for the audit tooling to compare
     // against what the page furniture is painted in.
     get actAccents() { return palette.accents.map((c) => c.getHexString()); },
     // Where dock() decided each set's visible weight should sit, in world units.
@@ -1363,7 +1363,7 @@ export function mountFilm({ canvas, buildStations }) {
     },
     // Hold the frame where it is, and draw one when asked.
     //
-    // For .claude-tools/audit-landing-weight.mjs, which hides part of a set and photographs what
+    // For the audit tooling, which hides part of a set and photographs what
     // is left to find out whether an act's subject or its scenery is the louder thing in the
     // frame. Each set's own update writes visibility onto its parts every frame, so with the
     // loop running anything a tool hides is drawn again before the shot is taken, and two acts
@@ -1381,7 +1381,7 @@ export function mountFilm({ canvas, buildStations }) {
     remeasure() { measure(); },
     // Draw calls in the last frame drawn.
     //
-    // audit-scene-perf reports the worst frame over a whole scripted scroll, which answers
+    // The performance audit reports the worst frame over a whole scripted scroll, which answers
     // "is the page inside its budget" and not "which act is spending it". Those are different
     // questions and the second one decides where a set may grow: the ceiling of 120 is set by
     // act three, so the room to add detail is in the other three and nothing said so.

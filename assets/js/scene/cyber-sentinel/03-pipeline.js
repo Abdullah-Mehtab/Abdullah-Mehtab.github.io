@@ -20,7 +20,7 @@ import { LAYER, THREE, clamp01, drift, ease, edgedBox, glow, motes, nameplate, p
 //
 // Left blank, they were the loudest empty objects in the chapter: a bright bordered rectangle
 // with a nameplate over it and nothing inside, measured at a luma spread of 4.4 against a floor
-// of 10 with .claude-tools/audit-screen-content.mjs.
+// of 10.
 function mailTexture(accent, deep) {
   const pale = deep.getHSL({ h: 0, s: 0, l: 0 }).l > 0.5;
   const wash = pale ? "#ffffff" : "#0a1119";
@@ -264,7 +264,7 @@ export function buildPipeline(palette) {
       const art = spec.art === "board" ? boardTexture(accent, palette.deep) : mailTexture(accent, palette.deep);
       const glass = panel(art, w - 3, h - 3, 0.12);
       glass.position.z = d / 2 + 0.1;
-      // Named so .claude-tools/audit-screen-content.mjs can look inside it. Only the set knows
+      // Named so the audit tooling can look inside it. Only the set knows
       // which of its planes is a screen and which is a panel of light.
       glass.userData.screen = spec.label;
       node.add(glass);

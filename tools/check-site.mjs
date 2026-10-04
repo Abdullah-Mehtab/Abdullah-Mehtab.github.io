@@ -2097,8 +2097,8 @@ async function checkFilmNameplates(baseUrl) {
 // How far apart two neighbouring acts' colours have to look.
 //
 // Measured as CIEDE2000 between the accents the page actually paints, not as hue degrees. Acts
-// three and four were 22 degrees apart, which a hue check called different and round 15 of the
-// critic could not tell apart at all, because the eye discriminates hue worst across exactly that
+// three and four were 22 degrees apart, which a hue check called different and which looked like
+// one colour on screen, because the eye discriminates hue worst across exactly that
 // blue to violet stretch. In perceptual terms they were 8.4 apart while the other two neighbouring
 // pairs were 13.1 and 13.2. Widening act four to +42 degrees puts all three at 13.
 //

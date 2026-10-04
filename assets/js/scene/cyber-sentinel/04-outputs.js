@@ -197,7 +197,7 @@ export function buildOutputs(palette) {
     unit.add(shell);
     const glass = panel(texture, w, h, 0);
     glass.position.z = depth / 2 + 0.2;
-    // Named so .claude-tools/audit-screen-content.mjs can look inside it.
+    // Named so the audit tooling can look inside it.
     glass.userData.screen = name;
     unit.add(glass);
     // A stalk down to the floor of the set, so the screen is standing rather than hovering.
@@ -242,8 +242,8 @@ export function buildOutputs(palette) {
   // This set stands at 0.52 scale, so plate width does not mean what it says here. At 44 the type
   // came out 12.8px at the one depth it was biggest and softer than that everywhere else: a plate
   // canvas is 640px wide with 46px type in it, and rendering that into 29px of screen downsamples
-  // the glyphs about four to one, which no filtering fixes. Round 15 of the critic read it as
-  // "grey mush over its own wireframe cube" in four of six frames, and it was right.
+  // the glyphs about four to one, which no filtering fixes: in four of six frames it was
+  // grey mush over its own wireframe cube.
   //
   // Size alone was not enough. At 60 in the old place the plate reached the copy lane and the
   // engine's own copy fade pulled it to 0.67 against a floor of 0.75, so it was legible and dim
@@ -397,7 +397,7 @@ export function buildOutputs(palette) {
       // Lit by how close the camera is, not by this act's own progress, and the difference is
       // the whole point. This act is a wide: the frame the reader lands on is the one where the
       // whole of it is in shot, and it was two dark rectangles with a nameplate over them, at 0%
-      // of their own brightest, measured with .claude-tools/audit-screen-content.mjs. That frame
+      // of their own brightest. That frame
       // is also where a deep link and the act rail both land.
       //
       // Its own progress cannot say when that frame is. A station's progress is zero for the
@@ -408,8 +408,8 @@ export function buildOutputs(palette) {
       // Distance can say it. The window was 124 to 108, chosen from when act three's copy leaves
       // the frame, and that was the wrong question: what matters is not whether the words are
       // still there but whether these two screens are standing on them. Asked properly, by
-      // projecting the screens' own rectangles against every line of copy the way
-      // audit-lit-panels does, the answer is much further out. At 299 units the dashboard covers
+      // projecting the screens' own rectangles against every line of copy, the answer is much
+      // further out. At 299 units the dashboard covers
       // 72% of "Email alerting and dashboards make", because act three's fly-through points the
       // camera where act four happens to sit. By 279 it touches nothing, and it touches nothing
       // at every distance from there in.
