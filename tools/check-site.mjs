@@ -309,6 +309,56 @@ async function checkDashes() {
   }
 }
 
+// A date range that ends in Present is a claim with an expiry date, and nothing here notices when
+// it passes. The owner's current role is the one fact the site keeps current, and it is shown twice
+// on purpose: on the home timeline and on the CV page, because a recruiter reads both and checks one
+// against the other, and dates that disagree read as carelessness or worse. So exactly those two
+// may say Present, once each, and they must say the same thing. Anywhere else it is finished work
+// that needs its end date.
+async function checkPresentDates() {
+  const roleFiles = ['index.html', 'cv.html'];
+  const pattern = /\d\s*(?:-|to)\s*Present\b/i;
+  const files = (await walkFiles(repoRoot))
+    .filter((file) => extname(file).toLowerCase() === '.html')
+    .filter((file) => {
+      const shown = toDisplayPath(file);
+      return !shown.startsWith('classic/') && !shown.startsWith('play/');
+    });
+
+  const roleRanges = new Map();
+  for (const file of files) {
+    const shown = toDisplayPath(file);
+    const content = await readFile(file, 'utf8');
+    const found = [];
+    content.split(/\r?\n/).forEach((line, index) => {
+      if (!pattern.test(line)) return;
+      found.push({ line: index + 1, text: line.replace(/<[^>]+>/g, ' ').trim() });
+    });
+
+    if (!roleFiles.includes(shown)) {
+      for (const hit of found) {
+        failures.push(`${shown}:${hit.line} dates something as ongoing ("${hit.text}"). Only the current role may say Present; give finished work its end date.`);
+      }
+      continue;
+    }
+    if (found.length !== 1) {
+      failures.push(`${shown} has ${found.length} date ranges ending in Present; it must have exactly one, the current role.`);
+      continue;
+    }
+    roleRanges.set(shown, found[0]);
+  }
+
+  for (const file of roleFiles) {
+    if (!files.some((candidate) => toDisplayPath(candidate) === file)) {
+      failures.push(`${file} is missing, so the current role's dates cannot be checked.`);
+    }
+  }
+  const [home, cv] = roleFiles.map((file) => roleRanges.get(file));
+  if (home && cv && home.text !== cv.text) {
+    failures.push(`The current role's dates disagree: index.html:${home.line} says "${home.text}" and cv.html:${cv.line} says "${cv.text}". Change both together.`);
+  }
+}
+
 // The truck strip's mountain range is a repeating tile, and three files have to agree on its
 // width for the loop to be invisible: the tile's own width in mountains.svg, the
 // background-size in animations.css, and the distance the mtn keyframes travel. Before this
@@ -2751,6 +2801,7 @@ async function main() {
   await checkDownloadNames();
   await checkRedirectStub();
   await checkDashes();
+  await checkPresentDates();
   await checkFilmTokenScope();
   await checkTruckStripLoop();
   await checkFilmActHandoff();
