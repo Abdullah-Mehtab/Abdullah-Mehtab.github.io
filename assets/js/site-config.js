@@ -4,6 +4,8 @@ window.PORTFOLIO_CONFIG = {
   commentsMode: "auto",
   commentsModeration: true,
   visitorProofEnabled: true,
+  // Visits are counted only on this host. npm test fails if it stops matching sitemap.xml.
+  visitorProofHost: "abdullah-mehtab.github.io",
   visitorProofEndpoint: "https://zvuklviflletxyhniwdm.supabase.co/functions/v1/visitor-proof",
   adminEmailHint: "abdullahmehtab666@gmail.com"
 };

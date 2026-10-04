@@ -381,6 +381,120 @@ async function checkPrivateFolders() {
   }
 }
 
+// The visitor counter only records on one host, set in site-config.js. If the site moves to
+// another domain and that setting does not move with it, real visits stop being counted and
+// nothing on the page says so. sitemap.xml has to name the live domain anyway, so the two are
+// held together here.
+async function checkVisitorProofHost() {
+  const config = await readFile(resolve(repoRoot, 'assets/js/site-config.js'), 'utf8');
+  const sitemap = await readFile(resolve(repoRoot, 'sitemap.xml'), 'utf8');
+  const host = config.match(/visitorProofHost:\s*"([^"]+)"/)?.[1];
+  if (!host) {
+    failures.push('assets/js/site-config.js sets no visitorProofHost, so the visitor counter would count no visit anywhere.');
+    return;
+  }
+  const named = new Set([...sitemap.matchAll(/<loc>\s*([^<\s]+)\s*<\/loc>/g)].map(([, loc]) => {
+    try {
+      return new URL(loc).hostname;
+    } catch {
+      return `an unreadable address (${loc})`;
+    }
+  }));
+  if (named.size === 0) {
+    failures.push("sitemap.xml lists no pages, so the visitor counter's host could not be checked against the live domain.");
+    return;
+  }
+  for (const hostname of named) {
+    if (hostname !== host) {
+      failures.push(`sitemap.xml names ${hostname} but the visitor counter only counts visits on ${host} (visitorProofHost in assets/js/site-config.js). Change them together.`);
+    }
+  }
+}
+
+// The visitor counter has to stay silent in every browser npm test drives, and still count a real
+// visitor. Three cases on the home page, each in a fresh browser, and each of the first two
+// leaves exactly one of the counter's two rules able to keep it silent:
+//   the local copy as served, in a browser that does not report automation, which is someone
+//   previewing the site locally: only the host rule stands between it and a recorded visit;
+//   the local copy presented as the published host, in an automated browser, which is a test
+//   run against the live site: only the automation rule does;
+//   the published host in a browser that does not report automation, which is how a visitor's
+//   browser looks: the counter has to try.
+// The third case is what tells silence because the rules work apart from silence because counting
+// broke. It also proves the wait is long enough: if the counter ever waits longer than this check
+// does, the third case fails rather than the first two passing for the wrong reason. guardPage
+// refuses every request that leaves the local copy, so even the third case reaches nothing outside
+// this machine.
+//
+// The counter waits 6s after the page loads, then up to 8s more for the browser to go idle.
+const VISIT_COUNTER_WAIT_MS = 16000;
+
+async function checkVisitCounting(baseUrl) {
+  const executablePath = findChromeExecutable();
+  if (!executablePath) {
+    warnings.push('Skipping the visitor counter check because Chrome/Edge was not found. Set CHROME_PATH to enable it.');
+    return;
+  }
+  const config = await readFile(resolve(repoRoot, 'assets/js/site-config.js'), 'utf8');
+  const endpoint = config.match(/visitorProofEndpoint:\s*"([^"]+)"/)?.[1];
+  if (!endpoint) {
+    failures.push('assets/js/site-config.js sets no visitorProofEndpoint, so the visitor counter check cannot tell whether a visit was sent.');
+    return;
+  }
+  // The counter's own two routes: its edge function, and the table it falls back to writing.
+  // Not the Supabase library itself, which the comments load from the same CDN.
+  const isVisitRecord = (url) => url.startsWith(endpoint) || url.includes('/rest/v1/visitor_events');
+
+  const cases = [
+    { name: 'the local copy as served, in a browser that does not report automation', published: false, automated: false, expectVisit: false },
+    { name: 'the local copy presented as the published host, in an automated browser', published: true, automated: true, expectVisit: false },
+    { name: 'the local copy presented as the published host, in a browser that does not report automation', published: true, automated: false, expectVisit: true }
+  ];
+
+  const { default: puppeteer } = await import('puppeteer-core');
+  for (const testCase of cases) {
+    const browser = await puppeteer.launch({
+      executablePath,
+      headless: true,
+      args: ['--no-sandbox', '--disable-setuid-sandbox', ...(testCase.automated ? [] : ['--disable-blink-features=AutomationControlled'])]
+    });
+    try {
+      const page = await browser.newPage();
+      if (testCase.published) {
+        // site-config.js assigns window.PORTFOLIO_CONFIG. Catching that assignment points the
+        // counter's host at wherever this copy is being served from, and changes nothing else.
+        await page.evaluateOnNewDocument(() => {
+          let held;
+          Object.defineProperty(window, 'PORTFOLIO_CONFIG', {
+            configurable: true,
+            get: () => held,
+            set: (value) => { held = { ...value, visitorProofHost: window.location.hostname }; }
+          });
+        });
+      }
+      await openPage(page, `${baseUrl}/`);
+      const automated = await page.evaluate(() => navigator.webdriver === true);
+      if (automated !== testCase.automated) {
+        failures.push(`The visitor counter check could not set up ${testCase.name}: navigator.webdriver was ${automated}. Chrome has changed how it reports automation, so this check no longer tests what it says.`);
+        continue;
+      }
+      const deadline = Date.now() + VISIT_COUNTER_WAIT_MS;
+      while (Date.now() < deadline && !refusedRequests(page).some(isVisitRecord)) {
+        await new Promise((resolveWait) => setTimeout(resolveWait, 250));
+      }
+      const tried = refusedRequests(page).some(isVisitRecord);
+      if (tried && !testCase.expectVisit) {
+        failures.push(`With ${testCase.name}, the visitor counter tried to record a visit. Test runs and local previews would be counted as visitors in the live data.`);
+      }
+      if (!tried && testCase.expectVisit) {
+        failures.push(`With ${testCase.name}, the visitor counter never tried to record a visit within ${VISIT_COUNTER_WAIT_MS / 1000}s. Either real visitors are no longer counted, or the counter now waits longer than this check does.`);
+      }
+    } finally {
+      await browser.close();
+    }
+  }
+}
+
 // The truck strip's mountain range is a repeating tile, and three files have to agree on its
 // width for the loop to be invisible: the tile's own width in mountains.svg, the
 // background-size in animations.css, and the distance the mtn keyframes travel. Before this
@@ -2765,6 +2879,38 @@ async function smokeTestRoutes(baseUrl) {
   }
 }
 
+// Every page a check opens may load from the local copy of the site and from nowhere else.
+// Without this the browser runs the page exactly as a visitor's would: it asks the live Supabase
+// project for comments, fetches a library from a CDN, and once a page has been open about six
+// seconds the visitor counter records a visit in the production data. A check measures the files
+// in this repository; it should neither depend on nor write to anything outside it.
+//
+// Puppeteer's rule for interception: once it is on, every request stalls until it is continued or
+// aborted, so both branches end in one of the two. What was refused is kept per page, so a check
+// can ask what a page tried to reach.
+const guardedPages = new WeakMap();
+
+async function guardPage(page, origin) {
+  if (guardedPages.has(page)) return;
+  const refused = [];
+  guardedPages.set(page, refused);
+  await page.setRequestInterception(true);
+  page.on('request', (request) => {
+    if (request.isInterceptResolutionHandled()) return;
+    const target = request.url();
+    if (target === origin || target.startsWith(`${origin}/`) || /^(data|blob|about):/.test(target)) {
+      request.continue();
+      return;
+    }
+    refused.push(target);
+    request.abort('blockedbyclient');
+  });
+}
+
+function refusedRequests(page) {
+  return guardedPages.get(page) || [];
+}
+
 // How every browser check opens a page. It waits for what the checks actually depend on: the
 // load event, the web fonts (copy wraps differently without them, and the frame fit check is
 // a measurement of wrapping), and, for a chapter opened with ?scene-debug, the scene handle.
@@ -2779,6 +2925,7 @@ async function smokeTestRoutes(baseUrl) {
 // A scene that never publishes is not swallowed here: the wait ends, and each check's own test
 // of window.chapterFilm reports the failure in its own words.
 async function openPage(page, url, { scene = false } = {}) {
+  await guardPage(page, new URL(url).origin);
   await page.goto(url, { waitUntil: 'load' });
   await page.evaluate(() => document.fonts.ready.then(() => true));
   if (!scene) return;
@@ -2833,6 +2980,7 @@ async function captureScreenshots(baseUrl) {
       ['play', '/play/']
     ];
     for (const [name, route] of pages) {
+      await guardPage(page, baseUrl);
       await page.goto(`${baseUrl}${route}`, { waitUntil: 'domcontentloaded', timeout: 45000 });
       await new Promise((resolveDelay) => setTimeout(resolveDelay, 2500));
       await page.screenshot({ path: join(outputDir, `${name}.png`), fullPage: true });
@@ -2849,6 +2997,7 @@ async function main() {
   await checkDashes();
   await checkPresentDates();
   await checkPrivateFolders();
+  await checkVisitorProofHost();
   await checkFilmTokenScope();
   await checkTruckStripLoop();
   await checkFilmActHandoff();
@@ -2869,6 +3018,7 @@ async function main() {
     await checkFilmPlayControl(baseUrl);
     await checkFilmBodyClash(baseUrl);
     await checkFilmActColour(baseUrl);
+    await checkVisitCounting(baseUrl);
     if (args.has('--screenshots')) {
       await captureScreenshots(baseUrl);
     }

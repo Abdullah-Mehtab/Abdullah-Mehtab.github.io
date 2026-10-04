@@ -212,7 +212,18 @@
     if (!edgeRecorded) await recordViaSupabase(payload);
   }
 
+  // Only a visit to the published site counts, and never one from a browser driven by automation.
+  // The host check keeps out local previews and anyone else serving a copy of these files; the
+  // automation check keeps out a test run against the live site, which the host check would let
+  // through. navigator.webdriver is the standard signal for that, and it is true in the headless
+  // Chrome that npm test drives. Without them, every test run counts as a visit.
+  function isCountableVisit() {
+    if (window.navigator && window.navigator.webdriver) return false;
+    return Boolean(config.visitorProofHost) && window.location.hostname === config.visitorProofHost;
+  }
+
   document.addEventListener("DOMContentLoaded", () => {
+    if (!isCountableVisit()) return;
     window.setTimeout(() => {
       if ("requestIdleCallback" in window) {
         window.requestIdleCallback(recordVisit, { timeout: 8000 });

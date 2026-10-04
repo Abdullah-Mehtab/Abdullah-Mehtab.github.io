@@ -47,6 +47,8 @@ beside them are a local archive and are not published.
 
 The site records lightweight visitor analytics through Supabase. Events include page slug, event type, selected theme/cursor/motion, referrer, optional source token, stable visitor/session IDs, hashed browser fingerprint data, and a hashed IP signal from the visitor-proof edge function.
 
+A visit is recorded only on the published domain, set as `visitorProofHost` in `assets/js/site-config.js`, and never from a browser that reports automation, so local previews and `npm test` add nothing to the data. `npm test` also refuses every request its browser makes outside the local copy of the site, and fails if either rule stops holding.
+
 ## Tech
 
 The site is built with static HTML, CSS, and JavaScript and is hosted through GitHub Pages. Interactive comments and lightweight visitor proof use Supabase. There is no build step for the site itself — the files in this repository are the files that ship.
