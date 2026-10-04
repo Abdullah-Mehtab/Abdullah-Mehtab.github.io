@@ -3,6 +3,7 @@
 
 import { createReadStream, existsSync } from 'node:fs';
 import { access, mkdir, readdir, readFile, stat } from 'node:fs/promises';
+import { execFileSync } from 'node:child_process';
 import { createServer } from 'node:http';
 import { dirname, extname, join, relative, resolve, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -356,6 +357,27 @@ async function checkPresentDates() {
   const [home, cv] = roleFiles.map((file) => roleRanges.get(file));
   if (home && cv && home.text !== cv.text) {
     failures.push(`The current role's dates disagree: index.html:${home.line} says "${home.text}" and cv.html:${cv.line} says "${cv.text}". Change both together.`);
+  }
+}
+
+// docs/ and .claude/ hold notes written for the coding assistant, not for a reader of this
+// repository, and the repository is public. .gitignore used to name each private doc one by one,
+// so every new doc was public by default and two of them shipped that way. It now ignores the
+// folders and names the one public file, but an ignore rule is not a gate: git add -f walks
+// straight past it. So this asks git what it is actually tracking there.
+async function checkPrivateFolders() {
+  const allowed = new Set(['docs/maintenance.md']);
+  let tracked;
+  try {
+    tracked = execFileSync('git', ['ls-files', '--', 'docs', '.claude'], { cwd: repoRoot, encoding: 'utf8' });
+  } catch (error) {
+    failures.push(`Could not ask git which files are tracked under docs/ and .claude/ (${error.message}); this check needs a git checkout.`);
+    return;
+  }
+  for (const file of tracked.split(/\r?\n/).filter(Boolean)) {
+    if (!allowed.has(file)) {
+      failures.push(`${file} is tracked, so it is published on GitHub. docs/ and .claude/ are internal: untrack it with git rm --cached, or add it to the allowed list here if it is meant for readers.`);
+    }
   }
 }
 
@@ -2802,6 +2824,7 @@ async function main() {
   await checkRedirectStub();
   await checkDashes();
   await checkPresentDates();
+  await checkPrivateFolders();
   await checkFilmTokenScope();
   await checkTruckStripLoop();
   await checkFilmActHandoff();
