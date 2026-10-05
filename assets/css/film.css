@@ -2156,14 +2156,32 @@ body.scene-live .film-stage-glow {
   of 0.10. The words are legible. They were sitting on a busy pattern, which is a
   composition fault, and the standard answer for text over busy imagery is a scrim
   that actually covers the text.
+
+  Light, at 40% and 20%, with a halo on the words doing the rest. At 92% and 72%
+  the ellipse also covered the space beside the copy where act three's labels
+  sit, and darkened their words over their own dark plates: Elasticsearch read
+  1.82:1, Logstash 2.37:1 and alerts.json 2.52:1 against 4.5, and every label
+  passed with the scrim switched off. A label carries its own ground, the way a
+  map label carries a mask, so the copy's protection must not reach it. The halo
+  follows the letters rather than a box: a soft ground under each block was
+  tried and drew a visible dark rectangle behind every heading and caption. What
+  the halo leaves of the scene inside a line, the fade in engine.js takes away.
+  Decided by the assistant after research, at the owner's delegation,
+  2026-10-05; measured by checkFilmLabelContrast and checkFilmTextClear.
 */
 body.scene-live .act > section {
   background-image: radial-gradient(
     ellipse 46% 64% at 28% 49%,
-    color-mix(in srgb, var(--bg-deep, #060b12) 92%, transparent) 0%,
-    color-mix(in srgb, var(--bg-deep, #060b12) 72%, transparent) 56%,
+    color-mix(in srgb, var(--bg-deep, #060b12) 40%, transparent) 0%,
+    color-mix(in srgb, var(--bg-deep, #060b12) 20%, transparent) 56%,
     transparent 82%
   );
+}
+body.scene-live main .act {
+  text-shadow:
+    0 0 4px var(--bg-deep, #060b12),
+    0 0 12px color-mix(in srgb, var(--bg-deep, #060b12) 95%, transparent),
+    0 0 32px color-mix(in srgb, var(--bg-deep, #060b12) 85%, transparent);
 }
 
 /*

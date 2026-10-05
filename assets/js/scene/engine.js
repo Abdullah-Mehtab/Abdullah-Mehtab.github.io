@@ -255,12 +255,17 @@ let headingCachedAt = 0;
 //
 // Paragraphs and list items as well as headings, because a label over a line of body copy is
 // the same fault at a smaller size, and the reader is more likely to be reading that line.
+//
+// And the two kinds of card, whole: act one's stat cards set their words in strong and span, and
+// act three's step numbers are spans, so neither was copy to this list. The scene was drawn at
+// full strength behind them, which is where a critic found the incoming set behind "Small-scale"
+// and "cost constraints" during the handoff to act two.
 function headingRects(now) {
   if (now - headingCachedAt < HEADING_REFRESH_MS) return headingCache;
   headingCachedAt = now;
   headingCache = [];
   headingOpacity = [];
-  for (const el of document.querySelectorAll("main .act h1, main .act h2, main .act h3, main .act p, main .act li")) {
+  for (const el of document.querySelectorAll("main .act h1, main .act h2, main .act h3, main .act p, main .act li, main .act .stat-card, main .act .case-step")) {
     const rect = el.getBoundingClientRect();
     if (rect.bottom < 0 || rect.top > window.innerHeight || rect.width < 40) continue;
     // A block whose own text has been faded out is not copy anyone is reading, and the reveals
@@ -291,9 +296,14 @@ function headingRects(now) {
 const TEXT_CLEAR_SLOTS = 32;
 // How much of what is behind a word is taken away at the middle of its box. Not all of it: the
 // sets are meant to be flown through, and a hole in the shape of a paragraph reads as a mask.
-const TEXT_CLEAR_FADE = 0.7;
+// 0.95 since the scrim was lightened to 40% on 2026-10-05: with the darker scrim gone, 0.7 left
+// act three's tower behind the step number "04" at 0.067 of that line's own edge against a
+// ceiling of 0.02, and 0.9 at 0.022. The feathered edge is what keeps it from reading as a hole.
+const TEXT_CLEAR_FADE = 0.95;
 // Pixels over which the fade eases out past a box's edge, so the set does not show a cut.
-const TEXT_CLEAR_FEATHER = 40;
+// 120, from 40: with the fade at 0.95, 40 pixels left a visible step where it ended on act two's
+// large flat back row, and a review read the copy as sitting on a mask.
+const TEXT_CLEAR_FEATHER = 120;
 const TEXT_CLEAR_PAD = 6;
 const textClear = {
   rects: Array.from({ length: TEXT_CLEAR_SLOTS }, () => new THREE.Vector4()),
@@ -337,9 +347,23 @@ float textClearAmount() {
 // staying off the words. A material that blends loses opacity; one that does not is mixed
 // toward the room's colour, which is what the fog already does with distance. Decided when the
 // material compiles: a material that changes its blending afterwards keeps its first answer.
-function clearBehindText(group) {
+//
+// Two kinds of thing are left whole, by owner decision 2026-10-05. A screen keeps its content:
+// the closing act's Kibana title faded with the Outcome column it passes behind at the end of
+// the act. And a set that declares itself contained keeps its solid bodies, because it is meant
+// to be seen whole: act one's board faded at the corner where it meets the opening paragraph.
+// Their lines and the scenery around them still fade.
+function clearBehindText(group, keepsBodies) {
+  const isScenery = (node) => {
+    for (let n = node; n && n !== group.parent; n = n.parent) {
+      if (n.userData && n.userData.ambient) return true;
+    }
+    return false;
+  };
   group.traverse((node) => {
     if (!node.material || (node.userData && node.userData.caption)) return;
+    if (node.userData && node.userData.screen) return;
+    if (keepsBodies && node.isMesh && !isScenery(node)) return;
     for (const material of Array.isArray(node.material) ? node.material : [node.material]) {
       if (material.userData.clearsBehindText) continue;
       material.userData.clearsBehindText = true;
@@ -1040,7 +1064,7 @@ export function mountFilm({ canvas, buildStations }) {
       scene.add(station.group);
     });
     ambience = buildTrackAmbience(scene, palette, stations.length);
-    for (const station of stations) clearBehindText(station.group);
+    for (const station of stations) clearBehindText(station.group, Boolean(station.contained));
     for (const part of [ambience.field, ambience.logs, ambience.ticks]) clearBehindText(part);
     renderer.setClearColor(palette.rooms[0], 1);
     // The fog is what makes an act a place, and it is also what hid the next set during a

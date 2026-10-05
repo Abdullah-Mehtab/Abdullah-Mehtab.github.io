@@ -2354,6 +2354,166 @@ async function checkFilmNameplates(baseUrl) {
   }
 }
 
+// A label is readable against what is behind it at every depth it is drawn, not only its best.
+//
+// A review on 2026-10-05 found act three's plates reading grey over the set, where the audit that
+// looked only at each plate's best depth passed them. Owner decision 2026-10-05 to check every
+// depth. Two things can take a plate under the floor: a plate drawn between PLATE_SOLID and full
+// strength lets the room through its ground, and the scrim behind the copy darkens the words of
+// a plate on the copy's side of the frame, which is what was measured here. Measured the way the audit
+// measures a plate, ink against ground, but across the middle of the plate where the words are,
+// and on the page as a reader sees it. The audit hides the page first, and with it the scrim
+// that darkens the copy's side of the frame, which is where those plates were going grey: a
+// plate there is read through it. The page's words are not in the way, because the engine
+// keeps every plate off them and checkFilmNameplates fails if it does not. Measured on
+// 2026-10-05 with the scrim at 92% and 72%: "alerts.json" 2.99:1 and "Elasticsearch" 3.60:1 in
+// act three, both passing with the scrim at 40% and 20%.
+const LABEL_CONTRAST_FLOOR = 4.5;
+const LABEL_CONTRAST_DEPTHS = [0, 0.05, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 0.95];
+// Fewer pixels than this inside a plate's middle and it is too small to measure; the size check
+// owns that fault.
+const LABEL_CONTRAST_PIXELS = 300;
+
+async function checkFilmLabelContrast(baseUrl) {
+  const executablePath = findChromeExecutable();
+  if (!executablePath) {
+    warnings.push('Skipping the label contrast check because Chrome/Edge was not found. Set CHROME_PATH to enable it.');
+    return;
+  }
+  const routes = await filmRoutes();
+  if (routes.length === 0) {
+    failures.push('The label contrast check found no page carrying the film body class, so it measured nothing.');
+    return;
+  }
+
+  const { default: puppeteer } = await import('puppeteer-core');
+  const browser = await puppeteer.launch({
+    executablePath,
+    headless: true,
+    args: ['--no-sandbox', '--disable-setuid-sandbox', '--enable-unsafe-swiftshader', '--use-gl=angle']
+  });
+  try {
+    const page = await browser.newPage();
+    await page.setCacheEnabled(false);
+    await page.setViewport({ width: 1440, height: 900, deviceScaleFactor: 1 });
+    for (const route of routes) {
+      await openPage(page, `${baseUrl}${route}?still&scene-debug`, { scene: true });
+      await page.evaluate(() => new Promise((done) => setTimeout(done, 1800)));
+      if (!await page.evaluate(() => Boolean(window.chapterFilm))) {
+        failures.push(`${route} did not publish its scene through ?scene-debug, so its labels could not be read against the room.`);
+        continue;
+      }
+      const bands = await page.evaluate(() => {
+        document.documentElement.style.scrollBehavior = 'auto';
+        return [...document.querySelectorAll('main > .act')].map((act) => ({
+          top: Math.round(act.getBoundingClientRect().top + window.scrollY),
+          span: Number(act.dataset.stationSpan) || Math.round(act.getBoundingClientRect().height)
+        }));
+      });
+      let measured = 0;
+      const low = [];
+      for (let a = 0; a < bands.length; a++) {
+        for (const depth of LABEL_CONTRAST_DEPTHS) {
+          await page.evaluate((to) => window.scrollTo(0, to), Math.round(bands[a].top + bands[a].span * depth));
+          await page.evaluate(() => new Promise((done) => {
+            let n = 0;
+            const tick = () => (++n > 50 ? done() : requestAnimationFrame(tick));
+            requestAnimationFrame(tick);
+          }));
+          // Every plate drawn at a strength the engine calls legible, by the middle of its
+          // ground: the inner two thirds across, where the ground is opaque at full strength and
+          // the words are, and the band the words sit in.
+          const plates = await page.evaluate((solid) => {
+            const film = window.chapterFilm;
+            const camera = film.camera;
+            camera.updateMatrixWorld();
+            const out = [];
+            film.stations.forEach((station, si) => {
+              if (!station.group.visible) return;
+              station.group.traverse((node) => {
+                if (!node.userData || !node.userData.caption || !node.material) return;
+                if (node.material.opacity < solid) return;
+                // Atmosphere, by the owner's ruling of 2026-09-16, and skipped by the size check
+                // for the same reason: act two's attack classes crossing the room are a swarm of
+                // words a few pixels tall, not names to read.
+                if (node.userData.swarm) return;
+                const params = node.geometry && node.geometry.parameters;
+                if (!params) return;
+                node.updateWorldMatrix(true, false);
+                let x0 = Infinity; let y0 = Infinity; let x1 = -Infinity; let y1 = -Infinity;
+                for (const [u, v] of [[-1 / 3, -0.4], [1 / 3, -0.4], [1 / 3, 0.4], [-1 / 3, 0.4]]) {
+                  const p = new (camera.position.constructor)(u * (params.width || 1), v * (params.height || 1), 0);
+                  p.applyMatrix4(node.matrixWorld);
+                  if (p.clone().applyMatrix4(camera.matrixWorldInverse).z > -0.1) return;
+                  p.project(camera);
+                  x0 = Math.min(x0, (p.x * 0.5 + 0.5) * innerWidth);
+                  x1 = Math.max(x1, (p.x * 0.5 + 0.5) * innerWidth);
+                  y0 = Math.min(y0, (-p.y * 0.5 + 0.5) * innerHeight);
+                  y1 = Math.max(y1, (-p.y * 0.5 + 0.5) * innerHeight);
+                }
+                if (x0 < 0 || y0 < 0 || x1 > innerWidth || y1 > innerHeight) return;
+                out.push({ act: si + 1, text: node.userData.caption, rect: [x0, y0, x1, y1] });
+              });
+            });
+            return out;
+          }, PLATE_SOLID);
+          if (!plates.length) continue;
+          const shot = await page.screenshot({ encoding: 'base64' });
+          const reads = await page.evaluate(async (data, rects, floorPixels) => {
+            const img = new Image();
+            img.src = 'data:image/png;base64,' + data;
+            await img.decode();
+            const canvas = document.createElement('canvas');
+            canvas.width = img.width;
+            canvas.height = img.height;
+            const ctx = canvas.getContext('2d', { willReadFrequently: true });
+            ctx.drawImage(img, 0, 0);
+            const pixels = ctx.getImageData(0, 0, img.width, img.height).data;
+            const channel = (v) => {
+              const s = v / 255;
+              return s <= 0.03928 ? s / 12.92 : ((s + 0.055) / 1.055) ** 2.4;
+            };
+            // Ink is the lightest tenth of the plate's middle on a dark theme and the darkest on a
+            // light one, so both ends are taken and the ratio between them is the reading.
+            return rects.map((rect) => {
+              const values = [];
+              for (let y = Math.ceil(rect[1]); y < Math.floor(rect[3]); y++) {
+                for (let x = Math.ceil(rect[0]); x < Math.floor(rect[2]); x++) {
+                  const i = (y * img.width + x) * 4;
+                  values.push(0.2126 * channel(pixels[i]) + 0.7152 * channel(pixels[i + 1]) + 0.0722 * channel(pixels[i + 2]));
+                }
+              }
+              if (values.length < floorPixels) return null;
+              values.sort((p, q) => p - q);
+              const tenth = Math.max(1, Math.round(values.length * 0.1));
+              const mean = (from, to) => values.slice(from, to).reduce((s, v) => s + v, 0) / (to - from);
+              return (mean(values.length - tenth, values.length) + 0.05) / (mean(0, tenth) + 0.05);
+            });
+          }, shot, plates.map((plate) => plate.rect), LABEL_CONTRAST_PIXELS);
+          plates.forEach((plate, i) => {
+            if (reads[i] === null) return;
+            measured++;
+            if (reads[i] < LABEL_CONTRAST_FLOOR) {
+              low.push(`"${plate.text}" in act ${plate.act} at ${reads[i].toFixed(2)}:1, act ${a + 1} at ${Math.round(depth * 100)}%`);
+            }
+          });
+        }
+      }
+      if (measured === 0) {
+        failures.push(`${route} drew no label large and strong enough to measure at any sampled depth, so the label contrast check measured nothing.`);
+        continue;
+      }
+      if (low.length) {
+        failures.push(
+          `${route} draws labels a reader cannot separate from what is behind them: ${low.slice(0, 8).join('; ')}${low.length > 8 ? `, and ${low.length - 8} more` : ''}, floor ${LABEL_CONTRAST_FLOOR}:1. Two things take a plate under it: a plate drawn below full strength lets the room through its ground, and the scrim behind the copy in film.css darkens the words of any plate on the copy's side of the frame. Anchor the label somewhere else, or look at the scrim.`
+        );
+      }
+    }
+  } finally {
+    await browser.close();
+  }
+}
+
 // The play control never takes a reader backwards, and is not offered where there is nothing
 // to play.
 //
@@ -3143,7 +3303,9 @@ async function checkFilmTextClear(baseUrl) {
             const header = document.querySelector('.site-header');
             const headerBottom = header ? header.getBoundingClientRect().bottom : 0;
             const found = [];
-            for (const el of document.querySelectorAll('main .act h1, main .act h2, main .act h3, main .act p, main .act li')) {
+            // The stat cards' words and the step numbers are set in strong and span, and are copy
+            // a reader reads like any other line.
+            for (const el of document.querySelectorAll('main .act h1, main .act h2, main .act h3, main .act p, main .act li, main .act .stat-card > *, main .act .case-step > span')) {
               const r = el.getBoundingClientRect();
               if (r.width < 40 || r.height < 10 || r.bottom < headerBottom || r.top > window.innerHeight) continue;
               const pin = el.closest('.act-pin');
@@ -3457,6 +3619,80 @@ async function checkVideoDialog(baseUrl) {
   }
 }
 
+// What the fade behind the page's words leaves alone. Owner decision 2026-10-05: a screen keeps
+// its content, and a set that declares itself contained keeps its solid bodies whole, because
+// the closing act's Kibana title and act one's board corner both faded with the copy they
+// passed behind. Everything else in a set still fades, and this asks that too, so a pass that
+// simply stopped fading anything would not pass here.
+async function checkFilmTextClearKeepsWhole(baseUrl) {
+  const executablePath = findChromeExecutable();
+  if (!executablePath) {
+    warnings.push('Skipping the check of what the text fade keeps whole because Chrome/Edge was not found. Set CHROME_PATH to enable it.');
+    return;
+  }
+  const routes = await filmRoutes();
+  if (routes.length === 0) {
+    failures.push('The check of what the text fade keeps whole found no page carrying the film body class, so it measured nothing.');
+    return;
+  }
+
+  const { default: puppeteer } = await import('puppeteer-core');
+  const browser = await puppeteer.launch({
+    executablePath,
+    headless: true,
+    args: ['--no-sandbox', '--disable-setuid-sandbox', '--enable-unsafe-swiftshader', '--use-gl=angle']
+  });
+  try {
+    const page = await browser.newPage();
+    await page.setCacheEnabled(false);
+    await page.setViewport({ width: 1440, height: 900, deviceScaleFactor: 1 });
+    for (const route of routes) {
+      await openPage(page, `${baseUrl}${route}?still&scene-debug`, { scene: true });
+      if (!await page.evaluate(() => Boolean(window.chapterFilm))) {
+        failures.push(`${route} did not publish its scene through ?scene-debug, so what the text fade keeps whole could not be checked.`);
+        continue;
+      }
+      const found = await page.evaluate(() => {
+        const out = { screensFaded: [], bodiesFaded: [], screens: 0, bodies: 0, sceneryFaded: 0, scenery: 0 };
+        const faded = (node) => [].concat(node.material).some((m) => m && m.userData && m.userData.clearsBehindText);
+        window.chapterFilm.stations.forEach((station, si) => {
+          station.group.traverse((node) => {
+            if (!node.material || (node.userData && node.userData.caption)) return;
+            let ambient = false;
+            for (let n = node; n && n !== station.group.parent; n = n.parent) {
+              if (n.userData && n.userData.ambient) ambient = true;
+            }
+            if (node.userData && node.userData.screen) {
+              out.screens++;
+              if (faded(node)) out.screensFaded.push(`act ${si + 1} "${node.userData.screen}"`);
+            } else if (station.contained && node.isMesh && !ambient) {
+              out.bodies++;
+              if (faded(node)) out.bodiesFaded.push(`act ${si + 1} ${node.type}`);
+            } else if (ambient) {
+              out.scenery++;
+              if (faded(node)) out.sceneryFaded++;
+            }
+          });
+        });
+        return out;
+      });
+      if (found.screens === 0) failures.push(`${route} marks no screens, so whether the text fade leaves them whole was not checked.`);
+      if (found.bodies === 0) failures.push(`${route} has no contained set with a solid body, so whether the text fade leaves them whole was not checked.`);
+      for (const item of found.screensFaded.slice(0, 4)) {
+        failures.push(`${route} fades ${item} behind the page's words. A screen's content stays whole: see clearBehindText in engine.js.`);
+      }
+      if (found.bodiesFaded.length) {
+        failures.push(`${route} fades ${found.bodiesFaded.length} solid bodies of a contained set behind the page's words (${found.bodiesFaded.slice(0, 4).join(', ')}). A set meant to be seen whole keeps its bodies whole: see clearBehindText in engine.js.`);
+      }
+      if (found.scenery > 0 && found.sceneryFaded === 0) {
+        failures.push(`${route} fades none of its ${found.scenery} pieces of scenery behind the page's words, so the fade is not running at all.`);
+      }
+    }
+  } finally {
+    await browser.close();
+  }
+}
+
 async function main() {
   await checkProtectedRoutes();
   await checkDownloadNames();
@@ -3483,7 +3719,9 @@ async function main() {
     await checkFilmTrafficPaths(baseUrl);
     await checkFilmLabelSize(baseUrl);
     await checkFilmPlateLegibility(baseUrl);
+    await checkFilmLabelContrast(baseUrl);
     await checkFilmTextClear(baseUrl);
+    await checkFilmTextClearKeepsWhole(baseUrl);
     await checkFilmPlayControl(baseUrl);
     await checkFilmJumpLanding(baseUrl);
     await checkVideoDialog(baseUrl);

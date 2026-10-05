@@ -356,7 +356,11 @@ export function buildPipeline(palette) {
   // Dimmer and thinner than the graph. These were the brightest, longest objects in the act
   // and the eye followed them instead of the flow: scenery has to sit behind the subject, not
   // in front of it.
-  const trunking = repeated(pipe, conduit, face, accent, 0.1);
+  //
+  // Their faces pulled most of the way into the room's colour, as act one's crates are. At the
+  // set's own face colour the conduit runs were 34% as loud as the flow where they stand, against
+  // the landing weight audit's 30%, and a review called them the longest things in the act. 19%.
+  const trunking = repeated(pipe, conduit, face.clone().lerp(palette.rooms[2], 0.6), accent, 0.1);
   trunking.userData.ambient = true;
   group.add(trunking);
 
