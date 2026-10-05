@@ -1922,19 +1922,6 @@ body[data-motion="off"] .cursor-effects {
   background: linear-gradient(0deg, rgba(88, 215, 255, 0.18), transparent);
 }
 
-.lite-video.is-playing::before,
-.lite-video.is-playing::after {
-  display: none;
-}
-
-.lite-video iframe {
-  position: relative;
-  z-index: 1;
-  width: 100%;
-  height: 100%;
-  border: 0;
-}
-
 .video-play {
   position: relative;
   z-index: 1;
@@ -1962,13 +1949,98 @@ body[data-motion="off"] .cursor-effects {
   background: rgba(8, 13, 21, 0.82);
 }
 
+/*
+  A screen, not a play triangle. The button opens a video in a window of its own, and on the
+  Cyber Sentinel page a play triangle already means "run the film". The screen is a box with a
+  stand under it, drawn in the theme's cyan: the triangle it replaces was painted in an
+  --accent that no stylesheet defines, so it was not drawn at all.
+*/
 .video-play-icon {
-  width: 34px;
-  height: 34px;
-  border-radius: 50%;
-  background: var(--accent);
-  clip-path: polygon(30% 18%, 30% 82%, 82% 50%);
-  box-shadow: 0 0 22px rgba(88, 215, 255, 0.4);
+  position: relative;
+  flex: none;
+  width: 22px;
+  height: 15px;
+  margin-bottom: 5px;
+  border: 2px solid var(--cyan);
+  border-radius: 2px;
+}
+
+.video-play-icon::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  bottom: -7px;
+  width: 10px;
+  height: 2px;
+  transform: translateX(-50%);
+  background: var(--cyan);
+}
+
+/* The video's own window: centred in the browser's top layer, above everything on the page. */
+.video-dialog {
+  width: min(1040px, 92vw, calc((100vh - 140px) * 16 / 9));
+  max-width: none;
+  max-height: none;
+  padding: 0;
+  border: 1px solid var(--line);
+  color: var(--text);
+  background: var(--bg-deep);
+  box-shadow: var(--shadow);
+}
+
+.video-dialog::backdrop {
+  background: rgba(3, 6, 10, 0.78);
+}
+
+/* The page behind an open video holds still. On a page whose film follows the scroll, a wheel
+   behind the dialog would otherwise fly the camera on while the reader watches. */
+html:has(.video-dialog[open]) {
+  overflow: hidden;
+  scrollbar-gutter: stable;
+}
+
+.video-dialog-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 10px 14px;
+  border-bottom: 1px solid var(--line);
+}
+
+.video-dialog-title {
+  margin: 0;
+  font-size: 0.92rem;
+  font-weight: 800;
+}
+
+.video-dialog-close {
+  padding: 6px 14px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  color: var(--text);
+  background: none;
+  cursor: pointer;
+  font: inherit;
+  font-size: 0.85rem;
+  font-weight: 800;
+}
+
+.video-dialog-close:hover,
+.video-dialog-close:focus-visible {
+  border-color: var(--cyan);
+}
+
+.video-dialog-frame {
+  aspect-ratio: 16 / 9;
+  background: #000;
+}
+
+.video-dialog-frame iframe {
+  display: block;
+  width: 100%;
+  height: 100%;
+  border: 0;
 }
 
 .work-placeholder {
@@ -2079,8 +2151,7 @@ body[data-motion="off"] .cursor-effects {
   line-height: 0.94;
 }
 
-.case-video,
-.case-video iframe {
+.case-video {
   width: 100%;
   aspect-ratio: 16 / 9;
 }
@@ -2091,11 +2162,6 @@ body[data-motion="off"] .cursor-effects {
   border-radius: 8px;
   background: var(--bg-soft);
   box-shadow: var(--shadow);
-}
-
-.case-video iframe {
-  display: block;
-  border: 0;
 }
 
 .case-metrics {

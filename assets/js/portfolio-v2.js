@@ -334,6 +334,124 @@
     });
   }
 
+  // The video plays in a dialog centred over the page, not inside the button's own box.
+  //
+  // Swapped into the box, the player opened wherever the box happened to be: on the Cyber
+  // Sentinel page that is the bottom left of a pinned frame, half visible, and once the video
+  // ended YouTube's end screen stayed there until the page was reloaded. A modal <dialog> sits
+  // in the browser's top layer above everything, makes the page behind it inert, closes on Esc
+  // and gives focus back to the button that opened it. Closing removes the player, so nothing
+  // carries on playing behind the page, and the video closes the dialog itself when it ends.
+  //
+  // Knowing that it ended needs YouTube's player API, loaded on the first click and not before,
+  // like the player itself. If it does not load, the video still plays in a plain embed and the
+  // close button still works; only the closing at the end is lost.
+  const YOUTUBE_ENDED = 0;
+  let videoDialog = null;
+  let youTubeApi = null;
+
+  function loadYouTubeApi() {
+    if (youTubeApi) return youTubeApi;
+    youTubeApi = new Promise((resolve, reject) => {
+      if (window.YT && window.YT.Player) {
+        resolve(window.YT);
+        return;
+      }
+      const before = window.onYouTubeIframeAPIReady;
+      window.onYouTubeIframeAPIReady = () => {
+        if (typeof before === "function") before();
+        resolve(window.YT);
+      };
+      const script = document.createElement("script");
+      script.src = "https://www.youtube.com/iframe_api";
+      script.async = true;
+      script.onerror = () => reject(new Error("The YouTube player API did not load."));
+      document.head.appendChild(script);
+    }).catch((error) => {
+      // Not remembered as failed: a later click tries again.
+      youTubeApi = null;
+      throw error;
+    });
+    return youTubeApi;
+  }
+
+  function videoDialogElement() {
+    if (videoDialog) return videoDialog;
+    const dialog = document.createElement("dialog");
+    dialog.className = "video-dialog";
+    dialog.setAttribute("aria-labelledby", "video-dialog-title");
+
+    const bar = document.createElement("div");
+    bar.className = "video-dialog-bar";
+    const title = document.createElement("p");
+    title.className = "video-dialog-title";
+    title.id = "video-dialog-title";
+    const close = document.createElement("button");
+    close.className = "video-dialog-close";
+    close.type = "button";
+    close.textContent = "Close";
+    close.setAttribute("aria-label", "Close the video");
+    bar.append(title, close);
+
+    const frame = document.createElement("div");
+    frame.className = "video-dialog-frame";
+    dialog.append(bar, frame);
+
+    close.addEventListener("click", () => dialog.close());
+    // The backdrop belongs to the dialog element itself, so a click that lands on the dialog
+    // and not on anything inside it is a click outside the video.
+    dialog.addEventListener("click", (event) => {
+      if (event.target === dialog) dialog.close();
+    });
+    dialog.addEventListener("close", () => {
+      if (dialog.player && typeof dialog.player.destroy === "function") dialog.player.destroy();
+      dialog.player = null;
+      frame.replaceChildren();
+    });
+
+    document.body.appendChild(dialog);
+    videoDialog = dialog;
+    return dialog;
+  }
+
+  function plainEmbed(videoId, label) {
+    const iframe = document.createElement("iframe");
+    iframe.src = `https://www.youtube.com/embed/${videoId}?autoplay=1&rel=0`;
+    iframe.title = label;
+    iframe.allow = "accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share";
+    iframe.allowFullscreen = true;
+    return iframe;
+  }
+
+  function playInDialog(videoId, label) {
+    const dialog = videoDialogElement();
+    dialog.querySelector(".video-dialog-title").textContent = label;
+    const mount = document.createElement("div");
+    dialog.querySelector(".video-dialog-frame").replaceChildren(mount);
+    dialog.showModal();
+
+    loadYouTubeApi().then((YT) => {
+      // Closed before the API arrived: nothing to play into.
+      if (!dialog.open || !mount.isConnected) return;
+      dialog.player = new YT.Player(mount, {
+        videoId,
+        playerVars: { autoplay: 1, rel: 0, playsinline: 1 },
+        events: {
+          onReady: (event) => {
+            const iframe = event.target.getIframe && event.target.getIframe();
+            if (iframe) iframe.title = label;
+          },
+          onStateChange: (event) => {
+            if (event.data === YOUTUBE_ENDED) dialog.close();
+          }
+        }
+      });
+    }).catch(() => {
+      if (!dialog.open || !mount.isConnected) return;
+      mount.replaceWith(plainEmbed(videoId, label));
+    });
+  }
+
   function setupLiteVideos() {
     document.querySelectorAll("[data-video-id]").forEach((video) => {
       const button = video.querySelector(".video-play");
@@ -342,17 +460,7 @@
       button.addEventListener("click", () => {
         const videoId = String(video.dataset.videoId || "").replace(/[^\w-]/g, "");
         if (!videoId) return;
-
-        const iframe = document.createElement("iframe");
-        iframe.src = `https://www.youtube.com/embed/${videoId}?autoplay=1&rel=0`;
-        iframe.title = video.dataset.videoTitle || button.getAttribute("aria-label") || "Project video";
-        iframe.loading = "lazy";
-        iframe.allow = "accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share";
-        iframe.allowFullscreen = true;
-
-        video.classList.add("is-playing");
-        video.replaceChildren(iframe);
-        iframe.focus();
+        playInDialog(videoId, video.dataset.videoTitle || button.getAttribute("aria-label") || "Project video");
       });
     });
   }

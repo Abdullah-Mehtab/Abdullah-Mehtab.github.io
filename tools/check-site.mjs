@@ -3236,6 +3236,148 @@ async function checkFilmTextClear(baseUrl) {
   }
 }
 
+// The demo video opens centred over the page and gives the page back when it closes.
+//
+// It used to play inside the button's own box, which on the Cyber Sentinel page is the bottom
+// left of a pinned frame, and once it ended YouTube's end screen stayed there until a reload.
+// YouTube itself is blocked here like every other outside request, so the player never loads:
+// what is checked is the window it plays in. The end of the video is YouTube telling the page
+// so, and that boundary is faked with an object shaped like YouTube's own player API.
+const VIDEO_CENTRE_TOLERANCE = 0.02;
+const VIDEO_MIN_WIDTH_SHARE = 0.6;
+
+async function checkVideoDialog(baseUrl) {
+  const executablePath = findChromeExecutable();
+  if (!executablePath) {
+    warnings.push('Skipping the video dialog check because Chrome/Edge was not found. Set CHROME_PATH to enable it.');
+    return;
+  }
+  const routes = [];
+  for (const file of (await walkFiles(repoRoot)).filter((f) => extname(f).toLowerCase() === '.html')) {
+    const shown = toDisplayPath(file);
+    if (shown.startsWith('classic/') || shown.startsWith('play/')) continue;
+    if ((await readFile(file, 'utf8')).includes('data-video-id')) routes.push('/' + shown);
+  }
+  if (routes.length === 0) {
+    failures.push('The video dialog check found no page with a video on it, so it measured nothing.');
+    return;
+  }
+
+  const { default: puppeteer } = await import('puppeteer-core');
+  const browser = await puppeteer.launch({
+    executablePath,
+    headless: true,
+    args: ['--no-sandbox', '--disable-setuid-sandbox', '--enable-unsafe-swiftshader', '--use-gl=angle']
+  });
+  try {
+    const page = await browser.newPage();
+    await page.setCacheEnabled(false);
+    await page.setViewport({ width: 1440, height: 900, deviceScaleFactor: 1 });
+    for (const route of routes) {
+      const problems = [];
+      await openPage(page, `${baseUrl}${route}`);
+      // A real click, so the button takes focus the way it does for a reader, and focus coming
+      // back to it afterwards means something.
+      const hasButton = await page.evaluate(() => {
+        const button = document.querySelector('[data-video-id] .video-play');
+        // Instant: the site scrolls smoothly, and a click aimed while the button is still moving misses it.
+        if (button) button.scrollIntoView({ block: 'center', behavior: 'instant' });
+        return Boolean(button);
+      });
+      // And until it has stopped moving: the chapter settles its camera after load, which can
+      // carry the page, and a click aimed at where the button was lands on nothing.
+      if (hasButton) {
+        await page.waitForFunction(() => new Promise((done) => {
+          const button = document.querySelector('[data-video-id] .video-play');
+          let last = button.getBoundingClientRect().top;
+          let same = 0;
+          const tick = () => {
+            const now = button.getBoundingClientRect().top;
+            same = now === last ? same + 1 : 0;
+            last = now;
+            if (same >= 10) done(true); else requestAnimationFrame(tick);
+          };
+          requestAnimationFrame(tick);
+        }), { timeout: 15000 });
+        await page.click('[data-video-id] .video-play');
+      }
+      const opened = !hasButton ? null : await page.evaluate(async () => {
+        const button = document.querySelector('[data-video-id] .video-play');
+        await new Promise((done) => requestAnimationFrame(() => requestAnimationFrame(done)));
+        const dialog = document.querySelector('dialog.video-dialog');
+        if (!dialog || !dialog.open) return { open: false };
+        const box = dialog.getBoundingClientRect();
+        return {
+          open: true,
+          dx: Math.abs(box.left + box.width / 2 - innerWidth / 2) / innerWidth,
+          dy: Math.abs(box.top + box.height / 2 - innerHeight / 2) / innerHeight,
+          width: box.width / innerWidth,
+          locked: getComputedStyle(document.documentElement).overflow === 'hidden',
+          buttonKept: document.contains(button)
+        };
+      });
+      if (!opened) {
+        problems.push('has a video block with no button in it');
+      } else if (!opened.open) {
+        problems.push('does not open the video in a dialog when its button is pressed');
+      } else {
+        if (opened.dx > VIDEO_CENTRE_TOLERANCE || opened.dy > VIDEO_CENTRE_TOLERANCE) {
+          problems.push(`opens the video ${Math.round(opened.dx * 100)}% across and ${Math.round(opened.dy * 100)}% down from the middle of the window, tolerance ${VIDEO_CENTRE_TOLERANCE * 100}%`);
+        }
+        if (opened.width < VIDEO_MIN_WIDTH_SHARE) {
+          problems.push(`opens the video ${Math.round(opened.width * 100)}% of the window wide, floor ${VIDEO_MIN_WIDTH_SHARE * 100}%`);
+        }
+        if (!opened.locked) problems.push('lets the page scroll behind the open video');
+        if (!opened.buttonKept) problems.push('replaces the button with the player, so there is nothing to return to');
+        await page.keyboard.press('Escape');
+        // The dialog's close event is queued, not run inside close(), so give it a frame.
+        const closed = await page.evaluate(async () => {
+          await new Promise((done) => requestAnimationFrame(() => requestAnimationFrame(done)));
+          const dialog = document.querySelector('dialog.video-dialog');
+          const button = document.querySelector('[data-video-id] .video-play');
+          return {
+            closed: !dialog.open,
+            emptied: !dialog.querySelector('.video-dialog-frame').firstChild,
+            focusBack: document.activeElement === button
+          };
+        });
+        if (!closed.closed) problems.push('does not close the video on Escape');
+        if (!closed.emptied) problems.push('keeps the player in the page after the video is closed, so it can play on unseen');
+        if (!closed.focusBack) problems.push('does not give focus back to the button after the video closes');
+      }
+
+      // The end of the video. A fresh page, with YouTube's player API standing in for itself.
+      await openPage(page, `${baseUrl}${route}`);
+      const ended = await page.evaluate(async () => {
+        let events = null;
+        window.YT = {
+          PlayerState: { ENDED: 0 },
+          Player: class {
+            constructor(element, options) { events = options.events; }
+            destroy() {}
+            getIframe() { return null; }
+          }
+        };
+        const button = document.querySelector('[data-video-id] .video-play');
+        if (!button) return null;
+        button.click();
+        for (let i = 0; i < 30 && !events; i++) await new Promise((done) => setTimeout(done, 20));
+        const dialog = document.querySelector('dialog.video-dialog');
+        if (!events || !dialog) return { reached: false };
+        events.onStateChange({ data: 0 });
+        return { reached: true, closed: !dialog.open, buttonKept: document.contains(button) };
+      });
+      if (ended && !ended.reached) problems.push('never handed the video to the player, so the end of the video could not be checked');
+      if (ended && ended.reached && !ended.closed) problems.push('stays open after the video ends');
+      if (ended && ended.reached && !ended.buttonKept) problems.push('does not leave the button in place after the video ends');
+
+      for (const problem of problems) failures.push(`${route} ${problem}.`);
+    }
+  } finally {
+    await browser.close();
+  }
+}
+
 async function main() {
   await checkProtectedRoutes();
   await checkDownloadNames();
@@ -3264,6 +3406,7 @@ async function main() {
     await checkFilmPlateLegibility(baseUrl);
     await checkFilmTextClear(baseUrl);
     await checkFilmPlayControl(baseUrl);
+    await checkVideoDialog(baseUrl);
     await checkFilmBodyClash(baseUrl);
     await checkFilmActColour(baseUrl);
     await checkVisitCounting(baseUrl);
