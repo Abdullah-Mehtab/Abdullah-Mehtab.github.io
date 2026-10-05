@@ -109,6 +109,13 @@ function mapServerFront(geometry) {
 
 export function buildLan(palette) {
   const group = new THREE.Group();
+  // Turned toward the camera, which stands about 40 degrees to the left of this room while the act
+  // is read. Square to the track, the racks and the manager showed their left sides and read as
+  // pointing at the copy. Turned by 0.3 radians, which leaves it seen 19 degrees off its face. At
+  // 0.6 the room was docked so far back that the racks lost about a third of their height; at
+  // 0.35 the camera's walk into the room at 70% passed square in front of one rack face and the
+  // frame carried almost no edges. Owner decision 2026-10-05, for this act alone.
+  group.rotation.y = -0.3;
   const accent = palette.accents[1];
   const face = palette.face;
   const random = seeded(23);
@@ -129,7 +136,7 @@ export function buildLan(palette) {
   // size moving right moves the whole room left: measured, 13% of the screen sits dead at the
   // right at 70%, against a ceiling of 12. Moving it
   // forward to z 29 or beyond clears the cabinet in depth and parks it in the seven attack lanes,
-  // which run at z 40 down to z 28 and are placed there deliberately to cross in front of its
+  // which run at z 44 down to z 32 and are placed there deliberately to cross in front of its
   // face. Shrinking it enough to fit beside a cabinet at 96 is not possible: it would have to
   // halve.
   //
@@ -279,15 +286,15 @@ export function buildLan(palette) {
   // No sorting rule can help a bead that is inside a box.
   const endpoints = spots.map(([x, y, z]) => ({ at: new THREE.Vector3(x, y + RACK_H / 2 + 1.5, z) }));
 
-  // The room names itself while it is still the subject.
+  // The room names itself, for the whole act, beside the manager's plate once that arrives.
   //
-  // The manager does not exist for the first 42% of this act, by design: its arrival is the
-  // act. But its nameplate was the only one here, so for most of the act the reader was
-  // looking at nine unlabelled cabinets with streams crossing them and nothing saying what
-  // the place was. This plate holds the first half and hands over as the manager comes up.
+  // Without it the reader was looking at unlabelled cabinets with streams crossing them and
+  // nothing saying what the place was. Over the middle of the racks rather than their left end:
+  // at x 26 the camera's approach carried it into the copy column by half way through the act,
+  // where the engine fades plates, and it went just as the reader got close.
   const roomLabel = nameplate("Unwatched LAN", "no agents reporting", accent, palette.deep, 52);
   roomLabel.userData.primary = true;
-  roomLabel.position.set(26, 52, 8);
+  roomLabel.position.set(58, 36, 8);
   group.add(roomLabel);
 
   // ——— the manager ———
@@ -341,7 +348,8 @@ export function buildLan(palette) {
   // and tilted. The turn is the manager doing its job, an ordered stack of rules with an event
   // being pushed down through it, so the plate comes off the turning thing rather than the turn
   // coming off the set.
-  const managerLabel = nameplate("Wazuh Manager", "", accent, palette.deep, 42);
+  // 56 wide, from 42, so its type reaches 12px while the manager is still arriving.
+  const managerLabel = nameplate("Wazuh Manager", "", accent, palette.deep, 56);
   managerLabel.userData.primary = true;
   managerLabel.position.set(0, 24, 0);
   group.add(managerLabel);
@@ -416,7 +424,12 @@ export function buildLan(palette) {
     // in front of them? Whats with the inconsistency?" Nothing was sorting them wrongly. They
     // were put there. Two units apart keeps the lanes separable without any of them reaching
     // the cabinets.
-    const z = 40 - i * 2;
+    //
+    // From 44 rather than 40, so they also pass clear in front of the turning manager. A stream
+    // that is not caught crosses in front of it, and at 40 the lowest lanes ran inside its reach.
+    // At 48 the camera's walk into the room at 70% of the act found the lanes too far forward to
+    // carry the frame: 3.0% edge against a floor of 3%. At 44, 6.8%.
+    const z = 44 - i * 2;
     trailPoints.push(new THREE.Vector3(206, y, z), new THREE.Vector3(-46, y, z));
 
     const head = glow(accent, 7, 0.9);
@@ -442,7 +455,10 @@ export function buildLan(palette) {
     label.position.set(206, y + 6, z);
     group.add(label);
 
-    return { head, label, y, z, at: random() };
+    // Its own point on the manager's front face, spread down it so seven streams do not land on
+    // one spot. The manager is 38 tall and its front face stands at z 25.
+    const target = new THREE.Vector3(manager.position.x + 4, manager.position.y + (3 - i) * 4, manager.position.z + 16);
+    return { head, label, y, z, at: random(), target, pass: null, seenAt: null, caught: false };
   });
   // Traffic is the one thing in this chapter with no manufactured shape, so it is the one
   // thing drawn as particles rather than as edges. Hardware has millimetres and gets sharp
@@ -475,6 +491,23 @@ export function buildLan(palette) {
   const backRow = repeated(new THREE.BoxGeometry(24, 68, 26), far, face, accent, 0.16);
   backRow.userData.ambient = true;
   group.add(backRow);
+  // Rack units on the back row's faces too, as dim as the row. The camera flies toward these as it
+  // leaves the room, and as bare boxes they filled act two's frame at 75% with flat navy slabs,
+  // which a review read as walls or a render fault. Scenery like the row, so where the engine
+  // docks the room does not move.
+  const farSlotPoints = [];
+  for (const [x, y, z] of far) {
+    for (let u = 0; u < UNITS; u++) {
+      const uy = y - 34 + 4 + u * (60 / UNITS);
+      farSlotPoints.push(new THREE.Vector3(x - 10, uy, z + 13.2), new THREE.Vector3(x + 10, uy, z + 13.2));
+    }
+  }
+  const farSlots = new THREE.LineSegments(
+    new THREE.BufferGeometry().setFromPoints(farSlotPoints),
+    new THREE.LineBasicMaterial({ color: accent, transparent: true, opacity: 0.2 })
+  );
+  farSlots.userData.ambient = true;
+  group.add(farSlots);
 
   // Packets and alerts in the air: flat cells going past, and the triangle every console in
   // the world uses to mean something is wrong.
@@ -505,11 +538,19 @@ export function buildLan(palette) {
 
   // When the manager arrives, as a fraction of the act.
   //
-  // It was 0.42, and the camera has left its resting frame by 0.46 and is between the cabinets
-  // by 0.56, so the object this act is about appeared as the reader was being carried past it
-  // and was never seen at size with its own name on it. The act still opens on a room nobody is
-  // watching, which is the point of it, and the room has its own plate for that stretch now.
-  const WATCHED_FROM = 0.16;
+  // From the act's first frame, so its plate is up by about a tenth of the way in while the attack
+  // streams are still running. At 0.16 the plate came up at about 0.27, by which time the streams
+  // the manager is there to watch were ending. Owner decision 2026-10-05.
+  //
+  // Before that it was 0.42, and the camera has left its resting frame by 0.46 and is between the
+  // cabinets by 0.56, so the object this act is about appeared as the reader was being carried
+  // past it and was never seen at size with its own name on it. The act still opens on a room
+  // nobody is watching, which is the point of it, and the room keeps its own plate throughout.
+  const WATCHED_FROM = 0;
+  // How far the manager has to have arrived before a stream setting off is caught.
+  const CAUGHT_FROM = 0.5;
+  // Over how many units of its run a caught stream curves from its lane onto the manager's face.
+  const CATCH_REACH = 70;
 
   return {
     group,
@@ -517,7 +558,6 @@ export function buildLan(palette) {
       const watched = ease(clamp01((p - WATCHED_FROM) / 0.3));
 
       manager.scale.setScalar(0.02 + watched * 0.98);
-      managerLabel.scale.setScalar(0.3 + watched * 0.7);
       manager.visible = watched > 0.02;
       manager.rotation.y = t * 0.18;
       // The rule stack turns as one and each plate breathes on its own beat: an event is
@@ -529,10 +569,14 @@ export function buildLan(palette) {
       }
       // Up as soon as the thing it names exists. Tied straight to `watched` it read 0.18 at
       // the halfway point of the act, so the object that gives this act its subject spent most
-      // of the act unnamed.
-      managerLabel.material.opacity = ease(clamp01(watched * 2.2)) * 0.95;
-      // One subject at a time: the room's plate goes as the manager's arrives.
-      roomLabel.material.opacity = (1 - ease(clamp01(watched * 1.8))) * 0.9;
+      // of the act unnamed. At full size from the start rather than growing with the manager, and
+      // at 3.2 rather than 2.2, so the name is up by a tenth of the way in: growing, its type was
+      // 4.7px there against a 12px floor and its strength 0.57 against 0.75, so it was hidden.
+      managerLabel.material.opacity = ease(clamp01(watched * 3.2)) * 0.95;
+      // The room's plate stays up the whole act, beside the manager's. Owner decision 2026-10-05:
+      // tied to the manager's arrival it went as the act was being read, which read as a label
+      // disappearing rather than as the room being watched.
+      roomLabel.material.opacity = 0.9;
       managerGlow.material.opacity = watched * 0.28 * (0.8 + Math.sin(t * 1.7) * 0.2);
 
       strips.material.opacity = 0.06 + Math.sin(t * 1.6) * 0.025 + watched * 0.5;
@@ -549,25 +593,51 @@ export function buildLan(palette) {
         link.bead.scale.setScalar(2.4 + Math.sin(along * Math.PI) * 2.2);
       }
 
-      // The terminating x walks from off the left of the room to the manager as the act turns.
-      const stopAt = -46 + (manager.position.x + 24 - -46) * watched;
+      // A caught stream flies into the manager and flares on its face; an uncaught one crosses
+      // the whole room and leaves. Owner decision 2026-10-05. Before this every stream stopped at
+      // one x that slid from off the left of the room to beside the manager as it arrived, so
+      // streams halted between the racks, or in the air beside the manager, and nothing read as
+      // caught.
+      //
+      // Whether a stream is caught is settled when it sets off, so a stream never changes its
+      // path in flight: one launched after the manager is half there is caught. A frozen frame
+      // has no flight to protect and settles it on every frame, so it does not depend on how the
+      // page was scrolled to.
       for (let i = 0; i < lanes.length; i++) {
         const lane = lanes[i];
-        const cycle = (t * 0.22 + lane.at) % 1;
-        const x = 206 - cycle * 260;
-        const stopped = x <= stopAt;
-        lane.head.position.set(stopped ? stopAt : x, lane.y, lane.z);
-        lane.label.position.set((stopped ? stopAt : x) + 26, lane.y + 6, lane.z);
+        const sweep = t * 0.22 + lane.at;
+        const pass = Math.floor(sweep);
+        if (lane.pass !== pass || lane.seenAt === t) {
+          lane.pass = pass;
+          lane.caught = watched >= CAUGHT_FROM;
+        }
+        lane.seenAt = t;
+        const x = 206 - (sweep - pass) * 260;
+        const target = lane.target;
+        const stopped = lane.caught && x <= target.x;
+        const headX = stopped ? target.x : x;
+        // Where a stream is at a given x: on its own lane, then curving in to its point on the
+        // manager's face over the last CATCH_REACH units.
+        const along = (at) => {
+          if (!lane.caught) return [lane.y, lane.z];
+          const k = ease(clamp01(1 - (at - target.x) / CATCH_REACH));
+          return [lane.y + (target.y - lane.y) * k, lane.z + (target.z - lane.z) * k];
+        };
+        const [headY, headZ] = stopped ? [target.y, target.z] : along(headX);
+        lane.head.position.set(headX, headY, headZ);
+        const [labelY, labelZ] = along(headX + 26);
+        lane.label.position.set(headX + 26, labelY + 6, labelZ);
         lane.label.material.opacity = 0.82 + (stopped ? 0.18 : 0);
 
-        // A caught stream flares and goes out. An uncaught one just keeps going.
-        const burst = stopped ? Math.max(0, 1 - (x - stopAt) / -40) : 0;
+        // A caught stream flares and goes out, over the next 40 units of what would have been its
+        // run. It used to shrink to a bright dot instead and sit on the manager until its next
+        // pass, so the face carried a column of stuck dots.
+        const burst = stopped ? clamp01((target.x - x) / 40) : 0;
         lane.head.scale.setScalar(stopped ? 4 + burst * 9 : 5.5 + Math.sin(t * 6 + i) * 0.8);
-        lane.head.material.opacity = stopped ? Math.max(0.1, 0.9 - burst * 0.7) : 0.9;
+        lane.head.material.opacity = stopped ? 0.9 * (1 - burst) : 0.9;
 
-        // The swarm trails its own head while the stream is running, and scatters outward from
-        // the manager once the stream is being caught there.
-        const headX = stopped ? stopAt : x;
+        // The swarm trails its own head along the same path while the stream is running, and
+        // scatters outward from the manager's face once the stream is caught there.
         for (let s = 0; s < SWARM; s++) {
           const at = (i * SWARM + s) * 3;
           const back = s * 3.4;
@@ -575,12 +645,13 @@ export function buildLan(palette) {
           if (stopped) {
             const spread = burst * (6 + s * 1.4);
             swarmPositions[at] = headX + Math.cos(s * 2.4 + t) * spread;
-            swarmPositions[at + 1] = lane.y + Math.sin(s * 1.9 + t) * spread;
-            swarmPositions[at + 2] = lane.z + Math.cos(s * 3.1) * spread * 0.6;
+            swarmPositions[at + 1] = headY + Math.sin(s * 1.9 + t) * spread;
+            swarmPositions[at + 2] = headZ + Math.cos(s * 3.1) * spread * 0.6;
           } else {
+            const [sy, sz] = along(headX + back);
             swarmPositions[at] = headX + back;
-            swarmPositions[at + 1] = lane.y + wobble * (s / SWARM);
-            swarmPositions[at + 2] = lane.z + Math.cos(t * 2 + s) * 1.6 * (s / SWARM);
+            swarmPositions[at + 1] = sy + wobble * (s / SWARM);
+            swarmPositions[at + 2] = sz + Math.cos(t * 2 + s) * 1.6 * (s / SWARM);
           }
         }
       }
@@ -598,13 +669,17 @@ export function buildLan(palette) {
     // Take in the room, then walk into it. The first third frames the whole rank of racks so
     // the reader knows where they are; the rest moves down the aisle toward the manager as it
     // arrives.
+    //
+    // It settles 30 units closer, from 14. With the room turned toward the camera its left end
+    // stands further off, and at 14 the racks shrank until a quarter of the frame was empty
+    // under them by 45% of the act, against a ceiling of a fifth. At 30 it is 15%.
     mod: (p) => {
       const settle = ease(clamp01(p / 0.34));
       const enter = ease(clamp01((p - 0.34) / 0.66));
       return {
         dx: -26 - 4 * settle + 54 * enter,
         dy: 18 - 2 * settle - 18 * enter,
-        dz: 104 - 14 * settle - 26 * enter,
+        dz: 104 - 30 * settle - 26 * enter,
         df: 3 - 5 * enter
       };
     }

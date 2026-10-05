@@ -3929,6 +3929,120 @@ async function checkFilmTextClearKeepsWhole(baseUrl) {
   }
 }
 
+// A set is seen close to square while its act is read, not from its side.
+//
+// The camera stands on the track left of each set and turns toward it, which is how the sets
+// keep the right of the frame while the copy keeps the left, and each set is built turned to
+// meet it. Act two was not: its room stood square to the track and was seen 38 to 41 degrees
+// off its face, so its racks and its manager showed their left sides and read as pointing at
+// the copy. Owner decision 2026-10-05: turn that set, and leave the camera, which had been
+// changed for every act at once and made the other three read as turned the other way.
+//
+// Measured at the depths an act is read from, before the camera goes into the set: the angle
+// between the way the set's front faces and the way to the camera, about the vertical axis.
+// Act two reads 41 degrees as committed and 19 turned; the others 12 to 26.
+const SQUARE_DEPTHS = [0, 0.1, 0.2, 0.3];
+const SQUARE_CEILING = 30;
+
+async function checkFilmSetsFaceReader(baseUrl) {
+  const executablePath = findChromeExecutable();
+  if (!executablePath) {
+    warnings.push('Skipping the check that sets face the reader because Chrome/Edge was not found. Set CHROME_PATH to enable it.');
+    return;
+  }
+  const routes = await filmRoutes();
+  if (routes.length === 0) {
+    failures.push('The check that sets face the reader found no page carrying the film body class, so it measured nothing.');
+    return;
+  }
+
+  const { default: puppeteer } = await import('puppeteer-core');
+  const browser = await puppeteer.launch({
+    executablePath,
+    headless: true,
+    args: ['--no-sandbox', '--disable-setuid-sandbox', '--enable-unsafe-swiftshader', '--use-gl=angle']
+  });
+  try {
+    const page = await browser.newPage();
+    await page.setCacheEnabled(false);
+    await page.setViewport({ width: 1440, height: 900, deviceScaleFactor: 1 });
+    for (const route of routes) {
+      await openPage(page, `${baseUrl}${route}?still&scene-debug`, { scene: true });
+      await page.evaluate(() => new Promise((done) => setTimeout(done, 1800)));
+      if (!await page.evaluate(() => Boolean(window.chapterFilm))) {
+        failures.push(`${route} did not publish its scene through ?scene-debug, so whether its sets face the reader could not be checked.`);
+        continue;
+      }
+      const bands = await page.evaluate(() => {
+        document.documentElement.style.scrollBehavior = 'auto';
+        return [...document.querySelectorAll('main > .act')].map((act) => ({
+          top: Math.round(act.getBoundingClientRect().top + window.scrollY),
+          span: Number(act.dataset.stationSpan) || Math.round(act.getBoundingClientRect().height)
+        }));
+      });
+      let measured = 0;
+      const turned = [];
+      for (let i = 0; i < bands.length; i++) {
+        let worst = 0;
+        let worstAt = 0;
+        for (const depth of SQUARE_DEPTHS) {
+          await page.evaluate((to) => window.scrollTo(0, to), Math.round(bands[i].top + bands[i].span * depth));
+          await page.evaluate(() => new Promise((done) => {
+            let n = 0;
+            const tick = () => (++n > 50 ? done() : requestAnimationFrame(tick));
+            requestAnimationFrame(tick);
+          }));
+          const off = await page.evaluate((index) => {
+            const film = window.chapterFilm;
+            const group = film.stations[index].group;
+            const camera = film.camera;
+            group.updateMatrixWorld(true);
+            // The middle of the set's own geometry, leaving out scenery and labels.
+            let x0 = Infinity; let x1 = -Infinity; let z0 = Infinity; let z1 = -Infinity;
+            const V = camera.position.constructor;
+            group.traverse((node) => {
+              if (!node.geometry || !(node.isMesh || node.isLine || node.isLineSegments)) return;
+              for (let p = node; p && p !== group.parent; p = p.parent) {
+                if (p.userData && (p.userData.ambient || p.userData.caption)) return;
+              }
+              if (!node.geometry.boundingBox) node.geometry.computeBoundingBox();
+              const bb = node.geometry.boundingBox;
+              for (let c = 0; c < 8; c++) {
+                const v = new V(c & 1 ? bb.max.x : bb.min.x, c & 2 ? bb.max.y : bb.min.y, c & 4 ? bb.max.z : bb.min.z)
+                  .applyMatrix4(node.matrixWorld);
+                x0 = Math.min(x0, v.x); x1 = Math.max(x1, v.x); z0 = Math.min(z0, v.z); z1 = Math.max(z1, v.z);
+              }
+            });
+            if (x0 === Infinity) return null;
+            const toCamera = Math.atan2(camera.position.x - (x0 + x1) / 2, camera.position.z - (z0 + z1) / 2);
+            // The way the set's front faces: its own +z, turned by its own rotation about y.
+            const front = new V(0, 0, 1).transformDirection(group.matrixWorld);
+            const faces = Math.atan2(front.x, front.z);
+            return Math.abs(faces - toCamera) * 180 / Math.PI;
+          }, i);
+          if (off === null) continue;
+          measured++;
+          if (off > worst) { worst = off; worstAt = depth; }
+        }
+        if (worst > SQUARE_CEILING) {
+          turned.push(`act ${i + 1} is seen ${worst.toFixed(0)} degrees off its face at ${Math.round(worstAt * 100)}%`);
+        }
+      }
+      if (measured === 0) {
+        failures.push(`${route} has no set geometry at any depth this check reads, so it measured nothing.`);
+        continue;
+      }
+      if (turned.length) {
+        failures.push(
+          `${route} shows a set from its side while its act is read: ${turned.join('; ')}, ceiling ${SQUARE_CEILING}. Seen like that a set reads as pointing at the copy. Turn the set toward the camera in its own file, as act two's room is, rather than moving the camera for every act.`
+        );
+      }
+    }
+  } finally {
+    await browser.close();
+  }
+}
+
 // During a flight, the set the camera is heading for is louder than the streaks around it.
 //
 // The streaks stretch and brighten with the camera's speed so travel reads as travel. A review
@@ -4242,6 +4356,7 @@ async function main() {
     await checkFilmClosingSet(baseUrl);
     await checkFilmNameplates(baseUrl);
     await checkFilmSetFraming(baseUrl);
+    await checkFilmSetsFaceReader(baseUrl);
     await checkFilmTransitWeight(baseUrl);
     await checkFilmSequenceWiring(baseUrl);
     await checkFilmTrafficPaths(baseUrl);
