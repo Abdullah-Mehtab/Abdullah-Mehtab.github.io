@@ -944,7 +944,19 @@ async function checkFilmEdgeChrome(baseUrl) {
           document.documentElement.style.scrollBehavior = 'auto';
           window.scrollTo(0, Math.round(document.documentElement.scrollHeight * 0.5));
         });
-        await page.evaluate(() => new Promise((done) => setTimeout(done, 600)));
+        // Until the progress bar has caught up with the scroll, not for a fixed time. It is set
+        // from an animation frame after the scroll, and a load can land the scroll in a long
+        // first frame: 3 loads in 9 took over a second under a throttled CPU, on code from before
+        // 2026-10-05, and a fixed 600ms failed two CI runs in four that way. A bar that never
+        // gets a width still fails below, after five seconds, with the same message.
+        try {
+          await page.waitForFunction(() => {
+            const bar = document.querySelector('.film-progress');
+            return !bar || bar.getBoundingClientRect().width >= 1;
+          }, { timeout: 5000 });
+        } catch (error) {
+          if (error?.name !== 'TimeoutError') throw error;
+        }
         const pieces = await page.evaluate(() => [...document.querySelectorAll('.film-progress, .film-spine, .film-act-nav, .film-play, .film-bar')]
           .map((el, i) => {
             el.dataset.filmChromeId = String(i);

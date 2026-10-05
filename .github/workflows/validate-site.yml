@@ -37,11 +37,15 @@ permissions:
 
 jobs:
   validate:
-    runs-on: ubuntu-latest
+    # Pinned rather than ubuntu-latest, which moves to Ubuntu 26.04 between 19 October and 19 November
+    # 2026. The browser checks depend on the image's own Chrome, so the move is made deliberately by
+    # changing this line and watching one run, not by the label shifting under a push.
+    runs-on: ubuntu-24.04
     steps:
-      - uses: actions/checkout@v4
+      # v5 of both actions runs on Node 24. The v4 runs carried GitHub's deprecation notice for Node 20.
+      - uses: actions/checkout@v5
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v5
         with:
           node-version: 22
           cache: npm
