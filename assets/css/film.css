@@ -1321,7 +1321,9 @@ body.film .chapter-close-links {
   transform: rotate(180deg);
   white-space: nowrap;
   font-family: var(--face-mono);
-  font-size: 0.6rem;
+  /* 12px, the floor every label in the scene is held to. At 0.6rem it was 9.6px, the faintest
+     type on the page, and a review read it as below the readable floor. */
+  font-size: 0.75rem;
   text-transform: uppercase;
   letter-spacing: 0.32em;
   color: color-mix(in srgb, var(--text) 58%, transparent);
@@ -2103,11 +2105,15 @@ body.film[data-scene="strata"] .film-stage-glow {
 */
 
 /*
-  The receding floor, the ceiling, the side walls and the vignette were a CSS
+  The receding floor, the ceiling, the side walls and the stage glow were a CSS
   attempt at the depth the canvas now draws properly. Two grids stacked on each
   other is why the owner's verdict on the last version was "filled with GRIDs
   everywhere". They stay in the markup because they are the fallback; they are
   simply not drawn on top of a scene that has real geometry in it.
+
+  The vignette and the grain are not among them. They belong to .film-grade
+  itself, which follows the canvas in the document at the same z-index, so they
+  are painted over the scene and stay on while it runs.
 */
 /*
   The header's backdrop blur costs nothing over a static page and a great deal over a canvas

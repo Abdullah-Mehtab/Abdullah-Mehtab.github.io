@@ -828,6 +828,17 @@ async function checkFilmEdgeChrome(baseUrl) {
             : (background.startsWith('rgba') ? Number(background.slice(background.lastIndexOf(',') + 1, -1)) : 1);
           return Number.isFinite(alpha) && alpha < 0.999 ? background : null;
         });
+        // The running head is type a reader is meant to read, so it is held to the same 12px floor
+        // as every label in the scene. It was 9.6px, the faintest type on the page, until a
+        // review found it on 2026-10-05.
+        const spine = await page.evaluate(() => {
+          const el = document.querySelector('.film-spine span');
+          if (!el || getComputedStyle(el.parentElement).display === 'none') return null;
+          return parseFloat(getComputedStyle(el).fontSize);
+        });
+        if (spine !== null && spine < 12) {
+          failures.push(`${route} sets its running head at ${spine}px at ${size.width}x${size.height}, floor 12px. It names the act a reader is in, and under 12px it is visible without being readable.`);
+        }
         if (seeThrough === 'missing') {
           failures.push(`${route} has no site header, so the check that copy cannot read through it measured nothing.`);
         } else if (seeThrough) {
