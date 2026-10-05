@@ -3693,6 +3693,193 @@ async function checkFilmTextClearKeepsWhole(baseUrl) {
   }
 }
 
+// During a flight, the set the camera is heading for is louder than the streaks around it.
+//
+// The streaks stretch and brighten with the camera's speed so travel reads as travel. A review
+// found them the brightest thing in the transit frames, with the incoming set small and drowned
+// in them, and the owner chose on 2026-10-05 to cap how bright they get. Measured the way the
+// landing weight is: inside the incoming set's own part of the frame, how much the set changes
+// the picture against how much the streaks do, each drawn alone against the empty room.
+const TRANSIT_LEAD = 2;
+const TRANSIT_DEPTHS = [0.7, 0.8];
+// And over the whole frame, once the flight is most of the way there. A second review read the
+// transit frames as a warp-speed burst with the arriving set lost in it while the measure above
+// passed: inside its own part of the frame the set led, and across the frame the streaks carried
+// up to twenty times its weight. At 80% of a flight the set now carries 2.2 times the streaks'
+// weight across the frame; it carried 0.37 before the streaks were shortened and dimmed.
+const TRANSIT_WHOLE_DEPTH = 0.8;
+const TRANSIT_WHOLE_LEAD = 1.5;
+
+async function checkFilmTransitWeight(baseUrl) {
+  const executablePath = findChromeExecutable();
+  if (!executablePath) {
+    warnings.push('Skipping the transit weight check because Chrome/Edge was not found. Set CHROME_PATH to enable it.');
+    return;
+  }
+  const routes = await filmRoutes();
+  if (routes.length === 0) {
+    failures.push('The transit weight check found no page carrying the film body class, so it measured nothing.');
+    return;
+  }
+
+  const { default: puppeteer } = await import('puppeteer-core');
+  const browser = await puppeteer.launch({
+    executablePath,
+    headless: true,
+    args: ['--no-sandbox', '--disable-setuid-sandbox', '--enable-unsafe-swiftshader', '--use-gl=angle']
+  });
+  try {
+    const page = await browser.newPage();
+    await page.setCacheEnabled(false);
+    await page.setViewport({ width: 1440, height: 900, deviceScaleFactor: 1 });
+    for (const route of routes) {
+      await openPage(page, `${baseUrl}${route}?still&scene-debug`, { scene: true });
+      await page.evaluate(() => new Promise((done) => setTimeout(done, 1800)));
+      if (!await page.evaluate(() => Boolean(window.chapterFilm && window.chapterFilm.pause))) {
+        failures.push(`${route} did not publish its scene through ?scene-debug, so its transit frames could not be weighed.`);
+        continue;
+      }
+      const bands = await page.evaluate(() => [...document.querySelectorAll('main > .act')].map((act) => ({
+        top: Math.round(act.getBoundingClientRect().top + window.scrollY),
+        span: Number(act.dataset.stationSpan) || Math.round(act.getBoundingClientRect().height)
+      })));
+      let measured = 0;
+      const drowned = [];
+      // Every act with a set after it. The last act has no flight.
+      for (let a = 0; a < bands.length - 1; a++) {
+        for (const depth of TRANSIT_DEPTHS) {
+          await page.evaluate((to) => window.scrollTo(0, to), Math.round(bands[a].top + bands[a].span * depth));
+          await page.evaluate(() => new Promise((done) => {
+            let n = 0;
+            const tick = () => (++n > 40 ? done() : requestAnimationFrame(tick));
+            requestAnimationFrame(tick);
+          }));
+          // Freeze the loop, then draw one layer at a time: nothing, the incoming set, the streaks.
+          const shots = {};
+          for (const layer of ['none', 'set', 'streaks']) {
+            await page.evaluate(([show, next]) => {
+              const film = window.chapterFilm;
+              film.pause();
+              film.scene.children.forEach((child) => {
+                const isStation = film.stations.some((s) => s.group === child);
+                if (isStation) child.visible = show === 'set' && child === film.stations[next].group;
+                else if (child.userData && child.userData.streaks) child.visible = show === 'streaks';
+                else if (child.isMesh || child.isLine || child.isPoints || child.isGroup) child.visible = false;
+              });
+              film.render();
+            }, [layer, a + 1]);
+            shots[layer] = await page.screenshot({ encoding: 'base64' });
+          }
+          const box = await page.evaluate((next) => {
+            const film = window.chapterFilm;
+            const camera = film.camera;
+            const group = film.stations[next].group;
+            let x0 = Infinity; let y0 = Infinity; let x1 = -Infinity; let y1 = -Infinity;
+            group.updateMatrixWorld(true);
+            group.traverse((node) => {
+              if (!node.geometry || (!node.isMesh && !node.isLine && !node.isLineSegments)) return;
+              for (let p = node; p && p !== group.parent; p = p.parent) {
+                if (p.userData && (p.userData.ambient || p.userData.caption)) return;
+              }
+              if (!node.geometry.boundingBox) node.geometry.computeBoundingBox();
+              const bb = node.geometry.boundingBox;
+              for (let c = 0; c < 8; c++) {
+                const v = bb.min.clone();
+                if (c & 1) v.x = bb.max.x;
+                if (c & 2) v.y = bb.max.y;
+                if (c & 4) v.z = bb.max.z;
+                v.applyMatrix4(node.matrixWorld);
+                if (v.clone().applyMatrix4(camera.matrixWorldInverse).z > -0.1) continue;
+                v.project(camera);
+                x0 = Math.min(x0, (v.x * 0.5 + 0.5) * innerWidth);
+                x1 = Math.max(x1, (v.x * 0.5 + 0.5) * innerWidth);
+                y0 = Math.min(y0, (-v.y * 0.5 + 0.5) * innerHeight);
+                y1 = Math.max(y1, (-v.y * 0.5 + 0.5) * innerHeight);
+              }
+            });
+            if (x0 === Infinity) return null;
+            return [Math.max(0, x0), Math.max(0, y0), Math.min(innerWidth, x1), Math.min(innerHeight, y1)];
+          }, a + 1);
+          // Hand the loop back before anything else is measured.
+          await page.evaluate(() => {
+            const film = window.chapterFilm;
+            film.scene.children.forEach((child) => { child.visible = true; });
+            if (film.resume) film.resume();
+          });
+          if (!box || box[2] - box[0] < 4 || box[3] - box[1] < 4) continue;
+          const ink = await page.evaluate(async (empty, set, streaks, rect) => {
+            const read = async (data) => {
+              const img = new Image();
+              img.src = 'data:image/png;base64,' + data;
+              await img.decode();
+              const canvas = document.createElement('canvas');
+              canvas.width = img.width;
+              canvas.height = img.height;
+              const ctx = canvas.getContext('2d', { willReadFrequently: true });
+              ctx.drawImage(img, 0, 0);
+              return ctx.getImageData(0, 0, img.width, img.height);
+            };
+            const base = await read(empty);
+            const sum = async (data) => {
+              const shot = await read(data);
+              let total = 0;
+              for (let y = Math.floor(rect[1]); y < Math.ceil(rect[3]); y++) {
+                for (let x = Math.floor(rect[0]); x < Math.ceil(rect[2]); x++) {
+                  const i = (y * shot.width + x) * 4;
+                  total += Math.abs(shot.data[i] - base.data[i]) + Math.abs(shot.data[i + 1] - base.data[i + 1]) + Math.abs(shot.data[i + 2] - base.data[i + 2]);
+                }
+              }
+              return total;
+            };
+            return { set: await sum(set), streaks: await sum(streaks) };
+          }, shots.none, shots.set, shots.streaks, box);
+          measured++;
+          const lead = ink.streaks > 0 ? ink.set / ink.streaks : Infinity;
+          if (lead < TRANSIT_LEAD) drowned.push(`act ${a + 1} at ${Math.round(depth * 100)}%, the set leads by ${lead.toFixed(2)}`);
+          if (depth === TRANSIT_WHOLE_DEPTH) {
+            const whole = await page.evaluate(async (empty, set, streaks) => {
+              const read = async (data) => {
+                const img = new Image();
+                img.src = 'data:image/png;base64,' + data;
+                await img.decode();
+                const canvas = document.createElement('canvas');
+                canvas.width = img.width;
+                canvas.height = img.height;
+                const ctx = canvas.getContext('2d', { willReadFrequently: true });
+                ctx.drawImage(img, 0, 0);
+                return ctx.getImageData(0, 0, img.width, img.height).data;
+              };
+              const base = await read(empty);
+              const sum = async (data) => {
+                const shot = await read(data);
+                let total = 0;
+                for (let i = 0; i < shot.length; i += 4) {
+                  total += Math.abs(shot[i] - base[i]) + Math.abs(shot[i + 1] - base[i + 1]) + Math.abs(shot[i + 2] - base[i + 2]);
+                }
+                return total;
+              };
+              return { set: await sum(set), streaks: await sum(streaks) };
+            }, shots.none, shots.set, shots.streaks);
+            const across = whole.streaks > 0 ? whole.set / whole.streaks : Infinity;
+            if (across < TRANSIT_WHOLE_LEAD) drowned.push(`act ${a + 1} at ${Math.round(depth * 100)}%, across the whole frame the set carries ${across.toFixed(2)} of the streaks' weight, floor ${TRANSIT_WHOLE_LEAD}`);
+          }
+        }
+      }
+      if (measured === 0) {
+        failures.push(`${route} showed no incoming set in any transit frame, so the transit weight check measured nothing.`);
+        continue;
+      }
+      if (drowned.length) {
+        failures.push(
+          `${route} lets its streaks outweigh the set a flight is heading for: ${drowned.join('; ')}. Inside the set's own part of the frame the floor is ${TRANSIT_LEAD} times. The streaks are there to make travel read as travel, not to be the subject; see the streak opacity in engine.js.`
+        );
+      }
+    }
+  } finally {
+    await browser.close();
+  }
+}
+
 async function main() {
   await checkProtectedRoutes();
   await checkDownloadNames();
@@ -3715,6 +3902,7 @@ async function main() {
     await checkFilmClosingSet(baseUrl);
     await checkFilmNameplates(baseUrl);
     await checkFilmSetFraming(baseUrl);
+    await checkFilmTransitWeight(baseUrl);
     await checkFilmSequenceWiring(baseUrl);
     await checkFilmTrafficPaths(baseUrl);
     await checkFilmLabelSize(baseUrl);

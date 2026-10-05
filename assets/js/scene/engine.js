@@ -663,7 +663,13 @@ function disposeGroup(group) {
 // and short bright ticks strung down the track. Both are one buffer each, so the whole track
 // costs three draw calls instead of ninety.
 // How many times its resting length a packet tick is drawn at the fastest part of a flight.
-const STREAK_STRETCH = 26;
+// 8, from 26: see STREAK_FLIGHT_CAP.
+const STREAK_STRETCH = 8;
+// The brightest the streaks may be at the middle of a flight. At rest the cap is the resting
+// pulse's own top, 0.36, so a held frame is untouched, and it closes to this as the flight
+// builds. See the frame loop.
+const STREAK_REST_CAP = 0.36;
+const STREAK_FLIGHT_CAP = 0.18;
 // Below this the streaks are at rest and the buffer is left alone, so a reader parked in front
 // of a set is not paying for a geometry upload every frame.
 const STREAK_IDLE = 0.02;
@@ -752,6 +758,8 @@ function buildTrackAmbience(scene, palette, stationCount) {
     new THREE.LineBasicMaterial({ color: palette.accents[2], transparent: true, opacity: 0.34 })
   );
   ticks.userData.lengths = tickLengths;
+  // Named for the site check, which weighs these against the set a flight is heading for.
+  ticks.userData.streaks = true;
   // Nothing here moves between frames except along z, and the far ends of the streaks run well
   // past the box the starting points describe. Culling against the resting box would drop the
   // whole field the moment it stretched.
@@ -1457,7 +1465,16 @@ export function mountFilm({ canvas, buildStations }) {
       // Bright enough to carry a transit frame, dim enough to read through. Act three's copy is
       // the widest on the page, four columns of it, and at 0.4 the lit streaks behind it took
       // one line to 3.56:1 against a 4.5:1 floor.
-      ambience.ticks.material.opacity = 0.26 + Math.sin(time * 2.4) * 0.1 + arc * 0.22;
+      //
+      // Capped through a flight, by owner decision 2026-10-05. Uncapped they reached 0.58 mid
+      // flight and were the loudest thing in act one's transit frame: the incoming set led them by
+      // 1.94 times inside its own part of the frame, against a floor of 2. A cap of 0.4 at a
+      // stretch of 26 met that floor, and a later review still read the transit frames as a
+      // warp-speed burst the arriving set was lost in: over the whole frame the set carried 0.05
+      // to 0.4 of the streaks' weight. At 0.18 and 8 it carries 0.8 to 1.4 at 75% of a flight,
+      // and 2.2 by 80%.
+      const streakCap = STREAK_REST_CAP + (STREAK_FLIGHT_CAP - STREAK_REST_CAP) * arc;
+      ambience.ticks.material.opacity = Math.min(streakCap, 0.26 + Math.sin(time * 2.4) * 0.1 + arc * 0.22);
     }
 
     // Only the sets within reach of the camera run or draw. Everything else is one visible
