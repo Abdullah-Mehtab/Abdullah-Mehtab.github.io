@@ -3284,6 +3284,110 @@ async function checkFilmPlayControl(baseUrl) {
   }
 }
 
+// Playing, the film stops at each act for as long as the act's words take to read.
+//
+// At a constant 240px a second an act was on screen for about nine seconds, and act two has
+// nineteen seconds of reading in it at the 238 words a minute adults read. The owner chose on
+// 2026-10-05 to keep the travel speed and stop at each act's top for its word count divided by
+// four seconds. Measured on one act rather than the whole chapter, which would take two minutes
+// of real time: play is pressed two seconds short of act two, and every frame's scroll position
+// is recorded through the arrival, the stop and two seconds of travel after it.
+//
+// The hold may be up to a second long, for frame timing, and not short at all beyond half a
+// second: a stop shorter than the reading time is the fault this exists to catch. The travel on
+// either side has to stay near the speed the owner chose, so a stop cannot be bought by slowing
+// the whole film down.
+const PLAY_HOLD_EARLY = 0.5;
+const PLAY_HOLD_LATE = 1;
+const PLAY_TRAVEL = [200, 280];
+const PLAY_WORDS_PER_SECOND = 4;
+
+async function checkFilmPlayPauses(baseUrl) {
+  const executablePath = findChromeExecutable();
+  if (!executablePath) {
+    warnings.push('Skipping the play pause check because Chrome/Edge was not found. Set CHROME_PATH to enable it.');
+    return;
+  }
+  const routes = await filmRoutes();
+  if (routes.length === 0) {
+    failures.push('The play pause check found no page carrying the film body class, so it measured nothing.');
+    return;
+  }
+
+  const { default: puppeteer } = await import('puppeteer-core');
+  const browser = await puppeteer.launch({
+    executablePath,
+    headless: true,
+    args: ['--no-sandbox', '--disable-setuid-sandbox', '--enable-unsafe-swiftshader', '--use-gl=angle']
+  });
+  try {
+    const page = await browser.newPage();
+    await page.setCacheEnabled(false);
+    await page.setViewport({ width: 1440, height: 900, deviceScaleFactor: 1 });
+    for (const route of routes) {
+      await openPage(page, `${baseUrl}${route}`);
+      await page.evaluate(() => new Promise((done) => setTimeout(done, 1500)));
+      const act = await page.evaluate(() => {
+        const second = document.querySelectorAll('main > .act')[1];
+        if (!second || !document.querySelector('.film-play')) return null;
+        return {
+          top: Math.round(second.getBoundingClientRect().top + window.scrollY),
+          words: second.innerText.split(/\s+/).filter(Boolean).length
+        };
+      });
+      if (!act) {
+        failures.push(`${route} has no play control or no second act, so the play pause check measured nothing.`);
+        continue;
+      }
+      const expected = act.words / PLAY_WORDS_PER_SECOND;
+      await page.evaluate((to) => {
+        document.documentElement.style.scrollBehavior = 'auto';
+        window.scrollTo(0, to);
+        document.documentElement.style.scrollBehavior = '';
+      }, act.top - 480);
+      await page.evaluate(() => new Promise((done) => setTimeout(done, 700)));
+      const samples = await page.evaluate((seconds) => new Promise((done) => {
+        const out = [];
+        const start = performance.now();
+        document.querySelector('.film-play').click();
+        const tick = (now) => {
+          out.push([(now - start) / 1000, window.scrollY]);
+          if (now - start < seconds * 1000) requestAnimationFrame(tick);
+          else done(out);
+        };
+        requestAnimationFrame(tick);
+      }), 2 + expected + PLAY_HOLD_LATE + 2.5);
+      await page.evaluate(() => { const el = document.querySelector('.film-play'); if (el && el.textContent.trim() === 'Stop') el.click(); });
+
+      const arrived = samples.findIndex(([, y]) => Math.abs(y - act.top) <= 2);
+      if (arrived < 0) {
+        failures.push(`${route} play control never brought act two's top to the top of the screen, so it never stopped there to be read.`);
+        continue;
+      }
+      const left = samples.findIndex(([, y], i) => i > arrived && y > act.top + 2);
+      const held = (left < 0 ? samples[samples.length - 1][0] : samples[left][0]) - samples[arrived][0];
+      const speed = (from, to) => (samples[to][1] - samples[from][1]) / Math.max(0.001, samples[to][0] - samples[from][0]);
+      const before = arrived > 0 ? speed(0, arrived) : null;
+      const afterEnd = left < 0 ? -1 : samples.findIndex(([t]) => t >= samples[left][0] + 2);
+      const after = left < 0 || afterEnd < 0 ? null : speed(left, afterEnd);
+      if (held < expected - PLAY_HOLD_EARLY) {
+        failures.push(`${route} play control stops at act two for ${held.toFixed(1)}s, against ${expected.toFixed(1)}s for its ${act.words} words at ${PLAY_WORDS_PER_SECOND} a second. The film leaves before the reader has read the act. See readingStops in film.js.`);
+      } else if (held > expected + PLAY_HOLD_LATE) {
+        failures.push(`${route} play control stays at act two for ${held.toFixed(1)}s, against ${expected.toFixed(1)}s for its ${act.words} words. A film that does not start again reads as a control that stopped working.`);
+      }
+      for (const [name, value] of [['into act two', before], ['out of act two', after]]) {
+        if (value === null) {
+          failures.push(`${route} play control's travel ${name} could not be measured, so the play pause check could not tell a stop from a slower film.`);
+        } else if (value < PLAY_TRAVEL[0] || value > PLAY_TRAVEL[1]) {
+          failures.push(`${route} play control travels ${name} at ${Math.round(value)}px a second, outside ${PLAY_TRAVEL[0]} to ${PLAY_TRAVEL[1]}. The stops give reading time; the travel between them stays at the speed the owner chose.`);
+        }
+      }
+    }
+  } finally {
+    await browser.close();
+  }
+}
+
 async function checkStaticReferences() {
   const files = await walkFiles(repoRoot);
   for (const file of files) {
@@ -4369,6 +4473,7 @@ async function main() {
     await checkFilmTextClear(baseUrl);
     await checkFilmTextClearKeepsWhole(baseUrl);
     await checkFilmPlayControl(baseUrl);
+    await checkFilmPlayPauses(baseUrl);
     await checkFilmJumpLanding(baseUrl);
     await checkVideoDialog(baseUrl);
     await checkFilmBodyClash(baseUrl);

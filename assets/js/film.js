@@ -137,9 +137,28 @@
   // in, short enough to read as travel. Faster than this starts to outrun the copy, which is
   // what the old number was trying to protect and overprotected by a factor of two.
   const PLAY_SPEED = 240;
+  // And it stops at each act's top, where an act's copy is settled and its set is composed, for
+  // as long as the act's words take to read: adults read about 238 words a minute, four a
+  // second. At 240px/s alone an act was on screen for about nine seconds against nineteen to
+  // read act two. Owner decision 2026-10-05: travel keeps this speed and reading gets real time.
+  //
+  // Only the acts ahead of where Play is pressed. Pressed at the top of the page, holding still
+  // on the act already in front of the reader would look like a control that did nothing.
+  const READING_WORDS_PER_SECOND = 4;
   let playing = false;
   let playFrom = 0;
   let playAt = 0;
+  let stops = [];
+  let holdUntil = 0;
+
+  function readingStops(from) {
+    return acts
+      .map((act) => ({
+        at: Math.round(act.getBoundingClientRect().top + window.scrollY),
+        hold: (act.innerText.split(/\s+/).filter(Boolean).length / READING_WORDS_PER_SECOND) * 1000
+      }))
+      .filter((stop) => stop.at > from + 1);
+  }
 
   function playEnd() {
     const last = acts[acts.length - 1];
@@ -172,7 +191,16 @@
     if (!playing) return;
     const seconds = (now - playAt) / 1000;
     playAt = now;
+    if (now < holdUntil) {
+      window.requestAnimationFrame(stepPlay);
+      return;
+    }
     playFrom += PLAY_SPEED * seconds;
+    if (stops.length && playFrom >= stops[0].at) {
+      const stop = stops.shift();
+      playFrom = stop.at;
+      holdUntil = now + stop.hold;
+    }
     const end = playEnd();
     if (playFrom >= end) {
       window.scrollTo(0, end);
@@ -193,6 +221,8 @@
     easedScroll = root.style.scrollBehavior;
     root.style.scrollBehavior = "auto";
     playFrom = window.scrollY;
+    stops = readingStops(playFrom);
+    holdUntil = 0;
     playAt = performance.now();
     body.classList.add("is-playing");
     play.setAttribute("aria-label", "Stop playing this chapter");
