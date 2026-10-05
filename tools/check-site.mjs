@@ -3236,6 +3236,85 @@ async function checkFilmTextClear(baseUrl) {
   }
 }
 
+// How far from its locking point a jump to an act may leave it, in CSS pixels.
+//
+// A pinned act locks with its top at the top of the window. The site's own stylesheet stops
+// in-page jumps 82px short to keep headings clear of the fixed header, and on this page that
+// left every act rail jump and every deep link 82px low: the copy and the camera moved into
+// place only on the reader's next scroll. Two pixels is rounding, not a tolerance.
+const JUMP_LANDING = 2;
+
+// Every way of jumping to an act lands it where it locks: the act rail and a link from outside.
+async function checkFilmJumpLanding(baseUrl) {
+  const executablePath = findChromeExecutable();
+  if (!executablePath) {
+    warnings.push('Skipping the chapter jump landing check because Chrome/Edge was not found. Set CHROME_PATH to enable it.');
+    return;
+  }
+  const routes = await filmRoutes();
+  if (routes.length === 0) {
+    failures.push('The chapter jump landing check found no page carrying the film body class, so it measured nothing.');
+    return;
+  }
+
+  const { default: puppeteer } = await import('puppeteer-core');
+  const browser = await puppeteer.launch({
+    executablePath,
+    headless: true,
+    args: ['--no-sandbox', '--disable-setuid-sandbox', '--enable-unsafe-swiftshader', '--use-gl=angle']
+  });
+  // Waits until the page has stopped scrolling, by condition rather than by a fixed time: a
+  // smooth scroll on a slow machine takes longer than any number written here would allow.
+  const stillScrolling = (page) => page.waitForFunction(() => new Promise((done) => {
+    let last = window.scrollY;
+    let same = 0;
+    const tick = () => {
+      same = window.scrollY === last ? same + 1 : 0;
+      last = window.scrollY;
+      if (same >= 20) done(true); else requestAnimationFrame(tick);
+    };
+    requestAnimationFrame(tick);
+  }), { timeout: 15000 });
+  const where = (page, id) => page.evaluate((target) => {
+    const act = document.getElementById(target);
+    return act ? Math.round(act.getBoundingClientRect().top) : null;
+  }, id);
+  try {
+    const page = await browser.newPage();
+    await page.setCacheEnabled(false);
+    await page.setViewport({ width: 1440, height: 900, deviceScaleFactor: 1 });
+    for (const route of routes) {
+      await openPage(page, `${baseUrl}${route}?scene-debug`, { scene: true });
+      await stillScrolling(page);
+      const ids = await page.evaluate(() => [...document.querySelectorAll('.film-act-nav a')].map((link) => link.getAttribute('href').slice(1)));
+      if (ids.length === 0) {
+        failures.push(`${route} has no act rail, so the jump landing check measured nothing.`);
+        continue;
+      }
+      const missed = [];
+      for (const id of ids) {
+        await page.evaluate((target) => document.querySelector(`.film-act-nav a[href="#${target}"]`).click(), id);
+        await stillScrolling(page);
+        const top = await where(page, id);
+        if (top === null || Math.abs(top) > JUMP_LANDING) missed.push(`the rail's #${id} leaves the act at ${top}px`);
+      }
+      // A link from outside, opened fresh, the way a reader arrives from another page.
+      const last = ids[ids.length - 1];
+      await openPage(page, `${baseUrl}${route}?scene-debug#${last}`, { scene: true });
+      await stillScrolling(page);
+      const linked = await where(page, last);
+      if (linked === null || Math.abs(linked) > JUMP_LANDING) missed.push(`opening #${last} leaves the act at ${linked}px`);
+      if (missed.length) {
+        failures.push(
+          `${route} stops a jump short of where the act locks: ${missed.join('; ')}, ceiling ${JUMP_LANDING}px. The copy and the camera then only arrive on the reader's next scroll. Look for a scroll-padding-top or scroll-margin-top that offsets the jump.`
+        );
+      }
+    }
+  } finally {
+    await browser.close();
+  }
+}
+
 // The demo video opens centred over the page and gives the page back when it closes.
 //
 // It used to play inside the button's own box, which on the Cyber Sentinel page is the bottom
@@ -3406,6 +3485,7 @@ async function main() {
     await checkFilmPlateLegibility(baseUrl);
     await checkFilmTextClear(baseUrl);
     await checkFilmPlayControl(baseUrl);
+    await checkFilmJumpLanding(baseUrl);
     await checkVideoDialog(baseUrl);
     await checkFilmBodyClash(baseUrl);
     await checkFilmActColour(baseUrl);

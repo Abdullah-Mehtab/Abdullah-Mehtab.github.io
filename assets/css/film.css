@@ -541,6 +541,22 @@ body.film .act-pin {
 }
 
 /*
+  A jump to an act lands on the act's own top, where its pin locks.
+
+  The site's stylesheet stops every in-page jump 82px short, to keep a heading out from under
+  the fixed header. A pinned act already reserves the header inside itself, so here the gap was
+  counted twice: the act rail and every deep link stopped the act 82px low, and the first small
+  scroll then moved the copy and the camera into place. Only where the pins actually pin; on a
+  narrow or short screen, or with reduced motion, the acts are ordinary flow and the header
+  offset is still what keeps a heading visible.
+*/
+@media (min-width: 901px) and (min-height: 641px) and (prefers-reduced-motion: no-preference) {
+  html:has(> body.film) {
+    scroll-padding-top: 0;
+  }
+}
+
+/*
   The first frame reserves the band the scroll cue stands in, the same way every pin reserves
   the header.
 
