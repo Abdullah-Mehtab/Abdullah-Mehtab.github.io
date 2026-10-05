@@ -132,7 +132,7 @@ const NODES = {
   // words at every depth the camera could see it from, so the lane fade took it to nothing and
   // the one node here that stores anything was never named.
   elastic:  { at: [-6, -10, -31], size: [26, 24, 24], form: "store", label: "Elasticsearch", sub: "index, search" },
-  logstash: { at: [16, 8, -47], size: [24, 22, 18], form: "fork", label: "Logstash", sub: "the fork" },
+  logstash: { at: [16, 8, -47], size: [24, 22, 18], form: "fork", label: "Logstash", sub: "email and dashboards" },
   // Brought in from x -31. That was clear of the copy while this set sat high in the frame; once
   // the camera started looking at the set rather than at its own height, the set came down and
   // this screen's left edge landed inside the last word of the act's own heading.

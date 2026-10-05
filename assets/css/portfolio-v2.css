@@ -3462,3 +3462,9 @@ body[data-cursor="reticle"] .cursor-reticle {
     display: grid;
   }
 }
+
+/* A hyphenated word that must not break at its hyphen. A line ending "open-" with "source"
+   on the next reads as a mistake, and a browser breaks there by default. */
+.keep-whole {
+  white-space: nowrap;
+}
