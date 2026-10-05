@@ -2214,12 +2214,24 @@ body.scene-live .act > section {
     grid-column: 1 / span 8;
   }
 
-  body.film.scene-live [data-frame="pair"] > :nth-child(1),
-  body.film.scene-live [data-frame="pair"] > :nth-child(2),
   /* The argument and the result stay side by side. Stacked in one narrow column they were
      nearly two hundred pixels taller than the frame they live in. */
   body.film.scene-live [data-frame="split"] > :nth-child(1) {
     grid-column: 1 / span 4;
+  }
+
+  /*
+    Act two's two panels, stacked, in half the grid.
+
+    In four columns, the same as act four's, they were the narrowest copy on the page with no
+    second column beside them: a 376px strip with 30px headings and 42 characters a line, against
+    act one's 778px and 59. The owner's word for it was empty. Six columns sets the paragraphs at
+    about 60 characters, inside the 50 to 75 that reads best, and the headings grow with the
+    panel because they are sized to it.
+  */
+  body.film.scene-live [data-frame="pair"] > :nth-child(1),
+  body.film.scene-live [data-frame="pair"] > :nth-child(2) {
+    grid-column: 1 / span 6;
   }
 
   /*
