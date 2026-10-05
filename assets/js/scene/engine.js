@@ -187,6 +187,51 @@ const plateUp = new THREE.Vector3();
 const plateAhead = new THREE.Vector3();
 const plateScale = new THREE.Vector3();
 const plateNudge = new THREE.Vector3();
+const plateRay = new THREE.Raycaster();
+const plateEye = new THREE.Vector3();
+const plateAim = new THREE.Vector3();
+
+// True when another node's solid body stands between the camera and the middle of this node.
+//
+// A plate is drawn over everything, so a node hidden behind a nearer one still had its name drawn
+// on the nearer one: in act three, near the Wazuh Manager, its tall stack carried the plates of
+// Filebeat, Logstash and Kibana, which stand behind it, and a review read one object named three
+// things. Labelling practice in 3D is to drop the label of an occluded feature. Added on
+// 2026-10-06 after that review, toward the owner's ask for a higher score.
+//
+// Solid means a mesh a reader cannot see through: opaque, or at least half opaque. Scenery and
+// labels never count. The list is built once per set and kept on the set.
+function nodeIsBehindAnother(anchor, group, camera) {
+  let solids = group.userData.plateSolids;
+  if (!solids) {
+    solids = [];
+    group.traverse((n) => {
+      if (!n.isMesh) return;
+      for (let p = n; p && p !== group.parent; p = p.parent) {
+        if (p.userData && (p.userData.ambient || p.userData.caption)) return;
+      }
+      const m = Array.isArray(n.material) ? n.material[0] : n.material;
+      if (!m || (m.transparent && m.opacity < 0.5)) return;
+      solids.push(n);
+    });
+    group.userData.plateSolids = solids;
+  }
+  camera.getWorldPosition(plateEye);
+  anchor.getWorldPosition(plateAim);
+  plateAim.sub(plateEye);
+  const distance = plateAim.length();
+  if (distance < 1e-3) return false;
+  plateRay.set(plateEye, plateAim.normalize());
+  plateRay.far = distance;
+  for (const hit of plateRay.intersectObjects(solids, false)) {
+    let own = false;
+    for (let p = hit.object; p; p = p.parent) {
+      if (p === anchor) { own = true; break; }
+    }
+    if (!own && hit.object.visible) return true;
+  }
+  return false;
+}
 // Where a plate may go when another one is already on its pixels, in order of preference, as
 // multiples of its own height along the screen's up and of its own width along the screen's
 // right.
@@ -471,6 +516,12 @@ function keepNameplatesLegible(stations, camera, probe, plates, narrow, width, h
       // Done here, before any other pass, so a plate about to be hidden does not take the place
       // of one a reader can read.
       if (!node.userData.swarm && node.userData.typeShare && typePixels(node, camera, probe, height) < NAMEPLATE_TYPE_FLOOR) {
+        node.material.opacity = 0;
+        return;
+      }
+      // A plate that hangs from a node of its own, rather than from the set as a whole, goes when
+      // that node is behind another one. See nodeIsBehindAnother.
+      if (node.parent && node.parent !== station.group && nodeIsBehindAnother(node.parent, station.group, camera)) {
         node.material.opacity = 0;
         return;
       }

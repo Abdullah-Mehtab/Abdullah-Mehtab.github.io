@@ -129,7 +129,12 @@ export function buildBoard(palette) {
 
   const labels = [
     { mesh: callout("BCM2712", "quad Arm Cortex-A76"), pos: [34, 24, 6], at: 0.56 },
-    { mesh: callout("2x20 GPIO", "header, 2.54mm pitch"), pos: [30, 4, -36], at: 0.62 },
+    // Above the header's right end and above the BCM2712 plate. At [30, 4, -36] the board's tilt
+    // put it on the BCM2712 plate at every frame from 30% to 50% of the act, so it was pushed
+    // aside into a place the board's sway kept taking away, and blinked. Moved left along the
+    // header instead, it met the copy column and was faded out; this is the free space between
+    // the two, measured clear of both from 36% to 56%. Owner decision 2026-10-05.
+    { mesh: callout("2x20 GPIO", "header, 2.54mm pitch"), pos: [24, 26, -34], at: 0.62 },
     { mesh: callout("Kali Linux", "the whole SIEM, on 85mm"), pos: [26, -22, 26], at: 0.68 }
   ];
   for (const label of labels) {

@@ -2514,6 +2514,242 @@ async function checkFilmLabelContrast(baseUrl) {
   }
 }
 
+// A label is never drawn on a node that is not the one it names.
+//
+// Every plate is drawn over the set, so a node hidden behind a nearer one had its name printed
+// on the nearer one. A review on 2026-10-06 found act three's Wazuh Manager carrying the plates of
+// Filebeat, Logstash and Kibana, which stand behind it. The engine now hides the plate of a node
+// another node stands in front of (nodeIsBehindAnother in engine.js). This asks the same question
+// with different arithmetic, a segment against each other node's box, so it is not the engine
+// checking itself: for each drawn plate that hangs from a node, does a solid body of another
+// node lie between the camera and the middle of that node.
+const OWN_NODE_DEPTHS = [0.05, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6];
+
+async function checkFilmPlatesOnOwnNode(baseUrl) {
+  const executablePath = findChromeExecutable();
+  if (!executablePath) {
+    warnings.push('Skipping the check that labels sit on their own node because Chrome/Edge was not found. Set CHROME_PATH to enable it.');
+    return;
+  }
+  const routes = await filmRoutes();
+  if (routes.length === 0) {
+    failures.push('The check that labels sit on their own node found no page carrying the film body class, so it measured nothing.');
+    return;
+  }
+
+  const { default: puppeteer } = await import('puppeteer-core');
+  const browser = await puppeteer.launch({
+    executablePath,
+    headless: true,
+    args: ['--no-sandbox', '--disable-setuid-sandbox', '--enable-unsafe-swiftshader', '--use-gl=angle']
+  });
+  try {
+    const page = await browser.newPage();
+    await page.setCacheEnabled(false);
+    await page.setViewport({ width: 1440, height: 900, deviceScaleFactor: 1 });
+    for (const route of routes) {
+      await openPage(page, `${baseUrl}${route}?still&scene-debug`, { scene: true });
+      await page.evaluate(() => new Promise((done) => setTimeout(done, 1800)));
+      if (!await page.evaluate(() => Boolean(window.chapterFilm))) {
+        failures.push(`${route} did not publish its scene through ?scene-debug, so where its labels sit could not be checked.`);
+        continue;
+      }
+      const bands = await page.evaluate(() => {
+        document.documentElement.style.scrollBehavior = 'auto';
+        return [...document.querySelectorAll('main > .act')].map((act) => ({
+          top: Math.round(act.getBoundingClientRect().top + window.scrollY),
+          span: Number(act.dataset.stationSpan) || Math.round(act.getBoundingClientRect().height)
+        }));
+      });
+      let measured = 0;
+      const misplaced = [];
+      for (let a = 0; a < bands.length; a++) {
+        for (const depth of OWN_NODE_DEPTHS) {
+          await page.evaluate((to) => window.scrollTo(0, to), Math.round(bands[a].top + bands[a].span * depth));
+          await page.evaluate(() => new Promise((done) => {
+            let n = 0;
+            const tick = () => (++n > 50 ? done() : requestAnimationFrame(tick));
+            requestAnimationFrame(tick);
+          }));
+          const found = await page.evaluate((index) => {
+            const film = window.chapterFilm;
+            const group = film.stations[index].group;
+            const camera = film.camera;
+            const V = camera.position.constructor;
+            group.updateMatrixWorld(true);
+            camera.updateMatrixWorld();
+            const eye = new V().setFromMatrixPosition(camera.matrixWorld);
+            // Each solid body, as its world box, with the node it belongs to: the child of the
+            // set the body hangs from.
+            const solids = [];
+            group.traverse((n) => {
+              if (!n.isMesh || !n.visible) return;
+              let top = n;
+              for (let p = n; p && p !== group; p = p.parent) {
+                if (p.userData && (p.userData.ambient || p.userData.caption)) return;
+                top = p;
+              }
+              const m = Array.isArray(n.material) ? n.material[0] : n.material;
+              if (!m || (m.transparent && m.opacity < 0.5)) return;
+              if (!n.geometry.boundingBox) n.geometry.computeBoundingBox();
+              const bb = n.geometry.boundingBox;
+              const lo = [Infinity, Infinity, Infinity];
+              const hi = [-Infinity, -Infinity, -Infinity];
+              for (let c = 0; c < 8; c++) {
+                const v = new V(c & 1 ? bb.max.x : bb.min.x, c & 2 ? bb.max.y : bb.min.y, c & 4 ? bb.max.z : bb.min.z).applyMatrix4(n.matrixWorld);
+                lo[0] = Math.min(lo[0], v.x); lo[1] = Math.min(lo[1], v.y); lo[2] = Math.min(lo[2], v.z);
+                hi[0] = Math.max(hi[0], v.x); hi[1] = Math.max(hi[1], v.y); hi[2] = Math.max(hi[2], v.z);
+              }
+              solids.push({ node: top, lo, hi });
+            });
+            // Does the segment from a to b pass through the box, short of b.
+            const crosses = (a, b, lo, hi) => {
+              let t0 = 0;
+              let t1 = 0.98;
+              const d = [b.x - a.x, b.y - a.y, b.z - a.z];
+              const o = [a.x, a.y, a.z];
+              for (let k = 0; k < 3; k++) {
+                if (Math.abs(d[k]) < 1e-9) {
+                  if (o[k] < lo[k] || o[k] > hi[k]) return false;
+                  continue;
+                }
+                let u = (lo[k] - o[k]) / d[k];
+                let w = (hi[k] - o[k]) / d[k];
+                if (u > w) [u, w] = [w, u];
+                t0 = Math.max(t0, u);
+                t1 = Math.min(t1, w);
+                if (t0 > t1) return false;
+              }
+              return true;
+            };
+            const out = { plates: 0, wrong: [] };
+            group.traverse((n) => {
+              if (!n.userData || !n.userData.caption || !n.material) return;
+              if (!n.parent || n.parent === group) return;
+              if (n.material.opacity < 0.75) return;
+              // Only a plate a reader can see. Past a node the camera has flown by, its plate is
+              // behind the lens, and a plate nobody sees cannot sit on the wrong object.
+              const seen = new V().setFromMatrixPosition(n.matrixWorld).project(camera);
+              if (seen.z > 1 || Math.abs(seen.x) > 1 || Math.abs(seen.y) > 1) return;
+              out.plates++;
+              const anchor = n.parent;
+              const middle = new V().setFromMatrixPosition(anchor.matrixWorld);
+              const own = (s) => {
+                for (let p = s.node; p; p = p.parent) if (p === anchor) return true;
+                for (let p = anchor; p; p = p.parent) if (p === s.node) return true;
+                return false;
+              };
+              const blocker = solids.find((s) => !own(s) && crosses(eye, middle, s.lo, s.hi));
+              if (blocker) out.wrong.push(n.userData.caption);
+            });
+            return out;
+          }, a);
+          measured += found.plates;
+          for (const name of found.wrong) misplaced.push(`"${name}" in act ${a + 1} at ${Math.round(depth * 100)}%`);
+        }
+      }
+      if (measured === 0) {
+        failures.push(`${route} drew no label hanging from a node of its own at any sampled depth, so the check that labels sit on their own node measured nothing.`);
+        continue;
+      }
+      if (misplaced.length) {
+        failures.push(
+          `${route} draws a label while another node stands in front of the one it names, so the name sits on the wrong object: ${misplaced.slice(0, 6).join('; ')}. See nodeIsBehindAnother in engine.js.`
+        );
+      }
+    }
+  } finally {
+    await browser.close();
+  }
+}
+
+// While an act is being read, its set has a name on screen.
+//
+// A review on 2026-10-06 found act three's frame at half way naming nothing: the camera was up
+// against the Wazuh Manager, the plates of the nodes behind it were rightly hidden, and the
+// manager's own plate reached into the copy column and was faded out. A set with no name on it
+// is shapes. Swarm labels and labels crossing the room do not count; they are not names.
+//
+// From 30% of the act, once its set has assembled. Act one opens on the page's title while its
+// board builds itself, and the board's callouts arrive with the parts they name, after the first
+// quarter of the act: an unnamed board at 10% is the build, not a missing name.
+const NAMED_DEPTHS = [0.3, 0.4, 0.5];
+
+async function checkFilmHoldsNamed(baseUrl) {
+  const executablePath = findChromeExecutable();
+  if (!executablePath) {
+    warnings.push('Skipping the check that each act has a name on screen because Chrome/Edge was not found. Set CHROME_PATH to enable it.');
+    return;
+  }
+  const routes = await filmRoutes();
+  if (routes.length === 0) {
+    failures.push('The check that each act has a name on screen found no page carrying the film body class, so it measured nothing.');
+    return;
+  }
+
+  const { default: puppeteer } = await import('puppeteer-core');
+  const browser = await puppeteer.launch({
+    executablePath,
+    headless: true,
+    args: ['--no-sandbox', '--disable-setuid-sandbox', '--enable-unsafe-swiftshader', '--use-gl=angle']
+  });
+  try {
+    const page = await browser.newPage();
+    await page.setCacheEnabled(false);
+    await page.setViewport({ width: 1440, height: 900, deviceScaleFactor: 1 });
+    for (const route of routes) {
+      await openPage(page, `${baseUrl}${route}?still&scene-debug`, { scene: true });
+      await page.evaluate(() => new Promise((done) => setTimeout(done, 1800)));
+      if (!await page.evaluate(() => Boolean(window.chapterFilm))) {
+        failures.push(`${route} did not publish its scene through ?scene-debug, so whether its acts carry names could not be checked.`);
+        continue;
+      }
+      const bands = await page.evaluate(() => {
+        document.documentElement.style.scrollBehavior = 'auto';
+        return [...document.querySelectorAll('main > .act')].map((act) => ({
+          top: Math.round(act.getBoundingClientRect().top + window.scrollY),
+          span: Number(act.dataset.stationSpan) || Math.round(act.getBoundingClientRect().height)
+        }));
+      });
+      const unnamed = [];
+      for (let a = 0; a < bands.length; a++) {
+        for (const depth of NAMED_DEPTHS) {
+          await page.evaluate((to) => window.scrollTo(0, to), Math.round(bands[a].top + bands[a].span * depth));
+          await page.evaluate(() => new Promise((done) => {
+            let n = 0;
+            const tick = () => (++n > 50 ? done() : requestAnimationFrame(tick));
+            requestAnimationFrame(tick);
+          }));
+          const names = await page.evaluate((index) => {
+            const film = window.chapterFilm;
+            const camera = film.camera;
+            camera.updateMatrixWorld();
+            const V = camera.position.constructor;
+            let count = 0;
+            film.stations[index].group.traverse((n) => {
+              if (!n.userData || !n.userData.caption || !n.material) return;
+              if (n.userData.swarm || n.userData.transient) return;
+              if (n.material.opacity < 0.75) return;
+              const at = new V().setFromMatrixPosition(n.matrixWorld).project(camera);
+              if (at.z > 1 || Math.abs(at.x) > 1 || Math.abs(at.y) > 1) return;
+              count++;
+            });
+            return count;
+          }, a);
+          if (names === 0) unnamed.push(`act ${a + 1} at ${Math.round(depth * 100)}%`);
+        }
+      }
+      if (unnamed.length) {
+        failures.push(
+          `${route} shows a set with no name on it while its act is being read: ${unnamed.join('; ')}. A plate that is hidden or faded everywhere at once leaves the reader looking at unlabelled shapes; move the plate that names what fills the frame, as act three's Wazuh Manager is with labelX.`
+        );
+      }
+    }
+  } finally {
+    await browser.close();
+  }
+}
+
 // The play control never takes a reader backwards, and is not offered where there is nothing
 // to play.
 //
@@ -3880,6 +4116,110 @@ async function checkFilmTransitWeight(baseUrl) {
   }
 }
 
+// Labels hold still while the reader does.
+//
+// With the reader holding a scroll position, the sets still move on their own: the board sways,
+// the manager turns. Every frame the engine decided afresh whether each label showed and where,
+// against sharp lines with no margin, so a label near any of them flickered or jumped: act one's
+// "2x20 GPIO" was hidden for two thirds of a twelve second hold and changed state in it. Owner
+// decision 2026-10-05: a check that counts changes while held still. Margins, a hold and fades in
+// the engine were tried and undone the same day, because holding or fading a label the rules had
+// taken away drew it overlapping or cut; what fixed the GPIO label was moving it to where nothing
+// covers it. Live, not frozen, because the fault only exists in motion.
+const LABEL_CHANGES_PER_SECOND = 0.05;
+const LABEL_HOLD_SECONDS = 8;
+const LABEL_HOLD_DEPTHS = [[1, 0.5], [2, 0.4], [3, 0.3], [4, 0.5]];
+
+async function checkFilmLabelSteadiness(baseUrl) {
+  const executablePath = findChromeExecutable();
+  if (!executablePath) {
+    warnings.push('Skipping the label steadiness check because Chrome/Edge was not found. Set CHROME_PATH to enable it.');
+    return;
+  }
+  const routes = await filmRoutes();
+  if (routes.length === 0) {
+    failures.push('The label steadiness check found no page carrying the film body class, so it measured nothing.');
+    return;
+  }
+
+  const { default: puppeteer } = await import('puppeteer-core');
+  const browser = await puppeteer.launch({
+    executablePath,
+    headless: true,
+    args: ['--no-sandbox', '--disable-setuid-sandbox', '--enable-unsafe-swiftshader', '--use-gl=angle']
+  });
+  try {
+    const page = await browser.newPage();
+    await page.setCacheEnabled(false);
+    await page.setViewport({ width: 1440, height: 900, deviceScaleFactor: 1 });
+    for (const route of routes) {
+      await openPage(page, `${baseUrl}${route}?scene-debug`, { scene: true });
+      if (!await page.evaluate(() => Boolean(window.chapterFilm))) {
+        failures.push(`${route} did not publish its scene through ?scene-debug, so its labels could not be watched.`);
+        continue;
+      }
+      const restless = [];
+      let watched = 0;
+      for (const [act, depth] of LABEL_HOLD_DEPTHS) {
+        const ok = await page.evaluate(([index, at]) => {
+          const target = [...document.querySelectorAll('main > .act')][index];
+          if (!target) return false;
+          const top = target.getBoundingClientRect().top + window.scrollY;
+          const span = Number(target.dataset.stationSpan) || target.getBoundingClientRect().height;
+          document.documentElement.style.scrollBehavior = 'auto';
+          window.scrollTo(0, Math.round(top + span * at));
+          return true;
+        }, [act - 1, depth]);
+        if (!ok) continue;
+        // Long enough for the damped camera to arrive and stop, so what is left is the sets'
+        // own motion and nothing the reader did.
+        await page.evaluate(() => new Promise((done) => setTimeout(done, 3000)));
+        const changes = await page.evaluate((seconds) => new Promise((done) => {
+          const film = window.chapterFilm;
+          const last = new Map();
+          const counts = new Map();
+          const names = new Map();
+          const start = performance.now();
+          const tick = () => {
+            film.scene.traverse((node) => {
+              if (!node.userData || !node.userData.caption || node.userData.swarm || node.userData.transient) return;
+              if (!node.material) return;
+              const state = (node.material.opacity > 0.02 ? 'shown' : 'hidden') + ':' + (node.userData.plateSlot === undefined ? 'home' : node.userData.plateSlot);
+              // By the plate itself, not its name: two acts can each name a part the same.
+              const key = node.uuid;
+              const before = last.get(key);
+              if (before !== undefined && before !== state) counts.set(key, (counts.get(key) || 0) + 1);
+              last.set(key, state);
+              names.set(key, node.userData.caption);
+            });
+            if (performance.now() - start < seconds * 1000) requestAnimationFrame(tick);
+            else done({ labels: last.size, counts: [...counts.entries()].map(([key, n]) => [names.get(key), n]) });
+          };
+          requestAnimationFrame(tick);
+        }), LABEL_HOLD_SECONDS);
+        watched += changes.labels;
+        const total = changes.counts.reduce((sum, [, n]) => sum + n, 0);
+        const rate = total / LABEL_HOLD_SECONDS;
+        if (rate > LABEL_CHANGES_PER_SECOND) {
+          const worst = changes.counts.sort((a, b) => b[1] - a[1]).slice(0, 3).map(([name, n]) => `"${name}" ${n}`).join(', ');
+          restless.push(`act ${act} at ${Math.round(depth * 100)}% changed labels ${rate.toFixed(2)} times a second (${worst})`);
+        }
+      }
+      if (watched === 0) {
+        failures.push(`${route} showed no labels at any held position, so the label steadiness check measured nothing.`);
+        continue;
+      }
+      if (restless.length) {
+        failures.push(
+          `${route} lets labels appear, vanish or jump while the reader holds still: ${restless.join('; ')}, ceiling ${LABEL_CHANGES_PER_SECOND} a second. A label near another plate, the copy column or the type floor crosses that line as its set sways; move its anchor to where nothing reaches it, as act one's 2x20 GPIO was.`
+        );
+      }
+    }
+  } finally {
+    await browser.close();
+  }
+}
+
 async function main() {
   await checkProtectedRoutes();
   await checkDownloadNames();
@@ -3908,6 +4248,9 @@ async function main() {
     await checkFilmLabelSize(baseUrl);
     await checkFilmPlateLegibility(baseUrl);
     await checkFilmLabelContrast(baseUrl);
+    await checkFilmPlatesOnOwnNode(baseUrl);
+    await checkFilmHoldsNamed(baseUrl);
+    await checkFilmLabelSteadiness(baseUrl);
     await checkFilmTextClear(baseUrl);
     await checkFilmTextClearKeepsWhole(baseUrl);
     await checkFilmPlayControl(baseUrl);

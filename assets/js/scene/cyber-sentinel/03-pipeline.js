@@ -125,8 +125,14 @@ const NODES = {
   // a 4.5 floor. The same thing, further along the flow, is why Elasticsearch moved.
   agents:   { at: [-14, 15, 51], size: [18, 13, 13], form: "cluster", label: "Agents", sub: "endpoints" },
   suricata: { at: [35, -25, 36], size: [20, 14, 14], form: "sensor", label: "Suricata", sub: "network alerts" },
-  manager:  { at: [0, 2, 19], size: [30, 32, 26], form: "rules", label: "Wazuh Manager", sub: "rules, decoders" },
-  alerts:   { at: [-11, -18, 2], size: [22, 3, 17], form: "file", label: "alerts.json", sub: "" },
+  // Its name set 12 to the right, so it clears the copy column when the camera is up against the
+  // stack at half way: centred, the plate reached into that column, the engine faded it, and
+  // that frame named nothing at all.
+  manager:  { at: [0, 2, 19], size: [30, 32, 26], form: "rules", label: "Wazuh Manager", sub: "rules, decoders", labelX: 12 },
+  // Its name is set to the right of the file rather than over it, by labelX in world units. Over
+  // it, the plate sat just above the end of the copy's four-step track, over "04 Alert", and read
+  // as part of the page's timeline. Owner decision 2026-10-05.
+  alerts:   { at: [-11, -18, 2], size: [22, 3, 17], form: "file", label: "alerts.json", sub: "", labelX: 16 },
   filebeat: { at: [16, 17, -14], size: [18, 14, 14], form: "shipper", label: "Filebeat", sub: "ships events" },
   // Left of the flow's middle but not out in the reading column. At -22 its plate sat over the
   // words at every depth the camera could see it from, so the lane fade took it to nothing and
@@ -276,7 +282,7 @@ export function buildPipeline(palette) {
     // two plates six units apart in world space are one plate in screen space at forty units
     // of depth. So a node is named when the camera is near it and unnamed when it is not,
     // which is what a caption is for anyway.
-    label.position.set(0, spec.size[1] / 2 + 7 + (i % 2) * 7, 0);
+    label.position.set(spec.labelX || 0, spec.size[1] / 2 + 7 + (i % 2) * 7, 0);
     node.add(label);
 
     node.position.set(spec.at[0], spec.at[1], spec.at[2]);

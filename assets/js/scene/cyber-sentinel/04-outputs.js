@@ -249,9 +249,13 @@ export function buildOutputs(palette) {
   // engine's own copy fade pulled it to 0.67 against a floor of 0.75, so it was legible and dim
   // instead of legible. Moving the node it names from x -18 to x 6 takes both clear of the column:
   // 17.3px at full strength, against 12.8px at 0.90 before.
+  //
+  // Under the box rather than over it, the same gap from its bottom face as it had from its top.
+  // Over it, the plate hung just under the dashboard's bottom edge and read as that screen's
+  // caption rather than the name of the box beneath. Owner decision 2026-10-05.
   const sourceLabel = nameplate("Logstash", "", accent, palette.deep, 60);
   sourceLabel.userData.primary = true;
-  sourceLabel.position.set(6, -14, -30);
+  sourceLabel.position.set(6, -42, -30);
   group.add(sourceLabel);
 
   const feeds = [dashboard, email].map((target, i) => {
