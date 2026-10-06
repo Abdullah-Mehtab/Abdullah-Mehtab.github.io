@@ -825,7 +825,15 @@ export function mountFilm({ canvas, buildStations }) {
   const acts = Array.from(document.querySelectorAll("main > .act"));
   if (acts.length === 0) return null;
 
-  const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  // Less motion is asked for in two places: the operating system, and the site's own Motion menu,
+  // which writes body[data-motion] (portfolio-v2.js, and its Auto setting already folds the OS query
+  // in). Off in either freezes the film. The OS setting wins outright, because film.css gates the
+  // pinned acts on that query and cannot follow the menu. Calm and Full run the film unchanged:
+  // owner ruling, 2026-10-06, Calm has no defined meaning for a 3D scene and inventing one is new
+  // design.
+  const osReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
+  const asksForNoMotion = () => osReducedMotion.matches || body.dataset.motion === "off";
+  let reduced = asksForNoMotion();
   // ?still holds the clock at zero and takes the camera off its damping, so the frame at a
   // given scroll position is the same frame every time.
   //
@@ -838,7 +846,13 @@ export function mountFilm({ canvas, buildStations }) {
   // Not the same as reduced motion, which also pins every set to its finished state. A still
   // frame has to be the frame at this depth, not the last frame of the act.
   const still = /[?&]still(?:=|&|$)/.test(window.location.search);
-  const frozen = reduced || still;
+  let frozen = reduced || still;
+  // The menu can be changed while the film is running.
+  const motionWatcher = new MutationObserver(() => {
+    reduced = asksForNoMotion();
+    frozen = reduced || still;
+  });
+  motionWatcher.observe(body, { attributes: true, attributeFilter: ["data-motion"] });
 
   // Ask for the context here rather than letting the renderer ask. Three logs an error to the
   // console before it throws, and a reader whose browser has no WebGL has done nothing wrong:
@@ -1636,6 +1650,7 @@ export function mountFilm({ canvas, buildStations }) {
     stop() {
       running = false;
       themeWatcher.disconnect();
+      motionWatcher.disconnect();
       teardownWorld();
       renderer.dispose();
       body.style.removeProperty("--scene-accent");

@@ -4449,6 +4449,340 @@ async function checkFilmLabelSteadiness(baseUrl) {
   }
 }
 
+// Share of two same-sized screenshots' pixels that differ by more than 6 of 255 on any channel,
+// decoded in the page so the check needs no image library.
+async function shareOfPixelsChanged(page, first, second) {
+  return page.evaluate(async (a, b) => {
+    const load = (data) => new Promise((done) => {
+      const image = new Image();
+      image.onload = () => done(image);
+      image.src = 'data:image/png;base64,' + data;
+    });
+    const [one, two] = await Promise.all([load(a), load(b)]);
+    const read = (image) => {
+      const canvas = document.createElement('canvas');
+      canvas.width = image.width;
+      canvas.height = image.height;
+      const context = canvas.getContext('2d');
+      context.drawImage(image, 0, 0);
+      return context.getImageData(0, 0, canvas.width, canvas.height).data;
+    };
+    const x = read(one);
+    const y = read(two);
+    let changed = 0;
+    for (let i = 0; i < x.length; i += 4) {
+      if (Math.abs(x[i] - y[i]) > 6 || Math.abs(x[i + 1] - y[i + 1]) > 6 || Math.abs(x[i + 2] - y[i + 2]) > 6) changed++;
+    }
+    return changed / (x.length / 4);
+  }, first, second);
+}
+
+// Leaves only the 3D canvas visible, so the page's own animation, the cursor trail and the grain,
+// is not counted as the film moving.
+async function showOnlyTheCanvas(page) {
+  await page.addStyleTag({ content: 'body * { visibility: hidden !important } #chapter-scene { visibility: visible !important }' });
+}
+
+// The words nobody can read at any depth. Walks the page a quarter screen at a time with transitions
+// off, so a step needs a few frames and not the 700ms dissolve, and records whether each piece of
+// copy is drawn solid and wide enough at some step. A piece that is faded at one depth is working as
+// designed; a piece that is never solid is a word nobody will read.
+async function copyNobodyCanRead(page) {
+  return page.evaluate(async () => {
+    const style = document.createElement('style');
+    style.textContent = '*, *::before, *::after { transition: none !important }';
+    document.head.appendChild(style);
+    document.documentElement.style.scrollBehavior = 'auto';
+    const items = [...document.querySelectorAll('main .act h1, main .act h2, main .act h3, main .act p, main .act li')]
+      .filter((el) => el.textContent.trim())
+      .map((el) => ({ el, text: el.textContent.trim().slice(0, 40), seen: false }));
+    const frames = (count) => new Promise((done) => {
+      let n = 0;
+      const tick = () => (++n >= count ? done() : requestAnimationFrame(tick));
+      requestAnimationFrame(tick);
+    });
+    const solid = (el) => {
+      const box = el.getBoundingClientRect();
+      if (box.width < 40 || box.height === 0 || box.bottom < 0 || box.top > innerHeight) return false;
+      let opacity = 1;
+      for (let node = el; node && node !== document.documentElement; node = node.parentElement) {
+        const own = getComputedStyle(node);
+        if (own.visibility === 'hidden' || own.display === 'none') return false;
+        opacity *= Number(own.opacity);
+      }
+      return opacity >= 0.9;
+    };
+    const step = Math.round(innerHeight / 4);
+    const end = document.documentElement.scrollHeight - innerHeight;
+    for (let y = 0; y <= end + step; y += step) {
+      window.scrollTo(0, Math.min(y, end));
+      await frames(4);
+      for (const item of items) if (!item.seen && solid(item.el)) item.seen = true;
+    }
+    return items.filter((item) => !item.seen).map((item) => item.text);
+  });
+}
+
+// A reader can ask for less motion in two ways: the operating system's setting, which the film has
+// always honoured, and the site's own Motion menu, which sets body[data-motion] and which the film
+// ignored, so choosing Off there left every set moving. Measured on 2026-10-06: with Off chosen 4.7%
+// of the canvas still changed in 1.2 seconds, the same as the default; with the OS setting, 0%.
+//
+// The default case is the control. A canvas that is quiet in every case would pass on a page where
+// nothing ever moved, so the default has to be seen moving first. Calm is not tested because the film
+// treats it as Full: owner ruling, 2026-10-06, Calm has no defined meaning for a 3D scene and
+// inventing one is new design. With the OS setting on, every piece of copy also has to be readable.
+const MOTION_SEEN_SHARE = 0.01;
+const MOTION_QUIET_SHARE = 0.0005;
+const MOTION_WINDOW_MS = 1200;
+// A change in the menu takes a few seconds to land, because the sets ease to their finished look
+// first: measured, 21% of the canvas changing 1.4 seconds after the change and 0% from 4.9 seconds.
+// So the menu case gets this many windows to go still, and the last one is judged. A film that never
+// goes still fails; one that takes a moment to stop does not.
+const MOTION_SETTLE_TRIES = 8;
+
+async function checkFilmMotionOff(baseUrl) {
+  const executablePath = findChromeExecutable();
+  if (!executablePath) {
+    warnings.push('Skipping the motion off check because Chrome/Edge was not found. Set CHROME_PATH to enable it.');
+    return;
+  }
+  const routes = await filmRoutes();
+  if (routes.length === 0) {
+    failures.push('The motion off check found no page carrying the film body class, so it measured nothing.');
+    return;
+  }
+
+  const { default: puppeteer } = await import('puppeteer-core');
+  const browser = await puppeteer.launch({
+    executablePath,
+    headless: true,
+    args: ['--no-sandbox', '--disable-setuid-sandbox', '--enable-unsafe-swiftshader', '--use-gl=angle']
+  });
+  try {
+    const cases = [
+      { name: 'the default', os: false, menu: false },
+      { name: "the operating system's reduced motion setting", os: true, menu: false },
+      { name: "the site's Motion menu set to Off", os: false, menu: true }
+    ];
+    for (const route of routes) {
+      const problems = [];
+      const moved = {};
+      for (const one of cases) {
+        const page = await browser.newPage();
+        try {
+          await page.setCacheEnabled(false);
+          await page.setViewport({ width: 1440, height: 900, deviceScaleFactor: 1 });
+          if (one.os) await page.emulateMediaFeatures([{ name: 'prefers-reduced-motion', value: 'reduce' }]);
+          await openPage(page, `${baseUrl}${route}`);
+          try {
+            await page.waitForFunction(() => document.body.classList.contains('scene-live'), { timeout: 30000 });
+          } catch (error) {
+            if (error?.name !== 'TimeoutError') throw error;
+            problems.push(`never started its scene with ${one.name}`);
+            continue;
+          }
+          if (one.menu) {
+            const chosen = await page.evaluate(() => {
+              const select = document.querySelector('[data-motion-select]');
+              if (!select) return false;
+              select.value = 'off';
+              select.dispatchEvent(new Event('change', { bubbles: true }));
+              return document.body.dataset.motion === 'off';
+            });
+            if (!chosen) {
+              problems.push('has no working Motion menu to set to Off');
+              continue;
+            }
+          }
+          await page.evaluate(() => new Promise((done) => {
+            document.documentElement.style.scrollBehavior = 'auto';
+            window.scrollTo(0, 0);
+            let n = 0;
+            const tick = () => (++n >= 90 ? done() : requestAnimationFrame(tick));
+            requestAnimationFrame(tick);
+          }));
+          await showOnlyTheCanvas(page);
+          const tries = one.menu ? MOTION_SETTLE_TRIES : 1;
+          for (let attempt = 0; attempt < tries; attempt++) {
+            const first = await page.screenshot({ encoding: 'base64' });
+            await new Promise((done) => setTimeout(done, MOTION_WINDOW_MS));
+            const second = await page.screenshot({ encoding: 'base64' });
+            moved[one.name] = await shareOfPixelsChanged(page, first, second);
+            if (moved[one.name] <= MOTION_QUIET_SHARE) break;
+          }
+          if (one.os) {
+            // The motion measurement hid everything but the canvas; read the copy on a fresh load.
+            await openPage(page, `${baseUrl}${route}`);
+            const unread = await copyNobodyCanRead(page);
+            if (unread.length) {
+              problems.push(`shows no readable copy for ${unread.length} pieces with the operating system's reduced motion setting on, first "${unread[0]}"`);
+            }
+          }
+        } finally {
+          await page.close();
+        }
+      }
+      const control = moved[cases[0].name];
+      if (control !== undefined && control < MOTION_SEEN_SHARE) {
+        problems.push(`never moves in its default state (${(control * 100).toFixed(2)}% of the canvas changed in ${MOTION_WINDOW_MS}ms, floor ${MOTION_SEEN_SHARE * 100}%), so the quiet cases prove nothing`);
+      }
+      for (const one of cases.slice(1)) {
+        const share = moved[one.name];
+        if (share !== undefined && share > MOTION_QUIET_SHARE) {
+          problems.push(`keeps moving with ${one.name}: ${(share * 100).toFixed(2)}% of the canvas changed in ${MOTION_WINDOW_MS}ms, ceiling ${MOTION_QUIET_SHARE * 100}%`);
+        }
+      }
+      if (problems.length) {
+        failures.push(`${route} does not give a reader who asks for less motion a still film: ${problems.join('; ')}. The film reads the OS query and body[data-motion]; see mountFilm in assets/js/scene/engine.js.`);
+      }
+    }
+  } finally {
+    await browser.close();
+  }
+}
+
+// The film is a layer over a page that already works, so a browser with no WebGL has to get that
+// page. The chapter's wiring file asks for a context before it imports the engine, so the scene
+// should never start, the body should never claim it has, and every word should still be readable.
+// Without a check, the promise in docs/scroll_film/SCROLL_FILM_PLAN.md was only a local audit.
+async function checkFilmWithoutWebGL(baseUrl) {
+  const executablePath = findChromeExecutable();
+  if (!executablePath) {
+    warnings.push('Skipping the no WebGL check because Chrome/Edge was not found. Set CHROME_PATH to enable it.');
+    return;
+  }
+  const routes = await filmRoutes();
+  if (routes.length === 0) {
+    failures.push('The no WebGL check found no page carrying the film body class, so it measured nothing.');
+    return;
+  }
+
+  const { default: puppeteer } = await import('puppeteer-core');
+  const browser = await puppeteer.launch({
+    executablePath,
+    headless: true,
+    args: ['--no-sandbox', '--disable-setuid-sandbox']
+  });
+  try {
+    for (const route of routes) {
+      const problems = [];
+      const page = await browser.newPage();
+      try {
+        await page.setCacheEnabled(false);
+        await page.setViewport({ width: 1440, height: 900, deviceScaleFactor: 1 });
+        const errors = [];
+        page.on('pageerror', (error) => errors.push(String(error.message || error).slice(0, 120)));
+        await page.evaluateOnNewDocument(() => {
+          const original = HTMLCanvasElement.prototype.getContext;
+          HTMLCanvasElement.prototype.getContext = function (type, ...rest) {
+            if (/webgl/i.test(String(type))) return null;
+            return original.call(this, type, ...rest);
+          };
+        });
+        await openPage(page, `${baseUrl}${route}`);
+        await new Promise((done) => setTimeout(done, 1500));
+        const live = await page.evaluate(() => document.body.classList.contains('scene-live'));
+        if (live) problems.push('claims its scene is live when the browser has no WebGL');
+        if (errors.length) problems.push(`throws ${errors.length} uncaught error${errors.length === 1 ? '' : 's'}, first "${errors[0]}"`);
+        const unread = await copyNobodyCanRead(page);
+        if (unread.length) problems.push(`shows no readable copy for ${unread.length} pieces, first "${unread[0]}"`);
+      } finally {
+        await page.close();
+      }
+      if (problems.length) {
+        failures.push(`${route} does not stand on its own without WebGL: ${problems.join('; ')}.`);
+      }
+    }
+  } finally {
+    await browser.close();
+  }
+}
+
+// A browser can take a page's graphics context away and give it back: a GPU reset, memory pressure,
+// a tab left idle. three.js registers its own handlers, and the scene was measured on 2026-10-06 to
+// come back whole: while lost 100% of the canvas differed from before, once restored 0%.
+// The lost state is the control. A restore that passes because the loss never blanked anything would
+// prove nothing, so the canvas must differ by at least half while lost. A frozen frame is used so
+// that the frame before and the frame after are the same frame.
+const CONTEXT_LOST_SHARE = 0.5;
+const CONTEXT_RESTORED_SHARE = 0.0005;
+
+async function checkFilmContextRecovery(baseUrl) {
+  const executablePath = findChromeExecutable();
+  if (!executablePath) {
+    warnings.push('Skipping the context recovery check because Chrome/Edge was not found. Set CHROME_PATH to enable it.');
+    return;
+  }
+  const routes = await filmRoutes();
+  if (routes.length === 0) {
+    failures.push('The context recovery check found no page carrying the film body class, so it measured nothing.');
+    return;
+  }
+
+  const { default: puppeteer } = await import('puppeteer-core');
+  const browser = await puppeteer.launch({
+    executablePath,
+    headless: true,
+    args: ['--no-sandbox', '--disable-setuid-sandbox', '--enable-unsafe-swiftshader', '--use-gl=angle']
+  });
+  try {
+    const page = await browser.newPage();
+    await page.setCacheEnabled(false);
+    await page.setViewport({ width: 1440, height: 900, deviceScaleFactor: 1 });
+    const frames = (count) => page.evaluate((n) => new Promise((done) => {
+      let seen = 0;
+      const tick = () => (++seen >= n ? done() : requestAnimationFrame(tick));
+      requestAnimationFrame(tick);
+    }), count);
+    for (const route of routes) {
+      await openPage(page, `${baseUrl}${route}?still&scene-debug`, { scene: true });
+      const problems = [];
+      const live = await page.evaluate(() => document.body.classList.contains('scene-live'));
+      if (!live) {
+        failures.push(`${route} never started its scene, so its context recovery was not measured.`);
+        continue;
+      }
+      await page.evaluate(() => {
+        document.documentElement.style.scrollBehavior = 'auto';
+        window.scrollTo(0, Math.round(document.documentElement.scrollHeight * 0.18));
+      });
+      await frames(90);
+      await showOnlyTheCanvas(page);
+      const before = await page.screenshot({ encoding: 'base64' });
+      const lost = await page.evaluate(() => {
+        const gl = document.getElementById('chapter-scene').getContext('webgl2');
+        const extension = gl.getExtension('WEBGL_lose_context');
+        if (!extension) return false;
+        window.__loseContext = extension;
+        extension.loseContext();
+        return gl.isContextLost();
+      });
+      if (!lost) {
+        failures.push(`${route} could not have its WebGL context taken away in the test browser, so its recovery was not measured.`);
+        continue;
+      }
+      await new Promise((done) => setTimeout(done, 600));
+      const during = await page.screenshot({ encoding: 'base64' });
+      await page.evaluate(() => window.__loseContext.restoreContext());
+      await frames(90);
+      await new Promise((done) => setTimeout(done, 1500));
+      const after = await page.screenshot({ encoding: 'base64' });
+      const blanked = await shareOfPixelsChanged(page, before, during);
+      const back = await shareOfPixelsChanged(page, before, after);
+      if (blanked < CONTEXT_LOST_SHARE) {
+        problems.push(`was not blanked by losing the context (${(blanked * 100).toFixed(1)}% changed, floor ${CONTEXT_LOST_SHARE * 100}%), so the recovery proves nothing`);
+      }
+      if (back > CONTEXT_RESTORED_SHARE) {
+        problems.push(`does not come back after the context is restored: ${(back * 100).toFixed(2)}% of the canvas still differs from before, ceiling ${CONTEXT_RESTORED_SHARE * 100}%`);
+      }
+      if (problems.length) failures.push(`${route} does not survive losing its WebGL context: ${problems.join('; ')}.`);
+    }
+  } finally {
+    await browser.close();
+  }
+}
+
 async function main() {
   await checkProtectedRoutes();
   await checkDownloadNames();
@@ -4489,6 +4823,9 @@ async function main() {
     await checkVideoDialog(baseUrl);
     await checkFilmBodyClash(baseUrl);
     await checkFilmActColour(baseUrl);
+    await checkFilmMotionOff(baseUrl);
+    await checkFilmWithoutWebGL(baseUrl);
+    await checkFilmContextRecovery(baseUrl);
     await checkVisitCounting(baseUrl);
     if (args.has('--screenshots')) {
       await captureScreenshots(baseUrl);
