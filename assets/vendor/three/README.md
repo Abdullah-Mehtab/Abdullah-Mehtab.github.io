@@ -12,3 +12,21 @@ someone else's access policy, and nothing in this repository would notice it bei
 
 To update: copy both files again from `node_modules/three/build/` and run `npm test`, which
 fails if the chapter's scene stops mounting. There is no build step here and there must not be one.
+
+## addons/
+
+Four of three's add-ons, the same release, copied unmodified from `node_modules/three/examples/jsm/`
+into the same folder names, so the add-ons' own imports of each other still resolve:
+`loaders/GLTFLoader.js`, which loads the Offensive Security Home Lab chapter's models, the two
+`utils/` files it imports, and `libs/meshopt_decoder.module.js`, which unpacks the models' compressed
+geometry.
+
+They import three by its bare name, `three`. A page that loads them has to map that name to
+`three.module.min.js` in an import map, before any module script:
+
+```html
+<script type="importmap">{ "imports": { "three": "../assets/vendor/three/three.module.min.js" } }</script>
+```
+
+The map points at the same file the engine imports by path, so the page gets one copy of three.
+To update, copy the four files again from the same `node_modules` release as the two above.

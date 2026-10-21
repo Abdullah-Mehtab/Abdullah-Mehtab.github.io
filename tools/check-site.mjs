@@ -4286,7 +4286,7 @@ async function checkFilmTextClearKeepsWhole(baseUrl) {
         continue;
       }
       const found = await page.evaluate(() => {
-        const out = { screensFaded: [], bodiesFaded: [], screens: 0, bodies: 0, sceneryFaded: 0, scenery: 0 };
+        const out = { screensFaded: [], bodiesFaded: [], screens: 0, bodies: 0, sceneryFaded: 0, scenery: 0, screensNotFaded: [], bodiesNotFaded: [] };
         const faded = (node) => [].concat(node.material).some((m) => m && m.userData && m.userData.clearsBehindText);
         window.chapterFilm.stations.forEach((station, si) => {
           station.group.traverse((node) => {
@@ -4295,9 +4295,16 @@ async function checkFilmTextClearKeepsWhole(baseUrl) {
             for (let n = node; n && n !== station.group.parent; n = n.parent) {
               if (n.userData && n.userData.ambient) ambient = true;
             }
-            if (node.userData && node.userData.screen) {
+            // A screen its set marks fadesBehindText is meant to fade like the rest of the set (owner ruling, 2026-10-18), and must.
+            if (node.userData && node.userData.screen && node.userData.fadesBehindText) {
+              if (!faded(node)) out.screensNotFaded.push(`act ${si + 1} "${node.userData.screen}"`);
+            } else if (node.userData && node.userData.screen) {
               out.screens++;
               if (faded(node)) out.screensFaded.push(`act ${si + 1} "${node.userData.screen}"`);
+            // A contained set's body its set marks fadesBehindText is meant to fade too (owner ruling, 2026-10-19), and must; every
+            // other body of a contained set stays whole as before.
+            } else if (station.contained && node.isMesh && !ambient && node.userData && node.userData.fadesBehindText) {
+              if (!faded(node)) out.bodiesNotFaded.push(`act ${si + 1} ${node.type}`);
             } else if (station.contained && node.isMesh && !ambient) {
               out.bodies++;
               if (faded(node)) out.bodiesFaded.push(`act ${si + 1} ${node.type}`);
@@ -4311,6 +4318,12 @@ async function checkFilmTextClearKeepsWhole(baseUrl) {
       });
       if (found.screens === 0) failures.push(`${route} marks no screens, so whether the text fade leaves them whole was not checked.`);
       if (found.bodies === 0) failures.push(`${route} has no contained set with a solid body, so whether the text fade leaves them whole was not checked.`);
+      for (const item of found.screensNotFaded.slice(0, 4)) {
+        failures.push(`${route} marks ${item} to fade behind the page's words and it does not. See fadesBehindText in clearBehindText in engine.js.`);
+      }
+      for (const item of found.bodiesNotFaded.slice(0, 4)) {
+        failures.push(`${route} marks ${item} of a contained set to fade behind the page's words and it does not. See fadesBehindText in clearBehindText in engine.js.`);
+      }
       for (const item of found.screensFaded.slice(0, 4)) {
         failures.push(`${route} fades ${item} behind the page's words. A screen's content stays whole: see clearBehindText in engine.js.`);
       }
@@ -4456,6 +4469,12 @@ const TRANSIT_DEPTHS = [0.7, 0.8];
 // weight across the frame; it carried 0.37 before the streaks were shortened and dimmed.
 const TRANSIT_WHOLE_DEPTH = 0.8;
 const TRANSIT_WHOLE_LEAD = 1.5;
+// The depths above were chosen for an act that holds its camera for the engine's default share of the act, 0.46 (HOLD in
+// engine.js), so 0.7 and 0.8 are 44% and 63% of the way through its flight. An act that asks for a longer hold is still being read
+// at 80% of itself: the Offensive Security Home Lab's act three holds to 82%, and at its 80% the next set is still in the fog. So each
+// act is measured at the same share of its own flight; an act with the default hold is measured exactly where it was before.
+const TRANSIT_DESIGNED_HOLD = 0.46;
+const transitDepthFor = (depth, hold) => hold + ((depth - TRANSIT_DESIGNED_HOLD) / (1 - TRANSIT_DESIGNED_HOLD)) * (1 - hold);
 
 async function checkFilmTransitWeight(baseUrl) {
   const executablePath = findChromeExecutable();
@@ -4492,10 +4511,13 @@ async function checkFilmTransitWeight(baseUrl) {
       })));
       let measured = 0;
       const drowned = [];
+      // Each set's own hold, where it asks for one.
+      const holds = await page.evaluate(() => window.chapterFilm.stations.map((s) => (typeof s.hold === 'number' ? s.hold : null)));
       // Every act with a set after it. The last act has no flight.
       for (let a = 0; a < bands.length - 1; a++) {
         for (const depth of TRANSIT_DEPTHS) {
-          await page.evaluate((to) => window.scrollTo(0, to), Math.round(bands[a].top + bands[a].span * depth));
+          const at = transitDepthFor(depth, holds[a] === null || holds[a] === undefined ? TRANSIT_DESIGNED_HOLD : holds[a]);
+          await page.evaluate((to) => window.scrollTo(0, to), Math.round(bands[a].top + bands[a].span * at));
           await page.evaluate(() => new Promise((done) => {
             let n = 0;
             const tick = () => (++n > 40 ? done() : requestAnimationFrame(tick));
@@ -4582,7 +4604,7 @@ async function checkFilmTransitWeight(baseUrl) {
           }, shots.none, shots.set, shots.streaks, box);
           measured++;
           const lead = ink.streaks > 0 ? ink.set / ink.streaks : Infinity;
-          if (lead < TRANSIT_LEAD) drowned.push(`act ${a + 1} at ${Math.round(depth * 100)}%, the set leads by ${lead.toFixed(2)}`);
+          if (lead < TRANSIT_LEAD) drowned.push(`act ${a + 1} at ${Math.round(at * 100)}%, the set leads by ${lead.toFixed(2)}`);
           if (depth === TRANSIT_WHOLE_DEPTH) {
             const whole = await page.evaluate(async (empty, set, streaks) => {
               const read = async (data) => {
@@ -4608,7 +4630,7 @@ async function checkFilmTransitWeight(baseUrl) {
               return { set: await sum(set), streaks: await sum(streaks) };
             }, shots.none, shots.set, shots.streaks);
             const across = whole.streaks > 0 ? whole.set / whole.streaks : Infinity;
-            if (across < TRANSIT_WHOLE_LEAD) drowned.push(`act ${a + 1} at ${Math.round(depth * 100)}%, across the whole frame the set carries ${across.toFixed(2)} of the streaks' weight, floor ${TRANSIT_WHOLE_LEAD}`);
+            if (across < TRANSIT_WHOLE_LEAD) drowned.push(`act ${a + 1} at ${Math.round(at * 100)}%, across the whole frame the set carries ${across.toFixed(2)} of the streaks' weight, floor ${TRANSIT_WHOLE_LEAD}`);
           }
         }
       }
@@ -5073,6 +5095,68 @@ async function checkFilmContextRecovery(baseUrl) {
   }
 }
 
+// The engine takes a stage object so a chapter can be staged differently from the first one. Its
+// defaults are the first chapter's values, and an option it does not know, or a value of the wrong
+// kind, has to stop the scene from mounting: ignoring a misspelt option would stage a chapter as the
+// first one without anyone being told. A page with no acts makes a valid call return null without
+// mounting anything, which is what lets this ask the engine without a scene.
+async function checkFilmStageOptions(baseUrl) {
+  const executablePath = findChromeExecutable();
+  if (!executablePath) {
+    warnings.push('Skipping the stage options check because Chrome/Edge was not found. Set CHROME_PATH to enable it.');
+    return;
+  }
+
+  const { default: puppeteer } = await import('puppeteer-core');
+  const browser = await puppeteer.launch({
+    executablePath,
+    headless: true,
+    args: ['--no-sandbox', '--disable-setuid-sandbox', '--enable-unsafe-swiftshader', '--use-gl=angle']
+  });
+  try {
+    const page = await browser.newPage();
+    await openPage(page, `${baseUrl}/robots.txt`);
+    const results = await page.evaluate(async () => {
+      const { mountFilm } = await import('/assets/js/scene/engine.js');
+      const canvas = document.createElement('canvas');
+      const attempt = (stage) => {
+        try { return { returned: String(mountFilm({ canvas, buildStations: () => [], stage })) }; }
+        catch (error) { return { threw: error.message }; }
+      };
+      return {
+        accepted: {
+          'no options': attempt(undefined),
+          'empty options': attempt({}),
+          'every option set': attempt({ fov: 30, fog: 0.001, flightFog: 0.0005, glide: true, streaks: 0, logRows: false, hueShifts: [0, 0], roomLift: [0], offsets: [10], lifts: [0] })
+        },
+        refused: {
+          'an option the engine does not know': attempt({ fogg: 0.001 }),
+          'a field of view of 5': attempt({ fov: 5 }),
+          'streaks above 1': attempt({ streaks: 2 }),
+          'logRows that is not a boolean': attempt({ logRows: 'no' }),
+          'an empty offsets list': attempt({ offsets: [] }),
+          'offsets holding a string': attempt({ offsets: [1, '2'] }),
+          'a negative fog': attempt({ fog: -1 }),
+          'a negative flight fog': attempt({ flightFog: -1 }),
+          'a glide that is not a boolean': attempt({ glide: 'yes' })
+        }
+      };
+    });
+    for (const [name, result] of Object.entries(results.accepted)) {
+      if (result.returned !== 'null') {
+        failures.push(`The engine did not accept ${name} for the stage (${result.threw ? 'it threw: ' + result.threw : 'it returned ' + result.returned}). A page that passes nothing has to be staged as the first chapter always was.`);
+      }
+    }
+    for (const [name, result] of Object.entries(results.refused)) {
+      if (!result.threw) {
+        failures.push(`The engine accepted ${name} for the stage. A bad stage option has to stop the scene from mounting, or a chapter is staged as the first one without anyone being told.`);
+      }
+    }
+  } finally {
+    await browser.close();
+  }
+}
+
 async function main() {
   await checkProtectedRoutes();
   await checkDownloadNames();
@@ -5118,6 +5202,7 @@ async function main() {
     await checkFilmMotionOff(baseUrl);
     await checkFilmWithoutWebGL(baseUrl);
     await checkFilmContextRecovery(baseUrl);
+    await checkFilmStageOptions(baseUrl);
     await checkVisitCounting(baseUrl);
     if (args.has('--screenshots')) {
       await captureScreenshots(baseUrl);

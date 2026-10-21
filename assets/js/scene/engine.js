@@ -51,6 +51,16 @@ const REST_GAP = 78;
 // 3.49: what crosses the words is act three's own set growing as the camera closes on it, not
 // the flight to the next one.
 const HOLD = 0.46;
+// A set may ask for its own share of the act before the flight, as `hold`. One whose camera tours its own subject (see `camera` in the
+// station contract) needs more of the act than one the camera only looks at. Checked when the sets are built: a hold outside this range
+// stops the scene from mounting rather than being quietly replaced.
+const holdOf = (station) => (station && station.hold !== undefined ? station.hold : HOLD);
+function checkStationHold(station, index) {
+  if (station.hold === undefined) return;
+  if (typeof station.hold !== "number" || !(station.hold >= 0.1 && station.hold <= 0.95)) {
+    throw new Error("mountFilm: set " + (index + 1) + " asks for a hold of " + station.hold + "; it must be a number from 0.1 to 0.95");
+  }
+}
 // A longer glide. At 0.1 the camera is within a pixel of the scroll position in about twenty
 // frames; at 0.065 it keeps moving for roughly half a second after the wheel stops, which is
 // the difference between following a scroll and flowing with it.
@@ -95,6 +105,68 @@ const NARROW_EYE = 34;
 // 13.2, 13.3. checkFilmActColour holds that, per neighbouring pair, in the same units.
 const ACT_HUE_SHIFT = [-30, -10, 12, 42];
 
+// How much lighter each act's room is than the theme's own dark ground, in act order.
+const ROOM_LIFT = [0, 0.034, 0.014, 0.05];
+
+// How a chapter is staged. Every field's default is the value the first chapter was built with, so a
+// page that passes none of them is staged exactly as it always was. A chapter whose staging is
+// different overrides only the fields that make it so.
+//
+//   fov        the camera's resting field of view in degrees. A narrow lens flattens perspective.
+//   fog        exponential fog density. Lower shows more of what is behind the set in front.
+//   streaks    0 to 1: how bright the packet ticks are between acts. 0 draws none.
+//   logRows    whether rows of log lines hang along the track.
+//   hueShifts  degrees added to the theme's accent for each act, in act order.
+//   roomLift   lightness added to the room's ground for each act, in act order.
+//   offsets    how far to the right of the track each set's visible weight sits, per act.
+//   lifts      how far above the track each set sits, per act.
+//   cable      false, or a colour: one cable run through every set that marks a `socket`, in act order, with packets riding
+//              it. A chapter whose story is one network uses it in place of the log rows and streaks. See buildCable.
+//   flightFog  null, or a fog density used while the camera flies between two sets, so the set ahead is seen coming while
+//              each set is still its own room once the camera rests. null keeps `fog` all the way. See the frame loop.
+//   glide      whether a flight covers most of its distance early and spends its second half gliding in on the next set,
+//              rather than easing evenly at both ends. Either way it leaves and arrives at rest. See the frame loop.
+const STAGE_DEFAULTS = {
+  fov: BASE_FOV,
+  fog: 0.003,
+  flightFog: null,
+  glide: false,
+  streaks: 1,
+  logRows: true,
+  hueShifts: ACT_HUE_SHIFT,
+  roomLift: ROOM_LIFT,
+  offsets: [42, 42, 34, 34],
+  lifts: [10, 6, 8, 6],
+  cable: false
+};
+
+// An option the engine does not know, or a value of the wrong kind, stops the scene from mounting.
+// Ignoring a misspelt option would stage the chapter as the first one without anyone being told.
+function resolveStage(stage) {
+  const given = stage || {};
+  for (const key of Object.keys(given)) {
+    if (!(key in STAGE_DEFAULTS)) throw new Error("mountFilm: unknown stage option '" + key + "'");
+  }
+  const options = { ...STAGE_DEFAULTS, ...given };
+  const isNumber = (v) => typeof v === "number" && Number.isFinite(v);
+  const isNumbers = (v) => Array.isArray(v) && v.length > 0 && v.every(isNumber);
+  if (!isNumber(options.fov) || options.fov < 10 || options.fov > 110) throw new Error("mountFilm: stage option 'fov' must be a number from 10 to 110");
+  if (!isNumber(options.fog) || options.fog < 0 || options.fog > 0.05) throw new Error("mountFilm: stage option 'fog' must be a number from 0 to 0.05");
+  if (options.flightFog !== null && (!isNumber(options.flightFog) || options.flightFog < 0 || options.flightFog > 0.05)) {
+    throw new Error("mountFilm: stage option 'flightFog' must be null or a number from 0 to 0.05");
+  }
+  if (!isNumber(options.streaks) || options.streaks < 0 || options.streaks > 1) throw new Error("mountFilm: stage option 'streaks' must be a number from 0 to 1");
+  if (typeof options.logRows !== "boolean") throw new Error("mountFilm: stage option 'logRows' must be true or false");
+  if (typeof options.glide !== "boolean") throw new Error("mountFilm: stage option 'glide' must be true or false");
+  if (options.cable !== false && !(isNumber(options.cable) && options.cable >= 0 && options.cable <= 0xffffff)) {
+    throw new Error("mountFilm: stage option 'cable' must be false or a colour from 0x000000 to 0xffffff");
+  }
+  for (const key of ["hueShifts", "roomLift", "offsets", "lifts"]) {
+    if (!isNumbers(options[key])) throw new Error("mountFilm: stage option '" + key + "' must be a list of numbers");
+  }
+  return options;
+}
+
 function parseColor(value, fallback) {
   const probe = new THREE.Color();
   try {
@@ -108,7 +180,7 @@ function parseColor(value, fallback) {
 // Reads the live theme rather than carrying a palette of its own. Eighteen themes are a
 // feature of this site, two of them are light, and a scene with its own fixed colours would
 // quietly opt out of all of that.
-function readPalette(body, actCount) {
+function readPalette(body, actCount, stage) {
   const style = getComputedStyle(body);
   const token = (name, fallback) => parseColor(style.getPropertyValue(name) || "", fallback);
 
@@ -122,7 +194,7 @@ function readPalette(body, actCount) {
 
   const accents = [];
   for (let i = 0; i < actCount; i++) {
-    const shift = ACT_HUE_SHIFT[i % ACT_HUE_SHIFT.length] / 360;
+    const shift = stage.hueShifts[i % stage.hueShifts.length] / 360;
     const colour = new THREE.Color();
     // On a light theme the same accent on a pale ground is invisible, so the room keeps its
     // hue and loses its lightness instead of the scene going dark and ignoring the theme.
@@ -145,13 +217,12 @@ function readPalette(body, actCount) {
   // accent's lightness, and with a bright cyan accent that turned the right half of the screen
   // into pale grey fog with the set barely visible in it. Taking the hue and keeping the
   // background's own darkness gives four distinct rooms that are all still night.
-  const ROOM_LIFT = [0, 0.034, 0.014, 0.05];
   const deepHsl = { h: 0, s: 0, l: 0 };
   deep.getHSL(deepHsl);
   const rooms = accents.map((accent, i) => {
     const hue = { h: 0, s: 0, l: 0 };
     accent.getHSL(hue);
-    const lift = ROOM_LIFT[i % 4] * (lightRoom ? -0.5 : 1);
+    const lift = stage.roomLift[i % stage.roomLift.length] * (lightRoom ? -0.5 : 1);
     return new THREE.Color().setHSL(hue.h, lightRoom ? 0.1 : 0.4, Math.max(0, deepHsl.l + lift));
   });
 
@@ -411,13 +482,22 @@ function clearBehindText(group, keepsBodies) {
   };
   group.traverse((node) => {
     if (!node.material || (node.userData && node.userData.caption)) return;
-    if (node.userData && node.userData.screen) return;
-    if (keepsBodies && node.isMesh && !isScenery(node)) return;
+    // A screen the set marks `fadesBehindText` is faded like the rest: one a camera tour pans behind the words, where leaving it bright
+    // would put lit content behind a heading (owner ruling for the Offensive Security Home Lab, 2026-10-18).
+    if (node.userData && node.userData.screen && !node.userData.fadesBehindText) return;
+    // The same mark on a solid body of a contained set fades it too: one a camera tour passes behind the words, where the close shots
+    // of a touring closing act put parts of the set behind the copy (owner ruling for the Offensive Security Home Lab, 2026-10-19).
+    if (keepsBodies && node.isMesh && !isScenery(node) && !(node.userData && node.userData.fadesBehindText)) return;
     for (const material of Array.isArray(node.material) ? node.material : [node.material]) {
       if (material.userData.clearsBehindText) continue;
       material.userData.clearsBehindText = true;
       const blends = material.transparent;
-      material.onBeforeCompile = (shader) => {
+      // A set may already patch its own material's shader, as a keyboard whose key edges go down with their keys does. Its patch
+      // runs first and this one is added after it, and the compiled program is keyed on both, so neither replaces the other.
+      const own = material.userData.ownShader ? material.onBeforeCompile : null;
+      const ownKey = own ? material.customProgramCacheKey() : "";
+      material.onBeforeCompile = (shader, renderer) => {
+        if (own) own.call(material, shader, renderer);
         Object.assign(shader.uniforms, textClearUniforms);
         shader.fragmentShader = TEXT_CLEAR_DECLARATIONS + shader.fragmentShader.replace(
           "#include <dithering_fragment>",
@@ -426,7 +506,7 @@ function clearBehindText(group, keepsBodies) {
             : "gl_FragColor.rgb = mix(gl_FragColor.rgb, uTextRoom, textClearAmount());")
         );
       };
-      material.customProgramCacheKey = () => (blends ? "clearBehindTextBlend" : "clearBehindTextMix");
+      material.customProgramCacheKey = () => ownKey + (blends ? "clearBehindTextBlend" : "clearBehindTextMix");
       material.needsUpdate = true;
     }
   });
@@ -838,7 +918,81 @@ function buildTrackAmbience(scene, palette, stationCount) {
   return { field, logs, ticks };
 }
 
-export function mountFilm({ canvas, buildStations }) {
+// The cable a chapter can run through its sets, in place of the log rows and streaks: one line through every set's `socket`, in
+// act order, dropping from each socket to a floor below the sets and rising to the next, with packets riding it the way the story
+// goes. Its joints and packets pass the camera during a flight, so travel still reads as travel, and unlike the streaks it is
+// something: a chapter about one network shows that network. Built once; laid again by layCable whenever dock() moves the sets.
+// Marked `streaks`, because it is the travel matter now: the site check that keeps the set a flight is heading for louder than the
+// streaks weighs this instead.
+const CABLE_PACKETS = 28;
+const CABLE_SPEED = 34; // world units a second
+const CABLE_JOINT = 16; // world units between the joints that pass the camera
+const CABLE_LANE = 26; // world units to the right of the sockets the cable runs between sets
+function buildCable(colour, palette) {
+  const group = new THREE.Group();
+  group.userData.streaks = true;
+  const line = new THREE.LineSegments(
+    new THREE.BufferGeometry(),
+    new THREE.LineBasicMaterial({ color: colour, transparent: true, opacity: palette.lightRoom ? 0.55 : 0.45, depthWrite: false })
+  );
+  line.frustumCulled = false;
+  group.add(line);
+  const packets = motes(new Array(CABLE_PACKETS * 3).fill(0), colour, 2.6, 0.9);
+  if (palette.lightRoom) packets.material.blending = THREE.NormalBlending;
+  packets.frustumCulled = false;
+  group.add(packets);
+  return { group, line, packets, curve: null, length: 0 };
+}
+
+// Lays the cable through the sockets, given in world units and act order.
+function layCable(cable, sockets) {
+  cable.curve = null;
+  if (sockets.length < 2) { cable.group.visible = false; return; }
+  const floor = Math.min(...sockets.map((s) => s.y)) - 14;
+  // Each stretch between two sets runs on the floor beside both, on the side away from the copy, as the streaks did: laid straight
+  // under the sockets it ran down the middle of a flight and left the frame's right side empty (act two of the home lab at 70%: 4%
+  // empty at the left edge against 23% at the right, the framing check's ceiling 12 apart).
+  const lane = (a, b) => Math.max(a.x, b.x) + CABLE_LANE;
+  const points = [];
+  sockets.forEach((s, i) => {
+    if (i > 0) points.push(new THREE.Vector3(lane(sockets[i - 1], s), floor, s.z + 8));
+    points.push(s.clone());
+    if (i < sockets.length - 1) points.push(new THREE.Vector3(lane(s, sockets[i + 1]), floor, s.z - 8));
+  });
+  const curve = new THREE.CatmullRomCurve3(points, false, "centripetal");
+  const length = curve.getLength();
+  const runs = curve.getSpacedPoints(Math.max(2, Math.round(length / 3)));
+  const segments = [];
+  for (let i = 0; i < runs.length - 1; i++) segments.push(runs[i], runs[i + 1]);
+  // A joint every so often: a short cross on the cable, which is what passes the camera when it flies alongside.
+  const joints = Math.floor(length / CABLE_JOINT);
+  const at = new THREE.Vector3();
+  for (let j = 1; j < joints; j++) {
+    curve.getPointAt(j / joints, at);
+    segments.push(at.clone().add(new THREE.Vector3(-1.4, 0, 0)), at.clone().add(new THREE.Vector3(1.4, 0, 0)));
+    segments.push(at.clone().add(new THREE.Vector3(0, -1.4, 0)), at.clone().add(new THREE.Vector3(0, 1.4, 0)));
+  }
+  cable.line.geometry.dispose();
+  cable.line.geometry = new THREE.BufferGeometry().setFromPoints(segments);
+  cable.curve = curve;
+  cable.length = length;
+}
+
+// Moves the packets along the cable. Frozen time leaves them where time zero puts them.
+const cablePoint = new THREE.Vector3();
+function runCable(cable, time) {
+  if (!cable.curve) return;
+  const position = cable.packets.geometry.attributes.position;
+  for (let i = 0; i < CABLE_PACKETS; i++) {
+    const u = ((i / CABLE_PACKETS + (time * CABLE_SPEED) / cable.length) % 1 + 1) % 1;
+    cable.curve.getPointAt(u, cablePoint);
+    position.setXYZ(i, cablePoint.x, cablePoint.y, cablePoint.z);
+  }
+  position.needsUpdate = true;
+}
+
+export function mountFilm({ canvas, buildStations, stage }) {
+  const stageOptions = resolveStage(stage);
   const body = document.body;
   const acts = Array.from(document.querySelectorAll("main > .act"));
   if (acts.length === 0) return null;
@@ -887,11 +1041,12 @@ export function mountFilm({ canvas, buildStations }) {
   }
 
   const scene = new THREE.Scene();
-  const camera = new THREE.PerspectiveCamera(BASE_FOV, 1, 0.1, 1800);
+  const camera = new THREE.PerspectiveCamera(stageOptions.fov, 1, 0.1, 1800);
 
-  let palette = readPalette(body, acts.length);
+  let palette = readPalette(body, acts.length, stageOptions);
   let stations = [];
   let ambience = null;
+  let cable = null;
 
   // Sets sit off to one side so the copy has the other half of the frame. On a phone the copy
   // fills the width, so they move to the centre and drop below it instead.
@@ -910,7 +1065,8 @@ export function mountFilm({ canvas, buildStations }) {
   // is contained pays for every unit of sideways offset in standoff, because the standoff has
   // to hold the far edge of the subject inside a frustum the offset has pushed it towards. At
   // 48 the closing subject needed 85 units of clearance and filled a sixth of the frame.
-  const DESKTOP_OFFSET = [42, 42, 34, 34];
+  // The values are the stage's, with the first chapter's as the default. See STAGE_DEFAULTS.
+  const DESKTOP_OFFSET = stageOptions.offsets;
   // How far above the track each set sits.
   //
   // This no longer decides where a set sits in the frame. The camera looks at the height a
@@ -923,7 +1079,7 @@ export function mountFilm({ canvas, buildStations }) {
   // set they are meant to read across, and the tower spread far enough from that angle to push
   // its own labels into the header and into each other: five of its eight were legible at once
   // against a floor of six. At 8 it is looked at the way the other three are.
-  const DESKTOP_LIFT = [10, 6, 8, 6];
+  const DESKTOP_LIFT = stageOptions.lifts;
   // On a phone the sets drop below the reader's line of sight rather than sitting behind the
   // heading they belong to.
   const NARROW_LIFT = -26;
@@ -1050,7 +1206,7 @@ export function mountFilm({ canvas, buildStations }) {
   // all the slopes are zero and this is the distance the old form returned.
   function keepBack(station, body, index) {
     const end = station.mod(1, 0);
-    const fov = (BASE_FOV + end.df) * Math.PI / 180;
+    const fov = (stageOptions.fov + end.df) * Math.PI / 180;
     const halfV = Math.tan(fov / 2);
     const halfH = halfV * Math.max(1, camera.aspect || 1.6);
     const midX = (body.left + body.right) / 2;
@@ -1147,6 +1303,7 @@ export function mountFilm({ canvas, buildStations }) {
   function buildWorld() {
     stations = buildStations(palette, THREE);
     stations.forEach((station, i) => {
+      checkStationHold(station, i);
       station.group.position.set(offsets[i] || 0, lifts[i] || 0, -i * STATION_GAP);
       // Each set chooses its own size for a desktop frame. Remembering it here is what lets a
       // phone stand them all down by a fixed fraction without the reduction compounding every
@@ -1157,12 +1314,17 @@ export function mountFilm({ canvas, buildStations }) {
     ambience = buildTrackAmbience(scene, palette, stations.length);
     for (const station of stations) clearBehindText(station.group, Boolean(station.contained));
     for (const part of [ambience.field, ambience.logs, ambience.ticks]) clearBehindText(part);
+    if (stageOptions.cable !== false) {
+      cable = buildCable(stageOptions.cable, palette);
+      scene.add(cable.group);
+      clearBehindText(cable.group);
+    }
     renderer.setClearColor(palette.rooms[0], 1);
     // The fog is what makes an act a place, and it is also what hid the next set during a
     // flight. At 0.0042 a set 220 units ahead was 57% fogged out; at 0.003 it is 34%, measured
     // to roughly double what the transit frames carry. Lower still flattens the depth and
     // costs the room its colour, for gains that had already stopped arriving by 0.0024.
-    scene.fog = new THREE.FogExp2(palette.rooms[0].clone(), 0.003);
+    scene.fog = new THREE.FogExp2(palette.rooms[0].clone(), stageOptions.fog);
   }
 
   function teardownWorld() {
@@ -1176,8 +1338,13 @@ export function mountFilm({ canvas, buildStations }) {
         disposeGroup(part);
       }
     }
+    if (cable) {
+      scene.remove(cable.group);
+      disposeGroup(cable.group);
+    }
     stations = [];
     ambience = null;
+    cable = null;
   }
 
   buildWorld();
@@ -1238,8 +1405,19 @@ export function mountFilm({ canvas, buildStations }) {
     // audit kept finding inside the copy at 390px, not the sets. Dust stays, because soft
     // points put no edge behind a word.
     if (ambience) {
-      ambience.logs.visible = !narrow;
-      ambience.ticks.visible = !narrow;
+      ambience.logs.visible = stageOptions.logRows && !narrow;
+      ambience.ticks.visible = stageOptions.streaks > 0 && !narrow;
+    }
+    // After every set is docked, because a socket is wherever its set ended up.
+    if (cable) {
+      const sockets = [];
+      for (const station of stations) {
+        if (!station.socket) continue;
+        station.group.updateMatrixWorld(true);
+        sockets.push(station.socket.getWorldPosition(new THREE.Vector3()));
+      }
+      layCable(cable, sockets);
+      cable.group.visible = Boolean(cable.curve) && !narrow;
     }
 
     const tops = acts.map((act) => Math.round(act.getBoundingClientRect().top + window.scrollY));
@@ -1290,7 +1468,7 @@ export function mountFilm({ canvas, buildStations }) {
   // cannot leave one forgotten material on last month's palette. A theme change is a click,
   // not a frame.
   const themeWatcher = new MutationObserver(() => {
-    const next = readPalette(body, acts.length);
+    const next = readPalette(body, acts.length, stageOptions);
     if (next.accents[0].getHex() === palette.accents[0].getHex() && next.deep.getHex() === palette.deep.getHex()) return;
     palette = next;
     teardownWorld();
@@ -1333,6 +1511,25 @@ export function mountFilm({ canvas, buildStations }) {
   // the scroll, so it would race back through every set to get there; film.js hides the jump behind a fade and asks for the camera to
   // be put where the scroll now is at once.
   window.addEventListener("film:jump", () => { smoothScroll = window.scrollY; });
+  const lookTarget = new THREE.Vector3();
+  const tourHere = { position: new THREE.Vector3(), look: new THREE.Vector3(), fov: 0 };
+  const tourNext = { position: new THREE.Vector3(), look: new THREE.Vector3(), fov: 0 };
+  // A toured set's camera at progress p through its hold, in world units, with the pointer's sway and the opening settle applied the
+  // same way the frame loop applies them to any other camera.
+  function tourPose(station, p, out) {
+    const pose = station.camera(p);
+    station.group.updateMatrixWorld(true);
+    out.position.copy(pose.position).applyMatrix4(station.group.matrixWorld);
+    out.look.copy(pose.look).applyMatrix4(station.group.matrixWorld);
+    out.position.x += smoothPointerX * 2.6;
+    out.position.y -= smoothPointerY * 1.8;
+    out.position.z += intro * 150;
+    out.look.x += smoothPointerX * 4;
+    out.look.y -= smoothPointerY * 2.6;
+    out.fov = pose.fov;
+    return out;
+  }
+
   function stationProgress(index) {
     const act = acts[index];
     const top = Number(act.dataset.stationTop) || 0;
@@ -1359,8 +1556,14 @@ export function mountFilm({ canvas, buildStations }) {
 
     // Hold on the set, then fly. Easing only the travel half means the camera leaves and
     // arrives gently but never creeps while the reader is stationary and reading.
-    const held = clamp01(progress / HOLD);
-    const flight = ease(clamp01((progress - HOLD) / (1 - HOLD)));
+    // A set that tours its own subject asks for a longer share of its act before the flight.
+    const holdHere = holdOf(stations[index]);
+    const held = clamp01(progress / holdHere);
+    // A gliding flight runs its share of the act through 1 - (1 - k)^2 before the easing, so it still starts and ends at rest but
+    // is about three quarters of the way there by the middle of the flight, against two fifths evenly eased. On the home lab the
+    // map was 14% of the frame's width at the middle of the flight into it, and only reached its own size in the last stretch.
+    const flightK = clamp01((progress - holdHere) / (1 - holdHere));
+    const flight = ease(stageOptions.glide ? 1 - (1 - flightK) * (1 - flightK) : flightK);
 
     // The last station has nowhere to fly to, and parking the camera there for the whole act
     // is what made the closing set a distant still: 33% of the frame at its biggest, and that
@@ -1458,7 +1661,11 @@ export function mountFilm({ canvas, buildStations }) {
     const closed = atLast ? 0 : ease(along01 < peakAt
       ? along01 / Math.max(0.001, peakAt)
       : (1 - along01) / Math.max(0.001, 1 - peakAt));
-    const ontoSet = closed * ((offsets[index] || 0) - dx);
+    // A set that walks the camera far in during its hold can ask to stay off its axis: moved onto it as the camera closed, the
+    // second chapter's act two slid left across its own heading by 45% of the act, and moved onto it from the start of the flight
+    // the camera grazed its Kali screen under the act rail. The camera then flies past such a set rather than through it.
+    const onAxis = stations[index].offAxis ? 0 : 1;
+    const ontoSet = closed * onAxis * ((offsets[index] || 0) - dx);
 
     camera.position.set(
       dx + ontoSet - swing + smoothPointerX * 2.6,
@@ -1522,13 +1729,32 @@ export function mountFilm({ canvas, buildStations }) {
     const aimY = narrow
       ? eyeY * 0.5
       : lerp(aimHeights[index] || 0, aimHeights[Math.min(index + 1, last)] || 0, blend);
-    camera.lookAt(
+    lookTarget.set(
       aimX + (dx + ontoSet) * 0.4 - swing + smoothPointerX * 4,
       aimY - smoothPointerY * 2.6,
       camera.position.z - aimDepth
     );
+    let fov = stageOptions.fov + df + kick * 10;
+
+    // A set that tours its own subject drives the camera itself while its act is read: it hands back where the camera stands, where it
+    // looks and its field of view, in the set's own units, for how far through its hold the reader is. The flight then carries the
+    // camera from the end of that tour to the next set's resting place exactly as it would from any other set, and a flight into a
+    // set that tours ends where its tour begins, so neither end jumps. The pointer moves a toured camera the way it moves this one.
+    if (stations[index].camera) {
+      tourPose(stations[index], held, tourHere);
+      camera.position.lerpVectors(tourHere.position, camera.position, blend);
+      lookTarget.lerpVectors(tourHere.look, lookTarget, blend);
+      fov = lerp(tourHere.fov, fov, blend);
+    }
+    if (!atLast && stations[index + 1].camera) {
+      tourPose(stations[index + 1], 0, tourNext);
+      camera.position.lerp(tourNext.position, blend);
+      lookTarget.lerp(tourNext.look, blend);
+      fov = lerp(fov, tourNext.fov, blend);
+    }
+    camera.lookAt(lookTarget);
     camera.rotateZ(Math.sin(along * 2.1) * 0.01 + kick * 0.03);
-    camera.fov = BASE_FOV + df + kick * 10;
+    camera.fov = fov;
     camera.updateProjectionMatrix();
 
     // The room crossfades with the camera, so the change of air happens during the flight
@@ -1536,6 +1762,13 @@ export function mountFilm({ canvas, buildStations }) {
     roomColour.copy(palette.rooms[index]).lerp(palette.rooms[Math.min(index + 1, last)], blend);
     renderer.setClearColor(roomColour, 1);
     if (scene.fog) scene.fog.color.copy(roomColour);
+    // A chapter may thin the fog while the camera flies, so the set it is flying to shows from the start of the flight rather
+    // than out of the fog in its last stretch. At the home lab's 0.003 the map was 22% to 37% there as the flight into it began,
+    // and the house was 5% to 8% there as the flight into it began. It thins over the first sixth of a flight and thickens over
+    // the last, so a resting set keeps its own room and the set behind it stays in the fog while it is read.
+    if (scene.fog && stageOptions.flightFog !== null) {
+      scene.fog.density = lerp(stageOptions.fog, stageOptions.flightFog, clamp01(arc * 2));
+    }
 
     // Only when it has actually moved. Writing a custom property on the body invalidates style
     // for the whole document, and doing that every frame cost 27ms a frame the last time
@@ -1567,8 +1800,9 @@ export function mountFilm({ canvas, buildStations }) {
       // to 0.4 of the streaks' weight. At 0.18 and 8 it carries 0.8 to 1.4 at 75% of a flight,
       // and 2.2 by 80%.
       const streakCap = STREAK_REST_CAP + (STREAK_FLIGHT_CAP - STREAK_REST_CAP) * arc;
-      ambience.ticks.material.opacity = Math.min(streakCap, 0.26 + Math.sin(time * 2.4) * 0.1 + arc * 0.22);
+      ambience.ticks.material.opacity = Math.min(streakCap, 0.26 + Math.sin(time * 2.4) * 0.1 + arc * 0.22) * stageOptions.streaks;
     }
+    if (cable) runCable(cable, time);
 
     // Only the sets within reach of the camera run or draw. Everything else is one visible
     // flag away and costs nothing, which is most of the draw-call budget.

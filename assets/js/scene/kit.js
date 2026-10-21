@@ -214,16 +214,24 @@ export function repeated(geometry, placements, faceColor, lineColor, lineOpacity
 // nothing was covering and nobody could read. Painting a soft dark pill behind the type means
 // the label carries its own contrast wherever it ends up, instead of depending on what the
 // camera happens to have put behind it.
-export function nameplate(text, sub, accent, deep, worldWidth) {
-  const width = 640;
+//
+// `fit`, optional and off by default: the plate is cut to its own ground instead of a 640 wide canvas, at the same size of type. A
+// short label on the full canvas is a small dark ground in a wide transparent plate, and the room shows through around its words.
+//
+// `subPx`, optional, 30 by default: the size the second line is painted at against the title's 46. At 30 a plate whose title is
+// drawn at the 12px floor has a second line of 8px; a page that needs that line readable without making the whole plate larger
+// paints it bigger.
+export function nameplate(text, sub, accent, deep, worldWidth, fit, subPx = 30) {
+  const measure = document.createElement("canvas").getContext("2d");
+  measure.font = "600 46px Archivo, 'Segoe UI', sans-serif";
+  const titleWidth = measure.measureText(text).width;
+  measure.font = `400 ${subPx}px 'IBM Plex Mono', ui-monospace, monospace`;
+  const subWidth = sub ? measure.measureText(sub).width : 0;
+  const width = fit ? Math.min(640, Math.ceil(Math.max(titleWidth, subWidth) + 56)) : 640;
   const height = sub ? 150 : 104;
   const texture = painted(width, height, (g, w, h) => {
     g.clearRect(0, 0, w, h);
 
-    g.font = "600 46px Archivo, 'Segoe UI', sans-serif";
-    const titleWidth = g.measureText(text).width;
-    g.font = "400 30px 'IBM Plex Mono', ui-monospace, monospace";
-    const subWidth = sub ? g.measureText(sub).width : 0;
     const boxWidth = Math.min(w - 8, Math.max(titleWidth, subWidth) + 48);
     const left = (w - boxWidth) / 2;
 
@@ -274,12 +282,14 @@ export function nameplate(text, sub, accent, deep, worldWidth) {
     g.fillText(text, w / 2, sub ? 46 : h / 2 - 3);
     if (sub) {
       g.globalAlpha = 0.78;
-      g.font = "400 30px 'IBM Plex Mono', ui-monospace, monospace";
-      g.fillText(sub, w / 2, 96);
+      g.font = `400 ${subPx}px 'IBM Plex Mono', ui-monospace, monospace`;
+      g.fillText(sub, w / 2, 81 + subPx / 2);
       g.globalAlpha = 1;
     }
   });
-  const plate = panel(texture, worldWidth, (worldWidth * height) / width, 0);
+  // Scaled with the canvas, so a fitted plate's type is the size the full canvas would have given it.
+  const plateWidth = (worldWidth * width) / 640;
+  const plate = panel(texture, plateWidth, (plateWidth * height) / width, 0);
   plate.renderOrder = LAYER.plate;
   plate.userData.caption = text;
   // The title is painted at 46px into a canvas this many pixels tall, so the plate's height on
