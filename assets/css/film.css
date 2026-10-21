@@ -1446,6 +1446,19 @@ body.film-still *::after {
 }
 
 /*
+  One rung further down, for a 720px screen. With the scene running the reading column is
+  narrower than the plain page's, so copy wraps to more lines, and at 1280x720 the problem act
+  ran 7px taller than the screen on the 790px rung alone. The same eight steps tighten again
+  instead of one margin being nudged, so the frame still tightens as a whole.
+*/
+@media (max-height: 740px) {
+  body.film {
+    --s6: 1.3rem;
+    --s7: 2.2rem;
+  }
+}
+
+/*
   The frame's own edge. Two bars, and they are the reason the page reads as something being
   projected rather than as a document that moves. Deliberately thin: this is an edge, not
   cinema bars, and every pixel of height here is a pixel the acts have to fit inside.

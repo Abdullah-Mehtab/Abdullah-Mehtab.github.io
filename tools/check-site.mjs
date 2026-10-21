@@ -717,6 +717,14 @@ const FRAME_FIT_SIZES = [
   { width: 1280, height: 720 }
 ];
 
+// Measured twice, because a chapter is two different pages. With the scene running the copy is
+// held to a narrower reading column, so a heading that wraps to two lines in the plain page wraps
+// to three beside the scene and pushes the rest of the frame under the bottom of the screen. This
+// check measured only whichever state the page happened to be in when it looked, which was the
+// plain one, and passed a first screen whose cards were cut off by the edge of the window.
+//
+// So each size is measured with the scene's scripts refused, which is the page a reader without
+// WebGL gets, and again once the scene is running.
 async function checkFilmFrameFit(baseUrl) {
   const executablePath = findChromeExecutable();
   if (!executablePath) {
@@ -736,25 +744,66 @@ async function checkFilmFrameFit(baseUrl) {
   const browser = await puppeteer.launch({
     executablePath,
     headless: true,
-    args: ['--no-sandbox', '--disable-setuid-sandbox']
+    args: ['--no-sandbox', '--disable-setuid-sandbox', '--enable-unsafe-swiftshader', '--use-gl=angle']
   });
   try {
-    const page = await browser.newPage();
-    for (const size of FRAME_FIT_SIZES) {
-      await page.setViewport({ width: size.width, height: size.height, deviceScaleFactor: 1 });
-      for (const route of routes) {
-        await openPage(page, `${baseUrl}${route}`);
-        const tall = await page.evaluate(() => {
-          const pins = [...document.querySelectorAll('main > .act .act-pin')];
-          return pins
-            .map((pin, i) => ({ act: i + 1, over: Math.round(pin.getBoundingClientRect().height - window.innerHeight) }))
-            .filter((row) => row.over > 1);
-        });
-        for (const row of tall) {
-          failures.push(
-            `${route} act ${row.act} needs ${row.over}px more than a ${size.width}x${size.height} screen is tall, so its pinned frame cannot hold with its top at the header line and the first line of its heading is cut off. Shorten the heading, or give that frame less to carry.`
-          );
+    const states = [
+      { name: 'with the scene refused', live: false },
+      { name: 'with the scene running', live: true }
+    ];
+    for (const state of states) {
+      const page = await browser.newPage();
+      let refusedScripts = 0;
+      try {
+        if (!state.live) {
+          // Registered before the guard's own handler, which continues every local request: the
+          // first handler to resolve a request wins, so this has to be the one that sees it first.
+          await page.setRequestInterception(true);
+          page.on('request', (request) => {
+            if (!request.isInterceptResolutionHandled() && request.url().includes('/assets/js/scene/')) {
+              refusedScripts++;
+              request.abort('blockedbyclient');
+            }
+          });
         }
+        for (const size of FRAME_FIT_SIZES) {
+          await page.setViewport({ width: size.width, height: size.height, deviceScaleFactor: 1 });
+          for (const route of routes) {
+            await openPage(page, `${baseUrl}${route}`);
+            if (!state.live) {
+              // Proof that the scene was refused. A page that never asked for its scene's scripts, or was
+              // given them anyway, would be measured as the plain page while being the other one.
+              const running = await page.evaluate(() => document.body.classList.contains('scene-live'));
+              if (refusedScripts === 0 || running) {
+                failures.push(`${route} could not be loaded without its scene at ${size.width}x${size.height} (scene scripts refused: ${refusedScripts}, scene running: ${running}), so its plain frames could not be measured.`);
+                continue;
+              }
+              refusedScripts = 0;
+            }
+            if (state.live) {
+              try {
+                await page.waitForFunction(() => document.body.classList.contains('scene-live'), { timeout: 30000 });
+              } catch (error) {
+                if (error?.name !== 'TimeoutError') throw error;
+                failures.push(`${route} never started its scene at ${size.width}x${size.height}, so its frames could not be measured with the scene running.`);
+                continue;
+              }
+            }
+            const tall = await page.evaluate(() => {
+              const pins = [...document.querySelectorAll('main > .act .act-pin')];
+              return pins
+                .map((pin, i) => ({ act: i + 1, over: Math.round(pin.getBoundingClientRect().height - window.innerHeight) }))
+                .filter((row) => row.over > 1);
+            });
+            for (const row of tall) {
+              failures.push(
+                `${route} act ${row.act} needs ${row.over}px more than a ${size.width}x${size.height} screen is tall ${state.name}, so its pinned frame cannot hold with its top at the header line and the first line of its heading is cut off. Shorten the heading, or give that frame less to carry.`
+              );
+            }
+          }
+        }
+      } finally {
+        await page.close();
       }
     }
   } finally {
@@ -4716,7 +4765,11 @@ async function checkFilmMotionOff(baseUrl) {
       const problems = [];
       const moved = {};
       for (const one of cases) {
-        const page = await browser.newPage();
+        // Its own browser context, so what one case saves is gone before the next one starts. The site keeps
+        // the reader's Motion choice in localStorage, and the menu case chooses Off: in a shared context the
+        // next page opened began with Off already chosen, so its default case read as a page that never moves.
+        const context = await browser.createBrowserContext();
+        const page = await context.newPage();
         try {
           await page.setCacheEnabled(false);
           await page.setViewport({ width: 1440, height: 900, deviceScaleFactor: 1 });
@@ -4768,6 +4821,7 @@ async function checkFilmMotionOff(baseUrl) {
           }
         } finally {
           await page.close();
+          await context.close();
         }
       }
       const control = moved[cases[0].name];
