@@ -1,0 +1,210 @@
+/*
+  ABOUTME: The Offensive Security Home Lab chapter's own adjustments to the film layout in film.css.
+  ABOUTME: Loaded by that chapter's page only, after film.css. Every other film page is untouched.
+
+  The words are set the way a terminal sets them, so this chapter's text does not read as chapter one's: the line over each heading
+  is a folder path, the chapter line a command typed after Kali's prompt, the stat names mono with a comment under each, the step
+  numbers bracketed, list items marked with ">", the tags written as flags. The big headings stay as they are. Owner ruling,
+  2026-10-20, from preview pictures, chosen over keeping chapter one's heading stack, which every critic round named as copied.
+
+  The title is set smaller while the scene runs. With the scene live the copy narrows to seven of
+  twelve columns, and at the shared size "Offensive Security Home Lab" wrapped to three lines, so
+  the opening frame was 81 to 140px taller than a laptop screen and its first line was cut off
+  under the header. At this size it sets in two. The words are unchanged. Owner ruling, 2026-10-18,
+  chosen over shortening the copy.
+*/
+/* The folder in the path is muted and the place itself carries the act's colour. */
+body.film .eyebrow.path {
+  text-transform: none;
+  letter-spacing: 0.02em;
+  font-size: 0.95rem;
+  color: var(--scene-accent);
+}
+
+body.film .eyebrow.path > span {
+  color: var(--muted);
+}
+
+body.film .case-hero .chapter-meta.path {
+  gap: 0;
+}
+
+body.film .case-hero .chapter-meta.path::after {
+  display: none;
+}
+
+/* The prompt and the cursor are decoration: the text after the slash is what a screen reader says for them, which is nothing.
+   The cursor holds still, because the page's words hold still once an act has arrived. */
+body.film .chapter-line {
+  font-family: var(--face-mono);
+  font-style: normal;
+  font-size: clamp(1rem, 1.45vw, 1.3rem);
+  line-height: 1.45;
+  text-wrap: pretty;
+}
+
+body.film .chapter-line::before {
+  content: "kali@lab:~$ " / "";
+  color: var(--scene-accent);
+}
+
+body.film .chapter-line::after {
+  content: "" / "";
+  display: inline-block;
+  width: 0.6em;
+  height: 1.1em;
+  margin-left: 0.25em;
+  vertical-align: -0.18em;
+  background: var(--scene-accent);
+}
+
+body.film .case-metrics .stat-card strong {
+  font-family: var(--face-mono);
+  font-weight: 500;
+  letter-spacing: -0.02em;
+  font-size: clamp(1rem, 1.45vw, 1.3rem);
+}
+
+/* No word left alone on a card's last line ("ran" was, under "Rules and alerts for what I"). */
+body.film .case-metrics .stat-card span {
+  text-wrap: pretty;
+}
+
+body.film .case-metrics .stat-card span::before {
+  content: "# " / "";
+  color: var(--scene-accent);
+}
+
+body.film .case-step > span {
+  letter-spacing: 0;
+}
+
+body.film .case-step > span::before {
+  content: "[" / "";
+  color: var(--muted);
+}
+
+body.film .case-step > span::after {
+  content: "]" / "";
+  color: var(--muted);
+}
+
+body.film .decision-list li::before {
+  content: ">" / "";
+  width: auto;
+  height: auto;
+  background: none;
+  top: var(--s3);
+  font-family: var(--face-mono);
+  color: var(--scene-accent);
+}
+
+body.film .tag {
+  text-transform: none;
+  letter-spacing: 0;
+  padding-left: 0;
+  font-size: 0.95rem;
+}
+
+body.film .tag::before {
+  display: none;
+}
+
+@media (min-width: 901px) {
+  body.film.scene-live .case-hero h1 {
+    font-size: clamp(3rem, 4.6vw, 4.5rem);
+  }
+
+  /*
+    Act three's method is seven phases, set as a list read downward: a number, the phase, one line. Seven in the shared run of
+    columns set at about nine characters a line, and four columns over two rows at fifteen, with the frame full to its edges at
+    1280x720; as a list every line sets at 35 to 43 characters and the frame fits all three checked screens, with the scene
+    running and without it. Owner ruling, 2026-10-19. The shared rule across the run becomes a rule down it, with each phase's node
+    on it, because the model beside it goes deeper in the same order.
+  */
+  body.film #method .case-flow {
+    grid-template-columns: minmax(0, 1fr);
+    row-gap: 0.55rem;
+    padding-top: 0;
+    padding-left: 1.4rem;
+  }
+
+  body.film #method .case-flow::before {
+    left: 3px;
+    right: auto;
+    top: 0.7rem;
+    bottom: 0.7rem;
+    width: var(--film-rule);
+    height: auto;
+    background: linear-gradient(to bottom, var(--scene-line), var(--scene-line) 86%, transparent);
+  }
+
+  body.film #method .case-flow .case-step {
+    display: grid;
+    /* 4rem holds a bracketed number, "[01]", with a space before the phase. */
+    grid-template-columns: 4rem 15rem minmax(0, 1fr);
+    align-items: baseline;
+    padding-top: 0.2rem;
+  }
+
+  body.film #method .case-flow .case-step > span,
+  body.film #method .case-flow .case-step h3,
+  body.film #method .case-flow .case-step p {
+    margin: 0;
+  }
+
+  body.film #method .case-flow .case-step::before {
+    left: calc(-1.4rem + 0.5px);
+    top: 0.75rem;
+  }
+
+  /*
+    The phase the lab map is playing, marked on the list's rule: its node grows and glows. Only the marker changes, so no line of the
+    copy moves or dims. The scene sets the class when the phase changes (03-method.js).
+  */
+  body.film #method .case-flow .case-step.is-current::before {
+    transform: scale(1.8);
+    box-shadow: 0 0 10px var(--scene-accent);
+  }
+}
+
+@media (min-width: 901px) and (prefers-reduced-motion: no-preference) {
+  body.film #method .case-flow .case-step::before {
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+  }
+}
+
+/* The run's rule draws downward, and the three phases past the shared four beats keep the stagger going. */
+@media (min-width: 901px) and (min-height: 641px) and (prefers-reduced-motion: no-preference) {
+  /*
+    Act three plays its seven phases on the lab map one after another, and at the shared 240vh each phase had about 194px of scroll,
+    under a second at Play's speed: nobody saw them. At 600vh each has about 450 to 600px. Owner ruling, 2026-10-19: "Yes, let it take
+    more time, let it have more scroll... It can be longer, 4000px or more"; 600vh is 4320px on a 720px tall screen.
+  */
+  body.film #method {
+    height: 600vh;
+  }
+
+  /*
+    Act four tours the lab over the shoulder of the laptop's Kali through six beats: the scan, the SSH brute force, Cowrie on 2222,
+    the trace, the block, the whole lab. At the shared height the act had 1260px of scroll on a 900px screen; at 500vh it has about
+    3600px, about 500px a beat. Owner ruling, 2026-10-19: the camera moves through act four as it does through act three, with more
+    scroll for it.
+  */
+  body.film #detection {
+    height: 500vh;
+  }
+
+  body.film.is-choreographed #method .act-pin .case-flow::before {
+    transform: scaleY(0);
+    transform-origin: top;
+  }
+
+  body.film.is-choreographed #method .act-pin.is-arrived .case-flow::before {
+    transform: scaleY(1);
+  }
+
+  body.film.is-choreographed #method .act-pin .case-flow > *:nth-child(5) { --beat: 5; }
+  body.film.is-choreographed #method .act-pin .case-flow > *:nth-child(6) { --beat: 6; }
+  body.film.is-choreographed #method .act-pin .case-flow > *:nth-child(7) { --beat: 7; }
+}

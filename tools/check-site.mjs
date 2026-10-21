@@ -1309,6 +1309,18 @@ const SUBJECT_EDGE = 0.06;
 // off the top with half the frame empty underneath is a camera aiming at itself, which is what
 // act three did for the whole second half of its hold.
 const SUBJECT_OVERRUN = 0.2;
+// Acts the owner has ruled may move their set in the frame while they are read, because the act is a camera tour of its set. Not a
+// lowered floor: each act keeps a ceiling of its own, set a little above what was measured when the ruling was made, so it still fails
+// if the act gets worse than what was looked at and accepted, and every run prints what it measured as a warning.
+const FRAMING_TOURS = {
+  // Act one, measured on 2026-10-18: moved 0.10 up at 20%, ran off the bottom with 27% empty at the top at 45%. Owner ruling that day.
+  // Act three, measured on 2026-10-19: moved 0.07 up at 45%, where the camera has gone in from the whole lab map to the one target;
+  // it never ran off an edge, so its overrun ceiling stays the shared one. Owner ruling that day, choosing option A.
+  '/chapters/offensive-security-home-lab.html': {
+    1: { ruling: 'act one tours the desk, owner ruling 2026-10-18', drift: 0.12, overrun: 0.3 },
+    3: { ruling: 'act three moves in on one target of the lab map, owner ruling 2026-10-19', drift: 0.09, overrun: 0.2 }
+  }
+};
 // Across the frame, how much wider the dead band at one edge may be than the dead band at the
 // other, counting both the scene and the page's own words. A set is not meant to be centred:
 // the copy takes one side of the frame and the set stands in the lane beside it. What this
@@ -1583,8 +1595,13 @@ async function checkFilmSetFraming(baseUrl) {
           if (atTop && atBottom) continue;
           if (atTop || atBottom) {
             const opposite = atTop ? below : above;
-            if (opposite > SUBJECT_OVERRUN) {
-              failures.push(`${at}: its set runs off the ${atTop ? 'top' : 'bottom'} of the frame with ${Math.round(opposite * 100)}% of the frame empty at the ${atTop ? 'bottom' : 'top'}, ceiling ${Math.round(SUBJECT_OVERRUN * 100)}%. The reader is still reading this act's words while its subject leaves the frame in one direction and abandons it in the other.`);
+            const tour = (FRAMING_TOURS[route] || {})[band.act];
+            if (tour && opposite > SUBJECT_OVERRUN && opposite <= tour.overrun) {
+              warnings.push(`${at}: its set runs off the ${atTop ? 'top' : 'bottom'} of the frame with ${Math.round(opposite * 100)}% of the frame empty at the ${atTop ? 'bottom' : 'top'}, accepted up to ${Math.round(tour.overrun * 100)}% (${tour.ruling}).`);
+              continue;
+            }
+            if (opposite > (tour ? tour.overrun : SUBJECT_OVERRUN)) {
+              failures.push(`${at}: its set runs off the ${atTop ? 'top' : 'bottom'} of the frame with ${Math.round(opposite * 100)}% of the frame empty at the ${atTop ? 'bottom' : 'top'}, ceiling ${Math.round((tour ? tour.overrun : SUBJECT_OVERRUN) * 100)}%. The reader is still reading this act's words while its subject leaves the frame in one direction and abandons it in the other.`);
             }
             continue;
           }
@@ -1596,8 +1613,12 @@ async function checkFilmSetFraming(baseUrl) {
             failures.push(`${at}: its set's middle sits ${middle.toFixed(2)} down the frame, band ${SUBJECT_BAND[0]} to ${SUBJECT_BAND[1]}, with ${Math.round(above * 100)}% of the frame empty above it and ${Math.round(below * 100)}% below it.`);
           }
           const drift = middle - opened.middle;
-          if (Math.abs(drift) > SUBJECT_DRIFT) {
-            failures.push(`${at}: its set has moved ${Math.abs(drift).toFixed(2)} of the frame ${drift < 0 ? 'up' : 'down'} since the frame the act opens on, ceiling ${SUBJECT_DRIFT}. The reader is still reading this act's words while its subject slides ${drift < 0 ? 'out of the top of' : 'down'} the frame.`);
+          const tour = (FRAMING_TOURS[route] || {})[band.act];
+          if (tour && Math.abs(drift) > SUBJECT_DRIFT && Math.abs(drift) <= tour.drift) {
+            warnings.push(`${at}: its set has moved ${Math.abs(drift).toFixed(2)} of the frame ${drift < 0 ? 'up' : 'down'} since the frame the act opens on, accepted up to ${tour.drift} (${tour.ruling}).`);
+          }
+          if (Math.abs(drift) > (tour ? tour.drift : SUBJECT_DRIFT)) {
+            failures.push(`${at}: its set has moved ${Math.abs(drift).toFixed(2)} of the frame ${drift < 0 ? 'up' : 'down'} since the frame the act opens on, ceiling ${tour ? tour.drift : SUBJECT_DRIFT}. The reader is still reading this act's words while its subject slides ${drift < 0 ? 'out of the top of' : 'down'} the frame.`);
           }
         }
       }

@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="Offensive Security Home Lab by Abdullah Mehtab: deliberately vulnerable machines on a home network, attacked from Kali to learn each attack end to end, then watched by Wazuh with a honeypot and IP blocking.">
+    <meta name="theme-color" content="#0e1116">
+    <meta name="robots" content="index, follow">
+    <meta property="og:title" content="Offensive Security Home Lab | Abdullah Mehtab">
+    <meta property="og:description" content="Deliberately vulnerable machines on a home network, attacked from Kali to learn each attack end to end, then watched by Wazuh with a honeypot and IP blocking.">
+    <meta property="og:type" content="article">
+    <meta property="og:url" content="https://abdullah-mehtab.github.io/chapters/offensive-security-home-lab.html">
+    <meta name="twitter:card" content="summary">
+    <meta name="twitter:title" content="Offensive Security Home Lab | Abdullah Mehtab">
+    <meta name="twitter:description" content="Deliberately vulnerable machines on a home network, attacked from Kali to learn each attack end to end, then watched by Wazuh with a honeypot and IP blocking.">
+    <link rel="canonical" href="https://abdullah-mehtab.github.io/chapters/offensive-security-home-lab.html">
+    <title>Offensive Security Home Lab | Abdullah Mehtab</title>
+    <link rel="icon" href="../assets/images/icon.png" type="image/png">
+    <link rel="stylesheet" href="../assets/css/animations.css">
+    <link rel="stylesheet" href="../assets/css/portfolio-v2.css">
+    <link rel="stylesheet" href="../assets/css/film.css">
+    <link rel="stylesheet" href="../assets/css/film-offensive-security-home-lab.css">
+    <script type="importmap">{ "imports": { "three": "../assets/vendor/three/three.module.min.js" } }</script>
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@type": "TechArticle",
+        "headline": "Offensive Security Home Lab",
+        "author": {
+          "@type": "Person",
+          "name": "Abdullah Mehtab",
+          "url": "https://abdullah-mehtab.github.io/"
+        },
+        "about": ["Cybersecurity", "Penetration testing", "Kali Linux", "Metasploit", "Wazuh"],
+        "url": "https://abdullah-mehtab.github.io/chapters/offensive-security-home-lab.html"
+      }
+    </script>
+  </head>
+  <body class="portfolio-v2 film">
+    <canvas id="chapter-scene" class="chapter-scene" aria-hidden="true"></canvas>
+    <div class="film-grade" aria-hidden="true">
+      <div class="film-room">
+        <div class="film-stage-ceiling"></div>
+        <div class="film-stage-floor"></div>
+        <div class="film-stage-wall" data-side="left"></div>
+        <div class="film-stage-wall" data-side="right"></div>
+      </div>
+      <div class="film-stage-glow"></div>
+    </div>
+    <a class="skip-link" href="#top">Skip to content</a>
+    <header class="site-header">
+      <nav class="site-nav" aria-label="Primary navigation">
+        <a class="brand" href="../index.html">Abdullah Mehtab</a>
+        <div class="nav-links">
+          <a href="../index.html">Home</a>
+          <a href="../projects.html">Projects</a>
+          <a href="../cv.html">CV</a>
+          <a href="../todo.html">Never-Ending List</a>
+          <a href="../play/">Portfolio Drive</a>
+        </div>
+        <div class="style-control" data-style-control>
+          <button class="style-toggle" type="button" aria-expanded="false" aria-controls="style-panel" data-style-toggle>Style</button>
+          <div class="style-panel" id="style-panel" data-style-panel>
+            <label>
+              <span>Theme</span>
+              <select data-theme-select aria-label="Theme"></select>
+            </label>
+            <label>
+              <span>Cursor Trail</span>
+              <select data-cursor-select aria-label="Cursor trail"></select>
+            </label>
+            <label>
+              <span>Motion Intensity</span>
+              <select data-motion-select aria-label="Motion intensity"></select>
+            </label>
+            <label>
+              <span>Autoplay</span>
+              <select data-autoplay-select aria-label="Play the film when idle"></select>
+            </label>
+            <button class="style-reset" type="button" data-style-reset>Reset Style</button>
+          </div>
+        </div>
+        <button class="nav-toggle" type="button" aria-label="Open navigation" aria-expanded="false" data-nav-toggle>Menu</button>
+      </nav>
+      <div class="mobile-nav" data-mobile-nav>
+        <a href="../index.html">Home</a>
+        <a href="../projects.html">Projects</a>
+        <a href="../cv.html">CV</a>
+        <a href="../todo.html">Never-Ending List</a>
+        <a href="../play/">Portfolio Drive</a>
+      </div>
+    </header>
+
+    <main id="top" data-chapter="Offensive Security Home Lab">
+      <div class="act" id="overview" data-act-name="Overview" data-scene="horizon">
+        <section class="case-hero act-pin" data-act="01">
+          <div class="section-inner" data-frame="title">
+            <p class="eyebrow chapter-meta path"><span>~/projects/</span>home-lab</p>
+            <h1>Offensive Security Home Lab</h1>
+            <p class="chapter-line">Break into my own network, then write the rules that catch it.</p>
+            <p class="page-lede">
+              Deliberately vulnerable machines on my home network, attacked from Kali to learn each attack from start to finish. Cyber Sentinel's Wazuh agent then watched them.
+            </p>
+            <div class="hero-actions">
+              <a class="button primary" href="../projects.html">Back to projects</a>
+            </div>
+            <div class="case-metrics">
+              <article class="stat-card">
+                <strong>Kali</strong>
+                <span>The attacking machine</span>
+              </article>
+              <article class="stat-card">
+                <strong>Metasploitable</strong>
+                <span>The deliberately vulnerable targets</span>
+              </article>
+              <article class="stat-card">
+                <strong>Metasploit</strong>
+                <span>The exploitation framework</span>
+              </article>
+              <article class="stat-card">
+                <strong>Wazuh</strong>
+                <span>Rules and alerts for what I ran</span>
+              </article>
+            </div>
+          </div>
+        </section>
+      </div>
+
+      <div class="act" id="lab" data-act-name="The lab" data-scene="streams">
+        <section class="section act-pin" data-act="02">
+          <div class="section-inner" data-frame="pair">
+            <article class="case-panel reveal">
+              <p class="eyebrow path"><span>~/lab/</span>objective</p>
+              <h2>Practice offensive security, then use it to defend.</h2>
+              <p>
+                The lab was built to run real attack techniques end to end against systems I own, and to turn what that taught me into Wazuh rules and alerts for Cyber Sentinel.
+              </p>
+            </article>
+            <article class="case-panel reveal">
+              <p class="eyebrow path"><span>~/lab/</span>environment</p>
+              <h2>Vulnerable targets on a bridged network.</h2>
+              <p>
+                A Kali attacker and intentionally vulnerable targets: <span class="keep-whole">Metasploitable 2</span>, <span class="keep-whole">Metasploitable 3</span> in its Windows and Ubuntu builds, and a spare <span class="keep-whole">Windows 10</span> laptop. The four virtual machines ran in VMware Workstation Pro, bridged onto my home LAN so the attacks crossed a real network, with no port forwarding.
+              </p>
+            </article>
+          </div>
+        </section>
+      </div>
+
+      <div class="act" id="method" data-act-name="Method" data-scene="lattice">
+        <section class="section act-pin" data-act="03">
+          <div class="section-inner" data-frame="sequence">
+            <div class="section-heading">
+              <div>
+                <p class="eyebrow path"><span>~/lab/</span>method</p>
+                <h2>Scan, break in, escalate, stay quiet.</h2>
+              </div>
+            </div>
+            <div class="case-flow">
+              <article class="case-step reveal">
+                <span>01</span>
+                <h3>Reconnaissance</h3>
+                <p>Finding the live hosts on the bridged LAN with Nmap.</p>
+              </article>
+              <article class="case-step reveal">
+                <span>02</span>
+                <h3>Enumeration</h3>
+                <p>Every open port, the service behind it and its exact version.</p>
+              </article>
+              <article class="case-step reveal">
+                <span>03</span>
+                <h3>Vulnerability analysis</h3>
+                <p>Matching those versions to known weaknesses and choosing the way in.</p>
+              </article>
+              <article class="case-step reveal">
+                <span>04</span>
+                <h3>Exploitation</h3>
+                <p>A first foothold through Metasploit modules, manual exploits or credential attacks.</p>
+              </article>
+              <article class="case-step reveal">
+                <span>05</span>
+                <h3>Privilege escalation</h3>
+                <p>From that foothold to root on Linux and SYSTEM on Windows.</p>
+              </article>
+              <article class="case-step reveal">
+                <span>06</span>
+                <h3>Post-exploitation</h3>
+                <p>Keeping access, and moving through the machine quietly.</p>
+              </article>
+              <article class="case-step reveal">
+                <span>07</span>
+                <h3>Covering tracks</h3>
+                <p>OPSEC throughout: as little trace as possible.</p>
+              </article>
+            </div>
+          </div>
+        </section>
+      </div>
+
+      <div class="act" id="detection" data-act-name="Detection" data-scene="strata">
+        <section class="section act-pin" data-act="04">
+          <div class="section-inner" data-frame="split">
+            <article class="case-panel reveal">
+              <p class="eyebrow path"><span>~/lab/</span>detection</p>
+              <h2>Then the machines got a Wazuh agent.</h2>
+              <ul class="decision-list">
+                <li>Agents on <span class="keep-whole">Windows 10</span> and both <span class="keep-whole">Metasploitable 3</span> builds, reporting to Cyber Sentinel's Wazuh Manager.</li>
+                <li>A Cowrie honeypot, and a script that blocked an alerted address from connecting again.</li>
+                <li>A second Kali, on the laptop, played the outside attacker, so I could practice detecting and responding to an attack as well as running one.</li>
+              </ul>
+            </article>
+            <article class="case-panel reveal">
+              <p class="eyebrow path"><span>~/lab/</span>outcome</p>
+              <h2>Attacks run end to end, and rules written against them.</h2>
+              <p>
+                Every attack ran from Kali, and the Wazuh rules and alerts for Cyber Sentinel were built from what I had just done to those machines.
+              </p>
+              <div class="tag-list">
+                <span class="tag">--wazuh-rules</span>
+                <span class="tag">--honeypot</span>
+                <span class="tag">--ip-blocking</span>
+              </div>
+            </article>
+          </div>
+        </section>
+      </div>
+
+      <section class="section chapter-close">
+        <div class="section-inner" data-frame="coda">
+          <p class="chapter-meta">More work</p>
+          <h2>Next: the rest of the range.</h2>
+          <p class="chapter-close-links">
+            <a class="button primary" href="../projects.html">All projects</a>
+            <a class="button" href="../cv.html">Full CV</a>
+          </p>
+        </div>
+      </section>
+
+      <section class="section">
+        <div class="section-inner" data-frame="single">
+          <p class="eyebrow">Responses</p>
+          <div data-comments data-type="project" data-slug="offensive-security-home-lab-blog" data-title="Comments on the home lab"></div>
+        </div>
+      </section>
+
+      <div class="loop-wrapper" aria-hidden="true">
+        <div class="mountain"></div><div class="hill"></div><div class="tree"></div><div class="tree"></div><div class="tree"></div><div class="rock"></div><div class="truck"></div><div class="wheels"></div>
+      </div>
+    </main>
+
+    <footer class="site-footer">
+      <div class="site-footer-inner">
+        <div>
+          <h2>The attacker's side.</h2>
+          <p class="footer-note">The home lab is where the attacks were run and Cyber Sentinel is where they were watched. The rest of the portfolio shows the wider range.</p>
+          <p class="footer-note">&copy; 2023-<span data-year></span> Abdullah Mehtab.</p>
+        </div>
+        <div class="footer-section">
+          <h3>Contact</h3>
+          <a href="mailto:abdullahmehtab666@gmail.com">Email</a>
+          <a href="https://github.com/Abdullah-Mehtab" target="_blank" rel="me noopener">GitHub</a>
+          <a href="https://linkedin.com/in/abdullah-mehtab" target="_blank" rel="me noopener">LinkedIn</a>
+        </div>
+        <div class="footer-section">
+          <h3>Navigate</h3>
+          <a href="../index.html">Home</a>
+          <a href="../projects.html">Projects</a>
+          <a href="../cv.html">CV</a>
+          <a href="../todo.html">Never-Ending List</a>
+          <a href="../classic/index.html">Classic Site</a>
+          <a href="../play/">Portfolio Drive</a>
+        </div>
+      </div>
+    </footer>
+
+    <script src="../assets/js/site-config.js"></script>
+    <script src="../assets/js/portfolio-v2.js"></script>
+    <script src="../assets/js/film.js"></script>
+    <script src="../assets/js/comments.js"></script>
+    <script src="../assets/js/visitor-proof.js"></script>
+    <!-- The page's 3D layer. A module, so it is deferred by definition and a browser that
+         cannot parse it simply never runs it, leaving the typographic page above. -->
+    <script type="module" src="../assets/js/scene/offensive-security-home-lab.js"></script>
+  </body>
+</html>
