@@ -628,6 +628,62 @@ async function checkTruckStripLoop() {
 // theme was used to build it. That has now happened twice: once to the scenery, once to the
 // chapter accents. film.css keeps constants in :root and everything derived on body.film, and
 // this enforces the split cheaply, without needing a browser.
+// The same rule as checkNoChapterWordInCopy, read from the page after its scripts have run. The film's own controls are labelled
+// by script (film.js), so the static check never saw them: "Play this chapter" and "Jump to a part of this chapter" were read out
+// by screen readers on every film page until 2026-10-19. Both the labels the page carries on load and the labels the script can
+// switch to later are read: the second from the script source, because a check cannot press every control into every state.
+async function checkFilmNoChapterWordShown(baseUrl) {
+  const executablePath = findChromeExecutable();
+  if (!executablePath) {
+    warnings.push('Skipping the check for the word chapter in scripted labels because Chrome/Edge was not found. Set CHROME_PATH to enable it.');
+    return;
+  }
+  const routes = await filmRoutes();
+  if (routes.length === 0) {
+    failures.push('The check for the word chapter in scripted labels found no page carrying the film body class, so it read nothing.');
+    return;
+  }
+  const word = /\bchapters?\b/i;
+  for (const name of ['assets/js/film.js', 'assets/js/portfolio-v2.js']) {
+    const source = resolve(repoRoot, name);
+    if (!await fileExists(source)) continue;
+    const js = await readFile(source, 'utf8');
+    for (const match of js.matchAll(/setAttribute\(\s*["'](aria-label|title|alt)["']\s*,\s*["'`]([^"'`]*)["'`]/g)) {
+      if (word.test(match[2])) failures.push(`${name} labels a control "${match[2]}" (${match[1]}), which a screen reader reads out. Name the page or the project, not the repository's word for it.`);
+    }
+  }
+  const { default: puppeteer } = await import('puppeteer-core');
+  const browser = await puppeteer.launch({
+    executablePath,
+    headless: true,
+    args: ['--no-sandbox', '--disable-setuid-sandbox', '--enable-unsafe-swiftshader', '--use-gl=angle']
+  });
+  try {
+    const page = await browser.newPage();
+    await page.setCacheEnabled(false);
+    await page.setViewport({ width: 1440, height: 900, deviceScaleFactor: 1 });
+    for (const route of routes) {
+      await openPage(page, `${baseUrl}${route}`, { scene: true });
+      const shown = await page.evaluate(() => {
+        const out = [];
+        document.querySelectorAll('[aria-label], [alt], [title]').forEach((el) => {
+          for (const name of ['aria-label', 'alt', 'title']) if (el.hasAttribute(name)) out.push(el.getAttribute(name));
+        });
+        out.push(...document.body.innerText.split('\n'));
+        return out;
+      });
+      if (shown.length === 0) {
+        failures.push(`${route} gave the check for the word chapter nothing to read, so the page was not checked.`);
+        continue;
+      }
+      const hit = shown.find((t) => word.test(t || ''));
+      if (hit) failures.push(`${route} shows the word "chapter" to a reader after its scripts run: "${hit.trim().slice(0, 80)}". Name the page or the project, not the repository's word for it.`);
+    }
+  } finally {
+    await browser.close();
+  }
+}
+
 async function checkFilmTokenScope() {
   const file = resolve(repoRoot, 'assets/css/film.css');
   if (!await fileExists(file)) return;
@@ -1075,6 +1131,10 @@ const CLOSING_SET_SHARE = 0.25;
 // screen with its top row of text past the edge is not readable. Not zero, because the pointer
 // moves the camera a little and the margin that allows for is the engine's business.
 const CONTAINED_SPILL = 0.02;
+// How faded the scene may be on the last frame of the closing act. The scene fades out as the chapter's last act leaves the
+// screen, and the fade once started 1.4 screens out, inside the last act's own pinned scroll: the frame a chapter ends on was
+// drawn at 71% strength, its dimmest. Not 1, because the value is written to three decimals.
+const CLOSING_FULL_STRENGTH = 0.99;
 
 // The closing set is big enough to be the subject, and a contained one is whole.
 //
@@ -1203,6 +1263,17 @@ async function checkFilmClosingSet(baseUrl) {
       if (shot.contained && shot.spill > CONTAINED_SPILL) {
         failures.push(
           `${route} closing set says it is contained but ${(shot.spill * 100).toFixed(1)}% of the frame's width of it is outside the frame, ceiling ${CONTAINED_SPILL * 100}%. Its surfaces are what the reader is meant to read, and the engine's standoff is not keeping them whole.`
+        );
+      }
+      const strength = await page.evaluate(() => {
+        const canvas = document.getElementById('chapter-scene');
+        return canvas ? Number(getComputedStyle(canvas).opacity) : null;
+      });
+      if (strength === null) {
+        failures.push(`${route} has no #chapter-scene canvas, so how strongly its closing frame is drawn could not be measured.`);
+      } else if (strength < CLOSING_FULL_STRENGTH) {
+        failures.push(
+          `${route} draws the last frame of its closing act at ${(strength * 100).toFixed(0)}% strength, floor ${CLOSING_FULL_STRENGTH * 100}%. The scene has started fading out while the act is still pinned, so the chapter ends on its dimmest frame. Start the fade where the last act lets go of the screen.`
         );
       }
     }
@@ -3998,11 +4069,29 @@ async function checkFilmJumpLanding(baseUrl) {
         continue;
       }
       const missed = [];
+      const misnamed = [];
       for (const id of ids) {
         await page.evaluate((target) => document.querySelector(`.film-act-nav a[href="#${target}"]`).click(), id);
         await stillScrolling(page);
         const top = await where(page, id);
         if (top === null || Math.abs(top) > JUMP_LANDING) missed.push(`the rail's #${id} leaves the act at ${top}px`);
+        // Where the jump lands, the running head and the lit rail dot name the act landed on. Taking the act whose middle was
+        // nearest the screen's middle named the act before a long one for its first screens, on the very frame a jump lands on.
+        const named = await page.evaluate((target) => {
+          const act = document.getElementById(target);
+          const lit = document.querySelector('.film-act-nav a[aria-current="true"]');
+          const spine = document.querySelector('.film-spine span');
+          return {
+            name: act ? act.dataset.actName || '' : '',
+            lit: lit ? lit.getAttribute('href').slice(1) : null,
+            spine: spine ? spine.textContent : ''
+          };
+        }, id);
+        if (named.lit !== id) misnamed.push(`the rail lights #${named.lit} at #${id}`);
+        if (named.name && !named.spine.endsWith(named.name)) misnamed.push(`the running head reads "${named.spine}" at #${id}`);
+      }
+      if (misnamed.length) {
+        failures.push(`${route} names the wrong act where a jump lands: ${misnamed.join('; ')}. The reader is told they are somewhere they are not.`);
       }
       // A link from outside, opened fresh, the way a reader arrives from another page.
       const last = ids[ids.length - 1];
@@ -5003,6 +5092,7 @@ async function main() {
     await smokeTestRoutes(baseUrl);
     await checkFilmFrameFit(baseUrl);
     await checkFilmEdgeChrome(baseUrl);
+    await checkFilmNoChapterWordShown(baseUrl);
     await checkFilmClosingSet(baseUrl);
     await checkFilmNameplates(baseUrl);
     await checkFilmSetFraming(baseUrl);

@@ -187,6 +187,10 @@ const plateUp = new THREE.Vector3();
 const plateAhead = new THREE.Vector3();
 const plateScale = new THREE.Vector3();
 const plateNudge = new THREE.Vector3();
+const plateLocal = new THREE.Vector3();
+const plateParentAt = new THREE.Vector3();
+const plateParentTurn = new THREE.Quaternion();
+const plateParentScale = new THREE.Vector3();
 const plateRay = new THREE.Raycaster();
 const plateEye = new THREE.Vector3();
 const plateAim = new THREE.Vector3();
@@ -468,7 +472,7 @@ function typePixels(node, camera, probe, height) {
   return node.userData.typeShare * (Math.abs(top - probe.y) / 2) * height;
 }
 
-function keepNameplatesLegible(stations, camera, probe, plates, narrow, width, height, now, laneEdge) {
+function keepNameplatesLegible(stations, camera, probe, plates, narrow, width, height, now, laneEdge, frameTop = 1) {
   plates.length = 0;
   // A phone has no art lane: the copy is the whole width, so any nameplate can land on the
   // page's own heading. Dropping all of them fixed that and cost every act its specificity:
@@ -538,10 +542,20 @@ function keepNameplatesLegible(stations, camera, probe, plates, narrow, width, h
 
   // Adds a world offset to a plate and remembers the total, so several passes can move the same
   // plate and the frame after this can put it back exactly where its set left it.
+  //
+  // The offset is worked out in world units and a plate's position is in its parent's, so it is
+  // turned into the parent's frame first. Added as it came, a plate hung inside a model scaled up
+  // 111 times, the laptop in the second chapter's act two, was moved 111 times too far and left
+  // the frame, and one inside a turned set was moved in a turned direction.
   const nudge = (node, by) => {
+    plateLocal.copy(by);
+    if (node.parent) {
+      node.parent.matrixWorld.decompose(plateParentAt, plateParentTurn, plateParentScale);
+      plateLocal.applyQuaternion(plateParentTurn.invert()).divide(plateParentScale);
+    }
     if (!node.userData.plateShift) node.userData.plateShift = new THREE.Vector3();
-    node.userData.plateShift.add(by);
-    node.position.add(by);
+    node.userData.plateShift.add(plateLocal);
+    node.position.add(plateLocal);
   };
 
   camera.matrixWorld.extractBasis(plateRight, plateUp, plateAhead);
@@ -550,9 +564,13 @@ function keepNameplatesLegible(stations, camera, probe, plates, narrow, width, h
   // is measured against the plate's own size rather than the screen's: a narrow plate hanging
   // two per cent of the screen past the edge has lost a fifth of itself, and a wide one has
   // lost a letter.
+  //
+  // The top edge is the page header's bottom, not the canvas's: the header is drawn over the canvas, and a plate under it was
+  // whole on the canvas and unreadable on the page. The second chapter's "Inside the Home PC" measured 2.30:1 there, at the
+  // start of the flight out of its act two.
   for (const plate of plates) {
     const own = Math.max(0.001, Math.max(plate.box.maxX - plate.box.minX, plate.box.maxY - plate.box.minY));
-    const out = Math.max(0, -1 - plate.box.minX, plate.box.maxX - 1, -1 - plate.box.minY, plate.box.maxY - 1);
+    const out = Math.max(0, -1 - plate.box.minX, plate.box.maxX - 1, -1 - plate.box.minY, plate.box.maxY - frameTop);
     if (out > 0) plate.node.material.opacity *= Math.max(0, 1 - (out / own) / NAMEPLATE_EDGE_FADE);
 
     // And the same treatment for the copy's side of the frame, on a wide screen where the copy
@@ -1174,6 +1192,8 @@ export function mountFilm({ canvas, buildStations }) {
   // the window does, and reading a rect in the frame loop after the renderer has written to the
   // canvas forces a layout recalculation every frame.
   let copyLaneEdge = COPY_LANE_FALLBACK;
+  // The top of the frame a reader sees, in clip space: the header's bottom edge, or 1 with no header.
+  let frameTop = 1;
 
   function measure() {
     // Before the writes below, not after. A custom-property or canvas-size write dirties style,
@@ -1187,6 +1207,10 @@ export function mountFilm({ canvas, buildStations }) {
       const box = column.getBoundingClientRect();
       copyLaneEdge = box.width > 0 ? ((box.left + box.width / 2) / window.innerWidth) * 2 - 1 : COPY_LANE_FALLBACK;
     }
+    // The page's header is drawn over the top of the canvas, so the frame a reader sees starts under it. See keepNameplatesLegible.
+    const header = document.querySelector(".site-header");
+    const headerBottom = header ? header.getBoundingClientRect().bottom : 0;
+    frameTop = headerBottom > 0 && window.innerHeight > 0 ? 1 - (headerBottom / window.innerHeight) * 2 : 1;
 
     width = window.innerWidth;
     height = window.innerHeight;
@@ -1554,7 +1578,7 @@ export function mountFilm({ canvas, buildStations }) {
       if (near) stations[i].update(time, reduced ? 1 : stationProgress(i), camera);
     }
 
-    keepNameplatesLegible(stations, camera, nameplateProbe, nameplates, narrow, width, height, now, copyLaneEdge);
+    keepNameplatesLegible(stations, camera, nameplateProbe, nameplates, narrow, width, height, now, copyLaneEdge, frameTop);
     feedTextClear(now, roomColour, renderer, height);
 
     renderer.render(scene, camera);
@@ -1564,9 +1588,12 @@ export function mountFilm({ canvas, buildStations }) {
     // Measured from the last act's bottom edge rather than from where it enters the frame, so
     // the fade is complete exactly when that edge leaves the top of the screen and not a
     // screen and a half later. Fading over a longer distance but finishing late put the scene
-    // behind the comment form; this fades over the same distance and finishes on time.
+    // behind the comment form; this finishes on time.
+    // It starts as the last act lets go of the screen, one screen out, and not before. Started
+    // 1.4 screens out, it dimmed the last act while that act was still pinned, so the closing
+    // set's final frame, the one a chapter ends on, was its dimmest: at 71% of full strength.
     const toEnd = chapterBottom - smoothScroll;
-    const past = clamp01((height * 1.4 - toEnd) / (height * 1.4));
+    const past = clamp01((height - toEnd) / height);
     // A phone scene at 0.72 was measured safe for the text (0.40 of a 1.6 edge budget) and
     // read as a watermark rather than an object. The budget had more than half of itself
     // spare, so the geometry takes some of it back.

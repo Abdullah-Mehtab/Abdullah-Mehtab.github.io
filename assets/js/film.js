@@ -65,7 +65,7 @@
     const rail = document.createElement("nav");
     rail.className = "film-act-nav";
     rail.dataset.actNav = "";
-    rail.setAttribute("aria-label", "Jump to a part of this chapter");
+    rail.setAttribute("aria-label", "Jump to a part of this page");
     for (const act of jumpable) {
       const link = document.createElement("a");
       link.href = "#" + act.id;
@@ -114,7 +114,7 @@
   play.type = "button";
   play.className = "film-play";
   play.dataset.filmPlay = "";
-  play.setAttribute("aria-label", "Play this chapter");
+  play.setAttribute("aria-label", "Play through the page");
   const playIcon = document.createElement("span");
   playIcon.className = "film-play-icon";
   playIcon.setAttribute("aria-hidden", "true");
@@ -196,7 +196,7 @@
     cut.classList.remove("is-shown");
     root.style.scrollBehavior = easedScroll;
     body.classList.remove("is-playing");
-    play.setAttribute("aria-label", "Play this chapter");
+    play.setAttribute("aria-label", "Play through the page");
     playWord.textContent = "Play";
   }
 
@@ -256,7 +256,7 @@
     holdUntil = 0;
     playAt = performance.now();
     body.classList.add("is-playing");
-    play.setAttribute("aria-label", "Stop playing this chapter");
+    play.setAttribute("aria-label", "Stop playing through the page");
     playWord.textContent = "Stop";
     window.requestAnimationFrame(stepPlay);
   }
@@ -424,16 +424,28 @@
     // computed the copy's opacity and position from scroll offset, which is why the copy ran
     // backwards when the reader did.
     //
-    // The stage also takes its character from whichever act is nearest the middle of the
-    // screen, so the space changes as the chapter advances instead of being one backdrop.
+    // The stage also takes its character from the act the reader is in, so the space changes as
+    // the chapter advances instead of being one backdrop. That is the act whose box holds the
+    // middle of the screen. The act whose middle was nearest the screen's middle named the act
+    // before a long one for its first screens: a six-screen act's middle is three screens down
+    // while its top is already pinned. Nearest middle stays as the fallback for a screen whose
+    // middle falls outside every act.
     let nearest = null;
-    let nearestDistance = Infinity;
     for (let i = 0; i < acts.length; i++) {
-      const rect = rects[i];
-      const distance = Math.abs(rect.top + rect.height / 2 - vh / 2);
-      if (distance < nearestDistance) {
-        nearestDistance = distance;
+      if (rects[i].top <= vh / 2 && rects[i].bottom > vh / 2) {
         nearest = acts[i];
+        break;
+      }
+    }
+    if (!nearest) {
+      let nearestDistance = Infinity;
+      for (let i = 0; i < acts.length; i++) {
+        const rect = rects[i];
+        const distance = Math.abs(rect.top + rect.height / 2 - vh / 2);
+        if (distance < nearestDistance) {
+          nearestDistance = distance;
+          nearest = acts[i];
+        }
       }
     }
     for (let i = 0; i < acts.length; i++) {
@@ -449,8 +461,8 @@
     const scene = nearest && nearest.dataset.scene ? nearest.dataset.scene : "horizon";
     if (body.dataset.scene !== scene) body.dataset.scene = scene;
 
-    // The running head and the rail both follow whichever act the reader is in, which is the
-    // one nearest the middle of the screen, the same act the room's colour is taken from.
+    // The running head and the rail both follow whichever act the reader is in, the one
+    // holding the middle of the screen, the same act the room's colour is taken from.
     //
     // Past the last act they name nothing: the reader is in a comment thread three screens
     // below the chapter, and a spine still reading OUTCOME over it is furniture that outlived
