@@ -2348,3 +2348,22 @@ body.scene-live main .act {
     );
   }
 }
+
+/*
+  The fade a film playing itself goes through when it loops from the end of its last act back to its first (film.js). It covers the
+  scene and the copy while the page jumps, so the reader sees the page dim and come back rather than every act racing past. Above the
+  scene and the copy, under the header, the bars and the controls.
+*/
+.film-cut {
+  position: fixed;
+  inset: 0;
+  z-index: 20;
+  background: var(--bg-deep, #060b12);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 450ms ease;
+}
+
+.film-cut.is-shown {
+  opacity: 1;
+}

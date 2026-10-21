@@ -3295,6 +3295,150 @@ async function checkFilmPlayControl(baseUrl) {
   }
 }
 
+// The film plays itself when the reader is idle. Owner ruling, 2026-10-18, for every film page.
+//
+// Scroll stays the way to move. After ten seconds with no input the film plays from where the reader is, any mouse movement stops a
+// film that started itself, it goes round from the end of the last act to the first, and it never starts with the settings panel's
+// Autoplay set to Off or under the operating system's reduced motion. Each of those is a case here, run against the real page and read
+// from the scroll position over real seconds, because the fault each one exists for is a page that moves when it should not or stands
+// still when it should move, and only time shows either. The Off and reduced motion cases each get a browser context of their own: the
+// site saves the Autoplay choice, and a choice left behind would make the next page tested start with it already made.
+//
+// It costs about a minute a film page, most of it the ten seconds of waiting each case needs.
+const AUTOPLAY_IDLE_SECONDS = 10;
+const AUTOPLAY_MOVED_PX = 100;
+
+async function checkFilmAutoplay(baseUrl) {
+  const executablePath = findChromeExecutable();
+  if (!executablePath) {
+    warnings.push('Skipping the autoplay check because Chrome/Edge was not found. Set CHROME_PATH to enable it.');
+    return;
+  }
+  const routes = await filmRoutes();
+  if (routes.length === 0) {
+    failures.push('The autoplay check found no page carrying the film body class, so it measured nothing.');
+    return;
+  }
+
+  const { default: puppeteer } = await import('puppeteer-core');
+  const browser = await puppeteer.launch({
+    executablePath,
+    headless: true,
+    args: ['--no-sandbox', '--disable-setuid-sandbox', '--enable-unsafe-swiftshader', '--use-gl=angle']
+  });
+  const wait = (page, seconds) => page.evaluate((ms) => new Promise((done) => setTimeout(done, ms)), seconds * 1000);
+  const scrollTo = (page, y) => page.evaluate((to) => {
+    document.documentElement.style.scrollBehavior = 'auto';
+    window.scrollTo(0, to);
+    document.documentElement.style.scrollBehavior = '';
+  }, y);
+  const actTops = (page) => page.evaluate(() => [...document.querySelectorAll('main > .act')].map((act) => Math.round(act.getBoundingClientRect().top + window.scrollY)));
+  const playEnd = (page) => page.evaluate(() => {
+    const acts = document.querySelectorAll('main > .act');
+    const last = acts[acts.length - 1];
+    return Math.round(last.getBoundingClientRect().top + window.scrollY + last.offsetHeight - window.innerHeight);
+  });
+  async function fresh(context, url) {
+    const page = await context.newPage();
+    await page.setCacheEnabled(false);
+    await page.setViewport({ width: 1440, height: 900, deviceScaleFactor: 1 });
+    await openPage(page, url);
+    await page.mouse.move(700, 450);
+    return page;
+  }
+  try {
+    for (const route of routes) {
+      const url = `${baseUrl}${route}`;
+
+      // Idle: it starts by itself, from where the reader is.
+      {
+        const context = await browser.createBrowserContext();
+        const page = await fresh(context, url);
+        const tops = await actTops(page);
+        if (tops.length < 2) {
+          failures.push(`${route} has fewer than two acts, so the autoplay check measured nothing.`);
+          await context.close();
+          continue;
+        }
+        await scrollTo(page, tops[0] + 200);
+        await wait(page, 1);
+        const from = await page.evaluate(() => window.scrollY);
+        await wait(page, AUTOPLAY_IDLE_SECONDS - 3);
+        const early = await page.evaluate(() => window.scrollY);
+        await wait(page, 3.5);
+        const later = await page.evaluate(() => window.scrollY);
+        if (Math.abs(early - from) > 2) {
+          failures.push(`${route} moved ${early - from}px within ${AUTOPLAY_IDLE_SECONDS - 2} seconds of the reader's last input. The film must wait ${AUTOPLAY_IDLE_SECONDS} seconds of idleness before it plays itself.`);
+        }
+        if (later - from < AUTOPLAY_MOVED_PX) {
+          failures.push(`${route} did not play itself after ${AUTOPLAY_IDLE_SECONDS} idle seconds: it moved ${later - from}px by ${(AUTOPLAY_IDLE_SECONDS + 1.5).toFixed(1)} seconds. See the idle autoplay in film.js.`);
+        }
+
+        // A mouse movement stops it at once.
+        await page.mouse.move(760, 500, { steps: 4 });
+        const stoppedAt = await page.evaluate(() => window.scrollY);
+        await wait(page, 1.5);
+        const stillAt = await page.evaluate(() => window.scrollY);
+        if (Math.abs(stillAt - stoppedAt) > 2) {
+          failures.push(`${route} kept playing for ${stillAt - stoppedAt}px after the mouse moved. A film that started itself stops the moment the reader moves.`);
+        }
+
+        // The loop: idle near the end of the last act, and the film comes round to the first act.
+        const end = await playEnd(page);
+        await scrollTo(page, end - 240);
+        await wait(page, AUTOPLAY_IDLE_SECONDS + 4);
+        const after = await page.evaluate(() => window.scrollY);
+        if (after >= tops[1]) {
+          failures.push(`${route} did not go round: idle near the end of the last act, the page was at ${after}px ${AUTOPLAY_IDLE_SECONDS + 4} seconds later, past act two's top at ${tops[1]}px. Played by itself, the film returns to the first act after the last.`);
+        }
+        await context.close();
+      }
+
+      // The settings panel's Autoplay choice set to Off.
+      {
+        const context = await browser.createBrowserContext();
+        const page = await fresh(context, url);
+        const select = await page.$('[data-autoplay-select]');
+        if (!select) {
+          failures.push(`${route} has no Autoplay choice in its settings panel, so a reader cannot turn the film's autoplay off.`);
+        } else {
+          await page.evaluate(() => { const s = document.querySelector('[data-autoplay-select]'); s.value = 'off'; s.dispatchEvent(new Event('change')); });
+          await scrollTo(page, (await actTops(page))[0] + 200);
+          await wait(page, 1);
+          const from = await page.evaluate(() => window.scrollY);
+          await wait(page, AUTOPLAY_IDLE_SECONDS + 1);
+          const at = await page.evaluate(() => window.scrollY);
+          if (Math.abs(at - from) > 2) {
+            failures.push(`${route} played itself with Autoplay set to Off in the settings panel (moved ${at - from}px).`);
+          }
+        }
+        await context.close();
+      }
+
+      // The operating system's reduced motion.
+      {
+        const context = await browser.createBrowserContext();
+        const page = await context.newPage();
+        await page.emulateMediaFeatures([{ name: 'prefers-reduced-motion', value: 'reduce' }]);
+        await page.setCacheEnabled(false);
+        await page.setViewport({ width: 1440, height: 900, deviceScaleFactor: 1 });
+        await openPage(page, url);
+        await scrollTo(page, (await actTops(page))[0] + 200);
+        await wait(page, 1);
+        const from = await page.evaluate(() => window.scrollY);
+        await wait(page, AUTOPLAY_IDLE_SECONDS + 1);
+        const at = await page.evaluate(() => window.scrollY);
+        if (Math.abs(at - from) > 2) {
+          failures.push(`${route} played itself under the operating system's reduced motion setting (moved ${at - from}px).`);
+        }
+        await context.close();
+      }
+    }
+  } finally {
+    await browser.close();
+  }
+}
+
 // Playing, the film stops at each act for as long as the act's words take to read.
 //
 // At a constant 240px a second an act was on screen for about nine seconds, and act two has
@@ -4381,6 +4525,9 @@ async function checkFilmLabelSteadiness(baseUrl) {
     const page = await browser.newPage();
     await page.setCacheEnabled(false);
     await page.setViewport({ width: 1440, height: 900, deviceScaleFactor: 1 });
+    // Held still for eleven seconds a depth, longer than the ten idle seconds after which the film plays itself. That is the autoplay
+    // check's business, not this one's, so autoplay is turned off here the way a reader turns it off in the settings panel.
+    await page.evaluateOnNewDocument(() => { try { localStorage.setItem('abdullah-portfolio-autoplay', 'off'); } catch (error) { /* no storage: autoplay stays on and the check says so */ } });
     for (const route of routes) {
       await openPage(page, `${baseUrl}${route}?scene-debug`, { scene: true });
       if (!await page.evaluate(() => Boolean(window.chapterFilm))) {
@@ -4819,6 +4966,7 @@ async function main() {
     await checkFilmTextClearKeepsWhole(baseUrl);
     await checkFilmPlayControl(baseUrl);
     await checkFilmPlayPauses(baseUrl);
+    await checkFilmAutoplay(baseUrl);
     await checkFilmJumpLanding(baseUrl);
     await checkVideoDialog(baseUrl);
     await checkFilmBodyClash(baseUrl);

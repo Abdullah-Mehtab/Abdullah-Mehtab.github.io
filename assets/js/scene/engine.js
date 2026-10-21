@@ -1305,6 +1305,10 @@ export function mountFilm({ canvas, buildStations }) {
   let running = true;
   let painted = false;
 
+  // A film playing itself on a loop returns from the end of its last act to its first in one step. The camera follows a damped copy of
+  // the scroll, so it would race back through every set to get there; film.js hides the jump behind a fade and asks for the camera to
+  // be put where the scroll now is at once.
+  window.addEventListener("film:jump", () => { smoothScroll = window.scrollY; });
   function stationProgress(index) {
     const act = acts[index];
     const top = Number(act.dataset.stationTop) || 0;

@@ -178,9 +178,22 @@
   const root = document.documentElement;
   let easedScroll = "";
 
+  // Played by the reader pressing Play, the film stops at the end of the last act. Played because the reader has been idle (see below),
+  // it goes round: at the end it fades to the page's own ground, returns to the first act and fades back.
+  let looping = false;
+  const CUT_MS = 450;
+  const cut = document.createElement("div");
+  cut.className = "film-cut";
+  cut.setAttribute("aria-hidden", "true");
+  body.appendChild(cut);
+  let jumpAt = 0;
+
   function stopPlaying() {
     if (!playing) return;
     playing = false;
+    looping = false;
+    jumpAt = 0;
+    cut.classList.remove("is-shown");
     root.style.scrollBehavior = easedScroll;
     body.classList.remove("is-playing");
     play.setAttribute("aria-label", "Play this chapter");
@@ -191,6 +204,22 @@
     if (!playing) return;
     const seconds = (now - playAt) / 1000;
     playAt = now;
+    // Faded out at the end of the last act: once the page is covered, go to the first act, tell the scene to put its camera there at
+    // once rather than flying back through every set, and fade back in, holding the first act for its reading time.
+    if (jumpAt) {
+      if (now >= jumpAt) {
+        jumpAt = 0;
+        const first = Math.round(acts[0].getBoundingClientRect().top + window.scrollY);
+        window.scrollTo(0, first);
+        window.dispatchEvent(new Event("film:jump"));
+        cut.classList.remove("is-shown");
+        playFrom = first;
+        stops = readingStops(first - 2);
+        holdUntil = now + CUT_MS;
+      }
+      window.requestAnimationFrame(stepPlay);
+      return;
+    }
     if (now < holdUntil) {
       window.requestAnimationFrame(stepPlay);
       return;
@@ -204,6 +233,12 @@
     const end = playEnd();
     if (playFrom >= end) {
       window.scrollTo(0, end);
+      if (looping) {
+        cut.classList.add("is-shown");
+        jumpAt = now + CUT_MS;
+        window.requestAnimationFrame(stepPlay);
+        return;
+      }
       stopPlaying();
       return;
     }
@@ -211,13 +246,9 @@
     window.requestAnimationFrame(stepPlay);
   }
 
-  play.addEventListener("click", () => {
-    if (playing) { stopPlaying(); return; }
-    // Nothing to play from here, and playing anyway means scrolling backwards to the end of the
-    // last act. The control is hidden past that point as well; this is the half of it that does
-    // not depend on a class having been applied yet.
-    if (window.scrollY >= playEnd()) return;
+  function startPlaying(loop) {
     playing = true;
+    looping = loop;
     easedScroll = root.style.scrollBehavior;
     root.style.scrollBehavior = "auto";
     playFrom = window.scrollY;
@@ -228,6 +259,15 @@
     play.setAttribute("aria-label", "Stop playing this chapter");
     playWord.textContent = "Stop";
     window.requestAnimationFrame(stepPlay);
+  }
+
+  play.addEventListener("click", () => {
+    if (playing) { stopPlaying(); return; }
+    // Nothing to play from here, and playing anyway means scrolling backwards to the end of the
+    // last act. The control is hidden past that point as well; this is the half of it that does
+    // not depend on a class having been applied yet.
+    if (window.scrollY >= playEnd()) return;
+    startPlaying(false);
   });
 
   // Anything the reader does takes the film back off them. Keydown is listed because the space
@@ -253,6 +293,42 @@
       stopPlaying();
     }, { passive: true, capture: true });
   }
+
+  // The film plays itself when the reader is idle. Owner ruling, 2026-10-18, for every film page.
+  //
+  // Scroll stays the way to move and the keys the backup. After ten seconds with no input the film plays from wherever the reader is,
+  // through the last act and round to the first again. Any mouse movement, scroll, key or touch stops it at once and the ten seconds
+  // start again. The Play control shows Stop while it plays, so the reader can always see that it is playing and stop it; the settings
+  // panel's Autoplay choice turns it off for good. It never starts under Motion Off, the operating system's reduced motion, a hidden
+  // tab, ?still (the frozen frames the checks are taken from), or below the chapter, where the page is a comment form.
+  const IDLE_MS = 10000;
+  const stillFrame = /[?&]still(?:=|&|$)/.test(window.location.search);
+  const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
+  const autoplayAllowed = () => !stillFrame && !reducedMotion.matches && body.dataset.motion !== "off" && body.dataset.autoplay !== "off";
+  let lastInput = performance.now();
+  for (const event of ["wheel", "touchstart", "keydown", "pointerdown", "pointermove", "scroll"]) {
+    window.addEventListener(event, () => {
+      // The film moving the page is not the reader doing anything.
+      if (event === "scroll" && playing) return;
+      lastInput = performance.now();
+      // Moving the mouse stops a film that started itself. It does not stop one the reader pressed Play on, because the reader's
+      // next move after pressing it is taking the pointer off the control.
+      if (event === "pointermove" && playing && looping) stopPlaying();
+    }, { passive: true, capture: true });
+  }
+  // A tab the reader comes back to starts its ten seconds again rather than playing at once.
+  document.addEventListener("visibilitychange", () => { if (!document.hidden) lastInput = performance.now(); });
+  window.setInterval(() => {
+    if (playing) {
+      if (looping && !autoplayAllowed()) stopPlaying();
+      return;
+    }
+    if (document.hidden || !autoplayAllowed()) return;
+    if (performance.now() - lastInput < IDLE_MS) return;
+    const last = acts[acts.length - 1].getBoundingClientRect();
+    if (last.bottom < window.innerHeight * 0.5) return;
+    startPlaying(true);
+  }, 500);
 
   // ?still: one scroll position, one frame, every time.
   //

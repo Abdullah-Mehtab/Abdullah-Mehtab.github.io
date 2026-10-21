@@ -51,10 +51,17 @@
     ["off", "Off"]
   ];
 
+  // Whether a chapter's film plays itself after the reader has been idle. On by default; the film pages offer the choice.
+  const autoplayOptions = [
+    ["on", "On"],
+    ["off", "Off"]
+  ];
+
   const storageKeys = {
     theme: "abdullah-portfolio-theme",
     cursor: "abdullah-portfolio-cursor",
-    motion: "abdullah-portfolio-motion"
+    motion: "abdullah-portfolio-motion",
+    autoplay: "abdullah-portfolio-autoplay"
   };
 
   function readStoredValue(key, fallback) {
@@ -152,6 +159,7 @@
     const themeSelects = document.querySelectorAll("[data-theme-select]");
     const cursorSelects = document.querySelectorAll("[data-cursor-select]");
     const motionSelects = document.querySelectorAll("[data-motion-select]");
+    const autoplaySelects = document.querySelectorAll("[data-autoplay-select]");
     const resetButtons = document.querySelectorAll("[data-style-reset]");
     const styleControls = document.querySelectorAll("[data-style-control]");
     const styleToggles = document.querySelectorAll("[data-style-toggle]");
@@ -167,6 +175,9 @@
     const savedMotion = motionOptions.some(([value]) => value === readStoredValue(storageKeys.motion, "auto"))
       ? readStoredValue(storageKeys.motion, "auto")
       : "auto";
+    const savedAutoplay = autoplayOptions.some(([value]) => value === readStoredValue(storageKeys.autoplay, "on"))
+      ? readStoredValue(storageKeys.autoplay, "on")
+      : "on";
 
     function fillSelect(select, options) {
       if (select.options.length) return;
@@ -209,6 +220,14 @@
       writeStoredValue(storageKeys.motion, value);
     }
 
+    function applyAutoplay(value) {
+      document.body.dataset.autoplay = value;
+      autoplaySelects.forEach((select) => {
+        select.value = value;
+      });
+      writeStoredValue(storageKeys.autoplay, value);
+    }
+
     themeSelects.forEach((select) => {
       fillSelect(select, themeOptions);
       select.addEventListener("change", () => applyTheme(select.value));
@@ -224,11 +243,17 @@
       select.addEventListener("change", () => applyMotion(select.value));
     });
 
+    autoplaySelects.forEach((select) => {
+      fillSelect(select, autoplayOptions);
+      select.addEventListener("change", () => applyAutoplay(select.value));
+    });
+
     resetButtons.forEach((button) => {
       button.addEventListener("click", () => {
         applyTheme("professional");
         applyCursor("constellation");
         applyMotion("auto");
+        applyAutoplay("on");
       });
     });
 
@@ -270,6 +295,7 @@
     applyTheme(savedTheme);
     applyCursor(savedCursor);
     applyMotion(savedMotion);
+    applyAutoplay(savedAutoplay);
   }
 
   function setupFilters() {
