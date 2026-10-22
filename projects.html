@@ -68,22 +68,8 @@
         </div>
       </section>
 
-      <section class="section">
+      <section class="section project-section">
         <div class="section-inner">
-          <article class="featured-project-teaser reveal">
-            <div>
-              <p class="eyebrow">Final Year Project</p>
-              <h2>Cyber Sentinel - Security Monitoring SIEM</h2>
-              <p>
-                A low-cost security monitoring stack built around Wazuh, ELK Stack, Suricata IDS, deployment automation, alerting, and small-environment practicality.
-              </p>
-            </div>
-            <div class="featured-project-actions">
-              <a class="button primary" href="chapters/cyber-sentinel.html">Explore Cyber Sentinel</a>
-              <a class="button" href="https://abdullah-mehtab.github.io/Cyber-Sentinal/" target="_blank" rel="noopener">Project site</a>
-            </div>
-          </article>
-
           <div class="work-toolbar" aria-label="Project filters">
             <button class="filter-button is-active" type="button" data-filter="all" aria-pressed="true">All</button>
             <button class="filter-button" type="button" data-filter="security" aria-pressed="false">Security</button>
@@ -95,311 +81,338 @@
           </div>
           <p class="filter-status" data-filter-status aria-live="polite">Showing all projects.</p>
 
-          <div class="grid two">
-            <article id="security-system" class="work-card" data-categories="security devops">
-              <div class="work-media lite-video" data-video-id="TLKqw3Hti8c" data-video-title="Cyber Sentinel Demonstration">
-                <button class="video-play" type="button" aria-label="Watch the Cyber Sentinel demo, 2 minutes 38 seconds">
-                  <span class="video-play-icon" aria-hidden="true"></span>
-                  <span>Watch demo &middot; 2:38</span>
-                </button>
-              </div>
-              <div>
-                <div class="work-meta"><span>Final Year Project</span><span>2024/11 - 2025/06</span></div>
-                <h3>Cyber Sentinel - Security Monitoring SIEM</h3>
-                <p>Low-cost open-source monitoring using Wazuh, ELK Stack, and Suricata IDS, with automated deployment, GUI management, and critical alerting for small-scale environments.</p>
-                <div class="tag-list">
-                  <span class="tag">Wazuh</span><span class="tag">ELK</span><span class="tag">Suricata</span><span class="tag">Python</span>
+          <section class="project-group" aria-labelledby="featured-projects-title">
+            <h2 class="project-group-title" id="featured-projects-title">Featured</h2>
+            <div class="project-cards featured-projects">
+              <article id="security-system" class="work-card" data-categories="security devops">
+                <a class="work-shot" href="chapters/cyber-sentinel.html" tabindex="-1" aria-hidden="true"><img src="assets/images/optimized/cyber-sentinel.webp" srcset="assets/images/optimized/cyber-sentinel.webp 620w, assets/images/optimized/cyber-sentinel-1240.webp 1240w" sizes="(max-width: 620px) 100vw, (max-width: 920px) 50vw, 580px" alt="" width="620" height="349" loading="lazy" decoding="async"></a>
+                <div class="work-body">
+                  <h3><a href="chapters/cyber-sentinel.html">Cyber Sentinel</a></h3>
+                  <div class="work-meta"><span>Final Year Project</span><span>2024/11 - 2025/06</span></div>
+                  <p>Low-cost security monitoring for small networks: Wazuh, ELK and Suricata wired into one stack, with an install wizard and email alerts.</p>
+                  <div class="work-action"><a class="button primary" href="chapters/cyber-sentinel.html">Explore Cyber Sentinel&nbsp;&rarr;</a></div>
+                  <div class="work-links">
+                    <span data-video-id="TLKqw3Hti8c" data-video-title="Cyber Sentinel Demonstration"><button class="video-play" type="button" aria-label="Watch the Cyber Sentinel demo, 2 minutes 38 seconds">Watch demo</button></span>
+                    <a class="work-link" href="https://abdullah-mehtab.github.io/Cyber-Sentinal/" target="_blank" rel="noopener">Project site</a>
+                    <a class="work-link" href="https://github.com/Abdullah-Mehtab/Cyber-Sentinal" target="_blank" rel="noopener">Repository</a>
+                    <details class="work-comments">
+                      <summary>Comments</summary>
+                      <div data-comments data-type="project" data-slug="cyber-sentinel" data-title="Comments on Cyber Sentinel"></div>
+                    </details>
+                  </div>
                 </div>
-                <div class="button-row">
-                  <a class="button primary" href="chapters/cyber-sentinel.html">Explore Cyber Sentinel</a>
-                  <a class="button" href="https://abdullah-mehtab.github.io/Cyber-Sentinal/" target="_blank" rel="noopener">Project site</a>
-                </div>
-              </div>
-              <div data-comments data-type="project" data-slug="cyber-sentinel" data-title="Comments on Cyber Sentinel"></div>
-            </article>
+              </article>
 
-            <article id="pentest-report-generator" class="work-card" data-categories="security fullstack">
-              <div class="work-placeholder security" role="img" aria-label="Placeholder panel for Automated Pentest Report Generator">
-                <span>JSON -> Report</span>
-                <strong>Automated Pentest Report Generator</strong>
-              </div>
-              <div>
-                <div class="work-meta"><span>Personal Project</span><span>Security reporting</span></div>
-                <h3>Automated Pentest Report Generator</h3>
-                <p>Parses standardized JSON vulnerability data into formatted Word and PDF reports, so the repetitive half of reporting stops eating time that should go into testing.</p>
-                <div class="tag-list">
-                  <span class="tag">JSON</span><span class="tag">PDF</span><span class="tag">Reports</span><span class="tag">Security</span>
+              <article id="offensive-security-home-lab" class="work-card" data-categories="security">
+                <a class="work-shot" href="chapters/offensive-security-home-lab.html" tabindex="-1" aria-hidden="true"><img src="assets/images/optimized/offensive-security-home-lab.webp" alt="" width="624" height="340" loading="lazy" decoding="async"></a>
+                <div class="work-body">
+                  <h3><a href="chapters/offensive-security-home-lab.html">Offensive Security Home Lab</a></h3>
+                  <div class="work-meta"><span>Personal Project</span><span>2024/08 - 2026/09</span></div>
+                  <p>An attack range at home in VMware: Kali against Metasploitable and Windows targets on my home LAN, later watched by Wazuh, a honeypot and IP blocking.</p>
+                  <div class="work-action"><a class="button primary" href="chapters/offensive-security-home-lab.html">Explore Offensive Security Home Lab&nbsp;&rarr;</a></div>
+                  <div class="work-links">
+                    <details class="work-comments">
+                      <summary>Comments</summary>
+                      <div data-comments data-type="project" data-slug="offensive-security-home-lab" data-title="Comments on the home lab"></div>
+                    </details>
+                  </div>
                 </div>
-              </div>
-              <div data-comments data-type="project" data-slug="pentest-report-generator" data-title="Comments on the report generator"></div>
-            </article>
+              </article>
 
-            <article id="offensive-security-home-lab" class="work-card" data-categories="security">
-              <img src="assets/images/optimized/offensive-security-home-lab.webp" alt="Diagram of the offensive security home lab: a Kali attacker machine and host PC connected to Metasploitable 2 and 3, Ubuntu Server and Windows 10 targets, annotated with the network reconnaissance, vulnerability assessment, attack simulation and post-exploitation stages" width="624" height="340" loading="lazy" decoding="async">
-              <div>
-                <div class="work-meta"><span>Personal Project</span><span>2024/08 - 2026/09</span></div>
-                <h3>Offensive Security Home Lab</h3>
-                <p>A virtualised attack range in VMware: Kali against Metasploitable 2 and 3, Ubuntu Server, and Windows 10. Used for network reconnaissance, bruteforce attempts, privilege escalation, and post-exploitation practice with Metasploit and Nmap.</p>
-                <div class="tag-list">
-                  <span class="tag">Kali</span><span class="tag">Metasploit</span><span class="tag">Nmap</span><span class="tag">VMware</span>
+              <article id="pentest-report-generator" class="work-card" data-categories="security fullstack">
+                <span class="work-shot"><img src="assets/images/optimized/pentest-report-generator.webp" srcset="assets/images/optimized/pentest-report-generator.webp 620w, assets/images/optimized/pentest-report-generator-1240.webp 1240w" sizes="(max-width: 620px) 100vw, (max-width: 920px) 50vw, 580px" alt="Illustration: a terminal printing a pentest report as an itemised receipt of findings" width="620" height="349" loading="lazy" decoding="async"></span>
+                <div class="work-body">
+                  <h3>Automated Pentest Report Generator</h3>
+                  <div class="work-meta"><span>Personal Project</span><span>2025/09 - 2026/07</span></div>
+                  <p>A Flask app that turns findings, typed in or imported from Nuclei, Nessus, Burp, ZAP and SARIF, into the Word and PDF report.</p>
+                  <div class="work-action"><span class="button work-private">Private repository</span></div>
+                  <div class="work-links">
+                    <details class="work-comments">
+                      <summary>Comments</summary>
+                      <div data-comments data-type="project" data-slug="pentest-report-generator" data-title="Comments on the report generator"></div>
+                    </details>
+                  </div>
                 </div>
-              </div>
-              <div data-comments data-type="project" data-slug="offensive-security-home-lab" data-title="Comments on the home lab"></div>
-            </article>
+              </article>
 
-            <article id="devops-environment" class="work-card" data-categories="devops fullstack">
-              <div class="work-placeholder fullstack" role="img" aria-label="Infrastructure and deployment project placeholder">
-                <span>IaC -> CI/CD</span>
-                <strong>DevOps Production Environment</strong>
-              </div>
-              <div>
-                <div class="work-meta"><span>Infrastructure</span><span>Production-style demo</span></div>
-                <h3>DevOps Production Environment</h3>
-                <p>Infrastructure and deployment practice using Terraform, Ansible, Docker, Jenkins, GitHub Actions, SonarQube, Prometheus, Grafana, and ELK-style observability thinking.</p>
-                <div class="tag-list">
-                  <span class="tag">Terraform</span><span class="tag">Ansible</span><span class="tag">Docker</span><span class="tag">Jenkins</span>
+              <article id="devops-environment" class="work-card" data-categories="devops fullstack">
+                <a class="work-shot" href="https://github.com/Abdullah-Mehtab/cloud-devops-lab-2025" target="_blank" rel="noopener" tabindex="-1" aria-hidden="true"><img src="assets/images/optimized/devops-production-environment.webp" srcset="assets/images/optimized/devops-production-environment.webp 620w, assets/images/optimized/devops-production-environment-1240.webp 1240w" sizes="(max-width: 620px) 100vw, (max-width: 920px) 50vw, 580px" alt="" width="620" height="349" loading="lazy" decoding="async"></a>
+                <div class="work-body">
+                  <h3><a href="https://github.com/Abdullah-Mehtab/cloud-devops-lab-2025" target="_blank" rel="noopener">DevOps Production Environment</a></h3>
+                  <div class="work-meta"><span>Tkxel internship</span><span>2025/08</span></div>
+                  <p>A production-style AWS environment, all as code: Terraform, Ansible, Docker Compose, a Jenkins pipeline, SonarQube, Prometheus and Grafana.</p>
+                  <div class="work-action"><a class="button" href="https://github.com/Abdullah-Mehtab/cloud-devops-lab-2025" target="_blank" rel="noopener">Repository&nbsp;&rarr;</a></div>
+                  <div class="work-links">
+                    <details class="work-comments">
+                      <summary>Comments</summary>
+                      <div data-comments data-type="project" data-slug="devops-production-environment" data-title="Comments on DevOps work"></div>
+                    </details>
+                  </div>
                 </div>
-              </div>
-              <div data-comments data-type="project" data-slug="devops-production-environment" data-title="Comments on DevOps work"></div>
-            </article>
+              </article>
 
-            <article id="led-monitoring" class="work-card" data-categories="iot fullstack">
-              <img src="assets/images/optimized/Project2.webp" alt="Smart LED monitoring dashboard" width="624" height="595" loading="lazy" decoding="async">
-              <div>
-                <div class="work-meta"><span>IoT</span><span>ESP32 + WebApp</span></div>
-                <h3>Smart LED On-Time Monitoring System</h3>
-                <p>ESP32-based LED usage tracking into Google Sheets through a custom WebApp, combining embedded systems, cloud logging, and practical analytics.</p>
-                <div class="tag-list">
-                  <span class="tag">ESP32</span><span class="tag">Google Sheets</span><span class="tag">JavaScript</span>
+              <article id="expression-parser" class="work-card" data-categories="early">
+                <a class="work-shot" href="https://github.com/Abdullah-Mehtab/Expression-Parser-Compiler-Construction" target="_blank" rel="noopener" tabindex="-1" aria-hidden="true"><img src="assets/images/optimized/expression-parser-compiler.webp" srcset="assets/images/optimized/expression-parser-compiler.webp 620w, assets/images/optimized/expression-parser-compiler-1240.webp 1240w" sizes="(max-width: 620px) 100vw, (max-width: 920px) 50vw, 580px" alt="" width="620" height="349" loading="lazy" decoding="async"></a>
+                <div class="work-body">
+                  <h3><a href="https://github.com/Abdullah-Mehtab/Expression-Parser-Compiler-Construction" target="_blank" rel="noopener">Expression Parser Compiler</a></h3>
+                  <div class="work-meta"><span>Course project</span><span>2024/05</span></div>
+                  <p>Three C programs for a compiler construction course: a lexer, an operator precedence parser and a code generator that writes assembly.</p>
+                  <div class="work-action"><a class="button" href="https://github.com/Abdullah-Mehtab/Expression-Parser-Compiler-Construction" target="_blank" rel="noopener">Repository&nbsp;&rarr;</a></div>
+                  <div class="work-links">
+                    <details class="work-comments">
+                      <summary>Comments</summary>
+                      <div data-comments data-type="project" data-slug="expression-parser-compiler" data-title="Comments on the expression parser"></div>
+                    </details>
+                  </div>
                 </div>
-                <div class="button-row">
-                  <a class="button" href="https://github.com/Abdullah-Mehtab/Smart-LED-On-Time-Monitoring-System" target="_blank" rel="noopener">Repository</a>
-                </div>
-              </div>
-              <div data-comments data-type="project" data-slug="smart-led-monitoring" data-title="Comments on LED monitoring"></div>
-            </article>
+              </article>
 
-            <article id="ai-chatbot" class="work-card" data-categories="ml fullstack">
-              <img src="assets/images/optimized/Project4.webp" alt="AI admissions chatbot interface" width="980" height="813" loading="lazy" decoding="async">
-              <div>
-                <div class="work-meta"><span>AI/NLP</span><span>Python</span></div>
-                <h3>AI-Powered University Admissions Chatbot</h3>
-                <p>A conversational assistant for university admissions queries, using Python and NLP-style query handling to help students find requirements and deadlines.</p>
-                <div class="tag-list">
-                  <span class="tag">Python</span><span class="tag">NLP</span><span class="tag">Chatbot</span>
+              <article id="linear-regression" class="work-card" data-categories="early ml">
+                <a class="work-shot" href="https://github.com/Abdullah-Mehtab/Linear-Regression-in-Assembly" target="_blank" rel="noopener" tabindex="-1" aria-hidden="true"><img src="assets/images/optimized/linear-regression-assembly.webp" srcset="assets/images/optimized/linear-regression-assembly.webp 620w, assets/images/optimized/linear-regression-assembly-1240.webp 1240w" sizes="(max-width: 620px) 100vw, (max-width: 920px) 50vw, 580px" alt="" width="620" height="349" loading="lazy" decoding="async"></a>
+                <div class="work-body">
+                  <h3><a href="https://github.com/Abdullah-Mehtab/Linear-Regression-in-Assembly" target="_blank" rel="noopener">Linear Regression in Assembly</a></h3>
+                  <div class="work-meta"><span>Course project</span><span>2024/05 - 2024/06</span></div>
+                  <p>Linear regression with no libraries at all, written in MIPS assembly on the MARS simulator.</p>
+                  <div class="work-action"><a class="button" href="https://github.com/Abdullah-Mehtab/Linear-Regression-in-Assembly" target="_blank" rel="noopener">Repository&nbsp;&rarr;</a></div>
+                  <div class="work-links">
+                    <details class="work-comments">
+                      <summary>Comments</summary>
+                      <div data-comments data-type="project" data-slug="linear-regression-assembly" data-title="Comments on Linear Regression in Assembly"></div>
+                    </details>
+                  </div>
                 </div>
-                <div class="button-row">
-                  <a class="button" href="https://github.com/Abdullah-Mehtab/AI-Powered-University-Admissions-Chatbot" target="_blank" rel="noopener">Repository</a>
-                </div>
-              </div>
-              <div data-comments data-type="project" data-slug="ai-admissions-chatbot" data-title="Comments on the chatbot"></div>
-            </article>
+              </article>
+            </div>
+          </section>
 
-            <article id="time-series-ml" class="work-card" data-categories="ml fullstack">
-              <div class="work-placeholder ml" role="img" aria-label="Placeholder panel for time-series forecasting and machine learning deployment">
-                <span>Forecast -> Deploy</span>
-                <strong>Time-Series ML</strong>
-              </div>
-              <div>
-                <div class="work-meta"><span>ML deployment</span><span>Flask + forecasting</span></div>
-                <h3>Time-Series Forecasting and ML Deployment</h3>
-                <p>Model training and deployment practice around forecasting, exploratory analysis, feature engineering, model evaluation, and serving predictions through a lightweight app.</p>
-                <div class="tag-list">
-                  <span class="tag">Flask</span><span class="tag">Forecasting</span><span class="tag">EDA</span><span class="tag">ML</span>
+          <section class="project-group" aria-labelledby="more-projects-title">
+            <h2 class="project-group-title" id="more-projects-title">More projects</h2>
+            <div class="project-cards">
+              <article id="led-monitoring" class="work-card" data-categories="iot fullstack">
+                <a class="work-shot" href="https://github.com/Abdullah-Mehtab/Smart-LED-On-Time-Monitoring-System" target="_blank" rel="noopener" tabindex="-1" aria-hidden="true"><img src="assets/images/optimized/Project2.webp" alt="" width="624" height="595" loading="lazy" decoding="async"></a>
+                <div class="work-body">
+                  <h3><a href="https://github.com/Abdullah-Mehtab/Smart-LED-On-Time-Monitoring-System" target="_blank" rel="noopener">Smart LED On-Time Monitoring System</a></h3>
+                  <div class="work-meta"><span>IoT</span><span>ESP32 + WebApp</span></div>
+                  <p>ESP32-based LED usage tracking into Google Sheets through a custom WebApp, combining embedded systems, cloud logging, and practical analytics.</p>
+                  <div class="work-action"><a class="button" href="https://github.com/Abdullah-Mehtab/Smart-LED-On-Time-Monitoring-System" target="_blank" rel="noopener">Repository&nbsp;&rarr;</a></div>
+                  <div class="work-links">
+                    <details class="work-comments">
+                      <summary>Comments</summary>
+                      <div data-comments data-type="project" data-slug="smart-led-monitoring" data-title="Comments on LED monitoring"></div>
+                    </details>
+                  </div>
                 </div>
-              </div>
-              <div data-comments data-type="project" data-slug="time-series-ml" data-title="Comments on time-series ML"></div>
-            </article>
+              </article>
 
-            <article id="laravel-backend" class="work-card" data-categories="fullstack">
-              <div class="work-placeholder fullstack" role="img" aria-label="Placeholder panel for Laravel ecommerce backend demo">
-                <span>API -> Admin</span>
-                <strong>Laravel Backend</strong>
-              </div>
-              <div>
-                <div class="work-meta"><span>Backend</span><span>Laravel 12.x</span></div>
-                <h3>Laravel E-commerce Backend Demo</h3>
-                <p>A backend-oriented e-commerce demo using Laravel, MySQL, Blade, routing, data modeling, and admin-style workflows.</p>
-                <div class="tag-list">
-                  <span class="tag">Laravel</span><span class="tag">MySQL</span><span class="tag">Blade</span>
+              <article id="ai-chatbot" class="work-card" data-categories="ml fullstack">
+                <a class="work-shot" href="https://github.com/Abdullah-Mehtab/AI-Powered-University-Admissions-Chatbot" target="_blank" rel="noopener" tabindex="-1" aria-hidden="true"><img src="assets/images/optimized/Project4.webp" alt="" width="980" height="813" loading="lazy" decoding="async"></a>
+                <div class="work-body">
+                  <h3><a href="https://github.com/Abdullah-Mehtab/AI-Powered-University-Admissions-Chatbot" target="_blank" rel="noopener">AI-Powered University Admissions Chatbot</a></h3>
+                  <div class="work-meta"><span>AI/NLP</span><span>Python</span></div>
+                  <p>A conversational assistant for university admissions queries, using Python and NLP-style query handling to help students find requirements and deadlines.</p>
+                  <div class="work-action"><a class="button" href="https://github.com/Abdullah-Mehtab/AI-Powered-University-Admissions-Chatbot" target="_blank" rel="noopener">Repository&nbsp;&rarr;</a></div>
+                  <div class="work-links">
+                    <details class="work-comments">
+                      <summary>Comments</summary>
+                      <div data-comments data-type="project" data-slug="ai-admissions-chatbot" data-title="Comments on the chatbot"></div>
+                    </details>
+                  </div>
                 </div>
-              </div>
-              <div data-comments data-type="project" data-slug="laravel-ecommerce-backend" data-title="Comments on Laravel backend"></div>
-            </article>
+              </article>
 
-            <article id="search-engine" class="work-card" data-categories="early fullstack">
-              <img src="assets/images/optimized/Project3.webp" alt="Small scale search engine" width="980" height="828" loading="lazy" decoding="async">
-              <div>
-                <div class="work-meta"><span>Python</span><span>DSA + Search</span></div>
-                <h3>Small Scale Search Engine</h3>
-                <p>Python search prototype using indexing and retrieval concepts from data structures and algorithms coursework.</p>
-                <div class="tag-list">
-                  <span class="tag">Python</span><span class="tag">DSA</span><span class="tag">Search</span>
+              <article id="time-series-ml" class="work-card" data-categories="ml fullstack">
+                <span class="work-shot"><img src="assets/images/optimized/time-series-ml.webp" srcset="assets/images/optimized/time-series-ml.webp 620w, assets/images/optimized/time-series-ml-1240.webp 1240w" sizes="(max-width: 620px) 100vw, (max-width: 920px) 50vw, 380px" alt="Illustration: a train named Model pulling two years of data along a track toward the next station, /predict" width="620" height="349" loading="lazy" decoding="async"></span>
+                <div class="work-body">
+                  <h3>Time-Series Forecasting and ML Deployment</h3>
+                  <div class="work-meta"><span>ML deployment</span><span>Flask + forecasting</span></div>
+                  <p>Model training and deployment practice around forecasting, exploratory analysis, feature engineering, model evaluation, and serving predictions through a lightweight app.</p>
+                  <div class="work-action"><span class="button work-private">No public repository</span></div>
+                  <div class="work-links">
+                    <details class="work-comments">
+                      <summary>Comments</summary>
+                      <div data-comments data-type="project" data-slug="time-series-ml" data-title="Comments on time-series ML"></div>
+                    </details>
+                  </div>
                 </div>
-                <div class="button-row">
-                  <a class="button" href="https://github.com/Abdullah-Mehtab/Search-Engine-Using-DSA" target="_blank" rel="noopener">Repository</a>
-                </div>
-              </div>
-              <div data-comments data-type="project" data-slug="small-scale-search-engine" data-title="Comments on the search engine"></div>
-            </article>
+              </article>
 
-            <article id="linear-regression" class="work-card" data-categories="early ml">
-              <img src="assets/images/optimized/Project6.webp" alt="Linear regression assembly output" width="620" height="538" loading="lazy" decoding="async">
-              <div>
-                <div class="work-meta"><span>MIPS Assembly</span><span>ML basics</span></div>
-                <h3>Linear Regression in Assembly</h3>
-                <p>A low-level implementation of linear regression in MIPS Assembly, connecting ML fundamentals with computer architecture.</p>
-                <div class="tag-list">
-                  <span class="tag">Assembly</span><span class="tag">Machine Learning</span>
+              <article id="laravel-backend" class="work-card" data-categories="fullstack">
+                <span class="work-shot"><img src="assets/images/optimized/laravel-ecommerce-backend.webp" srcset="assets/images/optimized/laravel-ecommerce-backend.webp 620w, assets/images/optimized/laravel-ecommerce-backend-1240.webp 1240w" sizes="(max-width: 620px) 100vw, (max-width: 920px) 50vw, 380px" alt="Illustration: the artisan's workshop, with a Blade knife, a route map, seeder packets, migrating birds and a cash register" width="620" height="349" loading="lazy" decoding="async"></span>
+                <div class="work-body">
+                  <h3>Laravel E-commerce Backend Demo</h3>
+                  <div class="work-meta"><span>Backend</span><span>Laravel 12.x</span></div>
+                  <p>A backend-oriented e-commerce demo using Laravel, MySQL, Blade, routing, data modeling, and admin-style workflows.</p>
+                  <div class="work-action"><span class="button work-private">No public repository</span></div>
+                  <div class="work-links">
+                    <details class="work-comments">
+                      <summary>Comments</summary>
+                      <div data-comments data-type="project" data-slug="laravel-ecommerce-backend" data-title="Comments on Laravel backend"></div>
+                    </details>
+                  </div>
                 </div>
-                <div class="button-row">
-                  <a class="button" href="https://github.com/Abdullah-Mehtab/Linear-Regression-in-Assembly" target="_blank" rel="noopener">Repository</a>
-                </div>
-              </div>
-              <div data-comments data-type="project" data-slug="linear-regression-assembly" data-title="Comments on Linear Regression in Assembly"></div>
-            </article>
+              </article>
 
-            <article id="expression-parser" class="work-card" data-categories="early">
-              <img src="assets/images/optimized/Project14.webp" alt="Expression parser compiler" width="817" height="807" loading="lazy" decoding="async">
-              <div>
-                <div class="work-meta"><span>Compiler construction</span><span>C</span></div>
-                <h3>Expression Parser Compiler</h3>
-                <p>A C-based parser/evaluator for arithmetic expressions, built around automata and compiler construction fundamentals.</p>
-                <div class="tag-list">
-                  <span class="tag">C</span><span class="tag">Compiler Design</span>
+              <article id="mytasks" class="work-card" data-categories="fullstack">
+                <a class="work-shot" href="https://github.com/Abdullah-Mehtab/Web-Dev-Project" target="_blank" rel="noopener" tabindex="-1" aria-hidden="true"><img src="assets/images/optimized/Project15.webp" alt="" width="602" height="404" loading="lazy" decoding="async"></a>
+                <div class="work-body">
+                  <h3><a href="https://github.com/Abdullah-Mehtab/Web-Dev-Project" target="_blank" rel="noopener">MyTasks Task Manager</a></h3>
+                  <div class="work-meta"><span>React</span><span>2025/01</span></div>
+                  <p>A React task app with sign-up and log-in, a drag-and-drop board from To Do to Done, a calendar of due dates, and a light and dark theme.</p>
+                  <div class="work-action"><a class="button" href="https://github.com/Abdullah-Mehtab/Web-Dev-Project" target="_blank" rel="noopener">Repository&nbsp;&rarr;</a></div>
+                  <div class="work-links">
+                    <details class="work-comments">
+                      <summary>Comments</summary>
+                      <div data-comments data-type="project" data-slug="mytasks" data-title="Comments on MyTasks"></div>
+                    </details>
+                  </div>
                 </div>
-                <div class="button-row">
-                  <a class="button" href="https://github.com/Abdullah-Mehtab/Expression-Parser-Compiler-Construction" target="_blank" rel="noopener">Repository</a>
-                </div>
-              </div>
-              <div data-comments data-type="project" data-slug="expression-parser-compiler" data-title="Comments on the expression parser"></div>
-            </article>
+              </article>
 
-            <article id="cab-taxi-management" class="work-card" data-categories="early fullstack">
-              <img src="assets/images/optimized/Project5.webp" alt="Cab and taxi management system interface" width="980" height="554" loading="lazy" decoding="async">
-              <div>
-                <div class="work-meta"><span>Tkinter</span><span>Desktop GUI</span></div>
-                <h3>Cab/Taxi Management System</h3>
-                <p>Tkinter-based management system with authentication, logging, booking flows, driver assignment, and fare calculation practice.</p>
-                <div class="tag-list">
-                  <span class="tag">Python</span><span class="tag">Tkinter</span><span class="tag">GUI</span>
+              <article id="search-engine" class="work-card" data-categories="early fullstack">
+                <a class="work-shot" href="https://github.com/Abdullah-Mehtab/Search-Engine-Using-DSA" target="_blank" rel="noopener" tabindex="-1" aria-hidden="true"><img src="assets/images/optimized/Project3.webp" alt="" width="980" height="828" loading="lazy" decoding="async"></a>
+                <div class="work-body">
+                  <h3><a href="https://github.com/Abdullah-Mehtab/Search-Engine-Using-DSA" target="_blank" rel="noopener">Small Scale Search Engine</a></h3>
+                  <div class="work-meta"><span>Python</span><span>DSA + Search</span></div>
+                  <p>Python search prototype using indexing and retrieval concepts from data structures and algorithms coursework.</p>
+                  <div class="work-action"><a class="button" href="https://github.com/Abdullah-Mehtab/Search-Engine-Using-DSA" target="_blank" rel="noopener">Repository&nbsp;&rarr;</a></div>
+                  <div class="work-links">
+                    <details class="work-comments">
+                      <summary>Comments</summary>
+                      <div data-comments data-type="project" data-slug="small-scale-search-engine" data-title="Comments on the search engine"></div>
+                    </details>
+                  </div>
                 </div>
-                <div class="button-row">
-                  <a class="button" href="https://github.com/Abdullah-Mehtab/Taxi-Management-System-Tkinter" target="_blank" rel="noopener">Repository</a>
-                </div>
-              </div>
-              <div data-comments data-type="project" data-slug="cab-taxi-management" data-title="Comments on the taxi management system"></div>
-            </article>
+              </article>
 
-            <article id="gol-gappay" class="work-card" data-categories="early fullstack">
-              <img src="assets/images/optimized/Project10.webp" alt="Gol-Gappay stall management database diagram" width="624" height="338" loading="lazy" decoding="async">
-              <div>
-                <div class="work-meta"><span>SQL</span><span>Database systems</span></div>
-                <h3>Gol-Gappay Stall Management System</h3>
-                <p>SQL-based management system for a food stall, focused on structured data, inventory, sales, and customer records.</p>
-                <div class="tag-list">
-                  <span class="tag">SQL</span><span class="tag">Database</span><span class="tag">ERD</span>
+              <article id="cab-taxi-management" class="work-card" data-categories="early fullstack">
+                <a class="work-shot" href="https://github.com/Abdullah-Mehtab/Taxi-Management-System-Tkinter" target="_blank" rel="noopener" tabindex="-1" aria-hidden="true"><img src="assets/images/optimized/Project5.webp" alt="" width="980" height="554" loading="lazy" decoding="async"></a>
+                <div class="work-body">
+                  <h3><a href="https://github.com/Abdullah-Mehtab/Taxi-Management-System-Tkinter" target="_blank" rel="noopener">Cab/Taxi Management System</a></h3>
+                  <div class="work-meta"><span>Tkinter</span><span>Desktop GUI</span></div>
+                  <p>Tkinter-based management system with authentication, logging, booking flows, driver assignment, and fare calculation practice.</p>
+                  <div class="work-action"><a class="button" href="https://github.com/Abdullah-Mehtab/Taxi-Management-System-Tkinter" target="_blank" rel="noopener">Repository&nbsp;&rarr;</a></div>
+                  <div class="work-links">
+                    <details class="work-comments">
+                      <summary>Comments</summary>
+                      <div data-comments data-type="project" data-slug="cab-taxi-management" data-title="Comments on the taxi management system"></div>
+                    </details>
+                  </div>
                 </div>
-                <div class="button-row">
-                  <a class="button" href="https://github.com/Abdullah-Mehtab/Gol-Gappay-SMS/tree/main" target="_blank" rel="noopener">Repository</a>
-                </div>
-              </div>
-              <div data-comments data-type="project" data-slug="gol-gappay-stall-management" data-title="Comments on Gol-Gappay Stall Management"></div>
-            </article>
+              </article>
 
-            <article id="facial-recognition" class="work-card" data-categories="early ml">
-              <img src="assets/images/optimized/Project8.webp" alt="Facial image recognition system" width="980" height="878" loading="lazy" decoding="async">
-              <div>
-                <div class="work-meta"><span>TensorFlow</span><span>Computer vision</span></div>
-                <h3>Facial Image Recognition</h3>
-                <p>TensorFlow-based facial recognition project for identity verification practice and image classification workflows.</p>
-                <div class="tag-list">
-                  <span class="tag">TensorFlow</span><span class="tag">Python</span><span class="tag">CV</span>
+              <article id="gol-gappay" class="work-card" data-categories="early fullstack">
+                <a class="work-shot" href="https://github.com/Abdullah-Mehtab/Gol-Gappay-SMS/tree/main" target="_blank" rel="noopener" tabindex="-1" aria-hidden="true"><img src="assets/images/optimized/Project10.webp" alt="" width="624" height="338" loading="lazy" decoding="async"></a>
+                <div class="work-body">
+                  <h3><a href="https://github.com/Abdullah-Mehtab/Gol-Gappay-SMS/tree/main" target="_blank" rel="noopener">Gol-Gappay Stall Management System</a></h3>
+                  <div class="work-meta"><span>SQL</span><span>Database systems</span></div>
+                  <p>SQL-based management system for a food stall, focused on structured data, inventory, sales, and customer records.</p>
+                  <div class="work-action"><a class="button" href="https://github.com/Abdullah-Mehtab/Gol-Gappay-SMS/tree/main" target="_blank" rel="noopener">Repository&nbsp;&rarr;</a></div>
+                  <div class="work-links">
+                    <details class="work-comments">
+                      <summary>Comments</summary>
+                      <div data-comments data-type="project" data-slug="gol-gappay-stall-management" data-title="Comments on Gol-Gappay Stall Management"></div>
+                    </details>
+                  </div>
                 </div>
-                <div class="button-row">
-                  <a class="button" href="https://github.com/Abdullah-Mehtab/Image-Recognition-Tensorflow-/tree/main" target="_blank" rel="noopener">Repository</a>
-                </div>
-              </div>
-              <div data-comments data-type="project" data-slug="facial-image-recognition" data-title="Comments on facial image recognition"></div>
-            </article>
+              </article>
 
-            <article id="space-invaders" class="work-card" data-categories="early">
-              <img src="assets/images/optimized/Project9.webp" alt="Space Invaders game interface" width="980" height="998" loading="lazy" decoding="async">
-              <div>
-                <div class="work-meta"><span>Java Swing</span><span>Game GUI</span></div>
-                <h3>Space Invaders Game GUI</h3>
-                <p>Java Swing-based Space Invaders implementation with GUI programming, game loops, and movement/collision mechanics.</p>
-                <div class="tag-list">
-                  <span class="tag">Java</span><span class="tag">Swing</span><span class="tag">Game</span>
+              <article id="facial-recognition" class="work-card" data-categories="early ml">
+                <a class="work-shot" href="https://github.com/Abdullah-Mehtab/Image-Recognition-Tensorflow-/tree/main" target="_blank" rel="noopener" tabindex="-1" aria-hidden="true"><img src="assets/images/optimized/Project8.webp" alt="" width="980" height="878" loading="lazy" decoding="async"></a>
+                <div class="work-body">
+                  <h3><a href="https://github.com/Abdullah-Mehtab/Image-Recognition-Tensorflow-/tree/main" target="_blank" rel="noopener">Facial Image Recognition</a></h3>
+                  <div class="work-meta"><span>TensorFlow</span><span>Computer vision</span></div>
+                  <p>TensorFlow-based facial recognition project for identity verification practice and image classification workflows.</p>
+                  <div class="work-action"><a class="button" href="https://github.com/Abdullah-Mehtab/Image-Recognition-Tensorflow-/tree/main" target="_blank" rel="noopener">Repository&nbsp;&rarr;</a></div>
+                  <div class="work-links">
+                    <details class="work-comments">
+                      <summary>Comments</summary>
+                      <div data-comments data-type="project" data-slug="facial-image-recognition" data-title="Comments on facial image recognition"></div>
+                    </details>
+                  </div>
                 </div>
-                <div class="button-row">
-                  <a class="button" href="https://github.com/Abdullah-Mehtab/Space-Invaders" target="_blank" rel="noopener">Repository</a>
-                </div>
-              </div>
-              <div data-comments data-type="project" data-slug="space-invaders-game" data-title="Comments on Space Invaders"></div>
-            </article>
+              </article>
 
-            <article id="line-following-robot" class="work-card" data-categories="early iot">
-              <img src="assets/images/optimized/Project11.webp" alt="Line-following mini robot" width="414" height="477" loading="lazy" decoding="async">
-              <div>
-                <div class="work-meta"><span>Robotics</span><span>Embedded systems</span></div>
-                <h3>Line-Following Mini-Robot</h3>
-                <p>Hardware robot car using sensors, motors, and control logic to follow predefined paths.</p>
-                <div class="tag-list">
-                  <span class="tag">Robotics</span><span class="tag">Sensors</span><span class="tag">Embedded</span>
+              <article id="space-invaders" class="work-card" data-categories="early">
+                <a class="work-shot" href="https://github.com/Abdullah-Mehtab/Space-Invaders" target="_blank" rel="noopener" tabindex="-1" aria-hidden="true"><img src="assets/images/optimized/Project9.webp" alt="" width="980" height="998" loading="lazy" decoding="async"></a>
+                <div class="work-body">
+                  <h3><a href="https://github.com/Abdullah-Mehtab/Space-Invaders" target="_blank" rel="noopener">Space Invaders Game GUI</a></h3>
+                  <div class="work-meta"><span>Java Swing</span><span>2022/06 - 2023/02</span></div>
+                  <p>Java Swing-based Space Invaders implementation with GUI programming, game loops, and movement/collision mechanics.</p>
+                  <div class="work-action"><a class="button" href="https://github.com/Abdullah-Mehtab/Space-Invaders" target="_blank" rel="noopener">Repository&nbsp;&rarr;</a></div>
+                  <div class="work-links">
+                    <details class="work-comments">
+                      <summary>Comments</summary>
+                      <div data-comments data-type="project" data-slug="space-invaders-game" data-title="Comments on Space Invaders"></div>
+                    </details>
+                  </div>
                 </div>
-              </div>
-              <div data-comments data-type="project" data-slug="line-following-mini-robot" data-title="Comments on the line-following robot"></div>
-            </article>
+              </article>
 
-            <article id="bluetooth-car" class="work-card" data-categories="early iot">
-              <img src="assets/images/optimized/Project12.webp" alt="Bluetooth controlled Arduino car" width="577" height="819" loading="lazy" decoding="async">
-              <div>
-                <div class="work-meta"><span>Arduino</span><span>Hardware</span></div>
-                <h3>Bluetooth Controlled Car</h3>
-                <p>Arduino-powered car controlled over Bluetooth using a smartphone, combining hardware wiring with embedded control logic.</p>
-                <div class="tag-list">
-                  <span class="tag">Arduino</span><span class="tag">Bluetooth</span><span class="tag">Embedded</span>
+              <article id="line-following-robot" class="work-card" data-categories="early iot">
+                <span class="work-shot"><img src="assets/images/optimized/Project11.webp" alt="Line-following mini robot" width="414" height="477" loading="lazy" decoding="async"></span>
+                <div class="work-body">
+                  <h3>Line-Following Mini-Robot</h3>
+                  <div class="work-meta"><span>Robotics</span><span>Embedded systems</span></div>
+                  <p>Hardware robot car using sensors, motors, and control logic to follow predefined paths.</p>
+                  <div class="work-action"><span class="button work-private">No public repository</span></div>
+                  <div class="work-links">
+                    <details class="work-comments">
+                      <summary>Comments</summary>
+                      <div data-comments data-type="project" data-slug="line-following-mini-robot" data-title="Comments on the line-following robot"></div>
+                    </details>
+                  </div>
                 </div>
-                <div class="button-row">
-                  <a class="button" href="https://github.com/Abdullah-Mehtab/Bluetooth-Controlled-Car-Arduino-/tree/main" target="_blank" rel="noopener">Repository</a>
-                </div>
-              </div>
-              <div data-comments data-type="project" data-slug="bluetooth-controlled-car" data-title="Comments on the Bluetooth controlled car"></div>
-            </article>
+              </article>
 
-            <article id="ludo-game" class="work-card" data-categories="early">
-              <img src="assets/images/optimized/Project7.webp" alt="Ludo game interface" width="980" height="745" loading="lazy" decoding="async">
-              <div>
-                <div class="work-meta"><span>Pygame</span><span>Game GUI</span></div>
-                <h3>Ludo Game GUI</h3>
-                <p>Pygame Ludo implementation with board rendering, player movement, multiplayer flow, and traditional Ludo rules.</p>
-                <div class="tag-list">
-                  <span class="tag">Python</span><span class="tag">Pygame</span><span class="tag">Game</span>
+              <article id="bluetooth-car" class="work-card" data-categories="early iot">
+                <a class="work-shot" href="https://github.com/Abdullah-Mehtab/Bluetooth-Controlled-Car-Arduino-/tree/main" target="_blank" rel="noopener" tabindex="-1" aria-hidden="true"><img src="assets/images/optimized/Project12.webp" alt="" width="577" height="819" loading="lazy" decoding="async"></a>
+                <div class="work-body">
+                  <h3><a href="https://github.com/Abdullah-Mehtab/Bluetooth-Controlled-Car-Arduino-/tree/main" target="_blank" rel="noopener">Bluetooth Controlled Car</a></h3>
+                  <div class="work-meta"><span>Arduino</span><span>Hardware</span></div>
+                  <p>Arduino-powered car controlled over Bluetooth using a smartphone, combining hardware wiring with embedded control logic.</p>
+                  <div class="work-action"><a class="button" href="https://github.com/Abdullah-Mehtab/Bluetooth-Controlled-Car-Arduino-/tree/main" target="_blank" rel="noopener">Repository&nbsp;&rarr;</a></div>
+                  <div class="work-links">
+                    <details class="work-comments">
+                      <summary>Comments</summary>
+                      <div data-comments data-type="project" data-slug="bluetooth-controlled-car" data-title="Comments on the Bluetooth controlled car"></div>
+                    </details>
+                  </div>
                 </div>
-                <div class="button-row">
-                  <a class="button" href="https://github.com/Abdullah-Mehtab/Ludo-in-Python" target="_blank" rel="noopener">Repository</a>
-                </div>
-              </div>
-              <div data-comments data-type="project" data-slug="ludo-game-gui" data-title="Comments on the Ludo game"></div>
-            </article>
+              </article>
 
-            <article id="game-2048" class="work-card" data-categories="early">
-              <img src="assets/images/optimized/Project13.webp" alt="2048 game interface" width="760" height="770" loading="lazy" decoding="async">
-              <div>
-                <div class="work-meta"><span>C++</span><span>Game logic</span></div>
-                <h3>2048 Game</h3>
-                <p>C++ implementation of the classic 2048 puzzle game, focused on tile movement, merge logic, and efficient state updates.</p>
-                <div class="tag-list">
-                  <span class="tag">C++</span><span class="tag">Game</span><span class="tag">Algorithms</span>
+              <article id="ludo-game" class="work-card" data-categories="early">
+                <a class="work-shot" href="https://github.com/Abdullah-Mehtab/Ludo-in-Python" target="_blank" rel="noopener" tabindex="-1" aria-hidden="true"><img src="assets/images/optimized/Project7.webp" alt="" width="980" height="745" loading="lazy" decoding="async"></a>
+                <div class="work-body">
+                  <h3><a href="https://github.com/Abdullah-Mehtab/Ludo-in-Python" target="_blank" rel="noopener">Ludo Game GUI</a></h3>
+                  <div class="work-meta"><span>Pygame</span><span>Game GUI</span></div>
+                  <p>Pygame Ludo implementation with board rendering, player movement, multiplayer flow, and traditional Ludo rules.</p>
+                  <div class="work-action"><a class="button" href="https://github.com/Abdullah-Mehtab/Ludo-in-Python" target="_blank" rel="noopener">Repository&nbsp;&rarr;</a></div>
+                  <div class="work-links">
+                    <details class="work-comments">
+                      <summary>Comments</summary>
+                      <div data-comments data-type="project" data-slug="ludo-game-gui" data-title="Comments on the Ludo game"></div>
+                    </details>
+                  </div>
                 </div>
-                <div class="button-row">
-                  <a class="button" href="https://github.com/Abdullah-Mehtab/2048-Game/tree/main" target="_blank" rel="noopener">Repository</a>
+              </article>
+
+              <article id="game-2048" class="work-card" data-categories="early">
+                <a class="work-shot" href="https://github.com/Abdullah-Mehtab/2048-Game/tree/main" target="_blank" rel="noopener" tabindex="-1" aria-hidden="true"><img src="assets/images/optimized/Project13.webp" alt="" width="760" height="770" loading="lazy" decoding="async"></a>
+                <div class="work-body">
+                  <h3><a href="https://github.com/Abdullah-Mehtab/2048-Game/tree/main" target="_blank" rel="noopener">2048 Game</a></h3>
+                  <div class="work-meta"><span>C++</span><span>Game logic</span></div>
+                  <p>C++ implementation of the classic 2048 puzzle game, focused on tile movement, merge logic, and efficient state updates.</p>
+                  <div class="work-action"><a class="button" href="https://github.com/Abdullah-Mehtab/2048-Game/tree/main" target="_blank" rel="noopener">Repository&nbsp;&rarr;</a></div>
+                  <div class="work-links">
+                    <details class="work-comments">
+                      <summary>Comments</summary>
+                      <div data-comments data-type="project" data-slug="2048-game" data-title="Comments on the 2048 game"></div>
+                    </details>
+                  </div>
                 </div>
-              </div>
-              <div data-comments data-type="project" data-slug="2048-game" data-title="Comments on the 2048 game"></div>
-            </article>
-          </div>
+              </article>
+            </div>
+          </section>
         </div>
       </section>
 

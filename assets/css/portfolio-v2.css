@@ -1772,39 +1772,218 @@ body[data-motion="off"] .cursor-effects {
   margin-bottom: 10px;
 }
 
-.featured-project-teaser {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(240px, auto);
-  gap: 24px;
-  align-items: center;
-  margin-bottom: 24px;
-  padding: 26px;
-  border: 1px solid var(--line);
-  border-radius: 8px;
-  background:
-    radial-gradient(circle at 8% 18%, var(--glow-a), transparent 18rem),
-    linear-gradient(135deg, var(--panel-glow), transparent 52%),
-    var(--panel-bg-strong);
-  box-shadow: var(--shadow);
+/* The projects page in two groups, Featured and More projects. The filters reach both, and a
+   group with nothing left to show goes, heading and all, instead of leaving a title over a gap. */
+.project-group + .project-group {
+  margin-top: 56px;
 }
 
-.featured-project-teaser h2 {
-  margin: 8px 0 10px;
+.project-group-title {
+  margin: 0 0 18px;
   color: var(--text);
-  font-size: clamp(1.8rem, 4vw, 3.2rem);
-  line-height: 1;
+  font-size: clamp(1.4rem, 2.6vw, 2rem);
 }
 
-.featured-project-teaser p {
+.project-group:not(:has(.work-card:not(.is-filtered-out))) {
+  display: none;
+}
+
+/* Every project is the same card: picture, name, kind and dates, one sentence, one main button in
+   the same place, then small links. Featured cards are the same card, larger. Scoped to this page's
+   grids, so the home page's cards keep their own look. */
+.project-cards {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 22px;
+}
+
+/* Two across, so the drawn pictures show near the 620px they were drawn at and their words stay
+   readable; at three across they shrank to about 380px. */
+.project-cards.featured-projects {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 24px;
+}
+
+.project-cards .work-card {
+  gap: 0;
+  padding: 0;
+  overflow: hidden;
+  border-radius: 6px;
+  background: var(--panel-bg);
+  contain-intrinsic-size: 460px;
+}
+
+.project-cards .work-card:hover {
+  transform: none;
+  border-color: rgba(88, 215, 255, 0.4);
+}
+
+.work-shot {
+  display: block;
+  overflow: hidden;
+  border-bottom: 1px solid var(--line);
+  background: var(--bg-soft);
+}
+
+/* The img's height attribute would otherwise set its height and win over the 16:9 shape. */
+.work-shot > img {
+  display: block;
+  width: 100%;
+  height: auto;
+  aspect-ratio: 16 / 9;
+  object-fit: cover;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .work-shot > img {
+    transition: transform 320ms ease;
+  }
+
+  .project-cards .work-card:hover .work-shot > img {
+    transform: scale(1.03);
+  }
+}
+
+.work-body {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  padding: 18px 20px 20px;
+}
+
+.project-cards h3 {
   margin: 0;
-  color: var(--muted);
+  font-size: 1.05rem;
+  line-height: 1.25;
 }
 
-.featured-project-actions {
+.project-cards.featured-projects h3 {
+  font-size: 1.3rem;
+}
+
+.project-cards h3 a {
+  color: inherit;
+  text-decoration: none;
+}
+
+.project-cards h3 a:hover,
+.project-cards h3 a:focus-visible {
+  text-decoration: underline;
+  text-underline-offset: 4px;
+}
+
+.project-cards .work-meta {
+  gap: 0;
+  margin-top: 6px;
+  font-size: 0.85rem;
+}
+
+.project-cards .work-meta span + span::before {
+  content: "\00b7";
+  margin: 0 8px;
+}
+
+.project-cards .work-card p {
+  margin: 10px 0 0;
+  font-size: 0.92rem;
+}
+
+/* The one main button, always in the same place: the bottom of the words. */
+.work-action {
+  margin-top: auto;
+  padding-top: 18px;
+}
+
+.work-action .button {
+  min-height: 40px;
+  font-size: 0.9rem;
+}
+
+/* Sits where a button would, says there is nothing to open, and does not pretend to be a link. */
+.button.work-private {
+  opacity: 0.55;
+  cursor: default;
+}
+
+.button.work-private:hover {
+  transform: none;
+  box-shadow: none;
+}
+
+.work-links {
   display: flex;
   flex-wrap: wrap;
-  justify-content: flex-end;
-  gap: 10px;
+  align-items: center;
+  gap: 6px 12px;
+  margin-top: 12px;
+  font-size: 0.86rem;
+}
+
+.work-links .work-link,
+.work-links .video-play,
+.work-comments summary {
+  color: var(--muted);
+  font-weight: 750;
+  text-decoration: underline;
+  text-decoration-color: var(--line);
+  text-underline-offset: 4px;
+}
+
+.work-links .work-link:hover,
+.work-links .work-link:focus-visible,
+.work-links .video-play:hover,
+.work-links .video-play:focus-visible,
+.work-comments summary:hover,
+.work-comments summary:focus-visible {
+  color: var(--text);
+  text-decoration-color: currentColor;
+}
+
+/* The demo video's button, worn as a link here. */
+.work-links .video-play {
+  min-height: 0;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: none;
+  box-shadow: none;
+  font-size: inherit;
+}
+
+.work-links .video-play:hover,
+.work-links .video-play:focus-visible {
+  transform: none;
+  background: none;
+}
+
+/* Each project's comments sit behind a link-sized toggle at the end of its links. Opened, the
+   thread takes the whole width under them. It only loads once opened: comments.js waits until
+   it is on screen, and inside a closed toggle it never is. */
+.work-comments summary {
+  cursor: pointer;
+  list-style: none;
+}
+
+.work-comments summary::-webkit-details-marker {
+  display: none;
+}
+
+.work-comments[open] {
+  flex-basis: 100%;
+}
+
+@media (max-width: 920px) {
+  .project-cards,
+  .project-cards.featured-projects {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 620px) {
+  .project-cards,
+  .project-cards.featured-projects {
+    grid-template-columns: 1fr;
+  }
 }
 
 .filter-button {
@@ -1932,7 +2111,9 @@ body[data-motion="off"] .cursor-effects {
   padding: 12px 18px;
   border: 1px solid rgba(244, 239, 231, 0.2);
   border-radius: 999px;
-  color: var(--text);
+  /* Light on every theme: the pill and the panel behind it are dark on every theme too, and the
+     theme's text colour turns dark on the light themes, which made the label unreadable. */
+  color: #f4efe7;
   background: rgba(5, 8, 13, 0.64);
   box-shadow: 0 18px 42px rgba(0, 0, 0, 0.34);
   cursor: pointer;
@@ -2085,27 +2266,6 @@ html:has(.video-dialog[open]) {
   line-height: 1.2;
 }
 
-.work-placeholder.security::before {
-  background:
-    linear-gradient(120deg, rgba(255, 97, 136, 0.22), transparent 42%),
-    radial-gradient(circle at 82% 20%, rgba(255, 209, 102, 0.2), transparent 28%),
-    repeating-linear-gradient(135deg, rgba(255, 255, 255, 0.05) 0 1px, transparent 1px 13px);
-}
-
-.work-placeholder.ml::before {
-  background:
-    linear-gradient(120deg, rgba(88, 215, 255, 0.2), transparent 42%),
-    radial-gradient(circle at 82% 20%, rgba(79, 255, 176, 0.22), transparent 28%),
-    repeating-linear-gradient(135deg, rgba(255, 255, 255, 0.05) 0 1px, transparent 1px 13px);
-}
-
-.work-placeholder.fullstack::before {
-  background:
-    linear-gradient(120deg, rgba(255, 209, 102, 0.22), transparent 42%),
-    radial-gradient(circle at 82% 20%, rgba(88, 215, 255, 0.22), transparent 28%),
-    repeating-linear-gradient(135deg, rgba(255, 255, 255, 0.05) 0 1px, transparent 1px 13px);
-}
-
 .work-meta {
   display: flex;
   flex-wrap: wrap;
@@ -2118,8 +2278,14 @@ html:has(.video-dialog[open]) {
   padding: 84px 0 44px;
 }
 
+/* Tight above the projects, so the featured row's first names are on a laptop's first screen. */
 .project-page-hero {
+  padding-bottom: 8px;
   text-align: center;
+}
+
+.project-section {
+  padding-top: 24px;
 }
 
 .project-page-hero h1 {
@@ -2500,10 +2666,6 @@ html:has(.video-dialog[open]) {
   background: transparent;
   padding: 0;
   margin-top: 8px;
-}
-
-.work-card > [data-comments] {
-  margin-top: auto;
 }
 
 .comment-shell h3 {
@@ -3379,7 +3541,6 @@ body[data-cursor="reticle"] .cursor-reticle {
   .proof-lanes,
   .skills-grid,
   .services-grid,
-  .featured-project-teaser,
   .case-metrics,
   .case-grid,
   .case-flow,
@@ -3410,10 +3571,6 @@ body[data-cursor="reticle"] .cursor-reticle {
   }
 
   .timeline-controls {
-    justify-content: flex-start;
-  }
-
-  .featured-project-actions {
     justify-content: flex-start;
   }
 }

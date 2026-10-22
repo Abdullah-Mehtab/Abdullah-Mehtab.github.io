@@ -348,7 +348,7 @@
   }
 
   function setupMediaFallbacks() {
-    document.querySelectorAll(".work-card > img").forEach((image) => {
+    document.querySelectorAll(".work-card > img, .work-shot > img").forEach((image) => {
       image.addEventListener("error", () => {
         const placeholder = document.createElement("div");
         placeholder.className = "work-placeholder";
