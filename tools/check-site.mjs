@@ -20,6 +20,7 @@ const protectedRoutes = [
   { route: '/todo.html', file: 'todo.html' },
   { route: '/cyber-sentinel.html', file: 'cyber-sentinel.html' },
   { route: '/chapters/cyber-sentinel.html', file: 'chapters/cyber-sentinel.html' },
+  { route: '/chapters/offensive-security-home-lab.html', file: 'chapters/offensive-security-home-lab.html' },
   { route: '/play/', file: 'play/index.html' },
   { route: '/classic/', file: 'classic/index.html' },
   { route: '/Abdullah-Mehtab-Master-CV.pdf', file: 'Abdullah-Mehtab-Master-CV.pdf' },
@@ -387,6 +388,44 @@ async function checkPresentDates() {
   const [home, cv] = roleFiles.map((file) => roleRanges.get(file));
   if (home && cv && home.text !== cv.text) {
     failures.push(`The current role's dates disagree: index.html:${home.line} says "${home.text}" and cv.html:${cv.line} says "${cv.text}". Change both together.`);
+  }
+}
+
+// A finished film page that nothing links to is not on the site. Each one needs an "Explore <name>"
+// button on the projects page, a line in the sitemap and a protected route here, and a page can be
+// built and pass every film check with none of the three. The projects page's featured row is
+// checked too: each project there needs its picture, its dates and a way in (or a word that its
+// repository is private), or the first screen a reader sees says less than the cards under it.
+async function checkFilmPagesListed() {
+  const projects = await readFile(resolve(repoRoot, 'projects.html'), 'utf8');
+  const sitemap = await readFile(resolve(repoRoot, 'sitemap.xml'), 'utf8');
+  const routes = await filmRoutes();
+  if (routes.length === 0) {
+    failures.push('Found no film page at all, so whether each one is linked was not checked.');
+    return;
+  }
+  const anchors = [...projects.matchAll(/<a\b[^>]*\bhref="([^"]+)"[^>]*>([^<]*)<\/a>/g)];
+  for (const route of routes) {
+    const file = route.slice(1);
+    const explored = anchors.some(([, href, text]) => href === file && /^Explore\s+\S/.test(text.trim()));
+    if (!explored) failures.push(`${route} is a film page with no "Explore <name>" button on projects.html, so no reader can reach it.`);
+    if (!sitemap.includes(`<loc>https://${sameSiteHost}${route}</loc>`)) failures.push(`${route} is missing from sitemap.xml.`);
+    if (!protectedRoutes.some((item) => item.route === route)) failures.push(`${route} is not in protectedRoutes in tools/check-site.mjs.`);
+  }
+
+  const featured = projects.match(/<div class="[^"]*\bfeatured-projects\b[^"]*">([\s\S]*?)<\/section>/);
+  if (!featured) {
+    failures.push('projects.html has no featured projects block (div.featured-projects).');
+    return;
+  }
+  const cards = featured[1].split(/<article\b/).slice(1);
+  if (cards.length === 0) failures.push('projects.html has a featured row with no projects in it.');
+  for (const card of cards) {
+    const id = (card.match(/\bid="([^"]+)"/) || [null, '(no id)'])[1];
+    if (!/<img\b[^>]*\bsrc="[^"]+"|\bdata-video-id="[^"]+"/.test(card)) failures.push(`Featured project ${id} on projects.html has no picture or video.`);
+    const meta = card.match(/<div class="work-meta">([\s\S]*?)<\/div>/);
+    if (!meta || !/\b(?:19|20)\d\d\/\d\d\b/.test(meta[1])) failures.push(`Featured project ${id} on projects.html shows no dates.`);
+    if (!/<a class="(?:button\b[^"]*|work-link)" href="[^"]+"|class="[^"]*\bwork-private\b[^"]*"/.test(card)) failures.push(`Featured project ${id} on projects.html has no link, and does not say its repository is private.`);
   }
 }
 
@@ -5185,6 +5224,7 @@ async function main() {
   await checkDashes();
   await checkNoChapterWordInCopy();
   await checkPresentDates();
+  await checkFilmPagesListed();
   await checkPrivateFolders();
   await checkVisitorProofHost();
   await checkFilmTokenScope();
