@@ -6,6 +6,9 @@
     return;
   }
 
+  // Where this file was loaded from, so theme-life.js is found from root pages and chapters alike.
+  const scriptSource = document.currentScript ? document.currentScript.src : window.location.href;
+
   const themeOptions = [
     ["professional", "Professional (Dark)"],
     ["forest", "Forest"],
@@ -30,12 +33,13 @@
     ["orbit", "Orbit"],
     ["snow", "Snowfall"],
     ["pulse", "Pulse Rings"],
+    ["pencil", "Pencil"],
     ["theme", "Match theme"],
     ["off", "Off"]
   ];
 
-  // The trail "Match theme" uses for each theme. Paper, Forest and Cyber get trails of their own
-  // (pencil, fireflies, a terminal cursor) when those themes are built; until then, the closest one.
+  // The trail "Match theme" uses for each theme. Forest and Cyber get trails of their own
+  // (fireflies, a terminal cursor) when those themes are built; until then, the closest one.
   const trailForTheme = {
     professional: "constellation",
     forest: "sparks",
@@ -43,8 +47,22 @@
     space: "constellation",
     ember: "embers",
     light: "spotlight",
-    paper: "ink"
+    paper: "pencil"
   };
+
+  // Themes with a life beyond their colours (things that draw themselves, answer the visitor).
+  // That code is in theme-life.js, fetched the first time one of these themes is picked, and
+  // never on a film page, where the film is what moves.
+  const themesWithLife = new Set(["paper"]);
+  let themeLifeRequested = false;
+
+  function loadThemeLife() {
+    if (themeLifeRequested || document.body.classList.contains("film")) return;
+    themeLifeRequested = true;
+    const script = document.createElement("script");
+    script.src = new URL("theme-life.js", scriptSource).href;
+    document.body.appendChild(script);
+  }
 
   const motionOptions = [
     ["auto", "Auto"],
@@ -198,6 +216,7 @@
       });
       writeStoredValue(storageKeys.theme, value);
       if (document.body.dataset.cursorChoice === "theme") applyCursor("theme");
+      if (themesWithLife.has(value)) loadThemeLife();
     }
 
     // The menu keeps what was picked; data-cursor holds the trail actually drawn, which for
@@ -641,6 +660,54 @@
       window.setTimeout(() => point.remove(), lifespanByMode[mode] || 850);
     }
 
+    // Pencil: one continuous graphite line behind the cursor, fading out within a second. A line
+    // cannot be made of separate dots, so it is drawn on a canvas made the first time it is used.
+    // It takes the theme's edge colour: graphite on Paper, a pale line on the dark themes.
+    const pencilLife = 800;
+    const pencilPoints = [];
+    let pencil = null;
+    let pencilFrame = 0;
+
+    function sizePencil() {
+      const ratio = window.devicePixelRatio || 1;
+      pencil.canvas.width = window.innerWidth * ratio;
+      pencil.canvas.height = window.innerHeight * ratio;
+      pencil.context.setTransform(ratio, 0, 0, ratio, 0, 0);
+    }
+
+    function drawPencil() {
+      const now = performance.now();
+      while (pencilPoints.length && now - pencilPoints[0].t > pencilLife) pencilPoints.shift();
+      const context = pencil.context;
+      context.clearRect(0, 0, window.innerWidth, window.innerHeight);
+      context.lineCap = "round";
+      for (let i = 1; i < pencilPoints.length; i += 1) {
+        const strength = 1 - (now - pencilPoints[i].t) / pencilLife;
+        context.strokeStyle = `rgba(${pencil.rgb}, ${(0.55 * strength).toFixed(3)})`;
+        context.lineWidth = 1.2 + strength * 0.8;
+        context.beginPath();
+        context.moveTo(pencilPoints[i - 1].x, pencilPoints[i - 1].y);
+        context.lineTo(pencilPoints[i].x, pencilPoints[i].y);
+        context.stroke();
+      }
+      pencilFrame = pencilPoints.length ? requestAnimationFrame(drawPencil) : 0;
+    }
+
+    function addPencilPoint(x, y) {
+      if (!effects) return;
+      if (!pencil) {
+        const canvas = document.createElement("canvas");
+        canvas.className = "cursor-pencil";
+        effects.appendChild(canvas);
+        pencil = { canvas, context: canvas.getContext("2d"), rgb: "" };
+        sizePencil();
+        window.addEventListener("resize", sizePencil);
+      }
+      if (!pencilFrame) pencil.rgb = getComputedStyle(document.body).getPropertyValue("--edge-rgb").trim() || "70, 66, 62";
+      pencilPoints.push({ x: x + (Math.random() - 0.5) * 0.8, y: y + (Math.random() - 0.5) * 0.8, t: performance.now() });
+      if (!pencilFrame) pencilFrame = requestAnimationFrame(drawPencil);
+    }
+
     window.addEventListener("pointermove", (event) => {
       pointerX = event.clientX;
       pointerY = event.clientY;
@@ -650,6 +717,10 @@
       const mode = document.body.dataset.cursor || "spotlight";
       const motion = document.body.dataset.motion || "full";
       if (motion === "off") return;
+      if (mode === "pencil") {
+        addPencilPoint(pointerX, pointerY);
+        return;
+      }
 
       const delayMultiplier = motion === "calm" ? 2.6 : 1;
       const delay = (delayByMode[mode] || 34) * delayMultiplier;

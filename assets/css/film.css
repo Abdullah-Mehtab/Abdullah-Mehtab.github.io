@@ -174,6 +174,12 @@ body.film {
      these fonts on body[data-theme]; this rule has the same weight and loads later, so it wins. */
   --font-body: Inter, "Open Sans", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
   --font-display: Inter, "Open Sans", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  /* The film is the page here, so a theme that draws a page of its own (Paper's lined sheet,
+     its margin, its handwriting without bold) does not draw it on a film page. initial sends
+     each back to the fallback every other theme uses. */
+  --page-bg: initial;
+  --page-gutter: initial;
+  --font-synthesis: initial;
 
   /*
     The stage, per scene. These four values are what make an act a different place rather

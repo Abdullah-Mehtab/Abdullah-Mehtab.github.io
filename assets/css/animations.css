@@ -333,6 +333,10 @@ body {
   changes which truck drives past rather than which filter is over it. --truck-art lives in
   each theme's own token block in portfolio-v2.css, beside all its other colours; a theme
   without one falls back to the professional truck rather than to a grey silhouette.
+
+  A theme can go further and bring a whole vehicle of its own: --wheels-art and --wheels-filter
+  swap the wheels, and --wind-colour the wind lines behind it. Every fallback below is the
+  painted truck's, so a theme that sets none of them gets exactly that truck.
 */
 .truck {
   background: var(--truck-art, url(../images/truck-professional.svg)) no-repeat;
@@ -344,15 +348,15 @@ body {
   position: absolute;
   width: 25px;
   box-shadow:
-    -30px 28px 0 1.5px #fff,
-     -35px 18px 0 1.5px #fff;
+    -30px 28px 0 1.5px var(--wind-colour, #fff),
+     -35px 18px 0 1.5px var(--wind-colour, #fff);
 }
-/* Rubber is rubber. The wheels stay dark and take no hue from the theme. */
+/* Rubber is rubber. The painted trucks' wheels stay dark and take no hue from the theme. */
 .wheels {
-  background: url(../images/wheels.svg) no-repeat;
+  background: var(--wheels-art, url(../images/wheels.svg)) no-repeat;
   height: 15px;
   margin-bottom: 0;
-  filter: brightness(0.42) saturate(0.2);
+  filter: var(--wheels-filter, brightness(0.42) saturate(0.2));
 }
 
 .tree  { animation: tree 3s 0.000s linear infinite; }

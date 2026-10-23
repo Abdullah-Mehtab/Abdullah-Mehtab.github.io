@@ -1,3 +1,15 @@
+/* The Paper theme's handwriting. A browser only downloads a font face when text on the page
+   uses it, so no other theme pays for this file. One weight exists: Paper turns off synthesis
+   rather than let the browser smear a fake bold. Latin only, so an arrow falls back. */
+@font-face {
+  font-family: "Gloria Hallelujah";
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url("../fonts/gloria-hallelujah-400-latin.woff2") format("woff2");
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+
 :root {
   --bg: #07111c;
   --bg-soft: #0c1826;
@@ -239,40 +251,82 @@ body[data-theme="ember"] {
 }
 
 body[data-theme="paper"] {
-  --edge-rgb: 23, 32, 42;
-  --hairline-rgb: 23, 32, 42;
-  --veil-rgb: 23, 32, 42;
-  --sheet-bg: linear-gradient(180deg, #fbfcfc, #f3f6f7);
-  --sheet-head-bg: #fbfcfc;
-  --sheet-shadow: 0 30px 80px rgba(40, 30, 20, 0.16);
-  --cta-base: #fbfcfc;
+  /* Paper: an old, yellowed sheet of lined paper written on in blue ballpoint, with red pen for
+     the things a hand would mark, and cards that are index cards laid on the sheet. Its life
+     (writing that draws itself, scribbles, the crumple) is in assets/js/theme-life.js. */
+  --text-rule: 32px;
+  --page-gutter: 200px;
+  /* The red margin line, left of the text column, and the punched holes left of that. */
+  --margin-x: max(56px, calc(50vw - min(var(--max), 100vw - var(--page-gutter)) / 2 - 34px));
+  --page-bg:
+    url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='260' height='260'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 .45  0 0 0 0 .38  0 0 0 0 .25  0 0 0 .22 0'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>") 0 0 / 260px 260px,
+    linear-gradient(#8aa3c2, #8aa3c2) 0 calc(var(--text-rule) * 3 - 2px) / 100% 2px no-repeat,
+    linear-gradient(#f1e5c2, #f1e5c2) 0 0 / 100% calc(var(--text-rule) * 3) no-repeat,
+    linear-gradient(90deg, transparent calc(var(--margin-x) - 1px), rgba(205, 95, 90, 0.72) calc(var(--margin-x) - 1px) calc(var(--margin-x) + 1px), transparent calc(var(--margin-x) + 1px)) 0 0 / 100% 64px repeat-y,
+    radial-gradient(circle at 46% 44%, #2a2521 0 5px, #3f3a35 9px, rgba(60, 45, 20, 0.5) 10.2px, transparent 12px) calc(var(--margin-x) / 2 - 14px) 140px / 28px 320px repeat-y,
+    radial-gradient(circle at 83% 640px, rgba(150, 105, 40, 0.1) 0 26px, transparent 60px) 0 0 / 100% 2200px repeat-y,
+    radial-gradient(circle at 23% 1180px, rgba(150, 105, 40, 0.08) 0 18px, transparent 44px) 0 0 / 100% 2200px repeat-y,
+    radial-gradient(circle at 64% 1700px, rgba(150, 105, 40, 0.07) 0 34px, transparent 70px) 0 0 / 100% 2200px repeat-y,
+    linear-gradient(to bottom, transparent calc(var(--text-rule) - 1px), rgba(120, 150, 190, 0.55) calc(var(--text-rule) - 1px)) 0 0 / 100% var(--text-rule) repeat-y,
+    #f1e5c2;
+  --font-body: "Gloria Hallelujah", "Comic Sans MS", cursive;
+  --font-display: "Gloria Hallelujah", "Comic Sans MS", cursive;
+  --font-synthesis: none;
+  --font-controls: "Gloria Hallelujah", "Comic Sans MS", cursive;
+  --font-controls-size: 1rem;
+  /* Boxes drawn by hand: no two corners the same. */
+  --radius-sm: 255px 15px 225px 15px / 15px 225px 15px 255px;
+  --radius-md: 255px 15px 225px 15px / 15px 225px 15px 255px;
+  --radius-pill: 255px 25px 225px 25px / 25px 225px 25px 255px;
+  --card-turn-a: -0.6deg;
+  --card-turn-b: 0.4deg;
+  --card-turn-c: 0.8deg;
+  --shadow: 0 2px 4px rgba(60, 45, 20, 0.16), 0 12px 26px rgba(60, 45, 20, 0.14);
+  --edge-rgb: 34, 51, 111;
+  --hairline-rgb: 34, 51, 111;
+  --veil-rgb: 34, 51, 111;
+  --glow-green-rgb: 168, 50, 42;
+  --glow-cyan-rgb: 34, 51, 111;
+  --glow-sky-rgb: 34, 51, 111;
+  --glow-gold-rgb: 168, 50, 42;
+  --glow-mint-rgb: 34, 51, 111;
+  --glow-amber-rgb: 140, 85, 18;
+  --sheet-bg: #fbf6e3;
+  --sheet-head-bg: #fbf6e3;
+  --sheet-shadow: 0 2px 4px rgba(60, 45, 20, 0.16), 0 18px 40px rgba(60, 45, 20, 0.16);
+  --cta-base: #fbf6e3;
   --truck-art: url("../images/truck-paper.svg");
-  --bg: #eef1f2;
-  --bg-mid: #e0e7eb;
-  --bg-deep: #d1d9de;
-  --bg-soft: #fbfcfc;
-  --bg-panel: #f7fafb;
-  --text: #17202a;
-  --muted: #4a5560;
-  --line: rgba(23, 32, 42, 0.16);
-  --cyan: #0d6386;
-  --green: #1b6347;
+  --wheels-art: url("../images/wheels-paper.svg");
+  --wheels-filter: none;
+  --wind-colour: rgba(70, 66, 62, 0.7);
+  --bg: #f1e5c2;
+  --bg-mid: #f1e5c2;
+  --bg-deep: #e6d6ab;
+  --bg-soft: #f7efd6;
+  --bg-panel: #fbf6e3;
+  --text: #22336f;
+  --muted: #3d4b80;
+  --line: rgba(34, 51, 111, 0.5);
+  --cyan: #1d4f91;
+  --green: #a8322a;
   --amber: #8c5512;
   --rose: #9d3b50;
   --violet: #4f5aa8;
-  --glow-a: rgba(19, 124, 164, 0.1);
-  --glow-b: rgba(36, 124, 88, 0.07);
-  --cursor-a: rgba(19, 124, 164, 0.18);
-  --cursor-b: rgba(168, 103, 25, 0.1);
-  --grid-a: rgba(23, 32, 42, 0.055);
-  --grid-b: rgba(19, 124, 164, 0.032);
-  --panel-bg: rgba(251, 252, 252, 0.84);
-  --panel-bg-strong: rgba(251, 252, 252, 0.96);
-  --panel-glow: rgba(19, 124, 164, 0.06);
-  --nav-top-bg: linear-gradient(90deg, #17202a, #137ca4);
-  --nav-top-text: #fbfcfc;
-  --nav-scroll-bg: rgba(251, 252, 252, 0.8);
-  --nav-link-top: rgba(251, 252, 252, 0.88);
+  --glow-a: transparent;
+  --glow-b: transparent;
+  --cursor-a: transparent;
+  --cursor-b: transparent;
+  --grid-a: transparent;
+  --grid-b: transparent;
+  --panel-bg: #fbf6e3;
+  --panel-bg-strong: #fffaea;
+  --panel-glow: transparent;
+  --nav-top-bg: transparent;
+  --nav-top-edge: transparent;
+  --nav-top-shadow: none;
+  --nav-top-text: #22336f;
+  --nav-scroll-bg: rgba(241, 229, 194, 0.95);
+  --nav-link-top: #22336f;
 }
 
 * {
@@ -296,12 +350,15 @@ body.portfolio-v2 {
   --primary-color: var(--cyan);
   --text-on-primary: var(--text);
   margin: 0;
-  background:
+  /* --page-bg lets a theme draw the page itself (Paper's lined sheet). The fallback is the
+     glow and gradient every other theme uses. */
+  background: var(--page-bg,
     radial-gradient(circle at 12% 8%, var(--glow-a), transparent 28rem),
     radial-gradient(circle at 86% 18%, var(--glow-b), transparent 30rem),
-    linear-gradient(180deg, var(--bg) 0%, var(--bg-mid) 46%, var(--bg-deep) 100%);
+    linear-gradient(180deg, var(--bg) 0%, var(--bg-mid) 46%, var(--bg-deep) 100%));
   color: var(--text);
   font-family: var(--font-body);
+  font-synthesis: var(--font-synthesis, weight style small-caps);
   line-height: 1.6;
 }
 
@@ -449,20 +506,199 @@ body[data-theme="ember"] .layer-b {
   animation: emberRise 18s linear infinite;
 }
 
+/* Paper: edges gone brown with age, a faint crinkle of light that crosses the sheet now and
+   then, and the creases that show while the sheet is crumpled (theme-life.js adds is-crunching). */
 body[data-theme="paper"] .layer-a {
-  background:
-    radial-gradient(circle at 18% 20%, rgba(19, 124, 164, 0.13), transparent 18rem),
-    radial-gradient(circle at 80% 28%, rgba(36, 124, 88, 0.09), transparent 20rem);
-  animation: paperFloat 18s ease-in-out infinite alternate;
+  inset: 0;
+  opacity: 1;
+  background: radial-gradient(ellipse at 50% 45%, transparent 55%, rgba(140, 95, 30, 0.2) 100%);
+  animation: none;
 }
 
 body[data-theme="paper"] .layer-b {
-  background:
-    linear-gradient(rgba(23, 32, 42, 0.045) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(19, 124, 164, 0.04) 1px, transparent 1px),
-    radial-gradient(circle at 72% 18%, rgba(36, 124, 88, 0.08), transparent 16rem);
-  background-size: 32px 32px, 32px 32px, auto;
-  animation: blueprintPan 52s linear infinite;
+  inset: -20%;
+  opacity: 1;
+  mix-blend-mode: soft-light;
+  background: linear-gradient(105deg, transparent 42%, rgba(255, 250, 230, 0.55) 48%, rgba(120, 90, 40, 0.18) 52%, transparent 58%);
+  transform: translateX(-70%);
+  animation: paperSheen 16s ease-in-out 3s infinite;
+}
+
+body[data-theme="paper"] .layer-c {
+  inset: 0;
+  height: auto;
+  opacity: 0;
+  filter: none;
+  mix-blend-mode: multiply;
+  background: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='900' height='900'><filter id='c'><feTurbulence type='turbulence' baseFrequency='.008' numOctaves='5' seed='7'/><feDiffuseLighting lighting-color='%23f5ecd2' surfaceScale='9'><feDistantLight azimuth='225' elevation='38'/></feDiffuseLighting></filter><rect width='100%' height='100%' filter='url(%23c)'/></svg>") center / cover;
+  animation: none;
+}
+
+body[data-theme="paper"].is-crunching .layer-c {
+  animation: paperCreases 1400ms ease-out;
+}
+
+body[data-theme="paper"].is-crunching main,
+body[data-theme="paper"].is-crunching .site-footer {
+  transform-origin: 50% 30vh;
+  animation: paperCrunch 900ms cubic-bezier(0.3, 0.7, 0.2, 1);
+}
+
+/* A theme may turn its cards a little, as if laid down by hand. No turn unless it says so. */
+.kinetic-card:nth-child(3n + 1),
+.proof-lane:nth-child(3n + 1) {
+  rotate: var(--card-turn-a, none);
+}
+
+.kinetic-card:nth-child(3n + 2),
+.proof-lane:nth-child(3n + 2) {
+  rotate: var(--card-turn-b, none);
+}
+
+.kinetic-card:nth-child(3n),
+.proof-lane:nth-child(3n) {
+  rotate: var(--card-turn-c, none);
+}
+
+/* Paper's life. theme-life.js adds these elements and classes while Paper is the theme and
+   removes them when it is not. theme-life-still is on body when Motion is not Full: everything
+   is shown already drawn and nothing animates. */
+.paper-word {
+  display: inline-block;
+  clip-path: inset(-30% 100% -30% -4%);
+}
+
+.is-written .paper-word {
+  clip-path: inset(-30% -6% -30% -4%);
+  transition: clip-path var(--write-time) linear var(--write-delay);
+}
+
+/* A highlighter swept across each word of a section heading once it is written. The padding
+   and the matching negative margin let neighbouring words' strokes meet across the space. */
+.paper-marked .paper-word {
+  margin: 0 -0.14em;
+  padding: 0 0.14em;
+  background: linear-gradient(transparent 50%, rgba(255, 220, 60, 0.6) 50% 88%, transparent 88%) left / 0% 100% no-repeat;
+}
+
+.paper-marked.is-written .paper-word {
+  background-size: 100% 100%;
+  transition: clip-path var(--write-time) linear var(--write-delay), background-size 500ms ease-out calc(var(--write-delay) + var(--write-time) + 150ms);
+}
+
+.paper-link,
+.paper-circled {
+  position: relative;
+}
+
+.paper-scribble {
+  position: absolute;
+  left: -4px;
+  bottom: -2px;
+  width: calc(100% + 8px);
+  height: 10px;
+  overflow: visible;
+  pointer-events: none;
+}
+
+.paper-scribble path,
+.paper-ring path {
+  fill: none;
+  stroke: var(--green);
+  stroke-linecap: round;
+}
+
+.paper-scribble path {
+  stroke-width: 2.2;
+  transition: stroke-dashoffset 380ms ease-out;
+}
+
+.paper-link:hover .paper-scribble path,
+.paper-link:focus-visible .paper-scribble path,
+.paper-link.active .paper-scribble path {
+  stroke-dashoffset: 0 !important;
+}
+
+.paper-ring {
+  position: absolute;
+  top: -9px;
+  left: -14px;
+  width: calc(100% + 28px);
+  height: calc(100% + 17px);
+  overflow: visible;
+  pointer-events: none;
+}
+
+.paper-ring path {
+  stroke-width: 2.4;
+  transition: stroke-dashoffset 500ms ease-in-out;
+}
+
+.paper-circled.is-active .paper-ring path {
+  stroke-dashoffset: 0 !important;
+}
+
+.paper-tape {
+  position: absolute;
+  top: -12px;
+  z-index: 3;
+  width: 96px;
+  height: 28px;
+  background: rgba(250, 244, 222, 0.62);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.12);
+  rotate: var(--tape-turn);
+  pointer-events: none;
+}
+
+.paper-tape-left {
+  left: -24px;
+}
+
+.paper-tape-right {
+  right: -24px;
+}
+
+.paper-margin {
+  position: absolute;
+  top: 0;
+  left: 0;
+  z-index: 1;
+  pointer-events: none;
+}
+
+.paper-doodle {
+  position: absolute;
+  width: var(--doodle-size);
+  height: var(--doodle-size);
+  overflow: visible;
+  rotate: var(--doodle-turn);
+}
+
+.paper-doodle path {
+  fill: none;
+  stroke: rgba(70, 66, 62, 0.72);
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  transition: stroke-dashoffset 1800ms ease-in-out;
+}
+
+.paper-doodle.is-written path {
+  stroke-dashoffset: 0 !important;
+}
+
+.theme-life-still .paper-word {
+  clip-path: none;
+  transition: none;
+}
+
+.theme-life-still .paper-marked .paper-word {
+  background-size: 100% 100%;
+}
+
+.theme-life-still .paper-doodle path {
+  stroke-dashoffset: 0 !important;
+  transition: none;
 }
 
 body.portfolio-v2 a {
@@ -475,10 +711,10 @@ body.portfolio-v2 a {
   left: 0;
   right: 0;
   z-index: 30;
-  border-bottom: 1px solid rgba(10, 25, 47, 0.22);
+  border-bottom: 1px solid var(--nav-top-edge, rgba(10, 25, 47, 0.22));
   background: var(--nav-top-bg);
   color: var(--nav-top-text);
-  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.16);
+  box-shadow: var(--nav-top-shadow, 0 10px 28px rgba(0, 0, 0, 0.16));
   transition: background 220ms ease, color 220ms ease, box-shadow 220ms ease, border-color 220ms ease;
 }
 
@@ -493,7 +729,8 @@ body.portfolio-v2 a {
 .site-nav,
 .section-inner,
 .site-footer-inner {
-  width: min(var(--max), calc(100% - 32px));
+  /* --page-gutter: room a theme keeps either side of the text column (Paper's margin). */
+  width: min(var(--max), calc(100% - var(--page-gutter, 32px)));
   margin: 0 auto;
 }
 
@@ -830,6 +1067,9 @@ body[data-motion="off"] .cursor-effects {
   background: rgba(var(--edge-rgb), 0.08);
   color: var(--text);
   text-decoration: none;
+  /* A link button inherits the page font and a <button> gets the browser's, unless a theme
+     names a font for its controls. */
+  font-family: var(--font-controls, revert);
   font-weight: 850;
   cursor: pointer;
   transition: transform 180ms ease, border-color 180ms ease, background 180ms ease, box-shadow 180ms ease;
@@ -1639,6 +1879,9 @@ body[data-motion="off"] .cursor-effects {
   color: var(--muted);
   background: rgba(var(--veil-rgb), 0.04);
   cursor: pointer;
+  /* The browser's own button font unless a theme writes its buttons by hand like its text. */
+  font-family: var(--font-controls, revert);
+  font-size: var(--font-controls-size, revert);
   font-weight: 800;
   transition: transform 160ms ease, border-color 160ms ease, background 160ms ease, color 160ms ease;
 }
@@ -2528,6 +2771,14 @@ html:has(.video-dialog[open]) {
   color: var(--muted);
 }
 
+/* The Pencil trail's canvas, drawn by setupPointerEffects in portfolio-v2.js. */
+.cursor-pencil {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+
 .cursor-point {
   position: fixed;
   left: 0;
@@ -2936,23 +3187,47 @@ body[data-cursor="reticle"] .cursor-reticle {
   }
 }
 
-@keyframes blueprintPan {
-  from {
-    background-position: 0 0, 0 0, 0 0;
+@keyframes paperSheen {
+  0%,
+  72% {
+    transform: translateX(-70%);
   }
 
-  to {
-    background-position: 152px 152px, 152px 152px, 0 0;
+  100% {
+    transform: translateX(70%);
   }
 }
 
-@keyframes paperFloat {
-  from {
-    transform: translate3d(-1%, -1%, 0) scale(1);
+/* The sheet is squeezed and twisted as it crumples, then smoothed flat again. */
+@keyframes paperCrunch {
+  0% {
+    transform: none;
   }
 
-  to {
-    transform: translate3d(1%, 1%, 0) scale(1.03);
+  28% {
+    transform: scale(0.955) rotate(-0.6deg) skewX(0.8deg);
+  }
+
+  52% {
+    transform: scale(0.985) rotate(0.3deg);
+  }
+
+  100% {
+    transform: none;
+  }
+}
+
+@keyframes paperCreases {
+  0% {
+    opacity: 0;
+  }
+
+  25% {
+    opacity: 0.85;
+  }
+
+  100% {
+    opacity: 0;
   }
 }
 

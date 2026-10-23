@@ -38,6 +38,7 @@ const smokeRoutes = [
 const requiredFiles = [
   'assets/js/site-config.js',
   'assets/js/portfolio-v2.js',
+  'assets/js/theme-life.js',
   'assets/js/comments.js',
   'assets/js/visitor-proof.js',
   'play/resume_data.json',
@@ -542,6 +543,91 @@ async function checkVisitorProofHost() {
     if (hostname !== host) {
       failures.push(`sitemap.xml names ${hostname} but the visitor counter only counts visits on ${host} (visitorProofHost in assets/js/site-config.js). Change them together.`);
     }
+  }
+}
+
+// A theme with life (Paper, so far) rewrites the page while it is picked: headings split into words, scribbles,
+// tape and doodles added, text nudged onto its ruled lines. It must be loaded only for those themes, never on a film
+// page, and must give the page back exactly as it found it when the visitor picks another theme, or every theme
+// after it inherits stray classes, styles and elements. So each life theme is picked and left again on real pages,
+// and the page must come back byte for byte.
+async function checkThemeLife(baseUrl) {
+  const executablePath = findChromeExecutable();
+  if (!executablePath) {
+    warnings.push('Skipping the theme life check because Chrome/Edge was not found. Set CHROME_PATH to enable it.');
+    return;
+  }
+  const js = await readFile(resolve(repoRoot, 'assets/js/portfolio-v2.js'), 'utf8');
+  const life = await readFile(resolve(repoRoot, 'assets/js/theme-life.js'), 'utf8');
+  const listed = js.match(/const themesWithLife = new Set\(\[([^\]]*)\]\)/);
+  const defined = life.match(/const lives = \{([^}]*)\}/);
+  if (!listed || !defined) {
+    failures.push('Could not read themesWithLife in assets/js/portfolio-v2.js or the lives list in assets/js/theme-life.js, so theme life was not checked.');
+    return;
+  }
+  const withLife = [...listed[1].matchAll(/"([^"]+)"/g)].map((m) => m[1]);
+  const lives = defined[1].split(',').map((name) => name.trim().split(':')[0].trim()).filter(Boolean);
+  for (const theme of withLife) if (!lives.includes(theme)) failures.push(`portfolio-v2.js loads theme-life.js for "${theme}", but theme-life.js has no life for it.`);
+  for (const theme of lives) if (!withLife.includes(theme)) failures.push(`theme-life.js has a life for "${theme}", but portfolio-v2.js never loads it for that theme (themesWithLife).`);
+  if (withLife.length === 0) return;
+
+  const { default: puppeteer } = await import('puppeteer-core');
+  const browser = await puppeteer.launch({ executablePath, headless: true, args: ['--no-sandbox', '--disable-setuid-sandbox'] });
+  const sleep = (ms) => new Promise((done) => setTimeout(done, ms));
+  async function open(path, theme) {
+    const page = await browser.newPage();
+    await guardPage(page, baseUrl);
+    await page.setViewport({ width: 1440, height: 900 });
+    const loaded = [];
+    page.on('request', (request) => { if (request.url().includes('theme-life.js')) loaded.push(request.url()); });
+    await page.evaluateOnNewDocument((value) => {
+      localStorage.setItem('abdullah-portfolio-theme', value);
+      localStorage.setItem('abdullah-portfolio-motion', 'full');
+    }, theme);
+    await page.goto(`${baseUrl}/${path}`, { waitUntil: 'load', timeout: 60000 });
+    await sleep(1500);
+    return { page, loaded };
+  }
+  const pick = (page, value) => page.evaluate((v) => {
+    const select = document.querySelector('[data-theme-select]');
+    select.value = v;
+    select.dispatchEvent(new Event('change'));
+  }, value);
+  const snapshot = (page) => page.evaluate(() => [document.body.className, document.querySelector('main').innerHTML, document.querySelector('.site-footer').innerHTML, document.querySelectorAll('body > :not(script)').length].join('\u0000'));
+  const firstDifference = (a, b) => {
+    let i = 0;
+    while (i < a.length && a[i] === b[i]) i += 1;
+    return `"${a.slice(Math.max(0, i - 60), i + 80).replace(/\s+/g, ' ')}" became "${b.slice(Math.max(0, i - 60), i + 80).replace(/\s+/g, ' ')}"`;
+  };
+  try {
+    for (const path of ['index.html', 'projects.html']) {
+      const { page, loaded } = await open(path, 'professional');
+      try {
+        if (loaded.length) failures.push(`/${path} loaded theme-life.js under Professional, which has no life.`);
+        const before = await snapshot(page);
+        for (const theme of withLife) {
+          await pick(page, theme);
+          await sleep(2500);
+          if (!loaded.length) failures.push(`/${path} did not load theme-life.js when ${theme} was picked.`);
+          if (await snapshot(page) === before) failures.push(`/${path} did not change at all when ${theme} was picked, so its life never started.`);
+          await pick(page, 'professional');
+          await sleep(300);
+          const after = await snapshot(page);
+          if (after !== before) failures.push(`/${path} was not given back as it was after leaving ${theme}: ${firstDifference(before, after)}`);
+        }
+      } finally {
+        await page.close();
+      }
+    }
+    for (const route of await filmRoutes()) {
+      for (const theme of withLife) {
+        const { page, loaded } = await open(route.slice(1), theme);
+        if (loaded.length) failures.push(`${route} loaded theme-life.js under ${theme}. A film page keeps its own life.`);
+        await page.close();
+      }
+    }
+  } finally {
+    await browser.close();
   }
 }
 
@@ -5470,6 +5556,7 @@ async function main() {
     await checkFilmWithoutWebGL(baseUrl);
     await checkFilmContextRecovery(baseUrl);
     await checkFilmStageOptions(baseUrl);
+    await checkThemeLife(baseUrl);
     await checkThemeContrast(baseUrl);
     await checkVisitCounting(baseUrl);
     if (args.has('--screenshots')) {
