@@ -3702,6 +3702,22 @@ async function checkFilmAutoplay(baseUrl) {
     document.documentElement.style.scrollBehavior = '';
   }, y);
   const actTops = (page) => page.evaluate(() => [...document.querySelectorAll('main > .act')].map((act) => Math.round(act.getBoundingClientRect().top + window.scrollY)));
+  // A page is still moving for a moment after a scroll: the 3D scene goes live (body.scene-live), the copy takes its
+  // column beside it, the page re-wraps and the browser shifts the scroll to keep its place. On a slow start that lands
+  // after the first second, and a fixed one second wait read it as the film playing itself (moved 6px, 2026-10-23).
+  // So the first reading waits until scroll and page height have held still for a second, up to 15s. Autoplay starts
+  // after ten idle seconds and loops, so it never holds still and is still caught by the reading after it.
+  const settle = (page) => page.evaluate(async () => {
+    const deadline = performance.now() + 15000;
+    let last = '';
+    let since = performance.now();
+    while (performance.now() < deadline) {
+      const now = `${Math.round(window.scrollY)}/${document.documentElement.scrollHeight}`;
+      if (now !== last) { last = now; since = performance.now(); }
+      else if (performance.now() - since >= 1000) return;
+      await new Promise((done) => setTimeout(done, 100));
+    }
+  });
   const playEnd = (page) => page.evaluate(() => {
     const acts = document.querySelectorAll('main > .act');
     const last = acts[acts.length - 1];
@@ -3773,7 +3789,7 @@ async function checkFilmAutoplay(baseUrl) {
         } else {
           await page.evaluate(() => { const s = document.querySelector('[data-autoplay-select]'); s.value = 'off'; s.dispatchEvent(new Event('change')); });
           await scrollTo(page, (await actTops(page))[0] + 200);
-          await wait(page, 1);
+          await settle(page);
           const from = await page.evaluate(() => window.scrollY);
           await wait(page, AUTOPLAY_IDLE_SECONDS + 1);
           const at = await page.evaluate(() => window.scrollY);
@@ -3793,7 +3809,7 @@ async function checkFilmAutoplay(baseUrl) {
         await page.setViewport({ width: 1440, height: 900, deviceScaleFactor: 1 });
         await openPage(page, url);
         await scrollTo(page, (await actTops(page))[0] + 200);
-        await wait(page, 1);
+        await settle(page);
         const from = await page.evaluate(() => window.scrollY);
         await wait(page, AUTOPLAY_IDLE_SECONDS + 1);
         const at = await page.evaluate(() => window.scrollY);
