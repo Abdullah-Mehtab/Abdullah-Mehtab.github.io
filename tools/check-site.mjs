@@ -396,6 +396,71 @@ async function checkPresentDates() {
 // built and pass every film check with none of the three. The projects page's featured row is
 // checked too: each project there needs its picture, its dates and a way in (or a word that its
 // repository is private), or the first screen a reader sees says less than the cards under it.
+// Themes are a menu in assets/js/portfolio-v2.js and a block of values per theme in portfolio-v2.css. Nothing tied
+// the two together: a theme could be listed with no colours, keep half of the default's, or leave styles behind
+// after it was retired, and every one of those still looks fine in the theme someone happened to test in.
+async function checkThemes() {
+  const js = await readFile(resolve(repoRoot, 'assets/js/portfolio-v2.js'), 'utf8');
+  const css = await readFile(resolve(repoRoot, 'assets/css/portfolio-v2.css'), 'utf8');
+  const film = await readFile(resolve(repoRoot, 'assets/css/film.css'), 'utf8');
+  const list = (name) => {
+    const block = js.match(new RegExp(`const ${name} = \\[([\\s\\S]*?)\\];`));
+    return block ? [...block[1].matchAll(/\[\s*"([^"]+)"\s*,\s*"([^"]+)"\s*\]/g)].map((m) => m[1]) : [];
+  };
+  const themes = list('themeOptions');
+  const trails = list('cursorOptions');
+  if (themes.length === 0) {
+    failures.push('assets/js/portfolio-v2.js has no themeOptions list the check can read, so no theme was checked.');
+    return;
+  }
+  if (themes[0] !== 'professional') failures.push(`The first theme in the Style menu is "${themes[0]}"; the default, professional, belongs first.`);
+
+  // The values each theme sets, read from the rule whose selector is that theme alone.
+  const declared = new Map();
+  for (const rule of css.matchAll(/([^{}]+)\{([^{}]*)\}/g)) {
+    const selectors = rule[1].split(',').map((s) => s.trim());
+    for (const selector of selectors) {
+      const theme = selector.match(/^body\[data-theme="([^"]+)"\]$/);
+      if (!theme) continue;
+      const names = declared.get(theme[1]) || new Set();
+      for (const prop of rule[2].matchAll(/(--[\w-]+)\s*:/g)) names.add(prop[1]);
+      declared.set(theme[1], names);
+    }
+  }
+  const required = declared.get('professional');
+  if (!required || required.size === 0) {
+    failures.push('assets/css/portfolio-v2.css has no body[data-theme="professional"] block, so there is nothing to hold the other themes to.');
+    return;
+  }
+  for (const theme of themes) {
+    const names = declared.get(theme);
+    if (!names) {
+      failures.push(`The theme "${theme}" is in the Style menu but assets/css/portfolio-v2.css has no body[data-theme="${theme}"] block, so picking it shows the default.`);
+      continue;
+    }
+    const missing = [...required].filter((name) => !names.has(name));
+    if (missing.length) failures.push(`The theme "${theme}" does not set ${missing.join(', ')}, so it shows professional's values for those. Give it its own.`);
+  }
+  for (const [source, sheet] of [['assets/css/portfolio-v2.css', css], ['assets/css/film.css', film]]) {
+    for (const used of new Set([...sheet.matchAll(/data-theme="([^"]+)"/g)].map((m) => m[1]))) {
+      if (!themes.includes(used)) failures.push(`${source} still styles data-theme="${used}", which is not in the Style menu. Remove the leftover rules.`);
+    }
+  }
+
+  // "Match theme" draws the trail each theme names; a theme without one, or naming a trail that does not exist, draws nothing.
+  const map = js.match(/const trailForTheme = \{([\s\S]*?)\};/);
+  if (!map) {
+    failures.push('assets/js/portfolio-v2.js has no trailForTheme map, so "Match theme" in the cursor menu has nothing to draw.');
+    return;
+  }
+  const pairs = new Map([...map[1].matchAll(/(\w+)\s*:\s*"([^"]+)"/g)].map((m) => [m[1], m[2]]));
+  for (const theme of themes) {
+    const trail = pairs.get(theme);
+    if (!trail) failures.push(`trailForTheme in assets/js/portfolio-v2.js has no trail for the theme "${theme}".`);
+    else if (!trails.includes(trail) || trail === 'theme' || trail === 'off') failures.push(`trailForTheme gives the theme "${theme}" the trail "${trail}", which is not a trail in the cursor menu.`);
+  }
+}
+
 async function checkFilmPagesListed() {
   const projects = await readFile(resolve(repoRoot, 'projects.html'), 'utf8');
   const sitemap = await readFile(resolve(repoRoot, 'sitemap.xml'), 'utf8');
@@ -477,6 +542,130 @@ async function checkVisitorProofHost() {
     if (hostname !== host) {
       failures.push(`sitemap.xml names ${hostname} but the visitor counter only counts visits on ${host} (visitorProofHost in assets/js/site-config.js). Change them together.`);
     }
+  }
+}
+
+// Every theme must leave every page readable. A theme is a block of values, and nothing else tested what those values
+// do to text: the drive link in the header was the theme's green on the pale header bar in every theme, about 1:1,
+// until 2026-10-23, and the CV in Light was dark text on a sheet drawn dark for dark themes. This reads text the way a
+// visitor meets it: each piece is measured against the pixels its own letters cover, found by capturing the screen
+// with the words and again with them hidden, so gradients, pictures and veils behind the text all count.
+// WCAG AA: 4.5:1, or 3:1 for large text. Motion and smooth scrolling are switched off so nothing moves between captures.
+async function checkThemeContrast(baseUrl) {
+  const executablePath = findChromeExecutable();
+  if (!executablePath) {
+    warnings.push('Skipping the theme contrast check because Chrome/Edge was not found. Set CHROME_PATH to enable it.');
+    return;
+  }
+  const js = await readFile(resolve(repoRoot, 'assets/js/portfolio-v2.js'), 'utf8');
+  const menu = js.match(/const themeOptions = \[([\s\S]*?)\];/);
+  const themes = menu ? [...menu[1].matchAll(/\[\s*"([^"]+)"\s*,/g)].map((m) => m[1]) : [];
+  if (themes.length === 0) {
+    failures.push('The theme contrast check could not read the theme list in assets/js/portfolio-v2.js, so it measured nothing.');
+    return;
+  }
+  const pages = ['index.html', 'projects.html', 'cv.html', 'todo.html'];
+  // What a reader must be able to read: menu links, buttons, filter buttons, body copy, card meta and labels.
+  const selector = ['.nav-links a', '.button', '.filter-button', 'main p', '.work-meta span', '.eyebrow', 'main h1', 'main h2', 'main h3', '.tag', '.work-links .work-link'].join(', ');
+  const { default: puppeteer } = await import('puppeteer-core');
+  // Software drawing with a fixed colour profile, so two captures of one screen differ only where something changed.
+  const browser = await puppeteer.launch({ executablePath, headless: true, args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-gpu', '--force-color-profile=srgb'] });
+  try {
+    for (const theme of themes) {
+      let measured = 0;
+      for (const pageName of pages) {
+        const page = await browser.newPage();
+        try {
+          // Nothing leaves the local copy: no comments, no analytics, nothing outside this machine.
+          await guardPage(page, baseUrl);
+          await page.setViewport({ width: 1440, height: 900 });
+          await page.evaluateOnNewDocument((value) => {
+            localStorage.setItem('abdullah-portfolio-theme', value);
+            localStorage.setItem('abdullah-portfolio-cursor', 'off');
+            localStorage.setItem('abdullah-portfolio-motion', 'off');
+          }, theme);
+          await page.goto(`${baseUrl}/${pageName}`, { waitUntil: 'load', timeout: 60000 });
+          await page.waitForNetworkIdle({ idleTime: 800, timeout: 15000 }).catch(() => {});
+          await page.addStyleTag({ content: 'html { scroll-behavior: auto !important; } *, *::before, *::after { animation: none !important; transition: none !important; } canvas { visibility: hidden !important; } * { content-visibility: visible !important; }' });
+          await page.evaluate(() => document.fonts.ready);
+          // Comments and lazy pictures load as they scroll into view and push the page down when they do, so the
+          // page is walked once to the bottom first and given its final shape before anything is measured.
+          await page.evaluate(async () => {
+            document.querySelectorAll('img[loading=lazy]').forEach((image) => { image.loading = 'eager'; });
+            for (let y = 0; y < document.documentElement.scrollHeight; y += 400) { window.scrollTo(0, y); await new Promise((r) => setTimeout(r, 120)); }
+            await Promise.all([...document.images].map((image) => image.complete ? null : new Promise((r) => { image.onload = image.onerror = r; })));
+          });
+          await page.waitForNetworkIdle({ idleTime: 1000, timeout: 20000 }).catch(() => {});
+          const pageHeight = await page.evaluate(() => document.documentElement.scrollHeight);
+          // A screen at a time. The header is read at the top, where its bar is pale, and once after scrolling, where it is dark.
+          for (let y = 0; y < pageHeight; y += 800) {
+            await page.evaluate((top) => { window.scrollTo(0, top); window.dispatchEvent(new Event('scroll')); }, y);
+            await new Promise((r) => setTimeout(r, 300));
+            const items = await page.evaluate((sel, step) => {
+              document.querySelectorAll('[data-contrast-probe]').forEach((el) => el.removeAttribute('data-contrast-probe'));
+              const seen = [...document.querySelectorAll(sel)].filter((el) => {
+                const r = el.getBoundingClientRect();
+                const cs = getComputedStyle(el);
+                if (!(r.width > 4 && r.height > 4 && r.top >= 0 && r.bottom <= innerHeight && cs.visibility !== 'hidden' && el.textContent.trim())) return false;
+                // Only text a reader actually sees: fully opaque all the way up, and on top at its own centre.
+                for (let e = el; e; e = e.parentElement) if (Number(getComputedStyle(e).opacity) < 0.99) return false;
+                const hit = document.elementFromPoint(r.x + r.width / 2, r.y + r.height / 2);
+                if (!hit || !(hit === el || el.contains(hit))) return false;
+                // Only elements whose words are their own, so the colour read is the colour of the text.
+                const own = [...el.childNodes].filter((n) => n.nodeType === 3).map((n) => n.textContent).join('').trim().length;
+                return own >= el.textContent.trim().length * 0.6;
+              }).filter((el) => step === 0 || step === 800 || !el.closest('.site-header')).slice(0, 40);
+              return seen.map((el, i) => {
+                el.setAttribute('data-contrast-probe', '');
+                const r = el.getBoundingClientRect();
+                const cs = getComputedStyle(el);
+                const size = parseFloat(cs.fontSize);
+                return { text: el.textContent.trim().slice(0, 40), color: cs.color, large: size >= 24 || (Number(cs.fontWeight) >= 700 && size >= 18.66), box: { x: r.x, y: r.y, width: r.width, height: r.height } };
+              });
+            }, selector, y);
+            if (items.length === 0) continue;
+            const withText = await page.screenshot({ encoding: 'base64', captureBeyondViewport: false });
+            await page.evaluate(() => document.querySelectorAll('[data-contrast-probe]').forEach((el) => [el, ...el.querySelectorAll('*')].forEach((e) => { e.style.setProperty('color', 'transparent', 'important'); e.style.setProperty('-webkit-text-fill-color', 'transparent', 'important'); e.style.setProperty('text-shadow', 'none', 'important'); })));
+            const withoutText = await page.screenshot({ encoding: 'base64', captureBeyondViewport: false });
+            await page.evaluate(() => document.querySelectorAll('[data-contrast-probe]').forEach((el) => [el, ...el.querySelectorAll('*')].forEach((e) => { e.style.removeProperty('color'); e.style.removeProperty('-webkit-text-fill-color'); e.style.removeProperty('text-shadow'); })));
+            const ratios = await page.evaluate(async (a64, b64, list) => {
+              const load = async (b) => { const i = new Image(); i.src = `data:image/png;base64,${b}`; await i.decode(); return i; };
+              const [a, b] = await Promise.all([load(a64), load(b64)]);
+              const lum = (r, g, bl) => { const f = (v) => { v /= 255; return v <= 0.03928 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4; }; return 0.2126 * f(r) + 0.7152 * f(g) + 0.0722 * f(bl); };
+              return list.map(({ color, box }) => {
+                const w = Math.max(1, Math.round(box.width)), h = Math.max(1, Math.round(box.height));
+                const read = (img) => { const c = document.createElement('canvas'); c.width = w; c.height = h; const x = c.getContext('2d'); x.drawImage(img, -Math.round(box.x), -Math.round(box.y)); return x.getImageData(0, 0, w, h).data; };
+                const da = read(a), db = read(b);
+                const m = color.match(/[\d.]+/g).map(Number);
+                const alpha = m.length > 3 ? m[3] : 1;
+                let br = 0, bg = 0, bb = 0, n = 0;
+                for (let i = 0; i < da.length; i += 4) {
+                  if (Math.abs(da[i] - db[i]) + Math.abs(da[i + 1] - db[i + 1]) + Math.abs(da[i + 2] - db[i + 2]) > 30) { br += db[i]; bg += db[i + 1]; bb += db[i + 2]; n++; }
+                }
+                if (!n) return null;
+                br /= n; bg /= n; bb /= n;
+                const lt = lum(m[0] * alpha + br * (1 - alpha), m[1] * alpha + bg * (1 - alpha), m[2] * alpha + bb * (1 - alpha));
+                const lb = lum(br, bg, bb);
+                return (Math.max(lt, lb) + 0.05) / (Math.min(lt, lb) + 0.05);
+              });
+            }, withText, withoutText, items);
+            items.forEach((item, i) => {
+              const ratio = ratios[i];
+              if (ratio === null) return;
+              measured++;
+              const need = item.large ? 3 : 4.5;
+              if (ratio < need) failures.push(`In the ${theme} theme, "${item.text}" on ${pageName} (${Math.round(item.box.y + y)}px down) reads at ${ratio.toFixed(2)}:1 against what is behind it; it needs ${need}:1. Adjust that theme's values, not the page.`);
+            });
+          }
+        } finally {
+          await page.close();
+        }
+      }
+      // A theme where nothing could be measured is a broken check, not a readable theme.
+      if (measured < 100) failures.push(`The theme contrast check measured only ${measured} pieces of text in the ${theme} theme across ${pages.join(', ')}, so it cannot vouch for that theme.`);
+    }
+  } finally {
+    await browser.close();
   }
 }
 
@@ -663,7 +852,7 @@ async function checkTruckStripLoop() {
 
 // Themes are declared on body[data-theme], so a custom property in film.css that aliases one
 // must also live on body. A "var(--cyan)" written inside :root resolves against the :root default
-// and freezes to a single colour in all eighteen themes, while still looking correct in whichever
+// and freezes to a single colour in every theme, while still looking correct in whichever
 // theme was used to build it. That has now happened twice: once to the scenery, once to the
 // chapter accents. film.css keeps constants in :root and everything derived on body.film, and
 // this enforces the split cheaply, without needing a browser.
@@ -5225,6 +5414,7 @@ async function main() {
   await checkNoChapterWordInCopy();
   await checkPresentDates();
   await checkFilmPagesListed();
+  await checkThemes();
   await checkPrivateFolders();
   await checkVisitorProofHost();
   await checkFilmTokenScope();
@@ -5264,6 +5454,7 @@ async function main() {
     await checkFilmWithoutWebGL(baseUrl);
     await checkFilmContextRecovery(baseUrl);
     await checkFilmStageOptions(baseUrl);
+    await checkThemeContrast(baseUrl);
     await checkVisitCounting(baseUrl);
     if (args.has('--screenshots')) {
       await captureScreenshots(baseUrl);

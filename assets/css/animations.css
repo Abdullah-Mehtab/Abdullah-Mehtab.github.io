@@ -327,7 +327,7 @@ body {
   truck is painted, and a grey one was the deadest thing on the page.
 
   One painted livery per theme in assets/images/truck-<theme>.svg, rather than one file
-  filtered eighteen ways. A CSS hue-rotate moves every colour in a file by the same angle, so
+  filtered once per theme. A CSS hue-rotate moves every colour in a file by the same angle, so
   cab, cargo box, glass and chassis stay locked to each other and every theme got the same
   flat truck in another shade. Each livery paints its nine parts separately, so a theme
   changes which truck drives past rather than which filter is over it. --truck-art lives in

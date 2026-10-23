@@ -7,24 +7,13 @@
   }
 
   const themeOptions = [
-    ["professional", "Professional"],
-    ["dark", "Dark Mode"],
-    ["light", "Light Mode"],
-    ["forest", "Forest Mode"],
-    ["space", "Space Mode"],
-    ["terminal", "Terminal Mode"],
-    ["cyber", "Cyber Mode"],
-    ["ocean", "Ocean Mode"],
-    ["ember", "Ember Mode"],
-    ["arctic", "Arctic Mode"],
-    ["royal", "Royal Mode"],
-    ["noir", "Noir Mode"],
-    ["blueprint", "Blueprint Mode"],
-    ["aurora", "Aurora Mode"],
-    ["rain", "Rain Mode"],
-    ["signal", "Signal Mode"],
-    ["lab", "Lab Mode"],
-    ["paper", "Paper Mode"]
+    ["professional", "Professional (Dark)"],
+    ["forest", "Forest"],
+    ["cyber", "Cyber"],
+    ["space", "Space"],
+    ["ember", "Ember"],
+    ["light", "Light mode"],
+    ["paper", "Paper"]
   ];
 
   const cursorOptions = [
@@ -41,8 +30,21 @@
     ["orbit", "Orbit"],
     ["snow", "Snowfall"],
     ["pulse", "Pulse Rings"],
+    ["theme", "Match theme"],
     ["off", "Off"]
   ];
+
+  // The trail "Match theme" uses for each theme. Paper, Forest and Cyber get trails of their own
+  // (pencil, fireflies, a terminal cursor) when those themes are built; until then, the closest one.
+  const trailForTheme = {
+    professional: "constellation",
+    forest: "sparks",
+    cyber: "scanner",
+    space: "constellation",
+    ember: "embers",
+    light: "spotlight",
+    paper: "ink"
+  };
 
   const motionOptions = [
     ["auto", "Auto"],
@@ -195,10 +197,14 @@
         select.value = value;
       });
       writeStoredValue(storageKeys.theme, value);
+      if (document.body.dataset.cursorChoice === "theme") applyCursor("theme");
     }
 
+    // The menu keeps what was picked; data-cursor holds the trail actually drawn, which for
+    // "Match theme" depends on the theme.
     function applyCursor(value) {
-      document.body.dataset.cursor = value;
+      document.body.dataset.cursorChoice = value;
+      document.body.dataset.cursor = value === "theme" ? trailForTheme[document.body.dataset.theme] || "constellation" : value;
       cursorSelects.forEach((select) => {
         select.value = value;
       });

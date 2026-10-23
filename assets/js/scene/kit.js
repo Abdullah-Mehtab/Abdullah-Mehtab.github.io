@@ -271,8 +271,8 @@ export function nameplate(text, sub, accent, deep, worldWidth, fit, subPx = 30) 
     // because their ground happens to be darker. The rule under the words keeps the accent,
     // which is where it reads as a colour rather than as camouflage.
     //
-    // Taken from the ground rather than passed in, so it is right on all eighteen themes: two
-    // of them are light, and light ink on a pale plate is the same fault the other way round.
+    // Taken from the ground rather than passed in, so it is right on every theme, the light
+    // ones included: light ink on a pale plate is the same fault the other way round.
     const pale = deep.getHSL({ h: 0, s: 0, l: 0 }).l > 0.5;
     g.fillStyle = pale ? "#0b0f14" : "#f2f7fb";
 

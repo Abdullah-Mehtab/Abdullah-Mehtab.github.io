@@ -166,10 +166,15 @@
   Anything derived from a theme token MUST be declared here and not at :root. A custom
   property alias resolves where it is declared, so var(--cyan) written at :root freezes to the
   :root default and never sees a theme, because themes override --cyan on body[data-theme].
-  That exact mistake previously froze this page's scenery on one colour in all eighteen
-  themes. tools/check-site.mjs fails the build if a :root rule in this file contains var().
+  That exact mistake previously froze this page's scenery on one colour in every
+  theme. tools/check-site.mjs fails the build if a :root rule in this file contains var().
 */
 body.film {
+  /* Film pages keep their own type under every theme (owner ruling 2026-10-23). A theme may set
+     these fonts on body[data-theme]; this rule has the same weight and loads later, so it wins. */
+  --font-body: Inter, "Open Sans", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --font-display: Inter, "Open Sans", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+
   /*
     The stage, per scene. These four values are what make an act a different place rather
     than the same place in a different colour: how hard the room converges, where its
@@ -205,7 +210,7 @@ body.film[data-theme="paper"] {
 
 /*
   Each act names a scene, and a scene is only ever a different accent that the theme already
-  defines. Four scenes across eighteen themes therefore cost four rules, not seventy two.
+  defines. Four scenes therefore cost four rules, however many themes there are.
 */
 /* Streams: a tight corridor. Hard convergence, low horizon, runs along the travel. */
 body.film[data-scene="streams"] {
