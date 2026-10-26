@@ -593,7 +593,10 @@ async function checkThemeLife(baseUrl) {
     select.value = v;
     select.dispatchEvent(new Event('change'));
   }, value);
-  const snapshot = (page) => page.evaluate(() => [document.body.className, document.querySelector('main').innerHTML, document.querySelector('.site-footer').innerHTML, document.querySelectorAll('body > :not(script)').length].join('\u0000'));
+  // The backdrop counts too: Forest slides its layers, and a layer left with so much as an empty style attribute is not
+  // the page it was. It is read only before and after, never while a life runs: reading an element's HTML makes Chrome
+  // write its pending inline style into the attribute, which hides exactly that leak.
+  const snapshot = (page, withBackdrop = true) => page.evaluate((backdrop) => [document.body.className, document.querySelector('main').innerHTML, document.querySelector('.site-footer').innerHTML, document.querySelectorAll('body > :not(script)').length, backdrop ? (document.querySelector('.theme-backdrop') || {}).outerHTML : ''].join('\u0000'), withBackdrop);
   const firstDifference = (a, b) => {
     let i = 0;
     while (i < a.length && a[i] === b[i]) i += 1;
@@ -605,11 +608,12 @@ async function checkThemeLife(baseUrl) {
       try {
         if (loaded.length) failures.push(`/${path} loaded theme-life.js under Professional, which has no life.`);
         const before = await snapshot(page);
+        const beforeWithoutBackdrop = await snapshot(page, false);
         for (const theme of withLife) {
           await pick(page, theme);
           await sleep(2500);
           if (!loaded.length) failures.push(`/${path} did not load theme-life.js when ${theme} was picked.`);
-          if (await snapshot(page) === before) failures.push(`/${path} did not change at all when ${theme} was picked, so its life never started.`);
+          if (await snapshot(page, false) === beforeWithoutBackdrop) failures.push(`/${path} did not change at all when ${theme} was picked, so its life never started.`);
           await pick(page, 'professional');
           await sleep(300);
           const after = await snapshot(page);

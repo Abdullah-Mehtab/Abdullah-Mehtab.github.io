@@ -34,15 +34,16 @@
     ["snow", "Snowfall"],
     ["pulse", "Pulse Rings"],
     ["pencil", "Pencil"],
+    ["fireflies", "Fireflies"],
     ["theme", "Match theme"],
     ["off", "Off"]
   ];
 
-  // The trail "Match theme" uses for each theme. Forest and Cyber get trails of their own
-  // (fireflies, a terminal cursor) when those themes are built; until then, the closest one.
+  // The trail "Match theme" uses for each theme. Cyber gets a trail of its own (a terminal
+  // cursor) when that theme is built; until then, the closest one.
   const trailForTheme = {
     professional: "constellation",
-    forest: "sparks",
+    forest: "fireflies",
     cyber: "scanner",
     space: "constellation",
     ember: "embers",
@@ -53,7 +54,7 @@
   // Themes with a life beyond their colours (things that draw themselves, answer the visitor).
   // That code is in theme-life.js, fetched the first time one of these themes is picked, and
   // never on a film page, where the film is what moves.
-  const themesWithLife = new Set(["paper", "space"]);
+  const themesWithLife = new Set(["paper", "space", "forest"]);
   let themeLifeRequested = false;
 
   function loadThemeLife() {
@@ -610,9 +611,11 @@
       sparks: 28,
       embers: 28,
       constellation: 22,
-      snow: 44
+      snow: 44,
+      fireflies: 46
     };
     const delayByMode = {
+      fireflies: 90,
       ribbon: 16,
       plasma: 18,
       scanner: 22,
@@ -632,7 +635,8 @@
       orbit: 1080,
       embers: 1150,
       constellation: 1220,
-      snow: 1450
+      snow: 1450,
+      fireflies: 2200
     };
 
     function createTrailPoint(x, y, mode) {
@@ -649,6 +653,12 @@
 
       if (mode === "orbit") {
         point.innerHTML = "<span></span><span></span>";
+      }
+
+      // Each firefly wanders off its own way while it blinks out.
+      if (mode === "fireflies") {
+        point.style.setProperty("--firefly-x", `${Math.round((Math.random() - 0.5) * 50)}px`);
+        point.style.setProperty("--firefly-y", `${Math.round(-10 - Math.random() * 30)}px`);
       }
 
       point.style.left = `${x}px`;

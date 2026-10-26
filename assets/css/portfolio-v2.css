@@ -10,6 +10,16 @@
   unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
 }
 
+/* The Forest theme's headings. One weight, latin only, downloaded only when Forest is picked. */
+@font-face {
+  font-family: "Fraunces";
+  font-style: normal;
+  font-weight: 600;
+  font-display: swap;
+  src: url("../fonts/fraunces-600-latin.woff2") format("woff2");
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+
 /* Archivo, the film pages' type and the Space theme's headings. Declared here because every
    page loads this file, film pages included, so it has one home. */
 @font-face {
@@ -173,32 +183,59 @@ body[data-theme="light"] {
 }
 
 body[data-theme="forest"] {
+  /* Forest: night in a forest by a river. Tree lines in three depths along the foot of the
+     screen, mist between them, shafts of light from above, river stone corners and soft serif
+     headings. Fireflies, falling leaves and the rest of its life are in assets/js/theme-life.js. */
+  --font-display: "Fraunces", Georgia, "Times New Roman", serif;
+  /* Fraunces ships one weight; headings take it as it is rather than a smeared fake bold. */
+  --font-synthesis: style small-caps;
+  --radius-sm: 10px;
+  --radius-md: 14px;
+  --radius-pill: 999px;
+  --shadow: 0 20px 60px rgba(0, 0, 0, 0.45);
+  --edge-rgb: 214, 232, 205;
+  --hairline-rgb: 214, 232, 205;
+  --veil-rgb: 255, 255, 255;
+  --glow-green-rgb: 143, 190, 120;
+  --glow-cyan-rgb: 124, 196, 184;
+  --glow-sky-rgb: 124, 196, 184;
+  --glow-gold-rgb: 242, 210, 122;
+  --glow-mint-rgb: 143, 190, 120;
+  --glow-amber-rgb: 242, 210, 122;
+  --sheet-bg: linear-gradient(180deg, rgba(12, 30, 22, 0.97), rgba(6, 16, 11, 0.98));
+  --sheet-head-bg: rgba(9, 24, 17, 0.92);
+  --sheet-shadow: 0 30px 100px rgba(0, 0, 0, 0.55);
+  --cta-base: rgba(10, 26, 19, 0.8);
   --truck-art: url("../images/truck-forest.svg");
-  --bg: #07140e;
-  --bg-mid: #0d2419;
-  --bg-deep: #040b08;
-  --bg-soft: #0f261b;
-  --bg-panel: #143321;
-  --text: #eff9ef;
-  --muted: #a7bdab;
-  --line: rgba(191, 236, 195, 0.16);
-  --cyan: #7fcfbc;
-  --green: #8dff9d;
-  --amber: #d7c477;
-  --rose: #e77f83;
-  --violet: #9fc1ff;
-  --glow-a: rgba(141, 255, 157, 0.16);
-  --glow-b: rgba(127, 207, 188, 0.09);
-  --cursor-a: rgba(141, 255, 157, 0.16);
-  --cursor-b: rgba(215, 196, 119, 0.1);
-  --grid-a: rgba(141, 255, 157, 0.035);
-  --grid-b: rgba(127, 207, 188, 0.025);
-  --panel-bg: rgba(13, 36, 25, 0.78);
-  --panel-bg-strong: rgba(15, 47, 31, 0.92);
-  --panel-glow: rgba(141, 255, 157, 0.06);
-  --nav-top-bg: linear-gradient(90deg, #9af7aa, #79c995);
-  --nav-top-text: #07140e;
-  --nav-scroll-bg: rgba(7, 20, 14, 0.76);
+  --wind-colour: rgba(200, 220, 200, 0.45);
+  --bg: #0a1a13;
+  --bg-mid: #08150f;
+  --bg-deep: #040b07;
+  --bg-soft: #0f241a;
+  --bg-panel: #122a1f;
+  --text: #eef3e6;
+  --muted: #a9b8a3;
+  --line: rgba(214, 232, 205, 0.13);
+  --cyan: #7cc4b8;
+  --green: #a9cf8a;
+  --amber: #f2d27a;
+  --rose: #e59a8a;
+  --violet: #b5c3e8;
+  --glow-a: rgba(124, 196, 184, 0.06);
+  --glow-b: rgba(242, 210, 122, 0.035);
+  --cursor-a: rgba(242, 210, 122, 0.1);
+  --cursor-b: rgba(124, 196, 184, 0.06);
+  --grid-a: transparent;
+  --grid-b: transparent;
+  --panel-bg: rgba(10, 26, 19, 0.82);
+  --panel-bg-strong: rgba(14, 34, 25, 0.93);
+  --panel-glow: transparent;
+  --nav-top-bg: transparent;
+  --nav-top-edge: rgba(214, 232, 205, 0.08);
+  --nav-top-shadow: none;
+  --nav-top-text: #eef3e6;
+  --nav-link-top: rgba(238, 243, 230, 0.76);
+  --nav-scroll-bg: rgba(6, 15, 10, 0.84);
 }
 
 body[data-theme="space"] {
@@ -537,19 +574,75 @@ body.portfolio-v2 main,
   animation: horizonPulse 9s ease-in-out infinite;
 }
 
-body[data-theme="forest"] .layer-a {
+/* Forest: the scenery is the backdrop, fixed behind the page so the reader stays among the trees.
+   Back to front: light shafts (a), the far tree line in mist (b), the middle tree line (c), the
+   river (c::before) and the nearest trees on its bank (c::after). Each tree layer is wider than
+   the screen by more than one tile, so theme-life.js can slide it sideways as the page scrolls.
+   Not on film pages, where the film is the scenery. */
+body[data-theme="forest"]:not(.film) .layer-a {
+  inset: 0;
+  opacity: 1;
+  transform-origin: 0 0;
   background:
-    radial-gradient(circle at 20% 30%, rgba(141, 255, 157, 0.16), transparent 18rem),
-    repeating-linear-gradient(100deg, transparent 0 36px, rgba(141, 255, 157, 0.045) 37px 39px);
+    linear-gradient(112deg, transparent 18%, rgba(236, 226, 170, 0.045) 21%, transparent 25%),
+    linear-gradient(118deg, transparent 30%, rgba(236, 226, 170, 0.035) 34%, transparent 39%),
+    linear-gradient(108deg, transparent 44%, rgba(236, 226, 170, 0.025) 46%, transparent 49%);
+  animation: forestShafts 16s ease-in-out infinite alternate;
 }
 
-body[data-theme="forest"] .layer-b {
+body[data-theme="forest"]:not(.film) .layer-b,
+body[data-theme="forest"]:not(.film) .layer-c {
+  inset: auto auto 0 0;
+  width: calc(100% + 1400px);
+  opacity: 1;
+  filter: none;
+  animation: none;
+}
+
+body[data-theme="forest"]:not(.film) .layer-b {
+  height: 340px;
   background:
-    radial-gradient(ellipse at 12% 20%, rgba(141, 255, 157, 0.14) 0 9px, transparent 10px),
-    radial-gradient(ellipse at 58% 28%, rgba(127, 207, 188, 0.12) 0 7px, transparent 8px),
-    radial-gradient(ellipse at 82% 18%, rgba(215, 196, 119, 0.1) 0 5px, transparent 6px);
-  background-size: 220px 160px;
-  animation: forestDrift 28s linear infinite;
+    url("../images/forest-trees-far.svg") left bottom 62px / 900px 230px repeat-x,
+    linear-gradient(to top, rgba(130, 175, 155, 0.09), transparent 75%);
+}
+
+body[data-theme="forest"]:not(.film) .layer-c {
+  height: 300px;
+  background:
+    linear-gradient(to top, rgba(130, 175, 155, 0.06), transparent 45%),
+    url("../images/forest-trees-mid.svg") left bottom 34px / 1100px 250px repeat-x;
+}
+
+body[data-theme="forest"]:not(.film) .layer-c::before,
+body[data-theme="forest"]:not(.film) .layer-c::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+}
+
+/* The river: dark water with glints that drift downstream. */
+body[data-theme="forest"]:not(.film) .layer-c::before {
+  bottom: 16px;
+  height: 24px;
+  background:
+    linear-gradient(90deg, transparent 60px, rgba(160, 220, 210, 0.16) 60px 74px, transparent 74px) 0 7px / 150px 2px repeat-x,
+    linear-gradient(90deg, transparent 25px, rgba(160, 220, 210, 0.1) 25px 33px, transparent 33px) 0 15px / 110px 2px repeat-x,
+    linear-gradient(#123430, #0a211e);
+  animation: forestRiver 9s linear infinite;
+}
+
+body[data-theme="forest"]:not(.film) .layer-c::after {
+  bottom: 0;
+  height: 260px;
+  transform: translateX(var(--forest-near, 0px));
+  background: url("../images/forest-trees-near.svg") left bottom -6px / 1300px 260px repeat-x;
+}
+
+/* Motion Off hides every backdrop because backdrops move. Forest's is its scenery, so it stays,
+   standing still. */
+body[data-motion="off"][data-theme="forest"]:not(.film) .theme-backdrop {
+  display: block !important;
 }
 
 /* Space: the sky itself is the page background. The backdrop adds only a faint haze that
@@ -778,17 +871,39 @@ body[data-theme="paper"].is-crunching .site-footer {
   transition: none;
 }
 
-/* Space's life, added and removed by theme-life.js like Paper's. */
-.space-anchor {
+/* Parts the lives in theme-life.js share: a box for marks placed inside an element, the canvas
+   in the backdrop, and the layer click bursts are drawn on. */
+.life-anchor {
   position: relative;
 }
 
-.space-sky {
+.space-sky,
+.forest-flies {
   position: absolute;
   inset: 0;
   width: 100%;
   height: 100%;
 }
+
+.life-bursts {
+  position: fixed;
+  inset: 0;
+  z-index: 46;
+  pointer-events: none;
+}
+
+.life-burst {
+  position: absolute;
+  width: 0;
+  height: 0;
+}
+
+.life-burst i {
+  position: absolute;
+  border-radius: 50%;
+}
+
+/* Space's life. */
 
 /* The starlight on a card's edge: a light that follows the pointer, masked to a 1px ring. */
 .space-glint {
@@ -799,7 +914,7 @@ body[data-theme="paper"].is-crunching .site-footer {
   border-radius: inherit;
   pointer-events: none;
   opacity: 0;
-  background: radial-gradient(240px circle at var(--glint-x, 50%) var(--glint-y, 50%), #f2f6ff, rgba(214, 228, 255, 0.45) 40%, transparent 80%);
+  background: radial-gradient(240px circle at var(--light-x, 50%) var(--light-y, 50%), #f2f6ff, rgba(214, 228, 255, 0.45) 40%, transparent 80%);
   -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
   -webkit-mask-composite: xor;
   mask-composite: exclude;
@@ -822,26 +937,11 @@ body[data-theme="paper"].is-crunching .site-footer {
   transform: none;
 }
 
-.space-bursts {
-  position: fixed;
-  inset: 0;
-  z-index: 46;
-  pointer-events: none;
-}
-
-.space-burst {
-  position: absolute;
-  width: 0;
-  height: 0;
-}
-
 .space-burst i {
-  position: absolute;
   left: -1.5px;
   top: -1.5px;
   width: 3px;
   height: 3px;
-  border-radius: 50%;
   background: #eef3ff;
   box-shadow: 0 0 6px rgba(188, 208, 255, 0.9);
   animation: spaceSpark 700ms cubic-bezier(0.2, 0.8, 0.3, 1) forwards;
@@ -880,6 +980,89 @@ body[data-theme="paper"].is-crunching .site-footer {
 
 .theme-life-still .space-orbit {
   offset-distance: 8%;
+  animation: none;
+}
+
+/* Forest's life. */
+.forest-leaf {
+  position: absolute;
+  top: -24px;
+  width: 13px;
+  height: 9px;
+  border-radius: 0 100% 0 100%;
+  background: linear-gradient(135deg, #8a9a4a, #5e6e2c);
+  opacity: 0.55;
+  animation: forestLeafFall var(--leaf-fall, 12s) linear forwards;
+}
+
+/* A warm light inside the card, nearest the pointer, as if a firefly came close. */
+.forest-glow {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  opacity: 0;
+  background: radial-gradient(260px circle at var(--light-x, 50%) var(--light-y, 50%), rgba(242, 210, 122, 0.1), transparent 70%);
+  transition: opacity 400ms ease;
+}
+
+.kinetic-card:hover > .forest-glow,
+.proof-lane:hover > .forest-glow {
+  opacity: 1;
+}
+
+.forest-rise {
+  opacity: 0;
+  transform: translateY(14px);
+  transition: opacity 1200ms ease, transform 1400ms cubic-bezier(0.2, 0.7, 0.2, 1);
+}
+
+.forest-rise.is-seen {
+  opacity: 1;
+  transform: none;
+}
+
+.forest-burst i {
+  left: -2px;
+  top: -2px;
+  width: 4px;
+  height: 4px;
+  background: #fff1b8;
+  box-shadow: 0 0 8px rgba(242, 210, 122, 0.95), 0 0 16px rgba(242, 210, 122, 0.5);
+  animation: forestSpeck 1500ms ease-out forwards;
+}
+
+.forest-firefly {
+  position: absolute;
+  top: -4px;
+  right: -3px;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #fff1b8;
+  box-shadow: 0 0 8px rgba(242, 210, 122, 0.95), 0 0 18px rgba(242, 210, 122, 0.45);
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 600ms ease;
+}
+
+.filter-button.is-active > .forest-firefly {
+  opacity: 1;
+  animation: forestBlink 3.2s ease-in-out infinite;
+}
+
+.theme-life-still .forest-glow {
+  display: none;
+}
+
+.theme-life-still .forest-rise {
+  opacity: 1;
+  transform: none;
+  transition: none;
+}
+
+.theme-life-still .forest-firefly {
   animation: none;
 }
 
@@ -3023,6 +3206,14 @@ body[data-cursor="embers"] .cursor-point {
   animation-duration: 1100ms;
 }
 
+body[data-cursor="fireflies"] .cursor-point {
+  width: 4px;
+  height: 4px;
+  background: #fff1b8;
+  box-shadow: 0 0 8px rgba(242, 210, 122, 0.95), 0 0 18px rgba(242, 210, 122, 0.45);
+  animation: cursorFirefly 2200ms ease-in-out forwards;
+}
+
 body[data-cursor="plasma"] .cursor-point {
   width: 26px;
   height: 26px;
@@ -3332,25 +3523,78 @@ body[data-cursor="reticle"] .cursor-reticle {
   }
 }
 
-@keyframes forestDrift {
+@keyframes forestShafts {
   from {
-    background-position: 0 0, 0 0, 0 0;
+    opacity: 0.7;
+    transform: rotate(-1.2deg);
   }
 
   to {
-    background-position: 260px -120px, -160px 120px, 180px 80px;
+    opacity: 1;
+    transform: rotate(1.2deg);
+  }
+}
+
+/* 1650px is a whole number of both glint tiles (150px and 110px), so the loop has no jump. */
+@keyframes forestRiver {
+  from {
+    background-position: 0 7px, 0 15px, 0 0;
+  }
+
+  to {
+    background-position: 1650px 7px, 1650px 15px, 0 0;
   }
 }
 
 @keyframes spaceSpark {
   from {
     opacity: 1;
-    transform: rotate(var(--spark-turn)) translateX(0) scale(1);
+    transform: rotate(var(--speck-turn)) translateX(0) scale(1);
   }
 
   to {
     opacity: 0;
-    transform: rotate(var(--spark-turn)) translateX(var(--spark-reach)) scale(0.4);
+    transform: rotate(var(--speck-turn)) translateX(var(--speck-reach)) scale(0.4);
+  }
+}
+
+/* Fireflies sent up by a click: out, then drifting upwards as they fade. */
+@keyframes forestSpeck {
+  from {
+    opacity: 1;
+    transform: rotate(var(--speck-turn)) translateX(0);
+  }
+
+  60% {
+    opacity: 0.9;
+  }
+
+  to {
+    opacity: 0;
+    transform: rotate(var(--speck-turn)) translateX(var(--speck-reach)) translateY(-10px);
+  }
+}
+
+@keyframes forestBlink {
+  0%,
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+
+  50% {
+    opacity: 0.35;
+    transform: translateY(-2px);
+  }
+}
+
+@keyframes forestLeafFall {
+  from {
+    transform: translate3d(0, 0, 0) rotate(0deg);
+  }
+
+  to {
+    transform: translate3d(var(--leaf-drift, 0px), 110vh, 0) rotate(var(--leaf-turn, 360deg));
   }
 }
 
@@ -3442,6 +3686,33 @@ body[data-cursor="reticle"] .cursor-reticle {
   to {
     opacity: 0;
     transform: translate(-50%, -50%) rotate(var(--cursor-rotate, 0deg)) scale(0.25);
+  }
+}
+
+/* A firefly left behind by the cursor: it drifts off, blinking twice before it goes out. */
+@keyframes cursorFirefly {
+  0% {
+    opacity: 0;
+    transform: translate(-50%, -50%);
+  }
+
+  15%,
+  45% {
+    opacity: 1;
+  }
+
+  30%,
+  60% {
+    opacity: 0.25;
+  }
+
+  75% {
+    opacity: 0.9;
+  }
+
+  100% {
+    opacity: 0;
+    transform: translate(calc(-50% + var(--firefly-x, 0px)), calc(-50% + var(--firefly-y, -20px)));
   }
 }
 

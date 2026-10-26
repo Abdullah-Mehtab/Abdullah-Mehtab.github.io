@@ -1,4 +1,4 @@
-// ABOUTME: A theme's life beyond its colours: what moves, draws itself and answers the visitor. Paper's and Space's live here.
+// ABOUTME: A theme's life beyond its colours: what moves, draws itself and answers the visitor. Paper, Space and Forest live here.
 // ABOUTME: Loaded by portfolio-v2.js the first time a theme with life is picked; never on film pages, where the film is the life.
 (function () {
   if (window.themeLife) return;
@@ -50,7 +50,13 @@
 
   function unstyle(element, ...properties) {
     properties.forEach((property) => element.style.removeProperty(property));
-    if (!element.style.length) element.removeAttribute("style");
+    if (!element.style.length) {
+      // Chrome writes inline style changes back to the attribute lazily. Removing an attribute
+      // that has not been written yet leaves it to come back later as style="", so it is read
+      // (written) first and then removed.
+      element.getAttribute("style");
+      element.removeAttribute("style");
+    }
   }
 
   function documentTop(element) {
@@ -277,26 +283,158 @@
     }
   };
 
+  // Parts several lives share. Each returns the step that takes it away again.
+
   // Adds a class only to elements that are not already positioned, so the parts placed inside
   // them have a box to sit in without moving an element the page placed on purpose.
   function anchor(elements) {
     const anchored = elements.filter((element) => getComputedStyle(element).position === "static");
-    anchored.forEach((element) => element.classList.add("space-anchor"));
-    return () => anchored.forEach((element) => unmark(element, "space-anchor"));
+    anchored.forEach((element) => element.classList.add("life-anchor"));
+    return () => anchored.forEach((element) => unmark(element, "life-anchor"));
+  }
+
+  // A canvas in the backdrop, sized to the window, drawn every frame at Full motion and a few
+  // times a second otherwise (enough for a slow twinkle). draw(context, width, height, now, mode).
+  function backdropCanvas(className, draw) {
+    const canvas = document.createElement("canvas");
+    canvas.className = className;
+    (document.querySelector(".theme-backdrop") || body).appendChild(canvas);
+    const context = canvas.getContext("2d");
+    let width = 0;
+    let height = 0;
+    function size() {
+      const ratio = window.devicePixelRatio || 1;
+      width = window.innerWidth;
+      height = window.innerHeight;
+      canvas.width = Math.round(width * ratio);
+      canvas.height = Math.round(height * ratio);
+      context.setTransform(ratio, 0, 0, ratio, 0, 0);
+    }
+    size();
+    window.addEventListener("resize", size);
+    let frame = 0;
+    let lastDraw = 0;
+    function loop(now) {
+      frame = window.requestAnimationFrame(loop);
+      const mode = motion();
+      if (mode !== "full" && now - lastDraw < 120) return;
+      lastDraw = now;
+      draw(context, width, height, now, mode);
+    }
+    frame = window.requestAnimationFrame(loop);
+    return () => {
+      window.cancelAnimationFrame(frame);
+      window.removeEventListener("resize", size);
+      canvas.remove();
+    };
+  }
+
+  // A light inside each card that follows the pointer while it is over the card. The theme's
+  // CSS for className decides what the light looks like (Space: an edge, Forest: a warm glow).
+  function pointerLight(className) {
+    const cards = [...document.querySelectorAll(".kinetic-card, .proof-lane")];
+    const unanchor = anchor(cards);
+    const lights = cards.map((card) => {
+      const light = document.createElement("span");
+      light.className = className;
+      light.setAttribute("aria-hidden", "true");
+      card.appendChild(light);
+      return light;
+    });
+    let frame = 0;
+    let pointer = null;
+    const move = (event) => {
+      pointer = event;
+      if (frame) return;
+      frame = window.requestAnimationFrame(() => {
+        frame = 0;
+        const card = pointer.target instanceof Element ? pointer.target.closest(".kinetic-card, .proof-lane") : null;
+        const light = card && card.querySelector(`:scope > .${className}`);
+        if (!light) return;
+        const box = card.getBoundingClientRect();
+        light.style.setProperty("--light-x", `${pointer.clientX - box.left}px`);
+        light.style.setProperty("--light-y", `${pointer.clientY - box.top}px`);
+      });
+    };
+    document.addEventListener("pointermove", move, { passive: true });
+    return () => {
+      document.removeEventListener("pointermove", move);
+      if (frame) window.cancelAnimationFrame(frame);
+      lights.forEach((light) => light.remove());
+      unanchor();
+    };
+  }
+
+  // Headings take className and gain is-seen when they come into view; the theme's CSS says how
+  // they arrive. Only at full motion: anywhere else they are simply there.
+  function headingsArrive(className) {
+    const headings = motion() === "full" ? [...document.querySelectorAll("main :is(h1, h2)")] : [];
+    headings.forEach((heading) => heading.classList.add(className));
+    const seen = new IntersectionObserver((entries) => {
+      entries.forEach((entry) => {
+        if (!entry.isIntersecting) return;
+        entry.target.classList.add("is-seen");
+        seen.unobserve(entry.target);
+      });
+    }, { threshold: 0.2 });
+    headings.forEach((heading) => seen.observe(heading));
+    return () => {
+      seen.disconnect();
+      headings.forEach((heading) => unmark(heading, className, "is-seen"));
+    };
+  }
+
+  // A click at full motion leaves a few specks that fly apart and fade, styled by className.
+  function clickBurst(className, count, reach) {
+    const layer = document.createElement("div");
+    layer.className = "life-bursts";
+    layer.setAttribute("aria-hidden", "true");
+    body.appendChild(layer);
+    const burst = (event) => {
+      if (motion() !== "full" || event.button !== 0) return;
+      const spot = document.createElement("span");
+      spot.className = `life-burst ${className}`;
+      spot.style.left = `${event.clientX}px`;
+      spot.style.top = `${event.clientY}px`;
+      for (let i = 0; i < count; i += 1) {
+        const speck = document.createElement("i");
+        speck.style.setProperty("--speck-turn", `${(i * 360) / count + wobble(360 / count / 2)}deg`);
+        speck.style.setProperty("--speck-reach", `${reach * (0.6 + Math.random() * 0.8)}px`);
+        spot.appendChild(speck);
+      }
+      layer.appendChild(spot);
+      window.setTimeout(() => spot.remove(), 1600);
+    };
+    document.addEventListener("pointerdown", burst, { passive: true });
+    return () => {
+      document.removeEventListener("pointerdown", burst);
+      layer.remove();
+    };
+  }
+
+  // A mark on every project filter, shown by the theme's CSS only on the chosen one.
+  function filterMark(className) {
+    const filters = [...document.querySelectorAll(".filter-button")];
+    const unanchor = anchor(filters);
+    filters.forEach((button) => {
+      const mark = document.createElement("span");
+      mark.className = className;
+      mark.setAttribute("aria-hidden", "true");
+      button.appendChild(mark);
+    });
+    return () => {
+      filters.forEach((button) => button.querySelectorAll(`:scope > .${className}`).forEach((mark) => mark.remove()));
+      unanchor();
+    };
   }
 
   const space = {
     start() {
       const undo = [];
-      const full = () => motion() === "full";
 
       // 1. A few stars of its own in front of the painted sky, at different depths, so they
       // drift apart as the page scrolls. Some twinkle; now and then one shoots across.
       // At Calm they hold still and twinkle slowly; at Off the backdrop is hidden altogether.
-      const canvas = document.createElement("canvas");
-      canvas.className = "space-sky";
-      (document.querySelector(".theme-backdrop") || body).appendChild(canvas);
-      const context = canvas.getContext("2d");
       const tints = ["255, 255, 255", "255, 255, 255", "255, 255, 255", "188, 208, 255", "255, 220, 170"];
       const stars = Array.from({ length: 64 }, () => ({
         x: Math.random(),
@@ -309,22 +447,9 @@
         phase: Math.random() * Math.PI * 2,
         tint: tints[Math.floor(Math.random() * tints.length)]
       }));
-      let width = 0;
-      let height = 0;
-      function size() {
-        const ratio = window.devicePixelRatio || 1;
-        width = window.innerWidth;
-        height = window.innerHeight;
-        canvas.width = Math.round(width * ratio);
-        canvas.height = Math.round(height * ratio);
-        context.setTransform(ratio, 0, 0, ratio, 0, 0);
-      }
-      size();
-      window.addEventListener("resize", size);
-
       let shooting = null;
       let nextShot = performance.now() + 8000 + Math.random() * 12000;
-      function shoot(now) {
+      function shoot(now, width, height) {
         const angle = (0.12 + Math.random() * 0.22) * Math.PI;
         const direction = Math.random() < 0.5 ? 1 : -1;
         shooting = {
@@ -338,16 +463,8 @@
         };
         nextShot = now + 20000 + Math.random() * 20000;
       }
-
-      let frame = 0;
-      let lastDraw = 0;
-      function draw(now) {
-        frame = window.requestAnimationFrame(draw);
-        const mode = motion();
+      undo.push(backdropCanvas("space-sky", (context, width, height, now, mode) => {
         if (mode === "off") return;
-        // Calm draws a few times a second: enough for a slow twinkle, nothing that moves.
-        if (mode !== "full" && now - lastDraw < 120) return;
-        lastDraw = now;
         const scroll = mode === "full" ? window.scrollY : 0;
         const slow = mode === "full" ? 1 : 3;
         context.clearRect(0, 0, width, height);
@@ -362,132 +479,161 @@
           context.arc(star.x * width, y, star.radius, 0, Math.PI * 2);
           context.fill();
         });
-        if (mode === "full" && !shooting && now > nextShot) shoot(now);
-        if (shooting) {
-          const progress = (now - shooting.start) / shooting.time;
-          if (progress >= 1 || mode !== "full") {
-            shooting = null;
-          } else {
-            const head = shooting.distance * progress;
-            const tail = Math.max(0, head - 150);
-            const fade = progress < 0.75 ? 1 : (1 - progress) / 0.25;
-            const x1 = shooting.x + shooting.dx * tail;
-            const y1 = shooting.y + shooting.dy * tail;
-            const x2 = shooting.x + shooting.dx * head;
-            const y2 = shooting.y + shooting.dy * head;
-            const streak = context.createLinearGradient(x1, y1, x2, y2);
-            streak.addColorStop(0, "rgba(220, 232, 255, 0)");
-            streak.addColorStop(1, `rgba(235, 242, 255, ${(0.85 * fade).toFixed(3)})`);
-            context.strokeStyle = streak;
-            context.lineWidth = 1.4;
-            context.lineCap = "round";
-            context.beginPath();
-            context.moveTo(x1, y1);
-            context.lineTo(x2, y2);
-            context.stroke();
-          }
+        if (mode === "full" && !shooting && now > nextShot) shoot(now, width, height);
+        if (!shooting) return;
+        const progress = (now - shooting.start) / shooting.time;
+        if (progress >= 1 || mode !== "full") {
+          shooting = null;
+          return;
         }
-      }
-      frame = window.requestAnimationFrame(draw);
-      undo.push(() => {
-        window.cancelAnimationFrame(frame);
-        window.removeEventListener("resize", size);
-        canvas.remove();
-      });
+        const head = shooting.distance * progress;
+        const tail = Math.max(0, head - 150);
+        const fade = progress < 0.75 ? 1 : (1 - progress) / 0.25;
+        const x1 = shooting.x + shooting.dx * tail;
+        const y1 = shooting.y + shooting.dy * tail;
+        const x2 = shooting.x + shooting.dx * head;
+        const y2 = shooting.y + shooting.dy * head;
+        const streak = context.createLinearGradient(x1, y1, x2, y2);
+        streak.addColorStop(0, "rgba(220, 232, 255, 0)");
+        streak.addColorStop(1, `rgba(235, 242, 255, ${(0.85 * fade).toFixed(3)})`);
+        context.strokeStyle = streak;
+        context.lineWidth = 1.4;
+        context.lineCap = "round";
+        context.beginPath();
+        context.moveTo(x1, y1);
+        context.lineTo(x2, y2);
+        context.stroke();
+      }));
 
       // 2. Starlight catches the edge of the card under the pointer, brightest nearest to it.
-      const cards = [...document.querySelectorAll(".kinetic-card, .proof-lane")];
-      undo.push(anchor(cards));
-      const glints = cards.map((card) => {
-        const glint = document.createElement("span");
-        glint.className = "space-glint";
-        glint.setAttribute("aria-hidden", "true");
-        card.appendChild(glint);
-        return glint;
-      });
-      let glintFrame = 0;
-      let pointer = null;
-      const moveGlint = (event) => {
-        pointer = event;
-        if (glintFrame) return;
-        glintFrame = window.requestAnimationFrame(() => {
-          glintFrame = 0;
-          const card = pointer.target instanceof Element ? pointer.target.closest(".kinetic-card, .proof-lane") : null;
-          const glint = card && card.querySelector(":scope > .space-glint");
-          if (!glint) return;
-          const box = card.getBoundingClientRect();
-          glint.style.setProperty("--glint-x", `${pointer.clientX - box.left}px`);
-          glint.style.setProperty("--glint-y", `${pointer.clientY - box.top}px`);
-        });
-      };
-      document.addEventListener("pointermove", moveGlint, { passive: true });
-      undo.push(() => {
-        document.removeEventListener("pointermove", moveGlint);
-        if (glintFrame) window.cancelAnimationFrame(glintFrame);
-        glints.forEach((glint) => glint.remove());
-      });
-
+      undo.push(pointerLight("space-glint"));
       // 3. Headings settle into place as they come into view, pulled in from a little wider.
-      // Only at full motion: anywhere else they are simply there.
-      const headings = full() ? [...document.querySelectorAll("main :is(h1, h2)")] : [];
-      headings.forEach((heading) => heading.classList.add("space-rise"));
-      const seen = new IntersectionObserver((entries) => {
-        entries.forEach((entry) => {
-          if (!entry.isIntersecting) return;
-          entry.target.classList.add("is-seen");
-          seen.unobserve(entry.target);
-        });
-      }, { threshold: 0.2 });
-      headings.forEach((heading) => seen.observe(heading));
-      undo.push(() => {
-        seen.disconnect();
-        headings.forEach((heading) => unmark(heading, "space-rise", "is-seen"));
-      });
-
+      undo.push(headingsArrive("space-rise"));
       // 4. A click leaves a small burst of stars where it landed.
-      const bursts = document.createElement("div");
-      bursts.className = "space-bursts";
-      bursts.setAttribute("aria-hidden", "true");
-      body.appendChild(bursts);
-      const burst = (event) => {
-        if (!full() || event.button !== 0) return;
-        const spot = document.createElement("span");
-        spot.className = "space-burst";
-        spot.style.left = `${event.clientX}px`;
-        spot.style.top = `${event.clientY}px`;
-        for (let i = 0; i < 8; i += 1) {
-          const spark = document.createElement("i");
-          spark.style.setProperty("--spark-turn", `${i * 45 + wobble(20)}deg`);
-          spark.style.setProperty("--spark-reach", `${18 + Math.random() * 14}px`);
-          spot.appendChild(spark);
-        }
-        bursts.appendChild(spot);
-        window.setTimeout(() => spot.remove(), 800);
-      };
-      document.addEventListener("pointerdown", burst, { passive: true });
-      undo.push(() => {
-        document.removeEventListener("pointerdown", burst);
-        bursts.remove();
-      });
-
+      undo.push(clickBurst("space-burst", 8, 24));
       // 5. A small dot orbits the chosen project filter.
-      const filters = [...document.querySelectorAll(".filter-button")];
-      undo.push(anchor(filters));
-      filters.forEach((button) => {
-        const dot = document.createElement("span");
-        dot.className = "space-orbit";
-        dot.setAttribute("aria-hidden", "true");
-        button.appendChild(dot);
-      });
-      undo.push(() => filters.forEach((button) => {
-        button.querySelectorAll(":scope > .space-orbit").forEach((dot) => dot.remove());
-      }));
+      undo.push(filterMark("space-orbit"));
 
       return () => undo.reverse().forEach((step) => step());
     }
   };
 
-  const lives = { paper, space };
+  const forest = {
+    start() {
+      const undo = [];
+      const full = () => motion() === "full";
+
+      // 1. Fireflies drift among the trees, each wandering on its own and blinking slowly.
+      // At Calm and Off they hold where they are.
+      const glow = document.createElement("canvas");
+      glow.width = 32;
+      glow.height = 32;
+      const glowContext = glow.getContext("2d");
+      const halo = glowContext.createRadialGradient(16, 16, 0, 16, 16, 16);
+      halo.addColorStop(0, "rgba(255, 244, 190, 1)");
+      halo.addColorStop(0.18, "rgba(242, 210, 122, 0.9)");
+      halo.addColorStop(0.45, "rgba(242, 210, 122, 0.22)");
+      halo.addColorStop(1, "rgba(242, 210, 122, 0)");
+      glowContext.fillStyle = halo;
+      glowContext.fillRect(0, 0, 32, 32);
+      const flies = Array.from({ length: 24 }, () => ({
+        x: Math.random(),
+        // Mostly low, among the trees, a few higher up.
+        y: 0.35 + Math.pow(Math.random(), 0.7) * 0.62,
+        heading: Math.random() * Math.PI * 2,
+        speed: 0.006 + Math.random() * 0.01,
+        size: 14 + Math.random() * 12,
+        blink: 2.5 + Math.random() * 4,
+        phase: Math.random() * Math.PI * 2
+      }));
+      let last = performance.now();
+      undo.push(backdropCanvas("forest-flies", (context, width, height, now, mode) => {
+        const seconds = Math.min(0.1, (now - last) / 1000);
+        last = now;
+        context.clearRect(0, 0, width, height);
+        flies.forEach((fly) => {
+          if (mode === "full") {
+            fly.heading += wobble(1.6) * seconds * 2;
+            fly.x = (fly.x + Math.cos(fly.heading) * fly.speed * seconds + 1) % 1;
+            fly.y += Math.sin(fly.heading) * fly.speed * seconds;
+            if (fly.y < 0.3 || fly.y > 0.98) fly.heading = -fly.heading;
+          }
+          const time = mode === "full" ? now : 0;
+          const light = 0.12 + 0.88 * Math.pow(Math.max(0, Math.sin((time / 1000 / fly.blink) * Math.PI * 2 + fly.phase)), 2);
+          context.globalAlpha = light;
+          context.drawImage(glow, fly.x * width - fly.size / 2, fly.y * height - fly.size / 2, fly.size, fly.size);
+        });
+        context.globalAlpha = 1;
+      }));
+
+      // 2. The tree lines slide apart as the page scrolls, the nearest fastest, so the reader
+      // seems to walk along the river.
+      const far = document.querySelector(".theme-backdrop .layer-b");
+      const middle = document.querySelector(".theme-backdrop .layer-c");
+      let scrollFrame = 0;
+      const shift = (depth, tile) => -((window.scrollY * depth) % tile);
+      function slide() {
+        scrollFrame = 0;
+        if (!far || !middle) return;
+        if (!full()) {
+          unstyle(far, "transform");
+          unstyle(middle, "transform", "--forest-near");
+          return;
+        }
+        const middleShift = shift(0.1, 1100);
+        far.style.transform = `translate3d(${shift(0.04, 900).toFixed(1)}px, 0, 0)`;
+        middle.style.transform = `translate3d(${middleShift.toFixed(1)}px, 0, 0)`;
+        // The nearest trees sit inside the middle layer, so they move by the difference.
+        middle.style.setProperty("--forest-near", `${(shift(0.22, 1300) - middleShift).toFixed(1)}px`);
+      }
+      const onScroll = () => {
+        if (!scrollFrame) scrollFrame = window.requestAnimationFrame(slide);
+      };
+      window.addEventListener("scroll", onScroll, { passive: true });
+      slide();
+      undo.push(() => {
+        window.removeEventListener("scroll", onScroll);
+        if (scrollFrame) window.cancelAnimationFrame(scrollFrame);
+        if (far) unstyle(far, "transform");
+        if (middle) unstyle(middle, "transform", "--forest-near");
+      });
+
+      // 3. Now and then a leaf drifts down behind the page.
+      const backdrop = document.querySelector(".theme-backdrop");
+      const leaves = [];
+      const dropLeaf = () => {
+        if (!full() || document.hidden || !backdrop) return;
+        const leaf = document.createElement("span");
+        leaf.className = "forest-leaf";
+        leaf.style.left = `${5 + Math.random() * 90}%`;
+        leaf.style.setProperty("--leaf-fall", `${10 + Math.random() * 5}s`);
+        leaf.style.setProperty("--leaf-drift", `${wobble(220)}px`);
+        leaf.style.setProperty("--leaf-turn", `${wobble(720)}deg`);
+        leaf.addEventListener("animationend", () => leaf.remove());
+        backdrop.appendChild(leaf);
+        leaves.push(leaf);
+      };
+      const leafTimer = window.setInterval(dropLeaf, 8000);
+      window.setTimeout(dropLeaf, 1500);
+      undo.push(() => {
+        window.clearInterval(leafTimer);
+        leaves.forEach((leaf) => leaf.remove());
+      });
+
+      // 4. The card under the pointer warms, as if a firefly came close.
+      undo.push(pointerLight("forest-glow"));
+      // 5. Headings rise out of the mist as they come into view.
+      undo.push(headingsArrive("forest-rise"));
+      // 6. A click sends a few fireflies up from where it landed.
+      undo.push(clickBurst("forest-burst", 6, 34));
+      // 7. A firefly settles on the chosen project filter.
+      undo.push(filterMark("forest-firefly"));
+
+      return () => undo.reverse().forEach((step) => step());
+    }
+  };
+
+  const lives = { paper, space, forest };
   let running = null;
 
   // The crumple: the sheet is squeezed and smoothed out again when it arrives, whether by a new
