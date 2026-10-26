@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="35" height="100" viewBox="0 0 35 100" aria-hidden="true">
+  <!-- Space's roadside mast: a lattice antenna tower with a small dish and a red warning light,
+       standing in for a tree on the moon. Same 35x100 box as tree.svg. -->
+  <g fill="none" stroke="#9aa0ab" stroke-width="1.2" stroke-linecap="round">
+    <path d="M11 100 L16 22 M24 100 L19 22"/>
+    <path d="M11.8 88 L23.2 76 M12.6 76 L22.4 64 M13.4 64 L21.6 52 M14.2 52 L20.8 40 M15 40 L20 30"/>
+    <path d="M23.2 88 L11.8 76 M22.4 76 L12.6 64 M21.6 64 L13.4 52 M20.8 52 L14.2 40 M20 40 L15 30"/>
+  </g>
+  <path d="M15 22 L20 22 L20 25 L15 25 Z" fill="#9aa0ab"/>
+  <path d="M17.5 22 L17.5 10" stroke="#c3c7d0" stroke-width="1.1"/>
+  <path d="M8 21 C 9 12, 18 9, 22 12 Z" fill="#dfe2e8"/>
+  <path d="M15 15 L22 12" stroke="#9aa0ab" stroke-width="0.7"/>
+  <circle cx="17.5" cy="9" r="1.6" fill="#ff6b5e"/>
+</svg>

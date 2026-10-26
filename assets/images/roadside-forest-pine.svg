@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="35" height="100" viewBox="0 0 35 100" aria-hidden="true">
+  <!-- Forest's roadside pine: fuller than the default tree, five tiers of drooping boughs with a
+       lighter edge where the moonlight catches them. Same 35x100 box as tree.svg. -->
+  <rect x="15.5" y="80" width="4" height="20" fill="#3d2d20"/>
+  <path d="M17.5 4 L23 18 L20.5 17.5 L26.5 32 L22.5 31 L29.5 47 L24.5 46 L32 63 L26 62 L34 82 L1 82 L9 62 L3 63 L10.5 46 L5.5 47 L12.5 31 L8.5 32 L14.5 17.5 L12 18 Z" fill="#14301f"/>
+  <path d="M17.5 4 L23 18 L20.5 17.5 L26.5 32 L22.5 31 L29.5 47 L24.5 46 L32 63 L26 62 L34 82 L17.5 82 Z" fill="#1c3f29"/>
+</svg>

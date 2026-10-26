@@ -208,6 +208,13 @@ body[data-theme="forest"] {
   --cta-base: rgba(10, 26, 19, 0.8);
   --truck-art: url("../images/truck-forest.svg");
   --wind-colour: rgba(200, 220, 200, 0.45);
+  --scene-far: url("../images/scene-forest-hills.svg");
+  --roadside-art: url("../images/roadside-forest-pine.svg");
+  --roadside-art-far: url("../images/roadside-forest-oak.svg");
+  --scene-hill-a: #0f2418;
+  --scene-hill-b: #0b1c13;
+  --scene-rock: #3c4a3e;
+  --scene-road: #040907;
   --bg: #0a1a13;
   --bg-mid: #08150f;
   --bg-deep: #040b07;
@@ -276,6 +283,14 @@ body[data-theme="space"] {
   --wheels-art: url("../images/wheels-space.svg");
   --wheels-filter: none;
   --wind-colour: rgba(190, 196, 210, 0.5);
+  --scene-far: url("../images/scene-moon-ridge.svg");
+  --roadside-art: url("../images/roadside-moon-base.svg");
+  --roadside-art-far: url("../images/roadside-moon-mast.svg");
+  --roadside-width: 60px;
+  --scene-hill-a: #3b3e44;
+  --scene-hill-b: #33363b;
+  --scene-rock: #8a8d94;
+  --scene-road: #2a2c32;
   --bg: #050607;
   --bg-mid: #070809;
   --bg-deep: #020303;
@@ -413,6 +428,14 @@ body[data-theme="paper"] {
   --wheels-art: url("../images/wheels-paper.svg");
   --wheels-filter: none;
   --wind-colour: rgba(70, 66, 62, 0.7);
+  /* The road scene is folded paper: origami mountains, trees and truck. */
+  --scene-far: url("../images/scene-origami-mountains.svg");
+  --roadside-art: url("../images/roadside-origami-pine.svg");
+  --roadside-art-far: url("../images/roadside-origami-tree.svg");
+  --scene-hill-a: #a8bf94;
+  --scene-hill-b: #93ad7f;
+  --scene-rock: #b6a98d;
+  --scene-road: #22336f;
   --bg: #f1e5c2;
   --bg-mid: #f1e5c2;
   --bg-deep: #e6d6ab;

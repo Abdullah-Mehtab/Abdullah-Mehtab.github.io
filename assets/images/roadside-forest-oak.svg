@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="35" height="100" viewBox="0 0 35 100" aria-hidden="true">
+  <!-- Forest's other roadside tree: a broad oak with a full crown, for the slower of the two
+       roadside loops. Same 35x100 box as tree.svg. -->
+  <path d="M15 100 L16 64 L12 56 L14.5 55 L17.5 61 L20 52 L22.5 53 L19.5 64 L20.5 100 Z" fill="#3d2d20"/>
+  <g fill="#173522">
+    <circle cx="17.5" cy="38" r="15"/>
+    <circle cx="8" cy="46" r="8"/>
+    <circle cx="27" cy="45" r="8.5"/>
+    <circle cx="11" cy="28" r="9"/>
+    <circle cx="24" cy="27" r="9.5"/>
+    <circle cx="17.5" cy="20" r="9"/>
+  </g>
+  <g fill="#204631">
+    <circle cx="23" cy="25" r="6.5"/>
+    <circle cx="27" cy="42" r="5.5"/>
+    <circle cx="20" cy="17" r="5"/>
+  </g>
+</svg>

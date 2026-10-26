@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="35" height="100" viewBox="0 0 35 100" aria-hidden="true">
+  <!-- Paper's other roadside tree: an origami round tree, a folded hexagon of orange-gold paper
+       in four faces on a folded kraft trunk. Same 35x100 box as tree.svg. -->
+  <path d="M16 60 L17.5 100 L15 100 Z" fill="#b8925e"/>
+  <path d="M17.5 60 L20 100 L17.5 100 Z" fill="#9b7646"/>
+  <path d="M17.5 30 L3 40 L17.5 46 Z" fill="#e6b65e"/>
+  <path d="M17.5 30 L32 40 L17.5 46 Z" fill="#cf9a45"/>
+  <path d="M3 40 L5 58 L17.5 66 L17.5 46 Z" fill="#d9a751"/>
+  <path d="M32 40 L30 58 L17.5 66 L17.5 46 Z" fill="#b8833a"/>
+</svg>

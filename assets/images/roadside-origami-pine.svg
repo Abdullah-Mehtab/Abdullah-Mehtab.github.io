@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="35" height="100" viewBox="0 0 35 100" aria-hidden="true">
+  <!-- Paper's roadside tree: an origami pine, three folded tiers of green paper, each with a lit
+       face and a face in shade, on a folded kraft trunk. Same 35x100 box as tree.svg. -->
+  <path d="M15.5 82 L17.5 100 L15 100 Z" fill="#b8925e"/>
+  <path d="M17.5 82 L20 100 L17.5 100 Z" fill="#9b7646"/>
+  <path d="M3 84 L17.5 52 L15 84 Z" fill="#8db07a"/>
+  <path d="M15 84 L17.5 52 L32 84 Z" fill="#6c9160"/>
+  <path d="M6 64 L17.5 30 L15.5 64 Z" fill="#9cbd87"/>
+  <path d="M15.5 64 L17.5 30 L29 64 Z" fill="#7a9e6b"/>
+  <path d="M9 42 L17.5 8 L16.5 42 Z" fill="#a9c893"/>
+  <path d="M16.5 42 L17.5 8 L26 42 Z" fill="#86a976"/>
+</svg>
