@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="85" height="15" viewBox="0 0 85 15" role="img" aria-label="Lunar rover wheels">
+  <!-- The Space theme's wheels, for truck-space.svg: woven wire wheels with chevron treads, as
+       a lunar rover had instead of rubber. Same box as wheels.svg, hubs at x=17 and x=66. -->
+  <g>
+    <circle cx="17" cy="7.5" r="6.8" fill="#2d3038" stroke="#c9ccd4" stroke-width="1.1"/>
+    <circle cx="66" cy="7.5" r="6.8" fill="#2d3038" stroke="#c9ccd4" stroke-width="1.1"/>
+    <g fill="none" stroke="#8d929d" stroke-width="0.6">
+      <path d="M17 1.4 L17 13.6 M10.9 7.5 L23.1 7.5 M12.7 3.2 L21.3 11.8 M21.3 3.2 L12.7 11.8"/>
+      <path d="M66 1.4 L66 13.6 M59.9 7.5 L72.1 7.5 M61.7 3.2 L70.3 11.8 M70.3 3.2 L61.7 11.8"/>
+    </g>
+    <circle cx="17" cy="7.5" r="2.2" fill="#dde0e6"/>
+    <circle cx="66" cy="7.5" r="2.2" fill="#dde0e6"/>
+  </g>
+</svg>

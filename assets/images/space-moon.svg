@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="120" height="120" viewBox="0 0 120 120" aria-hidden="true">
+  <!-- The Space theme's small moon, lit from the same side as space-planet.svg. -->
+  <defs>
+    <radialGradient id="lit" cx="0.5" cy="0.5" r="0.5" fx="0.72" fy="0.3">
+      <stop offset="0" stop-color="#a9adb8"/>
+      <stop offset="0.45" stop-color="#5a5e69"/>
+      <stop offset="0.8" stop-color="#1c1e24"/>
+      <stop offset="1" stop-color="#0a0b0d"/>
+    </radialGradient>
+  </defs>
+  <circle cx="60" cy="60" r="52" fill="url(#lit)"/>
+  <circle cx="44" cy="46" r="7" fill="#2a2d34" opacity="0.35"/>
+  <circle cx="62" cy="70" r="4.5" fill="#2a2d34" opacity="0.3"/>
+  <circle cx="38" cy="66" r="3" fill="#2a2d34" opacity="0.28"/>
+</svg>

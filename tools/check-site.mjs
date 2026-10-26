@@ -631,6 +631,66 @@ async function checkThemeLife(baseUrl) {
   }
 }
 
+// Film pages keep their own type under every theme (owner ruling 2026-10-23): a theme may change a film page's
+// colours, surfaces, corners and vehicle, never its fonts, sizes or letter case. Themes reach type through custom
+// properties (--font-display, --font-controls, --label-case and others) that film.css pins or overrides, and a theme
+// control added later could reach a film page silently. So every film page is typed in Professional and then in each
+// other theme, and every heading, label, button and paragraph must come out identical.
+async function checkFilmType(baseUrl) {
+  const executablePath = findChromeExecutable();
+  if (!executablePath) {
+    warnings.push('Skipping the film type check because Chrome/Edge was not found. Set CHROME_PATH to enable it.');
+    return;
+  }
+  const js = await readFile(resolve(repoRoot, 'assets/js/portfolio-v2.js'), 'utf8');
+  const menu = js.match(/const themeOptions = \[([\s\S]*?)\];/);
+  if (!menu) {
+    failures.push('assets/js/portfolio-v2.js has no themeOptions list the film type check can read.');
+    return;
+  }
+  const themes = [...menu[1].matchAll(/\["([^"]+)"/g)].map((m) => m[1]).filter((theme) => theme !== 'professional');
+  const { default: puppeteer } = await import('puppeteer-core');
+  const browser = await puppeteer.launch({ executablePath, headless: true, args: ['--no-sandbox', '--disable-setuid-sandbox'] });
+  async function typeOf(route, theme) {
+    const page = await browser.newPage();
+    try {
+      await guardPage(page, baseUrl);
+      await page.setViewport({ width: 1440, height: 900 });
+      await page.evaluateOnNewDocument((value) => {
+        localStorage.setItem('abdullah-portfolio-theme', value);
+        localStorage.setItem('abdullah-portfolio-motion', 'off');
+      }, theme);
+      await page.goto(`${baseUrl}${route}`, { waitUntil: 'load', timeout: 60000 });
+      return await page.evaluate(() => [...document.querySelectorAll('h1, h2, h3, p, .eyebrow, .nav-links a, .button, .filter-button, .style-toggle')].map((element) => {
+        const style = getComputedStyle(element);
+        const name = `${element.tagName.toLowerCase()}${element.className && typeof element.className === 'string' ? '.' + element.className.trim().split(/\s+/)[0] : ''} "${element.textContent.trim().slice(0, 30)}"`;
+        return [name, style.fontFamily, style.fontSize, style.fontWeight, style.fontStyle, style.textTransform, style.letterSpacing, style.lineHeight].join(' | ');
+      }));
+    } finally {
+      await page.close();
+    }
+  }
+  try {
+    for (const route of await filmRoutes()) {
+      const professional = await typeOf(route, 'professional');
+      if (!professional.length) {
+        failures.push(`${route}: the film type check found no text to compare.`);
+        continue;
+      }
+      for (const theme of themes) {
+        const themed = await typeOf(route, theme);
+        const index = professional.findIndex((line, i) => line !== themed[i]);
+        if (index >= 0 || themed.length !== professional.length) {
+          const at = index >= 0 ? index : Math.min(professional.length, themed.length);
+          failures.push(`${route} sets its type differently under ${theme}: "${professional[at] || 'nothing'}" became "${themed[at] || 'nothing'}". Reset that theme control in body.film in assets/css/film.css.`);
+        }
+      }
+    }
+  } finally {
+    await browser.close();
+  }
+}
+
 // Every theme must leave every page readable. A theme is a block of values, and nothing else tested what those values
 // do to text: the drive link in the header was the theme's green on the pale header bar in every theme, about 1:1,
 // until 2026-10-23, and the CV in Light was dark text on a sheet drawn dark for dark themes. This reads text the way a
@@ -5557,6 +5617,7 @@ async function main() {
     await checkFilmContextRecovery(baseUrl);
     await checkFilmStageOptions(baseUrl);
     await checkThemeLife(baseUrl);
+    await checkFilmType(baseUrl);
     await checkThemeContrast(baseUrl);
     await checkVisitCounting(baseUrl);
     if (args.has('--screenshots')) {

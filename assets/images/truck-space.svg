@@ -1,30 +1,40 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="85" height="60" viewBox="0 0 85 60" role="img" aria-label="Delivery truck">
-  <!-- Faces right: the scenery scrolls right to left past it, and the wind lines in
-       animations.css trail off its left side. The bottom 14px is left clear for wheels.svg,
-       whose hubs sit at x=17 and x=66, which is where the axle bolts below are placed.
-
-       One truck per theme. The truck art custom property in the space block of
-       portfolio-v2.css points animations.css at this file. Nine parts are painted separately
-       rather than one red truck hue rotated in CSS: a rotation moves every colour in a file
-       by the same angle, so cab, cargo box, glass and chassis stay locked together and every
-       theme got the same flat truck in another shade. The cargo box is pale so it reads
-       against this theme's page, and the rear marker sits off the cab's hue so the truck
-       carries more than one colour of its own.
+<svg xmlns="http://www.w3.org/2000/svg" width="85" height="60" viewBox="0 0 85 60" role="img" aria-label="Lunar rover">
+  <!-- The Space theme's vehicle: a lunar rover, an open aluminium frame with two seats, gold
+       foil boxes front and back, and a dish antenna on a mast. Faces right, as every vehicle
+       does: the scenery scrolls right to left past it. The bottom 14px is left clear for
+       wheels-space.svg, whose hubs sit at x=17 and x=66, under the fenders drawn here.
 
        Do not write a double hyphen into this comment. SVG is parsed as XML, where a double
        hyphen inside a comment is malformed and makes the whole file render as nothing. -->
-  <rect x="2" y="10" width="48" height="36" rx="2" fill="#d8d5dd"/>
-  <rect x="2" y="10" width="48" height="7" rx="2" fill="#eae9ec"/>
-  <rect x="5" y="21" width="42" height="1.4" fill="#a8a0b6"/>
-  <rect x="26" y="24" width="1.6" height="20" fill="#a8a0b6"/>
-  <rect x="5" y="41" width="42" height="3" rx="1" fill="#a8a0b6"/>
-  <path d="M50 23 h14 l10 11 h7 a2 2 0 0 1 2 2 v10 H50 Z" fill="#5d36a1"/>
-  <path d="M53 26 h10 l7.5 7.5 H53 Z" fill="#c6bdd6"/>
-  <rect x="50" y="40" width="33" height="3" fill="#371d62"/>
-  <rect x="49" y="24" width="1.6" height="22" fill="#332e3e"/>
-  <rect x="2" y="46" width="80" height="3" rx="1" fill="#332e3e"/>
-  <rect x="79" y="37" width="4" height="5" rx="1" fill="#ffe6a8"/>
-  <rect x="2" y="40" width="3" height="4" rx="1" fill="#d5c34d"/>
-  <circle cx="17" cy="48" r="1.2" fill="#a8a0b6"/>
-  <circle cx="66" cy="48" r="1.2" fill="#371d62"/>
+  <g fill="none" stroke="#d6d9e0" stroke-linecap="round" stroke-linejoin="round">
+    <!-- fenders over both wheels -->
+    <path d="M6.5 46.5 C 7.5 39.5, 26.5 39.5, 27.5 46.5" stroke-width="2.2"/>
+    <path d="M55.5 46.5 C 56.5 39.5, 75.5 39.5, 76.5 46.5" stroke-width="2.2"/>
+    <!-- the frame -->
+    <path d="M4 41.5 L80 41.5" stroke-width="2.4"/>
+    <path d="M26 41.5 L30 36.5 L52 36.5 L56 41.5" stroke-width="1.4"/>
+    <!-- seat backs -->
+    <path d="M30.5 36.5 L28.5 26.5 M41.5 36.5 L39.5 26.5" stroke-width="1.6"/>
+    <!-- the control post and the antenna mast -->
+    <path d="M53 36.5 L55 27" stroke-width="1.4"/>
+    <path d="M71 34 L71 14" stroke-width="1.3"/>
+    <path d="M64 33.5 L63 21" stroke="#aeb3be" stroke-width="1"/>
+  </g>
+  <!-- seat webbing -->
+  <path d="M28.6 27.5 L30.3 35.5 L37.3 35.5 L35.7 27.5 Z" fill="#5e6c8c"/>
+  <path d="M39.6 27.5 L41.3 35.5 L48.3 35.5 L46.7 27.5 Z" fill="#5e6c8c"/>
+  <!-- the console -->
+  <rect x="52.5" y="23.5" width="6.5" height="4.5" rx="0.8" fill="#9aa0ad"/>
+  <!-- gold foil boxes, the warm colour the theme uses for its labels -->
+  <rect x="58" y="33" width="20" height="8" rx="1" fill="#b98d3e"/>
+  <path d="M58.6 34.2 L65 34.2 L66.5 40 L58.6 40 Z M68 34.2 L77.2 34.2 L77.2 37 L69 38.6 Z" fill="#e3c071" opacity="0.85"/>
+  <rect x="4.5" y="33.5" width="16" height="7.5" rx="1" fill="#b98d3e"/>
+  <path d="M5.2 34.6 L12 34.6 L13 40.2 L5.2 40.2 Z" fill="#e3c071" opacity="0.8"/>
+  <!-- the dish: an open umbrella on the mast, tilted to the sky -->
+  <path d="M61.5 13.5 C 64 6.5, 77 5, 81.5 10.5 Z" fill="#eceef2"/>
+  <path d="M71 14 L71.6 7.4 M66 12 L71 14 L77 9" fill="none" stroke="#9ea4b0" stroke-width="0.7"/>
+  <circle cx="71" cy="14" r="1.2" fill="#c3c7d0"/>
+  <!-- the camera at the front -->
+  <rect x="76.5" y="29" width="5" height="3.6" rx="0.6" fill="#7d838f"/>
+  <circle cx="81.5" cy="30.8" r="1" fill="#bcd0ff"/>
 </svg>

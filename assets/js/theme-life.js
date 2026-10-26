@@ -1,4 +1,4 @@
-// ABOUTME: A theme's life beyond its colours: what moves, draws itself and answers the visitor. Paper's lives here.
+// ABOUTME: A theme's life beyond its colours: what moves, draws itself and answers the visitor. Paper's and Space's live here.
 // ABOUTME: Loaded by portfolio-v2.js the first time a theme with life is picked; never on film pages, where the film is the life.
 (function () {
   if (window.themeLife) return;
@@ -277,7 +277,217 @@
     }
   };
 
-  const lives = { paper };
+  // Adds a class only to elements that are not already positioned, so the parts placed inside
+  // them have a box to sit in without moving an element the page placed on purpose.
+  function anchor(elements) {
+    const anchored = elements.filter((element) => getComputedStyle(element).position === "static");
+    anchored.forEach((element) => element.classList.add("space-anchor"));
+    return () => anchored.forEach((element) => unmark(element, "space-anchor"));
+  }
+
+  const space = {
+    start() {
+      const undo = [];
+      const full = () => motion() === "full";
+
+      // 1. A few stars of its own in front of the painted sky, at different depths, so they
+      // drift apart as the page scrolls. Some twinkle; now and then one shoots across.
+      // At Calm they hold still and twinkle slowly; at Off the backdrop is hidden altogether.
+      const canvas = document.createElement("canvas");
+      canvas.className = "space-sky";
+      (document.querySelector(".theme-backdrop") || body).appendChild(canvas);
+      const context = canvas.getContext("2d");
+      const tints = ["255, 255, 255", "255, 255, 255", "255, 255, 255", "188, 208, 255", "255, 220, 170"];
+      const stars = Array.from({ length: 64 }, () => ({
+        x: Math.random(),
+        y: Math.random(),
+        radius: 0.45 + Math.pow(Math.random(), 2.4) * 1.1,
+        depth: 0.04 + Math.random() * 0.18,
+        light: 0.3 + Math.random() * 0.5,
+        // Seconds per twinkle, or 0 for a star that keeps its light.
+        twinkle: Math.random() < 0.22 ? 3 + Math.random() * 5 : 0,
+        phase: Math.random() * Math.PI * 2,
+        tint: tints[Math.floor(Math.random() * tints.length)]
+      }));
+      let width = 0;
+      let height = 0;
+      function size() {
+        const ratio = window.devicePixelRatio || 1;
+        width = window.innerWidth;
+        height = window.innerHeight;
+        canvas.width = Math.round(width * ratio);
+        canvas.height = Math.round(height * ratio);
+        context.setTransform(ratio, 0, 0, ratio, 0, 0);
+      }
+      size();
+      window.addEventListener("resize", size);
+
+      let shooting = null;
+      let nextShot = performance.now() + 8000 + Math.random() * 12000;
+      function shoot(now) {
+        const angle = (0.12 + Math.random() * 0.22) * Math.PI;
+        const direction = Math.random() < 0.5 ? 1 : -1;
+        shooting = {
+          x: width * (0.2 + Math.random() * 0.6),
+          y: height * (0.05 + Math.random() * 0.3),
+          dx: Math.cos(angle) * direction,
+          dy: Math.sin(angle),
+          start: now,
+          time: 700 + Math.random() * 300,
+          distance: 240 + Math.random() * 160
+        };
+        nextShot = now + 20000 + Math.random() * 20000;
+      }
+
+      let frame = 0;
+      let lastDraw = 0;
+      function draw(now) {
+        frame = window.requestAnimationFrame(draw);
+        const mode = motion();
+        if (mode === "off") return;
+        // Calm draws a few times a second: enough for a slow twinkle, nothing that moves.
+        if (mode !== "full" && now - lastDraw < 120) return;
+        lastDraw = now;
+        const scroll = mode === "full" ? window.scrollY : 0;
+        const slow = mode === "full" ? 1 : 3;
+        context.clearRect(0, 0, width, height);
+        stars.forEach((star) => {
+          let y = (star.y * height - scroll * star.depth) % height;
+          if (y < 0) y += height;
+          const light = star.twinkle
+            ? star.light * (0.55 + 0.45 * Math.sin(now / 1000 / (star.twinkle * slow) * Math.PI * 2 + star.phase))
+            : star.light;
+          context.fillStyle = `rgba(${star.tint}, ${light.toFixed(3)})`;
+          context.beginPath();
+          context.arc(star.x * width, y, star.radius, 0, Math.PI * 2);
+          context.fill();
+        });
+        if (mode === "full" && !shooting && now > nextShot) shoot(now);
+        if (shooting) {
+          const progress = (now - shooting.start) / shooting.time;
+          if (progress >= 1 || mode !== "full") {
+            shooting = null;
+          } else {
+            const head = shooting.distance * progress;
+            const tail = Math.max(0, head - 150);
+            const fade = progress < 0.75 ? 1 : (1 - progress) / 0.25;
+            const x1 = shooting.x + shooting.dx * tail;
+            const y1 = shooting.y + shooting.dy * tail;
+            const x2 = shooting.x + shooting.dx * head;
+            const y2 = shooting.y + shooting.dy * head;
+            const streak = context.createLinearGradient(x1, y1, x2, y2);
+            streak.addColorStop(0, "rgba(220, 232, 255, 0)");
+            streak.addColorStop(1, `rgba(235, 242, 255, ${(0.85 * fade).toFixed(3)})`);
+            context.strokeStyle = streak;
+            context.lineWidth = 1.4;
+            context.lineCap = "round";
+            context.beginPath();
+            context.moveTo(x1, y1);
+            context.lineTo(x2, y2);
+            context.stroke();
+          }
+        }
+      }
+      frame = window.requestAnimationFrame(draw);
+      undo.push(() => {
+        window.cancelAnimationFrame(frame);
+        window.removeEventListener("resize", size);
+        canvas.remove();
+      });
+
+      // 2. Starlight catches the edge of the card under the pointer, brightest nearest to it.
+      const cards = [...document.querySelectorAll(".kinetic-card, .proof-lane")];
+      undo.push(anchor(cards));
+      const glints = cards.map((card) => {
+        const glint = document.createElement("span");
+        glint.className = "space-glint";
+        glint.setAttribute("aria-hidden", "true");
+        card.appendChild(glint);
+        return glint;
+      });
+      let glintFrame = 0;
+      let pointer = null;
+      const moveGlint = (event) => {
+        pointer = event;
+        if (glintFrame) return;
+        glintFrame = window.requestAnimationFrame(() => {
+          glintFrame = 0;
+          const card = pointer.target instanceof Element ? pointer.target.closest(".kinetic-card, .proof-lane") : null;
+          const glint = card && card.querySelector(":scope > .space-glint");
+          if (!glint) return;
+          const box = card.getBoundingClientRect();
+          glint.style.setProperty("--glint-x", `${pointer.clientX - box.left}px`);
+          glint.style.setProperty("--glint-y", `${pointer.clientY - box.top}px`);
+        });
+      };
+      document.addEventListener("pointermove", moveGlint, { passive: true });
+      undo.push(() => {
+        document.removeEventListener("pointermove", moveGlint);
+        if (glintFrame) window.cancelAnimationFrame(glintFrame);
+        glints.forEach((glint) => glint.remove());
+      });
+
+      // 3. Headings settle into place as they come into view, pulled in from a little wider.
+      // Only at full motion: anywhere else they are simply there.
+      const headings = full() ? [...document.querySelectorAll("main :is(h1, h2)")] : [];
+      headings.forEach((heading) => heading.classList.add("space-rise"));
+      const seen = new IntersectionObserver((entries) => {
+        entries.forEach((entry) => {
+          if (!entry.isIntersecting) return;
+          entry.target.classList.add("is-seen");
+          seen.unobserve(entry.target);
+        });
+      }, { threshold: 0.2 });
+      headings.forEach((heading) => seen.observe(heading));
+      undo.push(() => {
+        seen.disconnect();
+        headings.forEach((heading) => unmark(heading, "space-rise", "is-seen"));
+      });
+
+      // 4. A click leaves a small burst of stars where it landed.
+      const bursts = document.createElement("div");
+      bursts.className = "space-bursts";
+      bursts.setAttribute("aria-hidden", "true");
+      body.appendChild(bursts);
+      const burst = (event) => {
+        if (!full() || event.button !== 0) return;
+        const spot = document.createElement("span");
+        spot.className = "space-burst";
+        spot.style.left = `${event.clientX}px`;
+        spot.style.top = `${event.clientY}px`;
+        for (let i = 0; i < 8; i += 1) {
+          const spark = document.createElement("i");
+          spark.style.setProperty("--spark-turn", `${i * 45 + wobble(20)}deg`);
+          spark.style.setProperty("--spark-reach", `${18 + Math.random() * 14}px`);
+          spot.appendChild(spark);
+        }
+        bursts.appendChild(spot);
+        window.setTimeout(() => spot.remove(), 800);
+      };
+      document.addEventListener("pointerdown", burst, { passive: true });
+      undo.push(() => {
+        document.removeEventListener("pointerdown", burst);
+        bursts.remove();
+      });
+
+      // 5. A small dot orbits the chosen project filter.
+      const filters = [...document.querySelectorAll(".filter-button")];
+      undo.push(anchor(filters));
+      filters.forEach((button) => {
+        const dot = document.createElement("span");
+        dot.className = "space-orbit";
+        dot.setAttribute("aria-hidden", "true");
+        button.appendChild(dot);
+      });
+      undo.push(() => filters.forEach((button) => {
+        button.querySelectorAll(":scope > .space-orbit").forEach((dot) => dot.remove());
+      }));
+
+      return () => undo.reverse().forEach((step) => step());
+    }
+  };
+
+  const lives = { paper, space };
   let running = null;
 
   // The crumple: the sheet is squeezed and smoothed out again when it arrives, whether by a new

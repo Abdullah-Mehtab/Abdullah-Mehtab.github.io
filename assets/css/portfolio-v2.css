@@ -10,6 +10,44 @@
   unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
 }
 
+/* Archivo, the film pages' type and the Space theme's headings. Declared here because every
+   page loads this file, film pages included, so it has one home. */
+@font-face {
+  font-family: "Archivo";
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url("../fonts/archivo-400-latin.woff2") format("woff2");
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+
+@font-face {
+  font-family: "Archivo";
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url("../fonts/archivo-400-latin-ext.woff2") format("woff2");
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+
+@font-face {
+  font-family: "Archivo";
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: url("../fonts/archivo-700-latin.woff2") format("woff2");
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+
+@font-face {
+  font-family: "Archivo";
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: url("../fonts/archivo-700-latin-ext.woff2") format("woff2");
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+
 :root {
   --bg: #07111c;
   --bg-soft: #0c1826;
@@ -164,32 +202,71 @@ body[data-theme="forest"] {
 }
 
 body[data-theme="space"] {
+  /* Space: a black sky with sparse stars, one dim planet lit from the side and a small moon,
+     plain bold headings, and small labels in spaced capitals like a mission control panel.
+     The stars that drift and twinkle, and the shooting stars, are in assets/js/theme-life.js. */
+  --page-bg:
+    url("../images/space-planet.svg") right -120px top 90px / 520px 520px no-repeat,
+    url("../images/space-moon.svg") left 7% top 1640px / 54px 54px no-repeat,
+    radial-gradient(ellipse at 12% 0, rgba(110, 130, 190, 0.07), transparent 42rem) no-repeat,
+    url("../images/space-stars-near.svg") 300px 410px / 1093px 1093px,
+    url("../images/space-stars-far.svg") 0 0 / 720px 720px,
+    #040506;
+  --font-display: "Archivo", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --font-controls: "Archivo", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --font-controls-size: 0.76rem;
+  --label-case: uppercase;
+  --label-tracking: 0.12em;
+  --label-size: 0.76rem;
+  --radius-sm: 3px;
+  --radius-md: 4px;
+  --radius-pill: 4px;
+  --shadow: 0 24px 70px rgba(0, 0, 0, 0.55);
+  --edge-rgb: 226, 232, 245;
+  --hairline-rgb: 226, 232, 245;
+  --veil-rgb: 255, 255, 255;
+  --glow-green-rgb: 240, 194, 122;
+  --glow-cyan-rgb: 156, 194, 255;
+  --glow-sky-rgb: 156, 194, 255;
+  --glow-gold-rgb: 240, 194, 122;
+  --glow-mint-rgb: 156, 194, 255;
+  --glow-amber-rgb: 240, 194, 122;
+  --sheet-bg: linear-gradient(180deg, rgba(14, 17, 20, 0.97), rgba(7, 8, 10, 0.98));
+  --sheet-head-bg: rgba(10, 12, 14, 0.92);
+  --sheet-shadow: 0 30px 100px rgba(0, 0, 0, 0.6);
+  --cta-base: rgba(11, 14, 16, 0.8);
   --truck-art: url("../images/truck-space.svg");
-  --bg: #050713;
-  --bg-mid: #0b102b;
-  --bg-deep: #03040a;
-  --bg-soft: #101635;
-  --bg-panel: #151b40;
+  --wheels-art: url("../images/wheels-space.svg");
+  --wheels-filter: none;
+  --wind-colour: rgba(190, 196, 210, 0.5);
+  --bg: #050607;
+  --bg-mid: #070809;
+  --bg-deep: #020303;
+  --bg-soft: #101416;
+  --bg-panel: #151a1d;
   --text: #edf1ff;
-  --muted: #a8afd1;
-  --line: rgba(213, 222, 255, 0.15);
-  --cyan: #78e8ff;
-  --green: #b9ffcf;
-  --amber: #ffd27d;
-  --rose: #ff7ab3;
-  --violet: #b89bff;
-  --glow-a: rgba(120, 232, 255, 0.13);
-  --glow-b: rgba(184, 155, 255, 0.13);
-  --cursor-a: rgba(120, 232, 255, 0.17);
-  --cursor-b: rgba(184, 155, 255, 0.1);
-  --grid-a: rgba(120, 232, 255, 0.03);
-  --grid-b: rgba(184, 155, 255, 0.025);
-  --panel-bg: rgba(11, 16, 43, 0.78);
-  --panel-bg-strong: rgba(16, 22, 53, 0.92);
-  --panel-glow: rgba(184, 155, 255, 0.07);
-  --nav-top-bg: linear-gradient(90deg, #d8d7ff, #8bdfff);
-  --nav-top-text: #050713;
-  --nav-scroll-bg: rgba(5, 7, 19, 0.78);
+  --muted: #a3abbd;
+  --line: rgba(226, 232, 245, 0.13);
+  --cyan: #9cc2ff;
+  --green: #f0c27a;
+  --amber: #f0c27a;
+  --rose: #ff8f86;
+  --violet: #b3bcff;
+  --glow-a: rgba(156, 194, 255, 0.05);
+  --glow-b: rgba(240, 194, 122, 0.035);
+  --cursor-a: rgba(156, 194, 255, 0.12);
+  --cursor-b: rgba(240, 194, 122, 0.06);
+  --grid-a: transparent;
+  --grid-b: transparent;
+  --panel-bg: rgba(10, 12, 14, 0.84);
+  --panel-bg-strong: rgba(15, 18, 21, 0.94);
+  --panel-glow: transparent;
+  --nav-top-bg: transparent;
+  --nav-top-edge: rgba(226, 232, 245, 0.08);
+  --nav-top-shadow: none;
+  --nav-top-text: #edf1ff;
+  --nav-link-top: rgba(237, 241, 255, 0.74);
+  --nav-scroll-bg: rgba(4, 5, 6, 0.84);
 }
 
 body[data-theme="cyber"] {
@@ -475,20 +552,20 @@ body[data-theme="forest"] .layer-b {
   animation: forestDrift 28s linear infinite;
 }
 
+/* Space: the sky itself is the page background. The backdrop adds only a faint haze that
+   breathes, and theme-life.js puts its drifting stars on a canvas inside it. */
 body[data-theme="space"] .layer-a {
-  background:
-    radial-gradient(circle at 18% 22%, rgba(255, 210, 125, 0.22) 0 22px, transparent 24px),
-    radial-gradient(circle at 70% 28%, rgba(184, 155, 255, 0.22) 0 38px, transparent 40px),
-    radial-gradient(circle at 82% 72%, rgba(120, 232, 255, 0.16) 0 18px, transparent 20px);
-  animation: orbitFloat 20s ease-in-out infinite alternate;
+  inset: 0;
+  opacity: 1;
+  background: radial-gradient(ellipse at 78% 70%, rgba(120, 140, 200, 0.06), transparent 55%);
+  animation: spaceHaze 22s ease-in-out infinite alternate;
 }
 
-body[data-theme="space"] .layer-b {
-  background-image:
-    radial-gradient(circle, rgba(255,255,255,0.78) 0 1px, transparent 1.6px),
-    radial-gradient(circle, rgba(120,232,255,0.7) 0 1px, transparent 1.5px);
-  background-size: 110px 110px, 170px 170px;
-  animation: starsMove 80s linear infinite;
+body[data-theme="space"] .layer-b,
+body[data-theme="space"] .layer-c {
+  background: none;
+  filter: none;
+  animation: none;
 }
 
 body[data-theme="cyber"] .layer-b {
@@ -701,6 +778,111 @@ body[data-theme="paper"].is-crunching .site-footer {
   transition: none;
 }
 
+/* Space's life, added and removed by theme-life.js like Paper's. */
+.space-anchor {
+  position: relative;
+}
+
+.space-sky {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+
+/* The starlight on a card's edge: a light that follows the pointer, masked to a 1px ring. */
+.space-glint {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  padding: 1px;
+  border-radius: inherit;
+  pointer-events: none;
+  opacity: 0;
+  background: radial-gradient(240px circle at var(--glint-x, 50%) var(--glint-y, 50%), #f2f6ff, rgba(214, 228, 255, 0.45) 40%, transparent 80%);
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  transition: opacity 280ms ease;
+}
+
+.kinetic-card:hover > .space-glint,
+.proof-lane:hover > .space-glint {
+  opacity: 1;
+}
+
+.space-rise {
+  opacity: 0;
+  transform: scaleX(1.05) translateY(10px);
+  transition: opacity 900ms ease, transform 1200ms cubic-bezier(0.2, 0.7, 0.2, 1);
+}
+
+.space-rise.is-seen {
+  opacity: 1;
+  transform: none;
+}
+
+.space-bursts {
+  position: fixed;
+  inset: 0;
+  z-index: 46;
+  pointer-events: none;
+}
+
+.space-burst {
+  position: absolute;
+  width: 0;
+  height: 0;
+}
+
+.space-burst i {
+  position: absolute;
+  left: -1.5px;
+  top: -1.5px;
+  width: 3px;
+  height: 3px;
+  border-radius: 50%;
+  background: #eef3ff;
+  box-shadow: 0 0 6px rgba(188, 208, 255, 0.9);
+  animation: spaceSpark 700ms cubic-bezier(0.2, 0.8, 0.3, 1) forwards;
+}
+
+.space-orbit {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: var(--amber);
+  box-shadow: 0 0 6px rgba(var(--glow-amber-rgb), 0.8);
+  pointer-events: none;
+  opacity: 0;
+  offset-path: inset(-5px round 7px);
+  offset-rotate: 0deg;
+  animation: spaceOrbit 5s linear infinite;
+  transition: opacity 300ms ease;
+}
+
+.filter-button.is-active > .space-orbit {
+  opacity: 1;
+}
+
+.theme-life-still .space-glint {
+  display: none;
+}
+
+.theme-life-still .space-rise {
+  opacity: 1;
+  transform: none;
+  transition: none;
+}
+
+.theme-life-still .space-orbit {
+  offset-distance: 8%;
+  animation: none;
+}
+
 body.portfolio-v2 a {
   color: inherit;
 }
@@ -773,8 +955,12 @@ body.portfolio-v2 a {
   border-radius: var(--radius-sm);
   color: var(--nav-link-top);
   text-decoration: none;
+  font-family: var(--font-controls, revert);
   font-weight: 850;
-  font-size: 0.95rem;
+  font-size: var(--label-size, 0.95rem);
+  /* A theme may set its small labels (menu, buttons, filters) in spaced capitals. */
+  text-transform: var(--label-case, revert);
+  letter-spacing: var(--label-tracking, revert);
   transition: color 180ms ease, background 180ms ease, transform 180ms ease;
 }
 
@@ -849,7 +1035,11 @@ body.portfolio-v2 a {
   background: color-mix(in srgb, var(--nav-top-text) 8%, transparent);
   cursor: pointer;
   font: inherit;
+  font-family: var(--font-controls, inherit);
+  font-size: var(--label-size, inherit);
   font-weight: 900;
+  text-transform: var(--label-case, revert);
+  letter-spacing: var(--label-tracking, revert);
 }
 
 .site-header.is-scrolled .style-toggle {
@@ -1071,6 +1261,9 @@ body[data-motion="off"] .cursor-effects {
      names a font for its controls. */
   font-family: var(--font-controls, revert);
   font-weight: 850;
+  font-size: var(--label-size, revert);
+  text-transform: var(--label-case, revert);
+  letter-spacing: var(--label-tracking, revert);
   cursor: pointer;
   transition: transform 180ms ease, border-color 180ms ease, background 180ms ease, box-shadow 180ms ease;
 }
@@ -1883,6 +2076,8 @@ body[data-motion="off"] .cursor-effects {
   font-family: var(--font-controls, revert);
   font-size: var(--font-controls-size, revert);
   font-weight: 800;
+  text-transform: var(--label-case, revert);
+  letter-spacing: var(--label-tracking, revert);
   transition: transform 160ms ease, border-color 160ms ease, background 160ms ease, color 160ms ease;
 }
 
@@ -3147,23 +3342,35 @@ body[data-cursor="reticle"] .cursor-reticle {
   }
 }
 
-@keyframes orbitFloat {
+@keyframes spaceSpark {
   from {
-    transform: translate3d(-1%, 0, 0) rotate(-2deg);
+    opacity: 1;
+    transform: rotate(var(--spark-turn)) translateX(0) scale(1);
   }
 
   to {
-    transform: translate3d(2%, 1%, 0) rotate(2deg);
+    opacity: 0;
+    transform: rotate(var(--spark-turn)) translateX(var(--spark-reach)) scale(0.4);
   }
 }
 
-@keyframes starsMove {
+@keyframes spaceOrbit {
   from {
-    background-position: 0 0, 0 0;
+    offset-distance: 0%;
   }
 
   to {
-    background-position: 400px 300px, -280px 360px;
+    offset-distance: 100%;
+  }
+}
+
+@keyframes spaceHaze {
+  from {
+    opacity: 0.55;
+  }
+
+  to {
+    opacity: 1;
   }
 }
 

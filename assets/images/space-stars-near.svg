@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1093" height="1093" viewBox="0 0 1093 1093" aria-hidden="true">
+  <!-- Nearer stars: fewer and a little larger, on an odd tile size so the two tiles never line up into a visible grid. Tiled by the Space theme's page background in portfolio-v2.css.
+       Written by a seeded generator, so the sky stays the same. -->
+  <circle cx="593.7" cy="7.7" r="0.68" fill="#ffffff" opacity="0.42"/>
+  <circle cx="48.3" cy="132.2" r="0.69" fill="#ffffff" opacity="0.35"/>
+  <circle cx="607.5" cy="606.8" r="1.34" fill="#bcd0ff" opacity="0.63"/>
+  <circle cx="608.8" cy="739.7" r="0.61" fill="#bcd0ff" opacity="0.55"/>
+  <circle cx="256.8" cy="898.0" r="0.87" fill="#ffffff" opacity="0.32"/>
+  <circle cx="828.1" cy="331.5" r="1.07" fill="#ffffff" opacity="0.43"/>
+  <circle cx="994.9" cy="474.0" r="0.60" fill="#ffffff" opacity="0.82"/>
+  <circle cx="648.3" cy="825.4" r="0.62" fill="#ffffff" opacity="0.45"/>
+  <circle cx="790.2" cy="296.3" r="0.91" fill="#ffffff" opacity="0.31"/>
+  <circle cx="151.7" cy="983.0" r="1.22" fill="#bcd0ff" opacity="0.38"/>
+  <circle cx="480.4" cy="834.3" r="0.60" fill="#ffffff" opacity="0.57"/>
+  <circle cx="327.0" cy="741.0" r="0.61" fill="#ffffff" opacity="0.28"/>
+  <circle cx="843.4" cy="470.9" r="0.68" fill="#ffffff" opacity="0.44"/>
+  <circle cx="244.9" cy="714.7" r="0.70" fill="#ffffff" opacity="0.39"/>
+  <circle cx="533.6" cy="59.8" r="0.62" fill="#ffffff" opacity="0.33"/>
+  <circle cx="138.6" cy="55.4" r="0.69" fill="#ffffff" opacity="0.32"/>
+  <circle cx="813.8" cy="214.9" r="1.13" fill="#ffffff" opacity="0.48"/>
+  <circle cx="401.3" cy="971.3" r="1.24" fill="#ffffff" opacity="0.33"/>
+  <circle cx="839.2" cy="601.1" r="0.97" fill="#bcd0ff" opacity="0.42"/>
+  <circle cx="943.2" cy="29.7" r="1.01" fill="#ffffff" opacity="0.32"/>
+  <circle cx="414.2" cy="636.2" r="0.89" fill="#bcd0ff" opacity="0.30"/>
+  <circle cx="1047.7" cy="215.3" r="1.08" fill="#bcd0ff" opacity="0.65"/>
+</svg>
