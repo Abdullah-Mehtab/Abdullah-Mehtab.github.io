@@ -1,4 +1,4 @@
-// ABOUTME: A theme's life beyond its colours: what moves, draws itself and answers the visitor. Paper, Space, Forest, Cyber and Ember live here.
+// ABOUTME: A theme's life beyond its colours: what moves, draws itself and answers the visitor. Paper, Space, Forest, Cyber, Ember and Cassie live here.
 // ABOUTME: Loaded by portfolio-v2.js the first time a theme with life is picked; never on film pages, where the film is the life.
 (function () {
   if (window.themeLife) return;
@@ -908,7 +908,256 @@
     }
   };
 
-  const lives = { paper, space, forest, cyber, ember };
+  const cassie = {
+    start() {
+      const undo = [];
+      const timers = [];
+      const full = () => motion() === "full";
+
+      // 1. Hearts, bows and sparkles drift up behind the page, each turning a little as it goes;
+      // the sparkles twinkle where they are. At Calm everything holds still.
+      const shapes = ["heart", "heart", "heart", "bow", "sparkle", "sparkle"];
+      const tints = ["255, 90, 168", "255, 156, 201", "255, 184, 216", "255, 214, 234"];
+      const float = (anywhere) => ({
+        shape: shapes[Math.floor(Math.random() * shapes.length)],
+        x: Math.random(),
+        y: anywhere ? Math.random() : 1.05,
+        rise: 0.02 + Math.random() * 0.04,
+        sway: 0.006 + Math.random() * 0.014,
+        swayRate: 0.4 + Math.random() * 0.8,
+        phase: Math.random() * Math.PI * 2,
+        size: 7 + Math.random() * 12,
+        light: 0.3 + Math.random() * 0.45,
+        tint: tints[Math.floor(Math.random() * tints.length)]
+      });
+      const floats = Array.from({ length: 60 }, () => float(true));
+      // The pointer pushes the floats aside as it passes, and a click on one pops it.
+      let aim = null;
+      const push = (event) => { aim = { x: event.clientX, y: event.clientY }; };
+      const pop = (event) => {
+        const canvas = document.querySelector("canvas.cassie-floats");
+        if (!canvas || event.button !== 0) return;
+        const width = canvas.clientWidth;
+        const height = canvas.clientHeight;
+        const hit = floats.findIndex((item) => item.shape !== "sparkle" && Math.hypot((item.x + (item.nudgeX || 0)) * width - event.clientX, item.y * height - event.clientY) < item.size + 10);
+        if (hit >= 0) floats[hit] = float(false);
+      };
+      document.addEventListener("pointermove", push, { passive: true });
+      document.addEventListener("pointerdown", pop, { passive: true });
+      undo.push(() => {
+        document.removeEventListener("pointermove", push);
+        document.removeEventListener("pointerdown", pop);
+      });
+      function draw(context, item, x, y, light) {
+        const s = item.size;
+        context.fillStyle = `rgba(${item.tint}, ${light.toFixed(3)})`;
+        context.beginPath();
+        if (item.shape === "heart") {
+          context.moveTo(x, y + s * 0.45);
+          context.bezierCurveTo(x - s * 0.6, y + s * 0.05, x - s * 0.5, y - s * 0.45, x, y - s * 0.15);
+          context.bezierCurveTo(x + s * 0.5, y - s * 0.45, x + s * 0.6, y + s * 0.05, x, y + s * 0.45);
+        } else if (item.shape === "bow") {
+          context.moveTo(x, y);
+          context.lineTo(x - s * 0.6, y - s * 0.35);
+          context.lineTo(x - s * 0.6, y + s * 0.35);
+          context.closePath();
+          context.moveTo(x, y);
+          context.lineTo(x + s * 0.6, y - s * 0.35);
+          context.lineTo(x + s * 0.6, y + s * 0.35);
+          context.closePath();
+          context.moveTo(x + s * 0.16, y);
+          context.arc(x, y, s * 0.16, 0, Math.PI * 2);
+        } else {
+          const k = s * 0.14;
+          const r = s * 0.5;
+          context.moveTo(x, y - r);
+          context.lineTo(x + k, y - k);
+          context.lineTo(x + r, y);
+          context.lineTo(x + k, y + k);
+          context.lineTo(x, y + r);
+          context.lineTo(x - k, y + k);
+          context.lineTo(x - r, y);
+          context.lineTo(x - k, y - k);
+          context.closePath();
+        }
+        context.fill();
+      }
+      let last = performance.now();
+      undo.push(backdropCanvas("cassie-floats", (context, width, height, now, mode) => {
+        const seconds = Math.min(0.1, (now - last) / 1000);
+        last = now;
+        context.clearRect(0, 0, width, height);
+        const time = mode === "full" ? now / 1000 : 0;
+        floats.forEach((item, index) => {
+          if (mode === "full" && item.shape !== "sparkle") {
+            item.y -= item.rise * seconds;
+            if (item.y < -0.05) floats[index] = float(false);
+          }
+          // Pushed away from a pointer within 110px, drifting back once it has gone.
+          item.nudgeX = (item.nudgeX || 0) * 0.94;
+          if (mode === "full" && aim) {
+            const dx = (item.x + item.nudgeX) * width - aim.x;
+            const dy = item.y * height - aim.y;
+            const distance = Math.hypot(dx, dy);
+            if (distance < 110 && distance > 0) {
+              item.nudgeX += ((dx / distance) * (110 - distance) * 0.012) / width * 6;
+              item.y += ((dy / distance) * (110 - distance) * 0.012) / height * 6;
+            }
+          }
+          const x = (item.x + item.nudgeX + Math.sin(time * item.swayRate + item.phase) * item.sway) * width;
+          const light = item.shape === "sparkle" ? item.light * (0.4 + 0.6 * Math.abs(Math.sin(time * item.swayRate * 2 + item.phase))) : item.light;
+          draw(context, item, x, item.y * height, light);
+        });
+      }));
+
+      // 2. Hello Cassie peeks up over the bottom of the screen. The eyes follow the pointer and
+      // blink now and then, and at full motion the cat ducks down and pops up again once in a
+      // while. At Calm the cat simply sits there; at Off it is not shown.
+      const peek = document.createElement("div");
+      peek.className = "cassie-peek";
+      peek.setAttribute("aria-hidden", "true");
+      const pupils = ["is-left", "is-right"].map((side) => {
+        const pupil = document.createElement("span");
+        pupil.className = `cassie-pupil ${side}`;
+        const lid = document.createElement("span");
+        lid.className = `cassie-lid ${side}`;
+        peek.append(pupil, lid);
+        return pupil;
+      });
+      const paw = document.createElement("span");
+      paw.className = "cassie-paw";
+      peek.appendChild(paw);
+      body.appendChild(peek);
+
+      // Petting: a click closes the cat's eyes, it wiggles, and a purr floats up.
+      const pet = () => {
+        peek.classList.remove("is-petted");
+        void peek.offsetWidth;
+        peek.classList.add("is-petted");
+        const purr = document.createElement("span");
+        purr.className = "cassie-purr";
+        purr.textContent = "purr";
+        peek.appendChild(purr);
+        timers.push(window.setTimeout(() => {
+          purr.remove();
+          peek.classList.remove("is-petted");
+        }, 1500));
+      };
+      peek.addEventListener("click", pet);
+
+      // A pointer that comes close gets batted at, once in a while rather than every frame.
+      let lastBat = 0;
+      const bat = (event) => {
+        if (!full() || !peek.classList.contains("is-up") || peek.classList.contains("is-petted")) return;
+        const box = peek.getBoundingClientRect();
+        const near = Math.hypot(event.clientX - (box.left + box.width / 2), event.clientY - (box.top + box.height / 2)) < 170;
+        const now = performance.now();
+        if (!near || now - lastBat < 900) return;
+        lastBat = now;
+        peek.classList.remove("is-batting");
+        void peek.offsetWidth;
+        peek.classList.add("is-batting");
+      };
+      document.addEventListener("pointermove", bat, { passive: true });
+      undo.push(() => document.removeEventListener("pointermove", bat));
+      timers.push(window.setTimeout(() => peek.classList.add("is-up"), full() ? 1200 : 0));
+      let lookFrame = 0;
+      let pointer = null;
+      const look = (event) => {
+        pointer = event;
+        if (lookFrame || !full()) return;
+        lookFrame = window.requestAnimationFrame(() => {
+          lookFrame = 0;
+          const box = peek.getBoundingClientRect();
+          pupils.forEach((pupil) => {
+            const eye = pupil.getBoundingClientRect();
+            const dx = pointer.clientX - (eye.left + eye.width / 2);
+            const dy = pointer.clientY - (eye.top + eye.height / 2);
+            const distance = Math.hypot(dx, dy) || 1;
+            // At most a few pixels, scaled to the drawing, so the pupil stays inside the eye.
+            const reach = box.width * 0.022;
+            pupil.style.setProperty("--look-x", `${((dx / distance) * reach).toFixed(1)}px`);
+            pupil.style.setProperty("--look-y", `${((dy / distance) * reach).toFixed(1)}px`);
+          });
+        });
+      };
+      document.addEventListener("pointermove", look, { passive: true });
+      const blink = () => {
+        if (full() && !document.hidden) {
+          peek.classList.remove("is-blinking");
+          void peek.offsetWidth;
+          peek.classList.add("is-blinking");
+        }
+        timers.push(window.setTimeout(blink, 2500 + Math.random() * 3500));
+      };
+      timers.push(window.setTimeout(blink, 2500));
+      timers.push(window.setInterval(() => {
+        if (!full() || document.hidden) return;
+        peek.classList.remove("is-up");
+        timers.push(window.setTimeout(() => peek.classList.add("is-up"), 2200));
+      }, 26000));
+      undo.push(() => {
+        document.removeEventListener("pointermove", look);
+        if (lookFrame) window.cancelAnimationFrame(lookFrame);
+        peek.remove();
+      });
+
+      // 3. Hello Cassie asleep in the corner of the footer.
+      const footer = document.querySelector(".site-footer-inner");
+      if (footer) {
+        const unanchor = anchor([footer]);
+        const sleeper = document.createElement("span");
+        sleeper.className = "cassie-sleep";
+        sleeper.setAttribute("aria-hidden", "true");
+        ["is-left", "is-right"].forEach((side) => {
+          const eye = document.createElement("span");
+          eye.className = `cassie-sleep-eye ${side}`;
+          sleeper.appendChild(eye);
+        });
+        footer.appendChild(sleeper);
+        // The pointer wakes the cat; a click makes it stretch; left alone, it dozes off again.
+        let doze = 0;
+        const wake = () => {
+          window.clearTimeout(doze);
+          sleeper.classList.add("is-awake");
+        };
+        const rest = () => {
+          doze = window.setTimeout(() => sleeper.classList.remove("is-awake"), 1500);
+          timers.push(doze);
+        };
+        const stretch = () => {
+          wake();
+          sleeper.classList.remove("is-stretching");
+          void sleeper.offsetWidth;
+          sleeper.classList.add("is-stretching");
+          timers.push(window.setTimeout(() => sleeper.classList.remove("is-stretching"), 850));
+        };
+        sleeper.addEventListener("pointerenter", wake);
+        sleeper.addEventListener("pointerleave", rest);
+        sleeper.addEventListener("click", stretch);
+        undo.push(() => {
+          sleeper.remove();
+          unanchor();
+        });
+      }
+
+      // 4. Headings pop into place with a little bounce.
+      undo.push(headingsArrive("cassie-pop"));
+      // 5. The card under the pointer glows pink and a bow pops onto its corner.
+      undo.push(pointerLight("cassie-glow"));
+      // 6. A click bursts into hearts.
+      undo.push(clickBurst("cassie-burst", 8, 40));
+      // 7. The chosen project filter wears a bow.
+      undo.push(filterMark("cassie-bow"));
+
+      return () => {
+        timers.forEach((timer) => { window.clearInterval(timer); window.clearTimeout(timer); });
+        undo.reverse().forEach((step) => step());
+      };
+    }
+  };
+
+  const lives = { paper, space, forest, cyber, ember, cassie };
   let running = null;
 
   // The crumple: the sheet is squeezed and smoothed out again when it arrives, whether by a new

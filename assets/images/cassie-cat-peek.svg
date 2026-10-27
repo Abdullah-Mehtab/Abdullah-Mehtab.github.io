@@ -1,0 +1,62 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="140" height="110" viewBox="0 0 140 110" aria-hidden="true">
+  <!-- Hello Cassie, the Cassie theme's cat, after the owner's own: a silver classic tabby with
+       the tabby M and stripes over the head, a white muzzle and paws, a pink nose and amber
+       eyes. Peeking up over the bottom edge of the screen, paws on the edge. The eyes are drawn
+       without pupils: theme-life.js lays the pupils over them (left eye at 37.1% 58.2%, right
+       at 62.9% 58.2%) so they can follow the pointer, blink and close when the cat is petted.
+
+       Do not write a double hyphen into this comment. SVG is parsed as XML, where a double
+       hyphen inside a comment is malformed and makes the whole file render as nothing. -->
+  <defs>
+    <linearGradient id="fur" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#dfe2e8"/>
+      <stop offset="1" stop-color="#b9bec8"/>
+    </linearGradient>
+    <radialGradient id="iris" cx="0.5" cy="0.45" r="0.6">
+      <stop offset="0" stop-color="#f6c45a"/>
+      <stop offset="0.7" stop-color="#e09a2e"/>
+      <stop offset="1" stop-color="#b8731c"/>
+    </radialGradient>
+  </defs>
+  <!-- ears -->
+  <path d="M24 50 C22 32, 25 16, 32 7 C41 13, 51 23, 57 32 Z" fill="url(#fur)"/>
+  <path d="M116 50 C118 32, 115 16, 108 7 C99 13, 89 23, 83 32 Z" fill="url(#fur)"/>
+  <path d="M31 40 C30 30, 31 21, 34 15 C39 20, 45 26, 49 32 Z" fill="#f4a9c4"/>
+  <path d="M109 40 C110 30, 109 21, 106 15 C101 20, 95 26, 91 32 Z" fill="#f4a9c4"/>
+  <!-- head, wide at the cheeks -->
+  <path d="M16 72 C14 42, 40 25, 70 25 C100 25, 126 42, 124 72 C122 94, 99 106, 70 106 C41 106, 18 94, 16 72 Z" fill="url(#fur)"/>
+  <!-- the tabby M and the stripes back over the head -->
+  <g fill="none" stroke="#3a3d45" stroke-width="3.4" stroke-linecap="round">
+    <path d="M61 30 C62 36, 63 42, 64 49"/>
+    <path d="M70 28 L70 48"/>
+    <path d="M79 30 C78 36, 77 42, 76 49"/>
+    <path d="M45 43 C51 38, 56 39, 60 45"/>
+    <path d="M95 43 C89 38, 84 39, 80 45"/>
+  </g>
+  <!-- cheek stripes, and the dark line from the outer corner of each eye -->
+  <g fill="none" stroke="#3a3d45" stroke-width="2.6" stroke-linecap="round">
+    <path d="M18 66 C24 66, 29 67, 33 70"/>
+    <path d="M20 77 C25 76, 30 76, 34 78"/>
+    <path d="M122 66 C116 66, 111 67, 107 70"/>
+    <path d="M120 77 C115 76, 110 76, 106 78"/>
+    <path d="M42 73 C39 75, 37 77, 36 80" stroke-width="1.8"/>
+    <path d="M98 73 C101 75, 103 77, 104 80" stroke-width="1.8"/>
+  </g>
+  <!-- white muzzle and chin -->
+  <path d="M50 82 C50 73, 61 71, 70 76 C79 71, 90 73, 90 82 C90 95, 80 104, 70 104 C60 104, 50 95, 50 82 Z" fill="#f7f7f9"/>
+  <!-- eyes, waiting for their pupils -->
+  <circle cx="52" cy="64" r="10.5" fill="url(#iris)" stroke="#2b2d33" stroke-width="1.6"/>
+  <circle cx="88" cy="64" r="10.5" fill="url(#iris)" stroke="#2b2d33" stroke-width="1.6"/>
+  <!-- nose and mouth -->
+  <path d="M65 76.5 Q70 74.6 75 76.5 Q72.6 81 70 82 Q67.4 81 65 76.5 Z" fill="#f29bb8"/>
+  <path d="M70 82 L70 85 M70 85 Q66.5 89 63 86 M70 85 Q73.5 89 77 86" fill="none" stroke="#6b5b63" stroke-width="1.4" stroke-linecap="round"/>
+  <!-- whiskers -->
+  <g stroke="#ffffff" stroke-width="0.9" stroke-linecap="round" opacity="0.85">
+    <path d="M50 83 L26 79 M50 87 L27 89 M51 91 L30 97"/>
+    <path d="M90 83 L114 79 M90 87 L113 89 M89 91 L110 97"/>
+  </g>
+  <!-- the left white paw resting on the edge; the right one is a separate piece in
+       theme-life.js (at 58.6% 87.3%, 22.9% by 16.4%), so the cat can lift it and bat -->
+  <ellipse cx="42" cy="105" rx="16" ry="9" fill="#f7f7f9" stroke="#c8cad3" stroke-width="1"/>
+  <path d="M37 100 L37 104 M42 99.5 L42 104 M47 100 L47 104" stroke="#c8cad3" stroke-width="1.2" stroke-linecap="round"/>
+</svg>

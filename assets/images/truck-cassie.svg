@@ -1,0 +1,38 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="85" height="60" viewBox="0 0 85 60" role="img" aria-label="Pink van with a cat driving">
+  <!-- The Cassie theme's vehicle: a small, rounded pink van with a black bow on the roof and a
+       white heart on its side, and Hello Cassie, the theme's silver tabby, at the wheel. Faces
+       right, as every vehicle does. The bottom 14px is left clear for wheels-cassie.svg, whose
+       hubs sit at x=17 and x=66, under the wheel arches drawn here.
+
+       Do not write a double hyphen into this comment. SVG is parsed as XML, where a double
+       hyphen inside a comment is malformed and makes the whole file render as nothing. -->
+  <!-- the body -->
+  <path d="M3 46.5 L3 27 Q3 15 15 15 L55 15 Q64 15 70 23 L77 31 Q84 33 84 40 L84 46.5 Z" fill="#ff6fb1"/>
+  <path d="M3 39 L84 39 L84 46.5 L3 46.5 Z" fill="#ffd1e6"/>
+  <path d="M3 39 L84 39" stroke="#e0528f" stroke-width="1"/>
+  <!-- the rear window and the windscreen -->
+  <rect x="9" y="19.5" width="21" height="11" rx="4" fill="#2a1622"/>
+  <path d="M42 19.5 L58 19.5 Q62 19.5 65 23.5 L70.5 31 L42 31 Z" fill="#2a1622"/>
+  <!-- Hello Cassie at the wheel: ears, silver head, amber eyes, white muzzle, stripes -->
+  <path d="M49 25 L50.5 19.8 L53.5 23 Z M58.5 23 L61.5 19.8 L63 25 Z" fill="#cdd1d8"/>
+  <path d="M50.5 23.6 L51 21.4 L52.3 22.9 Z M59.7 22.9 L61 21.4 L61.5 23.6 Z" fill="#f4a9c4"/>
+  <ellipse cx="56" cy="27.5" rx="7.6" ry="6.2" fill="#cdd1d8"/>
+  <path d="M54.6 22 L54.8 24.6 M56 21.6 L56 24.4 M57.4 22 L57.2 24.6" stroke="#3a3d45" stroke-width="0.8" stroke-linecap="round"/>
+  <ellipse cx="56" cy="30.2" rx="3.2" ry="2.3" fill="#f7f7f9"/>
+  <circle cx="53" cy="27.2" r="1.5" fill="#e6a03a"/>
+  <circle cx="59" cy="27.2" r="1.5" fill="#e6a03a"/>
+  <circle cx="53" cy="27.3" r="0.7" fill="#1a1a1e"/>
+  <circle cx="59" cy="27.3" r="0.7" fill="#1a1a1e"/>
+  <path d="M55.3 29 L56.7 29 L56 29.8 Z" fill="#f29bb8"/>
+  <!-- a white heart on the side, and the door seam -->
+  <path d="M22 33.2 C22 31.4, 24.4 31, 25 32.6 C25.6 31, 28 31.4, 28 33.2 C28 35, 25 36.8, 25 36.8 C25 36.8, 22 35, 22 33.2 Z" fill="#ffffff"/>
+  <path d="M38 17 L38 45.5" stroke="#e0528f" stroke-width="0.8"/>
+  <!-- the black bow on the roof -->
+  <path d="M24 11.5 L17 7.5 L17 15.5 Z M28 11.5 L35 7.5 L35 15.5 Z" fill="#1d1218" stroke="#ff8cc2" stroke-width="0.8" stroke-linejoin="round"/>
+  <circle cx="26" cy="11.5" r="2.4" fill="#ff6fb1" stroke="#1d1218" stroke-width="1"/>
+  <!-- wheel arches -->
+  <path d="M7.5 46.6 A9.5 9.5 0 0 1 26.5 46.6 Z M56.5 46.6 A9.5 9.5 0 0 1 75.5 46.6 Z" fill="#1d1218"/>
+  <!-- head and tail lights -->
+  <rect x="81.4" y="34" width="2.6" height="3" rx="0.8" fill="#fff6d6"/>
+  <rect x="3" y="31" width="1.8" height="4" rx="0.6" fill="#ff3d6e"/>
+</svg>

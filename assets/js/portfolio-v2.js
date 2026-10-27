@@ -16,7 +16,8 @@
     ["space", "Space"],
     ["ember", "Ember"],
     ["light", "Light mode"],
-    ["paper", "Paper"]
+    ["paper", "Paper"],
+    ["cassie", "Cassie"]
   ];
 
   const cursorOptions = [
@@ -36,6 +37,7 @@
     ["pencil", "Pencil"],
     ["fireflies", "Fireflies"],
     ["terminal", "Terminal"],
+    ["paws", "Paws"],
     ["theme", "Match theme"],
     ["off", "Off"]
   ];
@@ -48,13 +50,14 @@
     space: "constellation",
     ember: "embers",
     light: "spotlight",
-    paper: "pencil"
+    paper: "pencil",
+    cassie: "paws"
   };
 
   // Themes with a life beyond their colours (things that draw themselves, answer the visitor).
   // That code is in theme-life.js, fetched the first time one of these themes is picked, and
   // never on a film page, where the film is what moves.
-  const themesWithLife = new Set(["paper", "space", "forest", "cyber", "ember"]);
+  const themesWithLife = new Set(["paper", "space", "forest", "cyber", "ember", "cassie"]);
   let themeLifeRequested = false;
 
   function loadThemeLife() {
@@ -617,6 +620,7 @@
     const delayByMode = {
       fireflies: 90,
       terminal: 60,
+      paws: 120,
       ribbon: 16,
       plasma: 18,
       scanner: 22,
@@ -638,8 +642,12 @@
       constellation: 1220,
       snow: 1450,
       fireflies: 2200,
-      terminal: 900
+      terminal: 900,
+      paws: 1300
     };
+
+    let lastPaw = null;
+    let pawStep = 0;
 
     function createTrailPoint(x, y, mode) {
       if (!effects || noTrailModes.has(mode)) return;
@@ -667,6 +675,16 @@
       if (mode === "terminal") {
         x = Math.round(x / 10) * 10;
         y = Math.round(y / 18) * 18;
+      }
+
+      // Paw prints point the way the pointer went, left and right feet in turn.
+      if (mode === "paws") {
+        const angle = lastPaw ? Math.atan2(y - lastPaw.y, x - lastPaw.x) : -Math.PI / 2;
+        const side = (pawStep += 1) % 2 ? 1 : -1;
+        lastPaw = { x, y };
+        x += Math.cos(angle + Math.PI / 2) * 5 * side;
+        y += Math.sin(angle + Math.PI / 2) * 5 * side;
+        point.style.setProperty("--paw-turn", `${Math.round((angle * 180) / Math.PI + 90)}deg`);
       }
 
       point.style.left = `${x}px`;

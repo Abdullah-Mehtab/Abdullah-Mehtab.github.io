@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="85" height="15" viewBox="0 0 85 15" role="img" aria-label="Van wheels">
+  <!-- The Cassie theme's wheels, for truck-cassie.svg: black tyres with pink hubs. Same box as
+       wheels.svg, hubs at x=17 and x=66. -->
+  <circle cx="17" cy="7.5" r="7" fill="#1d1218"/>
+  <circle cx="66" cy="7.5" r="7" fill="#1d1218"/>
+  <circle cx="17" cy="7.5" r="3.4" fill="#ff8cc2"/>
+  <circle cx="66" cy="7.5" r="3.4" fill="#ff8cc2"/>
+  <circle cx="17" cy="7.5" r="1.2" fill="#ffffff"/>
+  <circle cx="66" cy="7.5" r="1.2" fill="#ffffff"/>
+</svg>
