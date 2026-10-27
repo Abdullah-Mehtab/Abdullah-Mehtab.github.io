@@ -35,16 +35,16 @@
     ["pulse", "Pulse Rings"],
     ["pencil", "Pencil"],
     ["fireflies", "Fireflies"],
+    ["terminal", "Terminal"],
     ["theme", "Match theme"],
     ["off", "Off"]
   ];
 
-  // The trail "Match theme" uses for each theme. Cyber gets a trail of its own (a terminal
-  // cursor) when that theme is built; until then, the closest one.
+  // The trail "Match theme" uses for each theme.
   const trailForTheme = {
     professional: "constellation",
     forest: "fireflies",
-    cyber: "scanner",
+    cyber: "terminal",
     space: "constellation",
     ember: "embers",
     light: "spotlight",
@@ -54,7 +54,7 @@
   // Themes with a life beyond their colours (things that draw themselves, answer the visitor).
   // That code is in theme-life.js, fetched the first time one of these themes is picked, and
   // never on a film page, where the film is what moves.
-  const themesWithLife = new Set(["paper", "space", "forest"]);
+  const themesWithLife = new Set(["paper", "space", "forest", "cyber", "ember"]);
   let themeLifeRequested = false;
 
   function loadThemeLife() {
@@ -616,6 +616,7 @@
     };
     const delayByMode = {
       fireflies: 90,
+      terminal: 60,
       ribbon: 16,
       plasma: 18,
       scanner: 22,
@@ -636,7 +637,8 @@
       embers: 1150,
       constellation: 1220,
       snow: 1450,
-      fireflies: 2200
+      fireflies: 2200,
+      terminal: 900
     };
 
     function createTrailPoint(x, y, mode) {
@@ -659,6 +661,12 @@
       if (mode === "fireflies") {
         point.style.setProperty("--firefly-x", `${Math.round((Math.random() - 0.5) * 50)}px`);
         point.style.setProperty("--firefly-y", `${Math.round(-10 - Math.random() * 30)}px`);
+      }
+
+      // The terminal cursor moves in whole character cells, as on a screen of text.
+      if (mode === "terminal") {
+        x = Math.round(x / 10) * 10;
+        y = Math.round(y / 18) * 18;
       }
 
       point.style.left = `${x}px`;

@@ -636,7 +636,7 @@ async function checkThemeLife(baseUrl) {
 }
 
 // Film pages keep their own type under every theme (owner ruling 2026-10-23): a theme may change a film page's
-// colours, surfaces, corners and vehicle, never its fonts, sizes or letter case. Themes reach type through custom
+// colours, surfaces, corners and vehicle, never its fonts, sizes, letter case or the marks it writes around words. Themes reach type through custom
 // properties (--font-display, --font-controls, --label-case and others) that film.css pins or overrides, and a theme
 // control added later could reach a film page silently. So every film page is typed in Professional and then in each
 // other theme, and every heading, label, button and paragraph must come out identical.
@@ -668,7 +668,8 @@ async function checkFilmType(baseUrl) {
       return await page.evaluate(() => [...document.querySelectorAll('h1, h2, h3, p, .eyebrow, .nav-links a, .button, .filter-button, .style-toggle')].map((element) => {
         const style = getComputedStyle(element);
         const name = `${element.tagName.toLowerCase()}${element.className && typeof element.className === 'string' ? '.' + element.className.trim().split(/\s+/)[0] : ''} "${element.textContent.trim().slice(0, 30)}"`;
-        return [name, style.fontFamily, style.fontSize, style.fontWeight, style.fontStyle, style.textTransform, style.letterSpacing, style.lineHeight].join(' | ');
+        // A theme may also write marks around a page's words (Cyber's prompt, # and brackets), and those must not reach a film either.
+        return [name, style.fontFamily, style.fontSize, style.fontWeight, style.fontStyle, style.textTransform, style.letterSpacing, style.lineHeight, getComputedStyle(element, '::before').content, getComputedStyle(element, '::after').content].join(' | ');
       }));
     } finally {
       await page.close();

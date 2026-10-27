@@ -20,6 +20,17 @@
   unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
 }
 
+/* The Ember theme's headings, labels and buttons. One weight, latin only, downloaded only when
+   Ember is picked. */
+@font-face {
+  font-family: "Josefin Sans";
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: url("../fonts/josefin-sans-700-latin.woff2") format("woff2");
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+
 /* Archivo, the film pages' type and the Space theme's headings. Declared here because every
    page loads this file, film pages included, so it has one home. */
 @font-face {
@@ -56,6 +67,38 @@
   font-display: swap;
   src: url("../fonts/archivo-700-latin-ext.woff2") format("woff2");
   unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+
+/* IBM Plex Mono, the film pages' labels and the Cyber theme's every word. Here for the same
+   reason as Archivo. */
+@font-face {
+  font-family: "IBM Plex Mono";
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url("../fonts/ibm-plex-mono-400-latin.woff2") format("woff2");
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+
+@font-face {
+  font-family: "IBM Plex Mono";
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url("../fonts/ibm-plex-mono-400-latin-ext.woff2") format("woff2");
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+
+/* The Cyber theme's headings and labels. A family name of its own rather than weight 600 of
+   "IBM Plex Mono": the film pages draw bold Plex Mono (canvas captions at 600, buttons at 850)
+   from the 400 face, and a real 600 face in that family would quietly redraw them. Latin only. */
+@font-face {
+  font-family: "IBM Plex Mono SemiBold";
+  font-style: normal;
+  font-weight: 600;
+  font-display: swap;
+  src: url("../fonts/ibm-plex-mono-600-latin.woff2") format("woff2");
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
 }
 
 :root {
@@ -322,61 +365,169 @@ body[data-theme="space"] {
 }
 
 body[data-theme="cyber"] {
+  /* Cyber: a Kali terminal in purple. Plum black with a faint magenta and violet aura at the
+     top, every word in IBM Plex Mono, labels written as a shell prompt, # before section
+     headings, buttons in brackets, square corners and thin violet rules. Colours keep the jobs
+     a terminal gives them: purple for the prompt, magenta for the cursor and what is chosen,
+     cyan for links, red only for errors. The typing, the log and the rest of its life are in
+     assets/js/theme-life.js. */
+  --page-bg:
+    radial-gradient(ellipse 46rem 26rem at 22% -6rem, rgba(214, 72, 186, 0.13), transparent) no-repeat,
+    radial-gradient(ellipse 52rem 30rem at 78% -8rem, rgba(124, 84, 232, 0.15), transparent) no-repeat,
+    linear-gradient(180deg, #130e1d 0, #100b19 60%, #0b0812 100%);
+  --font-body: "IBM Plex Mono", ui-monospace, "Cascadia Mono", Consolas, monospace;
+  --font-display: "IBM Plex Mono SemiBold", "IBM Plex Mono", ui-monospace, "Cascadia Mono", Consolas, monospace;
+  --font-controls: "IBM Plex Mono SemiBold", "IBM Plex Mono", ui-monospace, "Cascadia Mono", Consolas, monospace;
+  --font-controls-size: 0.82rem;
+  --label-size: 0.84rem;
+  --eyebrow-case: none;
+  --eyebrow-tracking: 0;
+  --label-prefix: "abdullah@kali:~$ " / "";
+  --heading-prefix: "# " / "";
+  --button-open: "[ " / "";
+  --button-close: " ]" / "";
+  --prompt-colour: #bd93f9;
+  --prompt-glow: 0 0 10px rgba(189, 147, 249, 0.45);
+  --headline-glow: 0 0 22px rgba(255, 121, 198, 0.28), 0 0 2px rgba(255, 255, 255, 0.25);
+  --headline-scale: 0.74;
+  --radius-sm: 4px;
+  --radius-md: 4px;
+  --radius-pill: 4px;
+  --shadow: 0 18px 50px rgba(0, 0, 0, 0.5);
+  --edge-rgb: 189, 147, 249;
+  --hairline-rgb: 189, 147, 249;
+  --veil-rgb: 189, 147, 249;
+  --glow-green-rgb: 189, 147, 249;
+  --glow-cyan-rgb: 139, 233, 253;
+  --glow-sky-rgb: 139, 233, 253;
+  --glow-gold-rgb: 255, 121, 198;
+  --glow-mint-rgb: 189, 147, 249;
+  --glow-amber-rgb: 255, 121, 198;
+  --sheet-bg: linear-gradient(180deg, rgba(27, 21, 40, 0.97), rgba(15, 11, 24, 0.98));
+  --sheet-head-bg: rgba(22, 17, 33, 0.94);
+  --sheet-shadow: 0 30px 100px rgba(0, 0, 0, 0.55);
+  --cta-base: rgba(27, 21, 40, 0.86);
   --truck-art: url("../images/truck-cyber.svg");
-  --bg: #090713;
-  --bg-mid: #140b27;
-  --bg-deep: #06040c;
-  --bg-soft: #1b1131;
-  --bg-panel: #22143d;
-  --text: #fff2ff;
-  --muted: #c9a9d4;
-  --line: rgba(255, 123, 221, 0.18);
-  --cyan: #34f7ff;
-  --green: #a7ff68;
-  --amber: #ffd166;
-  --rose: #ff4ec7;
-  --violet: #b36cff;
-  --glow-a: rgba(52, 247, 255, 0.14);
-  --glow-b: rgba(255, 78, 199, 0.12);
-  --cursor-a: rgba(52, 247, 255, 0.17);
-  --cursor-b: rgba(255, 78, 199, 0.12);
-  --grid-a: rgba(52, 247, 255, 0.04);
-  --grid-b: rgba(255, 78, 199, 0.025);
-  --panel-bg: rgba(20, 11, 39, 0.78);
-  --panel-bg-strong: rgba(27, 17, 49, 0.94);
-  --panel-glow: rgba(255, 78, 199, 0.08);
-  --nav-top-bg: linear-gradient(90deg, #34f7ff, #ff4ec7);
-  --nav-top-text: #090713;
-  --nav-scroll-bg: rgba(9, 7, 19, 0.78);
+  --wheels-art: url("../images/wheels-cyber.svg");
+  --wheels-filter: none;
+  --wind-colour: rgba(189, 147, 249, 0.55);
+  /* The road scene is drawn in characters, like everything else in a terminal. */
+  --scene-far: url("../images/scene-ascii-ridge.svg");
+  --roadside-art: url("../images/roadside-ascii-pine.svg");
+  --roadside-art-far: url("../images/roadside-ascii-tree.svg");
+  --roadside-width: 46px;
+  --scene-hill-a: transparent;
+  --scene-hill-b: transparent;
+  --scene-rock: url("../images/rock-ascii.svg") center / contain no-repeat;
+  --scene-road: #bd93f9;
+  --bg: #130e1d;
+  --bg-mid: #100b19;
+  --bg-deep: #0b0812;
+  --bg-soft: #1b1528;
+  --bg-panel: #1b1528;
+  --text: #ece6f7;
+  --muted: #b3a8c9;
+  --line: rgba(189, 147, 249, 0.2);
+  --cyan: #8be9fd;
+  --green: #bd93f9;
+  --amber: #ff79c6;
+  --rose: #ff5555;
+  --violet: #bd93f9;
+  --glow-a: rgba(189, 147, 249, 0.06);
+  --glow-b: rgba(255, 121, 198, 0.04);
+  --cursor-a: rgba(255, 121, 198, 0.1);
+  --cursor-b: rgba(189, 147, 249, 0.07);
+  --grid-a: transparent;
+  --grid-b: transparent;
+  --panel-bg: rgba(27, 21, 40, 0.9);
+  --panel-bg-strong: rgba(31, 24, 46, 0.96);
+  --panel-glow: transparent;
+  --nav-top-bg: transparent;
+  --nav-top-edge: rgba(189, 147, 249, 0.22);
+  --nav-top-shadow: none;
+  --nav-top-text: #ece6f7;
+  --nav-link-top: rgba(236, 230, 247, 0.78);
+  --nav-scroll-bg: rgba(19, 14, 29, 0.92);
 }
 
 body[data-theme="ember"] {
+  /* Ember: the warm layered colour of the Firewatch posters, not their landscape. Deep maroon
+     with a sunset glowing in bands at the top, amber labels in spaced capitals, Josefin Sans
+     headings like a 1930s park poster, and amber ribbon buttons. The rising embers, the heat
+     along the bottom and the rest of its life are in assets/js/theme-life.js. */
+  --page-bg:
+    radial-gradient(ellipse 120% 30rem at 50% -8rem, rgba(255, 182, 39, 0.26), transparent 70%) no-repeat,
+    radial-gradient(ellipse 140% 44rem at 50% -10rem, rgba(240, 110, 40, 0.18), transparent 75%) no-repeat,
+    radial-gradient(ellipse 160% 60rem at 50% -12rem, rgba(170, 45, 30, 0.2), transparent 80%) no-repeat,
+    linear-gradient(180deg, #210807 0, #1a0605 55%, #120303 100%);
+  --font-display: "Josefin Sans", Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --font-controls: "Josefin Sans", Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --eyebrow-font: "Josefin Sans", Inter, system-ui, sans-serif;
+  /* Josefin Sans ships one weight; everything bold takes it as it is rather than a fake bold. */
+  --font-synthesis: style small-caps;
+  --font-controls-size: 0.84rem;
+  --label-case: uppercase;
+  --label-tracking: 0.16em;
+  --label-size: 0.84rem;
+  --eyebrow-tracking: 0.22em;
+  --button-shape: polygon(0 0, 100% 0, calc(100% - 9px) 50%, 100% 100%, 0 100%, 9px 50%);
+  --button-primary-fill: #ffb627;
+  --button-primary-ink: #2a0806;
+  --radius-sm: 2px;
+  --radius-md: 6px;
+  --radius-pill: 2px;
+  --shadow: 0 22px 60px rgba(0, 0, 0, 0.5);
+  --edge-rgb: 255, 182, 39;
+  --hairline-rgb: 255, 182, 39;
+  --veil-rgb: 255, 220, 180;
+  --glow-green-rgb: 255, 182, 39;
+  --glow-cyan-rgb: 255, 160, 77;
+  --glow-sky-rgb: 255, 160, 77;
+  --glow-gold-rgb: 255, 182, 39;
+  --glow-mint-rgb: 255, 182, 39;
+  --glow-amber-rgb: 255, 122, 61;
+  --sheet-bg: linear-gradient(180deg, rgba(46, 16, 11, 0.97), rgba(26, 6, 5, 0.98));
+  --sheet-head-bg: rgba(38, 11, 8, 0.94);
+  --sheet-shadow: 0 30px 100px rgba(0, 0, 0, 0.55);
+  --cta-base: rgba(46, 16, 11, 0.85);
   --truck-art: url("../images/truck-ember.svg");
-  --bg: #140805;
-  --bg-mid: #271008;
-  --bg-deep: #080302;
-  --bg-soft: #2f160d;
-  --bg-panel: #3a1c10;
-  --text: #fff2e8;
-  --muted: #c5a394;
-  --line: rgba(255, 188, 120, 0.16);
-  --cyan: #ffb37d;
-  --green: #ffc868;
+  --wind-colour: rgba(255, 200, 140, 0.5);
+  /* The road runs below sunset ridges in bands, past black pines and a fire lookout. */
+  --scene-far: url("../images/scene-ember-ridges.svg");
+  --roadside-art: url("../images/roadside-ember-pine.svg");
+  --roadside-art-far: url("../images/roadside-ember-tower.svg");
+  --scene-hill-a: #3a0f0a;
+  --scene-hill-b: #300c08;
+  --scene-rock: #5a2418;
+  --scene-road: #0f0302;
+  --bg: #210807;
+  --bg-mid: #1a0605;
+  --bg-deep: #120303;
+  --bg-soft: #2a0d09;
+  --bg-panel: #2e100b;
+  --text: #fbe9d2;
+  --muted: #d6b79c;
+  --line: rgba(255, 182, 39, 0.18);
+  --cyan: #ffa04d;
+  --green: #ffb627;
   --amber: #ff8a3d;
-  --rose: #ff6262;
-  --violet: #e1a5ff;
-  --glow-a: rgba(255, 138, 61, 0.17);
-  --glow-b: rgba(255, 98, 98, 0.1);
-  --cursor-a: rgba(255, 138, 61, 0.18);
-  --cursor-b: rgba(255, 200, 104, 0.1);
-  --grid-a: rgba(255, 138, 61, 0.04);
-  --grid-b: rgba(255, 200, 104, 0.025);
-  --panel-bg: rgba(39, 16, 8, 0.8);
-  --panel-bg-strong: rgba(47, 22, 13, 0.94);
-  --panel-glow: rgba(255, 138, 61, 0.08);
-  --nav-top-bg: linear-gradient(90deg, #ffc868, #ff8a3d);
-  --nav-top-text: #140805;
-  --nav-scroll-bg: rgba(20, 8, 5, 0.78);
+  --rose: #ff5a36;
+  --violet: #f2a07b;
+  --glow-a: rgba(255, 160, 60, 0.08);
+  --glow-b: rgba(255, 90, 40, 0.06);
+  --cursor-a: rgba(255, 138, 61, 0.16);
+  --cursor-b: rgba(255, 200, 104, 0.08);
+  --grid-a: transparent;
+  --grid-b: transparent;
+  --panel-bg: rgba(46, 16, 11, 0.84);
+  --panel-bg-strong: rgba(52, 18, 12, 0.94);
+  --panel-glow: rgba(255, 138, 61, 0.05);
+  --nav-top-bg: transparent;
+  --nav-top-edge: rgba(255, 182, 39, 0.16);
+  --nav-top-shadow: none;
+  --nav-top-text: #fbe9d2;
+  --nav-link-top: rgba(251, 233, 210, 0.82);
+  --nav-scroll-bg: rgba(26, 6, 5, 0.9);
 }
 
 body[data-theme="paper"] {
@@ -613,6 +764,21 @@ body[data-theme="forest"]:not(.film) .layer-a {
   animation: forestShafts 16s ease-in-out infinite alternate;
 }
 
+/* Every fourteen seconds a wide beam of moonlight drifts across the whole forest. */
+body[data-theme="forest"]:not(.film) .layer-a::after {
+  content: "";
+  position: absolute;
+  inset: -10% -40%;
+  background: linear-gradient(104deg, transparent 36%, rgba(220, 236, 200, 0.08) 45%, rgba(240, 232, 190, 0.14) 50%, rgba(220, 236, 200, 0.08) 55%, transparent 64%);
+  transform: translateX(-60%);
+  animation: forestMoonbeam 14s ease-in-out 2s infinite;
+}
+
+/* The play state is not inherited, so the beam is paused with its layer at Calm. */
+body[data-motion="calm"][data-theme="forest"] .layer-a::after {
+  animation-play-state: paused;
+}
+
 body[data-theme="forest"]:not(.film) .layer-b,
 body[data-theme="forest"]:not(.film) .layer-c {
   inset: auto auto 0 0;
@@ -684,19 +850,60 @@ body[data-theme="space"] .layer-c {
   animation: none;
 }
 
-body[data-theme="cyber"] .layer-b {
+/* Cyber: the aura at the top of the screen breathes (a), the faint lines of an old monitor cross
+   the screen (b), and a refresh beam rolls down it every ten seconds (c). theme-life.js adds the
+   falling characters and the terminal log in the corner. */
+body[data-theme="cyber"] .layer-a {
+  inset: 0;
+  opacity: 1;
   background:
-    repeating-linear-gradient(120deg, transparent 0 54px, rgba(52, 247, 255, 0.08) 55px 57px, transparent 58px 110px),
-    repeating-linear-gradient(60deg, transparent 0 72px, rgba(255, 78, 199, 0.07) 73px 75px);
-  animation: cyberSweep 18s linear infinite;
+    radial-gradient(ellipse 54rem 26rem at 25% -4rem, rgba(214, 72, 186, 0.22), transparent),
+    radial-gradient(ellipse 60rem 30rem at 76% -6rem, rgba(124, 84, 232, 0.26), transparent);
+  animation: cyberAura 7s ease-in-out infinite alternate;
+}
+
+body[data-theme="cyber"] .layer-c {
+  inset: 0 0 auto;
+  height: 36vh;
+  opacity: 1;
+  filter: none;
+  background: linear-gradient(to bottom, transparent, rgba(189, 147, 249, 0.09) 40%, rgba(255, 121, 198, 0.17) 50%, rgba(189, 147, 249, 0.09) 60%, transparent);
+  transform: translateY(-40vh);
+  animation: cyberBeam 10s linear infinite;
+}
+
+body[data-theme="cyber"] .layer-b {
+  inset: 0;
+  opacity: 1;
+  background: repeating-linear-gradient(180deg, rgba(220, 200, 255, 0.025) 0 1px, transparent 1px 3px);
+  -webkit-mask-image: linear-gradient(to bottom, #000, rgba(0, 0, 0, 0.45) 60%);
+  mask-image: linear-gradient(to bottom, #000, rgba(0, 0, 0, 0.45) 60%);
+  animation: none;
+}
+
+/* Ember: heat breathing along the bottom of the screen (a), and every so often a band of warm
+   light crossing it (b). theme-life.js adds the rising embers. */
+body[data-theme="ember"] .layer-a {
+  inset: 0;
+  opacity: 1;
+  background:
+    radial-gradient(ellipse 90% 34vh at 50% 108%, rgba(255, 110, 30, 0.26), transparent 70%),
+    radial-gradient(ellipse 60% 22vh at 20% 104%, rgba(255, 170, 60, 0.14), transparent 70%);
+  animation: emberHeat 5s ease-in-out infinite alternate;
 }
 
 body[data-theme="ember"] .layer-b {
-  background-image:
-    radial-gradient(circle, rgba(255, 138, 61, 0.42) 0 2px, transparent 3px),
-    radial-gradient(circle, rgba(255, 200, 104, 0.28) 0 1px, transparent 2px);
-  background-size: 150px 150px, 90px 90px;
-  animation: emberRise 18s linear infinite;
+  inset: -20%;
+  opacity: 1;
+  background: linear-gradient(105deg, transparent 40%, rgba(255, 190, 110, 0.07) 47%, rgba(255, 210, 140, 0.12) 50%, rgba(255, 190, 110, 0.07) 53%, transparent 60%);
+  transform: translateX(-70%);
+  animation: emberSweep 12s ease-in-out 2s infinite;
+}
+
+body[data-theme="ember"] .layer-c {
+  background: none;
+  filter: none;
+  animation: none;
 }
 
 /* Paper: edges gone brown with age, a faint crinkle of light that crosses the sheet now and
@@ -901,7 +1108,9 @@ body[data-theme="paper"].is-crunching .site-footer {
 }
 
 .space-sky,
-.forest-flies {
+.forest-flies,
+.cyber-rain,
+.ember-sparks {
   position: absolute;
   inset: 0;
   width: 100%;
@@ -1010,11 +1219,11 @@ body[data-theme="paper"].is-crunching .site-footer {
 .forest-leaf {
   position: absolute;
   top: -24px;
-  width: 13px;
-  height: 9px;
+  width: var(--leaf-size, 13px);
+  height: calc(var(--leaf-size, 13px) * 0.7);
   border-radius: 0 100% 0 100%;
-  background: linear-gradient(135deg, #8a9a4a, #5e6e2c);
-  opacity: 0.55;
+  background: var(--leaf-paint, linear-gradient(135deg, #8a9a4a, #5e6e2c));
+  opacity: var(--leaf-light, 0.55);
   animation: forestLeafFall var(--leaf-fall, 12s) linear forwards;
 }
 
@@ -1086,6 +1295,275 @@ body[data-theme="paper"].is-crunching .site-footer {
 }
 
 .theme-life-still .forest-firefly {
+  animation: none;
+}
+
+/* Cyber's life. */
+
+/* A heading's words, clipped to what has been typed so far. */
+.cyber-word {
+  display: inline-block;
+  clip-path: inset(-25% calc(100% - var(--typed, 0px)) -25% -4px);
+}
+
+.cyber-word.is-typed {
+  clip-path: none;
+}
+
+.cyber-caret {
+  position: absolute;
+  width: 0.55em;
+  background: #ff79c6;
+  box-shadow: 0 0 12px rgba(255, 121, 198, 0.7);
+  pointer-events: none;
+}
+
+.is-typed > .cyber-caret {
+  animation: cyberBlink 1060ms step-end infinite;
+}
+
+/* A section heading's cursor blinks a few times once it is typed and goes; the headline's stays. */
+main h2.is-typed > .cyber-caret {
+  animation-iteration-count: 3;
+  animation-fill-mode: forwards;
+}
+
+/* A terminal window behind the page's own windows, so where cards cover it, it reads as one
+   window behind another. */
+.cyber-log {
+  position: absolute;
+  right: 28px;
+  bottom: 24px;
+  width: 50ch;
+  padding: 34px 14px 10px;
+  border: 1px solid rgba(189, 147, 249, 0.4);
+  border-radius: 6px;
+  background: rgba(11, 8, 18, 0.8);
+  font-family: "IBM Plex Mono", ui-monospace, monospace;
+  font-size: 11.5px;
+  line-height: 1.55;
+  color: #b3a8c9;
+  opacity: 0.42;
+  white-space: pre;
+  overflow: hidden;
+}
+
+.cyber-log::before {
+  content: "abdullah@kali: ~";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  padding: 5px 14px;
+  border-bottom: 1px solid rgba(189, 147, 249, 0.3);
+  background: rgba(189, 147, 249, 0.1);
+  color: #ece6f7;
+  text-align: center;
+}
+
+.cyber-prompt {
+  color: #bd93f9;
+}
+
+.cyber-info {
+  color: #8be9fd;
+}
+
+.cyber-alert {
+  color: #ff79c6;
+}
+
+.cyber-good {
+  color: #50fa7b;
+}
+
+.cyber-line:last-child::after {
+  content: "";
+  display: inline-block;
+  width: 0.6em;
+  height: 1.1em;
+  margin-left: 2px;
+  vertical-align: -0.2em;
+  background: #ff79c6;
+  animation: cyberBlink 1060ms step-end infinite;
+}
+
+/* The card under the pointer: a magenta outline, and [+] in the corner. */
+.cyber-frame {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  border: 1px solid #ff79c6;
+  border-radius: inherit;
+  box-shadow: 0 0 18px rgba(255, 121, 198, 0.18);
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 160ms ease;
+}
+
+.cyber-frame::after {
+  content: "[+]";
+  position: absolute;
+  top: 6px;
+  right: 9px;
+  font-family: "IBM Plex Mono", ui-monospace, monospace;
+  font-size: 12px;
+  line-height: 1;
+  color: #50fa7b;
+  text-shadow: 0 0 8px rgba(80, 250, 123, 0.55);
+}
+
+.kinetic-card:hover > .cyber-frame,
+.proof-lane:hover > .cyber-frame {
+  opacity: 1;
+}
+
+.cyber-burst i {
+  left: 0;
+  top: 0;
+  border-radius: 0;
+  transform: translate(-50%, -50%);
+  animation: cyberBlink 400ms step-end 3 forwards;
+}
+
+.cyber-burst i::before {
+  content: "[*]";
+  font-family: "IBM Plex Mono", ui-monospace, monospace;
+  font-size: 13px;
+  font-style: normal;
+  color: #ff79c6;
+  text-shadow: 0 0 8px rgba(255, 121, 198, 0.8);
+  white-space: pre;
+}
+
+/* A project filter as a checkbox: [ ] beside each, [x] beside the chosen one. */
+.filter-button:has(> .cyber-check) {
+  padding-left: calc(12px + 4ch);
+}
+
+.cyber-check {
+  position: absolute;
+  top: 50%;
+  left: 11px;
+  transform: translateY(-50%);
+  color: var(--muted);
+  pointer-events: none;
+}
+
+.cyber-check::before {
+  content: "[ ]";
+  white-space: pre;
+}
+
+.filter-button.is-active > .cyber-check {
+  color: #ff79c6;
+}
+
+.filter-button.is-active > .cyber-check::before {
+  content: "[x]";
+}
+
+.theme-life-still .cyber-word {
+  clip-path: none;
+}
+
+.theme-life-still .cyber-caret {
+  display: none;
+}
+
+.theme-life-still .cyber-line:last-child::after {
+  animation: none;
+}
+
+/* Ember's life. */
+
+/* A heading arrives hot: it rises into place while a flare blooms behind it and dies down. */
+.ember-kindle {
+  /* Its own stacking context, so the flare behind the words stays in front of the panel. */
+  isolation: isolate;
+  opacity: 0;
+  transform: translateY(12px);
+  transition: opacity 900ms ease, transform 1200ms cubic-bezier(0.2, 0.7, 0.2, 1);
+}
+
+.ember-kindle.is-seen {
+  opacity: 1;
+  transform: none;
+}
+
+.ember-kindle::after {
+  content: "";
+  position: absolute;
+  inset: -30% -6%;
+  z-index: -1;
+  background: radial-gradient(ellipse at 30% 55%, rgba(255, 150, 50, 0.32), rgba(255, 90, 30, 0.12) 45%, transparent 72%);
+  opacity: 0;
+  pointer-events: none;
+}
+
+.ember-kindle.is-seen::after {
+  animation: emberFlare 2600ms ease-out forwards;
+}
+
+/* The card under the pointer warms from below, brightest under the pointer. */
+.ember-heat {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  opacity: 0;
+  background: radial-gradient(320px 220px at var(--light-x, 50%) 100%, rgba(255, 120, 40, 0.2), transparent 75%);
+  box-shadow: inset 0 -2px 0 rgba(255, 150, 50, 0.55);
+  transition: opacity 300ms ease;
+}
+
+.kinetic-card:hover > .ember-heat,
+.proof-lane:hover > .ember-heat {
+  opacity: 1;
+}
+
+.ember-burst i {
+  left: -2px;
+  top: -2px;
+  width: 4px;
+  height: 4px;
+  background: #ffd27a;
+  box-shadow: 0 0 6px rgba(255, 160, 50, 0.95), 0 0 14px rgba(255, 90, 30, 0.6);
+  animation: emberSpark 900ms cubic-bezier(0.2, 0.8, 0.3, 1) forwards;
+}
+
+.ember-coal {
+  position: absolute;
+  top: -4px;
+  right: -3px;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #ffb627;
+  box-shadow: 0 0 8px rgba(255, 140, 40, 0.95), 0 0 18px rgba(255, 90, 30, 0.5);
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 500ms ease;
+}
+
+.filter-button.is-active > .ember-coal {
+  opacity: 1;
+  animation: emberCoal 2.4s ease-in-out infinite;
+}
+
+.theme-life-still .ember-kindle {
+  opacity: 1;
+  transform: none;
+  transition: none;
+}
+
+.theme-life-still .ember-kindle::after,
+.theme-life-still .ember-heat {
+  display: none;
+}
+
+.theme-life-still .ember-coal {
   animation: none;
 }
 
@@ -1416,24 +1894,57 @@ body[data-motion="off"] .cursor-effects {
 
 .eyebrow {
   color: var(--green);
+  font-family: var(--eyebrow-font, inherit);
   font-size: 0.82rem;
   font-weight: 900;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
+  letter-spacing: var(--eyebrow-tracking, 0.12em);
+  text-transform: var(--eyebrow-case, uppercase);
+}
+
+/* Marks a theme may write around the page's words without changing them (Cyber: a shell
+   prompt before each label, a # before each section heading, brackets around buttons). The
+   text after the slash is what a screen reader says for the mark: nothing. No mark unless a
+   theme sets one. */
+.eyebrow::before {
+  content: var(--label-prefix, none);
+  color: var(--prompt-colour, inherit);
+  text-shadow: var(--prompt-glow, none);
+  text-transform: none;
+  letter-spacing: 0;
+}
+
+main h2::before {
+  content: var(--heading-prefix, none);
+  color: var(--prompt-colour, inherit);
+  text-shadow: var(--prompt-glow, none);
+}
+
+.button::before {
+  content: var(--button-open, none);
+  white-space: pre;
+}
+
+.button::after {
+  content: var(--button-close, none);
+  white-space: pre;
 }
 
 .hero h1,
 .page-hero h1 {
   margin: 14px 0 18px;
   max-width: 920px;
-  font-size: clamp(2.65rem, 7vw, 6.25rem);
+  /* A theme with wide letters (Cyber's monospace) may scale headlines down so they do not take
+     the whole first screen. */
+  font-size: calc(var(--headline-scale, 1) * clamp(2.65rem, 7vw, 6.25rem));
   line-height: 0.93;
   letter-spacing: 0;
+  text-shadow: var(--headline-glow, none);
 }
 
 .hero h1.hero-title-compact {
   max-width: 860px;
-  font-size: clamp(2.15rem, 5.4vw, 4.7rem);
+  /* Scaled too, so the buttons under the home headline still show on the first screen. */
+  font-size: calc(var(--headline-scale, 1) * clamp(2.15rem, 5.4vw, 4.7rem));
   line-height: 0.98;
 }
 
@@ -1474,9 +1985,16 @@ body[data-motion="off"] .cursor-effects {
   transition: transform 180ms ease, border-color 180ms ease, background 180ms ease, box-shadow 180ms ease;
 }
 
+/* A theme may cut its buttons to a shape (Ember: a ribbon with notched ends). Not while a button
+   has keyboard focus, because the cut would cut its focus ring off too. */
+.button:not(:focus-visible) {
+  clip-path: var(--button-shape, none);
+}
+
 .button.primary {
   border-color: rgba(var(--glow-mint-rgb), 0.55);
-  background: linear-gradient(135deg, rgba(var(--glow-mint-rgb), 0.22), rgba(var(--glow-sky-rgb), 0.18));
+  background: var(--button-primary-fill, linear-gradient(135deg, rgba(var(--glow-mint-rgb), 0.22), rgba(var(--glow-sky-rgb), 0.18)));
+  color: var(--button-primary-ink, var(--text));
 }
 
 .button.ghost {
@@ -3237,6 +3755,42 @@ body[data-cursor="fireflies"] .cursor-point {
   animation: cursorFirefly 2200ms ease-in-out forwards;
 }
 
+/* Terminal: a block cursor that leaves an underscore where it stood, fading like old output. The
+   block and the underscore are separate so each only changes its opacity. */
+body[data-cursor="terminal"] .cursor-point {
+  width: 9px;
+  height: 16px;
+  border-radius: 1px;
+  background: transparent;
+  box-shadow: none;
+  transform: translate(-50%, -50%);
+  animation: none;
+}
+
+body[data-cursor="terminal"] .cursor-point::before,
+body[data-cursor="terminal"] .cursor-point::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  background: var(--amber);
+}
+
+body[data-cursor="terminal"] .cursor-point::before {
+  top: 0;
+  bottom: 0;
+  box-shadow: 0 0 12px var(--amber);
+  animation: cursorTerminalBlock 900ms linear forwards;
+}
+
+body[data-cursor="terminal"] .cursor-point::after {
+  bottom: 0;
+  height: 2px;
+  box-shadow: 0 0 6px var(--amber);
+  opacity: 0;
+  animation: cursorTerminalMark 900ms linear forwards;
+}
+
 body[data-cursor="plasma"] .cursor-point {
   width: 26px;
   height: 26px;
@@ -3611,6 +4165,51 @@ body[data-cursor="reticle"] .cursor-reticle {
   }
 }
 
+@keyframes cyberAura {
+  from {
+    opacity: 0.45;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
+
+/* The beam crosses in six seconds, then the screen rests for four. */
+@keyframes cyberBeam {
+  0% {
+    transform: translateY(-40vh);
+  }
+
+  60%,
+  100% {
+    transform: translateY(110vh);
+  }
+}
+
+/* A beam of moonlight drifts across the forest, then the night rests. */
+@keyframes forestMoonbeam {
+  0%,
+  30% {
+    transform: translateX(-60%);
+  }
+
+  100% {
+    transform: translateX(60%);
+  }
+}
+
+@keyframes cyberBlink {
+  0% {
+    opacity: 1;
+  }
+
+  50%,
+  100% {
+    opacity: 0;
+  }
+}
+
 @keyframes forestLeafFall {
   from {
     transform: translate3d(0, 0, 0) rotate(0deg);
@@ -3641,23 +4240,64 @@ body[data-cursor="reticle"] .cursor-reticle {
   }
 }
 
-@keyframes cyberSweep {
+@keyframes emberHeat {
   from {
-    background-position: 0 0, 0 0;
+    opacity: 0.5;
   }
 
   to {
-    background-position: 420px 0, -360px 0;
+    opacity: 1;
   }
 }
 
-@keyframes emberRise {
+/* The warm light crosses in a few seconds, then the page rests. */
+@keyframes emberSweep {
+  0%,
+  55% {
+    transform: translateX(-70%);
+  }
+
+  100% {
+    transform: translateX(70%);
+  }
+}
+
+/* A heading's flare blooms behind it as it arrives and dies down. */
+@keyframes emberFlare {
+  0% {
+    opacity: 0;
+  }
+
+  25% {
+    opacity: 1;
+  }
+
+  100% {
+    opacity: 0;
+  }
+}
+
+/* A spark flies out along its own direction, rising as it cools. */
+@keyframes emberSpark {
   from {
-    background-position: 0 220px, 0 160px;
+    opacity: 1;
+    transform: rotate(var(--speck-turn)) translateX(0) scale(1);
   }
 
   to {
-    background-position: 0 -220px, 0 -160px;
+    opacity: 0;
+    transform: translateY(-34px) rotate(var(--speck-turn)) translateX(var(--speck-reach)) scale(0.4);
+  }
+}
+
+@keyframes emberCoal {
+  0%,
+  100% {
+    opacity: 1;
+  }
+
+  50% {
+    opacity: 0.45;
   }
 }
 
@@ -3713,6 +4353,33 @@ body[data-cursor="reticle"] .cursor-reticle {
 }
 
 /* A firefly left behind by the cursor: it drifts off, blinking twice before it goes out. */
+@keyframes cursorTerminalBlock {
+  0%,
+  30% {
+    opacity: 1;
+  }
+
+  31%,
+  100% {
+    opacity: 0;
+  }
+}
+
+@keyframes cursorTerminalMark {
+  0%,
+  30% {
+    opacity: 0;
+  }
+
+  31% {
+    opacity: 0.9;
+  }
+
+  100% {
+    opacity: 0;
+  }
+}
+
 @keyframes cursorFirefly {
   0% {
     opacity: 0;

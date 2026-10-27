@@ -1,4 +1,4 @@
-// ABOUTME: A theme's life beyond its colours: what moves, draws itself and answers the visitor. Paper, Space and Forest live here.
+// ABOUTME: A theme's life beyond its colours: what moves, draws itself and answers the visitor. Paper, Space, Forest, Cyber and Ember live here.
 // ABOUTME: Loaded by portfolio-v2.js the first time a theme with life is picked; never on film pages, where the film is the life.
 (function () {
   if (window.themeLife) return;
@@ -59,6 +59,42 @@
     }
   }
 
+  // Puts each word of the elements' text in a span of className, so a word can be revealed on its
+  // own; each(span, word, element) is called for every word, in reading order. Returns the step
+  // that puts the original text nodes back.
+  function splitWords(elements, className, each) {
+    const split = [];
+    elements.forEach((element) => {
+      const walker = document.createTreeWalker(element, NodeFilter.SHOW_TEXT);
+      const texts = [];
+      while (walker.nextNode()) if (walker.currentNode.textContent.trim()) texts.push(walker.currentNode);
+      texts.forEach((text) => {
+        const fragment = document.createDocumentFragment();
+        const words = text.textContent.split(/(\s+)/);
+        words.forEach((word) => {
+          if (!word.trim()) {
+            fragment.appendChild(document.createTextNode(word));
+            return;
+          }
+          const span = document.createElement("span");
+          span.className = className;
+          span.textContent = word;
+          each(span, word, element);
+          fragment.appendChild(span);
+        });
+        const placeholder = fragment.firstChild;
+        text.replaceWith(fragment);
+        split.push({ text, first: placeholder, count: words.length });
+      });
+    });
+    return () => split.forEach(({ text, first, count }) => {
+      const nodes = [];
+      for (let node = first, i = 0; node && i < count; node = node.nextSibling, i += 1) nodes.push(node);
+      nodes[0].replaceWith(text);
+      nodes.slice(1).forEach((node) => node.remove());
+    });
+  }
+
   function documentTop(element) {
     let top = 0;
     for (let node = element; node; node = node.offsetParent) top += node.offsetTop;
@@ -111,41 +147,20 @@
       // 2. Headings write themselves in, word by word, when they come into view.
       // Only at full motion: anywhere else the headings stay whole text, already written.
       const writing = motion() === "full" ? [...document.querySelectorAll("main :is(h1, h2), main .eyebrow")] : [];
-      const split = [];
-      writing.forEach((heading) => {
-        const walker = document.createTreeWalker(heading, NodeFilter.SHOW_TEXT);
-        const texts = [];
-        while (walker.nextNode()) if (walker.currentNode.textContent.trim()) texts.push(walker.currentNode);
-        let delay = 0;
-        texts.forEach((text) => {
-          const fragment = document.createDocumentFragment();
-          const words = text.textContent.split(/(\s+)/);
-          words.forEach((word) => {
-            if (!word.trim()) {
-              fragment.appendChild(document.createTextNode(word));
-              return;
-            }
-            const span = document.createElement("span");
-            span.className = "paper-word";
-            span.textContent = word;
-            const time = Math.max(120, word.length * 40);
-            span.style.setProperty("--write-time", `${time}ms`);
-            span.style.setProperty("--write-delay", `${delay}ms`);
-            delay += time + 50;
-            fragment.appendChild(span);
-          });
-          const placeholder = fragment.firstChild;
-          text.replaceWith(fragment);
-          split.push({ text, first: placeholder, count: words.length });
-        });
+      let delay = 0;
+      let current = null;
+      const unsplit = splitWords(writing, "paper-word", (span, word, heading) => {
+        if (heading !== current) {
+          current = heading;
+          delay = 0;
+        }
+        const time = Math.max(120, word.length * 40);
+        span.style.setProperty("--write-time", `${time}ms`);
+        span.style.setProperty("--write-delay", `${delay}ms`);
+        delay += time + 50;
       });
       undo.push(() => {
-        split.forEach(({ text, first, count }) => {
-          const nodes = [];
-          for (let node = first, i = 0; node && i < count; node = node.nextSibling, i += 1) nodes.push(node);
-          nodes[0].replaceWith(text);
-          nodes.slice(1).forEach((node) => node.remove());
-        });
+        unsplit();
         writing.forEach((heading) => unmark(heading, "is-written"));
       });
 
@@ -432,23 +447,23 @@
     start() {
       const undo = [];
 
-      // 1. A few stars of its own in front of the painted sky, at different depths, so they
+      // 1. Stars of its own in front of the painted sky, at different depths, so they
       // drift apart as the page scrolls. Some twinkle; now and then one shoots across.
       // At Calm they hold still and twinkle slowly; at Off the backdrop is hidden altogether.
       const tints = ["255, 255, 255", "255, 255, 255", "255, 255, 255", "188, 208, 255", "255, 220, 170"];
-      const stars = Array.from({ length: 64 }, () => ({
+      const stars = Array.from({ length: 400 }, () => ({
         x: Math.random(),
         y: Math.random(),
         radius: 0.45 + Math.pow(Math.random(), 2.4) * 1.1,
         depth: 0.04 + Math.random() * 0.18,
-        light: 0.3 + Math.random() * 0.5,
+        light: 0.4 + Math.random() * 0.55,
         // Seconds per twinkle, or 0 for a star that keeps its light.
         twinkle: Math.random() < 0.22 ? 3 + Math.random() * 5 : 0,
         phase: Math.random() * Math.PI * 2,
         tint: tints[Math.floor(Math.random() * tints.length)]
       }));
       let shooting = null;
-      let nextShot = performance.now() + 8000 + Math.random() * 12000;
+      let nextShot = performance.now() + 3000 + Math.random() * 5000;
       function shoot(now, width, height) {
         const angle = (0.12 + Math.random() * 0.22) * Math.PI;
         const direction = Math.random() < 0.5 ? 1 : -1;
@@ -461,7 +476,7 @@
           time: 700 + Math.random() * 300,
           distance: 240 + Math.random() * 160
         };
-        nextShot = now + 20000 + Math.random() * 20000;
+        nextShot = now + 5000 + Math.random() * 5000;
       }
       undo.push(backdropCanvas("space-sky", (context, width, height, now, mode) => {
         if (mode === "off") return;
@@ -536,7 +551,7 @@
       halo.addColorStop(1, "rgba(242, 210, 122, 0)");
       glowContext.fillStyle = halo;
       glowContext.fillRect(0, 0, 32, 32);
-      const flies = Array.from({ length: 24 }, () => ({
+      const flies = Array.from({ length: 60 }, () => ({
         x: Math.random(),
         // Mostly low, among the trees, a few higher up.
         y: 0.35 + Math.pow(Math.random(), 0.7) * 0.62,
@@ -598,23 +613,36 @@
         if (middle) unstyle(middle, "transform", "--forest-near");
       });
 
-      // 3. Now and then a leaf drifts down behind the page.
+      // 3. Leaves keep drifting down behind the page, green, gold and rust, near and far.
       const backdrop = document.querySelector(".theme-backdrop");
-      const leaves = [];
+      const leaves = new Set();
+      const paints = [
+        "linear-gradient(135deg, #8a9a4a, #5e6e2c)",
+        "linear-gradient(135deg, #c9a24a, #8a6a24)",
+        "linear-gradient(135deg, #b0603a, #6e3420)"
+      ];
       const dropLeaf = () => {
         if (!full() || document.hidden || !backdrop) return;
         const leaf = document.createElement("span");
+        const near = Math.random();
         leaf.className = "forest-leaf";
-        leaf.style.left = `${5 + Math.random() * 90}%`;
-        leaf.style.setProperty("--leaf-fall", `${10 + Math.random() * 5}s`);
-        leaf.style.setProperty("--leaf-drift", `${wobble(220)}px`);
-        leaf.style.setProperty("--leaf-turn", `${wobble(720)}deg`);
-        leaf.addEventListener("animationend", () => leaf.remove());
+        leaf.style.left = `${2 + Math.random() * 96}%`;
+        leaf.style.setProperty("--leaf-size", `${(9 + near * 12).toFixed(1)}px`);
+        leaf.style.setProperty("--leaf-light", (0.5 + near * 0.4).toFixed(2));
+        leaf.style.setProperty("--leaf-paint", paints[Math.floor(Math.random() * paints.length)]);
+        // Nearer leaves are bigger and fall faster.
+        leaf.style.setProperty("--leaf-fall", `${(15 - near * 6 + Math.random() * 2).toFixed(1)}s`);
+        leaf.style.setProperty("--leaf-drift", `${wobble(320)}px`);
+        leaf.style.setProperty("--leaf-turn", `${wobble(900)}deg`);
+        leaf.addEventListener("animationend", () => {
+          leaf.remove();
+          leaves.delete(leaf);
+        });
         backdrop.appendChild(leaf);
-        leaves.push(leaf);
+        leaves.add(leaf);
       };
-      const leafTimer = window.setInterval(dropLeaf, 8000);
-      window.setTimeout(dropLeaf, 1500);
+      const leafTimer = window.setInterval(dropLeaf, 700);
+      for (let i = 0; i < 8; i += 1) window.setTimeout(dropLeaf, 150 + i * 250);
       undo.push(() => {
         window.clearInterval(leafTimer);
         leaves.forEach((leaf) => leaf.remove());
@@ -633,7 +661,254 @@
     }
   };
 
-  const lives = { paper, space, forest };
+  // What the terminal in the corner of the Cyber theme prints, over and over: a scan, an alert,
+  // a honeypot catching a guess, a push. Each line is [kind, text]; the kind picks its colour.
+  const terminalLog = [
+    ["prompt", "nmap -sV 10.0.2.0/24"],
+    ["info", "Nmap scan report for 10.0.2.15"],
+    ["out", "22/tcp   open  ssh     OpenSSH 9.6p1"],
+    ["out", "80/tcp   open  http    nginx 1.24.0"],
+    ["out", "445/tcp  open  microsoft-ds"],
+    ["out", "Nmap done: 256 IP addresses (4 hosts up)"],
+    ["prompt", "tail -f ossec/logs/alerts.log"],
+    ["alert", "** Alert: syslog,sshd,authentication_failed"],
+    ["out", "Rule: 5710 (level 5) sshd: non-existent user"],
+    ["out", "Src IP: 10.0.2.99"],
+    ["alert", "cowrie: login attempt [root/123456] failed"],
+    ["good", "[+] alert sent to the SOC channel"],
+    ["prompt", "git push origin main"],
+    ["out", "Writing objects: 100% (5/5), done."],
+    ["out", "   main -> main"],
+    ["good", "[+] all checks passed"]
+  ];
+
+  const cyber = {
+    start() {
+      const undo = [];
+      const timers = [];
+      const full = () => motion() === "full";
+
+      // 0. Characters fall behind the page in scattered columns, dim, each column at its own pace
+      // and a cell at a time, its newest character brightest. At Calm they hold still.
+      const cellWidth = 14;
+      const cellHeight = 18;
+      const glyphs = "0123456789abcdef<>/$#{}[]=*:;";
+      const pickGlyph = () => glyphs[Math.floor(Math.random() * glyphs.length)];
+      const column = (anywhere) => ({
+        x: Math.random(),
+        head: anywhere ? Math.floor(Math.random() * 60) : -Math.floor(Math.random() * 30),
+        length: 6 + Math.floor(Math.random() * 16),
+        // Milliseconds per cell.
+        pace: 70 + Math.random() * 150,
+        moved: 0,
+        trail: Array.from({ length: 24 }, pickGlyph)
+      });
+      const columns = Array.from({ length: 50 }, () => column(true));
+      let lastRain = 0;
+      undo.push(backdropCanvas("cyber-rain", (context, width, height, now, mode) => {
+        if (mode === "off" || now - lastRain < 50) return;
+        const elapsed = Math.min(200, now - lastRain);
+        lastRain = now;
+        context.clearRect(0, 0, width, height);
+        context.font = `13px "IBM Plex Mono", ui-monospace, monospace`;
+        context.textBaseline = "top";
+        const rows = Math.ceil(height / cellHeight);
+        columns.forEach((stream, index) => {
+          if (mode === "full") {
+            stream.moved += elapsed;
+            while (stream.moved > stream.pace) {
+              stream.moved -= stream.pace;
+              stream.head += 1;
+              stream.trail.unshift(pickGlyph());
+              stream.trail.pop();
+            }
+            if (stream.head - stream.length > rows) columns[index] = column(false);
+          }
+          const x = Math.round((stream.x * width) / cellWidth) * cellWidth;
+          for (let i = 0; i < stream.length; i += 1) {
+            const row = stream.head - i;
+            if (row < 0 || row > rows) continue;
+            context.fillStyle = i === 0 ? "rgba(255, 121, 198, 0.6)" : `rgba(189, 147, 249, ${(0.34 * (1 - i / stream.length)).toFixed(3)})`;
+            context.fillText(stream.trail[i], x, row * cellHeight);
+          }
+        });
+      }));
+
+      // 1. Headings are typed in, a character at a time, behind a blinking block cursor, when
+      // they come into view. The words are clipped rather than added letter by letter, so the
+      // page never reflows while they type. Only at full motion; anywhere else they are there.
+      const typing = full() ? [...document.querySelectorAll("main :is(h1, h2)")] : [];
+      const words = new Map();
+      undo.push(splitWords(typing, "cyber-word", (span, word, heading) => {
+        if (!words.has(heading)) words.set(heading, []);
+        words.get(heading).push(span);
+      }));
+      undo.push(anchor(typing));
+      const carets = [];
+      function type(heading) {
+        const spans = words.get(heading) || [];
+        const caret = document.createElement("span");
+        caret.className = "cyber-caret";
+        caret.setAttribute("aria-hidden", "true");
+        heading.appendChild(caret);
+        carets.push(caret);
+        // Every character of a monospaced word is the same width, so a word's width over its
+        // length is how far one keystroke reveals.
+        const plan = spans.map((span) => ({ span, width: span.offsetWidth, letters: span.textContent.length }));
+        let word = 0;
+        let typed = 0;
+        const place = (entry, shown) => {
+          caret.style.left = `${entry.span.offsetLeft + shown}px`;
+          caret.style.top = `${entry.span.offsetTop}px`;
+          caret.style.height = `${entry.span.offsetHeight}px`;
+        };
+        const timer = window.setInterval(() => {
+          const entry = plan[word];
+          if (!entry) {
+            window.clearInterval(timer);
+            heading.classList.add("is-typed");
+            return;
+          }
+          typed += 1;
+          const shown = (entry.width / entry.letters) * typed;
+          entry.span.style.setProperty("--typed", `${shown.toFixed(1)}px`);
+          place(entry, shown);
+          if (typed >= entry.letters) {
+            entry.span.classList.add("is-typed");
+            word += 1;
+            typed = 0;
+          }
+        }, 38);
+        timers.push(timer);
+        if (plan[0]) place(plan[0], 0);
+      }
+      const seen = new IntersectionObserver((entries) => {
+        entries.forEach((entry) => {
+          if (!entry.isIntersecting) return;
+          seen.unobserve(entry.target);
+          type(entry.target);
+        });
+      }, { threshold: 0.3 });
+      typing.forEach((heading) => seen.observe(heading));
+      undo.push(() => {
+        seen.disconnect();
+        carets.forEach((caret) => caret.remove());
+        typing.forEach((heading) => unmark(heading, "is-typed"));
+      });
+
+      // 2. A dim terminal in the bottom corner of the screen, printing a line every second or
+      // two. At Calm it shows its last screenful and prints nothing new.
+      const backdrop = document.querySelector(".theme-backdrop");
+      if (backdrop) {
+        const log = document.createElement("div");
+        log.className = "cyber-log";
+        log.setAttribute("aria-hidden", "true");
+        backdrop.appendChild(log);
+        let next = 0;
+        const print = () => {
+          const [kind, text] = terminalLog[next % terminalLog.length];
+          next += 1;
+          const line = document.createElement("div");
+          line.className = `cyber-line cyber-${kind}`;
+          if (kind === "prompt") {
+            const prompt = document.createElement("span");
+            prompt.className = "cyber-prompt";
+            prompt.textContent = "abdullah@kali:~$ ";
+            line.appendChild(prompt);
+          }
+          line.appendChild(document.createTextNode(text));
+          log.appendChild(line);
+          while (log.childElementCount > 11) log.firstElementChild.remove();
+        };
+        for (let i = 0; i < 9; i += 1) print();
+        timers.push(window.setInterval(() => {
+          if (full() && !document.hidden) print();
+        }, 1700));
+        undo.push(() => log.remove());
+      }
+
+      // 3. The card under the pointer is outlined in magenta and marked [+], as a found host is.
+      undo.push(pointerLight("cyber-frame"));
+      // 4. A click leaves a blinking [*] where it landed.
+      undo.push(clickBurst("cyber-burst", 1, 0));
+      // 5. Project filters become checkboxes, [x] on the chosen one.
+      undo.push(filterMark("cyber-check"));
+
+      return () => {
+        timers.forEach((timer) => window.clearInterval(timer));
+        undo.reverse().forEach((step) => step());
+      };
+    }
+  };
+
+  const ember = {
+    start() {
+      const undo = [];
+
+      // 1. Embers rise from the bottom of the screen, swaying and flickering, cooling from
+      // yellow to deep orange as they climb. At Calm they hold where they are.
+      const glow = document.createElement("canvas");
+      glow.width = 24;
+      glow.height = 24;
+      const glowContext = glow.getContext("2d");
+      const halo = glowContext.createRadialGradient(12, 12, 0, 12, 12, 12);
+      halo.addColorStop(0, "rgba(255, 240, 200, 1)");
+      halo.addColorStop(0.2, "rgba(255, 190, 80, 0.95)");
+      halo.addColorStop(0.5, "rgba(255, 110, 30, 0.35)");
+      halo.addColorStop(1, "rgba(255, 80, 20, 0)");
+      glowContext.fillStyle = halo;
+      glowContext.fillRect(0, 0, 24, 24);
+      const spark = (anywhere) => ({
+        x: Math.random(),
+        y: anywhere ? Math.random() : 1.02 + Math.random() * 0.1,
+        // Fractions of the screen height per second.
+        rise: 0.05 + Math.random() * 0.1,
+        sway: 0.004 + Math.random() * 0.014,
+        swayRate: 0.6 + Math.random() * 1.4,
+        phase: Math.random() * Math.PI * 2,
+        size: 7 + Math.pow(Math.random(), 2) * 18,
+        flicker: 4 + Math.random() * 8
+      });
+      const sparks = Array.from({ length: 140 }, () => spark(true));
+      let last = performance.now();
+      undo.push(backdropCanvas("ember-sparks", (context, width, height, now, mode) => {
+        const seconds = Math.min(0.1, (now - last) / 1000);
+        last = now;
+        context.clearRect(0, 0, width, height);
+        sparks.forEach((item, index) => {
+          if (mode === "full") {
+            item.y -= item.rise * seconds;
+            if (item.y < -0.05) sparks[index] = spark(false);
+          }
+          const time = mode === "full" ? now / 1000 : 0;
+          const x = (item.x + Math.sin(time * item.swayRate + item.phase) * item.sway) * width;
+          // Brightest low down, dying out as it climbs, with a flicker of its own.
+          const life = Math.max(0, Math.min(1, item.y * 1.15));
+          const light = life * (0.65 + 0.35 * Math.sin(time * item.flicker + item.phase));
+          if (light <= 0.02) return;
+          context.globalAlpha = light;
+          const size = item.size * (0.5 + life * 0.5);
+          context.drawImage(glow, x - size / 2, item.y * height - size / 2, size, size);
+        });
+        context.globalAlpha = 1;
+      }));
+
+      // 2. Headings arrive hot, rising into place while a flare behind them dies down.
+      const kindled = motion() === "full" ? [...document.querySelectorAll("main :is(h1, h2)")] : [];
+      undo.push(anchor(kindled));
+      undo.push(headingsArrive("ember-kindle"));
+      // 3. The card under the pointer warms from below.
+      undo.push(pointerLight("ember-heat"));
+      // 4. A click throws a shower of sparks.
+      undo.push(clickBurst("ember-burst", 10, 46));
+      // 5. A coal glows on the chosen project filter.
+      undo.push(filterMark("ember-coal"));
+
+      return () => undo.reverse().forEach((step) => step());
+    }
+  };
+
+  const lives = { paper, space, forest, cyber, ember };
   let running = null;
 
   // The crumple: the sheet is squeezed and smoothed out again when it arrives, whether by a new

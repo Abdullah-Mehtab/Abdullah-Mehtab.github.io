@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="85" height="15" viewBox="0 0 85 15" role="img" aria-label="Van wheels">
+  <!-- The Cyber theme's wheels, for truck-cyber.svg: black tyres with a magenta ring at the
+       hub. Same box as wheels.svg, hubs at x=17 and x=66. -->
+  <circle cx="17" cy="7.5" r="7" fill="#0d0b12" stroke="#3a2c50" stroke-width="1"/>
+  <circle cx="66" cy="7.5" r="7" fill="#0d0b12" stroke="#3a2c50" stroke-width="1"/>
+  <circle cx="17" cy="7.5" r="3" fill="#1b1528" stroke="#ff79c6" stroke-width="0.9"/>
+  <circle cx="66" cy="7.5" r="3" fill="#1b1528" stroke="#ff79c6" stroke-width="0.9"/>
+  <circle cx="17" cy="7.5" r="0.9" fill="#bd93f9"/>
+  <circle cx="66" cy="7.5" r="0.9" fill="#bd93f9"/>
+</svg>

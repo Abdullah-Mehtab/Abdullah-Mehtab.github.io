@@ -1,30 +1,42 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="85" height="60" viewBox="0 0 85 60" role="img" aria-label="Delivery truck">
-  <!-- Faces right: the scenery scrolls right to left past it, and the wind lines in
-       animations.css trail off its left side. The bottom 14px is left clear for wheels.svg,
-       whose hubs sit at x=17 and x=66, which is where the axle bolts below are placed.
-
-       One truck per theme. The truck art custom property in the ember block of
-       portfolio-v2.css points animations.css at this file. Nine parts are painted separately
-       rather than one red truck hue rotated in CSS: a rotation moves every colour in a file
-       by the same angle, so cab, cargo box, glass and chassis stay locked together and every
-       theme got the same flat truck in another shade. The cargo box is pale so it reads
-       against this theme's page, and the rear marker sits off the cab's hue so the truck
-       carries more than one colour of its own.
+<svg xmlns="http://www.w3.org/2000/svg" width="85" height="60" viewBox="0 0 85 60" role="img" aria-label="Forest service pickup">
+  <!-- The Ember theme's vehicle: an old forest service pickup in olive, a rust water tank in the
+       bed and an amber beacon on the cab roof, the kind a fire lookout drives up the mountain.
+       Faces right, as every vehicle does. The bottom 14px is left clear for wheels.svg, whose
+       hubs sit at x=17 and x=66, under the wheel arches drawn here.
 
        Do not write a double hyphen into this comment. SVG is parsed as XML, where a double
        hyphen inside a comment is malformed and makes the whole file render as nothing. -->
-  <rect x="2" y="10" width="48" height="36" rx="2" fill="#ddd7d5"/>
-  <rect x="2" y="10" width="48" height="7" rx="2" fill="#eceae9"/>
-  <rect x="5" y="21" width="42" height="1.4" fill="#b6a6a0"/>
-  <rect x="26" y="24" width="1.6" height="20" fill="#b6a6a0"/>
-  <rect x="5" y="41" width="42" height="3" rx="1" fill="#b6a6a0"/>
-  <path d="M50 23 h14 l10 11 h7 a2 2 0 0 1 2 2 v10 H50 Z" fill="#a15236"/>
-  <path d="M53 26 h10 l7.5 7.5 H53 Z" fill="#d6c3bd"/>
-  <rect x="50" y="40" width="33" height="3" fill="#62301d"/>
-  <rect x="49" y="24" width="1.6" height="22" fill="#3e322e"/>
-  <rect x="2" y="46" width="80" height="3" rx="1" fill="#3e322e"/>
-  <rect x="79" y="37" width="4" height="5" rx="1" fill="#ffe6a8"/>
-  <rect x="2" y="40" width="3" height="4" rx="1" fill="#4dd5b6"/>
-  <circle cx="17" cy="48" r="1.2" fill="#b6a6a0"/>
-  <circle cx="66" cy="48" r="1.2" fill="#62301d"/>
+  <defs>
+    <filter id="lit" x="-100%" y="-200%" width="300%" height="500%">
+      <feGaussianBlur stdDeviation="1.2" result="b"/>
+      <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+  </defs>
+  <!-- the water tank in the bed, with its bands and filler cap -->
+  <rect x="7" y="21.5" width="30" height="10" rx="4.5" fill="#b5531e"/>
+  <path d="M15 21.8 L15 31.2 M29 21.8 L29 31.2" stroke="#7e3412" stroke-width="1.2"/>
+  <rect x="20.5" y="19" width="3.5" height="3" rx="0.6" fill="#7e3412"/>
+  <path d="M9.5 24 L34 24" stroke="#e08a4a" stroke-width="0.8" opacity="0.7"/>
+  <!-- the bed -->
+  <path d="M3 29 L44 29 L44 46.5 L3 46.5 Z" fill="#5d6a36"/>
+  <path d="M3 29.6 L44 29.6" stroke="#7d8a4e" stroke-width="1.2"/>
+  <!-- the cab and the hood -->
+  <path d="M43 46.5 L43 17.5 Q43 15 45.5 15 L59.5 15 L66 28.5 L81.5 30 Q84 30.4 84 33 L84 46.5 Z" fill="#5d6a36"/>
+  <path d="M46 18 L58.2 18 L63.4 28.2 L46 28.2 Z" fill="#f2b45f" opacity="0.88"/>
+  <path d="M47.5 26.5 L56.5 19.5" stroke="#fff1d6" stroke-width="0.7" opacity="0.6"/>
+  <!-- door seam, a pale shield on the door, and the rust stripe down the side -->
+  <path d="M52.5 29 L52.5 45" stroke="#434d25" stroke-width="0.8"/>
+  <path d="M56 32 L61 32 L61 35.5 Q61 38 58.5 39 Q56 38 56 35.5 Z" fill="#e9dcc0" opacity="0.85"/>
+  <path d="M3 40 L84 40" stroke="#b5531e" stroke-width="2"/>
+  <!-- wheel arches -->
+  <path d="M7.5 46.6 A9.5 9.5 0 0 1 26.5 46.6 Z M56.5 46.6 A9.5 9.5 0 0 1 75.5 46.6 Z" fill="#2a0d08"/>
+  <!-- bumper -->
+  <path d="M79 45.5 L85 45.5" stroke="#2a2418" stroke-width="2.4" stroke-linecap="round"/>
+  <path d="M2 45.5 L5 45.5" stroke="#2a2418" stroke-width="2.4" stroke-linecap="round"/>
+  <g filter="url(#lit)">
+    <!-- the beacon on the cab roof, head and tail lights -->
+    <rect x="49" y="12" width="6.5" height="3" rx="1" fill="#ffb627"/>
+    <rect x="81.6" y="33" width="2.4" height="3.2" rx="0.6" fill="#fff1d6"/>
+    <rect x="3" y="31" width="1.6" height="4" rx="0.5" fill="#ff5a36"/>
+  </g>
 </svg>
