@@ -200,40 +200,72 @@ body.portfolio-v2:not([data-theme]) {
 }
 
 body[data-theme="light"] {
-  --edge-rgb: 22, 32, 45;
-  --hairline-rgb: 22, 32, 45;
-  --veil-rgb: 22, 32, 45;
-  --sheet-bg: linear-gradient(180deg, #fffaf0, #f7f2e7);
-  --sheet-head-bg: #fffaf0;
-  --sheet-shadow: 0 30px 80px rgba(40, 30, 20, 0.16);
-  --cta-base: #fffaf0;
+  /* Light mode: a clean, cool daytime page, unlike Paper's warm old sheet. Off-white with crisp
+     white cards, soft grey shadows, navy text and one clear blue. Sunlight crosses the page and
+     dust drifts in it; that life is in assets/js/theme-life.js. */
+  --page-bg:
+    radial-gradient(ellipse 70% 26rem at 85% -6rem, rgba(255, 214, 140, 0.22), transparent 70%) no-repeat,
+    radial-gradient(ellipse 90% 30rem at 20% -8rem, rgba(150, 195, 255, 0.24), transparent 72%) no-repeat,
+    linear-gradient(180deg, #f6f8fb 0, #f2f5f9 60%, #eceff4 100%);
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-pill: 999px;
+  --shadow: 0 10px 30px rgba(20, 30, 50, 0.08), 0 2px 6px rgba(20, 30, 50, 0.06);
+  --edge-rgb: 21, 32, 51;
+  --hairline-rgb: 21, 32, 51;
+  --veil-rgb: 21, 32, 51;
+  --glow-green-rgb: 29, 95, 209;
+  --glow-cyan-rgb: 29, 95, 209;
+  --glow-sky-rgb: 29, 95, 209;
+  --glow-gold-rgb: 180, 83, 9;
+  --glow-mint-rgb: 29, 95, 209;
+  --glow-amber-rgb: 180, 83, 9;
+  --button-primary-fill: #1d5fd1;
+  --button-primary-ink: #ffffff;
+  --sheet-bg: #ffffff;
+  --sheet-head-bg: #ffffff;
+  --sheet-shadow: 0 24px 60px rgba(20, 30, 50, 0.12);
+  --cta-base: #ffffff;
   --truck-art: url("../images/truck-light.svg");
-  --bg: #f2f0ea;
-  --bg-mid: #e5e2d8;
-  --bg-deep: #d6d1c5;
-  --bg-soft: #fffaf0;
-  --bg-panel: #f7f2e7;
-  --text: #182232;
-  --muted: #4b5360;
-  --line: rgba(22, 32, 45, 0.18);
-  --cyan: #07617f;
-  --green: #11633a;
-  --amber: #9b6418;
-  --rose: #9d3450;
-  --violet: #4b569e;
-  --glow-a: rgba(10, 120, 160, 0.12);
-  --glow-b: rgba(155, 100, 24, 0.1);
-  --cursor-a: rgba(10, 120, 160, 0.18);
-  --cursor-b: rgba(155, 100, 24, 0.1);
-  --grid-a: rgba(22, 32, 45, 0.06);
-  --grid-b: rgba(22, 32, 45, 0.035);
-  --panel-bg: rgba(255, 250, 240, 0.84);
-  --panel-bg-strong: rgba(255, 250, 240, 0.94);
-  --panel-glow: rgba(10, 120, 160, 0.08);
-  --nav-top-bg: linear-gradient(90deg, #1e3147, #2f6f88);
-  --nav-top-text: #fffaf0;
-  --nav-scroll-bg: rgba(255, 250, 240, 0.78);
-  --nav-link-top: rgba(255, 250, 240, 0.88);
+  --wind-colour: rgba(120, 130, 145, 0.6);
+  /* The road runs through sunny countryside: green hills under white clouds, leafy trees and
+     a windmill. */
+  --scene-far: url("../images/scene-light-hills.svg");
+  --roadside-art: url("../images/roadside-light-tree.svg");
+  --roadside-art-far: url("../images/roadside-light-windmill.svg");
+  --scene-hill-a: #5fae58;
+  --scene-hill-b: #4f9a4a;
+  --scene-rock: #9aa3ad;
+  --scene-road: #4b5563;
+  --bg: #f4f6f9;
+  --bg-mid: #eef1f5;
+  --bg-deep: #e6eaf0;
+  --bg-soft: #ffffff;
+  --bg-panel: #ffffff;
+  --text: #152033;
+  --muted: #4a5568;
+  --line: rgba(21, 32, 51, 0.14);
+  /* A deeper blue than the main button's, so blue words stay readable on the pale sky glow. */
+  --cyan: #1a4fb8;
+  --green: #1a4fb8;
+  --amber: #b45309;
+  --rose: #be123c;
+  --violet: #4f46e5;
+  --glow-a: rgba(150, 195, 255, 0.18);
+  --glow-b: rgba(255, 214, 140, 0.14);
+  --cursor-a: rgba(29, 95, 209, 0.12);
+  --cursor-b: rgba(255, 200, 120, 0.1);
+  --grid-a: transparent;
+  --grid-b: transparent;
+  --panel-bg: rgba(255, 255, 255, 0.92);
+  --panel-bg-strong: #ffffff;
+  --panel-glow: transparent;
+  --nav-top-bg: rgba(255, 255, 255, 0.72);
+  --nav-top-edge: rgba(21, 32, 51, 0.1);
+  --nav-top-shadow: none;
+  --nav-top-text: #152033;
+  --nav-link-top: rgba(21, 32, 51, 0.8);
+  --nav-scroll-bg: rgba(255, 255, 255, 0.9);
 }
 
 body[data-theme="forest"] {
@@ -1005,7 +1037,7 @@ body[data-theme="cassie"] .layer-a {
   background:
     radial-gradient(ellipse 70% 26vh at 50% -4vh, rgba(255, 90, 168, 0.18), transparent 70%),
     radial-gradient(ellipse 80% 30vh at 50% 106%, rgba(255, 90, 168, 0.16), transparent 70%);
-  animation: cassieGlow 5s ease-in-out infinite alternate;
+  animation: glowBreathe 5s ease-in-out infinite alternate;
 }
 
 body[data-theme="cassie"] .layer-b {
@@ -1017,6 +1049,33 @@ body[data-theme="cassie"] .layer-b {
 }
 
 body[data-theme="cassie"] .layer-c {
+  background: none;
+  filter: none;
+  animation: none;
+}
+
+/* Light mode: a sky glow that breathes at the top of the screen (a), and every so often a beam of
+   sunlight crossing it (b). theme-life.js adds the drifting dust. */
+body[data-theme="light"] .layer-a {
+  inset: 0;
+  opacity: 1;
+  background:
+    radial-gradient(ellipse 60% 28vh at 80% -4vh, rgba(255, 210, 130, 0.3), transparent 70%),
+    radial-gradient(ellipse 70% 30vh at 20% -6vh, rgba(140, 190, 255, 0.28), transparent 70%);
+  animation: glowBreathe 6s ease-in-out infinite alternate;
+}
+
+body[data-theme="light"] .layer-b {
+  inset: -20%;
+  opacity: 1;
+  background:
+    linear-gradient(118deg, transparent 38%, rgba(255, 236, 190, 0.32) 46%, rgba(255, 246, 220, 0.5) 50%, rgba(255, 236, 190, 0.32) 54%, transparent 62%),
+    linear-gradient(118deg, transparent 56%, rgba(255, 236, 190, 0.18) 60%, transparent 64%);
+  transform: translateX(-70%);
+  animation: lightSweep 10s ease-in-out 1s infinite;
+}
+
+body[data-theme="light"] .layer-c {
   background: none;
   filter: none;
   animation: none;
@@ -1227,7 +1286,8 @@ body[data-theme="paper"].is-crunching .site-footer {
 .forest-flies,
 .cyber-rain,
 .ember-sparks,
-.cassie-floats {
+.cassie-floats,
+.light-dust {
   position: absolute;
   inset: 0;
   width: 100%;
@@ -1666,7 +1726,7 @@ main h2.is-typed > .cyber-caret {
 
 .filter-button.is-active > .ember-coal {
   opacity: 1;
-  animation: emberCoal 2.4s ease-in-out infinite;
+  animation: softPulse 2.4s ease-in-out infinite;
 }
 
 .theme-life-still .ember-kindle {
@@ -1944,6 +2004,83 @@ main h2.is-typed > .cyber-caret {
   color: #ff9cc9;
   opacity: 0;
   animation: cassieSleepZ 3.6s ease-out infinite;
+}
+
+/* Light mode's life. */
+
+/* A heading slides up into place. */
+.light-rise {
+  opacity: 0;
+  transform: translateY(16px);
+  transition: opacity 700ms ease, transform 900ms cubic-bezier(0.2, 0.7, 0.2, 1);
+}
+
+.light-rise.is-seen {
+  opacity: 1;
+  transform: none;
+}
+
+/* The card under the pointer catches the light: a sheen that follows the pointer, and a deeper
+   shadow under the card. */
+.light-sheen {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  border-radius: inherit;
+  pointer-events: none;
+  opacity: 0;
+  background: radial-gradient(300px circle at var(--light-x, 50%) var(--light-y, 50%), rgba(255, 255, 255, 0.55), transparent 70%);
+  box-shadow: 0 18px 40px rgba(20, 30, 50, 0.14);
+  transition: opacity 260ms ease;
+}
+
+.kinetic-card:hover > .light-sheen,
+.proof-lane:hover > .light-sheen {
+  opacity: 1;
+}
+
+/* A click sends out a soft ring, like a drop on water. */
+.light-ripple i {
+  left: -20px;
+  top: -20px;
+  width: 40px;
+  height: 40px;
+  border: 2px solid rgba(29, 95, 209, 0.45);
+  animation: lightRipple 700ms ease-out forwards;
+}
+
+/* A small sun on the chosen project filter. */
+.light-sun {
+  position: absolute;
+  top: -5px;
+  right: -4px;
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: #f5b335;
+  box-shadow: 0 0 0 3px rgba(245, 179, 53, 0.22), 0 0 10px rgba(245, 179, 53, 0.7);
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 300ms ease;
+}
+
+.filter-button.is-active > .light-sun {
+  opacity: 1;
+  animation: softPulse 3s ease-in-out infinite;
+}
+
+.theme-life-still .light-rise {
+  opacity: 1;
+  transform: none;
+  transition: none;
+}
+
+.theme-life-still .light-sheen {
+  transition: none;
+}
+
+.theme-life-still .light-sun {
+  animation: none;
 }
 
 /* Motion Off shows no moving parts, and the peeking cat moves by being there. */
@@ -4668,7 +4805,19 @@ body[data-cursor="reticle"] .cursor-reticle {
   }
 }
 
-@keyframes cassieGlow {
+@keyframes lightRipple {
+  from {
+    opacity: 1;
+    transform: scale(0.3);
+  }
+
+  to {
+    opacity: 0;
+    transform: scale(1.6);
+  }
+}
+
+@keyframes glowBreathe {
   from {
     opacity: 0.55;
   }
@@ -4821,7 +4970,7 @@ body[data-cursor="reticle"] .cursor-reticle {
   }
 }
 
-@keyframes emberCoal {
+@keyframes softPulse {
   0%,
   100% {
     opacity: 1;

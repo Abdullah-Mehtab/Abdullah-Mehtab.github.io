@@ -57,7 +57,7 @@
   // Themes with a life beyond their colours (things that draw themselves, answer the visitor).
   // That code is in theme-life.js, fetched the first time one of these themes is picked, and
   // never on a film page, where the film is what moves.
-  const themesWithLife = new Set(["paper", "space", "forest", "cyber", "ember", "cassie"]);
+  const themesWithLife = new Set(["paper", "space", "forest", "cyber", "ember", "cassie", "light"]);
   let themeLifeRequested = false;
 
   function loadThemeLife() {

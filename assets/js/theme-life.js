@@ -1,4 +1,4 @@
-// ABOUTME: A theme's life beyond its colours: what moves, draws itself and answers the visitor. Paper, Space, Forest, Cyber, Ember and Cassie live here.
+// ABOUTME: A theme's life beyond its colours: what moves, draws itself and answers the visitor. Every theme but Professional lives here.
 // ABOUTME: Loaded by portfolio-v2.js the first time a theme with life is picked; never on film pages, where the film is the life.
 (function () {
   if (window.themeLife) return;
@@ -1157,7 +1157,63 @@
     }
   };
 
-  const lives = { paper, space, forest, cyber, ember, cassie };
+  const light = {
+    start() {
+      const undo = [];
+
+      // 1. Dust drifts in the sunlight, slow and warm, each mote catching the light now and then.
+      // At Calm the motes hold where they are.
+      const glow = document.createElement("canvas");
+      glow.width = 16;
+      glow.height = 16;
+      const glowContext = glow.getContext("2d");
+      const halo = glowContext.createRadialGradient(8, 8, 0, 8, 8, 8);
+      halo.addColorStop(0, "rgba(220, 150, 40, 0.9)");
+      halo.addColorStop(0.4, "rgba(235, 175, 70, 0.45)");
+      halo.addColorStop(1, "rgba(235, 175, 70, 0)");
+      glowContext.fillStyle = halo;
+      glowContext.fillRect(0, 0, 16, 16);
+      const motes = Array.from({ length: 80 }, () => ({
+        x: Math.random(),
+        y: Math.random(),
+        dx: (Math.random() - 0.3) * 0.012,
+        dy: (Math.random() - 0.6) * 0.01,
+        size: 3 + Math.pow(Math.random(), 2) * 7,
+        light: 0.25 + Math.random() * 0.45,
+        glint: 2 + Math.random() * 5,
+        phase: Math.random() * Math.PI * 2
+      }));
+      let last = performance.now();
+      undo.push(backdropCanvas("light-dust", (context, width, height, now, mode) => {
+        const seconds = Math.min(0.1, (now - last) / 1000);
+        last = now;
+        context.clearRect(0, 0, width, height);
+        const time = mode === "full" ? now / 1000 : 0;
+        motes.forEach((mote) => {
+          if (mode === "full") {
+            mote.x = (mote.x + mote.dx * seconds + 1) % 1;
+            mote.y = (mote.y + mote.dy * seconds + 1) % 1;
+          }
+          context.globalAlpha = mote.light * (0.55 + 0.45 * Math.sin(time * mote.glint + mote.phase));
+          context.drawImage(glow, mote.x * width - mote.size / 2, mote.y * height - mote.size / 2, mote.size, mote.size);
+        });
+        context.globalAlpha = 1;
+      }));
+
+      // 2. Headings slide up into place as they come into view.
+      undo.push(headingsArrive("light-rise"));
+      // 3. The card under the pointer catches the light and lifts its shadow.
+      undo.push(pointerLight("light-sheen"));
+      // 4. A click sends out a soft ring.
+      undo.push(clickBurst("light-ripple", 1, 0));
+      // 5. A small sun shines on the chosen project filter.
+      undo.push(filterMark("light-sun"));
+
+      return () => undo.reverse().forEach((step) => step());
+    }
+  };
+
+  const lives = { paper, space, forest, cyber, ember, cassie, light };
   let running = null;
 
   // The crumple: the sheet is squeezed and smoothed out again when it arrives, whether by a new
