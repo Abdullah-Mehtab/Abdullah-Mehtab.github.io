@@ -546,11 +546,12 @@ async function checkVisitorProofHost() {
   }
 }
 
-// A theme with life (Paper, so far) rewrites the page while it is picked: headings split into words, scribbles,
-// tape and doodles added, text nudged onto its ruled lines. It must be loaded only for those themes, never on a film
-// page, and must give the page back exactly as it found it when the visitor picks another theme, or every theme
-// after it inherits stray classes, styles and elements. So each life theme is picked and left again on real pages,
-// and the page must come back byte for byte.
+// A theme's life rewrites the page while it is picked: headings split into words, marks and cats added, text nudged
+// onto ruled lines. It must load only for themes that have one, never on a film page, and must give the page back
+// exactly as it found it when the visitor picks another theme, or every theme after it inherits stray classes,
+// styles and elements. Every theme has a life now, Professional included, so the page as written is read with
+// theme-life.js blocked; then each theme is picked on the real page and its life stopped again, and the page must
+// come back to that byte for byte.
 async function checkThemeLife(baseUrl) {
   const executablePath = findChromeExecutable();
   if (!executablePath) {
@@ -574,8 +575,15 @@ async function checkThemeLife(baseUrl) {
   const { default: puppeteer } = await import('puppeteer-core');
   const browser = await puppeteer.launch({ executablePath, headless: true, args: ['--no-sandbox', '--disable-setuid-sandbox'] });
   const sleep = (ms) => new Promise((done) => setTimeout(done, ms));
-  async function open(path, theme) {
+  async function open(path, theme, { blockLife = false } = {}) {
     const page = await browser.newPage();
+    if (blockLife) {
+      // Registered before guardPage, whose listener lets every same-site request through at once.
+      await page.setRequestInterception(true);
+      page.on('request', (request) => {
+        if (!request.isInterceptResolutionHandled() && request.url().includes('theme-life.js')) request.abort();
+      });
+    }
     await guardPage(page, baseUrl);
     await page.setViewport({ width: 1440, height: 900 });
     const loaded = [];
@@ -596,7 +604,13 @@ async function checkThemeLife(baseUrl) {
   // The backdrop counts too: Forest slides its layers, and a layer left with so much as an empty style attribute is not
   // the page it was. It is read only before and after, never while a life runs: reading an element's HTML makes Chrome
   // write its pending inline style into the attribute, which hides exactly that leak.
-  const snapshot = (page, withBackdrop = true) => page.evaluate((backdrop) => [document.body.className, document.querySelector('main').innerHTML, document.querySelector('.site-footer').innerHTML, document.querySelectorAll('body > :not(script)').length, backdrop ? (document.querySelector('.theme-backdrop') || {}).outerHTML : ''].join('\u0000'), withBackdrop);
+  // The page as written is read from its own load, earlier than the page it is compared with, so text the site
+  // changes by itself over time ([data-proof-line]) is left out of the comparison; its element still counts.
+  const snapshot = (page, withBackdrop = true) => page.evaluate((backdrop) => {
+    const main = document.querySelector('main').cloneNode(true);
+    main.querySelectorAll('[data-proof-line]').forEach((element) => { element.textContent = ''; });
+    return [document.body.className, main.innerHTML, document.querySelector('.site-footer').innerHTML, document.querySelectorAll('body > :not(script)').length, backdrop ? (document.querySelector('.theme-backdrop') || {}).outerHTML : ''].join('\u0000');
+  }, withBackdrop);
   const firstDifference = (a, b) => {
     let i = 0;
     while (i < a.length && a[i] === b[i]) i += 1;
@@ -604,17 +618,22 @@ async function checkThemeLife(baseUrl) {
   };
   try {
     for (const path of ['index.html', 'projects.html']) {
+      // The page as written: the same load with theme-life.js refused, so no life ever touched it.
+      const written = await open(path, 'professional', { blockLife: true });
+      const before = await snapshot(written.page);
+      const beforeWithoutBackdrop = await snapshot(written.page, false);
+      await written.page.close();
       const { page, loaded } = await open(path, 'professional');
       try {
-        if (loaded.length) failures.push(`/${path} loaded theme-life.js under Professional, which has no life.`);
-        const before = await snapshot(page);
-        const beforeWithoutBackdrop = await snapshot(page, false);
+        const professionalLives = withLife.includes('professional');
+        if (professionalLives !== loaded.length > 0) failures.push(`/${path} ${loaded.length ? 'loaded' : 'did not load'} theme-life.js under Professional, which ${professionalLives ? 'has' : 'has no'} life.`);
         for (const theme of withLife) {
           await pick(page, theme);
           await sleep(2500);
           if (!loaded.length) failures.push(`/${path} did not load theme-life.js when ${theme} was picked.`);
           if (await snapshot(page, false) === beforeWithoutBackdrop) failures.push(`/${path} did not change at all when ${theme} was picked, so its life never started.`);
-          await pick(page, 'professional');
+          // No theme of this name has a life, so the running one is stopped and nothing takes its place.
+          await page.evaluate(() => { document.body.dataset.theme = 'no-life'; });
           await sleep(300);
           const after = await snapshot(page);
           if (after !== before) failures.push(`/${path} was not given back as it was after leaving ${theme}: ${firstDifference(before, after)}`);

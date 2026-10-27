@@ -31,6 +31,19 @@
   unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
 }
 
+/* Inter, the Professional theme's type. A family name of its own rather than "Inter": the site
+   asks for Inter everywhere but never shipped it, so every other theme and the film pages show
+   the visitor's system font, as each was approved; a face named "Inter" would quietly change
+   them all. One variable file covers every weight from 400 to 900. Latin only. */
+@font-face {
+  font-family: "Inter Variable";
+  font-style: normal;
+  font-weight: 400 900;
+  font-display: swap;
+  src: url("../fonts/inter-variable-latin.woff2") format("woff2");
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+
 /* The Cassie theme's headings, labels and buttons. One weight, latin only, downloaded only when
    Cassie is picked. */
 @font-face {
@@ -171,6 +184,9 @@
 
 body[data-theme="professional"],
 body.portfolio-v2:not([data-theme]) {
+  /* Professional: the default. Navy and blue, the moving backdrop it always had, and Inter
+     shipped for real (in the rule below). Its reactions (headings settling in, light on a card,
+     a click of stars) are in assets/js/theme-life.js. */
   --truck-art: url("../images/truck-professional.svg");
   --bg: #08111f;
   --bg-mid: #0d1d31;
@@ -199,10 +215,21 @@ body.portfolio-v2:not([data-theme]) {
   --nav-scroll-bg: rgba(8, 17, 31, 0.76);
 }
 
+body[data-theme="professional"] {
+  /* Professional's Inter, only once the page is set to Professional. A page has no theme until
+     portfolio-v2.js runs at the end of it, and in that moment it takes the block above; Inter
+     there would start the download for every visitor, whatever theme they picked. */
+  --font-body: "Inter Variable", Inter, "Open Sans", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --font-display: "Inter Variable", Inter, "Open Sans", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+}
+
 body[data-theme="light"] {
   /* Light mode: a clean, cool daytime page, unlike Paper's warm old sheet. Off-white with crisp
      white cards, soft grey shadows, navy text and one clear blue. Sunlight crosses the page and
      dust drifts in it; that life is in assets/js/theme-life.js. */
+  /* The site's own fonts, written out because Professional ships Inter for itself. */
+  --font-body: Inter, "Open Sans", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --font-display: Inter, "Open Sans", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
   --page-bg:
     radial-gradient(ellipse 70% 26rem at 85% -6rem, rgba(255, 214, 140, 0.22), transparent 70%) no-repeat,
     radial-gradient(ellipse 90% 30rem at 20% -8rem, rgba(150, 195, 255, 0.24), transparent 72%) no-repeat,
@@ -272,6 +299,8 @@ body[data-theme="forest"] {
   /* Forest: night in a forest by a river. Tree lines in three depths along the foot of the
      screen, mist between them, shafts of light from above, river stone corners and soft serif
      headings. Fireflies, falling leaves and the rest of its life are in assets/js/theme-life.js. */
+  /* The site's own body font, written out because Professional ships Inter for itself. */
+  --font-body: Inter, "Open Sans", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
   --font-display: "Fraunces", Georgia, "Times New Roman", serif;
   /* Fraunces ships one weight; headings take it as it is rather than a smeared fake bold. */
   --font-synthesis: style small-caps;
@@ -335,6 +364,8 @@ body[data-theme="space"] {
   /* Space: a black sky with sparse stars, one dim planet lit from the side and a small moon,
      plain bold headings, and small labels in spaced capitals like a mission control panel.
      The stars that drift and twinkle, and the shooting stars, are in assets/js/theme-life.js. */
+  /* The site's own body font, written out because Professional ships Inter for itself. */
+  --font-body: Inter, "Open Sans", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
   --page-bg:
     url("../images/space-planet.svg") right -120px top 90px / 520px 520px no-repeat,
     url("../images/space-moon.svg") left 7% top 1640px / 54px 54px no-repeat,
@@ -498,6 +529,8 @@ body[data-theme="ember"] {
      with a sunset glowing in bands at the top, amber labels in spaced capitals, Josefin Sans
      headings like a 1930s park poster, and amber ribbon buttons. The rising embers, the heat
      along the bottom and the rest of its life are in assets/js/theme-life.js. */
+  /* The site's own body font, written out because Professional ships Inter for itself. */
+  --font-body: Inter, "Open Sans", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
   --page-bg:
     radial-gradient(ellipse 120% 30rem at 50% -8rem, rgba(255, 182, 39, 0.26), transparent 70%) no-repeat,
     radial-gradient(ellipse 140% 44rem at 50% -10rem, rgba(240, 110, 40, 0.18), transparent 75%) no-repeat,
@@ -665,6 +698,8 @@ body[data-theme="cassie"] {
      the owner's own cat, peeking up from the corner of the screen, asleep on the footer and
      driving the van. Round Fredoka headings, pill buttons, a faint pattern of hearts and dots.
      Its floating hearts, the cat's eyes and the rest of its life are in assets/js/theme-life.js. */
+  /* The site's own body font, written out because Professional ships Inter for itself. */
+  --font-body: Inter, "Open Sans", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
   --page-bg:
     radial-gradient(ellipse 110% 34rem at 50% -8rem, rgba(255, 90, 168, 0.2), transparent 70%) no-repeat,
     url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='120' height='120'><path d='M30 34 C30 30.5 34.5 29.6 35.6 32.6 C36.7 29.6 41.2 30.5 41.2 34 C41.2 37.4 35.6 40.8 35.6 40.8 C35.6 40.8 30 37.4 30 34 Z' fill='%23ff5aa8' fill-opacity='.09'/><circle cx='92' cy='88' r='2.2' fill='%23ff9cc9' fill-opacity='.1'/><circle cx='80' cy='22' r='1.4' fill='%23ff9cc9' fill-opacity='.1'/><circle cx='18' cy='96' r='1.6' fill='%23ff9cc9' fill-opacity='.09'/></svg>") 0 0 / 120px 120px,
@@ -2004,6 +2039,75 @@ main h2.is-typed > .cyber-caret {
   color: #ff9cc9;
   opacity: 0;
   animation: cassieSleepZ 3.6s ease-out infinite;
+}
+
+/* Professional's life: reactions only; its backdrop is the moving one every theme started with. */
+
+.pro-settle {
+  opacity: 0;
+  transform: translateY(10px);
+  transition: opacity 700ms ease, transform 900ms cubic-bezier(0.2, 0.7, 0.2, 1);
+}
+
+.pro-settle.is-seen {
+  opacity: 1;
+  transform: none;
+}
+
+/* A soft blue light inside the card under the pointer, and a brighter edge. */
+.pro-light {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  border-radius: inherit;
+  pointer-events: none;
+  opacity: 0;
+  background: radial-gradient(260px circle at var(--light-x, 50%) var(--light-y, 50%), rgba(120, 183, 255, 0.12), transparent 70%);
+  box-shadow: inset 0 0 0 1px rgba(120, 183, 255, 0.35);
+  transition: opacity 260ms ease;
+}
+
+.kinetic-card:hover > .pro-light,
+.proof-lane:hover > .pro-light {
+  opacity: 1;
+}
+
+.pro-burst i {
+  left: -1.5px;
+  top: -1.5px;
+  width: 3px;
+  height: 3px;
+  background: #d7e8ff;
+  box-shadow: 0 0 6px rgba(120, 183, 255, 0.9);
+  animation: spaceSpark 750ms cubic-bezier(0.2, 0.8, 0.3, 1) forwards;
+}
+
+.pro-mark {
+  position: absolute;
+  top: -4px;
+  right: -3px;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #78b7ff;
+  box-shadow: 0 0 8px rgba(120, 183, 255, 0.8);
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 300ms ease;
+}
+
+.filter-button.is-active > .pro-mark {
+  opacity: 1;
+}
+
+.theme-life-still .pro-settle {
+  opacity: 1;
+  transform: none;
+  transition: none;
+}
+
+.theme-life-still .pro-light {
+  transition: none;
 }
 
 /* Light mode's life. */

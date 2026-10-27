@@ -1,4 +1,4 @@
-// ABOUTME: A theme's life beyond its colours: what moves, draws itself and answers the visitor. Every theme but Professional lives here.
+// ABOUTME: A theme's life beyond its colours: what moves, draws itself and answers the visitor. Every theme's lives here.
 // ABOUTME: Loaded by portfolio-v2.js the first time a theme with life is picked; never on film pages, where the film is the life.
 (function () {
   if (window.themeLife) return;
@@ -1213,7 +1213,23 @@
     }
   };
 
-  const lives = { paper, space, forest, cyber, ember, cassie, light };
+  // Professional keeps the moving backdrop every theme started with; its life is reactions only.
+  const professional = {
+    start() {
+      const undo = [];
+      // 1. Headings settle into place as they come into view.
+      undo.push(headingsArrive("pro-settle"));
+      // 2. A soft blue light follows the pointer inside the card under it.
+      undo.push(pointerLight("pro-light"));
+      // 3. A click leaves a small burst of stars.
+      undo.push(clickBurst("pro-burst", 6, 26));
+      // 4. A blue dot marks the chosen project filter.
+      undo.push(filterMark("pro-mark"));
+      return () => undo.reverse().forEach((step) => step());
+    }
+  };
+
+  const lives = { paper, space, forest, cyber, ember, cassie, light, professional };
   let running = null;
 
   // The crumple: the sheet is squeezed and smoothed out again when it arrives, whether by a new
