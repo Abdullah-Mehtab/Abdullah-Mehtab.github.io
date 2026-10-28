@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="Linear Regression in Assembly by Abdullah Mehtab: a MIPS assembly program that reads a data file, splits it, fits a straight line by least squares and tests it, with no library underneath.">
+    <meta name="theme-color" content="#0e1116">
+    <meta name="robots" content="index, follow">
+    <meta property="og:title" content="Linear Regression in Assembly | Abdullah Mehtab">
+    <meta property="og:description" content="A MIPS assembly program that reads a data file, splits it, fits a straight line by least squares and tests it, with no library underneath.">
+    <meta property="og:type" content="article">
+    <meta property="og:url" content="https://abdullah-mehtab.github.io/chapters/linear-regression.html">
+    <meta name="twitter:card" content="summary">
+    <meta name="twitter:title" content="Linear Regression in Assembly | Abdullah Mehtab">
+    <meta name="twitter:description" content="A MIPS assembly program that reads a data file, splits it, fits a straight line by least squares and tests it, with no library underneath.">
+    <link rel="canonical" href="https://abdullah-mehtab.github.io/chapters/linear-regression.html">
+    <title>Linear Regression in Assembly | Abdullah Mehtab</title>
+    <link rel="icon" href="../assets/images/icon.png" type="image/png">
+    <link rel="stylesheet" href="../assets/css/animations.css">
+    <link rel="stylesheet" href="../assets/css/portfolio-v2.css">
+    <link rel="stylesheet" href="../assets/css/film.css">
+    <link rel="stylesheet" href="../assets/css/film-linear-regression-assembly.css">
+    <script type="importmap">{ "imports": { "three": "../assets/vendor/three/three.module.min.js" } }</script>
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@type": "TechArticle",
+        "headline": "Linear Regression in Assembly",
+        "author": {
+          "@type": "Person",
+          "name": "Abdullah Mehtab",
+          "url": "https://abdullah-mehtab.github.io/"
+        },
+        "about": ["MIPS assembly", "Linear regression", "Least squares", "Computer organization"],
+        "url": "https://abdullah-mehtab.github.io/chapters/linear-regression.html"
+      }
+    </script>
+  </head>
+  <body class="portfolio-v2 film">
+    <canvas id="chapter-scene" class="chapter-scene" aria-hidden="true"></canvas>
+    <div class="film-grade" aria-hidden="true">
+      <div class="film-room">
+        <div class="film-stage-ceiling"></div>
+        <div class="film-stage-floor"></div>
+        <div class="film-stage-wall" data-side="left"></div>
+        <div class="film-stage-wall" data-side="right"></div>
+      </div>
+      <div class="film-stage-glow"></div>
+    </div>
+    <a class="skip-link" href="#top">Skip to content</a>
+    <header class="site-header">
+      <nav class="site-nav" aria-label="Primary navigation">
+        <a class="brand" href="../index.html">Abdullah Mehtab</a>
+        <div class="nav-links">
+          <a href="../index.html">Home</a>
+          <a href="../projects.html">Projects</a>
+          <a href="../cv.html">CV</a>
+          <a href="../todo.html">Never-Ending List</a>
+          <a href="../play/">Portfolio Drive</a>
+        </div>
+        <div class="style-control" data-style-control>
+          <button class="style-toggle" type="button" aria-expanded="false" aria-controls="style-panel" data-style-toggle>Style</button>
+          <div class="style-panel" id="style-panel" data-style-panel>
+            <label>
+              <span>Theme</span>
+              <select data-theme-select aria-label="Theme"></select>
+            </label>
+            <label>
+              <span>Cursor Trail</span>
+              <select data-cursor-select aria-label="Cursor trail"></select>
+            </label>
+            <label>
+              <span>Motion Intensity</span>
+              <select data-motion-select aria-label="Motion intensity"></select>
+            </label>
+            <label>
+              <span>Autoplay</span>
+              <select data-autoplay-select aria-label="Play the film when idle"></select>
+            </label>
+            <button class="style-reset" type="button" data-style-reset>Reset Style</button>
+          </div>
+        </div>
+        <button class="nav-toggle" type="button" aria-label="Open navigation" aria-expanded="false" data-nav-toggle>Menu</button>
+      </nav>
+      <div class="mobile-nav" data-mobile-nav>
+        <a href="../index.html">Home</a>
+        <a href="../projects.html">Projects</a>
+        <a href="../cv.html">CV</a>
+        <a href="../todo.html">Never-Ending List</a>
+        <a href="../play/">Portfolio Drive</a>
+      </div>
+    </header>
+
+    <main id="top" data-chapter="Linear Regression in Assembly">
+      <div class="act" id="overview" data-act-name="Overview" data-scene="horizon">
+        <section class="case-hero act-pin" data-act="01">
+          <div class="section-inner" data-frame="title">
+            <p class="eyebrow chapter-meta">Machine learning in MIPS assembly &middot; Course project</p>
+            <h1>Linear Regression in Assembly</h1>
+            <p class="chapter-line">A line fitted through data, one machine instruction at a time.</p>
+            <p class="page-lede">
+              Built in January 2024 for a computer organization course: a program that reads a data file, splits it, fits a straight line and tests it, written in MIPS assembly with no library underneath.
+            </p>
+            <div class="hero-actions">
+              <a class="button primary" href="https://github.com/Abdullah-Mehtab/Linear-Regression-in-Assembly" target="_blank" rel="noopener">Repository</a>
+              <a class="button" href="../projects.html">Back to projects</a>
+            </div>
+            <div class="case-metrics">
+              <article class="stat-card">
+                <strong>MIPS</strong>
+                <span>The processor's own instructions</span>
+              </article>
+              <article class="stat-card">
+                <strong>No libraries</strong>
+                <span>Every loop, sum and division by hand</span>
+              </article>
+              <article class="stat-card">
+                <strong>About 3,200</strong>
+                <span>Instructions run to fit ten points</span>
+              </article>
+              <article class="stat-card">
+                <strong>MARS 4.5</strong>
+                <span>The simulator it runs on</span>
+              </article>
+            </div>
+          </div>
+        </section>
+      </div>
+
+      <div class="act" id="reading" data-act-name="Reading" data-scene="streams">
+        <section class="section act-pin" data-act="02">
+          <div class="section-inner" data-frame="pair">
+            <article class="case-panel reveal">
+              <p class="eyebrow">From text to numbers</p>
+              <h2>Even reading a number was code.</h2>
+              <p>
+                The data file arrives as characters. Each digit becomes a number by subtracting the code for "0", and every further digit multiplies what is already there by ten, then adds itself. So "9" then "8" becomes 98.
+              </p>
+            </article>
+            <article class="case-panel reveal">
+              <p class="eyebrow">Train and test</p>
+              <h2>A coin flip for every row.</h2>
+              <p>
+                A random 0 or 1 sends each row to training or testing, until training holds 80% of the rows. The line learns from those alone, so the rest can show whether it works.
+              </p>
+            </article>
+          </div>
+        </section>
+      </div>
+
+      <div class="act" id="fitting" data-act-name="Fitting" data-scene="lattice">
+        <section class="section act-pin" data-act="03">
+          <div class="section-inner" data-frame="sequence">
+            <div class="section-heading">
+              <div>
+                <p class="eyebrow">The fit</p>
+                <h2>Every slope solved at once.</h2>
+              </div>
+            </div>
+            <div class="case-flow">
+              <article class="case-step reveal">
+                <span>01</span>
+                <h3>Averages</h3>
+                <p>Every column summed and divided, in floating point.</p>
+              </article>
+              <article class="case-step reveal">
+                <span>02</span>
+                <h3>The table</h3>
+                <p>How each input moves with the others, and with the answer.</p>
+              </article>
+              <article class="case-step reveal">
+                <span>03</span>
+                <h3>The solve</h3>
+                <p>Gauss-Jordan elimination, largest pivot first, in double precision.</p>
+              </article>
+              <article class="case-step reveal">
+                <span>04</span>
+                <h3>The line</h3>
+                <p>The intercept from the slopes, then the formula printed.</p>
+              </article>
+            </div>
+          </div>
+        </section>
+      </div>
+
+      <div class="act" id="testing" data-act-name="Testing" data-scene="strata">
+        <section class="section act-pin" data-act="04">
+          <div class="section-inner" data-frame="split">
+            <article class="case-panel reveal">
+              <p class="eyebrow">The test</p>
+              <h2>Asked about a row it never saw.</h2>
+              <p>
+                In this run the row with 98 was held back. The line learned from the other eight, then answered for it:
+              </p>
+              <pre class="run-output" aria-label="Program output: actual 98, predicted 97.477615">Actual: 98	Predicted: 97.477615</pre>
+            </article>
+            <article class="case-panel reveal">
+              <p class="eyebrow">Outcome</p>
+              <h2>Checked against a separate solver.</h2>
+              <p>
+                Revisited in 2026: the course version fitted each input on its own, so the fit was rewritten to solve every input together, then checked over 90 runs on nine data files against an independent least squares solve. The 2024 code stays in the repository beside it.
+              </p>
+              <div class="tag-list">
+                <span class="tag">MIPS assembly</span>
+                <span class="tag">Floating point</span>
+                <span class="tag">Least squares</span>
+              </div>
+            </article>
+          </div>
+        </section>
+      </div>
+
+      <section class="section chapter-close">
+        <div class="section-inner" data-frame="coda">
+<pre class="run-output goodbye" aria-label="The program's goodbye banner: two ASCII cats and the words Project Complete, Goodbye, Abdullah Mehtab">  |\_/|   ****************************  (\_/)
+ / @ @ \  *     Project Complete!    * (='.'=)
+( &gt; &#186; &lt; ) *         Goodbye!         * (')_(')
+ `&gt;&gt;x&lt;&lt;&#180;  *     (Abdullah Mehtab)    *
+ /  O  \  *</pre>
+          <p class="chapter-meta">More work</p>
+          <h2>Next: the rest of the range.</h2>
+          <p class="chapter-close-links">
+            <a class="button primary" href="../projects.html">All projects</a>
+            <a class="button" href="../cv.html">Full CV</a>
+          </p>
+        </div>
+      </section>
+
+      <section class="section">
+        <div class="section-inner" data-frame="single">
+          <p class="eyebrow">Responses</p>
+          <div data-comments data-type="project" data-slug="linear-regression-assembly-blog" data-title="Comments on Linear Regression in Assembly"></div>
+        </div>
+      </section>
+
+      <div class="loop-wrapper" aria-hidden="true">
+        <div class="mountain"></div><div class="hill"></div><div class="tree"></div><div class="tree"></div><div class="tree"></div><div class="rock"></div><div class="truck"></div><div class="wheels"></div>
+      </div>
+    </main>
+
+    <footer class="site-footer">
+      <div class="site-footer-inner">
+        <div>
+          <h2>The layer underneath.</h2>
+          <p class="footer-note">With a library, fitting a line is one call. This is that call written out, instruction by instruction, for the processor itself.</p>
+          <p class="footer-note">&copy; 2023-<span data-year></span> Abdullah Mehtab.</p>
+        </div>
+        <div class="footer-section">
+          <h3>Contact</h3>
+          <a href="mailto:abdullahmehtab666@gmail.com">Email</a>
+          <a href="https://github.com/Abdullah-Mehtab" target="_blank" rel="me noopener">GitHub</a>
+          <a href="https://linkedin.com/in/abdullah-mehtab" target="_blank" rel="me noopener">LinkedIn</a>
+        </div>
+        <div class="footer-section">
+          <h3>Navigate</h3>
+          <a href="../index.html">Home</a>
+          <a href="../projects.html">Projects</a>
+          <a href="../cv.html">CV</a>
+          <a href="../todo.html">Never-Ending List</a>
+          <a href="../classic/index.html">Classic Site</a>
+          <a href="../play/">Portfolio Drive</a>
+        </div>
+      </div>
+    </footer>
+
+    <script src="../assets/js/site-config.js"></script>
+    <script src="../assets/js/portfolio-v2.js"></script>
+    <script src="../assets/js/film.js"></script>
+    <script src="../assets/js/comments.js"></script>
+    <script src="../assets/js/visitor-proof.js"></script>
+    <!-- The page's 3D layer. A module, so it is deferred by definition and a browser that
+         cannot parse it simply never runs it, leaving the typographic page above. -->
+    <script type="module" src="../assets/js/scene/linear-regression-assembly.js"></script>
+  </body>
+</html>

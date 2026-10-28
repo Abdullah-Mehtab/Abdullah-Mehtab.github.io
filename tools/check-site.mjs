@@ -21,6 +21,7 @@ const protectedRoutes = [
   { route: '/cyber-sentinel.html', file: 'cyber-sentinel.html' },
   { route: '/chapters/cyber-sentinel.html', file: 'chapters/cyber-sentinel.html' },
   { route: '/chapters/offensive-security-home-lab.html', file: 'chapters/offensive-security-home-lab.html' },
+  { route: '/chapters/linear-regression.html', file: 'chapters/linear-regression.html' },
   { route: '/play/', file: 'play/index.html' },
   { route: '/classic/', file: 'classic/index.html' },
   { route: '/Abdullah-Mehtab-Master-CV.pdf', file: 'Abdullah-Mehtab-Master-CV.pdf' },

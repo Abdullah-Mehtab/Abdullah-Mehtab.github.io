@@ -1,0 +1,35 @@
+/*
+  ABOUTME: The Linear Regression in Assembly page's own adjustments to the film layout in film.css.
+  ABOUTME: Loaded by that page only, after film.css. Every other film page is untouched.
+
+  The program's own printed lines are shown as it printed them: the test result in act four, and the goodbye banner of two
+  ASCII cats above the closing address, character for character (owner ruling, 2026-10-28). Spacing and tabs are part of
+  the text, so both are set as preformatted mono and never wrapped; the banner is 46 characters wide and fits every column
+  it stands in.
+*/
+body.film .run-output {
+  font-family: var(--face-mono);
+  font-size: 1rem;
+  line-height: 1.35;
+  color: var(--text);
+  white-space: pre;
+  tab-size: 8;
+  margin: var(--s3) 0 0;
+  overflow-x: auto;
+}
+
+/* The title is set smaller while the scene runs. With the scene live the copy narrows to seven of twelve columns, and at the
+   shared size "Linear Regression in Assembly" wrapped to three lines, so the opening frame was 140px taller than a 1440x900
+   screen (81px at 1366x768, 20px at 1280x720) and its first line was cut off under the header. The same size the home lab's
+   title takes for the same reason (owner ruling there, 2026-10-18, chosen over shortening the copy). The words are unchanged. */
+@media (min-width: 901px) {
+  body.film.scene-live .case-hero h1 {
+    font-size: clamp(3rem, 4.6vw, 4.5rem);
+  }
+}
+
+/* The banner opens the closing address, across the whole row, before the words "More work". */
+body.film [data-frame="coda"] > .goodbye {
+  grid-column: 1 / -1;
+  margin: 0 0 var(--s5);
+}
